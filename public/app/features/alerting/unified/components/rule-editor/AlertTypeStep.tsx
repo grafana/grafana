@@ -40,8 +40,13 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
     if (contextSrv.isEditor) {
       result.push({
         label: 'Cortex/Loki managed alert',
-        value: RuleFormType.cloud,
+        value: RuleFormType.cloudAlerting,
         description: 'Alert based on a system or application behavior. Based on Prometheus.',
+      });
+      result.push({
+        label: 'Cortex/Loki managed recording rule',
+        value: RuleFormType.cloudRecording,
+        description: 'Recording rule to pre-compute frequently needed or expensive calculations. Based on Prometheus.',
       });
     }
 
@@ -49,10 +54,10 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   }, []);
 
   return (
-    <RuleEditorSection stepNo={1} title="Alert type">
+    <RuleEditorSection stepNo={1} title="Rule type">
       <Field
         className={styles.formInput}
-        label="Alert name"
+        label="Rule name"
         error={errors?.name?.message}
         invalid={!!errors.name?.message}
       >
@@ -65,7 +70,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
       <div className={styles.flexRow}>
         <Field
           disabled={editingExistingRule}
-          label="Alert type"
+          label="Rule type"
           className={styles.formInput}
           error={errors.type?.message}
           invalid={!!errors.type?.message}
@@ -87,7 +92,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             }}
           />
         </Field>
-        {ruleFormType === RuleFormType.cloud && (
+        {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
           <Field
             className={styles.formInput}
             label="Select data source"
@@ -115,9 +120,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           </Field>
         )}
       </div>
-      {ruleFormType === RuleFormType.cloud && dataSourceName && (
-        <GroupAndNamespaceFields dataSourceName={dataSourceName} />
-      )}
+      {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
+        dataSourceName && <GroupAndNamespaceFields dataSourceName={dataSourceName} />}
+
       {ruleFormType === RuleFormType.grafana && (
         <Field
           label="Folder"

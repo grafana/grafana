@@ -158,7 +158,7 @@ func Recovery(cfg *setting.Cfg) macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, cfg.ErrTemplateName)
+					c.HTML(500, cfg.ErrTemplateName, c.Data)
 				}
 			}
 		}()

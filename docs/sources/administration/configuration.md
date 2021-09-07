@@ -206,7 +206,6 @@ Another way is to put a web server like Nginx or Apache in front of Grafana and 
 
 ### domain
 
-
 ### enforce_domain
 
 Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
@@ -423,6 +422,7 @@ For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/ne
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
 ### max_idle_connections_per_host
+
 [Deprecated - use max_idle_connections instead]
 
 The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
@@ -588,7 +588,7 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
 
->**Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
 
@@ -828,7 +828,7 @@ Azure cloud environment where Grafana is hosted:
 
 | Azure Cloud                                      | Value                  |
 | ------------------------------------------------ | ---------------------- |
-| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Azure public cloud                     | AzureCloud (_default_) |
 | Microsoft Chinese national cloud                 | AzureChinaCloud        |
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
@@ -1096,6 +1096,16 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 ### global_alert_rule
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
+
+<hr>
+
+## [unified_alerting]
+
+For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+
+### admin_config_poll_interval_seconds
+
+Specify the frequency of polling for admin config changes. The default value is `60`.
 
 <hr>
 
@@ -1520,7 +1530,7 @@ The `allowed_origins` option is a comma-separated list of additional origins (`O
 
 If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
 
-Origin patterns support wildcard symbol "*".
+Origin patterns support wildcard symbol "\*".
 
 For example:
 

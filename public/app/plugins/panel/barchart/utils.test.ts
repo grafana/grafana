@@ -1,5 +1,12 @@
 import { prepareGraphableFrames, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import {
+  LegendDisplayMode,
+  TooltipDisplayMode,
+  BarValueVisibility,
+  GraphGradientMode,
+  StackingMode,
+} from '@grafana/schema';
+import {
   createTheme,
   DefaultTimeZone,
   EventBusSrv,
@@ -10,13 +17,6 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions } from './types';
-import {
-  BarValueVisibility,
-  GraphGradientMode,
-  LegendDisplayMode,
-  StackingMode,
-  TooltipDisplayMode,
-} from '@grafana/ui';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({

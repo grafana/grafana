@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/stretchr/testify/require"
@@ -153,7 +152,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -275,7 +274,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
-					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
+					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -351,7 +350,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(80 * time.Second),
-					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(80 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -414,7 +413,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -477,7 +476,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -540,7 +539,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -603,7 +602,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -666,7 +665,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -730,7 +729,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -794,7 +793,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -874,7 +873,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
 
-	dbstore := tests.SetupTestEnv(t, 1)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	rule := tests.CreateTestAlertRule(t, dbstore, 600)
 
@@ -900,8 +899,6 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 	_ = dbstore.SaveAlertInstance(saveCmd2)
-
-	t.Cleanup(registry.ClearOverrides)
 
 	testCases := []struct {
 		desc               string

@@ -24,10 +24,11 @@ import {
   changeGroupByPart,
 } from '../../queryUtils';
 import { FormatAsSection } from './FormatAsSection';
-import { SectionLabel } from './SectionLabel';
-import { SectionFill } from './SectionFill';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
 import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from './partListUtils';
+import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 
 type Props = {
   query: InfluxQuery;
@@ -51,15 +52,8 @@ function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise
   return optionsPromise.then((options) => [...getTemplateVariableOptions(), ...options]);
 }
 
-const SectionWrap = ({ initialName, children }: { initialName: string; children: React.ReactNode }) => (
-  <div className="gf-form-inline">
-    <SectionLabel name={initialName} isInitial={true} />
-    {children}
-    <SectionFill />
-  </div>
-);
-
 export const Editor = (props: Props): JSX.Element => {
+  const styles = useStyles2(getStyles);
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
@@ -112,7 +106,7 @@ export const Editor = (props: Props): JSX.Element => {
 
   return (
     <div>
-      <SectionWrap initialName="from">
+      <SegmentSection label="FROM" fill={true}>
         <FromSection
           policy={policy}
           measurement={measurement}
@@ -124,7 +118,9 @@ export const Editor = (props: Props): JSX.Element => {
           }
           onChange={handleFromSectionChange}
         />
-        <SectionLabel name="where" />
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          WHERE
+        </InlineLabel>
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
@@ -133,9 +129,9 @@ export const Editor = (props: Props): JSX.Element => {
             withTemplateVariableOptions(getTagValues(key, measurement, policy, query.tags ?? [], datasource))
           }
         />
-      </SectionWrap>
+      </SegmentSection>
       {selectLists.map((sel, index) => (
-        <SectionWrap key={index} initialName={index === 0 ? 'select' : ''}>
+        <SegmentSection key={index} label={index === 0 ? 'SELECT' : ''} fill={true}>
           <PartListSection
             parts={sel}
             getNewPartOptions={() => Promise.resolve(getNewSelectPartOptions())}
@@ -150,9 +146,9 @@ export const Editor = (props: Props): JSX.Element => {
               onAppliedChange(removeSelectPart(query, partIndex, index));
             }}
           />
-        </SectionWrap>
+        </SegmentSection>
       ))}
-      <SectionWrap initialName="group by">
+      <SegmentSection label="GROUP BY" fill={true}>
         <PartListSection
           parts={groupByList}
           getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
@@ -167,8 +163,8 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange(removeGroupByPart(query, partIndex));
           }}
         />
-      </SectionWrap>
-      <SectionWrap initialName="timezone">
+      </SegmentSection>
+      <SegmentSection label="TIMEZONE" fill={true}>
         <InputSection
           placeholder="(optional)"
           value={query.tz}
@@ -176,20 +172,22 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <SectionLabel name="order by time" />
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          ORDER BY TIME
+        </InlineLabel>
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
             onAppliedChange({ ...query, orderByTime: v });
           }}
         />
-      </SectionWrap>
+      </SegmentSection>
       {/* query.fill is ignored in the query-editor, and it is deleted whenever
           query-editor changes. the influx_query_model still handles it, but the new
           approach seem to be to handle "fill" inside query.groupBy. so, if you
-          have a panel where in the json you have query.fill, it will be appled,
+          have a panel where in the json you have query.fill, it will be applied,
           as long as you do not edit that query. */}
-      <SectionWrap initialName="limit">
+      <SegmentSection label="LIMIT" fill={true}>
         <InputSection
           placeholder="(optional)"
           value={query.limit?.toString()}
@@ -197,7 +195,9 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, limit });
           }}
         />
-        <SectionLabel name="slimit" />
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          SLIMIT
+        </InlineLabel>
         <InputSection
           placeholder="(optional)"
           value={query.slimit?.toString()}
@@ -205,8 +205,8 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, slimit });
           }}
         />
-      </SectionWrap>
-      <SectionWrap initialName="format as">
+      </SegmentSection>
+      <SegmentSection label="FORMAT AS" fill={true}>
         <FormatAsSection
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {
@@ -215,7 +215,9 @@ export const Editor = (props: Props): JSX.Element => {
         />
         {query.resultFormat !== 'table' && (
           <>
-            <SectionLabel name="alias" />
+            <InlineLabel width="auto" className={styles.inlineLabel}>
+              ALIAS
+            </InlineLabel>
             <InputSection
               isWide
               placeholder="Naming pattern"
@@ -226,7 +228,15 @@ export const Editor = (props: Props): JSX.Element => {
             />
           </>
         )}
-      </SectionWrap>
+      </SegmentSection>
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    inlineLabel: css`
+      color: ${theme.colors.primary.text};
+    `,
+  };
+}

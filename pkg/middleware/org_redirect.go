@@ -37,7 +37,7 @@ func OrgRedirect(cfg *setting.Cfg) macaron.Handler {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
 			} else {
-				ctx.Error(404, "Not found")
+				http.Error(ctx.Resp, "Not found", http.StatusNotFound)
 			}
 
 			return

@@ -15,6 +15,7 @@ By exporting usage logs to Loki, you can directly query them and create dashboar
 ## Usage insights logs
 
 Usage insights logs are JSON objects that represent certain user activities, such as:
+
 - A user opens a dashboard.
 - A query is sent to a data source.
 
@@ -23,7 +24,8 @@ Usage insights logs are JSON objects that represent certain user activities, suc
 A log is created every time a user opens a dashboard or when a query is sent to a data source in the dashboard view. A query that is performed via Explore does not generate a log.
 
 ### Format
-Logs of usage insights contain the following fields, where the fields followed by * are always available, and the others depend on the logged event:
+
+Logs of usage insights contain the following fields, where the fields followed by \* are always available, and the others depend on the logged event:
 | Field name | Type | Description |
 | ---------- | ---- | ----------- |
 | `eventName`\* | string | Type of the event, which can be either `data-request` or `dashboard-view`. |
@@ -69,11 +71,12 @@ tls = true
 ## Visualize Loki usage insights in Grafana
 
 Now that your logs are exported into Loki, you can build Grafana dashboards to understand your Grafana instance usage.
+
 1. Add Loki as a data source. Refer to [Grafana fundamentals tutorial](/tutorials/grafana-fundamentals/#6).
 1. Import one of the following dashboards:
-    * [Usage insights](/grafana/dashboards/13785)
-    * [Usage insights datasource details](/grafana/dashboards/13786)
+   - [Usage insights](/grafana/dashboards/13785)
+   - [Usage insights datasource details](/grafana/dashboards/13786)
 1. Play with usage insights to understand them:
-    * In Explore, you can use the query `{datasource="gdev-loki",kind="usage_insights"}` to retrieve all logs related to your `gdev-loki` data source.
-    * In a dashboard, you can build a table panel with the query `topk(10, sum by (error) (count_over_time({kind="usage_insights", datasource="gdev-prometheus"} | json | error != "" [$__interval])))` to display the 10 most common errors your users see using the `gdev-prometheus` data source.
-    * In a dashboard, you can build a graph panel with the queries `sum by(host) (count_over_time({kind="usage_insights"} | json | eventName="data-request" | error != "" [$__interval]))` and `sum by(host) (count_over_time({kind="usage_insights"} | json | eventName="data-request" | error = "" [$__interval]))` to show the evolution of the data request count over time. Using `by (host)` allows you to have more information for each Grafana server you have if you have set up Grafana for [high availability](<{{< relref "../../administration/set-up-for-high-availability.md" >}}>). 
+   - In Explore, you can use the query `{datasource="gdev-loki",kind="usage_insights"}` to retrieve all logs related to your `gdev-loki` data source.
+   - In a dashboard, you can build a table panel with the query `topk(10, sum by (error) (count_over_time({kind="usage_insights", datasource="gdev-prometheus"} | json | error != "" [$__interval])))` to display the 10 most common errors your users see using the `gdev-prometheus` data source.
+   - In a dashboard, you can build a graph panel with the queries `sum by(host) (count_over_time({kind="usage_insights"} | json | eventName="data-request" | error != "" [$__interval]))` and `sum by(host) (count_over_time({kind="usage_insights"} | json | eventName="data-request" | error = "" [$__interval]))` to show the evolution of the data request count over time. Using `by (host)` allows you to have more information for each Grafana server you have if you have set up Grafana for [high availability](<{{< relref "../../administration/set-up-for-high-availability.md" >}}>).

@@ -10,7 +10,6 @@ list = false
 
 ### Bug fixes
 
-* **Dockerfile:** Fixes missing --no-cache. [#33906](https://github.com/grafana/grafana/pull/33906), [@030](https://github.com/030)
-* **Annotations:** Prevent orphaned annotation tags cleanup when no annotations were cleaned. [#33957](https://github.com/grafana/grafana/pull/33957), [@afayngelerindbx](https://github.com/afayngelerindbx)
-* **Quota:** Do not count folders towards dashboard quota. [#32519](https://github.com/grafana/grafana/pull/32519), [@conorevans](https://github.com/conorevans)
-
+- **Dockerfile:** Fixes missing --no-cache. [#33906](https://github.com/grafana/grafana/pull/33906), [@030](https://github.com/030)
+- **Annotations:** Prevent orphaned annotation tags cleanup when no annotations were cleaned. [#33957](https://github.com/grafana/grafana/pull/33957), [@afayngelerindbx](https://github.com/afayngelerindbx)
+- **Quota:** Do not count folders towards dashboard quota. [#32519](https://github.com/grafana/grafana/pull/32519), [@conorevans](https://github.com/conorevans)

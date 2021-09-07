@@ -69,18 +69,19 @@ the panel and you cannot reference series name or any data field.
 While `Data links` are used by the actual visualization and can reference data fields.
 
 Example:
+
 ```url
 http://my-grafana.com/d/bPCI6VSZz/other-dashboard?var-server=${__series_name}
 ```
 
 You have access to these variables:
 
-Name | Description
------------- | -------------
-*${__series_name}* | The name of the time series (or table)
-*${__value_time}* | The time of the point your clicking on (in millisecond epoch)
-*${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
-*${__all_variables}* | Adds all current variables (and current values) to the URL
+| Name                    | Description                                                                |
+| ----------------------- | -------------------------------------------------------------------------- |
+| _${\_\_series_name}_    | The name of the time series (or table)                                     |
+| _${\_\_value_time}_     | The time of the point your clicking on (in millisecond epoch)              |
+| _${\_\_url_time_range}_ | Interpolates as the full time range (i.e. from=21312323412&to=21312312312) |
+| _${\_\_all_variables}_  | Adds all current variables (and current values) to the URL                 |
 
 You can then click on point in the Graph.
 
@@ -107,7 +108,7 @@ Looks really nice in light theme as well.
 
 ## Grafana Enterprise
 
-Substantial refactoring and improvements to the external auth systems has gone in to this release making the  features
+Substantial refactoring and improvements to the external auth systems has gone in to this release making the features
 listed below possible as well as laying a foundation for future enhancements.
 
 ### LDAP Active Sync

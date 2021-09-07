@@ -2,16 +2,16 @@ import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
-import { LogMessageAnsi, Themeable, withTheme, getLogRowStyles, Icon, Button } from '@grafana/ui';
-import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
+import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
     label: logs-rows-live;
-    font-family: ${theme.typography.fontFamily.monospace};
-    font-size: ${theme.typography.size.sm};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-size: ${theme.typography.bodySmall.fontSize};
     display: flex;
     flex-flow: column nowrap;
     height: 60vh;
@@ -23,11 +23,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFade: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.palette.blue95).setAlpha(0.25).toString()};
+    background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${tinycolor(theme.palette.blue95).setAlpha(0.25).toString()};
+        background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
       }
       to {
         background-color: transparent;
@@ -35,20 +35,20 @@ const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
   logsRowsIndicator: css`
-    font-size: ${theme.typography.size.md};
-    padding-top: ${theme.spacing.sm};
+    font-size: ${theme.typography.h6.fontSize};
+    padding-top: ${theme.spacing(1)};
     display: flex;
     align-items: center;
   `,
   button: css`
-    margin-right: ${theme.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `,
   fullWidth: css`
     width: 100%;
   `,
 });
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   timeZone: TimeZone;
   stopLive: () => void;
@@ -163,4 +163,4 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 }
 
-export const LiveLogsWithTheme = withTheme(LiveLogs);
+export const LiveLogsWithTheme = withTheme2(LiveLogs);

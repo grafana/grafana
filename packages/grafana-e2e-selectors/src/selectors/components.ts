@@ -4,6 +4,11 @@
 // but you still might need to select it for testing,
 // in that case please add the attribute data-test-id={selector} in the component and
 // prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
+/**
+ * Selectors grouped/defined in Components
+ *
+ * @alpha
+ */
 export const Components = {
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
@@ -44,7 +49,7 @@ export const Components = {
   },
   Panels: {
     Panel: {
-      title: (title: string) => `Panel header ${title}`,
+      title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
@@ -73,6 +78,7 @@ export const Components = {
       },
       Table: {
         header: 'table header',
+        footer: 'table-footer',
       },
     },
   },
@@ -213,9 +219,9 @@ export const Components = {
     items: 'Search items',
   },
   DashboardLinks: {
-    container: 'Dashboard link container',
-    dropDown: 'Dashboard link dropdown',
-    link: 'Dashboard link',
+    container: 'data-testid Dashboard link container',
+    dropDown: 'data-testid Dashboard link dropdown',
+    link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
     icon: 'Loading indicator',

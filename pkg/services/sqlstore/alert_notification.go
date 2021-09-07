@@ -112,7 +112,7 @@ func GetAlertNotificationsWithUid(query *models.GetAlertNotificationsWithUidQuer
 
 func GetAllAlertNotifications(query *models.GetAllAlertNotificationsQuery) error {
 	results := make([]*models.AlertNotification, 0)
-	if err := x.Where("org_id = ?", query.OrgId).Find(&results); err != nil {
+	if err := x.Where("org_id = ?", query.OrgId).Asc("name").Find(&results); err != nil {
 		return err
 	}
 

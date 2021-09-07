@@ -11,9 +11,9 @@ A dashboard in Grafana is represented by a JSON object, which stores metadata of
 
 To view the JSON of a dashboard:
 
-  1. Navigate to a dashboard.
-  1. In the top navigation menu, click the **Dashboard settings** (gear) icon.
-  1. Click **JSON Model**.
+1. Navigate to a dashboard.
+1. In the top navigation menu, click the **Dashboard settings** (gear) icon.
+1. Click **JSON Model**.
 
 ## JSON fields
 
@@ -53,6 +53,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "links": []
 }
 ```
+
 Each field in the dashboard JSON is explained below with its usage:
 
 | Name              | Usage                                                                                                             |
@@ -99,7 +100,7 @@ Panels are the building blocks of a dashboard. It consists of data source querie
 
 The gridPos property describes the panel size and position in grid coordinates.
 
-- `w` 1-24  (the width of the dashboard is divided into 24 columns)
+- `w` 1-24 (the width of the dashboard is divided into 24 columns)
 - `h` In grid height units, each represents 30 pixels.
 - `x` The x position, in same unit as `w`.
 - `y` The y position, in same unit as `h`.

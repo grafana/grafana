@@ -1,4 +1,4 @@
-import React, { CSSProperties, FC, ReactNode, useState } from 'react';
+import React, { CSSProperties, FC, ReactNode, useState, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from '@emotion/css';
@@ -96,18 +96,24 @@ export const Drawer: FC<Props> = ({
   const theme = useTheme2();
   const drawerStyles = getStyles(theme, scrollableContent);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const currentWidth = isExpanded ? '100%' : width;
+
+  // RcDrawer v4.x needs to be mounted in advance for animations to play.
+  useEffect(() => {
+    setIsOpen(true);
+  }, []);
 
   return (
     <RcDrawer
       level={null}
       handler={false}
-      open={true}
+      open={isOpen}
       onClose={onClose}
       maskClosable={closeOnMaskClick}
       placement="right"
       width={currentWidth}
-      getContainer={inline ? false : 'body'}
+      getContainer={inline ? undefined : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
       aria-label={

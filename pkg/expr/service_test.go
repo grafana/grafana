@@ -13,9 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,17 +22,10 @@ func TestService(t *testing.T) {
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", nil, []*float64{fp(2)}))
 
-	dataSvc := tsdb.NewService()
-	dataSvc.PluginManager = &manager.PluginManager{
-		BackendPluginManager: fakeBackendPM{},
-	}
-	s := Service{DataService: &dataSvc}
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
 	}
-	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (plugins.DataPlugin, error) {
-		return me, nil
-	})
+	s := Service{DataService: me}
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil
@@ -98,9 +88,8 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
-	plugins.DataResponse, error) {
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
+func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	return plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
 			"A": {
@@ -110,6 +99,7 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 	}, nil
 }
 
-type fakeBackendPM struct {
-	backendplugin.Manager
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
+func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
+	return me.DataQuery(ctx, ds, query)
 }

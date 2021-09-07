@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package store_test
@@ -6,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
@@ -26,8 +26,7 @@ func mockTimeNow() {
 }
 
 func TestAlertInstanceOperations(t *testing.T) {
-	dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
-	t.Cleanup(registry.ClearOverrides)
+	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	alertRule1 := tests.CreateTestAlertRule(t, dbstore, 60)
 	orgID := alertRule1.OrgID

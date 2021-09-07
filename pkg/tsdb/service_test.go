@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 func TestHandleRequest(t *testing.T) {
@@ -124,11 +126,23 @@ func (m *fakeBackendPM) QueryData(ctx context.Context, req *backend.QueryDataReq
 	return nil, nil
 }
 
-func createService() (Service, *fakeExecutor, *fakeBackendPM) {
-	s := NewService()
-	fakeBackendPluginManager := &fakeBackendPM{}
-	s.PluginManager = &manager.PluginManager{}
-	s.BackendPluginManager = fakeBackendPluginManager
+type fakeOAuthTokenService struct {
+}
+
+func (s *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token {
+	return nil
+}
+
+func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+	return false
+}
+
+func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
+	fakeBackendPM := &fakeBackendPM{}
+	manager := &manager.PluginManager{
+		BackendPluginManager: fakeBackendPM,
+	}
+	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
@@ -139,5 +153,5 @@ func createService() (Service, *fakeExecutor, *fakeBackendPM) {
 		return e, nil
 	}
 
-	return s, e, fakeBackendPluginManager
+	return s, e, fakeBackendPM
 }

@@ -45,15 +45,15 @@ The javascript object that communicates with the database and transforms data to
 The Data source should contain the following functions:
 
 ```javascript
-query(options) // used by panels to get data
-testDatasource() // used by data source configuration page to make sure the connection is working
-annotationQuery(options) // used by dashboards to get annotations
-metricFindQuery(options) // used by query editor to get metric suggestions.
+query(options); // used by panels to get data
+testDatasource(); // used by data source configuration page to make sure the connection is working
+annotationQuery(options); // used by dashboards to get annotations
+metricFindQuery(options); // used by query editor to get metric suggestions.
 ```
 
 ### testDatasource
 
-When a user clicks on the *Save & Test* button when adding a new data source, the details are first saved to the database and then the `testDatasource` function that is defined in your data source plugin will be called. It is recommended that this function makes a query to the data source that will also test that the authentication details are correct. This is so the data source is correctly configured when the user tries to write a query in a new dashboard.
+When a user clicks on the _Save & Test_ button when adding a new data source, the details are first saved to the database and then the `testDatasource` function that is defined in your data source plugin will be called. It is recommended that this function makes a query to the data source that will also test that the authentication details are correct. This is so the data source is correctly configured when the user tries to write a query in a new dashboard.
 
 ### Query
 
@@ -81,15 +81,15 @@ An array of:
 ```json
 [
   {
-    "target":"upper_75",
-    "datapoints":[
+    "target": "upper_75",
+    "datapoints": [
       [622, 1450754160000],
       [365, 1450754220000]
     ]
   },
   {
-    "target":"upper_90",
-    "datapoints":[
+    "target": "upper_90",
+    "datapoints": [
       [861, 1450754160000],
       [767, 1450754220000]
     ]
@@ -118,16 +118,8 @@ An array of:
       }
     ],
     "rows": [
-      [
-        1457425380000,
-        null,
-        null
-      ],
-      [
-        1457425370000,
-        1002.76215352,
-        1002.76215352
-      ]
+      [1457425380000, null, null],
+      [1457425370000, 1002.76215352, 1002.76215352]
     ],
     "type": "table"
   }
@@ -141,7 +133,7 @@ Request object passed to datasource.annotationQuery function:
 ```json
 {
   "range": { "from": "2016-03-04T04:07:55.144Z", "to": "2016-03-04T07:07:55.144Z" },
-  "rangeRaw": { "from": "now-3h", to: "now" },
+  "rangeRaw": { "from": "now-3h", "to": "now" },
   "annotation": {
     "datasource": "generic datasource",
     "enable": true,
@@ -160,7 +152,7 @@ Expected result from datasource.annotationQuery:
       "name": "annotation name", //should match the annotation name in grafana
       "enabled": true,
       "datasource": "generic datasource"
-     },
+    },
     "title": "Cluster outage",
     "time": 1457075272576,
     "text": "Joe causes brain split",

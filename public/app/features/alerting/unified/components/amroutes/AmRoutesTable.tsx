@@ -6,6 +6,7 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 import { Matchers } from '../silences/Matchers';
+import { matcherFieldToMatcher } from '../../utils/alertmanager';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
@@ -32,7 +33,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
       id: 'matchingCriteria',
       label: 'Matching labels',
       // eslint-disable-next-line react/display-name
-      renderCell: (item) => <Matchers matchers={item.data.matchers} />,
+      renderCell: (item) => <Matchers matchers={item.data.matchers.map(matcherFieldToMatcher)} />,
       size: 10,
     },
     {

@@ -83,7 +83,7 @@ func replacedResponseWriter(ctx *models.ReqContext) (*models.ReqContext, *respon
 }
 
 type AlertingProxy struct {
-	DataProxy *datasourceproxy.DatasourceProxyService
+	DataProxy *datasourceproxy.DataSourceProxyService
 }
 
 // withReq proxies a different request
@@ -103,7 +103,7 @@ func (p *AlertingProxy) withReq(
 		req.Header.Add(h, v)
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
-	newCtx.Req.Request = req
+	newCtx.Req = req
 	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
 
 	status := resp.Status()
@@ -256,4 +256,9 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 		err = errors.WithMessagef(err, msg, args...)
 	}
 	return response.Error(status, err.Error(), nil)
+}
+
+// accessForbiddenResp creates a response of forbidden access.
+func accessForbiddenResp() response.Response {
+	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
 }

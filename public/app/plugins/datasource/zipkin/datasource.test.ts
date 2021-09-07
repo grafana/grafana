@@ -1,6 +1,7 @@
+import { lastValueFrom, of } from 'rxjs';
 import { DataSourceInstanceSettings, FieldType } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv';
-import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { ZipkinDatasource } from './datasource';
 import mockJson from './mockJsonResponse.json';
@@ -31,15 +32,27 @@ describe('ZipkinDatasource', () => {
     it('should handle json file upload', async () => {
       const ds = new ZipkinDatasource(defaultSettings);
       ds.uploadedJson = JSON.stringify(mockJson);
-      const response = await ds
-        .query({
+      const response = await lastValueFrom(
+        ds.query({
           targets: [{ queryType: 'upload', refId: 'A' }],
         } as any)
-        .toPromise();
+      );
       const field = response.data[0].fields[0];
       expect(field.name).toBe('traceID');
       expect(field.type).toBe(FieldType.string);
       expect(field.values.length).toBe(3);
+    });
+
+    it('should fail on invalid json file upload', async () => {
+      const ds = new ZipkinDatasource(defaultSettings);
+      ds.uploadedJson = JSON.stringify({ key: 'value', arr: [] });
+      const response = await lastValueFrom(
+        ds.query({
+          targets: [{ queryType: 'upload', refId: 'A' }],
+        } as any)
+      );
+      expect(response.error?.message).toBeDefined();
+      expect(response.data.length).toBe(0);
     });
   });
 
@@ -67,4 +80,5 @@ const defaultSettings: DataSourceInstanceSettings = {
   name: 'zipkin',
   meta: {} as any,
   jsonData: {},
+  access: 'proxy',
 };

@@ -2,6 +2,8 @@ import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 import { PanelPluginDataSupport } from '.';
+import { DataTopic } from './query';
+import { DataFrameType } from './dataFrameTypes';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -17,10 +19,6 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export enum DataTopic {
-  Annotations = 'annotations',
-}
-
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
@@ -28,6 +26,8 @@ export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 
  * @public
  */
 export interface QueryResultMeta {
+  type?: DataFrameType;
+
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
 

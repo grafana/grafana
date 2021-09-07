@@ -130,6 +130,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     body: css`
       padding: ${theme.spacing(1)};
+
+      a {
+        color: ${theme.colors.text.link};
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     `,
   };
 };

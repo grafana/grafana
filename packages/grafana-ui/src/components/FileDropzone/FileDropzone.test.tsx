@@ -107,6 +107,17 @@ describe('The FileDropzone component', () => {
 
     screen.getByText('Custom dropzone text');
   });
+
+  it('should handle file list overwrite when fileListRenderer is passed', async () => {
+    render(<FileDropzone fileListRenderer={() => null} />);
+
+    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
+
+    // need to await this in order to have the drop finished
+    await screen.findByTestId('dropzone');
+
+    expect(screen.queryByText('ping.json')).not.toBeInTheDocument();
+  });
 });
 
 function dispatchEvt(node: HTMLElement, type: string, data: any) {

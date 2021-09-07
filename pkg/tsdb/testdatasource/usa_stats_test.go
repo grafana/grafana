@@ -17,8 +17,8 @@ import (
 
 func TestUSAScenario(t *testing.T) {
 	cfg := setting.NewCfg()
-	p := &testDataPlugin{
-		Cfg: cfg,
+	p := &TestDataPlugin{
+		cfg: cfg,
 	}
 
 	t.Run("usa query modes", func(t *testing.T) {

@@ -5,10 +5,10 @@ weight = 4
 draft = "true"
 +++
 
-
 # Playlists
 
-A _playlist
+A \_playlist
+
 - is a list of dashboards that are displayed in a sequence. You might use a playlist to build situational awareness or to present your metrics to your team or visitors.
 
 Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
@@ -88,7 +88,7 @@ You can save a playlist to add it to your **Playlists** page, where you can star
 1. Click **Playlists**.
 1. Click on the playlist.
 1. Edit the playlist.
-   * Ensure that your playlist has a **Name**, **Interval**, and at least one **Dashboard** added to it.
+   - Ensure that your playlist has a **Name**, **Interval**, and at least one **Dashboard** added to it.
 1. Click **Save**.
 
 ## Start a playlist
@@ -101,38 +101,38 @@ By default, each dashboard is displayed for the amount of time entered in the In
 1. Next to the playlist you want to start, click **Start playlist**.
 1. In the dropdown, select the mode you want the playlist to display in.
    - **Normal mode:**
-       - The side menu remains visible.
-       - The navbar, row and panel controls appear at the top of the screen.
+     - The side menu remains visible.
+     - The navbar, row and panel controls appear at the top of the screen.
    - **TV mode:**
-      - The side menu is hidden/removed.
-      - The navbar, row and panel controls appear at the top of the screen.
-      - Enabled automatically after one minute of user inactivity.
-      - You can enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL.
-      - You can disable it with any mouse mouse movement or keyboard action.
+     - The side menu is hidden/removed.
+     - The navbar, row and panel controls appear at the top of the screen.
+     - Enabled automatically after one minute of user inactivity.
+     - You can enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL.
+     - You can disable it with any mouse mouse movement or keyboard action.
    - **TV mode (with auto fit panels):**
-      - The side menu is hidden/removed.
-      - The navbar, row and panel controls appear at the top of the screen.
-      - Dashboard panels automatically adjust to optimize space on screen.
+     - The side menu is hidden/removed.
+     - The navbar, row and panel controls appear at the top of the screen.
+     - Dashboard panels automatically adjust to optimize space on screen.
    - **Kiosk mode:**
-      - The side menu, navbar, row and panel controls are completely hidden/removed from view.
-      - You can enable it manually using the `d v` sequence shortcut after the playlist has started.
-      - You can disable it manually with the same shortcut.
+     - The side menu, navbar, row and panel controls are completely hidden/removed from view.
+     - You can enable it manually using the `d v` sequence shortcut after the playlist has started.
+     - You can disable it manually with the same shortcut.
    - **Kiosk mode (with auto fit panels):**
-      - The side menu, navbar, row and panel controls are completely hidden/removed from view.
-      - Dashboard panels automatically adjust to optimize space on screen.
+     - The side menu, navbar, row and panel controls are completely hidden/removed from view.
+     - Dashboard panels automatically adjust to optimize space on screen.
 
 ## Control a playlist
 
 You can control a playlist in **Normal** or **TV** mode after it's started, using the navigation bar at the top of your screen.
 
-| Button | Result |
-| --- | --- |
-| Next (double-right arrow) | Advances to the next dashboard. |
-| Back (left arrow) | Returns to the previous dashboard. |
-| Stop (square) | Ends the playlist, and exits to the current dashboard. |
-| Cycle view mode (monitor icon) | Rotates the display of the dashboards in different view modes. |
-| Time range | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
-| Refresh (circle arrow) | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop down arrow. |
+| Button                         | Result                                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Next (double-right arrow)      | Advances to the next dashboard.                                                                                                                 |
+| Back (left arrow)              | Returns to the previous dashboard.                                                                                                              |
+| Stop (square)                  | Ends the playlist, and exits to the current dashboard.                                                                                          |
+| Cycle view mode (monitor icon) | Rotates the display of the dashboards in different view modes.                                                                                  |
+| Time range                     | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
+| Refresh (circle arrow)         | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop down arrow.  |
 
 > Shortcut: Press the Esc key to stop the playlist from your keyboard.
 
@@ -140,11 +140,13 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 
 You can share a playlist by copying the link address on the view mode you prefer, and pasting the URL to your destination.
 
-1. From the Dashboards submenu, click **Playlists**.
-1. Next to the playlist you want to share, click **Start playlist**.
-1. In the dropdown, right click the view mode you prefer.
-1. Click **Copy Link Address** to copy the URL to your clipboard.
+1.  From the Dashboards submenu, click **Playlists**.
+1.  Next to the playlist you want to share, click **Start playlist**.
+1.  In the dropdown, right click the view mode you prefer.
+1.  Click **Copy Link Address** to copy the URL to your clipboard.
 
-    Example: The URL for the first playlist on the Grafana Play site in Kiosk mode will look like this:
-[https://play.grafana.org/playlists/play/1?kiosk](https://play.grafana.org/playlists/play/1?kiosk).
-1. Paste the URL to your destination.
+        Example: The URL for the first playlist on the Grafana Play site in Kiosk mode will look like this:
+
+    [https://play.grafana.org/playlists/play/1?kiosk](https://play.grafana.org/playlists/play/1?kiosk).
+
+1.  Paste the URL to your destination.

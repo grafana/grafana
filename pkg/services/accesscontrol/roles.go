@@ -8,6 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles() error
+}
+
 // Roles definition
 var (
 	datasourcesEditorReadRole = RoleDTO{
@@ -57,7 +62,7 @@ var (
 	}
 
 	settingsAdminReadRole = RoleDTO{
-		Version: 1,
+		Version: 2,
 		Name:    settingsAdminRead,
 		Permissions: []Permission{
 			{

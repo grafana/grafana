@@ -8,6 +8,7 @@ weight = 500
 # Generic OAuth authentication
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
+
 - [Generic OAuth authentication](#generic-oauth-authentication)
   - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
@@ -45,6 +46,7 @@ tls_client_ca =
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
 
 You can also specify the SSL/TLS configuration used by the client.
+
 - Set `tls_client_cert` to the path of the certificate.
 - Set `tls_client_key` to the path containing the key.
 - Set `tls_client_ca` to the path containing a trusted certificate authority list.
@@ -57,7 +59,7 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
 1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
-**Note**: Only available in Grafana v6.4+.
+   **Note**: Only available in Grafana v6.4+.
 1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
 1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
 1. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
@@ -86,28 +88,30 @@ You can set the user's display name with JMESPath using the `name_attribute_path
 ## Set up OAuth2 with Auth0
 
 1. Create a new Client in Auth0
-    - Name: Grafana
-    - Type: Regular Web Application
+
+   - Name: Grafana
+   - Type: Regular Web Application
 
 1. Go to the Settings tab and set:
-    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+   - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
 1. Click Save Changes, then use the values at the top of the page to configure Grafana:
 
-    ```bash
-    [auth.generic_oauth]
-    enabled = true
-    allow_sign_up = true
-    team_ids =
-    allowed_organizations =
-    name = Auth0
-    client_id = <client id>
-    client_secret = <client secret>
-    scopes = openid profile email
-    auth_url = https://<domain>/authorize
-    token_url = https://<domain>/oauth/token
-    api_url = https://<domain>/userinfo
-    ```
+   ```bash
+   [auth.generic_oauth]
+   enabled = true
+   allow_sign_up = true
+   team_ids =
+   allowed_organizations =
+   name = Auth0
+   client_id = <client id>
+   client_secret = <client secret>
+   scopes = openid profile email
+   auth_url = https://<domain>/authorize
+   token_url = https://<domain>/oauth/token
+   api_url = https://<domain>/userinfo
+   ```
 
 ## Set up OAuth2 with Bitbucket
 
@@ -144,53 +148,57 @@ allowed_organizations =
 
 1. Configure Grafana as follows:
 
-    ```bash
-    [auth.generic_oauth]
-    name = Centrify
-    enabled = true
-    allow_sign_up = true
-    client_id = <OpenID Connect Client ID from Centrify>
-    client_secret = <your generated OpenID Connect Client Secret"
-    scopes = openid profile email
-    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
-    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
-    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
-    ```
+   ```bash
+   [auth.generic_oauth]
+   name = Centrify
+   enabled = true
+   allow_sign_up = true
+   client_id = <OpenID Connect Client ID from Centrify>
+   client_secret = <your generated OpenID Connect Client Secret"
+   scopes = openid profile email
+   auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
+   token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+   api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
+   ```
 
 ## Set up OAuth2 with OneLogin
 
 1. Create a new Custom Connector with the following settings:
-    - Name: Grafana
-    - Sign On Method: OpenID Connect
-    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
-    - Signing Algorithm: RS256
-    - Login URL: `https://<grafana domain>/login/generic_oauth`
 
-    then:
+   - Name: Grafana
+   - Sign On Method: OpenID Connect
+   - Redirect URI: `https://<grafana domain>/login/generic_oauth`
+   - Signing Algorithm: RS256
+   - Login URL: `https://<grafana domain>/login/generic_oauth`
+
+   then:
+
 1. Add an App to the Grafana Connector:
-    - Display Name: Grafana
 
-    then:
+   - Display Name: Grafana
+
+   then:
+
 1. Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
 
-    Your OneLogin Domain will match the URL you use to access OneLogin.
+   Your OneLogin Domain will match the URL you use to access OneLogin.
 
-    Configure Grafana as follows:
+   Configure Grafana as follows:
 
-    ```bash
-    [auth.generic_oauth]
-    name = OneLogin
-    enabled = true
-    allow_sign_up = true
-    client_id = <client id>
-    client_secret = <client secret>
-    scopes = openid email name
-    auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
-    token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
-    api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
-    team_ids =
-    allowed_organizations =
-    ```
+   ```bash
+   [auth.generic_oauth]
+   name = OneLogin
+   enabled = true
+   allow_sign_up = true
+   client_id = <client id>
+   client_secret = <client secret>
+   scopes = openid email name
+   auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
+   token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
+   api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
+   team_ids =
+   allowed_organizations =
+   ```
 
 ## JMESPath examples
 
@@ -205,6 +213,7 @@ If  the`role_attribute_path` property does not return a role, then the user is 
 In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 Payload:
+
 ```json
 {
     ...
@@ -214,6 +223,7 @@ Payload:
 ```
 
 Config:
+
 ```bash
 role_attribute_path = role
 ```
@@ -223,6 +233,7 @@ role_attribute_path = role
 In the following example user will get `Admin` as role when authenticating since it has a role `admin`. If a user has a role `editor` it will get `Editor` as role, otherwise `Viewer`.
 
 Payload:
+
 ```json
 {
     ...
@@ -239,14 +250,14 @@ Payload:
 ```
 
 Config:
+
 ```bash
 role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
-
 ### Groups mapping
 
->  Available in Grafana Enterprise v8.1 and later versions.
+> Available in Grafana Enterprise v8.1 and later versions.
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
 
@@ -261,6 +272,7 @@ groups_attribute_path = info.groups
 ```
 
 Payload:
+
 ```json
 {
     ...

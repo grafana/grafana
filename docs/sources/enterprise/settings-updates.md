@@ -14,11 +14,11 @@ Settings updates at runtime allows you to update Grafana settings with no need t
 Updates that happen at runtime are stored in the database and override
 [settings from the other sources](https://grafana.com/docs/grafana/latest/administration/configuration/)
 (arguments, environment variables, settings file, etc). Therefore, every time a specific setting key is removed at runtime,
-the value used for that key is the inherited one from the other sources in the reverse order of precedence 
+the value used for that key is the inherited one from the other sources in the reverse order of precedence
 (`arguments > environment variables > settings file`), being the application default the value used when no one provided
 through one of these, at least.
 
-Currently, **it only supports updates on the `auth.saml` section.** 
+Currently, **it only supports updates on the `auth.saml` section.**
 
 ## Update settings via the API
 
@@ -27,8 +27,9 @@ You can update settings through the [Admin API]({{< relref "../http_api/admin.md
 When you submit a settings update via API, Grafana verifies if the given settings updates are allowed and valid. If they are, then Grafana stores the settings in the database and reloads
 Grafana services with no need to restart the instance.
 
-So, the payload of a `PUT` request to the update settings endpoint (`/api/admin/settings`) 
+So, the payload of a `PUT` request to the update settings endpoint (`/api/admin/settings`)
 should contain (either one or both):
+
 - An `updates` map with a key, and a value per section you want to set.
 - A `removals` list with keys per section you want to unset.
 
@@ -44,7 +45,9 @@ For example, if you provide the following `updates`:
   }
 }
 ```
+
 it would enable SAML and disable single logouts. And, if you provide the following `removals`:
+
 ```json
 {
   "auth.saml": ["allow_idp_initiated"]
@@ -77,12 +80,12 @@ won't be persisted into the database.
 ## Background job (high availability set-ups)
 
 Grafana Enterprise has a built-in scheduled background job that looks into the database every minute for
-settings updates. If there are updates, it reloads the Grafana services affected by the detected changes. 
+settings updates. If there are updates, it reloads the Grafana services affected by the detected changes.
 
 The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
 HTTP API, then the other instances are synchronized through the database and the background job.
 
 ## Control access with fine-grained access control
 
-If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings. 
+If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
 Refer to the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}) for more information.

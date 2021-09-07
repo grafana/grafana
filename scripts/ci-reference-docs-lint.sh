@@ -28,7 +28,7 @@ if [ ! -d "$REPORT_PATH" ]; then
   fi
 fi
 
-WARNINGS_COUNT="$(find "$REPORT_PATH" -type f -name \*.log -print0 | xargs -0 grep -o "Warning: " | wc -l | xargs)"
+WARNINGS_COUNT="$(find "$REPORT_PATH" -type f -name \*.log -print0 | xargs -0 grep -o "Warning:.*(ae-\|Warning:.*(tsdoc-" | wc -l | xargs)"
 WARNINGS_COUNT_LIMIT=1074
 
 if [ "$WARNINGS_COUNT" -gt $WARNINGS_COUNT_LIMIT ]; then

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/alertmanager/api/metrics"
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -23,13 +23,21 @@ const (
 	ProxyBackend   = "proxy"
 )
 
-var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
+// ProvideService is a Metrics factory.
+func ProvideService() *Metrics {
+	return NewMetrics(prometheus.DefaultRegisterer)
+}
+
+// ProvideServiceForTest is a Metrics factory used for test.
+func ProvideServiceForTest() *Metrics {
+	return NewMetrics(prometheus.NewRegistry())
+}
 
 type Metrics struct {
 	*metrics.Alerts
-	AlertState *prometheus.GaugeVec
 	// Registerer is for use by subcomponents which register their own metrics.
 	Registerer           prometheus.Registerer
+	AlertState           *prometheus.GaugeVec
 	RequestDuration      *prometheus.HistogramVec
 	ActiveConfigurations prometheus.Gauge
 	EvalTotal            *prometheus.CounterVec
@@ -38,31 +46,16 @@ type Metrics struct {
 	GroupRules           *prometheus.GaugeVec
 }
 
-func init() {
-	registry.RegisterService(GlobalMetrics)
-}
-
-func (m *Metrics) Init() error {
-	return nil
-}
-
-// SwapRegisterer overwrites the prometheus register used by a *Metrics in place.
-// It's used by tests to prevent duplicate registration errors
-func (m *Metrics) SwapRegisterer(r prometheus.Registerer) {
-	next := NewMetrics(r)
-	*m = *next
-}
-
 func NewMetrics(r prometheus.Registerer) *Metrics {
 	return &Metrics{
-		Alerts: metrics.NewAlerts("v2", r),
+		Registerer: r,
+		Alerts:     metrics.NewAlerts("v2", r),
 		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
-		Registerer: r,
 		RequestDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
@@ -123,6 +116,37 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			[]string{"user"},
 		),
 	}
+}
+
+// multi-thread safety and stable ordering of prometheus registries.
+type OrgRegistries struct {
+	regsMu sync.Mutex
+	regs   map[int64]prometheus.Registerer
+}
+
+func NewOrgRegistries() *OrgRegistries {
+	return &OrgRegistries{
+		regs: make(map[int64]prometheus.Registerer),
+	}
+}
+
+func (m *OrgRegistries) GetOrCreateOrgRegistry(orgID int64) prometheus.Registerer {
+	m.regsMu.Lock()
+	defer m.regsMu.Unlock()
+
+	orgRegistry, ok := m.regs[orgID]
+	if !ok {
+		reg := prometheus.NewRegistry()
+		m.regs[orgID] = reg
+		return reg
+	}
+	return orgRegistry
+}
+
+func (m *OrgRegistries) RemoveOrgRegistry(org int64) {
+	m.regsMu.Lock()
+	defer m.regsMu.Unlock()
+	delete(m.regs, org)
 }
 
 // Instrument wraps a middleware, instrumenting the request latencies.

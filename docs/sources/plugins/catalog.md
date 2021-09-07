@@ -10,9 +10,9 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
 
 | Org Admin | Server Admin | Permissions                                                                                 |
 | --------- | ------------ | ------------------------------------------------------------------------------------------- |
-|  &check;  |    &check;   | <ul><li>Can configure app plugins</li><li>Can install/uninstall/update plugins</li></ul>    |
-|  &check;  |    &times;   | <ul><li>Can configure app plugins</li><li>Cannot install/uninstall/update plugins</li></ul> |
-|  &times;  |    &check;   | <ul><li>Cannot configure app plugins</li><li>Can install/uninstall/update plugins</li></ul> |
+| &check;   | &check;      | <ul><li>Can configure app plugins</li><li>Can install/uninstall/update plugins</li></ul>    |
+| &check;   | &times;      | <ul><li>Can configure app plugins</li><li>Cannot install/uninstall/update plugins</li></ul> |
+| &times;   | &check;      | <ul><li>Cannot configure app plugins</li><li>Can install/uninstall/update plugins</li></ul> |
 
 > **Note:** The Plugin catalog is designed to work with a single Grafana server instance only. Support for Grafana clusters will be added in future Grafana releases.
 
@@ -27,9 +27,10 @@ Before you can use the Plugin catalog, you must enable it in the Grafana [config
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
-Currently, there are two entry points to the Plugin catalog. 
-- Grafana server administrators can find it at **Server Admin > 
-Plugins**.
+Currently, there are two entry points to the Plugin catalog.
+
+- Grafana server administrators can find it at **Server Admin >
+  Plugins**.
 - Organization administrators can find it at **Configuration > Plugins**.
 
 ## Browse plugins

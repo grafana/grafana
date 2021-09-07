@@ -220,7 +220,7 @@ There can be different reasons for this:
 
 - The folder has been changed by someone else, `status=version-mismatch`
 
- The response body will have the following properties:
+The response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed

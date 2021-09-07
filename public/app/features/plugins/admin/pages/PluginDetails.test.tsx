@@ -1,5 +1,7 @@
 import React from 'react';
 import { render, RenderResult, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { config } from '@grafana/runtime';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import PluginDetailsPage from './PluginDetails';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
@@ -17,12 +19,30 @@ jest.mock('@grafana/runtime', () => {
           case `${GRAFANA_API_ROOT}/plugins/not-installed/versions`:
           case `${GRAFANA_API_ROOT}/plugins/enterprise/versions`:
             return Promise.resolve([]);
+          case `${GRAFANA_API_ROOT}/plugins/installed/versions`:
+            return Promise.resolve({
+              items: [
+                {
+                  version: '1.0.0',
+                  createdAt: '2016-04-06T20:23:41.000Z',
+                },
+              ],
+            });
           case API_ROOT:
-            return Promise.resolve([localPlugin(), corePlugin()]);
+            return Promise.resolve([
+              localPlugin(),
+              localPlugin({ id: 'installed', signature: PluginSignatureStatus.valid }),
+              localPlugin({ id: 'has-update', signature: PluginSignatureStatus.valid }),
+              localPlugin({ id: 'core', signature: PluginSignatureStatus.internal }),
+            ]);
           case `${GRAFANA_API_ROOT}/plugins/core`:
-            return Promise.resolve(corePlugin());
+            return Promise.resolve(localPlugin({ id: 'core', signature: PluginSignatureStatus.internal }));
           case `${GRAFANA_API_ROOT}/plugins/not-installed`:
             return Promise.resolve(remotePlugin());
+          case `${GRAFANA_API_ROOT}/plugins/has-update`:
+            return Promise.resolve(remotePlugin({ slug: 'has-update', version: '2.0.0' }));
+          case `${GRAFANA_API_ROOT}/plugins/installed`:
+            return Promise.resolve(remotePlugin({ slug: 'installed' }));
           case `${GRAFANA_API_ROOT}/plugins/enterprise`:
             return Promise.resolve(remotePlugin({ status: 'enterprise' }));
           default:
@@ -53,24 +73,111 @@ function setup(pluginId: string): RenderResult {
 }
 
 describe('Plugin details page', () => {
-  it('should display install button for uninstalled plugins', async () => {
-    const { getByText } = setup('not-installed');
+  let dateNow: any;
 
-    const expected = 'Install';
-
-    await waitFor(() => expect(getByText(expected)).toBeInTheDocument());
+  beforeAll(() => {
+    dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
   });
 
-  it('should not display install button for enterprise plugins', async () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    dateNow.mockRestore();
+  });
+
+  it('should display an overview (plugin readme) by default', async () => {
+    const { queryByText } = setup('not-installed');
+    await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
+  });
+
+  it('should display version history', async () => {
+    const { queryByText, getByText, getByRole } = setup('installed');
+    await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
+    userEvent.click(getByText(/version history/i));
+    expect(
+      getByRole('columnheader', {
+        name: /version/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      getByRole('columnheader', {
+        name: /last updated/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      getByRole('cell', {
+        name: /1\.0\.0/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      getByRole('cell', {
+        name: /5 years ago/i,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("should display install button for a plugin that isn't installed", async () => {
+    const { queryByRole } = setup('not-installed');
+
+    await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+    expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
+  });
+
+  it('should display uninstall button for an installed plugin', async () => {
+    const { queryByRole } = setup('installed');
+    await waitFor(() => expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument());
+  });
+
+  it('should display update and uninstall buttons for a plugin with update', async () => {
+    const { queryByRole } = setup('has-update');
+
+    await waitFor(() => expect(queryByRole('button', { name: /update/i })).toBeInTheDocument());
+    expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
+  });
+
+  it('should display install button for enterprise plugins if license is valid', async () => {
+    config.licenseInfo.hasValidLicense = true;
     const { queryByRole } = setup('enterprise');
 
-    await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+  });
+
+  it('should not display install button for enterprise plugins if license is invalid', async () => {
+    config.licenseInfo.hasValidLicense = false;
+    const { queryByRole, queryByText } = setup('enterprise');
+
+    await waitFor(() => expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument());
+    expect(queryByText(/no valid Grafana Enterprise license detected/i)).toBeInTheDocument();
+    expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
   });
 
   it('should not display install / uninstall buttons for core plugins', async () => {
     const { queryByRole } = setup('core');
 
     await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
+  });
+
+  it('should display install link with pluginAdminExternalManageEnabled true', async () => {
+    config.pluginAdminExternalManageEnabled = true;
+    const { queryByRole } = setup('not-installed');
+
+    await waitFor(() => expect(queryByRole('link', { name: /install via grafana.com/i })).toBeInTheDocument());
+  });
+
+  it('should display uninstall link for an installed plugin with pluginAdminExternalManageEnabled true', async () => {
+    config.pluginAdminExternalManageEnabled = true;
+    const { queryByRole } = setup('installed');
+    await waitFor(() => expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument());
+  });
+
+  it('should display update and uninstall links for a plugin with update and pluginAdminExternalManageEnabled true', async () => {
+    config.pluginAdminExternalManageEnabled = true;
+    const { queryByRole } = setup('has-update');
+
+    await waitFor(() => expect(queryByRole('link', { name: /update via grafana.com/i })).toBeInTheDocument());
+    expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
   });
 });
 
@@ -106,7 +213,8 @@ function remotePlugin(plugin: Partial<RemotePlugin> = {}): RemotePlugin {
     versionSignedByOrg: 'alexanderzobnin',
     versionSignedByOrgName: 'Alexander Zobnin',
     userId: 0,
-    readme: '',
+    readme:
+      '<h1>Zabbix plugin for Grafana</h1>\n<p>:copyright: 2015-2021 Alexander Zobnin alexanderzobnin@gmail.com</p>\n<p>Licensed under the Apache 2.0 License</p>',
     json: {
       dependencies: {
         grafanaDependency: '>=7.3.0',
@@ -122,65 +230,40 @@ function remotePlugin(plugin: Partial<RemotePlugin> = {}): RemotePlugin {
 
 function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
   return {
-    category: '',
-    defaultNavUrl: '/plugins/alertmanager/',
+    name: 'Akumuli',
+    type: PluginType.datasource,
+    id: 'akumuli-datasource',
+    enabled: true,
+    pinned: false,
     info: {
       author: {
-        name: 'Prometheus alertmanager',
-        url: 'https://grafana.com',
+        name: 'Eugene Lazin',
+        url: 'https://akumuli.org',
+      },
+      description: 'Datasource plugin for Akumuli time-series database',
+      links: [
+        {
+          name: 'Project site',
+          url: 'https://github.com/akumuli/Akumuli',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/akumuli-datasource/img/logo.svg.png',
+        large: 'public/plugins/akumuli-datasource/img/logo.svg.png',
       },
       build: {},
-      description: '',
-      links: [],
-      logos: {
-        small: '',
-        large: '',
-      },
-      updated: '',
-      version: '',
+      screenshots: null,
+      version: '1.3.12',
+      updated: '2019-12-19',
     },
-    enabled: true,
+    latestVersion: '1.3.12',
     hasUpdate: false,
-    id: 'alertmanager',
-    latestVersion: '',
-    name: 'Alert Manager',
-    pinned: false,
-    signature: PluginSignatureStatus.internal,
-    signatureOrg: '',
-    signatureType: '',
-    state: 'alpha',
-    type: PluginType.datasource,
-    ...plugin,
-  };
-}
-
-function corePlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
-  return {
-    category: 'sql',
-    defaultNavUrl: '/plugins/postgres/',
-    enabled: true,
-    hasUpdate: false,
-    id: 'core',
-    info: {
-      author: { name: 'Grafana Labs', url: 'https://grafana.com' },
-      build: {},
-      description: 'Data source for PostgreSQL and compatible databases',
-      links: [],
-      logos: {
-        small: 'public/app/plugins/datasource/postgres/img/postgresql_logo.svg',
-        large: 'public/app/plugins/datasource/postgres/img/postgresql_logo.svg',
-      },
-      updated: '',
-      version: '',
-    },
-    latestVersion: '',
-    name: 'PostgreSQL',
-    pinned: false,
-    signature: PluginSignatureStatus.internal,
-    signatureOrg: '',
-    signatureType: '',
+    defaultNavUrl: '/plugins/akumuli-datasource/',
+    category: '',
     state: '',
-    type: PluginType.datasource,
+    signature: PluginSignatureStatus.valid,
+    signatureType: 'community',
+    signatureOrg: 'Grafana Labs',
     ...plugin,
   };
 }

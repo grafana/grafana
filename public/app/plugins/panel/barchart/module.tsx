@@ -7,7 +7,8 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { StackingMode, BarValueVisibility, graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { StackingMode, BarValueVisibility } from '@grafana/schema';
+import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 
@@ -16,7 +17,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,

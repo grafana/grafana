@@ -140,6 +140,12 @@ func (c *managedIdentityTokenRetriever) Init() error {
 }
 
 func (c *managedIdentityTokenRetriever) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
+	// Workaround for a bug in Azure SDK which mutates the passed array of scopes
+	// See details https://github.com/Azure/azure-sdk-for-go/issues/15308
+	arr := make([]string, len(scopes))
+	copy(arr, scopes)
+	scopes = arr
+
 	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err

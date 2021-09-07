@@ -7,12 +7,14 @@ import { useFormContext, FieldErrors } from 'react-hook-form';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 
 interface Props<R> {
   defaultValues: R;
   pathPrefix: string;
   notifiers: NotifierDTO[];
   onDuplicate: () => void;
+  onTest?: () => void;
   commonSettingsComponent: CommonSettingsComponentType;
 
   secureFields?: Record<string, boolean>;
@@ -25,6 +27,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   pathPrefix,
   onDuplicate,
   onDelete,
+  onTest,
   notifiers,
   errors,
   secureFields,
@@ -34,6 +37,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
   const { control, watch, register } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
+  const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   useEffect(() => {
     register(`${pathPrefix}.__id`);
@@ -89,6 +93,18 @@ export function ChannelSubForm<R extends ChannelValues>({
           </Field>
         </div>
         <div className={styles.buttons}>
+          {onTest && (
+            <Button
+              disabled={testingReceiver}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => onTest()}
+              icon={testingReceiver ? 'fa fa-spinner' : 'message'}
+            >
+              Test
+            </Button>
+          )}
           <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
             Duplicate
           </Button>

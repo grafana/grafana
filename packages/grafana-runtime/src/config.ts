@@ -63,6 +63,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
     ngalert: false,
     accesscontrol: false,
     trimDefaults: false,
+    tempoServiceGraph: false,
+    tempoSearch: false,
+    prometheusMonaco: false,
+    newNavigation: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

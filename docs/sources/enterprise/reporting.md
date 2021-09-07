@@ -11,7 +11,7 @@ weight = 800
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud Pro and Advanced and in Grafana Enterprise.
 
 > If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
-Refer to specific guides to understand what permissions are required.
+> Refer to specific guides to understand what permissions are required.
 
 {{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -86,12 +86,12 @@ If the time zone is set differently between your Grafana server and its remote i
 
 > We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) if you would like to get involved in the design process.
 
-Layout | Orientation | Support | Description | Preview
------- | ----------- | ------- | ----------- | -------
-Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
-Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+| Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                               |
+| ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}      |
+| Simple | Landscape   | v6.7+   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}                        |
+| Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}} |
+| Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}                   |
 
 ### CSV export
 
@@ -106,12 +106,12 @@ When the CSV file is generated, it is temporarily written to the `csv` folder in
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../administration/configuration/#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
 
 ### Scheduling
+
 > Note: Scheduler has been significantly changed in Grafana Enterprise v8.1.
 
 Scheduled reports can be sent once or repeatedly on an hourly, daily, weekly, or monthly basis, or at custom intervals. You can also disable scheduling by selecting **Never**: for example, if you want to send the report via the API.
 
 {{< figure src="/static/img/docs/enterprise/reports_scheduler_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 
 **Send now or schedule for later**
 
@@ -133,7 +133,7 @@ When you schedule a report with a monthly frequency, and set the start date betw
 
 1. In the report, click **Send test email**.
 1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
-If you want to use email addresses from the report, then select the **Use emails from report** check box.
+   If you want to use email addresses from the report, then select the **Use emails from report** check box.
 1. Click **Send**.
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
@@ -144,7 +144,7 @@ The last saved version of the report will be sent to selected emails. You can us
 
 > **Note:** Available in Grafana Enterprise v8+.
 
-You can pause sending of reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row. 
+You can pause sending of reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
 
 ## Send report via the API
 
@@ -193,6 +193,7 @@ Report branding:
 **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 
 Email branding:
+
 - **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 - **Email footer** - Toggle to enable report email footer. Select **Sent by** or **None**.
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".

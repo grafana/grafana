@@ -5,7 +5,6 @@ keywords = ["grafana", "http", "documentation", "api", "data source"]
 aliases = ["/docs/grafana/latest/http_api/datasource/"]
 +++
 
-
 # Data source API
 
 ## Get all data sources
@@ -293,6 +292,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   }
 }
 ```
+
 **Example Response with basic auth enabled**:
 
 ```http
@@ -528,6 +528,7 @@ Content-Type: application/json
   ]
 }
 ```
+
 > **Note:** The `from`, `to`, and `queries` properties are required.
 
 JSON Body schema:
@@ -564,6 +565,7 @@ Content-Type: application/json
 ```
 
 **Example MySQL time series query response:**
+
 ```http
 HTTP/1.1 200
 Content-Type: application/json

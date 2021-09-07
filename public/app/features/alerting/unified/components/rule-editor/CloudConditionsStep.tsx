@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Field, Input, InputControl, Select, useStyles } from '@grafana/ui';
 import { useFormContext } from 'react-hook-form';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
 import { RuleEditorSection } from './RuleEditorSection';
 import { PreviewRule } from './PreviewRule';
@@ -13,8 +13,16 @@ export const CloudConditionsStep: FC = () => {
   const {
     register,
     control,
+    watch,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
+
+  const type = watch('type');
+
+  // cloud recording rules do not have alert conditions
+  if (type === RuleFormType.cloudRecording) {
+    return null;
+  }
 
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">

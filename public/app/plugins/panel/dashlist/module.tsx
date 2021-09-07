@@ -4,6 +4,7 @@ import { DashListOptions } from './types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import React from 'react';
 import { TagsInput } from '@grafana/ui';
+import { PermissionLevelString } from '../../../types';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
   .setPanelOptions((builder) => {
@@ -49,7 +50,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
               initialFolderId={props.value}
               initialTitle="All"
               enableReset={true}
-              permissionLevel="View"
+              permissionLevel={PermissionLevelString.View}
               onChange={({ id }) => props.onChange(id)}
             />
           );

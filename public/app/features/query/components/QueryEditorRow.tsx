@@ -25,9 +25,9 @@ import {
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 
 interface Props<TQuery extends DataQuery> {

@@ -1,5 +1,7 @@
 import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
+import { MatcherFieldValue } from '../types/silence-form';
+import { SelectableValue } from '@grafana/data';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -43,6 +45,42 @@ export function matcherToOperator(matcher: Matcher): MatcherOperator {
     return MatcherOperator.notEqual;
   }
 }
+
+export function matcherOperatorToValue(operator: MatcherOperator) {
+  switch (operator) {
+    case MatcherOperator.equal:
+      return { isEqual: true, isRegex: false };
+    case MatcherOperator.notEqual:
+      return { isEqual: false, isRegex: false };
+    case MatcherOperator.regex:
+      return { isEqual: true, isRegex: true };
+    case MatcherOperator.notRegex:
+      return { isEqual: false, isRegex: true };
+  }
+}
+
+export function matcherToMatcherField(matcher: Matcher): MatcherFieldValue {
+  return {
+    name: matcher.name,
+    value: matcher.value,
+    operator: matcherToOperator(matcher),
+  };
+}
+
+export function matcherFieldToMatcher(field: MatcherFieldValue): Matcher {
+  return {
+    name: field.name,
+    value: field.value,
+    ...matcherOperatorToValue(field.operator),
+  };
+}
+
+export const matcherFieldOptions: SelectableValue[] = [
+  { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
+  { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
+  { label: MatcherOperator.regex, description: 'Matches regex', value: MatcherOperator.regex },
+  { label: MatcherOperator.notRegex, description: 'Does not match regex', value: MatcherOperator.notRegex },
+];
 
 const matcherOperators = [
   MatcherOperator.regex,

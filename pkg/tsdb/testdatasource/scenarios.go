@@ -54,12 +54,12 @@ type Scenario struct {
 	handler     backend.QueryDataHandlerFunc
 }
 
-func (p *testDataPlugin) registerScenario(scenario *Scenario) {
+func (p *TestDataPlugin) registerScenario(scenario *Scenario) {
 	p.scenarios[scenario.ID] = scenario
 	p.queryMux.HandleFunc(scenario.ID, scenario.handler)
 }
 
-func (p *testDataPlugin) registerScenarios() {
+func (p *TestDataPlugin) registerScenarios() {
 	p.registerScenario(&Scenario{
 		ID:      string(exponentialHeatmapBucketDataQuery),
 		Name:    "Exponential heatmap bucket data",
@@ -213,7 +213,7 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 }
 
 // handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
-func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	scenarioQueries := map[string][]backend.DataQuery{}
 
 	for _, q := range req.Queries {
@@ -256,7 +256,7 @@ func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backen
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleRandomWalkScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -276,7 +276,7 @@ func (p *testDataPlugin) handleRandomWalkScenario(ctx context.Context, req *back
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -300,7 +300,7 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -344,7 +344,7 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -362,7 +362,7 @@ func (p *testDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, 
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -383,7 +383,7 @@ func (p *testDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -400,7 +400,7 @@ func (p *testDataPlugin) handleRandomWalkTableScenario(ctx context.Context, req 
 	return resp, nil
 }
 
-func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -421,7 +421,7 @@ func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, r
 	return resp, nil
 }
 
-func (p *testDataPlugin) handlePredictablePulseScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handlePredictablePulseScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -442,15 +442,15 @@ func (p *testDataPlugin) handlePredictablePulseScenario(ctx context.Context, req
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	panic("Test Data Panic!")
 }
 
-func (p *testDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return backend.NewQueryDataResponse(), nil
 }
 
-func (p *testDataPlugin) handleArrowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleArrowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -474,7 +474,7 @@ func (p *testDataPlugin) handleArrowScenario(ctx context.Context, req *backend.Q
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -489,7 +489,7 @@ func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -504,7 +504,7 @@ func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Conte
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleTableStaticScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleTableStaticScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -533,7 +533,7 @@ func (p *testDataPlugin) handleTableStaticScenario(ctx context.Context, req *bac
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleLogsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleLogsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {

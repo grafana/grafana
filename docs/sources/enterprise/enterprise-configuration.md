@@ -362,6 +362,7 @@ This value limits the size of a single cache value. If a cache value (or query r
 The default is `1`.
 
 ## [caching.encryption]
+
 ### enabled
 
 When 'enabled' is `true`, query values in the cache are encrypted.

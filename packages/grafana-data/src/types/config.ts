@@ -48,6 +48,10 @@ export interface FeatureToggles {
   ngalert: boolean;
   trimDefaults: boolean;
   accesscontrol: boolean;
+  tempoServiceGraph: boolean;
+  tempoSearch: boolean;
+  prometheusMonaco: boolean;
+  newNavigation: boolean;
 }
 
 /**

@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -20,16 +19,8 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-
-	ac := OSSAccessControlService{
-		Cfg:        cfg,
-		UsageStats: &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)},
-		Log:        log.New("accesscontrol-test"),
-	}
-
-	err := ac.Init()
-	require.NoError(t, err)
-	return &ac
+	ac := ProvideService(cfg, &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)})
+	return ac
 }
 
 func removeRoleHelper(role string) {
@@ -94,8 +85,7 @@ type userTestCase struct {
 }
 
 type endpointTestCase struct {
-	permission string
-	scope      []string
+	evaluator accesscontrol.Evaluator
 }
 
 func TestEvaluatingPermissions(t *testing.T) {
@@ -108,8 +98,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: accesscontrol.ActionUsersDisable, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
-				{permission: accesscontrol.ActionUsersEnable, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersEnable, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: true,
 		},
@@ -121,7 +111,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: accesscontrol.ActionUsersCreate, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: false,
 		},
@@ -129,7 +119,6 @@ func TestEvaluatingPermissions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			ac := setupTestEnv(t)
-			t.Cleanup(registry.ClearOverrides)
 
 			user := &models.SignedInUser{
 				UserId:         1,
@@ -140,7 +129,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			}
 
 			for _, endpoint := range tc.endpoints {
-				result, err := ac.Evaluate(context.Background(), user, endpoint.permission, endpoint.scope...)
+				result, err := ac.Evaluate(context.Background(), user, endpoint.evaluator)
 				require.NoError(t, err)
 				assert.Equal(t, tc.evalResult, result)
 			}
@@ -173,15 +162,7 @@ func TestUsageMetrics(t *testing.T) {
 				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			}
 
-			s := &OSSAccessControlService{
-				Cfg:        cfg,
-				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
-				Log:        log.New("accesscontrol-test"),
-			}
-
-			err := s.Init()
-			assert.Nil(t, err)
-
+			s := ProvideService(cfg, &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)})
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 

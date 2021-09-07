@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	version      *semver.Version
-	interval     tsdb.Interval
+	interval     intervalv2.Interval
 	index        string
 	size         int
 	sort         map[string]interface{}
@@ -20,7 +20,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version *semver.Version, interval tsdb.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(version *semver.Version, interval intervalv2.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		version:     version,
 		interval:    interval,
@@ -129,7 +129,7 @@ func NewMultiSearchRequestBuilder(version *semver.Version) *MultiSearchRequestBu
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
+func (m *MultiSearchRequestBuilder) Search(interval intervalv2.Interval) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.version, interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b

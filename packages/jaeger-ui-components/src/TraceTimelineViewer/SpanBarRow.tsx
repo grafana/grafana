@@ -438,6 +438,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
+              <small className={styles.endpointName}> | {label}</small>
             </a>
             {createSpanLink &&
               (() => {

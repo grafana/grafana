@@ -18,7 +18,7 @@ export function PreviewRule(): React.ReactElement | null {
   const { getValues } = useFormContext();
   const [type] = getValues(fields);
 
-  if (type === RuleFormType.cloud) {
+  if (type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) {
     return null;
   }
 
@@ -60,7 +60,7 @@ function createPreviewRequest(values: any[]): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
 
   switch (type) {
-    case RuleFormType.cloud:
+    case RuleFormType.cloudAlerting:
       return {
         dataSourceName,
         expr: expression,
