@@ -81,6 +81,7 @@ interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasourc
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
+  isExplore?: boolean;
 }
 
 interface PromQueryFieldState {
@@ -281,7 +282,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, hasMetrics);
     const buttonDisabled = !(syntaxLoaded && hasMetrics);
 
-    const isMonacoEditorEnabled = config.featureToggles.prometheusMonaco;
+    const isMonacoEditorEnabled = this.props.isExplore && config.featureToggles.prometheusMonaco;
 
     return (
       <>

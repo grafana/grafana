@@ -65,6 +65,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
 
   return (
     <PromQueryField
+      isExplore={true}
       datasource={datasource}
       query={query}
       range={range}
