@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
-import { opentelemetryProto } from '@opentelemetry/exporter-collector/build/src/types';
 import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
 
@@ -294,8 +293,19 @@ export function transformToOTLP(
   data: MutableDataFrame
 ): { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } {
   let result: { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } = {
-    batches: [
-      {
+    batches: [],
+  };
+
+  // Lookup object to see which batch contains spans for which services
+  let services: { [key: string]: number } = {};
+
+  for (let i = 0; i < data.length; i++) {
+    const span = data.get(i);
+
+    // Group spans based on service
+    if (!services[span.serviceName]) {
+      services[span.serviceName] = result.batches.length;
+      result.batches.push({
         resource: {
           attributes: [],
           droppedAttributesCount: 0,
@@ -305,30 +315,28 @@ export function transformToOTLP(
             spans: [],
           },
         ],
-      },
-    ],
-  };
+      });
+    }
 
-  for (let i = 0; i < data.length; i++) {
-    const span = data.get(i);
+    let batchIndex = services[span.serviceName];
 
     // Populate resource attributes from service tags
-    if (result.batches[0].resource?.attributes.length === 0) {
-      result.batches[0].resource.attributes = tagsToAttributes(span.serviceTags);
+    if (result.batches[batchIndex].resource!.attributes.length === 0) {
+      result.batches[batchIndex].resource!.attributes = tagsToAttributes(span.serviceTags);
     }
 
     // Populate instrumentation library if it exists
-    if (!result.batches[0].instrumentationLibrarySpans[0].instrumentationLibrary) {
+    if (!result.batches[batchIndex].instrumentationLibrarySpans[0].instrumentationLibrary) {
       let libraryName = span.tags.find((t: TraceKeyValuePair) => t.key === 'otel.library.name')?.value;
       if (libraryName) {
-        result.batches[0].instrumentationLibrarySpans[0].instrumentationLibrary = {
+        result.batches[batchIndex].instrumentationLibrarySpans[0].instrumentationLibrary = {
           name: libraryName,
           version: span.tags.find((t: TraceKeyValuePair) => t.key === 'otel.library.version')?.value,
         };
       }
     }
 
-    result.batches[0].instrumentationLibrarySpans[0].spans.push({
+    result.batches[batchIndex].instrumentationLibrarySpans[0].spans.push({
       traceId: transformHexStringToBase64ID(span.traceID.padStart(32, '0')),
       spanId: transformHexStringToBase64ID(span.spanID),
       traceState: '',
@@ -342,6 +350,7 @@ export function transformToOTLP(
       droppedEventsCount: 0,
       droppedLinksCount: 0,
       status: getOTLPStatus(span.tags),
+      events: getOTLPEvents(span.logs),
     });
   }
 
@@ -372,7 +381,7 @@ function getOTLPSpanKind(tags: TraceKeyValuePair[]): string | undefined {
 /**
  * Converts key-value tags to OTLP attributes and removes tags added by Grafana
  */
-function tagsToAttributes(tags: TraceKeyValuePair[]): opentelemetryProto.common.v1.KeyValue[] {
+function tagsToAttributes(tags: TraceKeyValuePair[]): collectorTypes.opentelemetryProto.common.v1.KeyValue[] {
   return tags
     .filter(
       (t) =>
@@ -384,7 +393,7 @@ function tagsToAttributes(tags: TraceKeyValuePair[]): opentelemetryProto.common.
           'otel.status_code',
         ].includes(t.key)
     )
-    .reduce<opentelemetryProto.common.v1.KeyValue[]>(
+    .reduce<collectorTypes.opentelemetryProto.common.v1.KeyValue[]>(
       (attributes, tag) => [...attributes, { key: tag.key, value: toAttributeValue(tag) }],
       []
     );
@@ -393,7 +402,7 @@ function tagsToAttributes(tags: TraceKeyValuePair[]): opentelemetryProto.common.
 /**
  * Returns the correct OTLP AnyValue based on the value of the tag value
  */
-function toAttributeValue(tag: TraceKeyValuePair): opentelemetryProto.common.v1.AnyValue {
+function toAttributeValue(tag: TraceKeyValuePair): collectorTypes.opentelemetryProto.common.v1.AnyValue {
   if (typeof tag.value === 'string') {
     return { stringValue: tag.value };
   } else if (typeof tag.value === 'boolean') {
@@ -406,7 +415,7 @@ function toAttributeValue(tag: TraceKeyValuePair): opentelemetryProto.common.v1.
     }
   } else if (typeof tag.value === 'object') {
     if (Array.isArray(tag.value)) {
-      const values: opentelemetryProto.common.v1.AnyValue[] = [];
+      const values: collectorTypes.opentelemetryProto.common.v1.AnyValue[] = [];
       for (const val of tag.value) {
         values.push(toAttributeValue(val));
       }
@@ -428,6 +437,30 @@ function getOTLPStatus(tags: TraceKeyValuePair[]): SpanStatus | undefined {
   }
 
   return status;
+}
+
+function getOTLPEvents(logs: TraceLog[]): collectorTypes.opentelemetryProto.trace.v1.Span.Event[] | undefined {
+  if (!logs.length) {
+    return undefined;
+  }
+
+  let events: collectorTypes.opentelemetryProto.trace.v1.Span.Event[] = [];
+  for (const log of logs) {
+    let event: collectorTypes.opentelemetryProto.trace.v1.Span.Event = {
+      timeUnixNano: log.timestamp * 1000000,
+      attributes: [],
+      droppedAttributesCount: 0,
+      name: '',
+    };
+    for (const field of log.fields) {
+      event.attributes!.push({
+        key: field.key,
+        value: toAttributeValue(field),
+      });
+    }
+    events.push(event);
+  }
+  return events;
 }
 
 export function transformTrace(response: DataQueryResponse): DataQueryResponse {
