@@ -220,10 +220,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     // copy properties from persisted model
     for (const property in model) {
-      // ignore old panel alerts if ngalert is set
-      if (property === 'alert' && config.featureToggles.ngalert) {
-        continue;
-      }
       (this as any)[property] = model[property];
     }
 
