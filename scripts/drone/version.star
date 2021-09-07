@@ -1,5 +1,5 @@
 load(
-    'scripts/star/pipelines/release.star',
+    'scripts/drone/pipelines/release.star',
     'release_pipelines',
 )
 
