@@ -13,28 +13,32 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
-	dataSourceCache datasources.CacheService, encryptionService encryption.Service) *Provider {
+	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
+	pluginSettingsService *pluginsettings.Service) *Provider {
 
 	return &Provider{
-		Bus:               bus,
-		CacheService:      cacheService,
-		PluginManager:     pluginManager,
-		DataSourceCache:   dataSourceCache,
-		EncryptionService: encryptionService,
+		Bus:                   bus,
+		CacheService:          cacheService,
+		PluginManager:         pluginManager,
+		DataSourceCache:       dataSourceCache,
+		EncryptionService:     encryptionService,
+		PluginSettingsService: pluginSettingsService,
 	}
 }
 
 type Provider struct {
-	Bus               bus.Bus
-	CacheService      *localcache.CacheService
-	PluginManager     plugins.Manager
-	DataSourceCache   datasources.CacheService
-	EncryptionService encryption.Service
+	Bus                   bus.Bus
+	CacheService          *localcache.CacheService
+	PluginManager         plugins.Manager
+	DataSourceCache       datasources.CacheService
+	EncryptionService     encryption.Service
+	PluginSettingsService *pluginsettings.Service
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -63,7 +67,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to unmarshal plugin json data", err)
 		}
-		decryptedSecureJSONData = ps.DecryptedValues()
+		decryptedSecureJSONData = p.PluginSettingsService.DecryptedValues(ps)
 		updated = ps.Updated
 	}
 
