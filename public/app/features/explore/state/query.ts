@@ -72,6 +72,16 @@ export interface ChangeQueryPayload {
 export const changeQueryAction = createAction<ChangeQueryPayload>('explore/changeQuery');
 
 /**
+ * Query change handler for the query row with the given index.
+ * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
+ */
+export interface ChangeQueriesPayload {
+  exploreId: ExploreId;
+  queries: DataQuery[];
+}
+export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
+
+/**
  * Clear all queries and results.
  */
 export interface ClearQueriesPayload {
@@ -532,6 +542,15 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
+    };
+  }
+
+  if (changeQueriesAction.match(action)) {
+    const { queries } = action.payload;
+
+    return {
+      ...state,
+      queries,
     };
   }
 

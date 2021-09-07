@@ -390,7 +390,7 @@ export interface ExploreQueryFieldProps<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
-  history: any[];
+  history: Array<HistoryItem<TQuery>>;
   onBlur?: () => void;
   exploreId?: any;
 }

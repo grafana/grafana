@@ -286,7 +286,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
  * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
  */
 const validKeys = ['refId', 'key', 'context'];
-export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
+export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
     queries.some((query: any) => {
@@ -302,7 +302,7 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory<T extends DataQuery = any>(
+export function updateHistory<T extends DataQuery>(
   history: Array<HistoryItem<T>>,
   datasourceId: string,
   queries: T[]

@@ -8,11 +8,13 @@ import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
+  CoreApp,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   EventBusExtended,
   EventBusSrv,
+  HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -45,6 +47,8 @@ interface Props<TQuery extends DataQuery> {
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideDisableQuery?: boolean;
+  app?: CoreApp;
+  history?: Array<HistoryItem<TQuery>>;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -193,29 +197,52 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.renderAngularQueryEditor();
   };
 
+  getReactQueryEditor(ds: DataSourceApi<TQuery>) {
+    if (!ds) {
+      return;
+    }
+
+    switch (this.props.app) {
+      case CoreApp.Explore:
+        return (
+          ds.components?.ExploreMetricsQueryField ||
+          ds.components?.ExploreLogsQueryField ||
+          ds.components?.ExploreQueryField ||
+          ds.components?.QueryEditor
+        );
+      case CoreApp.Dashboard:
+      default:
+        return ds.components?.QueryEditor;
+    }
+  }
+
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery } = this.props;
+    const { query, onChange, queries, onRunQuery, app = CoreApp.Dashboard, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
       return <div ref={(element) => (this.element = element)} />;
     }
 
-    if (datasource?.components?.QueryEditor) {
-      const QueryEditor = datasource.components.QueryEditor;
+    if (datasource) {
+      let QueryEditor = this.getReactQueryEditor(datasource);
 
-      return (
-        <QueryEditor
-          key={datasource?.name}
-          query={query}
-          datasource={datasource}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          data={data}
-          range={getTimeSrv().timeRange()}
-          queries={queries}
-        />
-      );
+      if (QueryEditor) {
+        return (
+          <QueryEditor
+            key={datasource?.name}
+            query={query}
+            datasource={datasource}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            data={data}
+            range={getTimeSrv().timeRange()}
+            queries={queries}
+            app={app}
+            history={history}
+          />
+        );
+      }
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;
