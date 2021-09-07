@@ -207,21 +207,51 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const { logsVolume, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const {
+      exploreId,
+      loadLogsVolume,
+      logsVolume,
+      logsVolumeQuery,
+      logsVolumeLoadingInProgress,
+      absoluteRange,
+      timeZone,
+      splitOpen,
+      queryResponse,
+      loading,
+      theme,
+    } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
+
     return (
-      <Collapse label="Logs volume" loading={loading} isOpen>
-        <ExploreGraphNGPanel
-          data={logsVolume!}
-          height={150}
-          width={width - spacing}
-          tooltipDisplayMode={TooltipDisplayMode.Single}
-          absoluteRange={absoluteRange}
-          timeZone={timeZone}
-          onUpdateTimeRange={this.onUpdateTimeRange}
-          annotations={queryResponse.annotations}
-          splitOpenFn={splitOpen}
-        />
+      <Collapse label="Logs volume" isOpen={true} loading={loading || logsVolumeLoadingInProgress}>
+        {logsVolumeQuery && !logsVolume && !logsVolumeLoadingInProgress && (
+          <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
+            <Button
+              size="lg"
+              onClick={() => {
+                loadLogsVolume(exploreId);
+              }}
+            >
+              Load logs volume
+            </Button>
+          </div>
+        )}
+        {logsVolumeLoadingInProgress && !logsVolume && (
+          <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>Logs volume is loading...</div>
+        )}
+        {logsVolume && (
+          <ExploreGraphNGPanel
+            data={logsVolume}
+            height={150}
+            width={width - spacing}
+            tooltipDisplayMode={TooltipDisplayMode.Single}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onUpdateTimeRange={this.onUpdateTimeRange}
+            annotations={queryResponse.annotations}
+            splitOpenFn={splitOpen}
+          />
+        )}
       </Collapse>
     );
   }
@@ -290,10 +320,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       exploreId,
       queryKeys,
       graphResult,
-      logsVolumeQuery,
-      logsVolume,
-      logsVolumeLoadingInProgress,
-      loadLogsVolume,
       queryResponse,
       isLive,
       theme,
@@ -344,29 +370,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
-                          {/** CODE: is it possible to create a single collapsable panel? **/}
-                          {logsVolumeQuery && !logsVolume && !logsVolumeLoadingInProgress && (
-                            <Collapse label="Logs volume" isOpen={true}>
-                              <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
-                                <Button
-                                  size="lg"
-                                  onClick={() => {
-                                    loadLogsVolume(exploreId);
-                                  }}
-                                >
-                                  Load logs volume
-                                </Button>
-                              </div>
-                            </Collapse>
-                          )}
-                          {logsVolumeLoadingInProgress && !logsVolume && (
-                            <Collapse label="Logs volume" isOpen={true}>
-                              <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
-                                Logs volume is loading...
-                              </div>
-                            </Collapse>
-                          )}
-                          {logsVolume && <ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
+                          {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
