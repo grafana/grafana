@@ -108,17 +108,33 @@ func (ds *BuiltinGrafanaDatasource) doListQuery(query backend.DataQuery) backend
 		return response
 	}
 
-	path, err := ds.getPublicPath(q.Path)
-	if err != nil {
-		response.Error = err
-		return response
+	if q.Path == "" {
+		count := len(ds.roots)
+		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		for i, f := range ds.roots {
+			names.Set(i, f)
+			mtype.Set(i, "directory")
+		}
+		frame := data.NewFrame("", names, mtype)
+		frame.SetMeta(&data.FrameMeta{
+			Type: data.FrameTypeDirectoryListing,
+		})
+		response.Frames = data.Frames{frame}
+	} else {
+		path, err := ds.getPublicPath(q.Path)
+		if err != nil {
+			response.Error = err
+			return response
+		}
+		frame, err := experimental.GetDirectoryFrame(path, false)
+		if err != nil {
+			response.Error = err
+			return response
+		}
+		response.Frames = data.Frames{frame}
 	}
-	frame, err := experimental.GetDirectoryFrame(path, false)
-	if err != nil {
-		response.Error = err
-		return response
-	}
-	response.Frames = data.Frames{frame}
+
 	return response
 }
 

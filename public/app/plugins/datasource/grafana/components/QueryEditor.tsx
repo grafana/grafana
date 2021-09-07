@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineField, Select, Alert, Input } from '@grafana/ui';
+import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, dataFrameFromJSON, rangeUtil } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -27,6 +27,11 @@ export class QueryEditor extends PureComponent<Props, State> {
       label: 'Live Measurements',
       value: GrafanaQueryType.LiveMeasurements,
       description: 'Stream real-time measurements from Grafana',
+    },
+    {
+      label: 'List files',
+      value: GrafanaQueryType.List,
+      description: 'List public files',
     },
   ];
 
@@ -242,6 +247,29 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   }
 
+  renderListPublicFiles() {
+    const folders = ['aaa', 'bbb'].map((v) => ({ label: v, value: v }));
+    const currentFolder = undefined;
+
+    return (
+      <InlineFieldRow>
+        <InlineField label="Path" grow={true} labelWidth={labelWidth}>
+          <Select
+            menuShouldPortal
+            options={folders}
+            value={currentFolder || ''}
+            onChange={this.onChannelChange}
+            allowCustomValue={true}
+            backspaceRemovesValue={true}
+            placeholder="Select folder"
+            isClearable={true}
+            formatCreateLabel={(input: string) => `Folder: ${input}`}
+          />
+        </InlineField>
+      </InlineFieldRow>
+    );
+  }
+
   render() {
     const query = {
       ...defaultQuery,
@@ -250,7 +278,7 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className="gf-form">
+        <InlineFieldRow>
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
               menuShouldPortal
@@ -259,8 +287,9 @@ export class QueryEditor extends PureComponent<Props, State> {
               onChange={this.onQueryTypeChange}
             />
           </InlineField>
-        </div>
+        </InlineFieldRow>
         {query.queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
+        {query.queryType === GrafanaQueryType.List && this.renderListPublicFiles}
       </>
     );
   }
