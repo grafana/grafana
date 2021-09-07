@@ -2,7 +2,7 @@ import React from 'react';
 import DropDownChild from './DropDownChild';
 import { NavModelItem } from '@grafana/data';
 import { IconName, Link } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 interface Props {
   headerText: string;
@@ -21,15 +21,19 @@ const SideMenuDropDown = ({
   reverseDirection = false,
   subtitleText,
 }: Props) => {
+  const resetButtonStyles = css`
+    background-color: transparent;
+    font-size: inherit;
+  `;
   const headerContent = <span className="sidemenu-item-text">{headerText}</span>;
   const header = headerUrl ? (
     <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
       {headerContent}
     </Link>
   ) : (
-    <a onClick={onHeaderClick} className="side-menu-header-link">
+    <button onClick={onHeaderClick} className={cx(resetButtonStyles, 'side-menu-header-link')}>
       {headerContent}
-    </a>
+    </button>
   );
 
   const menuClass = css`

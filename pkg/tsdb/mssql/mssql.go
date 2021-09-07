@@ -1,6 +1,8 @@
 package mssql
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -8,43 +10,103 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 var logger = log.New("tsdb.mssql")
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
-	cnnstr, err := generateConnectionString(datasource)
+type Service struct {
+	im instancemgmt.InstanceManager
+}
+
+func ProvideService(manager backendplugin.Manager) (*Service, error) {
+	s := &Service{
+		im: datasource.NewInstanceManager(newInstanceSettings()),
+	}
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := manager.Register("mssql", factory); err != nil {
+		logger.Error("Failed to register plugin", "error", err)
+	}
+	return s, nil
+}
+
+func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Don't use global
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
-	}
+	instance := i.(*sqleng.DataSourceHandler)
+	return instance, nil
+}
 
-	config := sqleng.DataPluginConfiguration{
-		DriverName:        "mssql",
-		ConnectionString:  cnnstr,
-		Datasource:        datasource,
-		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	if err != nil {
+		return nil, err
 	}
+	return dsHandler.QueryData(ctx, req)
+}
 
-	queryResultTransformer := mssqlQueryResultTransformer{
-		log: logger,
+func newInstanceSettings() datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData := sqleng.JsonData{
+			MaxOpenConns:    0,
+			MaxIdleConns:    2,
+			ConnMaxLifetime: 14400,
+			Encrypt:         "false",
+		}
+
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		dsInfo := sqleng.DataSourceInfo{
+			JsonData:                jsonData,
+			URL:                     settings.URL,
+			User:                    settings.User,
+			Database:                settings.Database,
+			ID:                      settings.ID,
+			Updated:                 settings.Updated,
+			UID:                     settings.UID,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+		}
+		cnnstr, err := generateConnectionString(dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		// TODO: Don't use global
+		if setting.Env == setting.Dev {
+			logger.Debug("getEngine", "connection", cnnstr)
+		}
+
+		config := sqleng.DataPluginConfiguration{
+			DriverName:        "mssql",
+			ConnectionString:  cnnstr,
+			DSInfo:            dsInfo,
+			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+		}
+
+		queryResultTransformer := mssqlQueryResultTransformer{
+			log: logger,
+		}
+
+		return sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
-
-	return sqleng.NewDataPlugin(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
 // ParseURL tries to parse an MSSQL URL string into a URL object.
@@ -68,11 +130,11 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dataSource *models.DataSource) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
-	if dataSource.Url != "" {
-		u, err := ParseURL(dataSource.Url)
+	if dsInfo.URL != "" {
+		u, err := ParseURL(dsInfo.URL)
 		if err != nil {
 			return "", err
 		}
@@ -88,26 +150,30 @@ func generateConnectionString(dataSource *models.DataSource) (string, error) {
 	}
 
 	args := []interface{}{
-		"url", dataSource.Url, "host", addr.Host,
+		"url", dsInfo.URL, "host", addr.Host,
 	}
 	if addr.Port != "0" {
 		args = append(args, "port", addr.Port)
 	}
 
 	logger.Debug("Generating connection string", args...)
-	encrypt := dataSource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
-		dataSource.Database,
-		dataSource.User,
-		dataSource.DecryptedPassword(),
+		dsInfo.Database,
+		dsInfo.User,
+		dsInfo.DecryptedSecureJSONData["password"],
 	)
 	// Port number 0 means to determine the port automatically, so we can let the driver choose
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
-	if encrypt != "false" {
-		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
+
+	if dsInfo.JsonData.Encrypt == "" {
+		dsInfo.JsonData.Encrypt = "false"
+	}
+
+	if dsInfo.JsonData.Encrypt != "false" {
+		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
 	return connStr, nil
 }

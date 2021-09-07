@@ -5,20 +5,28 @@ import { DataTransformerID } from './ids';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { dateTimeParse } from '../../datetime';
 import { ArrayVector } from '../../vector';
+import { fieldMatchers } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 
 export interface ConvertFieldTypeTransformerOptions {
   conversions: ConvertFieldTypeOptions[];
 }
 
 export interface ConvertFieldTypeOptions {
+  /**
+   * The field to convert field type
+   */
   targetField?: string;
+  /**
+   * The field type to convert to
+   */
   destinationType?: FieldType;
+  /**
+   * Date format to parse a string datetime
+   */
   dateFormat?: string;
 }
 
-/**
- * @alpha
- */
 export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<ConvertFieldTypeTransformerOptions> = {
   id: DataTransformerID.convertFieldType,
   name: 'Convert field type',
@@ -43,32 +51,44 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
 };
 
 /**
- * @alpha
+ * Convert field types for dataframe(s)
+ * @param options - field type conversion options
+ * @param frames - dataframe(s) with field types to convert
+ * @returns dataframe(s) with converted field types
  */
 export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   if (!options.conversions.length) {
     return frames;
   }
 
-  const frameCopy: DataFrame[] = [];
+  const framesCopy = frames.map((frame) => ({ ...frame }));
 
-  frames.forEach((frame) => {
-    for (let fieldIdx = 0; fieldIdx < frame.fields.length; fieldIdx++) {
-      let field = frame.fields[fieldIdx];
-      for (let cIdx = 0; cIdx < options.conversions.length; cIdx++) {
-        if (field.name === options.conversions[cIdx].targetField) {
-          //check in about matchers with Ryan
-          const conversion = options.conversions[cIdx];
-          frame.fields[fieldIdx] = convertFieldType(field, conversion);
-          break;
-        }
-      }
+  for (const conversion of options.conversions) {
+    if (!conversion.targetField) {
+      continue;
     }
-    frameCopy.push(frame);
-  });
-  return frameCopy;
+    const matches = fieldMatchers.get(FieldMatcherID.byName).get(conversion.targetField);
+    for (const frame of framesCopy) {
+      frame.fields = frame.fields.map((field) => {
+        if (matches(field, frame, framesCopy)) {
+          return convertFieldType(field, conversion);
+        }
+        return field;
+      });
+    }
+  }
+
+  return framesCopy;
 }
 
+/**
+ * Convert a single field type to specifed field type.
+ * @param field - field to convert
+ * @param opts - field conversion options
+ * @returns converted field
+ *
+ * @internal
+ */
 export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): Field {
   switch (opts.destinationType) {
     case FieldType.time:
@@ -84,6 +104,9 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
   }
 }
 
+/**
+ * @internal
+ */
 export function fieldToTimeField(field: Field, dateFormat?: string): Field {
   let opts = dateFormat ? { format: dateFormat } : undefined;
 
@@ -109,12 +132,8 @@ function fieldToNumberField(field: Field): Field {
   const numValues = field.values.toArray().slice();
 
   for (let n = 0; n < numValues.length; n++) {
-    if (numValues[n]) {
-      let number = +numValues[n];
-      numValues[n] = Number.isFinite(number) ? number : null;
-    } else {
-      numValues[n] = null;
-    }
+    const number = +numValues[n];
+    numValues[n] = Number.isFinite(number) ? number : null;
   }
 
   return {
@@ -128,7 +147,7 @@ function fieldToBooleanField(field: Field): Field {
   const booleanValues = field.values.toArray().slice();
 
   for (let b = 0; b < booleanValues.length; b++) {
-    booleanValues[b] = Boolean(booleanValues[b]);
+    booleanValues[b] = Boolean(!!booleanValues[b]);
   }
 
   return {
@@ -153,7 +172,12 @@ function fieldToStringField(field: Field): Field {
 }
 
 /**
- * @alpha
+ * Checks the first value. Assumes any number should be time fieldtype. Otherwise attempts to make the fieldtype time.
+ * @param field - field to ensure is a time fieldtype
+ * @param dateFormat - date format used to parse a string datetime
+ * @returns field as time
+ *
+ * @public
  */
 export function ensureTimeField(field: Field, dateFormat?: string): Field {
   const firstValueTypeIsNumber = typeof field.values.get(0) === 'number';
