@@ -33,36 +33,36 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   };
 
   onRunQuery = () => {
-    const { exploreId } = this.props;
-    this.props.runQueries(exploreId);
+    // const { exploreId } = this.props;
+    // this.props.runQueries(exploreId);
   };
 
   onChange = (query: DataQuery, override?: boolean) => {
-    const { datasourceInstance, exploreId, index } = this.props;
-    this.props.changeQuery(exploreId, query, index, override);
-    if (query && !override && datasourceInstance?.getHighlighterExpression && index === 0) {
-      // Live preview of log search matches. Only use on first row for now
-      this.updateLogsHighlights(query);
-    }
+    // const { datasourceInstance, exploreId, index } = this.props;
+    // this.props.changeQuery(exploreId, query, index, override);
+    // if (query && !override && datasourceInstance?.getHighlighterExpression && index === 0) {
+    //   // Live preview of log search matches. Only use on first row for now
+    //   this.updateLogsHighlights(query);
+    // }
   };
 
   onClickToggleDisabled = () => {
-    const { exploreId, index, query } = this.props;
-    const newQuery = {
-      ...query,
-      hide: !query.hide,
-    };
-    this.props.changeQuery(exploreId, newQuery, index, true);
+    // const { exploreId, index, query } = this.props;
+    // const newQuery = {
+    //   ...query,
+    //   hide: !query.hide,
+    // };
+    // this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickRemoveButton = () => {
-    const { exploreId, index } = this.props;
-    this.props.removeQueryRowAction({ exploreId, index });
-    this.props.runQueries(exploreId);
+    // const { exploreId, index } = this.props;
+    // this.props.removeQueryRowAction({ exploreId, index });
+    // this.props.runQueries(exploreId);
   };
 
   onClickToggleEditorMode = () => {
-    this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
+    // this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
   setReactQueryEditor = (datasourceInstance: DataSourceApi) => {
