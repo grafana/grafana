@@ -60,7 +60,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, 
             className={tableStyles.headerCellLabel}
             title={column.render('Header')}
           >
-            {showTypeIcons && <Icon name={getFieldTypeIcon(field?.type)} style={{ marginRight: '8px' }} />}
+            {showTypeIcons && <Icon name={getFieldTypeIcon(field)} size="sm" style={{ marginRight: '8px' }} />}
             <div>{column.render('Header')}</div>
             <div>
               {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}

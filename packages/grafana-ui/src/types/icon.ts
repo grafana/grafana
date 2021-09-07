@@ -1,4 +1,4 @@
-import { FieldType } from '@grafana/data';
+import { Field, FieldType } from '@grafana/data';
 import { ComponentSize } from './size';
 export type IconType = 'mono' | 'default';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
@@ -157,9 +157,9 @@ type BrandIconNames = 'google' | 'microsoft' | 'github' | 'gitlab' | 'okta';
 export type IconName = ReturnType<typeof getAvailableIcons>[number] | BrandIconNames;
 
 /** Get the icon for a given field type */
-export function getFieldTypeIcon(t?: FieldType): IconName {
-  if (t) {
-    switch (t) {
+export function getFieldTypeIcon(field?: Field): IconName {
+  if (field) {
+    switch (field.type) {
       case FieldType.time:
         return 'clock-nine';
       case FieldType.string:

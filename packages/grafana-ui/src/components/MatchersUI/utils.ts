@@ -84,7 +84,7 @@ export function useSelectOptions(
       options.push({
         value: name,
         label: name,
-        icon: field ? getFieldTypeIcon(field.type) : undefined,
+        icon: field ? getFieldTypeIcon(field) : undefined,
       });
     }
     for (const name of displayNames.raw) {

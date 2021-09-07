@@ -75,18 +75,10 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
     },
   })
   .setPanelOptions((builder) => {
-    builder
-      .addBooleanSwitch({
-        path: 'showHeader',
-        name: 'Show header',
-        description: "To display table's header or not to display",
-        defaultValue: defaultPanelOptions.showHeader,
-      })
-      .addBooleanSwitch({
-        path: 'showTypeIcons',
-        name: 'Show type icons',
-        description: 'Include an icon indicating the field type',
-        defaultValue: defaultPanelOptions.showTypeIcons,
-        showIf: (ctx) => !!ctx.showHeader,
-      });
+    builder.addBooleanSwitch({
+      path: 'showHeader',
+      name: 'Show header',
+      description: "To display table's header or not to display",
+      defaultValue: defaultPanelOptions.showHeader,
+    });
   });
