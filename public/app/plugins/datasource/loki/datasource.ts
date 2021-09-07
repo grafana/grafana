@@ -103,6 +103,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getLogsVolumeQuery(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const isLogsVolumeAvailable = request.targets.some((target) => !isMetricsQuery(target.expr) && !!target.expr);
+    if (!isLogsVolumeAvailable) {
+      return;
+    }
+
     const histogramRequest = cloneDeep(request!);
     histogramRequest.targets = histogramRequest.targets
       .filter((target) => !isMetricsQuery(target.expr))
