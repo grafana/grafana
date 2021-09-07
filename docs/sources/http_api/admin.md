@@ -612,7 +612,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action              | Scope                      | Provision entity |
+| Actions              | Scopes                      | Provision entities |
 | ------------------- | -------------------------- | ---------------- |
 | provisioning:reload | provisioners:accesscontrol | accesscontrol    |
 | provisioning:reload | provisioners:dashboards    | dashboards       |
