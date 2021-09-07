@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
