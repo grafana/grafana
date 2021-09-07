@@ -19,10 +19,10 @@ To access OpenTSDB settings, hover your mouse over the **Configuration** (gear) 
 | `Name`             | The data source name. This is how you refer to the data source in panels and queries.   |
 | `Default`          | Default data source means that it will be pre-selected for new panels.                  |
 | `URL`              | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242)  |
-| `Accepted Cookies` | List the names of cookies to forward to the data source.                                |
+| `Allowed cookies` | List the names of cookies to forward to the data source.                                |
 | `Version`          | Version = opentsdb version, either <=2.1 or 2.2                                         |
 | `Resolution`       | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
-| `Lookup Limit`     | Default is 1000.                                                                        |
+| `Lookup limit`     | Default is 1000.                                                                        |
 
 ## Query editor
 
