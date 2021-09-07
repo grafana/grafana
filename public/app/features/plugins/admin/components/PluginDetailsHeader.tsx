@@ -4,19 +4,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
 import { InstallControls } from './InstallControls';
-import { usePluginDetails } from '../hooks/usePluginDetails';
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
 import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
 
 type Props = {
-  parentUrl: string;
   currentUrl: string;
   plugin: CatalogPlugin;
 };
 
-export function PluginDetailsHeader({ plugin, parentUrl, currentUrl }: Props): React.ReactElement {
+export function PluginDetailsHeader({ plugin, currentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
+  const parentUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
 
   return (
     <div className={styles.headerContainer}>
@@ -76,14 +75,7 @@ export function PluginDetailsHeader({ plugin, parentUrl, currentUrl }: Props): R
 
         <p>{plugin.description}</p>
 
-        {/* <InstallControls
-          plugin={plugin}
-          isInflight={plugin.isInflight}
-          hasUpdate={hasUpdate}
-          isInstalled={plugin.isInstalled}
-          hasInstalledPanel={hasInstalledPanel}
-          dispatch={dispatch}
-        /> */}
+        <InstallControls plugin={plugin} />
       </div>
     </div>
   );

@@ -1,20 +1,17 @@
 import React, { useState, useMemo } from 'react';
-
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginIncludeType, PluginType } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
-
 import { AppNotificationSeverity } from 'app/types';
-import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
-import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
-import { usePluginDetails } from '../hooks/usePluginDetails';
-import { Page as PluginPage } from '../components/Page';
-import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ActionTypes, CatalogPlugin, PluginTabLabels } from '../types';
-import { isOrgAdmin } from '../helpers';
+import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
+import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
+import { Page as PluginPage } from '../components/Page';
+import { Loader } from '../components/Loader';
+import { CatalogPlugin, PluginTabLabels } from '../types';
+import { isOrgAdmin } from '../helpers';
 import { useGetSingle, useFetchStatus } from '../state/hooks';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 
@@ -88,7 +85,6 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   // const pluginExtra = loadPlugin(pluginId); // fetches the local plugin settings as well
   const { isLoading, error } = useFetchStatus();
   const styles = useStyles2(getStyles);
-  const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
   const setActiveTab = (activeTabIndex: number) => setState({ ...state, activeTabIndex });
 
   if (isLoading) {
@@ -107,7 +103,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   return (
     <Page>
       <PluginPage>
-        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} plugin={plugin} />
+        <PluginDetailsHeader currentUrl={match.url} plugin={plugin} />
 
         {/* Tab navigation */}
         <TabsBar>
@@ -123,7 +119,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
-          {/* Cannot get plugin meta data. e.g. cannot talk to gcom and plugin is not installed. */}
+          {/* TODO: Cannot get plugin meta data. e.g. cannot talk to gcom and plugin is not installed. */}
           {/* {pluginConfig.loadError && (
             <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
               <>
