@@ -139,18 +139,16 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 
 func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	fakeBackendPM := &fakeBackendPM{}
-	manager := &manager.PluginManager{
-		BackendPluginManager: fakeBackendPM,
-	}
-	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
+	s := newService(
+		setting.NewCfg(),
+		&manager.PluginManager{BackendPluginManager: fakeBackendPM},
+		fakeBackendPM,
+		&fakeOAuthTokenService{},
+	)
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
 		resultsFn: make(map[string]resultsFn),
-	}
-	//nolint: staticcheck // plugins.DataPlugin deprecated
-	s.registry["test"] = func(*models.DataSource) (plugins.DataPlugin, error) {
-		return e, nil
 	}
 
 	return s, e, fakeBackendPM
