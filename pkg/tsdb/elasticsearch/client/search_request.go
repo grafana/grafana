@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 

@@ -18,32 +18,21 @@ Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instruct
 
 To access Graphite settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Graphite data source.
 
-| Name                  | Description                                                                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                 |
-| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                |
-| `URL`                 | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.                                                         |
-| `Access`              | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
-| `Auth`                | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.                                                   |
-| `Basic Auth`          | Enable basic authentication to the data source.                                                                                       |
-| `User`                | User name for basic authentication.                                                                                                   |
-| `Password`            | Password for basic authentication.                                                                                                    |
-| `Custom HTTP Headers` | Click **Add header** to add a custom HTTP header.                                                                                     |
-| `Header`              | Enter the custom header name.                                                                                                         |
-| `Value`               | Enter the custom header value.                                                                                                        |
+| Name                  | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                |
+| `URL`                 | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.         |
+| `Auth`                | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.   |
+| `Basic Auth`          | Enable basic authentication to the data source.                                       |
+| `User`                | User name for basic authentication.                                                   |
+| `Password`            | Password for basic authentication.                                                    |
+| `Custom HTTP Headers` | Click **Add header** to add a custom HTTP header.                                     |
+| `Header`              | Enter the custom header name.                                                         |
+| `Value`               | Enter the custom header value.                                                        |
 | `Graphite details`    |
-| `Version`             | Select your version of Graphite.                                                                                                      |
-| `Type`                | Select your type of Graphite.                                                                                                         |
-
-Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else is stated.
-
-### Server access mode (default)
-
-All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the Grafana backend/server if you select this access mode.
-
-### Browser access mode
-
-All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
+| `Version`             | Select your version of Graphite.                                                      |
+| `Type`                | Select your type of Graphite.                                                         |
 
 ## Graphite query editor
 

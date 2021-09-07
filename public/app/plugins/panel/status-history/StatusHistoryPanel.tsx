@@ -22,7 +22,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, false), [data]);
+  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, false, theme), [data, theme]);
 
   const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend, theme), [
     frames,

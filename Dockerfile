@@ -33,7 +33,7 @@ RUN go mod verify
 RUN go run build.go build
 
 # Final stage
-FROM alpine:3.14.1
+FROM alpine:3.14.2
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -51,7 +51,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache openssl musl-utils libcrypto1.1>1.1.1l-r0 libssl1.1>1.1.1l-r0
+    apk add --no-cache openssl musl-utils
 
 COPY conf ./conf
 

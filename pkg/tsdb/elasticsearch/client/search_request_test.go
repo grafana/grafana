@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSearchRequest(t *testing.T) {
