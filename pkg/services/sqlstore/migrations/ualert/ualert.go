@@ -410,6 +410,11 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	_, err = sess.Exec("delete from ngalert_configuration")
+	if err != nil {
+		return err
+	}
+
 	files, err := getSilenceFileNamesForAllOrgs(mg)
 	if err != nil {
 		return err
