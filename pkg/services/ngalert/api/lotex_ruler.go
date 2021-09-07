@@ -42,7 +42,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 		http.MethodDelete,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf("%s/%s", legacyRulerPrefix, macaron.Vars(ctx.Req)["Namespace"]),
+			fmt.Sprintf("%s/%s", legacyRulerPrefix, macaron.Vars(ctx.Req)[":Namespace"]),
 		),
 		nil,
 		messageExtractor,
@@ -63,8 +63,8 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				macaron.Vars(ctx.Req)["Namespace"],
-				macaron.Vars(ctx.Req)["Groupname"],
+				macaron.Vars(ctx.Req)[":Namespace"],
+				macaron.Vars(ctx.Req)[":Groupname"],
 			),
 		),
 		nil,
@@ -86,7 +86,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 			fmt.Sprintf(
 				"%s/%s",
 				legacyRulerPrefix,
-				macaron.Vars(ctx.Req)["Namespace"],
+				macaron.Vars(ctx.Req)[":Namespace"],
 			),
 		),
 		nil,
@@ -108,8 +108,8 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				macaron.Vars(ctx.Req)["Namespace"],
-				macaron.Vars(ctx.Req)["Groupname"],
+				macaron.Vars(ctx.Req)[":Namespace"],
+				macaron.Vars(ctx.Req)[":Groupname"],
 			),
 		),
 		nil,
@@ -145,7 +145,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	if err != nil {
 		return ErrResp(500, err, "Failed marshal rule group")
 	}
-	ns := macaron.Vars(ctx.Req)["Namespace"]
+	ns := macaron.Vars(ctx.Req)[":Namespace"]
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
 	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }

@@ -78,7 +78,7 @@ type CacheServer struct {
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
 
 func (a *CacheServer) Handler(ctx *models.ReqContext) {
-	hash := macaron.Vars(ctx.Req)["hash"]
+	hash := macaron.Vars(ctx.Req)[":hash"]
 
 	if len(hash) != 32 || !validMD5.MatchString(hash) {
 		ctx.JsonApiErr(404, "Avatar not found", nil)
