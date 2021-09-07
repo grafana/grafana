@@ -151,7 +151,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 24, len(frames[0].Fields))
 
-			require.Equal(t, true, frames[0].Fields[0].At(0).(bool))
+			require.Equal(t, true, *frames[0].Fields[0].At(0).(*bool))
 			require.Equal(t, int64(5), *frames[0].Fields[1].At(0).(*int64))
 			require.Equal(t, int64(20020), *frames[0].Fields[2].At(0).(*int64))
 			require.Equal(t, int64(980300), *frames[0].Fields[3].At(0).(*int64))
@@ -654,8 +654,8 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 
 			require.Equal(t, 3, len(frames[0].Fields))
-			require.Equal(t, data.Labels{"metric": "Metric A - value one"}, frames[0].Fields[1].Labels)
-			require.Equal(t, data.Labels{"metric": "Metric B - value one"}, frames[0].Fields[2].Labels)
+			require.Equal(t, "Metric A - value one", frames[0].Fields[1].Name)
+			require.Equal(t, "Metric B - value one", frames[0].Fields[2].Name)
 		})
 
 		t.Run("When doing a metric query grouping by time should return correct series", func(t *testing.T) {
@@ -1202,6 +1202,32 @@ func TestMSSQL(t *testing.T) {
 
 			// Should be in time.Time
 			require.Nil(t, frames[0].Fields[0].At(0))
+		})
+
+		t.Run("When doing an annotation query with a time and timeend column should return two fields of type time", func(t *testing.T) {
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT 1631053772276 as time, 1631054012276 as timeend, '' as text, '' as tags",
+							"format": "table",
+						}),
+						RefID: "A",
+					},
+				},
+			}
+
+			resp, err := endpoint.DataQuery(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 4, len(frames[0].Fields))
+
+			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[0].Type())
+			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[1].Type())
 		})
 	})
 }
