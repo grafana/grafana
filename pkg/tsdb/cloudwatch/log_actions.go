@@ -36,6 +36,9 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 			}
 
 			groupedFrames, err := groupResponseFrame(dataframe, model.Get("statsGroups").MustStringArray())
+			if err != nil {
+				return err
+			}
 			resultChan <- backend.Responses{
 				query.RefID: backend.DataResponse{Frames: groupedFrames},
 			}
