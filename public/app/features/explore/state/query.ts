@@ -211,6 +211,11 @@ export interface ClearCachePayload {
   exploreId: ExploreId;
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
+
+export const changeAutoLogsVolumeAction = createAction<{ exploreId: ExploreId; autoLoadLogsVolume: boolean }>(
+  'explore/changeAutoLogsVolumeAction'
+);
+
 //
 // Action creators
 //
@@ -340,11 +345,9 @@ export function modifyQueries(
  */
 export const runQueries = (
   exploreId: ExploreId,
-  options?: { replaceUrl?: boolean; preserveCache?: boolean; autoLoadLogsVolume?: boolean }
+  options?: { replaceUrl?: boolean; preserveCache?: boolean }
 ): ThunkResult<void> => {
   return (dispatch, getState) => {
-    options = options || {};
-    options.autoLoadLogsVolume = window.location.href.includes('autoLoadHistogram=on');
     dispatch(updateTime({ exploreId }));
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
@@ -368,6 +371,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
+      autoLoadLogsVolume,
     } = exploreItemState;
     let newQuerySub;
 
@@ -485,8 +489,7 @@ export const runQueries = (
           logsVolumeQuery,
         })
       );
-      // CODE: Add optional switcher to automatically load logs
-      if (options?.autoLoadLogsVolume && logsVolumeQuery) {
+      if (autoLoadLogsVolume && logsVolumeQuery) {
         dispatch(loadLogsVolume(exploreId));
       }
     }
@@ -542,6 +545,17 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
 export function clearCache(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(clearCacheAction({ exploreId }));
+  };
+}
+
+export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(changeAutoLogsVolumeAction({ exploreId, autoLoadLogsVolume }));
+    const state = getState().explore[exploreId]!;
+    const { logsVolumeQuery, logsVolume } = state;
+    if (logsVolumeQuery && !logsVolume && autoLoadLogsVolume) {
+      dispatch(loadLogsVolume(exploreId));
+    }
   };
 }
 
@@ -822,6 +836,14 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       cache: [],
+    };
+  }
+
+  if (changeAutoLogsVolumeAction.match(action)) {
+    const { autoLoadLogsVolume } = action.payload;
+    return {
+      ...state,
+      autoLoadLogsVolume,
     };
   }
 

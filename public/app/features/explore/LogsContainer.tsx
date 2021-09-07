@@ -3,10 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
 import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
+import store from 'app/core/store';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
-import { addResultsToCache, clearCache } from './state/query';
+import { addResultsToCache, clearCache, changeAutoLogsVolume } from './state/query';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -14,6 +15,7 @@ import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
+import { AUTO_LOAD_LOGS_VOLUME_SETTING_KEY } from './ExplorePaneContainer';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
@@ -79,6 +81,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
+      autoLoadLogsVolume,
+      changeAutoLogsVolume,
     } = this.props;
 
     if (!logRows) {
@@ -138,6 +142,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               getFieldLinks={this.getFieldLinks}
               addResultsToCache={() => addResultsToCache(exploreId)}
               clearCache={() => clearCache(exploreId)}
+              autoLoadLogsVolume={autoLoadLogsVolume}
+              onChangeAutoLogsVolume={(autoLoadLogsVolume) => {
+                changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
+                store.set(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, autoLoadLogsVolume);
+              }}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -160,6 +169,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    autoLoadLogsVolume,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -178,6 +188,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    autoLoadLogsVolume,
   };
 }
 
@@ -186,6 +197,7 @@ const mapDispatchToProps = {
   splitOpen,
   addResultsToCache,
   clearCache,
+  changeAutoLogsVolume,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

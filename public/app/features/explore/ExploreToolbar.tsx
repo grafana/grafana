@@ -216,6 +216,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isLive,
     isPaused,
     containerWidth,
+    autoLoadLogsVolume,
   } = exploreItem;
 
   const hasLiveOption = !!datasourceInstance?.meta?.streaming;
@@ -233,6 +234,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
+    autoLoadLogsVolume,
   };
 };
 

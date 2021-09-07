@@ -161,6 +161,7 @@ export interface ExploreItemState {
   logsVolumeQuery?: Observable<DataQueryResponse>;
   logsVolume?: DataFrame[];
   logsVolumeLoadingInProgress: boolean;
+  autoLoadLogsVolume: boolean;
 }
 
 export interface ExploreUpdateState {
