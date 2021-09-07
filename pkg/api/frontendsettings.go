@@ -112,11 +112,15 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 	// the datasource table)
 	for _, ds := range hs.PluginManager.DataSources() {
 		if ds.BuiltIn {
-			dataSources[ds.Name] = map[string]interface{}{
+			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
 				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
+			if ds.Id == "grafana" {
+				info["id"] = -1
+			}
+			dataSources[ds.Name] = info
 		}
 	}
 
