@@ -1,6 +1,5 @@
 load(
-    'scripts/lib.star',
-    'pipeline',
+    'scripts/star/steps/lib.star',
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
@@ -23,9 +22,18 @@ load(
     'redis_integration_tests_step',
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
-    'ldap_service',
+    'validate_scuemata_step',
+)
+
+load(
+    'scripts/star/services/services.star',
     'integration_test_services',
-    'validate_scuemata',
+    'ldap_service',
+)
+
+load(
+    'scripts/star/utils/utils.star',
+    'pipeline',
 )
 
 ver_mode = 'pr'
@@ -43,7 +51,7 @@ def pr_pipelines(edition):
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
-        validate_scuemata(),
+        validate_scuemata_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
