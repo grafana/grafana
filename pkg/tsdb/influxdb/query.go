@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var (
@@ -29,7 +29,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 		res += query.renderTz()
 	}
 
-	intervalText := tsdb.FormatDuration(query.Interval)
+	intervalText := intervalv2.FormatDuration(query.Interval)
 	intervalMs := int64(query.Interval / time.Millisecond)
 
 	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
