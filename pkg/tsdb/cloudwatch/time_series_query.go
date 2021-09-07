@@ -98,6 +98,12 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	}
 
 	if err := eg.Wait(); err != nil {
+		dataResponse := backend.DataResponse{
+			Error: fmt.Errorf("metric request error: %q", err),
+		}
+		resultChan <- &responseWrapper{
+			DataResponse: &dataResponse,
+		}
 		return nil, err
 	}
 	close(resultChan)

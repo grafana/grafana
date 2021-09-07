@@ -25,7 +25,8 @@ func TestMigrations(t *testing.T) {
 	require.Error(t, err)
 
 	mg := NewMigrator(x, &setting.Cfg{})
-	AddMigrations(mg)
+	migrations := &OSSMigrations{}
+	migrations.AddMigration(mg)
 	expectedMigrations := mg.MigrationsCount()
 
 	err = mg.Start()
@@ -38,7 +39,7 @@ func TestMigrations(t *testing.T) {
 	require.Equal(t, expectedMigrations, result.Count)
 
 	mg = NewMigrator(x, &setting.Cfg{})
-	AddMigrations(mg)
+	migrations.AddMigration(mg)
 
 	err = mg.Start()
 	require.NoError(t, err)

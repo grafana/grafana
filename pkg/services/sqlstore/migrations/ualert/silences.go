@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -27,7 +28,7 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		return errors.New("failed to create uuid for silence")
 	}
 
-	n, v := getLabelForRouteMatching(rule.Uid)
+	n, v := getLabelForRouteMatching(rule.UID)
 	s := &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: uid.String(),
@@ -50,7 +51,7 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 	return nil
 }
 
-func (m *migration) writeSilencesFile() error {
+func (m *migration) writeSilencesFile(orgID int64) error {
 	var buf bytes.Buffer
 	for _, e := range m.silences {
 		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
@@ -58,7 +59,7 @@ func (m *migration) writeSilencesFile() error {
 		}
 	}
 
-	f, err := openReplace(silencesFileName(m.mg))
+	f, err := openReplace(silencesFileNameForOrg(m.mg, orgID))
 	if err != nil {
 		return err
 	}
@@ -70,8 +71,12 @@ func (m *migration) writeSilencesFile() error {
 	return f.Close()
 }
 
-func silencesFileName(mg *migrator.Migrator) string {
-	return filepath.Join(mg.Cfg.DataPath, "alerting", "silences")
+func getSilenceFileNamesForAllOrgs(mg *migrator.Migrator) ([]string, error) {
+	return filepath.Glob(filepath.Join(mg.Cfg.DataPath, "alerting", "*", "silences"))
+}
+
+func silencesFileNameForOrg(mg *migrator.Migrator, orgID int64) string {
+	return filepath.Join(mg.Cfg.DataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
 }
 
 // replaceFile wraps a file that is moved to another filename on closing.
@@ -93,6 +98,10 @@ func (f *replaceFile) Close() error {
 // openReplace opens a new temporary file that is moved to filename on closing.
 func openReplace(filename string) (*replaceFile, error) {
 	tmpFilename := fmt.Sprintf("%s.%x", filename, uint64(rand.Int63()))
+
+	if err := os.MkdirAll(filepath.Dir(tmpFilename), os.ModePerm); err != nil {
+		return nil, err
+	}
 
 	f, err := os.Create(tmpFilename)
 	if err != nil {

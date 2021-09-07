@@ -279,6 +279,18 @@ describe('utils/colorManipulator', () => {
       expect(alpha('hsla(0, 100%, 50%, 0.2)', 0.5)).toEqual('hsla(0, 100%, 50%, 0.5)');
     });
 
+    it('converts an #rrggbb hex color with the alpha value provided', () => {
+      expect(alpha('#FFFFFF', 0)).toEqual('#FFFFFF00');
+    });
+
+    it('converts an #rgb color with the alpha value provided', () => {
+      expect(alpha('#fff', 0.5)).toEqual('#ffffff80');
+    });
+
+    it('converts an #rgba color with the alpha value provided', () => {
+      expect(alpha('#ffff', 0.5)).toEqual('#ffffff80');
+    });
+
     it('throw on invalid colors', () => {
       expect(() => {
         alpha('white', 0.4);

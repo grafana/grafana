@@ -1,3 +1,3 @@
-# Geomap Panel -  Native Plugin
+# Geomap Panel - Native Plugin
 
 The Geomap is **included** with Grafana.

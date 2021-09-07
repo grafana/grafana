@@ -13,25 +13,26 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
+	shortURLService shorturls.Service) *CleanUpService {
+	s := &CleanUpService{
+		Cfg:               cfg,
+		ServerLockService: serverLockService,
+		ShortURLService:   shortURLService,
+		log:               log.New("cleanup"),
+	}
+	return s
+}
+
 type CleanUpService struct {
 	log               log.Logger
-	Cfg               *setting.Cfg                  `inject:""`
-	ServerLockService *serverlock.ServerLockService `inject:""`
-	ShortURLService   shorturls.Service             `inject:""`
-}
-
-func init() {
-	registry.RegisterService(&CleanUpService{})
-}
-
-func (srv *CleanUpService) Init() error {
-	srv.log = log.New("cleanup")
-	return nil
+	Cfg               *setting.Cfg
+	ServerLockService *serverlock.ServerLockService
+	ShortURLService   shorturls.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {

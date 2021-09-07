@@ -1,5 +1,3 @@
-import { defaults } from 'lodash';
-
 import React, { PureComponent } from 'react';
 import { InlineField, Select, Alert, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, dataFrameFromJSON, rangeUtil } from '@grafana/data';
@@ -54,7 +52,7 @@ export class QueryEditor extends PureComponent<Props, State> {
               }
               return {
                 value: c.channel,
-                label: c.channel,
+                label: c.channel + ' [' + c.minute_rate + ' msg/min]',
               };
             });
 
@@ -192,6 +190,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         <div className="gf-form">
           <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
             <Select
+              menuShouldPortal
               options={channels}
               value={currentChannel || ''}
               onChange={this.onChannelChange}
@@ -208,6 +207,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           <div className="gf-form">
             <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
+                menuShouldPortal
                 options={fields}
                 value={filter?.fields || []}
                 onChange={this.onFieldNamesChange}
@@ -243,12 +243,17 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const query = defaults(this.props.query, defaultQuery);
+    const query = {
+      ...defaultQuery,
+      ...this.props.query,
+    };
+
     return (
       <>
         <div className="gf-form">
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
+              menuShouldPortal
               options={this.queryTypes}
               value={this.queryTypes.find((v) => v.value === query.queryType) || this.queryTypes[0]}
               onChange={this.onQueryTypeChange}

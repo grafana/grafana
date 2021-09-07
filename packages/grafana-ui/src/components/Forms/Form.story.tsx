@@ -111,7 +111,7 @@ const renderForm = (defaultValues?: FormDTO) => (
               rules={{
                 required: true,
               }}
-              render={({ field }) => <Select {...field} options={selectOptions} />}
+              render={({ field }) => <Select menuShouldPortal {...field} options={selectOptions} />}
             />
           </Field>
 

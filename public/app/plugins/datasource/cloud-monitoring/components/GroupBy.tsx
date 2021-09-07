@@ -32,6 +32,7 @@ export const GroupBy: FunctionComponent<Props> = ({
       tooltip="You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, you can specify a grouping and a function. Grouping is done on the basis of labels. The grouping function is used to combine the time series in the group into a single time series."
     >
       <MultiSelect
+        menuShouldPortal
         width={INPUT_WIDTH}
         placeholder="Choose label"
         options={options}

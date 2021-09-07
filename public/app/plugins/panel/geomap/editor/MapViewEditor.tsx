@@ -3,7 +3,7 @@ import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
-import { NumberInput } from '../components/NumberInput';
+import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 import { lastGeomapPanelInstance } from '../GeomapPanel';
 import { toLonLat } from 'ol/proj';
 
@@ -62,7 +62,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
     <>
       <InlineFieldRow>
         <InlineField label="View" labelWidth={labelWidth} grow={true}>
-          <Select options={views.options} value={views.current} onChange={onSelectView} />
+          <Select menuShouldPortal options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
       {value?.id === MapCenterID.Coordinates && (

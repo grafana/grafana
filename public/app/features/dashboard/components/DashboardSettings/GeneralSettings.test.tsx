@@ -4,24 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from '@grafana/ui';
 
 import { byRole } from 'testing-library-selector';
-import { Props, GeneralSettingsUnconnected as GeneralSettings } from './GeneralSettings';
+import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
 import { DashboardModel } from '../../state';
-
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => ({
-    search: jest.fn(() => [
-      { title: 'A', id: 'A' },
-      { title: 'B', id: 'B' },
-    ]),
-  }),
-}));
-
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    user: { orgId: 1 },
-  },
-}));
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -33,6 +17,7 @@ const setupTestContext = (options: Partial<Props>) => {
         time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
       },
       meta: {
+        folderId: 1,
         folderTitle: 'test',
       },
       timezone: 'utc',

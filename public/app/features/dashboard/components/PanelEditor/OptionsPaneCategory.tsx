@@ -20,10 +20,14 @@ export interface OptionsPaneCategoryProps {
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
+    const initialIsExpanded = isOpenDefault !== false;
+
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
-      isExpanded: isOpenDefault !== false,
+      isExpanded: initialIsExpanded,
     });
-    const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
+
+    // `savedState` can be undefined by typescript, so we have to handle that case
+    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
     const styles = useStyles2(getStyles);
 
     useEffect(() => {

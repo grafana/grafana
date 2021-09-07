@@ -5,15 +5,15 @@ import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
-import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .useFieldConfig()
   .setPanelOptions((builder) => {
-    let category = ['Map View'];
+    let category = ['Map view'];
     builder.addCustomEditor({
       category,
       id: 'view',
@@ -32,30 +32,26 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    // Nested
     builder.addCustomEditor({
-      category: ['Base Layer'],
+      category: ['Base layer'],
       id: 'basemap',
       path: 'basemap',
-      name: 'Base Layer',
+      name: 'Base layer',
       editor: BaseLayerEditor,
-      defaultValue: {
-        type: defaultGrafanaThemedMap.id,
-        config: defaultGrafanaThemedMap.defaultOptions,
-      },
+      defaultValue: DEFAULT_BASEMAP_CONFIG,
     });
 
     builder.addCustomEditor({
-      category: ['Data Layer'],
+      category: ['Data layer'],
       id: 'layers',
       path: 'layers',
-      name: 'Data Layer',
+      name: 'Data layer',
       editor: DataLayersEditor,
       defaultValue: [defaultMarkersConfig],
     });
 
     // The controls section
-    category = ['Map Controls'];
+    category = ['Map controls'];
     builder
       .addBooleanSwitch({
         category,
@@ -68,13 +64,6 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         category,
         path: 'controls.mouseWheelZoom',
         name: 'Mouse wheel zoom',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category,
-        path: 'controls.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
         defaultValue: true,
       })
       .addBooleanSwitch({

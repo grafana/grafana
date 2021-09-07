@@ -15,19 +15,52 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 	calculator := NewCalculator(CalculatorOptions{})
 
 	testCases := []struct {
-		name      string
-		timeRange plugins.DataTimeRange
-		expected  string
+		name         string
+		timeRange    plugins.DataTimeRange
+		intervalMode string
+		expected     string
 	}{
-		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), "200ms"},
-		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), "500ms"},
-		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), "1s"},
-		{"from 1h to now", plugins.NewDataTimeRange("1h", "now"), "2s"},
+		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), "min", "200ms"},
+		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), "exact", "1ms"},
+		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), "max", "1ms"},
+		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), "min", "500ms"},
+		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), "max", "1ms"},
+		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), "exact", "1ms"},
+		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), "min", "1s"},
+		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), "max", "1ms"},
+		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), "exact", "1ms"},
+		{"from 24h to now", plugins.NewDataTimeRange("24h", "now"), "min", "1m"},
+		{"from 24h to now", plugins.NewDataTimeRange("24h", "now"), "max", "1ms"},
+		{"from 24h to now", plugins.NewDataTimeRange("24h", "now"), "exact", "1ms"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			interval := calculator.Calculate(tc.timeRange, time.Millisecond*1)
+			interval, err := calculator.Calculate(tc.timeRange, time.Millisecond*1, tc.intervalMode)
+			require.Nil(t, err)
+			assert.Equal(t, tc.expected, interval.Text)
+		})
+	}
+}
+
+func TestIntervalCalculator_CalculateSafeInterval(t *testing.T) {
+	calculator := NewCalculator(CalculatorOptions{})
+
+	testCases := []struct {
+		name           string
+		timeRange      plugins.DataTimeRange
+		safeResolution int64
+		expected       string
+	}{
+		{"from 5m to now", plugins.NewDataTimeRange("5m", "now"), 11000, "20ms"},
+		{"from 15m to now", plugins.NewDataTimeRange("15m", "now"), 11000, "100ms"},
+		{"from 30m to now", plugins.NewDataTimeRange("30m", "now"), 11000, "200ms"},
+		{"from 24h to now", plugins.NewDataTimeRange("24h", "now"), 11000, "10s"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			interval := calculator.CalculateSafeInterval(tc.timeRange, tc.safeResolution)
 			assert.Equal(t, tc.expected, interval.Text)
 		})
 	}

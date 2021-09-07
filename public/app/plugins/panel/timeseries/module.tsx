@@ -1,5 +1,6 @@
+import { GraphFieldConfig } from '@grafana/schema';
 import { PanelPlugin } from '@grafana/data';
-import { GraphFieldConfig, commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { TimeSeriesOptions } from './types';

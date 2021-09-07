@@ -60,7 +60,7 @@ The new table panel introduced in 7.0 was missing a few features that the old ta
 
 ## Stat panel text mode
 
-The [stat panel]({{<relref "../panels/visualizations/stat-panel.md#text-mode" >}}) has a new **Text mode** option to control what text to show.
+The [stat panel]({{<relref "../visualizations/stat-panel.md#text-mode" >}}) has a new **Text mode** option to control what text to show.
 
 By default, the Stat panel displays:
 

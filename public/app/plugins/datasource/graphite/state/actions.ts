@@ -1,18 +1,23 @@
-import { GraphiteQueryEditorAngularDependencies, GraphiteSegment, GraphiteTag } from '../types';
+import { GraphiteQuery, GraphiteQueryEditorDependencies, GraphiteSegment, GraphiteTag } from '../types';
 import { createAction } from '@reduxjs/toolkit';
 import { FuncInstance } from '../gfunc';
+import { TimeRange } from '@grafana/data';
 
 /**
  * List of possible actions changing the state of QueryEditor
  */
 
+const init = createAction<GraphiteQueryEditorDependencies>('init');
+
 /**
- * This is used only during the transition to react. It will be removed after migrating all components.
+ * Synchronise editor dependencies with internal state.
  */
-const init = createAction<GraphiteQueryEditorAngularDependencies>('init');
+const timeRangeChanged = createAction<TimeRange | undefined>('time-range-changed');
+const queriesChanged = createAction<GraphiteQuery[] | undefined>('queries-changed');
+const queryChanged = createAction<GraphiteQuery>('query-changed');
 
 // Metrics & Tags
-const segmentValueChanged = createAction<{ segment: GraphiteSegment; index: number }>('segment-value-changed');
+const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
 
 // Tags
 const addNewTag = createAction<{ segment: GraphiteSegment }>('add-new-tag');
@@ -23,15 +28,18 @@ const unpause = createAction('unpause');
 const addFunction = createAction<{ name: string }>('add-function');
 const removeFunction = createAction<{ func: FuncInstance }>('remove-function');
 const moveFunction = createAction<{ func: FuncInstance; offset: number }>('move-function');
-// TODO: at the moment parameters are modified directly, new value of the param will be passed in the action
-const updateFunctionParam = createAction<{ func: FuncInstance }>('update-function-param');
+const updateFunctionParam = createAction<{ func: FuncInstance; index: number; value: string }>('change-function-param');
 
 // Text editor
 const updateQuery = createAction<{ query: string }>('update-query');
+const runQuery = createAction('run-current-query');
 const toggleEditorMode = createAction('toggle-editor');
 
 export const actions = {
   init,
+  timeRangeChanged,
+  queriesChanged,
+  queryChanged,
   segmentValueChanged,
   tagChanged,
   addNewTag,
@@ -41,5 +49,6 @@ export const actions = {
   moveFunction,
   updateFunctionParam,
   updateQuery,
+  runQuery,
   toggleEditorMode,
 };

@@ -47,8 +47,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   defaultSubscriptionId?: string;
   resourcePath: string;
   azurePortalUrl: string;
-  resourceGroup: string;
-  resourceName: string;
+  declare resourceGroup: string;
+  declare resourceName: string;
   supportedMetricNamespaces: string[] = [];
   timeSrv: TimeSrv;
 

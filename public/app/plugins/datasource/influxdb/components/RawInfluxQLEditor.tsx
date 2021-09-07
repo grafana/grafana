@@ -45,6 +45,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
       <HorizontalGroup>
         <InlineFormLabel htmlFor={selectElementId}>Format as</InlineFormLabel>
         <Select
+          menuShouldPortal
           inputId={selectElementId}
           onChange={(v) => {
             onChange({ ...query, resultFormat: v.value });

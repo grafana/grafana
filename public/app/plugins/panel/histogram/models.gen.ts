@@ -4,13 +4,13 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import {
-  GraphGradientMode,
-  HideableFieldConfig,
   LegendDisplayMode,
   OptionsWithLegend,
   OptionsWithTooltip,
   TooltipDisplayMode,
-} from '@grafana/ui';
+  GraphGradientMode,
+  HideableFieldConfig,
+} from '@grafana/schema';
 
 export const modelVersion = Object.freeze([1, 0]);
 

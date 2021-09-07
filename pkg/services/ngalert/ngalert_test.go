@@ -31,18 +31,18 @@ func TestGetRuleDefaultIntervalSeconds(t *testing.T) {
 		},
 		{
 			desc:                "valid min rule interval equals base scheduler interval",
-			alertingMinInterval: baseIntervalSeconds,
+			alertingMinInterval: defaultBaseIntervalSeconds,
 			expOutput:           defaultIntervalSeconds,
 		},
 		{
 			desc:                "valid min rule interval less than default",
-			alertingMinInterval: defaultIntervalSeconds - baseIntervalSeconds,
+			alertingMinInterval: defaultIntervalSeconds - defaultBaseIntervalSeconds,
 			expOutput:           defaultIntervalSeconds,
 		},
 		{
 			desc:                "valid min rule interval greater than default",
-			alertingMinInterval: defaultIntervalSeconds + baseIntervalSeconds,
-			expOutput:           defaultIntervalSeconds + baseIntervalSeconds,
+			alertingMinInterval: defaultIntervalSeconds + defaultBaseIntervalSeconds,
+			expOutput:           defaultIntervalSeconds + defaultBaseIntervalSeconds,
 		},
 	}
 
@@ -68,22 +68,22 @@ func TestGetRuleMinIntervalSeconds(t *testing.T) {
 		{
 			desc:                "negative min rule interval",
 			alertingMinInterval: -1,
-			expOutput:           baseIntervalSeconds,
+			expOutput:           defaultBaseIntervalSeconds,
 		},
 		{
 			desc:                "zero min rule interval",
 			alertingMinInterval: 0,
-			expOutput:           baseIntervalSeconds,
+			expOutput:           defaultBaseIntervalSeconds,
 		},
 		{
 			desc:                "invalid min rule interval",
 			alertingMinInterval: 1,
-			expOutput:           baseIntervalSeconds,
+			expOutput:           defaultBaseIntervalSeconds,
 		},
 		{
 			desc:                "valid min rule interval ",
-			alertingMinInterval: defaultIntervalSeconds + baseIntervalSeconds,
-			expOutput:           defaultIntervalSeconds + baseIntervalSeconds,
+			alertingMinInterval: defaultIntervalSeconds + defaultBaseIntervalSeconds,
+			expOutput:           defaultIntervalSeconds + defaultBaseIntervalSeconds,
 		},
 	}
 

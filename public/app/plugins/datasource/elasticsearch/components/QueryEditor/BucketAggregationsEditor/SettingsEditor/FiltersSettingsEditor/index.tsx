@@ -5,7 +5,6 @@ import { AddRemove } from '../../../../AddRemove';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { Filters } from '../../aggregations';
 import { changeBucketAggregationSetting } from '../../state/actions';
-import { BucketAggregationAction } from '../../state/types';
 import { addFilter, changeFilter, removeFilter } from './state/actions';
 import { reducer as filtersReducer } from './state/reducer';
 
@@ -14,10 +13,10 @@ interface Props {
 }
 
 export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
-  const upperStateDispatch = useDispatch<BucketAggregationAction<Filters>>();
+  const upperStateDispatch = useDispatch();
 
   const dispatch = useStatelessReducer(
-    (newState) => upperStateDispatch(changeBucketAggregationSetting(bucketAgg, 'filters', newState)),
+    (newValue) => upperStateDispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'filters', newValue })),
     bucketAgg.settings?.filters,
     filtersReducer
   );
@@ -55,7 +54,7 @@ export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
                   placeholder="Lucene Query"
                   portalOrigin="elasticsearch"
                   onBlur={() => {}}
-                  onChange={(query) => dispatch(changeFilter(index, { ...filter, query }))}
+                  onChange={(query) => dispatch(changeFilter({ index, filter: { ...filter, query } }))}
                   query={filter.query}
                 />
               </InlineField>
@@ -63,7 +62,7 @@ export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
             <InlineField label="Label" labelWidth={10}>
               <Input
                 placeholder="Label"
-                onBlur={(e) => dispatch(changeFilter(index, { ...filter, label: e.target.value }))}
+                onBlur={(e) => dispatch(changeFilter({ index, filter: { ...filter, label: e.target.value } }))}
                 defaultValue={filter.label}
               />
             </InlineField>

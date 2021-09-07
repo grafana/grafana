@@ -4,7 +4,7 @@ description = "Change which organization you are logged in with"
 weight = 300
 +++
 
-#  Change the organization you are signed in to
+# Change the organization you are signed in to
 
 When you sign in to Grafana, you are always signed in with a particular organization. If you are assigned to multiple organizations, then you might need to switch which organization you are signed in to. For example, if you need to view a dashboard associated with a different org, then you might switch organizations.
 

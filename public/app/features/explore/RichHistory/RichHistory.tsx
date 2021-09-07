@@ -29,7 +29,7 @@ export const sortOrderOptions = [
 
 export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
-  activeDatasourceInstance: string;
+  activeDatasourceInstance?: string;
   firstTab: Tabs;
   exploreId: ExploreId;
   height: number;
@@ -57,11 +57,13 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     };
   }
 
-  onChangeRetentionPeriod = (retentionPeriod: { label: string; value: number }) => {
-    this.setState({
-      retentionPeriod: retentionPeriod.value,
-    });
-    store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, retentionPeriod.value);
+  onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
+    if (retentionPeriod.value !== undefined) {
+      this.setState({
+        retentionPeriod: retentionPeriod.value,
+      });
+      store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, retentionPeriod.value);
+    }
   };
 
   toggleStarredTabAsFirstTab = () => {

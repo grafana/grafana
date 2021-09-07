@@ -144,6 +144,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
+          menuShouldPortal
           className={styles.select}
           isMulti={false}
           isClearable={false}

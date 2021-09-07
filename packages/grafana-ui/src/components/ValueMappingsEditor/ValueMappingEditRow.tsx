@@ -148,6 +148,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
             {mapping.type === MappingType.SpecialValue && (
               <Select
+                menuShouldPortal
                 value={specialMatchOptions.find((v) => v.value === mapping.specialMatch)}
                 options={specialMatchOptions}
                 onChange={onChangeSpecialMatch}

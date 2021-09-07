@@ -93,8 +93,8 @@ function getElasticsearchQuery(prometheusLabels: string[][]): string {
 }
 
 export default class ElasticsearchLanguageProvider extends LanguageProvider {
-  request: (url: string, params?: any) => Promise<any>;
-  start: () => Promise<any[]>;
+  declare request: (url: string, params?: any) => Promise<any>;
+  declare start: () => Promise<any[]>;
   datasource: ElasticDatasource;
 
   constructor(datasource: ElasticDatasource, initialValues?: any) {

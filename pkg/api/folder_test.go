@@ -217,7 +217,7 @@ type fakeFolderService struct {
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(limit int64) ([]*models.Folder, error) {
+func (s *fakeFolderService) GetFolders(limit int64, page int64) ([]*models.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
@@ -238,7 +238,7 @@ func (s *fakeFolderService) UpdateFolder(existingUID string, cmd *models.UpdateF
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(uid string) (*models.Folder, error) {
+func (s *fakeFolderService) DeleteFolder(uid string, forceDeleteRules bool) (*models.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }

@@ -29,9 +29,9 @@ func TestPluginInstallAccess(t *testing.T) {
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
 	})
-	store := testinfra.SetUpDatabase(t, dir)
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
 	store.Bus = bus.GetBus() // in order to allow successful user auth
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, cfgPath, store)
 
 	createUser(t, store, usernameNonAdmin, defaultPassword, false)
 	createUser(t, store, usernameAdmin, defaultPassword, true)

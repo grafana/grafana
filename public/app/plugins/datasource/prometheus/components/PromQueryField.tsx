@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Plugin } from 'slate';
 import {
   SlatePrism,
@@ -28,6 +29,7 @@ import {
 } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
+import { MonacoQueryFieldLazy } from './monaco-query-field/MonacoQueryFieldLazy';
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -89,7 +91,7 @@ interface PromQueryFieldState {
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: Plugin[];
-  languageProviderInitializationPromise: CancelablePromise<any>;
+  declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
@@ -279,6 +281,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, hasMetrics);
     const buttonDisabled = !(syntaxLoaded && hasMetrics);
 
+    const isMonacoEditorEnabled = config.featureToggles.prometheusMonaco;
+
     return (
       <>
         <div
@@ -295,19 +299,29 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           </button>
 
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-            <QueryField
-              additionalPlugins={this.plugins}
-              cleanText={cleanText}
-              query={query.expr}
-              onTypeahead={this.onTypeahead}
-              onWillApplySuggestion={willApplySuggestion}
-              onBlur={this.props.onBlur}
-              onChange={this.onChangeQuery}
-              onRunQuery={this.props.onRunQuery}
-              placeholder={placeholder}
-              portalOrigin="prometheus"
-              syntaxLoaded={syntaxLoaded}
-            />
+            {isMonacoEditorEnabled ? (
+              <MonacoQueryFieldLazy
+                languageProvider={languageProvider}
+                history={this.props.history}
+                onChange={this.onChangeQuery}
+                onRunQuery={this.props.onRunQuery}
+                initialValue={query.expr ?? ''}
+              />
+            ) : (
+              <QueryField
+                additionalPlugins={this.plugins}
+                cleanText={cleanText}
+                query={query.expr}
+                onTypeahead={this.onTypeahead}
+                onWillApplySuggestion={willApplySuggestion}
+                onBlur={this.props.onBlur}
+                onChange={this.onChangeQuery}
+                onRunQuery={this.props.onRunQuery}
+                placeholder={placeholder}
+                portalOrigin="prometheus"
+                syntaxLoaded={syntaxLoaded}
+              />
+            )}
           </div>
         </div>
         {labelBrowserVisible && (

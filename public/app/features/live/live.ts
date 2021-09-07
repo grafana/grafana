@@ -37,7 +37,7 @@ import {
 } from './scopes';
 import { registerLiveFeatures } from './features';
 import { contextSrv } from '../../core/services/context_srv';
-import { perf } from './perf';
+import { liveTimer } from '../dashboard/dashgrid/liveTimer';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -221,7 +221,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       let data: StreamingDataFrame | undefined = undefined;
       let filtered: DataFrame | undefined = undefined;
       let state = LoadingState.Streaming;
-      let last = perf.last;
+      let last = liveTimer.lastUpdate;
       let lastWidth = -1;
 
       const process = (msg: DataFrameJSON) => {
@@ -248,11 +248,11 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
           }
         }
 
-        const elapsed = perf.last - last;
-        if (elapsed > 1000 || perf.ok) {
+        const elapsed = liveTimer.lastUpdate - last;
+        if (elapsed > 1000 || liveTimer.ok) {
           filtered.length = data.length; // make sure they stay up-to-date
           subscriber.next({ state, data: [filtered], key });
-          last = perf.last;
+          last = liveTimer.lastUpdate;
         }
       };
 

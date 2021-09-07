@@ -41,8 +41,7 @@ can still show them if you add a new **Annotation Query** and filter by tags. Bu
 
 ### Query by tag
 
-
-You can create new queries to fetch annotations from the native annotation store via the `-- Grafana --` data source by setting *Filter by* to `Tags`. 
+You can create new queries to fetch annotations from the native annotation store via the `-- Grafana --` data source by setting _Filter by_ to `Tags`.
 
 Grafana v8.1 and later versions also support typeahead of existing tags, provide at least one tag.
 
@@ -61,6 +60,7 @@ open the dashboard settings menu, then select `Annotations`. This will open the 
 settings view. To create a new annotation query hit the `New` button.
 
 <!--![](/static/img/docs/v50/annotation_new_query.png)-->
+
 {{< figure src="/static/img/docs/v50/annotation_new_query.png" max-width="600px" >}}
 
 Specify a name for the annotation query. This name is given to the toggle (checkbox) that will allow

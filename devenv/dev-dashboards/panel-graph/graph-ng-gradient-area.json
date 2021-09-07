@@ -92,7 +92,6 @@
       "interval": "1m",
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
@@ -181,7 +180,6 @@
       "links": [],
       "maxDataPoints": 10,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
@@ -270,7 +268,6 @@
       "links": [],
       "maxDataPoints": 20,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
@@ -358,7 +355,6 @@
       "interval": "1m",
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
@@ -447,7 +443,6 @@
       "links": [],
       "maxDataPoints": 80,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
@@ -536,7 +531,6 @@
       "links": [],
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
