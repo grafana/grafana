@@ -13,7 +13,9 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 ## Table of contents
 
 - [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
-  - [8.0 deprecations](#80-deprecations)
+  - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
+  - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
+  - [Data frames can now be in either wide or long format](#data-frames-can-now-be-in-either-wide-or-long-format)
 - [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
   - [Legend components](#legend-components)
 - [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
@@ -25,6 +27,8 @@ This guide explains how to migrate Grafana plugins from previous version to the 
   - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
 
 ## From version 7.x.x to 8.x.x
+
+### Backend plugin v1 support has been dropped
 
 ### 8.0 deprecations
 
@@ -42,9 +46,8 @@ import { LegendItem, LegendOptions, GraphLegend } from '@grafana/ui';
 import { VizLegendItem, VizLegendOptions, VizLegend } from '@grafana/ui';
 ```
 
-The values for the `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'` so you can not place the legend above the visualization anymore.
-
-The `isVisible` in the `LegendItem` has been renamed to `disabled` in `VizLegendItem`.
+- `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'` so you can not place the legend above the visualization anymore.
+- The `isVisible` in the `LegendItem` has been renamed to `disabled` in `VizLegendItem`.
 
 ## From version 6.x.x to 7.x.x
 
@@ -175,3 +178,5 @@ For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
 ### Troubleshoot plugin migration
 
 As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
+
+### 7.0 Deprecations
