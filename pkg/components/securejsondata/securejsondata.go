@@ -23,8 +23,6 @@ func (s SecureJsonData) DecryptedValue(key string) (string, bool) {
 	return "", false
 }
 
-// Decrypt returns map of the same type but where the all the values are decrypted. Opposite of what
-// GetEncryptedJsonData is doing.
 func (s SecureJsonData) Decrypt() map[string]string {
 	decrypted := make(map[string]string)
 	for key, data := range s {
@@ -38,7 +36,6 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	return decrypted
 }
 
-// GetEncryptedJsonData returns map where all keys are encrypted.
 func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
 	encrypted := make(SecureJsonData)
 	for key, data := range sjd {

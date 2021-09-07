@@ -9,7 +9,6 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -337,7 +336,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 	})
 }
 
-func TestDataSource_getTimeout(t *testing.T) {
+func TestService_getTimeout(t *testing.T) {
 	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
 	sdkhttpclient.DefaultTimeoutOptions.Timeout = 60 * time.Second
 	t.Cleanup(func() {
@@ -366,29 +365,35 @@ func TestDataSource_getTimeout(t *testing.T) {
 	}
 }
 
-func TestDataSource_DecryptedValue(t *testing.T) {
+func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
-		ds := models.DataSource{
-			Id:       1,
-			Type:     models.DS_INFLUXDB_08,
-			JsonData: simplejson.New(),
-			User:     "user",
-			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
-				"password": "password",
-			}),
-		}
-
 		encryptionService := ossencryption.ProvideService()
 		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		encryptedJsonData, err := encryptionService.EncryptJsonData(map[string]string{
+			"password": "password",
+		}, setting.SecretKey)
+		require.NoError(t, err)
+
+		ds := models.DataSource{
+			Id:             1,
+			Type:           models.DS_INFLUXDB_08,
+			JsonData:       simplejson.New(),
+			User:           "user",
+			SecureJsonData: encryptedJsonData,
+		}
 
 		// Populate cache
 		password, ok := dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+		encryptedJsonData, err = encryptionService.EncryptJsonData(map[string]string{
 			"password": "",
-		})
+		}, setting.SecretKey)
+		require.NoError(t, err)
+
+		ds.SecureJsonData = encryptedJsonData
 
 		password, ok = dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
@@ -430,7 +435,7 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 	})
 }
 
-func TestDataSource_HTTPClientOptions(t *testing.T) {
+func TestService_HTTPClientOptions(t *testing.T) {
 	emptyJsonData := simplejson.New()
 	emptySecureJsonData := map[string][]byte{}
 

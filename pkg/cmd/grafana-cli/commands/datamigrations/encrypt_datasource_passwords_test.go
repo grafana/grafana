@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,12 +31,14 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	for _, ds := range datasources {
 		ds.Created = time.Now()
 		ds.Updated = time.Now()
+
 		if ds.Name == "elasticsearch" {
-			ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
-				"key": "value",
-			})
+			key, err := util.Encrypt([]byte("value"), setting.SecretKey)
+			require.NoError(t, err)
+
+			ds.SecureJsonData = map[string][]byte{"key": key}
 		} else {
-			ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{})
+			ds.SecureJsonData = map[string][]byte{}
 		}
 	}
 

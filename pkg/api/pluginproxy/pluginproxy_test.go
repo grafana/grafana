@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -159,11 +160,20 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+			encryptedJsonData, err := ossencryption.ProvideService().EncryptJsonData(
+				map[string]string{"key": "123"},
+				setting.SecretKey,
+			)
+
+			if err != nil {
+				return err
+			}
+
 			query.Result = &models.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",
 				},
-				SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{"key": "123"}),
+				SecureJsonData: encryptedJsonData,
 			}
 			return nil
 		})
