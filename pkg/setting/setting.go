@@ -446,6 +446,10 @@ func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 	return cfg.FeatureToggles["disable_http_request_histogram"]
 }
 
+func (cfg Cfg) IsNewNavigationEnabled() bool {
+	return cfg.FeatureToggles["newNavigation"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
