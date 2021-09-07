@@ -2,7 +2,7 @@ package builtin
 
 const (
 	// QueryTypeRandomWalk retuns a random walk
-	queryTypeRandomWalk = "randomwalk"
+	queryTypeRandomWalk = "randomWalk"
 
 	// QueryTypeList will list the files in a folder
 	queryTypeList = "list"

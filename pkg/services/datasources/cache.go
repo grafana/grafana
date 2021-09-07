@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,10 +35,12 @@ func (dc *CacheServiceImpl) GetDatasource(
 ) (*models.DataSource, error) {
 	if datasourceID == -1 {
 		return &models.DataSource{
-			Type:  "grafana",
-			OrgId: user.OrgId,
-			Id:    -1,
-			Name:  "-- Grafana --",
+			Type:           "grafana",
+			OrgId:          user.OrgId,
+			Id:             -1,
+			Name:           "-- Grafana --",
+			JsonData:       simplejson.New(),
+			SecureJsonData: make(securejsondata.SecureJsonData),
 		}, nil
 	}
 	cacheKey := idKey(datasourceID)
