@@ -278,6 +278,10 @@ func (uss *UsageStatsService) RegisterMetricsFunc(fn MetricsFunc) {
 }
 
 func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
+	if !uss.Cfg.ReportingEnabled {
+		return nil
+	}
+
 	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
 	report, err := uss.GetUsageReport(ctx)

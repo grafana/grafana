@@ -80,12 +80,10 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-sendReportTicker.C:
-			if uss.Cfg.ReportingEnabled {
-				if err := uss.sendUsageStats(ctx); err != nil {
-					metricsLogger.Warn("Failed to send usage stats", "err", err)
-				}
+			if err := uss.sendUsageStats(ctx); err != nil {
+				metricsLogger.Warn("Failed to send usage stats", "err", err)
 			}
-			// always reset stats every report tick
+			// always reset live stats every report tick
 			uss.resetLiveStats()
 		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
