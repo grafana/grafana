@@ -21,7 +21,6 @@ import (
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
 	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
 	pluginSettingsService *pluginsettings.Service) *Provider {
-
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,

@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -142,7 +146,8 @@ func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	manager := &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM,
 	}
-	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{}, dsService)
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
