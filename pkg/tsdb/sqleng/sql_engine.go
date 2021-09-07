@@ -208,6 +208,7 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 	return result, nil
 }
 
+//nolint: gocyclo
 func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
 	ch chan DBDataResponse, queryJson QueryJson) {
 	defer wg.Done()
