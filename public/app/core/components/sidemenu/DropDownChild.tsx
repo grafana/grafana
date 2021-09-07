@@ -16,6 +16,11 @@ const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
   const iconClassName = css`
     margin-right: ${theme.spacing(1)};
   `;
+  const resetButtonStyles = css`
+    background-color: transparent;
+    border: none;
+    width: 100%;
+  `;
 
   const linkContent = (
     <>
@@ -24,9 +29,13 @@ const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
     </>
   );
 
-  let anchor = <a onClick={onClick}>{linkContent}</a>;
+  let element = (
+    <button className={resetButtonStyles} onClick={onClick}>
+      {linkContent}
+    </button>
+  );
   if (url) {
-    anchor =
+    element =
       !target && url.startsWith('/') ? (
         <Link onClick={onClick} href={url}>
           {linkContent}
@@ -38,7 +47,7 @@ const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
       );
   }
 
-  return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{anchor}</li>;
+  return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{element}</li>;
 };
 
 export default DropDownChild;

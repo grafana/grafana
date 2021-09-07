@@ -29,7 +29,7 @@ const TopSection = () => {
             url={link.url}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link.img && <img src={link.img} />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
           </SideMenuItem>
         );
       })}

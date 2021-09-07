@@ -64,6 +64,21 @@ describe('Language completion provider', () => {
     });
   });
 
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {},
+        { end: '1', 'match[]': '{job="grafana"}', start: '0' }
+      );
+    });
+  });
+
   describe('empty query suggestions', () => {
     it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
