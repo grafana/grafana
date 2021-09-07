@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/silence"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -73,6 +75,24 @@ const (
 }
 `
 )
+
+func init() {
+	silence.ValidateMatcher = func(m *pb.Matcher) error {
+		switch m.Type {
+		case pb.Matcher_EQUAL, pb.Matcher_NOT_EQUAL:
+			if !model.LabelValue(m.Pattern).IsValid() {
+				return fmt.Errorf("invalid label value %q", m.Pattern)
+			}
+		case pb.Matcher_REGEXP, pb.Matcher_NOT_REGEXP:
+			if _, err := regexp.Compile(m.Pattern); err != nil {
+				return fmt.Errorf("invalid regular expression %q: %s", m.Pattern, err)
+			}
+		default:
+			return fmt.Errorf("unknown matcher type %q", m.Type)
+		}
+		return nil
+	}
+}
 
 type Alertmanager struct {
 	logger      log.Logger
@@ -636,9 +656,8 @@ func validateLabelSet(ls model.LabelSet) error {
 	return nil
 }
 
-// isValidLabelName is ln.IsValid() while additionally allowing spaces.
-// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
-// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+// isValidLabelName is ln.IsValid() without restrictions other than it can not be empty.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$.
 func isValidLabelName(ln model.LabelName) bool {
 	if len(ln) == 0 {
 		return false
