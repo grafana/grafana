@@ -1,9 +1,10 @@
 import { createSlice, createEntityAdapter, EntityState, AnyAction } from '@reduxjs/toolkit';
+import { PluginsState } from 'app/types';
 import { fetchAll, fetchDetails } from './actions';
 import { CatalogPlugin, RequestInfo, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
 
-type ReducerState = {
+type ReducerState = PluginsState & {
   items: EntityState<CatalogPlugin>;
   requests: Record<string, RequestInfo>;
 };
@@ -25,7 +26,19 @@ const getOriginalActionType = (type: string) => {
 
 export const { reducer } = createSlice({
   name: 'plugins',
-  initialState: { items: pluginsAdapter.getInitialState(), requests: {} } as ReducerState,
+  initialState: {
+    items: pluginsAdapter.getInitialState(),
+    requests: {},
+    // Backwards compatibility
+    // (we need to have these in the store as well until other parts of the app are changed)
+    plugins: [],
+    errors: [],
+    searchQuery: '',
+    hasFetched: false,
+    dashboards: [],
+    isLoadingPluginDashboards: false,
+    panels: {},
+  } as ReducerState,
   reducers: {},
   extraReducers: (builder) =>
     builder
