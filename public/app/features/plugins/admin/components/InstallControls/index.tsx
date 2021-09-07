@@ -13,25 +13,24 @@ import { InstallControlsButton } from './InstallControlsButton';
 
 interface Props {
   plugin: CatalogPlugin;
-  isInflight: boolean;
-  hasUpdate: boolean;
-  hasInstalledPanel: boolean;
-  isInstalled: boolean;
-  dispatch: React.Dispatch<any>;
 }
 
-export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, hasInstalledPanel, dispatch }: Props) => {
+export const InstallControls = ({ plugin }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = isGrafanaAdmin();
   const grafanaDependency = plugin.details?.grafanaDependency;
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
-        // needed for when running against master
+        // needed for when running against main
         includePrerelease: true,
       })
     : false;
-  const pluginStatus = isInstalled ? (hasUpdate ? PluginStatus.UPDATE : PluginStatus.UNINSTALL) : PluginStatus.INSTALL;
+  const pluginStatus = plugin.isInstalled
+    ? plugin.hasUpdate
+      ? PluginStatus.UPDATE
+      : PluginStatus.UNINSTALL
+    : PluginStatus.INSTALL;
 
   if (plugin.isCore) {
     return null;
@@ -79,15 +78,7 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
     return <ExternallyManagedButton pluginId={plugin.id} pluginStatus={pluginStatus} />;
   }
 
-  return (
-    <InstallControlsButton
-      isInProgress={isInflight}
-      dispatch={dispatch}
-      plugin={plugin}
-      pluginStatus={pluginStatus}
-      hasInstalledPanel={hasInstalledPanel}
-    />
-  );
+  return <InstallControlsButton plugin={plugin} pluginStatus={pluginStatus} />;
 };
 
 export const getStyles = (theme: GrafanaTheme2) => {
