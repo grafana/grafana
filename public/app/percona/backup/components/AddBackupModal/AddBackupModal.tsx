@@ -237,7 +237,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 disabled={!valid || pristine}
                 loading={submitting}
               >
-                {!!backup ? Messages.editAction : scheduleMode ? Messages.scheduleAction : Messages.backupAction}
+                {Messages.getSubmitButtonText(scheduleMode, !!backup)}
               </LoaderButton>
               <Button data-qa="storage-location-cancel-button" variant="secondary" onClick={onClose}>
                 {Messages.cancelAction}

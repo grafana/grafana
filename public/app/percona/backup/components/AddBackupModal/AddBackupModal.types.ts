@@ -37,4 +37,5 @@ export interface AddBackupFormProps {
   startMinute?: Array<SelectableValue<number>>;
   logs?: boolean;
   active?: boolean;
+  vendor: string;
 }
