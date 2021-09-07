@@ -163,7 +163,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
                   width={13}
                   tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
                 >
-                  Accepted Cookies
+                  Allowed cookies
                 </InlineFormLabel>
                 <TagsInput
                   tags={dataSourceConfig.jsonData.keepCookies}
