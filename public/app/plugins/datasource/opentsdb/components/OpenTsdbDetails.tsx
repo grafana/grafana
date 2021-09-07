@@ -48,7 +48,7 @@ export const OpenTsdbDetails = (props: Props) => {
         />
       </div>
       <div className="gf-form">
-        <InlineFormLabel width={7}>Lookup Limit</InlineFormLabel>
+        <InlineFormLabel width={7}>Lookup limit</InlineFormLabel>
         <Input
           type="number"
           value={value.jsonData.lookupLimit ?? 1000}
