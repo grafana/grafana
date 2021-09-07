@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -208,7 +209,6 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 	return result, nil
 }
 
-//nolint: gocyclo
 func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
 	ch chan DBDataResponse, queryJson QueryJson) {
 	defer wg.Done()
@@ -301,18 +301,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	if qm.timeIndex != -1 {
-		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			errAppendDebug("db convert time column failed", err, interpolatedQuery)
-			return
-		}
-	}
-
-	if qm.timeEndIndex != -1 {
-		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
-			errAppendDebug("db convert timeend column failed", err, interpolatedQuery)
-			return
-		}
+	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
+		errAppendDebug("converting time columns failed", err, interpolatedQuery)
+		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
@@ -835,6 +826,22 @@ func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 			newField.Append(&value)
 		}
 	}
+}
+
+func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
+	if qm.timeIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
+			return errutil.Wrap("failed to convert time column", err)
+		}
+	}
+
+	if qm.timeEndIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
+			return errutil.Wrap("failed to convert timeend column", err)
+		}
+	}
+
+	return nil
 }
 
 // convertSQLTimeColumnToEpochMS converts column named time to unix timestamp in milliseconds

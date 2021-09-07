@@ -1163,6 +1163,32 @@ func TestMSSQL(t *testing.T) {
 			// Should be in time.Time
 			require.Nil(t, frames[0].Fields[0].At(0))
 		})
+
+		t.Run("When doing an annotation query with a time and timeend column should return two fields of type time", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT 1631053772276 as time, 1631054012276 as timeend, '' as text, '' as tags",
+							"format": "table"
+						}`),
+						RefID: "A",
+					},
+				},
+			}
+
+			resp, err := endpoint.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames := queryResult.Frames
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 4, len(frames[0].Fields))
+
+			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[0].Type())
+			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[1].Type())
+		})
 	})
 }
 
