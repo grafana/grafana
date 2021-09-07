@@ -110,9 +110,27 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
   const renderMarker = useCallback(
     (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      let markerStyle;
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(dataFrameFieldIndex.fieldIndex);
-      return <AnnotationMarker annotation={annotation} timeZone={timeZone} />;
+      const isRegionAnnotation = Boolean(annotation.isRegion);
+
+      if (isRegionAnnotation && plotInstance.current) {
+        let x0 = plotInstance.current.valToPos(annotation.time, 'x');
+        let x1 = plotInstance.current.valToPos(annotation.timeEnd, 'x');
+
+        // markers are rendered relatively to uPlot canvas overly, not caring about axes width
+        if (x0 < 0) {
+          x0 = 0;
+        }
+
+        if (x1 > plotInstance.current.bbox.width / window.devicePixelRatio) {
+          x1 = plotInstance.current.bbox.width / window.devicePixelRatio;
+        }
+        markerStyle = { width: `${x1 - x0}px` };
+      }
+
+      return <AnnotationMarker annotation={annotation} timeZone={timeZone} style={markerStyle} />;
     },
     [timeZone]
   );
