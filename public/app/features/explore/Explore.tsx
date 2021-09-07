@@ -362,8 +362,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {logsVolumeLoadingInProgress && !logsVolume && (
                             <Collapse label="Logs volume" isOpen={true}>
                               <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
-                                Logs volume is loading... <Button size="md">Cancel</Button>
-                                {/** CODE: Support logs volume cancellation **/}
+                                Logs volume is loading...
                               </div>
                             </Collapse>
                           )}
