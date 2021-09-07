@@ -28,12 +28,13 @@ export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, asy
 
 export const install = createAsyncThunk(
   `${STATE_PREFIX}/install`,
-  async ({ id, version }: { id: string; version: string }, thunkApi) => {
+  async ({ id, version, isUpdating = false }: { id: string; version: string; isUpdating?: boolean }, thunkApi) => {
+    const changes = isUpdating ? { isInstalled: true, hasUpdate: false } : { isInstalled: true };
     try {
       await installPlugin(id, version);
       return {
         id,
-        changes: { isInstalled: true },
+        changes,
       } as Update<CatalogPlugin>;
     } catch (e) {
       // TODO<add more error handling here>

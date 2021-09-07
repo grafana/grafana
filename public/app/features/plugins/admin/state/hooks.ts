@@ -26,7 +26,7 @@ export const useGetSingle = (id: string): CatalogPlugin | undefined => {
 export const useInstall = () => {
   const dispatch = useDispatch();
 
-  return (id: string, version: string) => dispatch(install({ id, version }));
+  return (id: string, version: string, isUpdating?: boolean) => dispatch(install({ id, version, isUpdating }));
 };
 
 export const useUninstall = () => {

@@ -39,7 +39,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   };
 
   const onUpdate = async () => {
-    await install(plugin.id, plugin.version);
+    await install(plugin.id, plugin.version, true);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }
