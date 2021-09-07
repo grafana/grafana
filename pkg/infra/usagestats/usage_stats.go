@@ -77,7 +77,6 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
-	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 
 	liveUsersAvg := 0
 	liveClientsAvg := 0
@@ -279,9 +278,6 @@ func (uss *UsageStatsService) RegisterMetricsFunc(fn MetricsFunc) {
 }
 
 func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
-	if !uss.Cfg.ReportingEnabled {
-		return nil
-	}
 
 	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
@@ -294,11 +290,9 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	data := bytes.NewBuffer(out)
 	sendUsageStats(data)
-
-	uss.resetLiveStats()
-
 	return nil
 }
 
