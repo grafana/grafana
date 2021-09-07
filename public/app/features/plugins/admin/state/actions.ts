@@ -1,7 +1,7 @@
 import { createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
-import { StoreState } from 'app/types';
+import { StoreState, ThunkResult } from 'app/types';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 import { getCatalogPlugins, getPluginDetails, installPlugin, uninstallPlugin } from '../api';
 import { STATE_PREFIX } from '../constants';
@@ -60,9 +60,9 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
   }
 });
 
-// Action needed for backwards compatibility
-// Originally location: public/app/features/plugins/state/actions.ts
-// TODO<get rid of this this once the "plugin_admin_enabled" feature flag is removed>
+// We need this to be backwards-compatible with other parts of Grafana.
+// (Originally in "public/app/features/plugins/state/actions.ts")
+// TODO<remove once the "plugin_admin_enabled" feature flag is removed>
 export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPluginDashboards`, async (_, thunkApi) => {
   const state = thunkApi.getState() as StoreState;
   const dataSourceType = state.dataSources.dataSource.type;
@@ -71,24 +71,27 @@ export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPlugin
   return getBackendSrv().get(url);
 });
 
-// Action needed for backwards compatibility
-// Original location: public/app/features/plugins/state/actions.ts
-// TODO<get rid of this this once the "plugin_admin_enabled" feature flag is removed>
-export const loadPanelPlugin = createAsyncThunk<PanelPlugin, string, { state: StoreState }>(
-  `${STATE_PREFIX}/loadPanelPlugin`,
-  async (id: string, thunkApi) => {
-    const plugin = thunkApi.getState().plugins.panels[id];
+// We need this to be backwards-compatible with other parts of Grafana.
+// (Originally in "public/app/features/plugins/state/actions.ts")
+// It cannot be constructed with `createAsyncThunk()` as we need the return value on the call-site,
+// and we cannot easily change the call-site to unwrap the result.
+// TODO<remove once the "plugin_admin_enabled" feature flag is removed>
+export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> => {
+  return async (dispatch, getStore) => {
+    let plugin = getStore().plugins.panels[id];
 
     if (!plugin) {
-      return importPanelPlugin(id);
+      plugin = await importPanelPlugin(id);
 
-      // I don't think it's needed?
       // second check to protect against raise condition
-      // if (!state.plugins.panels[id]) {
-      //   thunkApi.dispatch(panelPluginLoaded(plugin));
-      // }
+      if (!getStore().plugins.panels[id]) {
+        dispatch({
+          type: `${STATE_PREFIX}/loadPanelPlugin/fulfilled`,
+          payload: plugin,
+        });
+      }
     }
 
     return plugin;
-  }
-);
+  };
+};

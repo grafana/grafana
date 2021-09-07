@@ -1,9 +1,10 @@
 import { createSlice, createEntityAdapter, EntityState, AnyAction } from '@reduxjs/toolkit';
 import { PluginsState } from 'app/types';
-import { fetchAll, fetchDetails, install, uninstall, loadPanelPlugin, loadPluginDashboards } from './actions';
+import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards } from './actions';
 import { CatalogPlugin, RequestInfo, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
 
+// TODO<remove `PluginsState &` once the "plugin_admin_enabled" feature flag is removed>
 type ReducerState = PluginsState & {
   items: EntityState<CatalogPlugin>;
   requests: Record<string, RequestInfo>;
@@ -30,7 +31,8 @@ export const { reducer } = createSlice({
     items: pluginsAdapter.getInitialState(),
     requests: {},
     // Backwards compatibility
-    // (we need to have these in the store as well until other parts of the app are changed)
+    // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
+    // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
     plugins: [],
     errors: [],
     searchQuery: '',
@@ -58,13 +60,19 @@ export const { reducer } = createSlice({
       .addCase(uninstall.fulfilled, (state, action) => {
         pluginsAdapter.updateOne(state.items, action.payload);
       })
-      .addCase(loadPanelPlugin.fulfilled, (state, action) => {
+      // Load a panel plugin (backward-compatibility)
+      // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
+      .addCase(`${STATE_PREFIX}/loadPanelPlugin/fulfilled`, (state, action: AnyAction) => {
         state.panels[action.payload.meta!.id] = action.payload;
       })
+      // Start loading panel dashboards (backward-compatibility)
+      // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
       .addCase(loadPluginDashboards.pending, (state, action) => {
         state.isLoadingPluginDashboards = true;
         state.dashboards = [];
       })
+      // Load panel dashboards (backward-compatibility)
+      // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
       .addCase(loadPluginDashboards.fulfilled, (state, action) => {
         state.isLoadingPluginDashboards = false;
         state.dashboards = action.payload;
