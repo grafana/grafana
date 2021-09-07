@@ -60,5 +60,12 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
     return null;
   }
 
-  return <XYCanvas>{eventMarkers}</XYCanvas>;
+  return (
+    <XYCanvas
+      left={plotInstance.current.bbox.left / window.devicePixelRatio}
+      top={plotInstance.current.bbox.top / window.devicePixelRatio}
+    >
+      {eventMarkers}
+    </XYCanvas>
+  );
 }
