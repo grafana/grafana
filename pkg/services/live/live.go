@@ -113,9 +113,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
 			Prefix: "gf_live",
 
-			// We are using Redis streams here for history. Require Redis >= 5.
-			UseStreams: true,
-
 			// Use reasonably large expiration interval for stream meta key,
 			// much bigger than maximum HistoryLifetime value in Node config.
 			// This way stream meta data will expire, in some cases you may want
