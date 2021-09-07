@@ -1,4 +1,4 @@
-package tsdb
+package intervalv2
 
 import (
 	"fmt"
@@ -101,6 +101,11 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 // queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
 // queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
 func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
+	// Apparently we are setting default value of queryInterval to 0s now
+	if queryInterval == "0s" {
+		queryInterval = ""
+	}
+
 	if queryInterval == "" {
 		if queryIntervalMS != 0 {
 			return time.Duration(queryIntervalMS) * time.Millisecond, nil

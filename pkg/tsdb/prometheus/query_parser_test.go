@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 var now = time.Now()
 
 func TestPrometheusQueryParser_calculateStep(t *testing.T) {
-	calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
+	calculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 	expr := "test"
 	timeRange := backend.TimeRange{
 		From: now,
@@ -45,7 +45,7 @@ func TestPrometheusQueryParser_calculateStep(t *testing.T) {
 
 func TestPrometheusQueryParser_parseQuery(t *testing.T) {
 	service := Service{
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
 	t.Run("parsing query model with step and default stepMode", func(t *testing.T) {

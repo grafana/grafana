@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type QueryModel struct {
@@ -62,11 +62,11 @@ func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery)
 	return queryModel
 }
 
-func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery, intervalCalculator tsdb.Calculator) (time.Duration, error) {
+func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
 	intervalMode := "min"
 	hasQueryInterval := model.Interval != ""
 
-	foundInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), 15*time.Second)
+	foundInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
@@ -75,7 +75,7 @@ func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQue
 		intervalMode = model.StepMode
 	}
 	// Calculate interval value from query or data source settings or use default value
-	calculatedInterval, err := intervalCalculator.Calculate(query.TimeRange, foundInterval, tsdb.IntervalMode(intervalMode))
+	calculatedInterval, err := intervalCalculator.Calculate(query.TimeRange, foundInterval, intervalv2.IntervalMode(intervalMode))
 	if err != nil {
 		return time.Duration(0), err
 	}

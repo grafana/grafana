@@ -1,4 +1,4 @@
-load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
+load('scripts/star/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.4.2'
 build_image = 'grafana/build-container:1.4.2'
@@ -11,70 +11,6 @@ dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
-def pipeline(
-    name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
-    is_downstream=False, install_deps=True,
-    ):
-    if platform != 'windows':
-        platform_conf = {
-            'platform': {
-                'os': 'linux',
-                'arch': 'amd64'
-            },
-            # A shared cache is used on the host
-            # To avoid issues with parallel builds, we run this repo on single build agents
-            'node': {
-                'type': 'no-parallel'
-            }
-        }
-    else:
-        platform_conf = {
-            'platform': {
-                'os': 'windows',
-                'arch': 'amd64',
-                'version': '1809',
-            }
-        }
-
-    pipeline = {
-        'kind': 'pipeline',
-        'type': 'docker',
-        'name': name,
-        'trigger': trigger,
-        'services': services,
-        'steps': init_steps(
-            edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
-        ) + steps,
-        'depends_on': depends_on,
-    }
-    pipeline.update(platform_conf)
-
-    if edition in ('enterprise', 'enterprise2'):
-        pipeline['image_pull_secrets'] = [pull_secret]
-        # We have a custom clone step for enterprise
-        pipeline['clone'] = {
-            'disable': True,
-        }
-
-    return pipeline
-
-def notify_pipeline(name, slack_channel, trigger, depends_on=[]):
-    trigger = dict(trigger, status = ['failure'])
-    return {
-        'kind': 'pipeline',
-        'type': 'docker',
-        'platform': {
-            'os': 'linux',
-            'arch': 'amd64',
-        },
-        'name': name,
-        'trigger': trigger,
-        'steps': [
-            slack_step(slack_channel),
-        ],
-        'depends_on': depends_on,
-    }
-
 def slack_step(channel):
     return {
         'name': 'slack',
@@ -86,7 +22,7 @@ def slack_step(channel):
         },
     }
 
-def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=True):
+def initialize_step(edition, platform, ver_mode, is_downstream=False, install_deps=True):
     if platform == 'windows':
         return [
             {
@@ -215,7 +151,7 @@ def enterprise_downstream_step(edition):
 
 def lint_backend_step(edition):
     return {
-        'name': 'lint-backend' + enterprise2_sfx(edition),
+        'name': 'lint-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -247,17 +183,6 @@ def benchmark_ldap_step():
             './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
             'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
-    }
-
-def ldap_service():
-    return {
-        'name': 'ldap',
-        'image': 'osixia/openldap:1.4.0',
-        'environment': {
-          'LDAP_ADMIN_PASSWORD': 'grafana',
-          'LDAP_DOMAIN': 'grafana.org',
-          'SLAPD_ADDITIONAL_MODULES': 'memberof',
-        },
     }
 
 def build_storybook_step(edition, ver_mode):
@@ -315,12 +240,12 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
-def upload_cdn(edition):
+def upload_cdn_step(edition):
     return {
-        'name': 'upload-cdn-assets' + enterprise2_sfx(edition),
+        'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
@@ -367,10 +292,10 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         ]
 
     return {
-        'name': 'build-backend' + enterprise2_sfx(edition),
+        'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'test-backend' + enterprise2_sfx(edition),
+            'test-backend' + enterprise2_suffix(edition),
         ],
         'environment': env,
         'commands': cmds,
@@ -449,7 +374,7 @@ def test_backend_step(edition, tries=None):
         test_backend_cmd += ' --tries {}'.format(tries)
         integration_tests_cmd += ' --tries {}'.format(tries)
     return {
-        'name': 'test-backend' + enterprise2_sfx(edition),
+        'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
             'lint-backend',
@@ -481,14 +406,14 @@ def test_frontend_step():
 
 def test_a11y_frontend_step(edition, port=3001):
     return {
-        'name': 'test-a11y-frontend' + enterprise2_sfx(edition),
+        'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
         'image': 'buildkite/puppeteer',
         'depends_on': [
-          'end-to-end-tests-server' + enterprise2_sfx(edition),
+          'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
          'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
         'failure': 'ignore',
@@ -506,7 +431,7 @@ def frontend_metrics_step(edition):
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'test-a11y-frontend' + enterprise2_sfx(edition),
+            'test-a11y-frontend' + enterprise2_suffix(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
@@ -625,7 +550,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         ]
 
     return {
-        'name': 'package' + enterprise2_sfx(edition),
+        'name': 'package' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
             # This step should have all the dependencies required for packaging, and should generate
@@ -639,7 +564,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
 def e2e_tests_server_step(edition, port=3001):
     package_file_pfx = ''
     if edition == 'enterprise2':
-        package_file_pfx = 'grafana' + enterprise2_sfx(edition)
+        package_file_pfx = 'grafana' + enterprise2_suffix(edition)
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
 
@@ -651,11 +576,11 @@ def e2e_tests_server_step(edition, port=3001):
         environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
 
     return {
-        'name': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+        'name': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         'image': build_image,
         'detach': True,
         'depends_on': [
-            'package' + enterprise2_sfx(edition),
+            'package' + enterprise2_suffix(edition),
         ],
         'environment': environment,
         'commands': [
@@ -668,13 +593,13 @@ def e2e_tests_step(edition, port=3001, tries=None):
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
-        'name': 'end-to-end-tests' + enterprise2_sfx(edition),
+        'name': 'end-to-end-tests' + enterprise2_suffix(edition),
         'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
-            'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
         },
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
@@ -858,7 +783,7 @@ def push_to_deployment_tools_step(edition, is_downstream=False):
         },
     }
 
-def enterprise2_sfx(edition):
+def enterprise2_suffix(edition):
     if edition == 'enterprise2':
         return '-{}'.format(edition)
     return ''
@@ -867,7 +792,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
-    packages_bucket = ' --packages-bucket grafana-downloads' + enterprise2_sfx(edition)
+    packages_bucket = ' --packages-bucket grafana-downloads' + enterprise2_suffix(edition)
 
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
@@ -876,7 +801,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     dependencies = [
-        'end-to-end-tests' + enterprise2_sfx(edition),
+        'end-to-end-tests' + enterprise2_suffix(edition),
         'mysql-integration-tests',
         'postgres-integration-tests',
     ]
@@ -886,7 +811,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
       dependencies.append('memcached-integration-tests')
 
     return {
-        'name': 'upload-packages' + enterprise2_sfx(edition),
+        'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': dependencies,
         'environment': {
@@ -1053,43 +978,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
 
     return steps
 
-def integration_test_services(edition):
-    services = [
-        {
-            'name': 'postgres',
-            'image': 'postgres:12.3-alpine',
-            'environment': {
-              'POSTGRES_USER': 'grafanatest',
-              'POSTGRES_PASSWORD': 'grafanatest',
-              'POSTGRES_DB': 'grafanatest',
-            },
-        },
-        {
-            'name': 'mysql',
-            'image': 'mysql:5.6.48',
-            'environment': {
-                'MYSQL_ROOT_PASSWORD': 'rootpass',
-                'MYSQL_DATABASE': 'grafana_tests',
-                'MYSQL_USER': 'grafana',
-                'MYSQL_PASSWORD': 'password',
-            },
-        },
-    ]
-
-    if edition in ('enterprise', 'enterprise2'):
-        services.extend([{
-            'name': 'redis',
-            'image': 'redis:6.2.1-alpine',
-            'environment': {},
-        }, {
-            'name': 'memcached',
-            'image': 'memcached:1.6.9-alpine',
-            'environment': {},
-        }])
-
-    return services
-
-def validate_scuemata():
+def validate_scuemata_step():
     return {
         'name': 'validate-scuemata',
         'image': build_image,
