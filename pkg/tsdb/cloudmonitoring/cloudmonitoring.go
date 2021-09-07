@@ -156,6 +156,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 // the time series or table format
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
+	if len(req.Queries) == 0 {
+		return resp, fmt.Errorf("query contains no queries")
+	}
 
 	model := &QueryModel{}
 	err := json.Unmarshal(req.Queries[0].JSON, model)
@@ -258,7 +261,6 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 
 func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
 	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
-
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
