@@ -1,8 +1,9 @@
+import { isArray } from 'angular';
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
 import { FetchError } from '@grafana/runtime';
-import { isArray } from 'angular';
-import { appEvents } from 'app/core/core';
 import { AppEvents } from '@grafana/data';
+
+import { appEvents } from 'app/core/core';
 
 export interface AsyncRequestState<T> {
   result?: T;
@@ -68,7 +69,9 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     initialState: initialAsyncRequestState as AsyncRequestState<T>,
     reducers: {},
     extraReducers: (builder) =>
-      builder.addDefaultCase((state, action: AsyncRequestAction<T>) => requestStateReducer(asyncThunk, state, action)),
+      builder.addDefaultCase((state, action) =>
+        requestStateReducer(asyncThunk, state, (action as unknown) as AsyncRequestAction<T>)
+      ),
   });
 }
 
@@ -87,12 +90,13 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     initialState: {} as AsyncRequestMapSlice<T>,
     reducers: {},
     extraReducers: (builder) =>
-      builder.addDefaultCase((state, action: AsyncRequestAction<T>) => {
+      builder.addDefaultCase((state, action) => {
         if (isAsyncThunkAction(asyncThunk)(action)) {
-          const entityId = getEntityId(action.meta.arg);
+          const asyncAction = (action as unknown) as AsyncRequestAction<T>;
+          const entityId = getEntityId(asyncAction.meta.arg);
           return {
             ...state,
-            [entityId]: requestStateReducer(asyncThunk, state[entityId], action),
+            [entityId]: requestStateReducer(asyncThunk, state[entityId], asyncAction),
           };
         }
         return state;
