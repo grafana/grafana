@@ -7,7 +7,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,7 +16,7 @@ func TestSearchRequest(t *testing.T) {
 		timeField := "@timestamp"
 		Convey("Given new search request builder for es version 5", func() {
 			version5, _ := semver.NewVersion("5.0.0")
-			b := NewSearchRequestBuilder(version5, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b := NewSearchRequestBuilder(version5, intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			Convey("When building search request", func() {
 				sr, err := b.Build()
@@ -392,7 +392,7 @@ func TestSearchRequest(t *testing.T) {
 
 		Convey("Given new search request builder for es version 2", func() {
 			version2, _ := semver.NewVersion("2.0.0")
-			b := NewSearchRequestBuilder(version2, tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+			b := NewSearchRequestBuilder(version2, intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			Convey("When adding doc value field", func() {
 				b.AddDocValueField(timeField)
@@ -452,7 +452,7 @@ func TestMultiSearchRequest(t *testing.T) {
 			b := NewMultiSearchRequestBuilder(version2)
 
 			Convey("When adding one search request", func() {
-				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
 
 				Convey("When building search request should contain one search request", func() {
 					mr, err := b.Build()
@@ -462,8 +462,8 @@ func TestMultiSearchRequest(t *testing.T) {
 			})
 
 			Convey("When adding two search requests", func() {
-				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
-				b.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+				b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
 
 				Convey("When building search request should contain two search requests", func() {
 					mr, err := b.Build()
