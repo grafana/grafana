@@ -59,6 +59,10 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [setOpen]
   );
 
+  const onClose = useCallback(() => {
+    setOpen(false);
+  }, [setOpen]);
+
   const onFocus = useCallback(
     (event: FormEvent<HTMLElement>) => {
       if (!isFullscreen) {
@@ -117,7 +121,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           value={to.value}
         />
       </Field>
-      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
+      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply} onFocus={onClose}>
         Apply time range
       </Button>
 
@@ -127,7 +131,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         from={dateTimeParse(from.value)}
         to={dateTimeParse(to.value)}
         onApply={onApply}
-        onClose={() => setOpen(false)}
+        onClose={onClose}
         onChange={onChange}
         timeZone={timeZone}
         isReversed={isReversed}
