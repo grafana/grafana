@@ -210,11 +210,12 @@ export const TimePickerCalendar = memo<Props>((props) => {
 
   if (isFullscreen) {
     return (
-      <ClickOutsideWrapper onClick={props.onClose}>
+      <ClickOutsideWrapper onClick={props.onClose} includeButtonPress={false}>
         <section
           className={styles.container}
           onClick={stopPropagation}
           aria-label={selectors.components.TimePicker.calendar}
+          tabIndex={0}
         >
           <Body {...props} />
         </section>
