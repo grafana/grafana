@@ -378,7 +378,7 @@ Limit the maximum viewport height that can be requested. Default is `3000`.
 #### Device scale factor
 
 Specify default device scale factor for rendering images. `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory. Default is `1`.
-This can be overriden in the rendering request.
+This can be overridden in the rendering request.
 
 ```json
 {
