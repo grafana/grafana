@@ -209,7 +209,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderLogsVolume(width: number) {
     const { logsVolume, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-    // CODE: Add option to dismiss logs histogram. How to bring it back, though?
     return (
       <Collapse label="Logs volume" loading={loading} isOpen>
         <ExploreGraphNGPanel
