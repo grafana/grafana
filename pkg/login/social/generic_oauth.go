@@ -44,12 +44,6 @@ func (s *SocialGenericOAuth) IsTeamMember(teamMemberships []string, client *http
 		return true
 	}
 
-	if teamMemberships == nil {
-		var err error
-		teamMemberships, err = s.FetchTeamMemberships(client)
-		if err != nil {
-			return false
-		}
 	}
 
 	for _, teamId := range s.teamIds {
