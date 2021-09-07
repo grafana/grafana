@@ -44,7 +44,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
 	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service,
-	_ *pluginsettings.Service,
+	_ *pluginsettings.Service, _ *alerting.AlertNotificationService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -31,11 +31,7 @@ var (
 	logger = log.New("alerting.testnotification")
 )
 
-func init() {
-	bus.AddHandlerCtx("alerting", handleNotificationTestCommand)
-}
-
-func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
+func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Context, cmd *NotificationTestCommand) error {
 	notifier := newNotificationService(nil)
 
 	model := &models.AlertNotification{
@@ -56,7 +52,11 @@ func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCom
 		}
 
 		if query.Result.SecureSettings != nil {
-			secureSettingsMap = query.Result.SecureSettings.Decrypt()
+			var err error
+			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(query.Result.SecureSettings, setting.SecretKey)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -64,10 +64,13 @@ func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCom
 		secureSettingsMap[k] = v
 	}
 
-	model.SecureSettings = securejsondata.GetEncryptedJsonData(secureSettingsMap)
+	var err error
+	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(secureSettingsMap, setting.SecretKey)
+	if err != nil {
+		return err
+	}
 
 	notifiers, err := InitNotifier(model)
-
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return err

@@ -243,7 +243,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.Header.Del("Referer")
 
 	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
+		ApplyRoute(
+			proxy.ctx.Req.Context(), req, proxy.proxyPath,
+			proxy.route, proxy.ds, proxy.cfg,
+			proxy.dataSourcesService.EncryptionService,
+		)
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {

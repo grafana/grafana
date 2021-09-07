@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -85,10 +87,11 @@ type Service struct {
 
 // Executor executes queries for the CloudMonitoring datasource.
 type Executor struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
+	httpClient        *http.Client
+	dsInfo            *models.DataSource
+	pluginManager     plugins.Manager
+	encryptionService encryption.Service
+	cfg               *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
@@ -100,10 +103,11 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 	}
 
 	return &Executor{
-		httpClient:    httpClient,
-		dsInfo:        dsInfo,
-		pluginManager: s.PluginManager,
-		cfg:           s.Cfg,
+		httpClient:        httpClient,
+		dsInfo:            dsInfo,
+		pluginManager:     s.PluginManager,
+		encryptionService: s.dsService.EncryptionService,
+		cfg:               s.Cfg,
 	}, nil
 }
 
@@ -551,7 +555,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg, e.encryptionService)
 
 	return req, nil
 }

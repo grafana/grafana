@@ -146,6 +146,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardsnapshots.ProvideService,
 	datasources.ProvideService,
 	pluginsettings.ProvideService,
+	alerting.ProvideService,
 )
 
 var wireSet = wire.NewSet(

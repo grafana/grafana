@@ -37,6 +37,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 	s.Bus.AddHandler(s.UpdateAlertNotificationWithUid)
 	s.Bus.AddHandler(s.DeleteAlertNotificationWithUid)
 	s.Bus.AddHandler(s.GetAlertNotificationsWithUidToSend)
+	s.Bus.AddHandlerCtx(s.HandleNotificationTestCommand)
 
 	return s
 }

@@ -204,7 +204,7 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, ossencryption.ProvideService())
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)

@@ -3,9 +3,11 @@ package notifiers
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,9 +112,13 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		securedSettingsJSON := securejsondata.GetEncryptedJsonData(map[string]string{
+
+		encryptionService := ossencryption.ProvideService()
+		securedSettingsJSON, err := encryptionService.EncryptJsonData(map[string]string{
 			"token": "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX",
-		})
+		}, setting.SecretKey)
+		require.NoError(t, err)
+
 		model := &models.AlertNotification{
 			Name:           "ops",
 			Type:           "slack",
