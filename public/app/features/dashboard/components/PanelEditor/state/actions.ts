@@ -128,6 +128,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       // But do this after the panel edit editor exit process has completed
       setTimeout(() => {
         sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
+        sourcePanel.render();
       }, 20);
     }
 
