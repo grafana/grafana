@@ -1,7 +1,12 @@
 import React, { CSSProperties } from 'react';
 
 import { CanvasElementItem, CanvasElementProps } from '../element';
-import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from 'app/features/dimensions';
+import {
+  ColorDimensionConfig,
+  ResourceDimensionConfig,
+  ResourceDimensionMode,
+  getPublicOrAbsoluteUrl,
+} from 'app/features/dimensions';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
@@ -62,7 +67,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   defaultConfig: {
     path: {
       mode: ResourceDimensionMode.Fixed,
-      fixed: 'question-circle.svg',
+      fixed: 'img/icons/unicons/question-circle.svg',
     },
     fill: { fixed: '#FFF899' },
   },
@@ -74,17 +79,12 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: IconConfig) => {
-    const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
     let path: string | undefined = undefined;
     if (cfg.path) {
       path = ctx.getResource(cfg.path).value();
     }
     if (!path || !isString(path)) {
-      // must be something?
-      path = 'question-circle.svg';
-    }
-    if (path.indexOf(':/') < 0) {
-      path = iconRoot + path;
+      path = getPublicOrAbsoluteUrl('img/icons/unicons/question-circle.svg');
     }
 
     const data: IconData = {
