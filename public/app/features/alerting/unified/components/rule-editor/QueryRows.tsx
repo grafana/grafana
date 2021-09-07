@@ -80,7 +80,7 @@ export class QueryRows extends PureComponent<Props, State> {
                     ...condition,
                     evaluator: {
                       ...condition.evaluator,
-                      params: [thresholds.steps[1].value.toPrecision(4)],
+                      params: [thresholds.steps[1].value.toPrecision(3)],
                     },
                   };
                 }

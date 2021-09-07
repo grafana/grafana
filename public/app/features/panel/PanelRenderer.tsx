@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
@@ -6,6 +6,7 @@ import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
 import { useTheme2 } from '@grafana/ui';
+import { merge } from 'lodash';
 
 export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
   const {
@@ -20,11 +21,14 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     onChangeTimeRange = () => {},
     fieldConfig: config = { defaults: {}, overrides: [] },
   } = props;
-  console.log('panel renderer config', config);
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(config);
   const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
   const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
+
+  useEffect(() => {
+    setFieldConfig((fieldConfig) => merge({}, fieldConfig, config));
+  }, [config]);
 
   if (error) {
     return <div>Failed to load plugin: {error.message}</div>;
@@ -43,8 +47,6 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   }
 
   const PanelComponent = plugin.panel;
-
-  console.log('panel renderer', fieldConfig);
 
   return (
     <PanelComponent

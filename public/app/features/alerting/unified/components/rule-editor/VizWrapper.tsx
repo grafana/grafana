@@ -55,7 +55,6 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
     return null;
   }
 
-  console.log('VizWrapper', fieldConfig);
   return (
     <div className={styles.wrapper}>
       <div className={styles.buttonGroup}>

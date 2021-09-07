@@ -25,7 +25,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
-  console.log('timeseries panel', fieldConfig);
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds } = usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
