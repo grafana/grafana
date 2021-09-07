@@ -2,7 +2,14 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { CoreApp, DataQuery, DataSourceInstanceSettings, HistoryItem, PanelData } from '@grafana/data';
+import {
+  CoreApp,
+  DataQuery,
+  DataSourceInstanceSettings,
+  EventBusExtended,
+  HistoryItem,
+  PanelData,
+} from '@grafana/data';
 import { QueryEditorRow } from './QueryEditorRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -23,6 +30,7 @@ interface Props {
   // Misc
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
+  eventBus?: EventBusExtended;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -93,7 +101,7 @@ export class QueryEditorRows extends PureComponent<Props> {
   };
 
   render() {
-    const { dsSettings, data, queries, app, history } = this.props;
+    const { dsSettings, data, queries, app, history, eventBus } = this.props;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -123,6 +131,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       queries={queries}
                       app={app}
                       history={history}
+                      eventBus={eventBus}
                     />
                   );
                 })}

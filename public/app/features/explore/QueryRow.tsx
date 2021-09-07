@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 import { debounce, has } from 'lodash';
 import { connect, ConnectedProps } from 'react-redux';
-import AngularQueryEditor from './QueryEditor';
+import { AngularQueryEditor } from './AngularQueryEditor';
 import { QueryRowActions } from './QueryRowActions';
 import { StoreState } from 'app/types';
 import { DataQuery, LoadingState, DataSourceApi } from '@grafana/data';

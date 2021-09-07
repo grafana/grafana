@@ -19,7 +19,7 @@ interface QueryEditorProps {
   textEditModeEnabled?: boolean;
 }
 
-export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
+export class AngularQueryEditor extends PureComponent<QueryEditorProps, any> {
   element: any;
   component?: AngularComponent;
   angularScope: any;

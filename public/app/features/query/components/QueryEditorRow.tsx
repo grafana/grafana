@@ -49,6 +49,7 @@ interface Props<TQuery extends DataQuery> {
   hideDisableQuery?: boolean;
   app?: CoreApp;
   history?: Array<HistoryItem<TQuery>>;
+  eventBus?: EventBusExtended;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -112,7 +113,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         this.props.onRunQuery();
       },
       render: () => () => console.log('legacy render function called, it does nothing'),
-      events: new EventBusSrv(),
+      events: this.props.eventBus || new EventBusSrv(),
       range: getTimeSrv().timeRange(),
     };
   }

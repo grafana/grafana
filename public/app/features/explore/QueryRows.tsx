@@ -18,25 +18,6 @@ class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector
   onChange = (queries: DataQuery[]) => {
     const { exploreId } = this.props;
     this.props.changeQueriesAction({ queries, exploreId });
-
-    // onChange = (query: DataQuery, index: number) => {
-    //   const { datasourceInstance, exploreId } = this.props;
-    //   this.props.changeQuery(exploreId, query, index);
-
-    //   if (query && datasourceInstance?.getHighlighterExpression && index === 0) {
-    //     // Live preview of log search matches. Only use on first row for now
-    //     this.updateLogsHighlights(query);
-    //   }
-    // };
-
-    // updateLogsHighlights = debounce((value: DataQuery) => {
-    //   const { datasourceInstance } = this.props;
-    //   if (datasourceInstance?.getHighlighterExpression) {
-    //     const { exploreId } = this.props;
-    //     const expressions = datasourceInstance.getHighlighterExpression(value);
-    //     this.props.highlightLogsExpressionAction({ exploreId, expressions });
-    //   }
-    // }, 500);
   };
 
   onAddQuery = (query: DataQuery) => {
@@ -48,7 +29,7 @@ class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector
   };
 
   render() {
-    const { queries, datasourceInstance, history } = this.props;
+    const { queries, datasourceInstance, history, eventBus } = this.props;
     const dsSettings = getDatasourceSrv().getInstanceSettings(datasourceInstance?.name)!;
 
     return (
@@ -61,6 +42,7 @@ class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector
         data={this.props.queryResponse}
         app={CoreApp.Explore}
         history={history}
+        eventBus={eventBus}
       />
     );
   }
@@ -68,13 +50,14 @@ class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector
 
 function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
   const explore = state.explore;
-  const { queries, datasourceInstance, queryResponse, history } = explore[exploreId]!;
+  const { queries, datasourceInstance, queryResponse, history, eventBridge } = explore[exploreId]!;
 
   return {
     queries,
     datasourceInstance,
     queryResponse,
     history,
+    eventBus: eventBridge,
   };
 }
 
