@@ -51,7 +51,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 ## List of supported notifiers
 
 | Name                                          | Type                      | Supports images    | Support alert rule tags |
-| --------------------------------------------- | ------------------------- | ------------------ | ----------------------- |
+| --------------------------------------------- | ------------------------- | ------------------ | ----------------------- | --- |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                      |
 | [Discord](#discord)                           | `discord`                 | yes                | no                      |
 | [Email](#email)                               | `email`                   | yes                | no                      |
@@ -70,7 +70,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Telegram                                      | `telegram`                | yes                | no                      |
 | Threema                                       | `threema`                 | yes, external only | no                      |
 | VictorOps                                     | `victorops`               | yes, external only | yes                     |
-| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |                   |
+| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |     |
 
 ### Email
 
@@ -258,7 +258,7 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 ### Sensu Go
 
-Grafana alert notifications can be sent to [Sensu]((https://sensu.io)) Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
+Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
 
 ## Enable images in notifications {#external-image-store}
 

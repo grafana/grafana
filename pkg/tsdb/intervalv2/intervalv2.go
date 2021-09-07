@@ -1,4 +1,4 @@
-package tsdb
+package intervalv2
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
@@ -101,6 +100,11 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 // queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
 // queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
 func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
+	// Apparently we are setting default value of queryInterval to 0s now
+	if queryInterval == "0s" {
+		queryInterval = ""
+	}
+
 	if queryInterval == "" {
 		if queryIntervalMS != 0 {
 			return time.Duration(queryIntervalMS) * time.Millisecond, nil
@@ -121,7 +125,7 @@ func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, de
 	if isPureNum {
 		interval += "s"
 	}
-	parsedInterval, err := gtime.ParseDuration(interval)
+	parsedInterval, err := time.ParseDuration(interval)
 	if err != nil {
 		return time.Duration(0), err
 	}

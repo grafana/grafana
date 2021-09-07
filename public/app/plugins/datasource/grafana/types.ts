@@ -6,9 +6,13 @@ import { LiveDataFilter } from '@grafana/runtime';
 //----------------------------------------------
 
 export enum GrafanaQueryType {
-  RandomWalk = 'randomWalk',
   LiveMeasurements = 'measurements',
   Annotations = 'annotations',
+
+  // backend
+  RandomWalk = 'randomWalk',
+  List = 'list',
+  Read = 'read',
 }
 
 export interface GrafanaQuery extends DataQuery {

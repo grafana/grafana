@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
-import { Link, useStyles2 } from '@grafana/ui';
+import { Link } from '@grafana/ui';
 import { NavModelItem } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 
@@ -25,12 +25,9 @@ const SideMenuItem = ({
   target,
   url,
 }: Props) => {
-  const resetButtonStyles = useStyles2(
-    () =>
-      css`
-        background-color: transparent;
-      `
-  );
+  const resetButtonStyles = css`
+    background-color: transparent;
+  `;
 
   const anchor = url ? (
     <Link

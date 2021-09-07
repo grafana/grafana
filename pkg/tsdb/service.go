@@ -13,26 +13,23 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/builtin"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/postgres"
+	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 )
 
 // NewService returns a new Service.
 func NewService(
-	cfg *setting.Cfg, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager,
-	oauthTokenService *oauthtoken.Service, httpClientProvider httpclient.Provider,
+	cfg *setting.Cfg,
+	pluginManager plugins.Manager,
+	backendPluginManager backendplugin.Manager,
+	oauthTokenService *oauthtoken.Service,
+	httpClientProvider httpclient.Provider,
 	cloudMonitoringService *cloudmonitoring.Service,
-	postgresService *postgres.PostgresService,
 	buildinGrafanaDS *builtin.BuiltinGrafanaDatasource,
 ) *Service {
 	s := newService(cfg, pluginManager, backendPluginManager, oauthTokenService, buildinGrafanaDS)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
-	s.registry["mssql"] = mssql.NewExecutor
-	s.registry["postgres"] = postgresService.NewExecutor
-	s.registry["mysql"] = mysql.New(httpClientProvider)
 	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
 
 	return s
