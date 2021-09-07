@@ -3,10 +3,11 @@ package ldap
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ldap.v3"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestLDAPPrivateMethods(t *testing.T) {
@@ -74,7 +75,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := []*ldap.Entry{&entry}
+			users := [][]*ldap.Entry{{&entry}}
 
 			result, err := server.serializeUsers(users)
 
@@ -108,7 +109,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := []*ldap.Entry{&entry}
+			users := [][]*ldap.Entry{{&entry}}
 
 			result, err := server.serializeUsers(users)
 
@@ -136,7 +137,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := []*ldap.Entry{&entry}
+			users := [][]*ldap.Entry{{&entry}}
 
 			result, err := server.serializeUsers(users)
 
