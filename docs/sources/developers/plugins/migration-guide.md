@@ -12,9 +12,11 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 
 ## Table of contents
 
-- [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
+- [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
   - [8.0 deprecations](#80-deprecations)
-- [From version 6.x.x to 7.x.x](#from-version-6xx-to-7xx)
+- [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
+  - [Legend components](#legend-components)
+- [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
   - [What's new in Grafana 7.0?](#whats-new-in-grafana-70)
   - [Migrate a plugin from Angular to React](#migrate-a-plugin-from-angular-to-react)
     - [Migrate a panel plugin](#migrate-a-panel-plugin)
@@ -25,6 +27,24 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 ## From version 7.x.x to 8.x.x
 
 ### 8.0 deprecations
+
+## From version 6.2.x to 7.4.0
+
+### Legend components
+
+The Legend components have been refactored and introduced the following changes within the `@grafana/ui` package.
+
+```ts
+// before
+import { LegendItem, LegendOptions, GraphLegend } from '@grafana/ui';
+
+// after
+import { VizLegendItem, VizLegendOptions, VizLegend } from '@grafana/ui';
+```
+
+The values for the `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'` so you can not place the legend above the visualization anymore.
+
+The `isVisible` in the `LegendItem` has been renamed to `disabled` in `VizLegendItem`.
 
 ## From version 6.x.x to 7.x.x
 
