@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
@@ -29,7 +29,7 @@ import (
 )
 
 type Service struct {
-	intervalCalculator tsdb.Calculator
+	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 	plog               log.Logger
 }
@@ -38,7 +38,7 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		im:                 im,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 		plog:               log.New("tsdb.loki"),
 	}
 
@@ -195,12 +195,12 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 		start := query.TimeRange.From
 		end := query.TimeRange.To
 
-		dsInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), time.Second)
+		dsInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), time.Second)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
 
-		interval, err := s.intervalCalculator.Calculate(query.TimeRange, dsInterval, tsdb.Min)
+		interval, err := s.intervalCalculator.Calculate(query.TimeRange, dsInterval, intervalv2.Min)
 		if err != nil {
 			return nil, err
 		}
