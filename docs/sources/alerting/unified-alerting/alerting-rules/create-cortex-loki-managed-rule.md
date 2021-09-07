@@ -15,21 +15,21 @@ In order for both Cortex and Loki data sources to work with Grafana 8.0 alerting
 
 1. In the Grafana menu hover your cursor over the Alerting (bell) icon.
 1. To create a new alert rule, click **New alert rule**. To edit an existing rule, expand one of the rules in the **Cortex / Loki** section and click **Edit**.
-1. Click on the **Alert type** drop down and select **Cortex / Loki managed alert**.
+1. Click on the **Rule type** drop down and select **Cortex / Loki managed alert**.
 1. Fill out the rest of the fields. Descriptions are listed below in [Alert rule fields](#alert-rule-fields).
-1. When you have finished writing your rule, click **Save** in the upper right corner to save the rule,, or **Save and exit** to save and exit rule editing.
+1. When you have finished writing your rule, click **Save** in the upper right corner to save the rule, or **Save and exit** to save and exit rule editing.
 
 ## Alert rule fields
 
 This section describes the fields you fill out to create an alert.
 
-### Alert type
+### Rule type
 
-- **Alert name -** Enter a descriptive name. The name will be displayed in the alert rule list, as well as added as `alertname` label to every alert instance that is created from this rule.
-- **Alert type -** Select **Cortex / Loki managed alert**.
+- **Rule name -** Enter a descriptive name. The name will be displayed in the alert rule list, as well as added as `alertname` label to every alert instance that is created from this rule.
+- **Rule type -** Select **Cortex / Loki managed alert**.
 - **Data source -** Select a Prometheus or Loki data source. Only Prometheus data sources that support Cortex ruler API will be available.
-- **Namespace -** Select an existing rule namespace or click **Add new** to create a new one.
-- **Group -** Select an existing group within the selected namespace or click **Add new** to create a new one. Newly created rules will be added to the end of the rule group.
+- **Namespace -** Select an existing rule namespace or click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and have only organizational purpose.
+- **Group -** Select an existing group within the selected namespace or click **Add new** and enter a name to create a new one. Newly created rules will be added to the end of the rule group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
 
 ![Alert type section screenshot](/static/img/docs/alerting/unified/rule-edit-cortex-alert-type-8-0.png 'Alert type section screenshot')
 

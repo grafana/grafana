@@ -23,9 +23,10 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, options.mergeValues ?? true), [
+  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, options.mergeValues ?? true, theme), [
     data,
     options.mergeValues,
+    theme,
   ]);
 
   const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend, theme), [
