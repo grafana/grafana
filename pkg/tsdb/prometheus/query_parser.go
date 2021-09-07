@@ -31,7 +31,7 @@ func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.Query
 		}
 
 		step := time.Duration(model.StepMS) * time.Millisecond
-		if step == time.Duration(0) {
+		if model.StepMS == 0 {
 			stepFromInterval, err := createStep(dsInfo, model, query, s.intervalCalculator)
 			if err != nil {
 				return nil, err
