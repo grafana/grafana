@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -386,7 +385,7 @@ func (ss *SQLStore) UpdateAlertNotification(cmd *models.UpdateAlertNotificationC
 
 		current.Updated = time.Now()
 		current.Settings = cmd.Settings
-		current.SecureSettings = securejsondata.GetEncryptedJsonData(cmd.SecureSettings)
+		current.SecureSettings = cmd.EncryptedSecureSettings
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault

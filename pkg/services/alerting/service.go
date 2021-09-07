@@ -56,6 +56,12 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(cmd *models.Cr
 }
 
 func (s *AlertNotificationService) UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
+	var err error
+	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(cmd.SecureSettings, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
 	return s.SQLStore.UpdateAlertNotification(cmd)
 }
 

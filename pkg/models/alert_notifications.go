@@ -71,7 +71,9 @@ type UpdateAlertNotificationCommand struct {
 	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId  int64 `json:"-"`
+	OrgId                   int64             `json:"-"`
+	EncryptedSecureSettings map[string][]byte `json:"-"`
+
 	Result *AlertNotification
 }
 
