@@ -1,10 +1,10 @@
 load(
-    'scripts/star/steps/lib.star',
+    'scripts/drone/steps/lib.star',
     'initialize_step',
     'slack_step',
 )
 
-load('scripts/star/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
+load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],

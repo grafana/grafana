@@ -1,5 +1,5 @@
 load(
-    'scripts/star/steps/lib.star',
+    'scripts/drone/steps/lib.star',
     'test_release_ver',
     'build_image',
     'publish_image',
@@ -33,13 +33,13 @@ load(
 )
 
 load(
-    'scripts/star/services/services.star',
+    'scripts/drone/services/services.star',
     'integration_test_services',
     'ldap_service',
 )
 
 load(
-    'scripts/star/utils/utils.star',
+    'scripts/drone/utils/utils.star',
     'pipeline',
     'notify_pipeline',
 )
