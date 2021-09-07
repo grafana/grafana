@@ -115,4 +115,4 @@ Finalize the merge by clicking on the `Confirm squash and merge` button.
 
 ## After the merge
 
-Make sure to close any referenced/related issues. It's recommended to assign the same milestone on the issues that the pull request fixes/closes, but required.
+Make sure to close any referenced/related issues. It's recommended to assign the same milestone on the issues that the pull request fixes/closes, but not required.
