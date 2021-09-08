@@ -1,89 +1,201 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func Test_accessForbidden(t *testing.T) {
-	type testCase struct {
-		filename string
-	}
-	tests := []struct {
-		name            string
-		t               testCase
-		accessForbidden bool
-	}{
-		{
-			name: ".exe files are forbidden",
-			t: testCase{
-				filename: "test.exe",
-			},
-			accessForbidden: true,
-		},
-		{
-			name: ".sh files are forbidden",
-			t: testCase{
-				filename: "test.sh",
-			},
-			accessForbidden: true,
-		},
-		{
-			name: "js is not forbidden",
-			t: testCase{
+func Test_GetPluginAssets(t *testing.T) {
+	pluginID := "test-plugin"
+	pluginDir := "."
+	tmpFile, err := ioutil.TempFile(pluginDir, "")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := os.RemoveAll(tmpFile.Name())
+		assert.NoError(t, err)
+	})
+	expectedBody := "Plugin test"
+	_, err = tmpFile.WriteString(expectedBody)
+	assert.NoError(t, err)
 
-				filename: "module.js",
-			},
-			accessForbidden: false,
-		},
-		{
-			name: "logos are not forbidden",
-			t: testCase{
+	requestedFile := filepath.Clean(tmpFile.Name())
 
-				filename: "logo.svg",
+	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
+		p := &plugins.PluginBase{
+			Id:        pluginID,
+			PluginDir: pluginDir,
+			SignedFiles: map[string]struct{}{
+				requestedFile: {},
 			},
-			accessForbidden: false,
-		},
-		{
-			name: "JPGs are not forbidden",
-			t: testCase{
-				filename: "img/test.jpg",
+		}
+		service := &pluginManager{
+			plugins: map[string]*plugins.PluginBase{
+				pluginID: p,
 			},
-			accessForbidden: false,
-		},
-		{
-			name: "JPEGs are not forbidden",
-			t: testCase{
-				filename: "img/test.jpeg",
+		}
+		l := &logger{}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				require.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, expectedBody, sc.resp.Body.String())
+				assert.Empty(t, l.warnings)
+			})
+	})
+
+	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
+		p := &plugins.PluginBase{
+			Id:        pluginID,
+			PluginDir: pluginDir,
+		}
+		service := &pluginManager{
+			plugins: map[string]*plugins.PluginBase{
+				pluginID: p,
 			},
-			accessForbidden: false,
-		},
-		{
-			name: "ext case is ignored",
-			t: testCase{
-				filename: "scripts/runThis.SH",
+		}
+		l := &logger{}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				require.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, expectedBody, sc.resp.Body.String())
+				assert.Empty(t, l.warnings)
+			})
+	})
+
+	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
+		p := &plugins.PluginBase{
+			Id:        pluginID,
+			PluginDir: pluginDir,
+		}
+		service := &pluginManager{
+			plugins: map[string]*plugins.PluginBase{
+				pluginID: p,
 			},
-			accessForbidden: true,
-		},
-		{
-			name: "no file ext is forbidden",
-			t: testCase{
-				filename: "scripts/runThis",
+		}
+		l := &logger{}
+
+		requestedFile := "nonExistent"
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				var respJson map[string]interface{}
+				err := json.NewDecoder(sc.resp.Body).Decode(&respJson)
+				require.NoError(t, err)
+				require.Equal(t, 404, sc.resp.Code)
+				assert.Equal(t, "Plugin file not found", respJson["message"])
+				assert.Empty(t, l.warnings)
+			})
+	})
+
+	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
+		service := &pluginManager{
+			plugins: map[string]*plugins.PluginBase{},
+		}
+		l := &logger{}
+
+		requestedFile := "nonExistent"
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				var respJson map[string]interface{}
+				err := json.NewDecoder(sc.resp.Body).Decode(&respJson)
+				require.NoError(t, err)
+				assert.Equal(t, 404, sc.resp.Code)
+				assert.Equal(t, "Plugin not found", respJson["message"])
+				assert.Empty(t, l.warnings)
+			})
+	})
+
+	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
+		service := &pluginManager{
+			plugins: map[string]*plugins.PluginBase{
+				pluginID: {
+					IsCorePlugin: true,
+				},
 			},
-			accessForbidden: true,
-		},
-		{
-			name: "empty file ext is forbidden",
-			t: testCase{
-				filename: "scripts/runThis.",
-			},
-			accessForbidden: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := accessForbidden(tt.t.filename); got != tt.accessForbidden {
-				t.Errorf("accessForbidden() = %v, accessForbidden %v", got, tt.accessForbidden)
-			}
-		})
-	}
+		}
+		l := &logger{}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				require.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, expectedBody, sc.resp.Body.String())
+				assert.Empty(t, l.warnings)
+			})
+	})
+}
+
+func callGetPluginAsset(sc *scenarioContext) {
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+}
+
+func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginManager plugins.Manager,
+	logger log.Logger, fn scenarioFunc) {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		defer bus.ClearBusHandlers()
+
+		hs := HTTPServer{
+			Cfg:           setting.NewCfg(),
+			PluginManager: pluginManager,
+			log:           logger,
+		}
+
+		sc := setupScenarioContext(t, url)
+		sc.defaultHandler = func(c *models.ReqContext) {
+			sc.context = c
+			hs.getPluginAssets(c)
+		}
+
+		sc.m.Get(urlPattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+type pluginManager struct {
+	manager.PluginManager
+
+	plugins map[string]*plugins.PluginBase
+}
+
+func (pm *pluginManager) GetPlugin(id string) *plugins.PluginBase {
+	return pm.plugins[id]
+}
+
+type logger struct {
+	log.Logger
+
+	warnings []string
+}
+
+func (l *logger) Warn(msg string, ctx ...interface{}) {
+	l.warnings = append(l.warnings, msg)
 }
