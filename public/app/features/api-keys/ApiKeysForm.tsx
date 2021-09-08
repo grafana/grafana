@@ -38,10 +38,14 @@ const tooltipText =
 
 export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const [name, setName] = useState<string>('');
+  const [serviceAccount, setServiceAccount] = useState<string>('');
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [secondsToLive, setSecondsToLive] = useState<string>('');
+  const [createServiceAccount, setCreateServiceAccount] = useState<string>('');
+
   useEffect(() => {
     setName('');
+    setServiceAccount('');
     setRole(OrgRole.Viewer);
     setSecondsToLive('');
   }, [show]);
@@ -49,12 +53,18 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (isValidInterval(secondsToLive)) {
-      onKeyAdded({ name, role, secondsToLive });
+      onKeyAdded({ name, role, secondsToLive, serviceAccount, createServiceAccount });
       onClose();
     }
   };
   const onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setName(event.currentTarget.value);
+  };
+  const onServiceAccountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setServiceAccount(event.currentTarget.value);
+  };
+  const onCreateServiceAccountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setCreateServiceAccount(event.currentTarget.value);
   };
   const onRoleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setRole(event.currentTarget.value as OrgRole);
@@ -89,6 +99,16 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
               </span>
             </div>
             <div className="gf-form max-width-21">
+              <span className="gf-form-label">Service Account</span>
+              <Input
+                type="text"
+                className="gf-form-input"
+                value={serviceAccount}
+                placeholder="Service Account Id"
+                onChange={onServiceAccountChange}
+              />
+            </div>
+            <div className="gf-form max-width-21">
               <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
               <Input
                 type="text"
@@ -98,6 +118,17 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
                 value={secondsToLive}
                 onChange={onSecondsToLiveChange}
               />
+            </div>
+            <div className="gf-form">
+              <label>
+                New Service Account
+                <input
+                  name="createServiceAccount"
+                  type="checkbox"
+                  checked={createServiceAccount}
+                  onChange={onCreateServiceAccountChange}
+                />
+              </label>
             </div>
             <div className="gf-form">
               <Button>Add</Button>

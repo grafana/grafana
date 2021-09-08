@@ -12,6 +12,8 @@ export interface NewApiKey {
   name: string;
   role: OrgRole;
   secondsToLive: string;
+  serviceAccount: string;
+  createServiceAccount: string;
 }
 
 export interface ApiKeysState {
