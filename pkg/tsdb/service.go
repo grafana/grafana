@@ -13,16 +13,15 @@ import (
 
 // NewService returns a new Service.
 func NewService(
-	cfg *setting.Cfg, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager,
+	cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
 	oauthTokenService *oauthtoken.Service) *Service {
-	return newService(cfg, pluginManager, backendPluginManager, oauthTokenService)
+	return newService(cfg, backendPluginManager, oauthTokenService)
 }
 
-func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager backendplugin.Manager,
+func newService(cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
 	oauthTokenService oauthtoken.OAuthTokenService) *Service {
 	return &Service{
 		Cfg:                  cfg,
-		PluginManager:        manager,
 		BackendPluginManager: backendPluginManager,
 		OAuthTokenService:    oauthTokenService,
 	}
@@ -31,7 +30,6 @@ func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager 
 // Service handles data requests to data sources.
 type Service struct {
 	Cfg                  *setting.Cfg
-	PluginManager        plugins.Manager
 	BackendPluginManager backendplugin.Manager
 	OAuthTokenService    oauthtoken.OAuthTokenService
 }

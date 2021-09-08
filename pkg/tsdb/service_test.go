@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -102,7 +101,6 @@ func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	fakeBackendPM := &fakeBackendPM{}
 	s := newService(
 		setting.NewCfg(),
-		&manager.PluginManager{BackendPluginManager: fakeBackendPM},
 		fakeBackendPM,
 		&fakeOAuthTokenService{},
 	)
