@@ -47,6 +47,15 @@ jest.mock('@grafana/runtime', () => {
             return Promise.resolve(remotePlugin({ slug: 'installed' }));
           case `${GRAFANA_API_ROOT}/plugins/enterprise`:
             return Promise.resolve(remotePlugin({ status: 'enterprise' }));
+          case `${GRAFANA_API_ROOT}/plugins`:
+            return Promise.resolve({
+              items: [
+                remotePlugin({ slug: 'not-installed' }),
+                remotePlugin({ slug: 'installed' }),
+                remotePlugin({ slug: 'has-update', version: '2.0.0' }),
+                remotePlugin({ slug: 'enterprise', status: 'enterprise' }),
+              ],
+            });
           default:
             return Promise.reject();
         }
@@ -97,6 +106,7 @@ describe('Plugin details page', () => {
 
   it('should display an overview (plugin readme) by default', async () => {
     const { queryByText } = setup('not-installed');
+
     await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
   });
 
