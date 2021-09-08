@@ -39,7 +39,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
-		assert.NotNil(t, sqlStore)
 
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
