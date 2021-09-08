@@ -516,6 +516,7 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	pb.Signature = pluginBase.Signature
 	pb.SignatureType = pluginBase.SignatureType
 	pb.SignatureOrg = pluginBase.SignatureOrg
+	pb.SignedFiles = pluginBase.SignedFiles
 
 	pm.plugins[pb.Id] = pb
 	pm.log.Debug("Successfully added plugin", "id", pb.Id)
@@ -585,6 +586,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	pluginCommon.Signature = signatureState.Status
 	pluginCommon.SignatureType = signatureState.Type
 	pluginCommon.SignatureOrg = signatureState.SigningOrg
+	pluginCommon.SignedFiles = signatureState.Files
 
 	s.plugins[currentDir] = &pluginCommon
 
