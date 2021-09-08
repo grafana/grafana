@@ -11,7 +11,6 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
   try {
     return await getCatalogPlugins();
   } catch (e) {
-    // TODO<add more error handling here>
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
@@ -25,7 +24,6 @@ export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, asy
       changes: { details },
     } as Update<CatalogPlugin>;
   } catch (e) {
-    // TODO<add more error handling here>
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
@@ -41,7 +39,6 @@ export const install = createAsyncThunk(
         changes,
       } as Update<CatalogPlugin>;
     } catch (e) {
-      // TODO<add more error handling here>
       return thunkApi.rejectWithValue('Unknown error.');
     }
   }
@@ -55,7 +52,6 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
       changes: { isInstalled: false },
     } as Update<CatalogPlugin>;
   } catch (e) {
-    // TODO<add more error handling here>
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });

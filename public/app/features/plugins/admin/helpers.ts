@@ -13,7 +13,6 @@ export function isOrgAdmin() {
 }
 
 export function mergeLocalsAndRemotes(local: LocalPlugin[] = [], remote: RemotePlugin[] = []): CatalogPlugin[] {
-  // TODO<use a Set() here instead of Array.prototype.find()>
   const catalogPlugins: CatalogPlugin[] = [];
 
   // add locals
