@@ -1,5 +1,5 @@
 import { DataQuery, DefaultTimeZone, EventBusExtended, serializeStateToUrlParam, toUtc } from '@grafana/data';
-import { ExploreId } from 'app/types';
+import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
 import { refreshExplore } from './explorePane';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from '../../../store/configureStore';
@@ -92,37 +92,38 @@ function setup(state?: any) {
     },
   } as any);
 
-  const store = setupStore({
+  const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = setupStore({
     datasourceInstance: datasources.someDs,
     ...(state || {}),
   });
 
   return {
-    store,
+    dispatch,
+    getState,
     datasources,
   };
 }
 
 describe('refreshExplore', () => {
   it('should change data source when datasource in url changes', async () => {
-    const { store } = setup();
-    await store.dispatch(
+    const { dispatch, getState } = setup();
+    await dispatch(
       refreshExplore(ExploreId.left, serializeStateToUrlParam({ datasource: 'newDs', queries: [], range: testRange }))
     );
-    expect(store.getState().explore[ExploreId.left].datasourceInstance?.name).toBe('newDs');
+    expect(getState().explore[ExploreId.left].datasourceInstance?.name).toBe('newDs');
   });
 
   it('should change and run new queries from the URL', async () => {
-    const { store, datasources } = setup();
+    const { dispatch, getState, datasources } = setup();
     datasources.someDs.query.mockReturnValueOnce(of({}));
-    await store.dispatch(
+    await dispatch(
       refreshExplore(
         ExploreId.left,
         serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()' }], range: testRange })
       )
     );
     // same
-    const state = store.getState().explore[ExploreId.left];
+    const state = getState().explore[ExploreId.left];
     expect(state.datasourceInstance?.name).toBe('someDs');
     expect(state.queries.length).toBe(1);
     expect(state.queries).toMatchObject([{ expr: 'count()' }]);
@@ -130,17 +131,17 @@ describe('refreshExplore', () => {
   });
 
   it('should not do anything if pane is not initialized', async () => {
-    const { store } = setup({
+    const { dispatch, getState } = setup({
       initialized: false,
     });
-    const state = store.getState();
-    await store.dispatch(
+    const state = getState();
+    await dispatch(
       refreshExplore(
         ExploreId.left,
         serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()' }], range: testRange })
       )
     );
 
-    expect(state).toEqual(store.getState());
+    expect(state).toEqual(getState());
   });
 });

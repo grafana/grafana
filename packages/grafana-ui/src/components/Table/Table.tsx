@@ -38,6 +38,7 @@ export interface Props {
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;
+  showTypeIcons?: boolean;
   resizable?: boolean;
   initialSortBy?: TableSortByFieldState[];
   onColumnResize?: TableColumnResizeActionCallback;
@@ -124,6 +125,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     resizable = true,
     initialSortBy,
     footerValues,
+    showTypeIcons,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -204,7 +206,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
         <div style={{ width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%' }}>
-          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} />}
+          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {rows.length > 0 ? (
             <FixedSizeList
               height={height - headerHeight}

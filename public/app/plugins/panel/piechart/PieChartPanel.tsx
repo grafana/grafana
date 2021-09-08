@@ -49,6 +49,14 @@ export function PieChartPanel(props: Props) {
     timeZone,
   });
 
+  if (!hasFrames(fieldDisplayValues)) {
+    return (
+      <div className="panel-empty">
+        <p>No data</p>
+      </div>
+    );
+  }
+
   return (
     <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues)}>
       {(vizWidth: number, vizHeight: number) => {
@@ -125,6 +133,10 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       displayMode={legendOptions.displayMode}
     />
   );
+}
+
+function hasFrames(fieldDisplayValues: FieldDisplay[]) {
+  return fieldDisplayValues.some((fd) => fd.view?.dataFrame.length);
 }
 
 function useSliceHighlightState() {

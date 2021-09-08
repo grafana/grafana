@@ -5,7 +5,7 @@ import { LinkButton } from '@grafana/ui';
 export interface Props {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
-  linkButton?: { href: string; title: string };
+  linkButton?: { href: string; title: string; disabled?: boolean };
   target?: string;
   placeholder?: string;
 }
@@ -13,7 +13,7 @@ export interface Props {
 export default class PageActionBar extends PureComponent<Props> {
   render() {
     const { searchQuery, linkButton, setSearchQuery, target, placeholder = 'Search by name or type' } = this.props;
-    const linkProps = { href: linkButton?.href };
+    const linkProps = { href: linkButton?.href, disabled: linkButton?.disabled };
 
     if (target) {
       (linkProps as any).target = target;

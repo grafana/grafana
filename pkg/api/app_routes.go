@@ -59,6 +59,6 @@ func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer)
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg)
 		proxy.Transport = pluginProxyTransport
-		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		proxy.ServeHTTP(c.Resp, c.Req)
 	}
 }

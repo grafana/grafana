@@ -73,11 +73,29 @@ type PluginBase struct {
 	IsCorePlugin    bool                `json:"-"`
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
+	SignedFiles     PluginFiles         `json:"-"`
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 
 	Root *PluginBase
+}
+
+func (p *PluginBase) IncludedInSignature(file string) bool {
+	// permit Core plugin files
+	if p.IsCorePlugin {
+		return true
+	}
+
+	// permit when no signed files (no MANIFEST)
+	if p.SignedFiles == nil {
+		return true
+	}
+
+	if _, exists := p.SignedFiles[file]; !exists {
+		return false
+	}
+	return true
 }
 
 type PluginDependencies struct {
