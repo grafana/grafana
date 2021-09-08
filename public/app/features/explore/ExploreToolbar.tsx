@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
 
@@ -251,4 +250,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const ExploreToolbar = hot(module)(connector(UnConnectedExploreToolbar));
+export const ExploreToolbar = connector(UnConnectedExploreToolbar);

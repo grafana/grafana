@@ -5,6 +5,12 @@ import { findField, getLastNotNullFieldValue } from './utils';
 //---------------------------------------------------------
 // Resource dimension
 //---------------------------------------------------------
+export function getPublicOrAbsoluteUrl(v: string): string {
+  if (!v) {
+    return '';
+  }
+  return v.indexOf(':/') > 0 ? v : (window as any).__grafana_public_path__ + v;
+}
 
 export function getResourceDimension(
   frame: DataFrame | undefined,
@@ -12,7 +18,7 @@ export function getResourceDimension(
 ): DimensionSupplier<string> {
   const mode = config.mode ?? ResourceDimensionMode.Fixed;
   if (mode === ResourceDimensionMode.Fixed) {
-    const v = config.fixed!;
+    const v = getPublicOrAbsoluteUrl(config.fixed!);
     return {
       isAssumed: !Boolean(v),
       fixed: v,
@@ -33,7 +39,7 @@ export function getResourceDimension(
   }
 
   if (mode === ResourceDimensionMode.Mapping) {
-    const mapper = (v: any) => `${v}`;
+    const mapper = (v: any) => getPublicOrAbsoluteUrl(`${v}`);
     return {
       field,
       get: (i) => mapper(field.values.get(i)),

@@ -22,8 +22,8 @@ Family: {
     lineages: [
         [
             {
-                #TimelineMode: "changes" | "samples" @cuetsy(targetType="enum")
-                #TimelineValueAlignment: "center" | "left" | "right" @cuetsy(targetType="type")
+                #TimelineMode: "changes" | "samples" @cuetsy(kind="enum")
+                #TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
                 PanelOptions: {
                     // FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
                     mode?: #TimelineMode

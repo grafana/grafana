@@ -2,8 +2,13 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { LinkButton, CallToActionCard, Icon, useTheme2 } from '@grafana/ui';
 
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
+
 export const NoDataSourceCallToAction = () => {
   const theme = useTheme2();
+
+  const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
   const message =
     'Explore requires at least one data source. Once you have added a data source, you can query it here.';
@@ -23,7 +28,7 @@ export const NoDataSourceCallToAction = () => {
   );
 
   const ctaElement = (
-    <LinkButton size="lg" href="datasources/new" icon="database">
+    <LinkButton size="lg" href="datasources/new" icon="database" disabled={!canCreateDataSource}>
       Add data source
     </LinkButton>
   );

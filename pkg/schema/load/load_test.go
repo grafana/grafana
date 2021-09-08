@@ -50,8 +50,6 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDevenvDashboardValidity(t *testing.T) {
-	t.Skip()
-
 	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 
 	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
@@ -109,11 +107,9 @@ func TestDevenvDashboardValidity(t *testing.T) {
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
 
-	// TODO disabled because base variant validation currently must fail in order for
-	// dist/instance validation to do closed validation of plugin-specified fields
-	// t.Run("base", doTest(dash))
-	// dash, err := BaseDashboardFamily(p)
-	// require.NoError(t, err, "error while loading base dashboard scuemata")
+	dash, err := BaseDashboardFamily(p)
+	require.NoError(t, err, "error while loading base dashboard scuemata")
+	t.Run("base", doTest(dash))
 
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")

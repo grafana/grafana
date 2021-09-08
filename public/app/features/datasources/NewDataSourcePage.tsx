@@ -1,6 +1,5 @@
 import React, { FC, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
 import { Button, LinkButton, List, PluginSignatureBadge } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -179,4 +178,4 @@ export function getNavModel(): NavModel {
   };
 }
 
-export default hot(module)(connector(NewDataSourcePage));
+export default connector(NewDataSourcePage);
