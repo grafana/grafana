@@ -10,12 +10,12 @@ import { CatalogPlugin } from '../types';
 
 type Props = {
   currentUrl: string;
+  parentUrl: string;
   plugin: CatalogPlugin;
 };
 
-export function PluginDetailsHeader({ plugin, currentUrl }: Props): React.ReactElement {
+export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const parentUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
 
   return (
     <div className={styles.headerContainer}>
