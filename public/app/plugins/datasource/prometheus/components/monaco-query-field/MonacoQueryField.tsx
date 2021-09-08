@@ -16,6 +16,7 @@ const options: CodeEditorMonacoOptions = {
   scrollBeyondLastLine: false,
   renderLineHighlight: 'none',
   fontSize: 14,
+  fixedOverflowWidgets: true,
 };
 
 const MonacoQueryField = (props: Props) => {
