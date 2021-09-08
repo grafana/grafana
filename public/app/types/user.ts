@@ -22,7 +22,7 @@ export interface User {
   orgId?: number;
 }
 
-type Unit = { name: string; url: string };
+export type Unit = { name: string; url: string };
 
 export interface UserDTO {
   id: number;

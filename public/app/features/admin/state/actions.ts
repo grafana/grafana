@@ -281,16 +281,36 @@ export function fetchUsers(): ThunkResult<void> {
         ],
         orgs: [
           {
-            name: 'TODOS',
+            name: 'Main org.',
             url: 'org url',
           },
           {
-            name: 'OLA KE ASE',
+            name: 'Second org',
             url: 'org url',
           },
         ],
       };
-      dispatch(usersFetched({ ...result, users: result.users.map((user: any) => ({ ...user, ...mockData })) }));
+      dispatch(
+        usersFetched({
+          ...result,
+          users: result.users.map((user: any, i: number) => {
+            if (i === result.users.length - 1) {
+              return {
+                ...user,
+                ...mockData,
+                teams: [
+                  {
+                    name: 'Permissions Team',
+                    url: 'team url',
+                  },
+                ],
+              };
+            }
+
+            return { ...user, ...mockData };
+          }),
+        })
+      );
     } catch (error) {
       usersFetchEnd();
       console.error(error);

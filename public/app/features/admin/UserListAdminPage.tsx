@@ -1,15 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
-import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Icon, IconName, LinkButton, Pagination, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AccessControlAction, StoreState, UserDTO } from '../../types';
-import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
+import { AccessControlAction, StoreState, Unit, UserDTO } from '../../types';
+import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
 
 const mapDispatchToProps = {
@@ -56,6 +56,8 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
     fetchUsers();
   }, [fetchUsers]);
 
+  const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
+  const showUnits = useMemo(() => users.some((user) => user.teams || user.orgs), [users]);
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -96,6 +98,8 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th>Email</th>
                     <th>Name</th>
                     <th>Server admin</th>
+                    {showUnits && <th>Belongs to</th>}
+                    {showLicensedRole && <th>Licensed role</th>}
                     <th>
                       Last active&nbsp;
                       <Tooltip placement="top" content="Time since user was seen using Grafana">
@@ -105,7 +109,11 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th style={{ width: '1%' }}></th>
                   </tr>
                 </thead>
-                <tbody>{users.map(renderUser)}</tbody>
+                <tbody>
+                  {users.map((user) => (
+                    <UserListItem user={user} showLicensedRole={showLicensedRole} showUnits={showUnits} key={user.id} />
+                  ))}
+                </tbody>
               </table>
             </div>
             {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
@@ -116,7 +124,18 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   );
 };
 
-const renderUser = (user: UserDTO) => {
+const iconMap = new Map<string, IconName>([
+  ['dashboard', 'apps'],
+  ['folder', 'folder'],
+]);
+
+type UserListItemProps = {
+  user: UserDTO;
+  showLicensedRole: boolean;
+  showUnits: boolean;
+};
+const UserListItem = memo(({ user, showUnits, showLicensedRole }: UserListItemProps) => {
+  const styles = useStyles2(getStyles);
   const editUrl = `admin/users/edit/${user.id}`;
 
   return (
@@ -150,6 +169,22 @@ const renderUser = (user: UserDTO) => {
           </a>
         )}
       </td>
+      {showUnits && (
+        <td className={cx('link-td', styles.iconRow, styles.row)}>
+          <OrgUnits units={user.orgs} icon={'building'} />
+          <OrgUnits units={user.teams} icon={'users-alt'} />
+        </td>
+      )}
+      {showLicensedRole && (
+        <td className={cx('link-td', styles.iconRow)}>
+          <a className="ellipsis" href={editUrl} title={user.name} aria-label={`Edit user's ${user.name} details`}>
+            {user.licensedRole}{' '}
+            {user.permissions?.map((permission) =>
+              iconMap.has(permission) ? <Icon name={iconMap.get(permission)!} /> : null
+            )}
+          </a>
+        </td>
+      )}
       <td className="link-td">
         {user.lastSeenAtAge && (
           <a
@@ -170,6 +205,47 @@ const renderUser = (user: UserDTO) => {
       </td>
     </tr>
   );
+});
+
+UserListItem.displayName = 'UserListItem';
+
+type OrgUnitProps = { units?: Unit[]; icon: IconName };
+
+const OrgUnits = ({ units, icon }: OrgUnitProps) => {
+  const styles = useStyles2(getStyles);
+
+  if (!units?.length) {
+    return null;
+  }
+
+  return units.length > 1 ? (
+    <Tooltip
+      placement={'top'}
+      content={
+        <div className={styles.unitTooltip}>
+          {units?.map((unit) => (
+            <a href={unit.url} title={unit.name} key={unit.name} aria-label={`Edit ${unit.name}`}>
+              {unit.name}
+            </a>
+          ))}
+        </div>
+      }
+    >
+      <div className={styles.unitItem}>
+        <Icon name={icon} /> <span>{units.length}</span>
+      </div>
+    </Tooltip>
+  ) : (
+    <a
+      className="ellipsis"
+      href={units[0].url}
+      title={units[0].name}
+      key={units[0].name}
+      aria-label={`Edit ${units[0].name}`}
+    >
+      <Icon name={'users-alt'} /> {units[0].name}
+    </a>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -179,6 +255,26 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     filter: css`
       margin-right: ${theme.spacing(1)};
+    `,
+    iconRow: css`
+      svg {
+        margin-left: ${theme.spacing(0.5)};
+      }
+    `,
+    row: css`
+      display: flex;
+      align-items: center;
+
+      svg {
+        margin-left: ${theme.spacing(1)};
+      }
+    `,
+    unitTooltip: css`
+      display: flex;
+      flex-direction: column;
+    `,
+    unitItem: css`
+      cursor: pointer;
     `,
   };
 };
