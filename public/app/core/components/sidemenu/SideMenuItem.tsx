@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
 import { Link } from '@grafana/ui';
 import { NavModelItem } from '@grafana/data';
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 
 export interface Props {
   children: ReactNode;
@@ -25,10 +25,6 @@ const SideMenuItem = ({
   target,
   url,
 }: Props) => {
-  const resetButtonStyles = css`
-    background-color: transparent;
-  `;
-
   const anchor = url ? (
     <Link
       className="sidemenu-link"
@@ -41,7 +37,7 @@ const SideMenuItem = ({
       <span className="icon-circle sidemenu-icon">{children}</span>
     </Link>
   ) : (
-    <button className={cx(resetButtonStyles, 'sidemenu-link')} onClick={onClick} aria-label={label}>
+    <button className="sidemenu-link" onClick={onClick} aria-label={label}>
       <span className="icon-circle sidemenu-icon">{children}</span>
     </button>
   );

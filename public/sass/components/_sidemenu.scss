@@ -85,6 +85,7 @@ $mobile-menu-breakpoint: md;
 }
 
 .sidemenu-link {
+  background-color: transparent;
   color: $side-menu-icon-color !important;
   line-height: 42px;
   padding: 0px 10px 0px 10px;
@@ -132,8 +133,10 @@ $mobile-menu-breakpoint: md;
 }
 
 .side-menu-header-link {
-  color: $side-menu-header-color !important;
+  background-color: transparent;
   border: none !important;
+  color: $side-menu-header-color !important;
+  font-size: inherit;
   padding: 0 !important;
 }
 
