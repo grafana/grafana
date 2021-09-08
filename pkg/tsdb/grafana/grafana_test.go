@@ -44,3 +44,7 @@ func TestReadCSVFile(t *testing.T) {
 type fakeBackendPM struct {
 	backendplugin.Manager
 }
+
+func (pm *fakeBackendPM) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	return nil
+}
