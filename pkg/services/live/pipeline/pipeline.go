@@ -56,6 +56,8 @@ type Outputter interface {
 	Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error)
 }
 
+// LiveChannelRule is an in-memory representation of each specific rule, with Converter, Processor
+// and Outputter to be executed by Pipeline.
 type LiveChannelRule struct {
 	OrgId     int64
 	Pattern   string
@@ -64,11 +66,13 @@ type LiveChannelRule struct {
 	Outputter Outputter
 }
 
+// Label ...
 type Label struct {
 	Name  string `json:"name"`
 	Value string `json:"value"` // Can be JSONPath or Goja script.
 }
 
+// Field description.
 type Field struct {
 	Name   string            `json:"name"`
 	Type   data.FieldType    `json:"type"`
