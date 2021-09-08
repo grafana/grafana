@@ -1,4 +1,4 @@
-package builtin
+package grafana
 
 const (
 	// QueryTypeRandomWalk retuns a random walk

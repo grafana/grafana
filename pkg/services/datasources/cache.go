@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,9 +31,6 @@ func (dc *CacheServiceImpl) GetDatasource(
 	user *models.SignedInUser,
 	skipCache bool,
 ) (*models.DataSource, error) {
-	if datasourceID == -1 {
-		return getBuiltinGrafanaDS(user.OrgId), nil
-	}
 	cacheKey := idKey(datasourceID)
 
 	if !skipCache {
@@ -68,9 +63,6 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
-	if datasourceUID == "grafana" {
-		return getBuiltinGrafanaDS(user.OrgId), nil
-	}
 	if user.OrgId == 0 {
 		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
 	}
@@ -102,15 +94,4 @@ func idKey(id int64) string {
 
 func uidKey(orgID int64, uid string) string {
 	return fmt.Sprintf("ds-orgid-uid-%d-%s", orgID, uid)
-}
-
-func getBuiltinGrafanaDS(orgId int64) *models.DataSource {
-	return &models.DataSource{
-		Type:           "grafana",
-		OrgId:          orgId,
-		Id:             -1,
-		Name:           "-- Grafana --",
-		JsonData:       simplejson.New(),
-		SecureJsonData: make(securejsondata.SecureJsonData),
-	}
 }

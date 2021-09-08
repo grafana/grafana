@@ -1,9 +1,11 @@
-package builtin
+package grafana
 
 import (
 	"encoding/json"
 	"path"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
@@ -16,7 +18,7 @@ func asJSON(v interface{}) json.RawMessage {
 }
 
 func TestReadFolderListing(t *testing.T) {
-	ds := newBuiltinGrafanaDatasource("../../../public")
+	ds := newService("../../../public", &fakeBackendPM{})
 	dr := ds.doListQuery(backend.DataQuery{
 		QueryType: "x",
 		JSON: asJSON(listQueryModel{
@@ -28,7 +30,7 @@ func TestReadFolderListing(t *testing.T) {
 }
 
 func TestReadCSVFile(t *testing.T) {
-	ds := newBuiltinGrafanaDatasource("../../../public")
+	ds := newService("../../../public", &fakeBackendPM{})
 	dr := ds.doReadQuery(backend.DataQuery{
 		QueryType: "x",
 		JSON: asJSON(readQueryModel{
@@ -37,4 +39,12 @@ func TestReadCSVFile(t *testing.T) {
 	})
 	err := experimental.CheckGoldenDataResponse(path.Join("testdata", "jslib.golden.txt"), &dr, true)
 	require.NoError(t, err)
+}
+
+type fakeBackendPM struct {
+	backendplugin.Manager
+}
+
+func (pm *fakeBackendPM) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	return nil
 }
