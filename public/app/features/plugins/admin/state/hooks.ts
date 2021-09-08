@@ -69,10 +69,10 @@ export const useFetchAll = () => {
 export const useFetchDetails = (id: string) => {
   const dispatch = useDispatch();
   const plugin = useSelector((state) => selectById(state, id));
-  const isPending = useSelector(selectIsRequestPending(fetchDetails.typePrefix));
-  const shouldFetch = !isPending && !plugin?.details;
+  const isNotFetching = !useSelector(selectIsRequestPending(fetchDetails.typePrefix));
+  const shouldFetch = isNotFetching && plugin && !plugin.details;
 
   useEffect(() => {
     shouldFetch && dispatch(fetchDetails(id));
-  }, []); // eslint-disable-line
+  }, [plugin]); // eslint-disable-line
 };
