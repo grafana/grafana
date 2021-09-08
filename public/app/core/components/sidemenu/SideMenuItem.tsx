@@ -27,27 +27,37 @@ const SideMenuItem = ({
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const element = url ? (
-    <Link
-      className={styles.element}
-      href={url}
-      target={target}
-      aria-label={label}
-      onClick={onClick}
-      aria-haspopup="true"
-    >
-      <span className={styles.icon}>{children}</span>
-    </Link>
-  ) : (
+  let element = (
     <button className={styles.element} onClick={onClick} aria-label={label}>
       <span className={styles.icon}>{children}</span>
     </button>
   );
 
+  if (url) {
+    element =
+      !target && url.startsWith('/') ? (
+        <Link
+          className={styles.element}
+          href={url}
+          target={target}
+          aria-label={label}
+          onClick={onClick}
+          aria-haspopup="true"
+        >
+          <span className={styles.icon}>{children}</span>
+        </Link>
+      ) : (
+        <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
+          <span className={styles.icon}>{children}</span>
+        </a>
+      );
+  }
+
   return (
     <div className={cx(styles.container, 'dropdown', { dropup: reverseMenuDirection })}>
       {element}
       <SideMenuDropDown
+        headerTarget={target}
         headerText={label}
         headerUrl={url}
         items={menuItems}

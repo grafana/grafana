@@ -5,6 +5,7 @@ import { IconName, Link, useTheme2 } from '@grafana/ui';
 import DropDownChild from './DropDownChild';
 
 interface Props {
+  headerTarget?: HTMLAnchorElement['target'];
   headerText: string;
   headerUrl?: string;
   items?: NavModelItem[];
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const SideMenuDropDown = ({
+  headerTarget,
   headerText,
   headerUrl,
   items = [],
@@ -24,19 +26,27 @@ const SideMenuDropDown = ({
   const theme = useTheme2();
   const styles = getStyles(theme, reverseDirection);
 
-  const headerElement = headerUrl ? (
-    <Link href={headerUrl} onClick={onHeaderClick} className={styles.header}>
-      {headerText}
-    </Link>
-  ) : (
+  let header = (
     <button onClick={onHeaderClick} className={styles.header}>
       {headerText}
     </button>
   );
+  if (headerUrl) {
+    header =
+      !headerTarget && headerUrl.startsWith('/') ? (
+        <Link href={headerUrl} onClick={onHeaderClick} className={styles.header}>
+          {headerText}
+        </Link>
+      ) : (
+        <a href={headerUrl} target={headerTarget} onClick={onHeaderClick} className={styles.header}>
+          {headerText}
+        </a>
+      );
+  }
 
   return (
     <ul className={`${styles.menu} dropdown-menu dropdown-menu--sidemenu`} role="menu">
-      <li>{headerElement}</li>
+      <li>{header}</li>
       {items
         .filter((item) => !item.hideFromMenu)
         .map((child, index) => (

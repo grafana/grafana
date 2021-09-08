@@ -18,6 +18,16 @@ const (
 	darkName  = "dark"
 )
 
+// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
+var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	ac.EvalAny(
+		ac.EvalPermission(ActionDatasourcesCreate),
+		ac.EvalPermission(ActionDatasourcesDelete),
+		ac.EvalPermission(ActionDatasourcesWrite),
+	),
+)
+
 func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	// Only set login if it's different from the name
 	var login string
@@ -253,7 +263,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	configNodes := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)) {
+	if hasAccess(ac.ReqOrgAdmin, dataSourcesConfigurationAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
