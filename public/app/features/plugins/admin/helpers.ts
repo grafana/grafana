@@ -16,20 +16,20 @@ export function mergeLocalsAndRemotes(local: LocalPlugin[] = [], remote: RemoteP
   // TODO<use a Set() here instead of Array.prototype.find()>
   const catalogPlugins: CatalogPlugin[] = [];
 
+  // add locals
+  local.forEach((l) => {
+    const remotePlugin = remote.find((r) => r.slug === l.id);
+
+    if (!remotePlugin) {
+      catalogPlugins.push(mergeLocalAndRemote(l));
+    }
+  });
+
   // add remote
   remote.forEach((r) => {
     const localPlugin = local.find((l) => l.id === r.slug);
 
     catalogPlugins.push(mergeLocalAndRemote(localPlugin, r));
-  });
-
-  // add locals
-  local.forEach((l) => {
-    const catalogPlugin = catalogPlugins.find((p) => p.id === l.id);
-
-    if (!catalogPlugin) {
-      catalogPlugins.push(mergeLocalAndRemote(l));
-    }
   });
 
   return catalogPlugins;
