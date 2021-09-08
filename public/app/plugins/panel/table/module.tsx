@@ -144,9 +144,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         settings: {
           options: [],
           getOptions: async (context: FieldOverrideContext) => {
-            if (context && context.data && context.data.length > 1) {
-              const frames = context.data.filter((_, i) => i > 0);
-              return frames.map((f) => ({ value: f.name, label: f.name }));
+            if (context?.data?.length) {
+              return context.data.filter((_, i) => i > 0).map((f) => ({ value: f.name, label: f.name }));
             }
             return [];
           },
