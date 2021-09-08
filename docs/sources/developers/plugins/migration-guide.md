@@ -15,7 +15,12 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 - [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
   - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
-  - [Data frames can now be in either wide or long format](#data-frames-can-now-be-in-either-wide-or-long-format)
+  - [Time series data can now be in wide or many format](#time-series-data-can-now-be-in-wide-or-many-format)
+  - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
+  - [Update the plugin.json](#update-the-pluginjson)
+  - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
+  - [8.0 Deprecations](#80-deprecations)
+    - [Grafana theme v1](#grafana-theme-v1)
 - [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
   - [Legend components](#legend-components)
 - [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
@@ -28,9 +33,59 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 
 ## From version 7.x.x to 8.x.x
 
+This guide will help you migrate Grafana v7.x.x plugins to the updated plugin system released with Grafana v8.x.x. All the changes described below might not be applicable to your plugin but we will try to cover all breaking changes in Grafana v8.x.x and what steps you need to take to upgrade your plugin.
+
 ### Backend plugin v1 support has been dropped
 
+### Unsigned backend plugins will not be loaded
+
+We strongly recommend our Grafana users not to allow unsigned plugins in their Grafana installation. By allowing unsigned plugins, we can’t guarantee the authenticity of the plugin which could compromise the security of your Grafana installation.
+
+This means that you, as a plugin developer, need to get your plugin signed if you want it to be able to run on all Grafana installations.
+
+Follow the following [steps](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) to get instructions on how to set up plugin signing.
+
+You will still be able to run and develop your plugin during development by running your Grafana [instance in development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode).
+
+### Time series data can now be structured in a wide or many format.
+
+Starting in Grafana 8 time series data can either be structured in either `wide` or `many` format. Prior to this version time series data was delivered in the following format (which is the `many` format).
+
+| time                 | temperature |
+| -------------------- | ----------- |
+| 2021-05-08T07:31:45Z | 23          |
+| 2021-05-08T09:31:45Z | 25          |
+| 2021-05-08T11:31:45Z | 27          |
+
+| time                 | humidity |
+| -------------------- | -------- |
+| 2021-05-08T07:31:45Z | 60       |
+| 2021-05-08T09:31:45Z | 55       |
+| 2021-05-08T11:31:45Z | 55       |
+
+> Data delivered as an array of data frames (time field needs to be repeated).
+
+That made it possible to detect time series data by inspecting the data frame. If it had two fields (time + value) it most likley was time series data. This is no longer possible since the same data can be delivered in the following `wide` format.
+
+| time                 | temperature | humidity |
+| -------------------- | ----------- | -------- |
+| 2021-05-08T07:31:45Z | 23          | 60       |
+| 2021-05-08T09:31:45Z | 25          | 55       |
+| 2021-05-08T11:31:45Z | 27          | 55       |
+
+> Data delivered as one single data frame (the values share the same time field).
+
+If your plugin should support time series data we recommend you to make sure to support both.
+
+### Update react-hook-form from v6 to v7
+
+### Update the plugin.json
+
+### Update imports to match emotion 11
+
 ### 8.0 deprecations
+
+#### Grafana theme v1
 
 ## From version 6.2.x to 7.4.0
 
