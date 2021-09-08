@@ -1,7 +1,7 @@
-import React, { useLayoutEffect, useState, useCallback, useRef } from 'react';
-
-import { UPlotConfigBuilder, PlotSelection } from '@grafana/ui';
 import { CartesianCoords2D, DataFrame, TimeZone } from '@grafana/data';
+import { PlotSelection, UPlotConfigBuilder } from '@grafana/ui';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useMountedState } from 'react-use';
 import { AnnotationEditor } from './annotations/AnnotationEditor';
 
 type StartAnnotatingFn = (props: {
@@ -24,6 +24,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
   const [bbox, setBbox] = useState<DOMRect>();
   const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);
   const [selection, setSelection] = useState<PlotSelection | null>(null);
+  const isMounted = useMountedState();
 
   const clearSelection = useCallback(() => {
     setSelection(null);
@@ -57,6 +58,9 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
 
     // cache uPlot plotting area bounding box
     config.addHook('syncRect', (u, rect) => {
+      if (!isMounted()) {
+        return;
+      }
       setBbox(rect);
     });
 
@@ -98,7 +102,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
         },
       },
     });
-  }, [config, setBbox]);
+  }, [config, setBbox, isMounted]);
 
   const startAnnotating = useCallback<StartAnnotatingFn>(
     ({ coords }) => {

@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { Portal } from '../../Portal/Portal';
@@ -48,6 +49,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const [focusedPointIdxs, setFocusedPointIdxs] = useState<Array<number | null>>([]);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
+  const isMounted = useMountedState();
 
   const pluginId = `TooltipPlugin`;
 
@@ -62,12 +64,18 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     let bbox: DOMRect | undefined = undefined;
 
     const plotMouseLeave = () => {
+      if (!isMounted()) {
+        return;
+      }
       setCoords(null);
       setIsActive(false);
       plotInstance?.root.classList.remove('plot-active');
     };
 
     const plotMouseEnter = () => {
+      if (!isMounted()) {
+        return;
+      }
       setIsActive(true);
       plotInstance?.root.classList.add('plot-active');
     };
@@ -116,13 +124,16 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       });
     } else {
       config.addHook('setLegend', (u) => {
+        if (!isMounted()) {
+          return;
+        }
         setFocusedPointIdx(u.legend.idx!);
         setFocusedPointIdxs(u.legend.idxs!.slice());
       });
 
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
-        if (!bbox) {
+        if (!bbox || !isMounted()) {
           return;
         }
 
@@ -135,6 +146,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       });
 
       config.addHook('setSeries', (_, idx) => {
+        if (!isMounted()) {
+          return;
+        }
         setFocusedSeriesIdx(idx);
       });
     }
@@ -142,8 +156,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     return () => {
       setCoords(null);
       if (plotInstance) {
-        plotInstance.over.addEventListener('mouseleave', plotMouseLeave);
-        plotInstance.over.addEventListener('mouseenter', plotMouseEnter);
+        plotInstance.over.removeEventListener('mouseleave', plotMouseLeave);
+        plotInstance.over.removeEventListener('mouseenter', plotMouseEnter);
       }
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
