@@ -239,7 +239,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {logsVolumeLoadingInProgress && !logsVolume && (
           <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>Logs volume is loading...</div>
         )}
-        {logsVolume && (
+        {logsVolume && logsVolume.length > 0 && (
           <ExploreGraphNGPanel
             data={logsVolume}
             height={150}
@@ -251,6 +251,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             annotations={queryResponse.annotations}
             splitOpenFn={splitOpen}
           />
+        )}
+        {logsVolume && logsVolume.length === 0 && (
+          <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>No volume data.</div>
         )}
       </Collapse>
     );
