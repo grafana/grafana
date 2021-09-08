@@ -104,8 +104,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
       })
       .addCustomEditor({
         category: ['Table footer'],
-        id: 'reduceOptions.calcs',
-        path: 'reduceOptions.calcs',
+        id: 'footerSummary.reduceOptions.calcs',
+        path: 'footerSummary.reduceOptions.calcs',
         name: 'Summarize',
         description: 'Choose a reducer function / calculation',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,

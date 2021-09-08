@@ -33,18 +33,17 @@ export interface PanelOptions {
   footerFrame?: number;
   footerSummary?: TableFooterSummary; // TODO: should be array (options builder is limited)
   footerLabelMode?: FooterLabelMode;
-  reduceOptions?: ReduceDataOptions;
 }
 
 interface TableFooterSummary {
-  reducer: string;
+  reduceOptions?: ReduceDataOptions;
   fields: string; // TODO!
 }
 
 export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
-  reduceOptions: { calcs: [] },
+  footerSummary: { reduceOptions: { calcs: [] }, fields: '' },
 };
 
 export interface PanelFieldConfig {
