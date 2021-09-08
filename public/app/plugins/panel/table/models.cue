@@ -25,6 +25,7 @@ Family: {
                 PanelOptions: {
                     frameIndex: number | *0
                     showHeader: bool | *true
+                    showTypeIcons: bool | *false
                     sortBy?: [...ui.TableSortByFieldState]
                 }
                 PanelFieldConfig: {

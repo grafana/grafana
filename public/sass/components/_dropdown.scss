@@ -74,7 +74,8 @@
 
   // Links within the dropdown menu
   > li {
-    > a {
+    > a,
+    > button {
       display: block;
       padding: 3px 20px 3px 15px;
       clear: both;
@@ -111,7 +112,8 @@
     box-shadow: $menu-dropdown-shadow;
     margin-top: 0px;
 
-    > li > a {
+    > li > a,
+    > li > button {
       display: flex;
       padding: 5px 10px;
       border-left: 2px solid transparent;
@@ -125,7 +127,8 @@
 
   &--sidemenu {
     li.sidemenu-org-switcher {
-      > a {
+      > a,
+      > button {
         padding: 8px 10px 8px 15px;
       }
     }
@@ -141,7 +144,11 @@
 .dropdown-menu > li > a:hover,
 .dropdown-menu > li > a:focus,
 .dropdown-submenu:hover > a,
-.dropdown-submenu:focus > a {
+.dropdown-submenu:focus > a,
+.dropdown-menu > li > button:hover,
+.dropdown-menu > li > button:focus,
+.dropdown-submenu:hover > button,
+.dropdown-submenu:focus > button {
   text-decoration: none;
   color: $dropdownLinkColorHover;
   background-color: $dropdownLinkBackgroundHover;
@@ -151,7 +158,10 @@
 // ------------
 .dropdown-menu > .active > a,
 .dropdown-menu > .active > a:hover,
-.dropdown-menu > .active > a:focus {
+.dropdown-menu > .active > a:focus,
+.dropdown-menu > .active > button,
+.dropdown-menu > .active > button:hover,
+.dropdown-menu > .active > button:focus {
   color: $dropdownLinkColorActive;
   text-decoration: none;
   outline: 0;
@@ -163,12 +173,17 @@
 // Gray out text and ensure the hover/focus state remains gray
 .dropdown-menu > .disabled > a,
 .dropdown-menu > .disabled > a:hover,
-.dropdown-menu > .disabled > a:focus {
+.dropdown-menu > .disabled > a:focus,
+.dropdown-menu > .disabled > button,
+.dropdown-menu > .disabled > button:hover,
+.dropdown-menu > .disabled > button:focus {
   color: $gray-2;
 }
 // Nuke hover/focus effects
 .dropdown-menu > .disabled > a:hover,
-.dropdown-menu > .disabled > a:focus {
+.dropdown-menu > .disabled > a:focus,
+.dropdown-menu > .disabled > button:hover,
+.dropdown-menu > .disabled > button:focus {
   text-decoration: none;
   background-color: transparent;
   background-image: none; // Remove CSS gradient
@@ -269,7 +284,8 @@
 //   pointer-events: none;
 //   font-size: 11px;
 // }
-.dropdown-submenu:hover > a::after {
+.dropdown-submenu:hover > a::after,
+.dropdown-submenu:hover > button::after {
   border-left-color: $dropdownLinkColorHover;
 }
 
@@ -314,7 +330,8 @@
 }
 
 .dropdown-menu.dropdown-menu--new {
-  li a {
+  li a,
+  li button {
     padding: $spacer/2 $spacer;
     border-left: 2px solid $side-menu-bg;
     background: $side-menu-bg;

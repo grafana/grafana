@@ -1016,6 +1016,7 @@ export class DashboardModel {
   private updateSchema(old: any) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
+    migrator.migrateCloudWatchQueries();
   }
 
   resetOriginalTime() {

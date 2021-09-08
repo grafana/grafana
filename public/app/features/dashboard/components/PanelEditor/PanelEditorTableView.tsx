@@ -19,6 +19,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
     showHeader: true,
+    showTypeIcons: true,
   });
 
   // Subscribe to panel event
