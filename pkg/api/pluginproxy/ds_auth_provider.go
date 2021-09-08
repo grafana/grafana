@@ -7,10 +7,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/encryption"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
