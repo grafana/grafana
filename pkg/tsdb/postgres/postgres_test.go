@@ -1217,6 +1217,32 @@ func TestPostgres(t *testing.T) {
 			// Should be in time.Time
 			assert.Nil(t, frames[0].Fields[0].At(0))
 		})
+
+		t.Run("When doing an annotation query with a time and timeend column should return two fields of type time", func(t *testing.T) {
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT 1631053772276 as time, 1631054012276 as timeend, '' as text, '' as tags",
+							"format": "table",
+						}),
+						RefID: "A",
+					},
+				},
+			}
+
+			resp, err := exe.DataQuery(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 4, len(frames[0].Fields))
+
+			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[0].Type())
+			require.Equal(t, data.FieldTypeNullableTime, frames[0].Fields[1].Type())
+		})
 	})
 }
 
