@@ -93,6 +93,9 @@ const emptyDataQueryResponse = {
       ],
       meta: {
         preferredVisualisationType: 'trace',
+        custom: {
+          traceFormat: 'zipkin',
+        },
       },
     }),
   ],
