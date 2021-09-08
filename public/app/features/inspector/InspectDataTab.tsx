@@ -228,7 +228,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={dataFrame} />
+                  <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />
                 </div>
               );
             }}

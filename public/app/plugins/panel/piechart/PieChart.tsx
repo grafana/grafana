@@ -66,10 +66,6 @@ export const PieChart: FC<PieChartProps> = ({
     return !dv.field.custom.hideFrom.viz;
   });
 
-  if (filteredFieldDisplayValues.length < 0) {
-    return <div>No data</div>;
-  }
-
   const getValue = (d: FieldDisplay) => d.display.numeric;
   const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
   const getGradientColor = (color: string) => {
