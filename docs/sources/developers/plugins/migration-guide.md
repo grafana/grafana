@@ -344,6 +344,32 @@ import { VizLegendItem, VizLegendOptions, VizLegend } from '@grafana/ui';
 - `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'` so you can not place the legend above the visualization anymore.
 - The `isVisible` in the `LegendItem` has been renamed to `disabled` in `VizLegendItem`.
 
+## From version 6.5.x to 7.3.0
+
+### getColorForTheme changes
+
+The `getColorForTheme` function arguments have changed from `(color: ColorDefinition, theme?: GrafanaThemeType)` to `(color: string, theme: GrafanaTheme)`.
+
+```ts
+// before
+const color: ColorDefinition = {
+  hue: 'green';
+  name: 'dark-green';
+  variants: {
+    light: '#19730E'
+    dark: '#37872D'
+  };
+}
+const themeType: GrafanaThemeType = 'dark';
+const themeColor = getColorForTheme(color, themeType);
+
+// after
+const color = 'green';
+const theme: GrafanaTheme = useTheme();
+const themeColor = getColorForTheme(color, theme);
+
+```
+
 ## From version 6.x.x to 7.x.x
 
 ### What's new in Grafana 7.0?
