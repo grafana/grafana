@@ -28,6 +28,7 @@ export enum FooterLabelMode {
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
+  showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
   footerMode?: FooterMode;
   footerFrame?: number;
@@ -44,6 +45,7 @@ export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
   footerSummary: { reduceOptions: { calcs: [] }, fields: '' },
+  showTypeIcons: false,
 };
 
 export interface PanelFieldConfig {

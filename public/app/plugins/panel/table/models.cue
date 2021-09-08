@@ -26,6 +26,7 @@ Family: {
                     frameIndex: number | *0
                     showHeader: bool | *true
                     showFooter: bool | *false
+                    showTypeIcons: bool | *false
                     sortBy?: [...ui.TableSortByFieldState]
                     footerFunctions?: string | *"sum"
                 }

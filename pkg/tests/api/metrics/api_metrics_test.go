@@ -129,9 +129,6 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 				Fields: []*data.Field{
 					data.NewField("logGroupName", nil, []*string{}),
 				},
-				Meta: &data.FrameMeta{
-					PreferredVisualization: "logs",
-				},
 			},
 		}
 

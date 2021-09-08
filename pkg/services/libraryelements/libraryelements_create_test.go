@@ -59,7 +59,7 @@ func TestCreateLibraryElement(t *testing.T) {
 			}
 		})
 
-	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should update panel title",
+	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should not update panel title",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(1, "Library Panel Name")
 			resp := sc.service.createHandler(sc.reqContext, command)
@@ -78,7 +78,7 @@ func TestCreateLibraryElement(t *testing.T) {
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",
 						"id":          float64(1),
-						"title":       "Library Panel Name",
+						"title":       "Text - Library Panel",
 						"type":        "text",
 					},
 					Version: 1,
