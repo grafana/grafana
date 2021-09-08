@@ -5,14 +5,16 @@ import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 
-export interface DashboardPickerItem extends SelectableValue<number>, Pick<DashboardSearchHit, 'uid'> {
+export interface DashboardPickerItem extends SelectableValue<number> {
+  id: number;
+  uid: string;
   value: number;
   label: string;
 }
 
 interface Props {
   onChange: (dashboard: DashboardPickerItem) => void;
-  value?: SelectableValue;
+  value?: DashboardPickerItem;
   width?: number;
   isClearable?: boolean;
   invalid?: boolean;
