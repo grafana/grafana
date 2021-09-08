@@ -10,6 +10,14 @@ import (
 // FileStorage can load channel rules from a file on disk.
 type FileStorage struct{}
 
+type RemoteWriteBackends struct {
+	Backends []RemoteWriteBackend `json:"remoteWriteBackends"`
+}
+
+type ChannelRules struct {
+	Rules []ChannelRule `json:"rules"`
+}
+
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
 	backendBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_REMOTE_WRITE_BACKENDS_FILE"))
 	var remoteWriteBackends RemoteWriteBackends

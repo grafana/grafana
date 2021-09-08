@@ -74,14 +74,6 @@ type RemoteWriteBackend struct {
 	Settings *RemoteWriteConfig `json:"settings"`
 }
 
-type RemoteWriteBackends struct {
-	Backends []RemoteWriteBackend `json:"remoteWriteBackends"`
-}
-
-type ChannelRules struct {
-	Rules []ChannelRule `json:"rules"`
-}
-
 type MultipleConditionCheckerConfig struct {
 	Type       ConditionType            `json:"type"`
 	Conditions []ConditionCheckerConfig `json:"conditions"`
