@@ -25,27 +25,37 @@ const SideMenuItem = ({
   target,
   url,
 }: Props) => {
-  const anchor = url ? (
-    <Link
-      className="sidemenu-link"
-      href={url}
-      target={target}
-      aria-label={label}
-      onClick={onClick}
-      aria-haspopup="true"
-    >
-      <span className="icon-circle sidemenu-icon">{children}</span>
-    </Link>
-  ) : (
+  let element = (
     <button className="sidemenu-link" onClick={onClick} aria-label={label}>
       <span className="icon-circle sidemenu-icon">{children}</span>
     </button>
   );
 
+  if (url) {
+    element =
+      !target && url.startsWith('/') ? (
+        <Link
+          className="sidemenu-link"
+          href={url}
+          target={target}
+          aria-label={label}
+          onClick={onClick}
+          aria-haspopup="true"
+        >
+          <span className="icon-circle sidemenu-icon">{children}</span>
+        </Link>
+      ) : (
+        <a href={url} target={target} className="sidemenu-link" onClick={onClick} aria-label={label}>
+          <span className="icon-circle sidemenu-icon">{children}</span>
+        </a>
+      );
+  }
+
   return (
     <div className={cx('sidemenu-item', 'dropdown', { dropup: reverseMenuDirection })}>
-      {anchor}
+      {element}
       <SideMenuDropDown
+        headerTarget={target}
         headerText={label}
         headerUrl={url}
         items={menuItems}

@@ -5,6 +5,7 @@ import { IconName, Link } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 interface Props {
+  headerTarget?: HTMLAnchorElement['target'];
   headerText: string;
   headerUrl?: string;
   items?: NavModelItem[];
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const SideMenuDropDown = ({
+  headerTarget,
   headerText,
   headerUrl,
   items = [],
@@ -22,15 +24,23 @@ const SideMenuDropDown = ({
   subtitleText,
 }: Props) => {
   const headerContent = <span className="sidemenu-item-text">{headerText}</span>;
-  const header = headerUrl ? (
-    <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
-      {headerContent}
-    </Link>
-  ) : (
+  let header = (
     <button onClick={onHeaderClick} className="side-menu-header-link">
       {headerContent}
     </button>
   );
+  if (headerUrl) {
+    header =
+      !headerTarget && headerUrl.startsWith('/') ? (
+        <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
+          {headerContent}
+        </Link>
+      ) : (
+        <a href={headerUrl} target={headerTarget} onClick={onHeaderClick} className="side-menu-header-link">
+          {headerContent}
+        </a>
+      );
+  }
 
   const menuClass = css`
     flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
