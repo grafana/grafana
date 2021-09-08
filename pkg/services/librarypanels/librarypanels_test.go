@@ -326,7 +326,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								},
 							},
 						},
-						"title": "Text - Library Panel",
+						"title": "Outside row",
 						"type":  "text",
 					},
 				},
