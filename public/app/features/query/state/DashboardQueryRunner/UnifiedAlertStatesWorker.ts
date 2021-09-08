@@ -9,12 +9,21 @@ import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 
 export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
+  // maps dashboard uid to wether it has alert rules.
+  // if it is determined that a dashboard does not have alert rules,
+  // further attempts to get alert states for it will not be made
+  private hasAlertRules: Record<string, boolean> = {};
+
   canWork({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
     if (!dashboard.uid) {
       return false;
     }
 
     if (range.raw.to !== 'now') {
+      return false;
+    }
+
+    if (this.hasAlertRules[dashboard.uid] === false) {
       return false;
     }
 
@@ -36,6 +45,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     ).pipe(
       map((result: PromRulesResponse) => {
         if (result.status === 'success') {
+          this.hasAlertRules[dashboard.uid] = false;
           const panelIdToAlertState: Record<number, AlertStateInfo> = {};
           result.data.groups.forEach((group) =>
             group.rules.forEach((rule) => {
@@ -45,6 +55,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
                 rule.annotations[Annotation.dashboardUID] === dashboard.uid &&
                 rule.annotations[Annotation.panelID]
               ) {
+                this.hasAlertRules[dashboard.uid] = true;
                 const panelId = Number(rule.annotations[Annotation.panelID]);
                 const state = promAlertStateToAlertState(rule.state);
 

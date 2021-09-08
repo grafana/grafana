@@ -7,6 +7,7 @@ import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceCons
 import * as store from '../../../../store/store';
 import { PromAlertingRuleState, PromRuleDTO, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { lastValueFrom } from 'rxjs';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -29,7 +30,7 @@ function getTestContext() {
   return { getMock, options, dispatchMock };
 }
 
-describe('AlertStatesWorker', () => {
+describe('UnifiedAlertStatesWorker', () => {
   const worker = new UnifiedAlertStatesWorker();
 
   describe('when canWork is called with correct props', () => {
@@ -70,6 +71,24 @@ describe('AlertStatesWorker', () => {
         expect(results).toEqual({ alertStates: [], annotations: [] });
         expect(getMock).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('when run repeatedly for the same dashboard and no alert rules are found', () => {
+    it('then canWork should start returning false', async () => {
+      const worker = new UnifiedAlertStatesWorker();
+
+      const getResults: PromRulesResponse = {
+        status: 'success',
+        data: {
+          groups: [],
+        },
+      };
+      const { getMock, options } = getTestContext();
+      getMock.mockResolvedValue(getResults);
+      expect(worker.canWork(options)).toBe(true);
+      await lastValueFrom(worker.work(options));
+      expect(worker.canWork(options)).toBe(false);
     });
   });
 

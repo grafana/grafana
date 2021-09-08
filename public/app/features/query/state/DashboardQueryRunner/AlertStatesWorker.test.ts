@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = { id: 'an id' };
+  const dashboard: any = { id: 'an id', panels: [{ alert: {} }] };
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
@@ -53,6 +53,14 @@ describe('AlertStatesWorker', () => {
       const range: TimeRange = { ...defaultRange, raw: { ...defaultRange.raw, to: 'now-6h' } };
       const options = { ...getDefaultOptions(), range };
 
+      expect(worker.canWork(options)).toBe(false);
+    });
+  });
+
+  describe('when canWork is called for dashboard with no alert panels', () => {
+    it('then it should return false', () => {
+      const options = getDefaultOptions();
+      options.dashboard.panels.forEach((panel) => delete panel.alert);
       expect(worker.canWork(options)).toBe(false);
     });
   });
