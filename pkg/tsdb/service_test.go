@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/builtin"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
@@ -142,7 +143,8 @@ func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	manager := &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM,
 	}
-	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
+	gds := builtin.NewBuiltinGrafanaDatasource("..")
+	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{}, gds)
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),

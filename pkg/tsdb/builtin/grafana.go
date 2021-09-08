@@ -18,10 +18,11 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg) *BuiltinGrafanaDatasource {
-	return newBuiltinGrafanaDatasource(cfg.StaticRootPath)
+	return NewBuiltinGrafanaDatasource(cfg.StaticRootPath)
 }
 
-func newBuiltinGrafanaDatasource(staticRootPath string) *BuiltinGrafanaDatasource {
+// NewBuiltinGrafanaDatasource only public for testing
+func NewBuiltinGrafanaDatasource(staticRootPath string) *BuiltinGrafanaDatasource {
 	logger := log.New("tsdb.grafana")
 	ds := &BuiltinGrafanaDatasource{
 		logger:         logger,
