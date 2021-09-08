@@ -117,6 +117,80 @@ import { cx, css } from '@emotion/css';
 
 #### Grafana theme v1
 
+In Grafana 8 we have introduced a new improved version of our theming system. The previous version of the theming system is still available but deprecated and will be removed in the next major version of Grafana.
+
+You can find more detailed information on how to apply the v2 theme [here](https://github.com/grafana/grafana/blob/main/contribute/style-guides/themes.md#theming-grafana).
+
+**How to use the theme in a functional component**
+
+```ts
+// before
+import React, { ReactElement } from 'react';
+import { useTheme } from '@grafana/ui';
+
+function Component(): ReactElement | null {
+  const theme = useTheme();
+}
+
+// after
+import React, { ReactElement } from 'react';
+import { useTheme2 } from '@grafana/ui';
+
+function Component(): ReactElement | null {
+  const theme = useTheme2();
+  // Your component has access to the theme variables now
+}
+```
+
+**How to use the theme in a class component**
+
+```ts
+// before
+import React from 'react';
+import { Themeable, withTheme } from '@grafana/ui';
+
+type Props = {} & Themeable;
+
+class Component extends React.Component<Props> {
+  render() {
+    const { theme } = this.props;
+    // Your component has access to the theme variables now
+  }
+}
+
+export default withTheme(Component);
+
+// after
+import React from 'react';
+import { Themeable2, withTheme2 } from '@grafana/ui';
+
+type Props = {} & Themeable2;
+
+class Component extends React.Component<Props> {
+  render() {
+    const { theme } = this.props;
+    // Your component has access to the theme variables now
+  }
+}
+
+export default withTheme2(Component);
+```
+
+**Gradually migrating components**
+
+If you end up in a situation where you need to use both the v1 and v2 theme due to using migraded and non-migrated components in the same context you can handle that by using the `v1` property on the `v2` theme as described below.
+
+```ts
+function Component(): ReactElement | null {
+  const theme = useTheme2();
+  return (
+    <NonMigrated theme={theme.v1}>
+      <Migrated theme={theme] />
+    </NonMigrate>
+  );
+};
+```
+
 ## From version 6.2.x to 7.4.0
 
 ### Legend components
@@ -263,5 +337,3 @@ For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
 ### Troubleshoot plugin migration
 
 As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
-
-### 7.0 Deprecations
