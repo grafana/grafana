@@ -35,9 +35,9 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   const styles = useStyles2(getStyles);
   const setActiveTab = useCallback((activeTabIndex: number) => setState({ ...state, activeTabIndex }), [state]);
 
-  // If an app plugin is uninstalled we need to reset the active tab as the config / dashboards tabs are removed.
+  // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
   useEffect(() => {
-    if (activeTabIndex > tabs.length) {
+    if (activeTabIndex > tabs.length - 1) {
       setActiveTab(0);
     }
   }, [setActiveTab, activeTabIndex, tabs]);
