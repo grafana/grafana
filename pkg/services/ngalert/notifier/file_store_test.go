@@ -23,7 +23,7 @@ func TestFileStore_FilepathFort(t *testing.T) {
 		r, err := fs.FilepathFor(filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		f, err := ioutil.ReadFile(filePath)
+		f, err := ioutil.ReadFile(filepath.Clean(filePath))
 		require.NoError(t, err)
 		require.Equal(t, "silence1,silence2", string(f))
 		require.NoError(t, os.Remove(filePath))
@@ -31,15 +31,15 @@ func TestFileStore_FilepathFort(t *testing.T) {
 
 	// With a file already on the database, it writes the file to disk and returns the filepath.
 	{
-		store.Set(context.Background(), 1, KVNamespace, filekey, encode([]byte("silence1,silence3")))
+		require.NoError(t, store.Set(context.Background(), 1, KVNamespace, filekey, encode([]byte("silence1,silence3"))))
 		r, err := fs.FilepathFor(filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		f, err := ioutil.ReadFile(filePath)
+		f, err := ioutil.ReadFile(filepath.Clean(filePath))
 		require.NoError(t, err)
 		require.Equal(t, "silence1,silence3", string(f))
 		require.NoError(t, os.Remove(filePath))
-		store.Del(context.Background(), 1, KVNamespace, filekey)
+		require.NoError(t, store.Del(context.Background(), 1, KVNamespace, filekey))
 	}
 
 	// With no file on disk or database, it returns the original filepath.
@@ -47,7 +47,7 @@ func TestFileStore_FilepathFort(t *testing.T) {
 		r, err := fs.FilepathFor(filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		_, err = ioutil.ReadFile(filePath)
+		_, err = ioutil.ReadFile(filepath.Clean(filePath))
 		require.Error(t, err)
 	}
 }

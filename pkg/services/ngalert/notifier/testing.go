@@ -57,20 +57,20 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
-type fakeKVStore struct {
+type FakeKVStore struct {
 	mtx   sync.Mutex
 	store map[int64]map[string]map[string]string
 }
 
-func newFakeKVStore(t *testing.T) *fakeKVStore {
+func newFakeKVStore(t *testing.T) *FakeKVStore {
 	t.Helper()
 
-	return &fakeKVStore{
+	return &FakeKVStore{
 		store: map[int64]map[string]map[string]string{},
 	}
 }
 
-func (fkv *fakeKVStore) Get(_ context.Context, orgId int64, namespace string, key string) (string, bool, error) {
+func (fkv *FakeKVStore) Get(_ context.Context, orgId int64, namespace string, key string) (string, bool, error) {
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
 	org, ok := fkv.store[orgId]
@@ -89,7 +89,7 @@ func (fkv *fakeKVStore) Get(_ context.Context, orgId int64, namespace string, ke
 
 	return v, true, nil
 }
-func (fkv *fakeKVStore) Set(_ context.Context, orgId int64, namespace string, key string, value string) error {
+func (fkv *FakeKVStore) Set(_ context.Context, orgId int64, namespace string, key string, value string) error {
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
 	org, ok := fkv.store[orgId]
@@ -105,7 +105,7 @@ func (fkv *fakeKVStore) Set(_ context.Context, orgId int64, namespace string, ke
 
 	return nil
 }
-func (fkv *fakeKVStore) Del(_ context.Context, orgId int64, namespace string, key string) error {
+func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, key string) error {
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
 	org, ok := fkv.store[orgId]
