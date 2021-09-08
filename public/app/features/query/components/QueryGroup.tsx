@@ -161,12 +161,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  modalAddQuery(q: DataQuery): void {
-    const { options } = this.props;
-    this.onChange({ queries: addQuery(options.queries, q) });
-    this.onScrollBottom();
-  }
-
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 

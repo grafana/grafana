@@ -46,7 +46,6 @@ interface Props<TQuery extends DataQuery> {
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideDisableQuery?: boolean;
-  draggable?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -56,7 +55,6 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
-  createRecordedQuery: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
@@ -69,7 +67,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
-    createRecordedQuery: false,
     showingHelp: false,
   };
 
@@ -312,14 +309,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         )}
         {this.renderExtraActions()}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
-        {!hideDisableQuery && (
+        {!hideDisableQuery ? (
           <QueryOperationAction
             title="Disable/enable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
           />
-        )}
+        ) : null}
         <QueryOperationAction title="Remove query" icon="trash-alt" onClick={this.onRemoveQuery} />
       </HorizontalGroup>
     );
@@ -344,7 +341,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, id, index, visualization, draggable } = this.props;
+    const { query, id, index, visualization } = this.props;
     const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
@@ -364,7 +361,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={id}
-          draggable={draggable ?? true}
+          draggable={true}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}
