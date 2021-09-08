@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
 import { PluginSignatureStatus } from '@grafana/data';
-import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, RemotePlugin, Version, PluginFilter } from './types';
+import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export function isGrafanaAdmin(): boolean {
@@ -171,42 +171,5 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): 
     version,
   };
 }
-
-export function getCatalogPluginDetails(
-  local: LocalPlugin | undefined,
-  remote: RemotePlugin | undefined,
-  pluginVersions: Version[] = []
-): CatalogPluginDetails {
-  const plugin = mapToCatalogPlugin(local, remote);
-
-  return {
-    ...plugin,
-    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
-    links: remote?.json?.info.links || local?.info.links || [],
-    readme: remote?.readme || 'No plugin help or readme markdown file was found',
-    versions: pluginVersions,
-  };
-}
-
-export const isInstalled: PluginFilter = (plugin, query) =>
-  query === 'installed' ? plugin.isInstalled : !plugin.isCore;
-
-export const isType: PluginFilter = (plugin, query) => query === 'all' || plugin.type === query;
-
-export const matchesKeyword: PluginFilter = (plugin, query) => {
-  if (!query) {
-    return true;
-  }
-  const fields: String[] = [];
-  if (plugin.name) {
-    fields.push(plugin.name.toLowerCase());
-  }
-
-  if (plugin.orgName) {
-    fields.push(plugin.orgName.toLowerCase());
-  }
-
-  return fields.some((f) => f.includes(query.toLowerCase()));
-};
 
 export const getExternalManageLink = (pluginId: string) => `https://grafana.com/grafana/plugins/${pluginId}`;
