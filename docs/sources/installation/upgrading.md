@@ -293,7 +293,7 @@ The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK cr
 
 The other authentication methods, _Access & secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
 
-For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/cloudwatch.md#authentication" >}}).
+For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/aws-cloudwatch/aws-authentication.md" >}}).
 
 ### User invites database migration
 
