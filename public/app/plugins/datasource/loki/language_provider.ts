@@ -454,7 +454,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     if (!value) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.seriesCache.set(cacheKey, {});
-      const params = { match, start, end };
+      const params = { 'match[]': match, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);
       value = values;
@@ -470,7 +470,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/loki/api/v1/series';
     const { start, end } = this.datasource.getTimeRangeParams();
-    const params = { match, start, end };
+    const params = { 'match[]': match, start, end };
     return await this.request(url, params);
   };
 
