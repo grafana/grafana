@@ -9,9 +9,9 @@ import (
 
 	macaron "gopkg.in/macaron.v1"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -197,7 +197,7 @@ func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
 	}
 
 	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&hasAdminPermissionInFoldersQuery); err != nil {
+	if err := sqlstore.HasAdminPermissionInFolders(&hasAdminPermissionInFoldersQuery); err != nil {
 		c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 	}
 
@@ -206,7 +206,7 @@ func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
 	}
 
 	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&isAdminOfTeamsQuery); err != nil {
+	if err := sqlstore.IsAdminOfTeams(&isAdminOfTeamsQuery); err != nil {
 		c.JsonApiErr(500, "Failed to check if user is a team admin", err)
 	}
 
