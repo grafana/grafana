@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -108,19 +107,19 @@ type QueryModel struct {
 
 type datasourceInfo struct {
 	id                 int64
+	updated            time.Time
 	url                string
 	authenticationType string
 	defaultProject     string
 	client             *http.Client
+
+	jsonData                map[string]interface{}
+	decryptedSecureJSONData map[string]string
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := struct {
-			AuthenticationType string `json:"authenticationType"`
-			DefaultProject     string `json:"defaultProject"`
-		}{}
-
+		var jsonData map[string]interface{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -136,17 +135,25 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		authenticationType := jsonData.AuthenticationType
-		if authenticationType == "" {
-			authenticationType = jwtAuthentication
+		authType := jwtAuthentication
+		if authTypeOverride, ok := jsonData["authenticationType"].(string); ok && authTypeOverride != "" {
+			authType = authTypeOverride
+		}
+
+		var defaultProject string
+		if jsonData["defaultProject"] != nil {
+			defaultProject = jsonData["defaultProject"].(string)
 		}
 
 		return &datasourceInfo{
-			id:                 settings.ID,
-			url:                settings.URL,
-			authenticationType: authenticationType,
-			defaultProject:     jsonData.DefaultProject,
-			client:             client,
+			id:                      settings.ID,
+			updated:                 settings.Updated,
+			url:                     settings.URL,
+			authenticationType:      authType,
+			defaultProject:          defaultProject,
+			client:                  client,
+			jsonData:                jsonData,
+			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}, nil
 	}
 }
@@ -603,19 +610,12 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 		}
 	}
 
-	user := &models.SignedInUser{
-		OrgId:   pluginCtx.OrgID,
-		Login:   pluginCtx.User.Login,
-		Name:    pluginCtx.User.Name,
-		Email:   pluginCtx.User.Email,
-		OrgRole: models.RoleType(pluginCtx.User.Role),
-	}
-	ds, err := s.dataSourceCache.GetDatasource(dsInfo.id, user, false)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, ds, s.cfg)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, pluginproxy.DSInfo{
+		ID:                      dsInfo.id,
+		Updated:                 dsInfo.updated,
+		JSONData:                dsInfo.jsonData,
+		DecryptedSecureJSONData: dsInfo.decryptedSecureJSONData,
+	}, s.cfg)
 
 	return req, nil
 }
