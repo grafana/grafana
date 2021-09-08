@@ -166,10 +166,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           const dataQueryResponse = toDataQueryResponse({
             data: data,
           });
-          if (dataQueryResponse.data.length !== 0) {
-            return dataQueryResponse.data[0].meta;
+          if (dataQueryResponse.data.length !== 0 && dataQueryResponse.data[0].fields) {
+            return dataQueryResponse.data[0].fields.length > 1 ? dataQueryResponse.data[0].fields[1].labels : {};
           }
-
           return {};
         })
       )
