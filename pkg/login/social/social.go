@@ -38,9 +38,11 @@ type OAuthInfo struct {
 	RoleAttributePath      string
 	RoleAttributeStrict    bool
 	GroupsAttributePath    string
+	TeamIdsAttributePath   string
 	AllowedDomains         []string
 	HostedDomain           string
 	ApiUrl                 string
+	TeamsUrl               string
 	AllowSignup            bool
 	Name                   string
 	TlsClientCert          string
@@ -60,26 +62,28 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		sec := cfg.Raw.Section("auth." + name)
 
 		info := &OAuthInfo{
-			ClientId:            sec.Key("client_id").String(),
-			ClientSecret:        sec.Key("client_secret").String(),
-			Scopes:              util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:             sec.Key("auth_url").String(),
-			TokenUrl:            sec.Key("token_url").String(),
-			ApiUrl:              sec.Key("api_url").String(),
-			Enabled:             sec.Key("enabled").MustBool(),
-			EmailAttributeName:  sec.Key("email_attribute_name").String(),
-			EmailAttributePath:  sec.Key("email_attribute_path").String(),
-			RoleAttributePath:   sec.Key("role_attribute_path").String(),
-			RoleAttributeStrict: sec.Key("role_attribute_strict").MustBool(),
-			GroupsAttributePath: sec.Key("groups_attribute_path").String(),
-			AllowedDomains:      util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:        sec.Key("hosted_domain").String(),
-			AllowSignup:         sec.Key("allow_sign_up").MustBool(),
-			Name:                sec.Key("name").MustString(name),
-			TlsClientCert:       sec.Key("tls_client_cert").String(),
-			TlsClientKey:        sec.Key("tls_client_key").String(),
-			TlsClientCa:         sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
+			ClientId:             sec.Key("client_id").String(),
+			ClientSecret:         sec.Key("client_secret").String(),
+			Scopes:               util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:              sec.Key("auth_url").String(),
+			TokenUrl:             sec.Key("token_url").String(),
+			ApiUrl:               sec.Key("api_url").String(),
+			TeamsUrl:             sec.Key("teams_url").String(),
+			Enabled:              sec.Key("enabled").MustBool(),
+			EmailAttributeName:   sec.Key("email_attribute_name").String(),
+			EmailAttributePath:   sec.Key("email_attribute_path").String(),
+			RoleAttributePath:    sec.Key("role_attribute_path").String(),
+			RoleAttributeStrict:  sec.Key("role_attribute_strict").MustBool(),
+			GroupsAttributePath:  sec.Key("groups_attribute_path").String(),
+			TeamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
+			AllowedDomains:       util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:         sec.Key("hosted_domain").String(),
+			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
+			Name:                 sec.Key("name").MustString(name),
+			TlsClientCert:        sec.Key("tls_client_cert").String(),
+			TlsClientKey:         sec.Key("tls_client_key").String(),
+			TlsClientCa:          sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:        sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -162,6 +166,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
 				SocialBase:           newSocialBase(name, &config, info),
 				apiUrl:               info.ApiUrl,
+				teamsUrl:             info.TeamsUrl,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				nameAttributePath:    sec.Key("name_attribute_path").String(),
@@ -170,7 +175,8 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 				groupsAttributePath:  info.GroupsAttributePath,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),
 				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIds:              sec.Key("team_ids").Ints(","),
+				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
+				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
