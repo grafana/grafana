@@ -3,7 +3,10 @@ import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 import { FUNCTIONS } from '../../../promql';
 
+export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
+
 type Completion = {
+  type: CompletionType;
   label: string;
   insertText: string;
   triggerOnInsert?: boolean;
@@ -20,6 +23,7 @@ export type DataProvider = {
 async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
   const names = await dataProvider.getAllMetricNames();
   return names.map((text) => ({
+    type: 'METRIC_NAME',
     label: text,
     insertText: text,
   }));
@@ -27,6 +31,7 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise
 
 function getAllFunctionsCompletions(): Completion[] {
   return FUNCTIONS.map((f) => ({
+    type: 'FUNCTION',
     label: f.label,
     insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
   }));
@@ -35,6 +40,7 @@ function getAllFunctionsCompletions(): Completion[] {
 function getAllDurationsCompletions(): Completion[] {
   // FIXME: get a better list
   return ['5m', '1m', '30s', '15s'].map((text) => ({
+    type: 'DURATION',
     label: text,
     insertText: text,
   }));
@@ -46,6 +52,7 @@ async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Com
   const allHistory = await dataProvider.getHistory();
   // FIXME: find a better history-limit
   return allHistory.slice(0, 10).map((expr) => ({
+    type: 'HISTORY',
     label: expr,
     insertText: expr,
   }));
@@ -77,6 +84,7 @@ async function getLabelNamesForCompletions(
   const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
   const labelNames = possibleLabelNames.filter((l) => !usedLabelNames.has(l));
   return labelNames.map((text) => ({
+    type: 'LABEL_NAME',
     label: text,
     insertText: `${text}${suffix}`,
     triggerOnInsert,
@@ -108,6 +116,7 @@ async function getLabelValuesForMetricCompletions(
   const data = await dataProvider.getSeries(selector);
   const values = data[labelName] ?? [];
   return values.map((text) => ({
+    type: 'LABEL_VALUE',
     label: text,
     insertText: `"${text}"`, // FIXME: escaping strange characters?
   }));
