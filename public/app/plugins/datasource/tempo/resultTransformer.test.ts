@@ -1,5 +1,6 @@
 import { FieldType, MutableDataFrame } from '@grafana/data';
-import { createTableFrame } from './resultTransformer';
+import { createTableFrame, transformToOTLP } from './resultTransformer';
+import { otlpDataFrame, otlpResponse } from './testResponse';
 
 describe('transformTraceList()', () => {
   const lokiDataFrame = new MutableDataFrame({
@@ -33,5 +34,12 @@ describe('transformTraceList()', () => {
     // Second match in new line
     expect(frame.fields[0].values.get(1)).toBe('2020-02-12T15:05:15.265Z');
     expect(frame.fields[1].values.get(1)).toBe('as');
+  });
+});
+
+describe('transformToOTLP()', () => {
+  test('transforms dataframe to OTLP format', () => {
+    const otlp = transformToOTLP(otlpDataFrame);
+    expect(otlp).toMatchObject(otlpResponse);
   });
 });
