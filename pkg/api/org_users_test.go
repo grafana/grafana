@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -20,22 +19,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setUpGetOrgUsersHandler() {
-	bus.AddHandler("test", func(query *models.GetOrgUsersQuery) error {
-		query.Result = []*models.OrgUserDTO{
-			{Email: "testUser@grafana.com", Login: testUserLogin},
-			{Email: "user1@grafana.com", Login: "user1"},
-			{Email: "user2@grafana.com", Login: "user2"},
-		}
-		return nil
-	})
-}
-
 func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgId = 1
+	setting.AutoAssignOrgId = int(testOrgID)
 
-	_, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "testUser@grafana.com", Login: "testUserLogin"})
+	_, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
 	require.NoError(t, err)
 	_, err = sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
 	require.NoError(t, err)
@@ -44,14 +32,14 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 }
 
 func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
-	// t.Cleanup(bus.ClearBusHandlers)
 	settings := setting.NewCfg()
 	hs := &HTTPServer{Cfg: settings}
 
 	sqlStore := sqlstore.InitTestDB(t)
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
-		setUpGetOrgUsersHandler()
+		setUpGetOrgUsersDB(t, sqlStore)
+		assert.NotNil(t, sqlStore)
 
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -100,7 +88,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, resp.Page)
 	})
 
-	t.Run("Given there is two hidden users", func(t *testing.T) {
+	t.Run("Given there are two hidden users", func(t *testing.T) {
 		settings.HiddenUsers = map[string]struct{}{
 			"user1":       {},
 			testUserLogin: {},
@@ -108,7 +96,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
-			setUpGetOrgUsersHandler()
+			setUpGetOrgUsersDB(t, sqlStore)
 
 			sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -125,7 +113,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", models.ROLE_ADMIN, func(sc *scenarioContext) {
-				setUpGetOrgUsersHandler()
+				setUpGetOrgUsersDB(t, sqlStore)
 
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -142,14 +130,16 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	})
 }
 
-func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) *scenarioContext {
+func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) (*scenarioContext, *sqlstore.SQLStore) {
 	cfg := setting.NewCfg()
+	db := sqlstore.InitTestDB(t)
 
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		QuotaService:  &quota.QuotaService{Cfg: cfg},
 		RouteRegister: routing.NewRouteRegister(),
 		AccessControl: accesscontrolmock.New().WithDisabled(),
+		SQLStore:      db,
 	}
 
 	sc := setupScenarioContext(t, "/api/org/users/lookup")
@@ -167,25 +157,18 @@ func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) *scenarioContex
 	hs.registerRoutes()
 	hs.RouteRegister.Register(sc.m.Router)
 
-	return sc
+	return sc, db
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
+	sc, db := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
+
 	// Setup store teams
-	db := sqlstore.InitTestDB(t)
 	team1, err := db.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
 	require.NoError(t, err)
 	err = db.AddTeamMember(testUserID, testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 	require.NoError(t, err)
 
-	// query := &models.IsAdminOfTeamsQuery{
-	// 	SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: testUserID},
-	// 	Result:       false,
-	// }
-	// sqlstore.IsAdminOfTeams(query)
-	// assert.True(t, query.Result)
-
-	sc := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
 	sc.resp = httptest.NewRecorder()
 
 	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
@@ -196,7 +179,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
-	sc := setupOrgUsersAPIcontext(t, models.ROLE_ADMIN)
+	sc, _ := setupOrgUsersAPIcontext(t, models.ROLE_ADMIN)
 	sc.resp = httptest.NewRecorder()
 
 	var err error
@@ -208,7 +191,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_Viewer(t *testing.T) {
-	sc := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
+	sc, _ := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
 	sc.resp = httptest.NewRecorder()
 
 	var err error

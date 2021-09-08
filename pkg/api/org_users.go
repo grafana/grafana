@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -109,7 +110,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
-	if err := bus.Dispatch(query); err != nil {
+	if err := sqlstore.GetOrgUsers(query); err != nil {
 		return nil, err
 	}
 
