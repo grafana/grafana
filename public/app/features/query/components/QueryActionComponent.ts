@@ -2,7 +2,8 @@ import { DataQuery } from '@grafana/data';
 
 export interface QueryActionComponentProps {
   query?: DataQuery;
-  queries?: DataQuery[];
+  queries?: Array<Partial<DataQuery>>;
+  onAddQuery?: (q: Partial<DataQuery>) => void;
 }
 
 export type QueryActionComponent = React.ComponentType<QueryActionComponentProps>;

@@ -277,7 +277,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   renderExtraActions = () => {
     const { query, queries } = this.props;
     return getAllExtraRenderQueryAction().map((c) => {
-      return React.createElement(c, { query, queries });
+      return React.createElement(c, { query, queries, onAddQuery: this.props.onAddQuery });
     });
   };
 

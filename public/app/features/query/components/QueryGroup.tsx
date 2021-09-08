@@ -330,7 +330,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   renderExtraActions() {
     return getAllExtraRenderCreateAction().map((c) => {
-      return React.createElement(c);
+      return React.createElement(c, { onAddQuery: this.onAddQuery });
     });
   }
 
