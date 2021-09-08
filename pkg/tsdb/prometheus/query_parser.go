@@ -63,30 +63,19 @@ func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery)
 }
 
 func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
-	intervalMode := "min"
-	hasQueryInterval := model.Interval != ""
-
 	foundInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
 
-	if hasQueryInterval && model.StepMode != "" {
-		intervalMode = model.StepMode
-	}
-	// Calculate interval value from query or data source settings or use default value
-	calculatedInterval, err := intervalCalculator.Calculate(query.TimeRange, foundInterval, intervalv2.IntervalMode(intervalMode))
-	if err != nil {
-		return time.Duration(0), err
-	}
+	calculatedInterval := intervalCalculator.Calculate(query.TimeRange, foundInterval)
 	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
 
-	var adjustedInterval time.Duration
+	adjustedInterval := safeInterval.Value
 	if calculatedInterval.Value > safeInterval.Value {
 		adjustedInterval = calculatedInterval.Value
-	} else {
-		adjustedInterval = safeInterval.Value
 	}
+
 	intervalFactor := model.IntervalFactor
 	if intervalFactor == 0 {
 		intervalFactor = 1

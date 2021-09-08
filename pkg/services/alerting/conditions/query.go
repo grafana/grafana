@@ -128,10 +128,7 @@ func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, 
 
 	calc := interval.NewCalculator()
 
-	interval, err := calc.Calculate(timeRange, minInterval, "min")
-	if err != nil {
-		return time.Duration(0), err
-	}
+	interval := calc.Calculate(timeRange, minInterval)
 
 	return interval.Value, nil
 }

@@ -27,11 +27,11 @@ func TestPrometheusQueryParser_calculateStep(t *testing.T) {
 		query    backend.DataQuery
 		expected time.Duration
 	}{
-		{"Interval: nil, StepMode: nil", QueryModel{Expr: expr, Interval: "", StepMode: ""}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
-		{"Interval: 15s, StepMode: min", QueryModel{Expr: expr, Interval: "15s", StepMode: "min"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
-		{"Interval: 7s, StepMode: exact", QueryModel{Expr: expr, Interval: "7s", StepMode: "exact"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(7) * time.Second},
-		{"Interval: 6s, StepMode: max", QueryModel{Expr: expr, Interval: "6s", StepMode: "max"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(6) * time.Second},
-		{"Interval: 100s, StepMode: max", QueryModel{Expr: expr, Interval: "100s", StepMode: "max"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: nil", QueryModel{Expr: expr, Interval: ""}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 15s", QueryModel{Expr: expr, Interval: "15s"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 7s", QueryModel{Expr: expr, Interval: "7s"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 6s", QueryModel{Expr: expr, Interval: "6s"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 100s", QueryModel{Expr: expr, Interval: "100s"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(100) * time.Second},
 	}
 
 	for _, tc := range testCases {
