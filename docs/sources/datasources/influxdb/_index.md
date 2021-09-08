@@ -35,7 +35,7 @@ These options apply if you are using the InfluxQL query language. If you are usi
 | `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.  |
 
 **Note**: Browser access is deprecated and will be removed in a future release.
-`Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
+`Allowed cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
 `Database` | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.
 `User` | The username you use to sign into InfluxDB.
 `Password` | The token you use to query the bucket above, copied from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.

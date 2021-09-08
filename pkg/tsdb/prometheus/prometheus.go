@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -43,7 +43,7 @@ type DatasourceInfo struct {
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	intervalCalculator tsdb.Calculator
+	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
@@ -53,7 +53,7 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 
 	s := &Service{
 		httpClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 		im:                 im,
 	}
 
@@ -247,7 +247,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo
 		end := queryModel.TimeRange.To
 		queryInterval := jsonModel.Get("interval").MustString("")
 
-		foundInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, 0, 15*time.Second)
+		foundInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, 0, 15*time.Second)
 		hasQueryInterval := queryInterval != ""
 		// Only use stepMode if we have interval in query, otherwise use "min"
 		if hasQueryInterval {
@@ -261,7 +261,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo
 			return nil, err
 		}
 
-		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, foundInterval, tsdb.IntervalMode(intervalMode))
+		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, foundInterval, intervalv2.IntervalMode(intervalMode))
 		if err != nil {
 			return nil, err
 		}

@@ -1,4 +1,4 @@
-package grafanaschema
+package dashboard
 
 import "github.com/grafana/grafana/cue/scuemata"
 
@@ -75,9 +75,4 @@ Dummy: scuemata.#Family & {
             }
 		]
 	]
-}
-
-#Latest: {
-    #Dashboard: Dummy.latest
-    #Panel: Dummy.latest._Panel
 }
