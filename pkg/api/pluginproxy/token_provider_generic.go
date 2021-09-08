@@ -123,5 +123,5 @@ func (provider *genericAccessTokenProvider) GetAccessToken() (string, error) {
 }
 
 func (provider *genericAccessTokenProvider) getAccessTokenCacheKey() string {
-	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceUpdated, provider.route.Path, provider.route.Method)
+	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceUpdated.Unix(), provider.route.Path, provider.route.Method)
 }
