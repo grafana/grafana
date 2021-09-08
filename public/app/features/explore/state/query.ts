@@ -1,13 +1,16 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, Unsubscribable, of, Observable } from 'rxjs';
+import { identity, Observable, of, Unsubscribable } from 'rxjs';
 import {
+  DataFrame,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
   FieldCache,
+  FieldColorModeId,
   FieldType,
   LoadingState,
+  LogLevel,
   PanelData,
   PanelEvents,
   QueryFixAction,
@@ -38,8 +41,15 @@ import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createEmptyQueryResponse, createCacheKey, getResultsFromCache } from './utils';
+import {
+  aggregateFields,
+  createCacheKey,
+  createEmptyQueryResponse,
+  getLogLevelFromLabels,
+  getResultsFromCache,
+} from './utils';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { LogLevelColor } from '../../../core/logs_model';
 
 //
 // Actions and Payloads
@@ -722,42 +732,69 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       logsVolumeQuery,
       logsVolume: undefined, // clear previous results
+      rawLogsVolume: undefined,
       logsVolumeLoadingInProgress: false,
     };
   }
 
   if (logsVolumeLoadedAction.match(action)) {
     const { logsVolume } = action.payload;
-    const data = logsVolume?.data.map((series) => {
-      const data = toDataFrame(series);
-      const fieldCache = new FieldCache(data);
 
-      const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
+    const rawLogsVolume = (state.rawLogsVolume || []).concat(logsVolume.data.map(toDataFrame) || []);
 
-      data.fields[valueField.index].config.min = 0;
-      data.fields[valueField.index].config.decimals = 0;
+    // Aggregate data frames by level
+    const logsVolumeByLevel: any = [];
+    const logsVolumeByLevelMap: any = {};
+    rawLogsVolume.forEach((dataFrame) => {
+      const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
+      const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
 
-      data.fields[valueField.index].config.custom = {
-        drawStyle: GraphDrawStyle.Bars,
-        barAlignment: BarAlignment.Center,
-        barWidthFactor: 0.9,
-        barMaxWidth: 5,
-        lineWidth: 0,
-        fillOpacity: 100,
-        stacking: {
-          mode: StackingMode.Normal,
-          group: 'A',
-        },
-      };
-      return data;
+      if (!logsVolumeByLevelMap[level]) {
+        logsVolumeByLevelMap[level] = {
+          dataFrames: [],
+          level,
+        };
+        logsVolumeByLevel.push(logsVolumeByLevelMap[level]);
+      }
+      logsVolumeByLevelMap[level].dataFrames = logsVolumeByLevelMap[level].dataFrames.concat(dataFrame);
     });
 
-    const result = (state.logsVolume || []).concat(data || []);
+    // Reduce all data frames to a single data frame containing total value
+    const totalLogsVolumeByLevel = logsVolumeByLevel.map(
+      (groupedDataFrames: { dataFrames: DataFrame[]; level: LogLevel }) => {
+        const { dataFrames, level } = groupedDataFrames;
+        const color = LogLevelColor[level];
+        const fieldConfig = {
+          displayNameFromDS: level,
+          color: {
+            mode: FieldColorModeId.Fixed,
+            fixedColor: color,
+          },
+          custom: {
+            drawStyle: GraphDrawStyle.Bars,
+            barAlignment: BarAlignment.Center,
+            barWidthFactor: 0.9,
+            barMaxWidth: 5,
+            lineColor: color,
+            pointColor: color,
+            fillColor: color,
+            lineWidth: 1,
+            fillOpacity: 100,
+            stacking: {
+              mode: StackingMode.Normal,
+              group: 'A',
+            },
+          },
+        };
+        return aggregateFields(dataFrames, fieldConfig);
+      }
+    );
 
     return {
       ...state,
       logsVolumeLoadingInProgress: false,
-      logsVolume: result,
+      rawLogsVolume,
+      logsVolume: totalLogsVolumeByLevel,
     };
   }
 

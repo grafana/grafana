@@ -159,6 +159,7 @@ export interface ExploreItemState {
   cache: Array<{ key: string; value: PanelData }>;
 
   logsVolumeQuery?: Observable<DataQueryResponse>;
+  rawLogsVolume?: DataFrame[];
   logsVolume?: DataFrame[];
   logsVolumeLoadingInProgress: boolean;
   autoLoadLogsVolume: boolean;

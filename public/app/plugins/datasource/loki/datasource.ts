@@ -112,7 +112,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     histogramRequest.targets = histogramRequest.targets
       .filter((target) => !isMetricsQuery(target.expr))
       .map((target) => {
-        target.expr = `count_over_time(${target.expr}[${1 * histogramRequest.intervalMs}ms])`;
+        target.expr = `count_over_time(${target.expr}[$__interval])`;
         return target;
       });
 
