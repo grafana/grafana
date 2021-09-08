@@ -4,224 +4,222 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ldap.v3"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func TestPublicAPI(t *testing.T) {
-	Convey("New()", t, func() {
-		Convey("Should return ", func() {
-			result := New(&ServerConfig{
+func TestNew(t *testing.T) {
+	result := New(&ServerConfig{
+		Attr:          AttributeMap{},
+		SearchBaseDNs: []string{"BaseDNHere"},
+	})
+
+	assert.Implements(t, (*IServer)(nil), result)
+}
+
+func TestServer_Close(t *testing.T) {
+	t.Run("close the connection", func(t *testing.T) {
+		connection := &MockConnection{}
+
+		server := &Server{
+			Config: &ServerConfig{
 				Attr:          AttributeMap{},
 				SearchBaseDNs: []string{"BaseDNHere"},
-			})
+			},
+			Connection: connection,
+		}
 
-			So(result, ShouldImplement, (*IServer)(nil))
-		})
+		assert.NotPanics(t, server.Close)
+		assert.True(t, connection.CloseCalled)
 	})
 
-	Convey("Close()", t, func() {
-		Convey("Should close the connection", func() {
-			connection := &MockConnection{}
+	t.Run("panic if no connection", func(t *testing.T) {
+		server := &Server{
+			Config: &ServerConfig{
+				Attr:          AttributeMap{},
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			Connection: nil,
+		}
 
-			server := &Server{
-				Config: &ServerConfig{
-					Attr:          AttributeMap{},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-			}
-
-			So(server.Close, ShouldNotPanic)
-			So(connection.CloseCalled, ShouldBeTrue)
-		})
-
-		Convey("Should panic if no connection is established", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr:          AttributeMap{},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: nil,
-			}
-
-			So(server.Close, ShouldPanic)
-		})
+		assert.Panics(t, server.Close)
 	})
-	Convey("Users()", t, func() {
-		Convey("Finds one user", func() {
-			MockConnection := &MockConnection{}
-			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "surname", Values: []string{"Gerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				}}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			MockConnection.setSearchResult(&result)
+}
 
-			// Set up attribute map without surname and email
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
+func TestServer_Users(t *testing.T) {
+	t.Run("one user", func(t *testing.T) {
+		conn := &MockConnection{}
+		entry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"roelgerrits"}},
+				{Name: "surname", Values: []string{"Gerrits"}},
+				{Name: "email", Values: []string{"roel@test.com"}},
+				{Name: "name", Values: []string{"Roel"}},
+				{Name: "memberof", Values: []string{"admins"}},
+			}}
+		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+		conn.setSearchResult(&result)
+
+		// Set up attribute map without surname and email
+		server := &Server{
+			Config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+					MemberOf: "memberof",
 				},
-				Connection: MockConnection,
-				log:        log.New("test-logger"),
-			}
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			Connection: conn,
+			log:        log.New("test-logger"),
+		}
 
-			searchResult, err := server.Users([]string{"roelgerrits"})
+		searchResult, err := server.Users([]string{"roelgerrits"})
 
-			So(err, ShouldBeNil)
-			So(searchResult, ShouldNotBeNil)
+		require.NoError(t, err)
+		assert.NotNil(t, searchResult)
 
-			// User should be searched in ldap
-			So(MockConnection.SearchCalled, ShouldBeTrue)
-
-			// No empty attributes should be added to the search request
-			So(len(MockConnection.SearchAttributes), ShouldEqual, 3)
-		})
-
-		Convey("Handles a error", func() {
-			expected := errors.New("Killa-gorilla")
-			MockConnection := &MockConnection{}
-			MockConnection.setSearchError(expected)
-
-			// Set up attribute map without surname and email
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: MockConnection,
-				log:        log.New("test-logger"),
-			}
-
-			_, err := server.Users([]string{"roelgerrits"})
-
-			So(err, ShouldEqual, expected)
-		})
-
-		Convey("Should return empty slice if none were found", func() {
-			MockConnection := &MockConnection{}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
-			MockConnection.setSearchResult(&result)
-
-			// Set up attribute map without surname and email
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: MockConnection,
-				log:        log.New("test-logger"),
-			}
-
-			searchResult, err := server.Users([]string{"roelgerrits"})
-
-			So(err, ShouldBeNil)
-			So(searchResult, ShouldBeEmpty)
-		})
+		// User should be searched in ldap
+		assert.True(t, conn.SearchCalled)
+		// No empty attributes should be added to the search request
+		assert.Len(t, conn.SearchAttributes, 3)
 	})
 
-	Convey("UserBind()", t, func() {
-		Convey("Should use provided DN and password", func() {
-			connection := &MockConnection{}
-			var actualUsername, actualPassword string
-			connection.BindProvider = func(username, password string) error {
-				actualUsername = username
-				actualPassword = password
-				return nil
-			}
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindDN: "cn=admin,dc=grafana,dc=org",
-				},
-			}
+	t.Run("error", func(t *testing.T) {
+		expected := errors.New("Killa-gorilla")
+		conn := &MockConnection{}
+		conn.setSearchError(expected)
 
-			dn := "cn=user,ou=users,dc=grafana,dc=org"
-			err := server.UserBind(dn, "pwd")
+		// Set up attribute map without surname and email
+		server := &Server{
+			Config: &ServerConfig{
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			Connection: conn,
+			log:        log.New("test-logger"),
+		}
 
-			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, dn)
-			So(actualPassword, ShouldEqual, "pwd")
-		})
+		_, err := server.Users([]string{"roelgerrits"})
 
-		Convey("Should handle an error", func() {
-			connection := &MockConnection{}
-			expected := &ldap.Error{
-				ResultCode: uint16(25),
-			}
-			connection.BindProvider = func(username, password string) error {
-				return expected
-			}
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindDN: "cn=%s,ou=users,dc=grafana,dc=org",
-				},
-				log: log.New("test-logger"),
-			}
-			err := server.UserBind("user", "pwd")
-			So(err, ShouldEqual, expected)
-		})
+		assert.ErrorIs(t, err, expected)
 	})
 
-	Convey("AdminBind()", t, func() {
-		Convey("Should use admin DN and password", func() {
-			connection := &MockConnection{}
-			var actualUsername, actualPassword string
-			connection.BindProvider = func(username, password string) error {
-				actualUsername = username
-				actualPassword = password
-				return nil
-			}
+	t.Run("no user", func(t *testing.T) {
+		conn := &MockConnection{}
+		result := ldap.SearchResult{Entries: []*ldap.Entry{}}
+		conn.setSearchResult(&result)
 
-			dn := "cn=admin,dc=grafana,dc=org"
+		// Set up attribute map without surname and email
+		server := &Server{
+			Config: &ServerConfig{
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			Connection: conn,
+			log:        log.New("test-logger"),
+		}
 
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindPassword: "pwd",
-					BindDN:       dn,
-				},
-			}
+		searchResult, err := server.Users([]string{"roelgerrits"})
 
-			err := server.AdminBind()
+		require.NoError(t, err)
+		assert.Empty(t, searchResult)
+	})
+}
 
-			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, dn)
-			So(actualPassword, ShouldEqual, "pwd")
-		})
+func TestServer_UserBind(t *testing.T) {
+	t.Run("use provided DN and password", func(t *testing.T) {
+		connection := &MockConnection{}
+		var actualUsername, actualPassword string
+		connection.BindProvider = func(username, password string) error {
+			actualUsername = username
+			actualPassword = password
+			return nil
+		}
+		server := &Server{
+			Connection: connection,
+			Config: &ServerConfig{
+				BindDN: "cn=admin,dc=grafana,dc=org",
+			},
+		}
 
-		Convey("Should handle an error", func() {
-			connection := &MockConnection{}
-			expected := &ldap.Error{
-				ResultCode: uint16(25),
-			}
-			connection.BindProvider = func(username, password string) error {
-				return expected
-			}
+		dn := "cn=user,ou=users,dc=grafana,dc=org"
+		err := server.UserBind(dn, "pwd")
 
-			dn := "cn=admin,dc=grafana,dc=org"
+		require.NoError(t, err)
+		assert.Equal(t, dn, actualUsername)
+		assert.Equal(t, "pwd", actualPassword)
+	})
 
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindPassword: "pwd",
-					BindDN:       dn,
-				},
-				log: log.New("test-logger"),
-			}
+	t.Run("error", func(t *testing.T) {
+		connection := &MockConnection{}
+		expected := &ldap.Error{
+			ResultCode: uint16(25),
+		}
+		connection.BindProvider = func(username, password string) error {
+			return expected
+		}
+		server := &Server{
+			Connection: connection,
+			Config: &ServerConfig{
+				BindDN: "cn=%s,ou=users,dc=grafana,dc=org",
+			},
+			log: log.New("test-logger"),
+		}
+		err := server.UserBind("user", "pwd")
+		assert.ErrorIs(t, err, expected)
+	})
+}
 
-			err := server.AdminBind()
-			So(err, ShouldEqual, expected)
-		})
+func TestServer_AdminBind(t *testing.T) {
+	t.Run("use admin DN and password", func(t *testing.T) {
+		connection := &MockConnection{}
+		var actualUsername, actualPassword string
+		connection.BindProvider = func(username, password string) error {
+			actualUsername = username
+			actualPassword = password
+			return nil
+		}
+
+		dn := "cn=admin,dc=grafana,dc=org"
+
+		server := &Server{
+			Connection: connection,
+			Config: &ServerConfig{
+				BindPassword: "pwd",
+				BindDN:       dn,
+			},
+		}
+
+		err := server.AdminBind()
+		require.NoError(t, err)
+
+		assert.Equal(t, dn, actualUsername)
+		assert.Equal(t, "pwd", actualPassword)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		connection := &MockConnection{}
+		expected := &ldap.Error{
+			ResultCode: uint16(25),
+		}
+		connection.BindProvider = func(username, password string) error {
+			return expected
+		}
+
+		dn := "cn=admin,dc=grafana,dc=org"
+
+		server := &Server{
+			Connection: connection,
+			Config: &ServerConfig{
+				BindPassword: "pwd",
+				BindDN:       dn,
+			},
+			log: log.New("test-logger"),
+		}
+
+		err := server.AdminBind()
+		assert.ErrorIs(t, err, expected)
 	})
 }
