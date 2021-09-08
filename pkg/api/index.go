@@ -548,7 +548,7 @@ func getAppNameBodyClass(validLicense bool) string {
 func getDataSourcesConfigurationAccessEvaluator() ac.Evaluator {
 	// Read and at least one of the modifying action is needed
 	return ac.EvalAll(
-		ac.EvalPermission(ActionDatasourcesRead),
+		ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
 		ac.EvalAny(
 			ac.EvalPermission(ActionDatasourcesCreate),
 			ac.EvalPermission(ActionDatasourcesDelete),
