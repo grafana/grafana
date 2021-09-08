@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab } from '@grafana/ui';
@@ -33,7 +33,14 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   const { activeTabIndex } = state;
   const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
-  const setActiveTab = (activeTabIndex: number) => setState({ ...state, activeTabIndex });
+  const setActiveTab = useCallback((activeTabIndex: number) => setState({ ...state, activeTabIndex }), [state]);
+
+  // If an app plugin is uninstalled we need to reset the active tab as the config / dashboards tabs are removed.
+  useEffect(() => {
+    if (activeTabIndex > tabs.length) {
+      setActiveTab(0);
+    }
+  }, [setActiveTab, activeTabIndex, tabs]);
 
   if (isLoading) {
     return (
