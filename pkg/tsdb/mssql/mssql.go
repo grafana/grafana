@@ -31,9 +31,9 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(manager backendplugin.Manager) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*Service, error) {
 	s := &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings()),
+		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
@@ -62,7 +62,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsHandler.QueryData(ctx, req)
 }
 
-func newInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:    0,
@@ -89,8 +89,8 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		if err != nil {
 			return nil, err
 		}
-		// TODO: Don't use global
-		if setting.Env == setting.Dev {
+
+		if cfg.Env == setting.Dev {
 			logger.Debug("getEngine", "connection", cnnstr)
 		}
 
@@ -99,6 +99,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
 		queryResultTransformer := mssqlQueryResultTransformer{

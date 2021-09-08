@@ -57,6 +57,7 @@ func TestMSSQL(t *testing.T) {
 		ConnectionString:  "",
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+		RowLimit:          1000000,
 	}
 	endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	require.NoError(t, err)
@@ -794,6 +795,7 @@ func TestMSSQL(t *testing.T) {
 					ConnectionString:  "",
 					DSInfo:            dsInfo,
 					MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
+					RowLimit:          1000000,
 				}
 				endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 				require.NoError(t, err)

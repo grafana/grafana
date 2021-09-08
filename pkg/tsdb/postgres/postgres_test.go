@@ -112,7 +112,6 @@ func TestGenerateConnectionString(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := Service{
-				Cfg:        cfg,
 				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
 			}
 
@@ -190,6 +189,7 @@ func TestPostgres(t *testing.T) {
 		ConnectionString:  "",
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
+		RowLimit:          1000000,
 	}
 
 	queryResultTransformer := postgresQueryResultTransformer{

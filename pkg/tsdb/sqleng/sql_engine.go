@@ -92,6 +92,7 @@ type DataPluginConfiguration struct {
 	ConnectionString  string
 	TimeColumnNames   []string
 	MetricColumnTypes []string
+	RowLimit          int64
 }
 type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
@@ -101,6 +102,7 @@ type DataSourceHandler struct {
 	metricColumnTypes      []string
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
+	rowLimit               int64
 }
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
@@ -133,6 +135,7 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		timeColumnNames:        []string{"time"},
 		log:                    log,
 		dsInfo:                 config.DSInfo,
+		rowLimit:               config.RowLimit,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -167,8 +170,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	queryDataHandler.engine = engine
 	return &queryDataHandler, nil
 }
-
-const rowLimit = 1000000
 
 type DBDataResponse struct {
 	dataResponse backend.DataResponse
@@ -284,7 +285,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
-	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
+	frame, err := sqlutil.FrameFromRows(rows.Rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return

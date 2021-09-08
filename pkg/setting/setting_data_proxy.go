@@ -20,5 +20,7 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 		cfg.DataProxyMaxIdleConns = val
 	}
 
+	cfg.DataProxyRowLimit = dataproxy.Key("row_limit").MustInt64(1000000)
+
 	return nil
 }

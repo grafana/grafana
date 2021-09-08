@@ -68,6 +68,7 @@ func TestMySQL(t *testing.T) {
 		DSInfo:            dsInfo,
 		TimeColumnNames:   []string{"time", "time_sec"},
 		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
+		RowLimit:          1000000,
 	}
 
 	rowTransformer := mysqlQueryResultTransformer{
