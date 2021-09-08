@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
@@ -26,18 +26,18 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
     const [focusedItem, setFocusedItem] = useState(UNFOCUSED);
 
     const localRef = useRef<HTMLDivElement>(null);
-    const wrapperRef = (forwardedRef as React.RefObject<HTMLDivElement>) ?? localRef;
+    useImperativeHandle(forwardedRef, () => localRef.current!);
 
     useEffect(() => {
-      const menuItems = wrapperRef?.current?.querySelectorAll(`[data-role="menuitem"]`);
+      const menuItems = localRef?.current?.querySelectorAll(`[data-role="menuitem"]`);
       (menuItems?.[focusedItem] as MenuItemElement)?.focus();
       menuItems?.forEach((menuItem, i) => {
         (menuItem as MenuItemElement).tabIndex = i === focusedItem ? 0 : -1;
       });
-    }, [wrapperRef, focusedItem]);
+    }, [localRef, focusedItem]);
 
     useEffectOnce(() => {
-      const firstMenuItem = wrapperRef?.current?.querySelector(`[data-role="menuitem"]`) as MenuItemElement | null;
+      const firstMenuItem = localRef?.current?.querySelector(`[data-role="menuitem"]`) as MenuItemElement | null;
       if (firstMenuItem) {
         firstMenuItem.tabIndex = 0;
       }
@@ -45,7 +45,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
     });
 
     const handleKeys = (event: React.KeyboardEvent) => {
-      const menuItemsCount = wrapperRef?.current?.querySelectorAll('[data-role="menuitem"]').length ?? 0;
+      const menuItemsCount = localRef?.current?.querySelectorAll('[data-role="menuitem"]').length ?? 0;
 
       switch (event.key) {
         case 'ArrowUp':
@@ -85,7 +85,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
     return (
       <div
         {...otherProps}
-        ref={wrapperRef}
+        ref={localRef}
         className={styles.wrapper}
         role="menu"
         aria-label={ariaLabel}
