@@ -9,6 +9,74 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
+// ChannelFrame is a wrapper over data.Frame with additional channel information.
+// Channel is used for rule routing, if the channel is empty then frame processing
+// will try to take current rule Processor and Outputter. If channel is not empty
+// then frame processing will be redirected to a corresponding channel rule.
+// TODO: avoid recursion, increment a counter while frame travels over pipeline steps, make it configurable.
+type ChannelFrame struct {
+	Channel string
+	Frame   *data.Frame
+}
+
+// Vars has some helpful things pipeline entities could use.
+type Vars struct {
+	OrgID     int64
+	Channel   string
+	Scope     string
+	Namespace string
+	Path      string
+}
+
+// ProcessorVars has some helpful things Processor entities could use.
+type ProcessorVars struct {
+	Vars
+}
+
+// OutputVars has some helpful things Outputter entities could use.
+type OutputVars struct {
+	ProcessorVars
+}
+
+// Converter converts raw bytes to slice of ChannelFrame. Each element
+// of resulting slice will be then individually processed and outputted
+// according configured channel rules.
+type Converter interface {
+	Convert(ctx context.Context, vars Vars, body []byte) ([]*ChannelFrame, error)
+}
+
+// Processor can modify data.Frame in a custom way before it will be outputted.
+type Processor interface {
+	Process(ctx context.Context, vars ProcessorVars, frame *data.Frame) (*data.Frame, error)
+}
+
+// Outputter outputs data.Frame to a custom destination. Or simply
+// do nothing if some conditions not met.
+type Outputter interface {
+	Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error)
+}
+
+type LiveChannelRule struct {
+	OrgId     int64
+	Pattern   string
+	Converter Converter
+	Processor Processor
+	Outputter Outputter
+}
+
+type Label struct {
+	Name  string `json:"name"`
+	Value string `json:"value"` // Can be JSONPath or Goja script.
+}
+
+type Field struct {
+	Name   string            `json:"name"`
+	Type   data.FieldType    `json:"type"`
+	Value  string            `json:"value"` // Can be JSONPath or Goja script.
+	Labels []Label           `json:"labels,omitempty"`
+	Config *data.FieldConfig `json:"config,omitempty"`
+}
+
 type ChannelRuleGetter interface {
 	Get(orgID int64, channel string) (*LiveChannelRule, bool, error)
 }
@@ -159,41 +227,4 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 	}
 
 	return nil
-}
-
-type LiveChannelRule struct {
-	OrgId     int64
-	Pattern   string
-	Converter Converter
-	Processor Processor
-	Outputter Outputter
-}
-
-type Label struct {
-	Name  string `json:"name"`
-	Value string `json:"value"` // Can be JSONPath or Goja script.
-}
-
-type Field struct {
-	Name   string            `json:"name"`
-	Type   data.FieldType    `json:"type"`
-	Value  string            `json:"value"` // Can be JSONPath or Goja script.
-	Labels []Label           `json:"labels,omitempty"`
-	Config *data.FieldConfig `json:"config,omitempty"`
-}
-
-type Vars struct {
-	OrgID     int64
-	Channel   string
-	Scope     string
-	Namespace string
-	Path      string
-}
-
-type ProcessorVars struct {
-	Vars
-}
-
-type OutputVars struct {
-	ProcessorVars
 }
