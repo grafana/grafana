@@ -2,6 +2,8 @@ package notifier
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -18,9 +20,12 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
+
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
 	ctx := context.Background()
+
+	t.Cleanup(cleanOrgDirectories(mam))
 
 	// Ensure that one Alertmanager is created per org.
 	{
@@ -52,6 +57,8 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
 	ctx := context.Background()
+
+	t.Cleanup(cleanOrgDirectories(mam))
 
 	// Ensure that one Alertmanagers is created per org.
 	{
@@ -88,5 +95,13 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		_, err := mam.AlertmanagerFor(2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
+	}
+}
+
+func cleanOrgDirectories(mam *MultiOrgAlertmanager) func() {
+	return func() {
+		for _, am := range mam.alertmanagers {
+			os.RemoveAll(filepath.Dir(am.WorkingDirPath()))
+		}
 	}
 }
