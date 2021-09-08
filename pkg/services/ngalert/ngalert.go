@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"golang.org/x/sync/errgroup"
@@ -95,7 +97,8 @@ func (ng *AlertNG) init() error {
 		Logger:                 ng.Log,
 	}
 
-	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store)
+	kvStore := kvstore.ProvideService(ng.SQLStore) // TODO: Is this right?
+	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, kvStore)
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
