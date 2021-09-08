@@ -5,8 +5,6 @@ package server
 
 import (
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/services/searchusers"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -143,7 +141,6 @@ var wireBasicSet = wire.NewSet(
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
 	dashboardsnapshots.ProvideService,
-	searchusers.ProvideUsersService,
 )
 
 var wireSet = wire.NewSet(
