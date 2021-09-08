@@ -1,10 +1,10 @@
 import React, { memo, FC, useEffect } from 'react';
 
 // Types
-import { ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
-import { PromQuery, PromOptions, StepMode } from '../types';
+import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
 import { PromExploreExtraField } from './PromExploreExtraField';
@@ -34,19 +34,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     onChange(nextQuery);
   }
 
-  function onChangeStepMode(mode: StepMode) {
-    const { query, onChange } = props;
-    const nextQuery = { ...query, stepMode: mode };
-    onChange(nextQuery);
-  }
-
-  function onStepModeChange(option: SelectableValue<StepMode>) {
-    if (option.value) {
-      onChangeStepMode(option.value);
-    }
-  }
-
-  function onStepIntervalChange(e: React.SyntheticEvent<HTMLInputElement>) {
+  function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
     if (e.currentTarget.value !== query.interval) {
       onChangeQueryStep(e.currentTarget.value);
     }
@@ -85,10 +73,8 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
         <PromExploreExtraField
           queryType={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
           stepValue={query.interval || ''}
-          stepMode={query.stepMode || 'min'}
           onQueryTypeChange={onQueryTypeChange}
-          onStepModeChange={onStepModeChange}
-          onStepIntervalChange={onStepIntervalChange}
+          onStepChange={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
           query={query}
           onChange={onChange}
