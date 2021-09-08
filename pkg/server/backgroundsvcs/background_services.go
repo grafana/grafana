@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
+	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -46,7 +47,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
 	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service,
-	_ *postgres.Service, _ *mysql.Service, _ *mssql.Service,
+	_ *postgres.Service, _ *mysql.Service, _ *mssql.Service, _ *cloudmonitoring.Service,
 
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
