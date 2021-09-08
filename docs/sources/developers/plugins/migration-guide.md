@@ -81,6 +81,26 @@ If your plugin should support time series data we recommend you to make sure to 
 
 ### Update the plugin.json
 
+The property of defining what Grafana version your plugin support has been renamed.
+
+```json
+// before
+{
+"dependencies": {
+    "grafanaVersion": "7.5.x",
+    "plugins": []
+  }
+}
+
+// after
+{
+  "dependencies": {
+    "grafanaDependency": "8.0.0",
+    "plugins": []
+  }
+}
+```
+
 ### Update imports to match emotion 11
 
 ### 8.0 deprecations
