@@ -16,7 +16,7 @@ func TestURLBuilder(t *testing.T) {
 				ResourceName:        "rn",
 			}
 
-			url := ub.Build()
+			url := ub.BuildMetricsURL()
 			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics")
 		})
 
@@ -29,7 +29,7 @@ func TestURLBuilder(t *testing.T) {
 				ResourceName:        "rn",
 			}
 
-			url := ub.Build()
+			url := ub.BuildMetricsURL()
 			So(url, ShouldEqual, "specified-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics")
 		})
 
@@ -41,7 +41,7 @@ func TestURLBuilder(t *testing.T) {
 				ResourceName:        "rn1/default",
 			}
 
-			url := ub.Build()
+			url := ub.BuildMetricsURL()
 			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/providers/microsoft.insights/metrics")
 		})
 
@@ -53,7 +53,7 @@ func TestURLBuilder(t *testing.T) {
 				ResourceName:        "rn1/default",
 			}
 
-			url := ub.Build()
+			url := ub.BuildMetricsURL()
 			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/providers/microsoft.insights/metrics")
 		})
 
@@ -65,7 +65,7 @@ func TestURLBuilder(t *testing.T) {
 				ResourceName:        "rn1/rn2/rn3",
 			}
 
-			url := ub.Build()
+			url := ub.BuildMetricsURL()
 			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics")
 		})
 	})

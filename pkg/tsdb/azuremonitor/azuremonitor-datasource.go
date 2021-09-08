@@ -78,13 +78,17 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		urlComponents["resourceName"] = azJSONModel.ResourceName
 
 		ub := urlBuilder{
+			ResourceURI: azJSONModel.ResourceURI,
+
+			// Legacy, used to reconstruct resource URI if it's not present
 			DefaultSubscription: dsInfo.Settings.SubscriptionId,
 			Subscription:        queryJSONModel.Subscription,
-			ResourceGroup:       queryJSONModel.AzureMonitor.ResourceGroup,
+			ResourceGroup:       azJSONModel.ResourceGroup,
 			MetricDefinition:    azJSONModel.MetricDefinition,
 			ResourceName:        azJSONModel.ResourceName,
 		}
-		azureURL := ub.Build()
+		azureURL := ub.BuildMetricsURL()
+		azlog.Info("build azureURL", "ResourceURI", azJSONModel.ResourceURI, "azureURL", azureURL)
 
 		alias := azJSONModel.Alias
 
@@ -216,7 +220,6 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo datas
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-	req.URL.Path = "/subscriptions"
 	req.Header.Set("Content-Type", "application/json")
 
 	return req, nil

@@ -2,11 +2,7 @@ import React from 'react';
 
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
-import SubscriptionField from '../SubscriptionField';
 import MetricNamespaceField from './MetricNamespaceField';
-import ResourceTypeField from './ResourceTypeField';
-import ResourceGroupsField from './ResourceGroupsField';
-import ResourceNameField from './ResourceNameField';
 import MetricNameField from './MetricNameField';
 import AggregationField from './AggregationField';
 import TimeGrainField from './TimeGrainField';
@@ -14,15 +10,7 @@ import DimensionFields from './DimensionFields';
 import TopField from './TopField';
 import LegendFormatField from './LegendFormatField';
 import { InlineFieldRow } from '@grafana/ui';
-import {
-  useMetricNames,
-  useMetricNamespaces,
-  useResourceGroups,
-  useResourceNames,
-  useResourceTypes,
-  useSubscriptions,
-  useMetricMetadata,
-} from './dataHooks';
+import { useMetricNames, useMetricNamespaces, useMetricMetadata } from './dataHooks';
 import ResourceField from './ResourceField';
 
 interface MetricsQueryEditorProps {
@@ -43,8 +31,8 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   setError,
 }) => {
   const metricsMetadata = useMetricMetadata(query, datasource, onChange);
-  const metricNames = useMetricNames(query, datasource, onChange, setError);
   const metricNamespaces = useMetricNamespaces(query, datasource, onChange, setError);
+  const metricNames = useMetricNames(query, datasource, onChange, setError);
 
   return (
     <div data-testid="azure-monitor-metrics-query-editor">

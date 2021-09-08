@@ -53,12 +53,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return !!(
       item.hide !== true &&
       item.azureMonitor &&
-      item.azureMonitor.resourceGroup &&
-      item.azureMonitor.resourceGroup !== defaultDropdownValue &&
-      item.azureMonitor.resourceName &&
-      item.azureMonitor.resourceName !== defaultDropdownValue &&
-      item.azureMonitor.metricDefinition &&
-      item.azureMonitor.metricDefinition !== defaultDropdownValue &&
+      // If it doesnt have a resource URI, check to see if it has the old individual resource fields
+      (item.azureMonitor.resource ||
+        (item.azureMonitor.resourceGroup &&
+          item.azureMonitor.resourceGroup !== defaultDropdownValue &&
+          item.azureMonitor.resourceName &&
+          item.azureMonitor.resourceName !== defaultDropdownValue &&
+          item.azureMonitor.metricDefinition &&
+          item.azureMonitor.metricDefinition !== defaultDropdownValue)) &&
       item.azureMonitor.metricName &&
       item.azureMonitor.metricName !== defaultDropdownValue &&
       item.azureMonitor.aggregation &&
@@ -81,6 +83,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     const templateSrv = getTemplateSrv();
 
+    const resourceURI = templateSrv.replace(item.resource, scopedVars);
     const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
     const resourceName = templateSrv.replace(item.resourceName, scopedVars);
@@ -106,6 +109,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       subscription: subscriptionId,
       queryType: AzureQueryType.AzureMonitor,
       azureMonitor: {
+        resource: resourceURI,
         resourceGroup,
         resourceName,
         metricDefinition,
@@ -179,6 +183,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       const resourceGroup = this.toVariable(metricNamespaceQuery[1]);
       const metricDefinition = this.toVariable(metricNamespaceQuery[2]);
       const resourceName = this.toVariable(metricNamespaceQuery[3]);
+      // TODO: recreate a resource URI
       return this.getMetricNamespaces(this.defaultSubscriptionId, resourceGroup, metricDefinition, resourceName);
     }
 
@@ -190,6 +195,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       const resourceGroup = this.toVariable(metricNamespaceQueryWithSub[2]);
       const metricDefinition = this.toVariable(metricNamespaceQueryWithSub[3]);
       const resourceName = this.toVariable(metricNamespaceQueryWithSub[4]);
+      // TODO: recreate a resource URI
       return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
     }
 
@@ -200,6 +206,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         const metricDefinition = this.toVariable(metricNamesQuery[2]);
         const resourceName = this.toVariable(metricNamesQuery[3]);
         const metricNamespace = this.toVariable(metricNamesQuery[4]);
+        // TODO: recreate a resource URI
+
         return this.getMetricNames(
           this.defaultSubscriptionId,
           resourceGroup,
@@ -220,6 +228,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       const metricDefinition = this.toVariable(metricNamesQueryWithSub[3]);
       const resourceName = this.toVariable(metricNamesQueryWithSub[4]);
       const metricNamespace = this.toVariable(metricNamesQueryWithSub[5]);
+      // TODO: recreate a resource URI
       return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
     }
 
@@ -301,6 +310,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
+  /** @deprecated - Use resource picker now? */
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
     return this.getResource(
       `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
@@ -320,56 +330,32 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getMetricNamespaces(resourceURI: string) {
-    const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
-      this.resourcePath,
-      resourceURI,
-      this.apiPreviewVersion
-    );
+    const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricNamespaces?api-version=${this.apiPreviewVersion}`.replace(
+      'subscriptions/subscriptions',
+      'subscriptions'
+    ); // TODO: hack for now because resourcePath already includes /subscriptions/
 
+    console.log('getMetricNamespaces', url);
     return this.getResource(url).then((result: any) => {
+      console.log('getMetricNamespaces results', result);
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
   }
 
-  getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string
-  ) {
-    const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
-      this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      this.apiVersion
-    );
+  getMetricNames(resourceURI: string, metricNamespace: string) {
+    const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricDefinitions?api-version=${
+      this.apiPreviewVersion
+    }&metricnamespace=${encodeURIComponent(metricNamespace)}`.replace('subscriptions/subscriptions', 'subscriptions'); // TODO: hack for now because resourcePath already includes /subscriptions/
 
     return this.getResource(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
 
-  getMetricMetadata(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    metricName: string
-  ) {
-    const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
-      this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      this.apiVersion
-    );
+  getMetricMetadata(resourceURI: string, metricNamespace: string, metricName: string) {
+    const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricDefinitions?api-version=${
+      this.apiPreviewVersion
+    }&metricnamespace=${encodeURIComponent(metricNamespace)}`.replace('subscriptions/subscriptions', 'subscriptions'); // TODO: hack for now because resourcePath already includes /subscriptions/
 
     return this.getResource(url).then((result: any) => {
       return ResponseParser.parseMetadata(result, metricName);
