@@ -14,20 +14,28 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
+type Metric = {
+  name: string;
+  help: string;
+  type: string;
+};
+
 export type DataProvider = {
   getHistory: () => Promise<string[]>;
-  getAllMetricNames: () => Promise<string[]>;
+  getAllMetricNames: () => Promise<Metric[]>;
   getSeries: (selector: string) => Promise<Record<string, string[]>>;
 };
 
 // we order items like: history, functions, metrics
 
 async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const names = await dataProvider.getAllMetricNames();
-  return names.map((text) => ({
+  const metrics = await dataProvider.getAllMetricNames();
+  return metrics.map((metric) => ({
     type: 'METRIC_NAME',
-    label: text,
-    insertText: text,
+    label: metric.name,
+    insertText: metric.name,
+    detail: metric.type,
+    documentation: metric.help,
   }));
 }
 
