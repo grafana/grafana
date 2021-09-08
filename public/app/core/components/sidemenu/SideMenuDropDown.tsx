@@ -27,9 +27,9 @@ const SideMenuDropDown = ({
       {headerContent}
     </Link>
   ) : (
-    <a onClick={onHeaderClick} className="side-menu-header-link">
+    <button onClick={onHeaderClick} className="side-menu-header-link">
       {headerContent}
-    </a>
+    </button>
   );
 
   const menuClass = css`

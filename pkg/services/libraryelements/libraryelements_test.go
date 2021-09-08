@@ -280,9 +280,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		ctx := macaron.Context{
-			Req: macaron.Request{Request: &http.Request{}},
-		}
+		ctx := macaron.Context{Req: &http.Request{}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)

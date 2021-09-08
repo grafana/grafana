@@ -14,6 +14,7 @@ package scuemata
 // its position in the list of lineages - e.g., 0.0 corresponds to the first
 // schema in the first lineage.
 #Family: {
+	compose?: {...}
 	lineages: [#Lineage, ...#Lineage]
 	migrations: [...#Migration]
 	let lseq = lineages[len(lineages)-1]
