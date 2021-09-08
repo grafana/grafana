@@ -34,7 +34,7 @@ const DatasourceID = -1
 
 // DatasourceUID is the fake datasource uid used in requests to identify it as a
 // Grafana DS command.
-const DatasourceUID = "-1"
+const DatasourceUID = "grafana"
 
 // Make sure Service implements required interfaces.
 // This is important to do since otherwise we will only get a

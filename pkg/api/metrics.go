@@ -37,9 +37,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		if dsType == expr.DatasourceName {
 			return hs.handleExpressions(c, reqDTO)
 		}
-		if dsType == grafana.DatasourceName {
-			ds = grafana.DataSourceModel(c.OrgId)
-		}
 		if prevType != "" && prevType != dsType {
 			// For mixed datasource case, each data source is sent in a single request.
 			// So only the datasource from the first query is needed. As all requests

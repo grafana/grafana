@@ -22,13 +22,7 @@ let counter = 100;
 
 export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
-    super({
-      ...instanceSettings,
-      id: -1,
-      type: 'grafana',
-      uid: 'grafana',
-      name: '-- Grafana --',
-    });
+    super(instanceSettings);
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
       prepareAnnotation(json: any): AnnotationQuery<GrafanaAnnotationQuery> {

@@ -1,7 +1,7 @@
 package grafana
 
 const (
-	// QueryTypeRandomWalk retuns a random walk
+	// QueryTypeRandomWalk returns a random walk series
 	queryTypeRandomWalk = "randomWalk"
 
 	// QueryTypeList will list the files in a folder
