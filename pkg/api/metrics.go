@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
@@ -212,15 +211,6 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	}
 
 	return response.JSON(statusCode, &resp)
-}
-
-// GET /api/tsdb/testdata/gensql
-func GenerateSQLTestData(c *models.ReqContext) response.Response {
-	if err := bus.Dispatch(&models.InsertSQLTestDataCommand{}); err != nil {
-		return response.Error(500, "Failed to insert test data", err)
-	}
-
-	return response.JSON(200, &util.DynMap{"message": "OK"})
 }
 
 // GET /api/tsdb/testdata/random-walk

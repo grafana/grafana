@@ -114,9 +114,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
 			Prefix: "gf_live",
 
-			// We are using Redis streams here for history. Require Redis >= 5.
-			UseStreams: true,
-
 			// Use reasonably large expiration interval for stream meta key,
 			// much bigger than maximum HistoryLifetime value in Node config.
 			// This way stream meta data will expire, in some cases you may want
@@ -362,6 +359,11 @@ type GrafanaLive struct {
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
+}
+
+type UsageStats struct {
+	NumClients int
+	NumUsers   int
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -747,6 +749,13 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 		return 0, err
 	}
 	return len(p.Presence), nil
+}
+
+func (g *GrafanaLive) UsageStats() UsageStats {
+	clients := g.node.Hub().NumClients()
+	users := g.node.Hub().NumUsers()
+
+	return UsageStats{NumClients: clients, NumUsers: users}
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {

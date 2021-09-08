@@ -3,7 +3,7 @@ import { cloneDeep } from 'lodash';
 import { NavModelItem } from '@grafana/data';
 import { Icon, IconName } from '@grafana/ui';
 import appEvents from '../../app_events';
-import { SignIn } from './SignIn';
+import { useLocation } from 'react-router-dom';
 import SideMenuItem from './SideMenuItem';
 import { ShowModalReactEvent } from '../../../types/events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -11,11 +11,14 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 import config from '../../config';
+import { getForcedLoginUrl } from './utils';
 
 export default function BottomSection() {
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
+  const location = useLocation();
+  const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
   const user = contextSrv.user;
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
 
@@ -37,7 +40,11 @@ export default function BottomSection() {
 
   return (
     <div data-testid="bottom-section-items" className="sidemenu__bottom">
-      {!isSignedIn && <SignIn />}
+      {!isSignedIn && (
+        <SideMenuItem label="Sign In" target="_self" url={forcedLoginUrl}>
+          <Icon name="signout" size="xl" />
+        </SideMenuItem>
+      )}
       {bottomNav.map((link, index) => {
         let menuItems = link.children || [];
 
