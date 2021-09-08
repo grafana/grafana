@@ -9,6 +9,8 @@ type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
+  detail?: string;
+  documentation?: string;
   triggerOnInsert?: boolean;
 };
 
@@ -34,6 +36,8 @@ function getAllFunctionsCompletions(): Completion[] {
     type: 'FUNCTION',
     label: f.label,
     insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
+    detail: f.detail,
+    documentation: f.documentation,
   }));
 }
 

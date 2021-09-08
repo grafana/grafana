@@ -54,10 +54,12 @@ export function getCompletionProvider(
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
-      const suggestions = items.map((item, index) => ({
+      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
         kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
         insertText: item.insertText,
+        detail: item.detail,
+        documentation: item.documentation,
         sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
         range,
         command: item.triggerOnInsert
