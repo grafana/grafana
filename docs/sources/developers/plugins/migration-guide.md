@@ -14,6 +14,9 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 
 - [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
+    - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
+    - [2. Update the way you bootrap your plugin](#2-update-the-way-you-bootrap-your-plugin)
+    - [3. Update the plugin package](#3-update-the-plugin-package)
   - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
   - [Time series data can now be in wide or many format](#time-series-data-can-now-be-in-wide-or-many-format)
   - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
@@ -36,6 +39,137 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 This guide will help you migrate Grafana v7.x.x plugins to the updated plugin system released with Grafana v8.x.x. All the changes described below might not be applicable to your plugin but we will try to cover all breaking changes in Grafana v8.x.x and what steps you need to take to upgrade your plugin.
 
 ### Backend plugin v1 support has been dropped
+
+To get your backend plugin running in Grafana 8 you need to use the new [plugin sdk](https://github.com/grafana/grafana-plugin-sdk-go).
+
+#### 1. Add dependency on grafana-plugin-sdk-go
+
+Add a dependency on the `https://github.com/grafana/grafana-plugin-sdk-go`. We recommend using [go modules](https://go.dev/blog/using-go-modules) to manage your dependencies.
+
+#### 2. Update the way you bootrap your plugin
+
+Update your `main` package to bootstrap via the new plugin sdk.
+
+```go
+// before
+package main
+
+import (
+  "github.com/grafana/grafana_plugin_model/go/datasource"
+  hclog "github.com/hashicorp/go-hclog"
+  plugin "github.com/hashicorp/go-plugin"
+
+  "github.com/myorgid/datasource/pkg/plugin"
+)
+
+func main() {
+  pluginLogger.Debug("Running GRPC server")
+
+  ds, err := NewSampleDatasource(pluginLogger);
+  if err != nil {
+    pluginLogger.Error("Unable to create plugin");
+  }
+
+  plugin.Serve(&plugin.ServeConfig{
+    HandshakeConfig: plugin.HandshakeConfig{
+			ProtocolVersion:  1,
+			MagicCookieKey:   "grafana_plugin_type",
+			MagicCookieValue: "datasource",
+		},
+    Plugins: map[string]plugin.Plugin{
+			"myorgid-datasource": &datasource.DatasourcePluginImpl{Plugin: ds},
+    },
+    GRPCServer: plugin.DefaultGRPCServer,
+  })
+}
+
+// after
+package main
+
+import (
+  "os"
+
+  "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+  "github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+
+  "github.com/myorgid/datasource/pkg/plugin"
+)
+
+func main() {
+  log.DefaultLogger.Debug("Running GRPC server")
+
+  if err := datasource.Manage("myorgid-datasource", NewSampleDatasource, datasource.ManageOpts{}); err != nil {
+				log.DefaultLogger.Error(err.Error())
+				os.Exit(1)
+		}
+}
+```
+
+#### 3. Update the plugin package
+
+Update your `plugin` package to use the new plugin sdk.
+
+```go
+// before
+package plugin
+
+import (
+  "context"
+
+  "github.com/grafana/grafana_plugin_model/go/datasource"
+  "github.com/hashicorp/go-hclog"
+)
+
+func NewSampleDatasource(pluginLogger hclog.Logger) (*SampleDatasource, error) {
+	return &SampleDatasource{
+		logger: pluginLogger,
+	}, nil
+}
+
+type SampleDatasource struct{
+  logger hclog.Logger
+}
+
+func (d *SampleDatasource) Query(ctx context.Context, tsdbReq *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
+  d.logger.Info("QueryData called", "request", req)
+  // logic for querying your datasource.
+}
+
+// after
+package plugin
+
+import (
+  "context"
+
+  "github.com/grafana/grafana-plugin-sdk-go/backend"
+  "github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+  "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+  "github.com/grafana/grafana-plugin-sdk-go/data"
+)
+
+func NewSampleDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return &SampleDatasource{}, nil
+}
+
+type SampleDatasource struct{}
+
+
+func (d *SampleDatasource) Dispose() {
+	// Clean up datasource instance resources.
+}
+
+func (d *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+  log.DefaultLogger.Info("QueryData called", "request", req)
+  // logic for querying your datasource.
+}
+
+func (d *SampleDatasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+  log.DefaultLogger.Info("CheckHealth called", "request", req)
+  // The main use case for these health checks is the test button on the
+  // datasource configuration page which allows users to verify that
+  // a datasource is working as expected.
+}
+```
 
 ### Unsigned backend plugins will not be loaded
 
