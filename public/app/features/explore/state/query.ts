@@ -743,52 +743,44 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     const rawLogsVolume = (state.rawLogsVolume || []).concat(logsVolume.data.map(toDataFrame) || []);
 
     // Aggregate data frames by level
-    const logsVolumeByLevel: any = [];
-    const logsVolumeByLevelMap: any = {};
+    const logsVolumeByLevelMap: Record<string, DataFrame[]> = {};
     rawLogsVolume.forEach((dataFrame) => {
       const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
       const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
-
       if (!logsVolumeByLevelMap[level]) {
-        logsVolumeByLevelMap[level] = {
-          dataFrames: [],
-          level,
-        };
-        logsVolumeByLevel.push(logsVolumeByLevelMap[level]);
+        logsVolumeByLevelMap[level] = [];
       }
-      logsVolumeByLevelMap[level].dataFrames = logsVolumeByLevelMap[level].dataFrames.concat(dataFrame);
+      logsVolumeByLevelMap[level].push(dataFrame);
     });
 
     // Reduce all data frames to a single data frame containing total value
-    const totalLogsVolumeByLevel = logsVolumeByLevel.map(
-      (groupedDataFrames: { dataFrames: DataFrame[]; level: LogLevel }) => {
-        const { dataFrames, level } = groupedDataFrames;
-        const color = LogLevelColor[level];
-        const fieldConfig = {
-          displayNameFromDS: level,
-          color: {
-            mode: FieldColorModeId.Fixed,
-            fixedColor: color,
+    const totalLogsVolumeByLevel = Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
+      const dataFrames = logsVolumeByLevelMap[level];
+      const color = LogLevelColor[level];
+      const fieldConfig = {
+        displayNameFromDS: level,
+        color: {
+          mode: FieldColorModeId.Fixed,
+          fixedColor: color,
+        },
+        custom: {
+          drawStyle: GraphDrawStyle.Bars,
+          barAlignment: BarAlignment.Center,
+          barWidthFactor: 0.9,
+          barMaxWidth: 5,
+          lineColor: color,
+          pointColor: color,
+          fillColor: color,
+          lineWidth: 1,
+          fillOpacity: 100,
+          stacking: {
+            mode: StackingMode.Normal,
+            group: 'A',
           },
-          custom: {
-            drawStyle: GraphDrawStyle.Bars,
-            barAlignment: BarAlignment.Center,
-            barWidthFactor: 0.9,
-            barMaxWidth: 5,
-            lineColor: color,
-            pointColor: color,
-            fillColor: color,
-            lineWidth: 1,
-            fillOpacity: 100,
-            stacking: {
-              mode: StackingMode.Normal,
-              group: 'A',
-            },
-          },
-        };
-        return aggregateFields(dataFrames, fieldConfig);
-      }
-    );
+        },
+      };
+      return aggregateFields(dataFrames, fieldConfig);
+    });
 
     return {
       ...state,
