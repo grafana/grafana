@@ -1,9 +1,8 @@
 import { createSelector } from 'reselect';
+import { RequestStatus, PluginCatalogStoreState } from '../types';
 import { pluginsAdapter } from './reducer';
-import { RequestStatus } from '../types';
 
-// TODO<use the proper store state here>
-export const selectRoot = (state: any) => state.plugins;
+export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
 export const selectItems = createSelector(selectRoot, ({ items }) => items);
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAll, fetchDetails, install, uninstall } from './actions';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, PluginCatalogStoreState } from '../types';
 import {
   selectAll,
   selectById,
@@ -20,7 +20,7 @@ export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchAll();
   useFetchDetails(id);
 
-  return useSelector((state) => selectById(state, id));
+  return useSelector((state: PluginCatalogStoreState) => selectById(state, id));
 };
 
 export const useInstall = () => {
@@ -68,7 +68,7 @@ export const useFetchAll = () => {
 
 export const useFetchDetails = (id: string) => {
   const dispatch = useDispatch();
-  const plugin = useSelector((state) => selectById(state, id));
+  const plugin = useSelector((state: PluginCatalogStoreState) => selectById(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchDetails.typePrefix));
   const shouldFetch = isNotFetching && plugin && !plugin.details;
 

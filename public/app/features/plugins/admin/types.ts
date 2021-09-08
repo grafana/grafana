@@ -1,4 +1,7 @@
+import { EntityState } from '@reduxjs/toolkit';
 import { PluginType, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { StoreState, PluginsState } from 'app/types';
+
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export enum PluginAdminRoutes {
@@ -203,3 +206,12 @@ export type RequestInfo = {
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
 };
+
+// TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>
+export type ReducerState = PluginsState & {
+  items: EntityState<CatalogPlugin>;
+  requests: Record<string, RequestInfo>;
+};
+
+// TODO<remove when the "plugin_admin_enabled" feature flag is removed>
+export type PluginCatalogStoreState = StoreState & { plugins: ReducerState };

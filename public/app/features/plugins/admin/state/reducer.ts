@@ -1,14 +1,7 @@
-import { createSlice, createEntityAdapter, EntityState, AnyAction } from '@reduxjs/toolkit';
-import { PluginsState } from 'app/types';
+import { createSlice, createEntityAdapter, AnyAction } from '@reduxjs/toolkit';
 import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards } from './actions';
-import { CatalogPlugin, RequestInfo, RequestStatus } from '../types';
+import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
-
-// TODO<remove `PluginsState &` once the "plugin_admin_enabled" feature flag is removed>
-type ReducerState = PluginsState & {
-  items: EntityState<CatalogPlugin>;
-  requests: Record<string, RequestInfo>;
-};
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
 
