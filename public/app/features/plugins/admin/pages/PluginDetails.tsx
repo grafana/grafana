@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PluginIncludeType, PluginType } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -9,19 +9,14 @@ import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
-import { CatalogPlugin, PluginTabLabels } from '../types';
-import { isOrgAdmin } from '../helpers';
+import { PluginTabLabels, PluginDetailsTab } from '../types';
 import { useGetSingle, useFetchStatus } from '../state/hooks';
-import { usePluginConfig } from '../hooks/usePluginConfig';
+import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
-type TabType = {
-  label: PluginTabLabels;
-};
-
 type State = {
-  tabs: TabType[];
+  tabs: PluginDetailsTab[];
   activeTabIndex: number;
 };
 
@@ -30,56 +25,11 @@ const DefaultState = {
   activeTabIndex: 0,
 };
 
-const useTabs = (plugin?: CatalogPlugin) => {
-  const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
-  const tabs = useMemo(() => {
-    const canConfigurePlugins = isOrgAdmin();
-    const tabs: Array<{ label: string }> = [...DefaultState.tabs];
-
-    // Not extending the tabs with the config pages if the plugin is not installed
-    if (!pluginConfig) {
-      return tabs;
-    }
-
-    if (canConfigurePlugins) {
-      if (pluginConfig.meta.type === PluginType.app) {
-        if (pluginConfig.angularConfigCtrl) {
-          tabs.push({
-            label: 'Config',
-          });
-        }
-
-        if (pluginConfig.configPages) {
-          for (const page of pluginConfig.configPages) {
-            tabs.push({
-              label: page.title,
-            });
-          }
-        }
-
-        if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
-          tabs.push({
-            label: 'Dashboards',
-          });
-        }
-      }
-    }
-
-    return tabs;
-  }, [pluginConfig]);
-
-  return {
-    loading,
-    tabs,
-    error,
-  };
-};
-
 export default function PluginDetails({ match }: Props): JSX.Element | null {
   const { pluginId = '' } = match.params;
   const [state, setState] = useState<State>(DefaultState);
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
-  const { tabs } = useTabs(plugin);
+  const { tabs } = usePluginDetailsTabs(plugin, DefaultState.tabs);
   const { activeTabIndex } = state;
   const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
@@ -105,7 +55,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
 
         {/* Tab navigation */}
         <TabsBar>
-          {tabs.map((tab: TabType, idx: number) => (
+          {tabs.map((tab: PluginDetailsTab, idx: number) => (
             <Tab
               key={tab.label}
               label={tab.label}

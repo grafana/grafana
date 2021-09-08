@@ -253,3 +253,7 @@ export type RequestInfo = {
   // An optional error message
   errorMessage?: string;
 };
+
+export type PluginDetailsTab = {
+  label: PluginTabLabels;
+};
