@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/tsdb/grafana"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -35,6 +37,9 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		if dsType == expr.DatasourceName {
 			return hs.handleExpressions(c, reqDTO)
 		}
+		if dsType == grafana.DatasourceName {
+			ds = grafana.DataSourceModel(c.OrgId)
+		}
 		if prevType != "" && prevType != dsType {
 			// For mixed datasource case, each data source is sent in a single request.
 			// So only the datasource from the first query is needed. As all requests
@@ -45,18 +50,18 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 		if ds == nil {
 			// require ID for everything
-			datasourceID, err := query.Get("datasourceId").Int64()
-			if dsType == "grafana" {
-				datasourceID = -1
-				err = nil
-			}
+			dsID, err := query.Get("datasourceId").Int64()
 			if err != nil {
 				hs.log.Debug("Can't process query since it's missing data source ID")
 				return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
 			}
-			ds, err = hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
-			if err != nil {
-				return hs.handleGetDataSourceError(err, datasourceID)
+			if dsID == grafana.DatasourceID {
+				ds = grafana.DataSourceModel(c.OrgId)
+			} else {
+				ds, err = hs.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+				if err != nil {
+					return hs.handleGetDataSourceError(err, dsID)
+				}
 			}
 		}
 		prevType = dsType
