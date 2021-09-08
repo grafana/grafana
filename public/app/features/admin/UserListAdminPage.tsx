@@ -97,7 +97,6 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th>Login</th>
                     <th>Email</th>
                     <th>Name</th>
-                    <th>Server admin</th>
                     {showUnits && <th>Belongs to</th>}
                     {showLicensedRole && <th>Licensed role</th>}
                     <th>
@@ -160,7 +159,10 @@ const UserListItem = memo(({ user, showUnits, showLicensedRole }: UserListItemPr
           {user.name}
         </a>
       </td>
-      <td className="link-td">
+
+      <td className={cx('link-td', styles.iconRow, styles.row)}>
+        <OrgUnits units={user.orgs} icon={'building'} />
+        <OrgUnits units={user.teams} icon={'users-alt'} />
         {user.isAdmin && (
           <a href={editUrl} aria-label={`Edit user's ${user.name} details`}>
             <Tooltip placement="top" content="Grafana Admin">
@@ -169,12 +171,6 @@ const UserListItem = memo(({ user, showUnits, showLicensedRole }: UserListItemPr
           </a>
         )}
       </td>
-      {showUnits && (
-        <td className={cx('link-td', styles.iconRow, styles.row)}>
-          <OrgUnits units={user.orgs} icon={'building'} />
-          <OrgUnits units={user.teams} icon={'users-alt'} />
-        </td>
-      )}
       {showLicensedRole && (
         <td className={cx('link-td', styles.iconRow)}>
           <a className="ellipsis" href={editUrl} title={user.name} aria-label={`Edit user's ${user.name} details`}>
