@@ -702,7 +702,7 @@ export class DashboardMigrator {
     }
   }
 
-  // Migrates metric queris and/or annotation queries that use more than one statistic.
+  // Migrates metric queries and/or annotation queries that use more than one statistic.
   // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
   // New queries, that were created during migration, are put at the end of the array.
   migrateCloudWatchQueries() {
