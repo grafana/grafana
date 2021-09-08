@@ -1,8 +1,9 @@
 package httpclientprovider
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"net/http"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 // ResponseLimitMiddlewareName is the middleware name used by ResponseLimitMiddleware.

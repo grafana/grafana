@@ -2,17 +2,17 @@ package httpclientprovider
 
 import (
 	"context"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponseLimitMiddleware(t *testing.T) {
 	t.Run("Test ResponseLimitMiddleware with set limit", func(t *testing.T) {
-
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{StatusCode: http.StatusOK, Request: req, Body: ioutil.NopCloser(strings.NewReader("dummy"))}, nil
 		})
@@ -42,7 +42,6 @@ func TestResponseLimitMiddleware(t *testing.T) {
 	})
 
 	t.Run("Test ResponseLimitMiddleware without limit", func(t *testing.T) {
-
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{StatusCode: http.StatusOK, Request: req, Body: ioutil.NopCloser(strings.NewReader("dummy"))}, nil
 		})
