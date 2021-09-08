@@ -5,13 +5,13 @@
 
 ### Features and enhancements
 
-- **Bug:** Return empty plugins.DataTimeSeriesSlice when the frame field vector is empty and does not contain any data. [#38587](https://github.com/grafana/grafana/pull/38587), [@idafurjes](https://github.com/idafurjes)
 - **Elasticsearch:** Prevent pipeline aggregations to show up in terms order by options. [#38448](https://github.com/grafana/grafana/pull/38448), [@Elfo404](https://github.com/Elfo404)
 - **Plugins:** Track signed files + add warn log for plugin assets which are not signed. [#38938](https://github.com/grafana/grafana/pull/38938), [@wbrowne](https://github.com/wbrowne)
 
 ### Bug fixes
 
 - **Alerting:** Fix alert flapping in the internal alertmanager. [#38648](https://github.com/grafana/grafana/pull/38648), [@gotjosh](https://github.com/gotjosh)
+- **Backend:** Return empty plugins.DataTimeSeriesSlice when the frame field vector is empty and does not contain any data. [#38587](https://github.com/grafana/grafana/pull/38587), [@idafurjes](https://github.com/idafurjes)
 - **Dashboard:** Fix UIDs are not preserved when importing/creating dashboards thru importing .json file. [#38659](https://github.com/grafana/grafana/pull/38659), [@axelavargas](https://github.com/axelavargas)
 - **Dashboard:** Forces panel re-render when exiting panel edit. [#38913](https://github.com/grafana/grafana/pull/38913), [@hugohaggmark](https://github.com/hugohaggmark)
 - **Dashboard:** Prevent folder from changing when navigating to general settings. [#38103](https://github.com/grafana/grafana/pull/38103), [@hugohaggmark](https://github.com/hugohaggmark)
