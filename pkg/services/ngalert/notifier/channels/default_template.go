@@ -89,6 +89,7 @@ Labels:
 func templateForTests(t *testing.T) *template.Template {
 	f, err := ioutil.TempFile("/tmp", "template")
 	require.NoError(t, err)
+	defer f.Close()
 
 	t.Cleanup(func() {
 		require.NoError(t, os.RemoveAll(f.Name()))

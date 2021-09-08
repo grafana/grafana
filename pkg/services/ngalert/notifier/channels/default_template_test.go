@@ -58,6 +58,7 @@ func TestDefaultTemplateString(t *testing.T) {
 
 	f, err := ioutil.TempFile("/tmp", "template")
 	require.NoError(t, err)
+	defer f.Close()
 
 	t.Cleanup(func() {
 		require.NoError(t, os.RemoveAll(f.Name()))
