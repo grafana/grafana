@@ -253,7 +253,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	configNodes := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)) {
+	if hasAccess(ac.ReqOrgAdmin, getDataSourcesConfigurationAccessEvaluator()) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
@@ -541,4 +541,18 @@ func getAppNameBodyClass(validLicense bool) string {
 	}
 
 	return "app-grafana"
+}
+
+// getDataSourcesConfigurationAccessEvaluator returns an accesscontrol evaluator
+// required to allow access to the "Configure > Data sources" tab
+func getDataSourcesConfigurationAccessEvaluator() ac.Evaluator {
+	// Read and at least one of the modifying action is needed
+	return ac.EvalAll(
+		ac.EvalPermission(ActionDatasourcesRead),
+		ac.EvalAny(
+			ac.EvalPermission(ActionDatasourcesCreate),
+			ac.EvalPermission(ActionDatasourcesDelete),
+			ac.EvalPermission(ActionDatasourcesWrite),
+		),
+	)
 }
