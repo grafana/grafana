@@ -201,5 +201,5 @@ export type RequestInfo = {
 };
 
 export type PluginDetailsTab = {
-  label: PluginTabLabels;
+  label: PluginTabLabels | string;
 };
