@@ -52,6 +52,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
 	metrics["stats.users.count"] = statsQuery.Result.Users
+	metrics["stats.admins.count"] = statsQuery.Result.Admins
+	metrics["stats.editors.count"] = statsQuery.Result.Editors
+	metrics["stats.viewers.count"] = statsQuery.Result.Viewers
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
 	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
