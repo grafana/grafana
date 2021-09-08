@@ -103,6 +103,16 @@ The property of defining what Grafana version your plugin support has been renam
 
 ### Update imports to match emotion 11
 
+Grafana uses emotion to manage the styling of the frontend. The emotion package has now been updated which might affect your frontend plugin if you have any custom styling in it. Luckily you only need to update the import statements to get it working in Grafana 8.
+
+```ts
+// before
+import { cx, css } from 'emotion';
+
+// after
+import { cx, css } from '@emotion/css';
+```
+
 ### 8.0 deprecations
 
 #### Grafana theme v1
