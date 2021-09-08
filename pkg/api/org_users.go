@@ -70,15 +70,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	isAdmin, err := isOrgAdminFolderAdminOrTeamAdmin(c)
-	if err != nil {
-		return response.Error(500, "Failed to get users for current organization", err)
-	}
-
-	if !isAdmin {
-		return response.Error(403, "Permission denied", nil)
-	}
-
 	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
@@ -100,28 +91,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	}
 
 	return response.JSON(200, result)
-}
-
-func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
-	if c.OrgRole == models.ROLE_ADMIN {
-		return true, nil
-	}
-
-	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&hasAdminPermissionInFoldersQuery); err != nil {
-		return false, err
-	}
-
-	if hasAdminPermissionInFoldersQuery.Result {
-		return true, nil
-	}
-
-	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&isAdminOfTeamsQuery); err != nil {
-		return false, err
-	}
-
-	return isAdminOfTeamsQuery.Result, nil
 }
 
 // GET /api/orgs/:orgId/users
