@@ -11,6 +11,9 @@ const ResponseLimitMiddlewareName = "response-limit"
 
 func ResponseLimitMiddleware(limit int64) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(ResponseLimitMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		if limit <= 0 {
+			return next
+		}
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			res, err := next.RoundTrip(req)
 			if err != nil {
