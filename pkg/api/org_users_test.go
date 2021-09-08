@@ -8,9 +8,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -41,6 +44,7 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 }
 
 func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+	// t.Cleanup(bus.ClearBusHandlers)
 	settings := setting.NewCfg()
 	hs := &HTTPServer{Cfg: settings}
 
@@ -96,47 +100,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, resp.Page)
 	})
 
-	loggedInUserScenario(t, "When calling GET as an editor with no team / folder permissions on",
-		"api/org/users/lookup", func(sc *scenarioContext) {
-			setUpGetOrgUsersHandler()
-			bus.AddHandler("test", func(query *models.HasAdminPermissionInFoldersQuery) error {
-				query.Result = false
-				return nil
-			})
-			bus.AddHandler("test", func(query *models.IsAdminOfTeamsQuery) error {
-				query.Result = false
-				return nil
-			})
-
-			sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-			assert.Equal(t, http.StatusForbidden, sc.resp.Code)
-
-			var resp struct {
-				Message string
-			}
-			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
-			require.NoError(t, err)
-
-			assert.Equal(t, "Permission denied", resp.Message)
-		})
-
-	loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
-		"api/org/users/lookup", models.ROLE_ADMIN, func(sc *scenarioContext) {
-			setUpGetOrgUsersHandler()
-
-			sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-			require.Equal(t, http.StatusOK, sc.resp.Code)
-
-			var resp []dtos.UserLookupDTO
-			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
-			require.NoError(t, err)
-			assert.Len(t, resp, 3)
-		})
-
 	t.Run("Given there is two hidden users", func(t *testing.T) {
 		settings.HiddenUsers = map[string]struct{}{
 			"user1":       {},
@@ -177,6 +140,83 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, "user2", resp[1].Login)
 			})
 	})
+}
+
+func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) *scenarioContext {
+	cfg := setting.NewCfg()
+
+	hs := &HTTPServer{
+		Cfg:           cfg,
+		QuotaService:  &quota.QuotaService{Cfg: cfg},
+		RouteRegister: routing.NewRouteRegister(),
+		AccessControl: accesscontrolmock.New().WithDisabled(),
+	}
+
+	sc := setupScenarioContext(t, "/api/org/users/lookup")
+	// Create a middleware to pretend user is logged in
+	pretendSignInMiddleware := func(c *models.ReqContext) {
+		sc.context = c
+		sc.context.UserId = testUserID
+		sc.context.OrgId = testOrgID
+		sc.context.Login = testUserLogin
+		sc.context.OrgRole = role
+		sc.context.IsSignedIn = true
+	}
+	sc.m.Use(pretendSignInMiddleware)
+
+	hs.registerRoutes()
+	hs.RouteRegister.Register(sc.m.Router)
+
+	return sc
+}
+
+func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
+	// Setup store teams
+	db := sqlstore.InitTestDB(t)
+	team1, err := db.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
+	require.NoError(t, err)
+	err = db.AddTeamMember(testUserID, testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+	require.NoError(t, err)
+
+	// query := &models.IsAdminOfTeamsQuery{
+	// 	SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: testUserID},
+	// 	Result:       false,
+	// }
+	// sqlstore.IsAdminOfTeams(query)
+	// assert.True(t, query.Result)
+
+	sc := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
+	sc.resp = httptest.NewRecorder()
+
+	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
+	assert.NoError(t, err)
+
+	sc.exec()
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+}
+
+func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
+	sc := setupOrgUsersAPIcontext(t, models.ROLE_ADMIN)
+	sc.resp = httptest.NewRecorder()
+
+	var err error
+	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
+	assert.NoError(t, err)
+
+	sc.exec()
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+}
+
+func TestOrgUsersAPIEndpoint_LegacyAccessControl_Viewer(t *testing.T) {
+	sc := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
+	sc.resp = httptest.NewRecorder()
+
+	var err error
+	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
+	assert.NoError(t, err)
+
+	sc.exec()
+	assert.Equal(t, http.StatusForbidden, sc.resp.Code)
 }
 
 func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
