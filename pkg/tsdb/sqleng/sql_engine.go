@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -300,11 +301,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	if qm.timeIndex != -1 {
-		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			errAppendDebug("db convert time column failed", err, interpolatedQuery)
-			return
-		}
+	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
+		errAppendDebug("converting time columns failed", err, interpolatedQuery)
+		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
@@ -408,6 +407,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 		columnNames:  columnNames,
 		rows:         rows,
 		timeIndex:    -1,
+		timeEndIndex: -1,
 		metricIndex:  -1,
 		metricPrefix: false,
 		queryContext: queryContext,
@@ -454,6 +454,12 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 				break
 			}
 		}
+
+		if qm.Format == dataQueryFormatTable && col == "timeend" {
+			qm.timeEndIndex = i
+			continue
+		}
+
 		switch col {
 		case "metric":
 			qm.metricIndex = i
@@ -492,6 +498,7 @@ type dataQueryModel struct {
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
 	timeIndex         int
+	timeEndIndex      int
 	metricIndex       int
 	rows              *core.Rows
 	metricPrefix      bool
@@ -819,6 +826,22 @@ func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 			newField.Append(&value)
 		}
 	}
+}
+
+func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
+	if qm.timeIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
+			return errutil.Wrap("failed to convert time column", err)
+		}
+	}
+
+	if qm.timeEndIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
+			return errutil.Wrap("failed to convert timeend column", err)
+		}
+	}
+
+	return nil
 }
 
 // convertSQLTimeColumnToEpochMS converts column named time to unix timestamp in milliseconds

@@ -66,6 +66,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     tempoServiceGraph: false,
     tempoSearch: false,
     prometheusMonaco: false,
+    newNavigation: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

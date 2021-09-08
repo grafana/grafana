@@ -12,19 +12,24 @@ export const StringValueEditor: React.FC<StandardEditorProps<string, StringField
 
   const onValueChange = useCallback(
     (e: React.SyntheticEvent) => {
+      let nextValue = value ?? '';
       if (e.hasOwnProperty('key')) {
         // handling keyboard event
         const evt = e as React.KeyboardEvent<HTMLInputElement>;
         if (evt.key === 'Enter' && !item.settings?.useTextarea) {
-          onChange(evt.currentTarget.value.trim() === '' ? undefined : evt.currentTarget.value);
+          nextValue = evt.currentTarget.value.trim();
         }
       } else {
         // handling form event
         const evt = e as React.FormEvent<HTMLInputElement>;
-        onChange(evt.currentTarget.value.trim() === '' ? undefined : evt.currentTarget.value);
+        nextValue = evt.currentTarget.value.trim();
       }
+      if (nextValue === value) {
+        return; // no change
+      }
+      onChange(nextValue === '' ? undefined : nextValue);
     },
-    [item.settings?.useTextarea, onChange]
+    [value, item.settings?.useTextarea, onChange]
   );
 
   return (
