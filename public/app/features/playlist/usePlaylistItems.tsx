@@ -1,7 +1,7 @@
+import { DashboardPickerItem } from 'app/core/components/editors/DashboardPickerByID';
 import { useCallback, useState } from 'react';
 
 import { PlaylistItem } from './types';
-import { DashboardPickerItem } from '../../core/components/Select/DashboardPicker';
 
 export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
   const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);

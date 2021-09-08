@@ -5,12 +5,12 @@ import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 
-export interface DashboardPickerItem extends Pick<DashboardSearchHit, 'uid' | 'id'> {
+export interface DashboardPickerItem extends SelectableValue<number>, Pick<DashboardSearchHit, 'uid'> {
   value: number;
   label: string;
 }
 
-export interface Props {
+interface Props {
   onChange: (dashboard: DashboardPickerItem) => void;
   value?: SelectableValue;
   width?: number;
@@ -30,7 +30,10 @@ const getDashboards = (query = '') => {
   });
 };
 
-export const DashboardPicker: FC<Props> = ({ onChange, value, width, isClearable = false, invalid, disabled }) => {
+/**
+ * @deprecated prefer using dashboard uid rather than id
+ */
+export const DashboardPickerByID: FC<Props> = ({ onChange, value, width, isClearable = false, invalid, disabled }) => {
   const debouncedSearch = debounce(getDashboards, 300);
 
   return (
