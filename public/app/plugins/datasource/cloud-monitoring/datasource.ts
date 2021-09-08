@@ -163,11 +163,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           });
         }),
         map(({ data }) => {
-          return data;
-        }),
-        map((response) => {
-          const result = response.results[refId];
-          return result && result.meta ? result.meta.labels : {};
+          const dataQueryResponse = toDataQueryResponse({
+            data: data,
+          });
+          if (dataQueryResponse.data.length !== 0) {
+            return dataQueryResponse.data[0].meta;
+          }
+
+          return {};
         })
       )
     );
