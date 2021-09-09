@@ -1,6 +1,6 @@
 import React, { FC, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, styleMixins, useTheme2 } from '@grafana/ui';
 import appEvents from '../../app_events';
@@ -28,7 +28,7 @@ export const SideMenu: FC = React.memo(() => {
   }
 
   return (
-    <nav className={`${styles.sidemenu} sidemenu`} data-testid="sidemenu" aria-label="Main menu">
+    <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
       <a href={homeUrl} className={styles.homeLogo}>
         <Branding.MenuLogo />
       </a>
