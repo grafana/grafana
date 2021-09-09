@@ -77,7 +77,6 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
                   onOptionsChange={setOptions}
                   options={options}
                   fieldConfig={fieldConfig}
-                  onFieldConfigChange={setFieldConfig}
                 />
               </PanelContextProvider>
             </div>
