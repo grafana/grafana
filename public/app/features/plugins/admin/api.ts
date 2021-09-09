@@ -4,8 +4,10 @@ import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin, CatalogPl
 import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
-  const localPlugins = await getLocalPlugins();
-  const remotePlugins = await getRemotePlugins();
+  const [localPlugins, remotePlugins] = await Promise.all([
+    getLocalPlugins(),
+    getRemotePlugins(),
+  ]);
 
   return mergeLocalsAndRemotes(localPlugins, remotePlugins);
 }
