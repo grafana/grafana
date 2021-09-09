@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
 import { FieldConfigSource, GrafanaTheme2, PanelData, ThresholdsConfig } from '@grafana/data';
@@ -24,23 +24,27 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   });
   const vizHeight = useVizHeight(data, currentPanel, options.frameIndex);
   const styles = useStyles2(getStyles(vizHeight));
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(defaultFieldConfig(thresholds));
+  console.log('thresholds', thresholds);
 
-  const fieldConfig: FieldConfigSource = useMemo(() => {
-    if (thresholds) {
-      return {
+  const onFieldConfigChange = useCallback(
+    (config: FieldConfigSource) => {
+      setFieldConfig({
+        ...config,
         defaults: {
+          ...config.defaults,
           thresholds: thresholds,
           custom: {
+            ...config.defaults.custom,
             thresholdsStyle: {
               mode: 'line',
             },
           },
         },
-        overrides: [],
-      };
-    }
-    return { defaults: {}, overrides: [] };
-  }, [thresholds]);
+      });
+    },
+    [thresholds, setFieldConfig]
+  );
 
   const context: PanelContext = useMemo(
     () => ({
@@ -54,6 +58,8 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   if (!options || !data) {
     return null;
   }
+
+  console.log('vizwrapper', fieldConfig);
 
   return (
     <div className={styles.wrapper}>
@@ -77,6 +83,7 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
                   onOptionsChange={setOptions}
                   options={options}
                   fieldConfig={fieldConfig}
+                  onFieldConfigChange={onFieldConfigChange}
                 />
               </PanelContextProvider>
             </div>
@@ -97,3 +104,20 @@ const getStyles = (visHeight: number) => (theme: GrafanaTheme2) => ({
     justify-content: flex-end;
   `,
 });
+
+function defaultFieldConfig(thresholds: ThresholdsConfig): FieldConfigSource {
+  if (!thresholds) {
+    return { defaults: {}, overrides: [] };
+  }
+  return {
+    defaults: {
+      thresholds: thresholds,
+      custom: {
+        thresholdsStyle: {
+          mode: 'line',
+        },
+      },
+    },
+    overrides: [],
+  };
+}

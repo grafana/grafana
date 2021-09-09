@@ -36,7 +36,6 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
       onStop={(_e, d) => {
         onChange(mapPositionToValue(d.lastY));
         // as of https://github.com/react-grid-layout/react-draggable/issues/390#issuecomment-623237835
-        return false;
       }}
       onDrag={(_e, d) => setCurrentValue(mapPositionToValue(d.lastY))}
       position={{ x: 0, y }}

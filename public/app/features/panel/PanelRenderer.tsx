@@ -42,7 +42,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   }
 
   const PanelComponent = plugin.panel;
-
+  console.log('panel rendererer', fieldConfig);
   return (
     <PanelComponent
       id={1}
@@ -131,7 +131,7 @@ function useFieldConfigState(props: PanelRendererProps): [FieldConfigSource, (co
   // field config state internally or externally by the consuming
   // component. This will also prevent the way of managing state to
   // change during the components life cycle.
-  const isManagedInternally = useRef(() => !!onFieldConfigChange);
+  const isManagedInternally = useRef(!onFieldConfigChange);
   const [internalConfig, setInternalConfig] = useState(fieldConfig);
 
   const setExternalConfig = useCallback(
@@ -144,8 +144,9 @@ function useFieldConfigState(props: PanelRendererProps): [FieldConfigSource, (co
     [onFieldConfigChange]
   );
 
-  if (isManagedInternally) {
+  if (isManagedInternally.current) {
     return [internalConfig, setInternalConfig];
   }
+
   return [fieldConfig, setExternalConfig];
 }
