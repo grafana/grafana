@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/tsdb/grafana_ds"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -52,8 +52,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 				hs.log.Debug("Can't process query since it's missing data source ID")
 				return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
 			}
-			if dsID == grafana_ds.DatasourceID {
-				ds = grafana_ds.DataSourceModel(c.OrgId)
+			if dsID == grafanads.DatasourceID {
+				ds = grafanads.DataSourceModel(c.OrgId)
 			} else {
 				ds, err = hs.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
 				if err != nil {

@@ -1,4 +1,4 @@
-package grafana_ds
+package grafanads
 
 import (
 	"context"
@@ -186,7 +186,7 @@ func (s *Service) doReadQuery(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	if !strings.HasSuffix(q.Path, ".csv") {
+	if filepath.Ext(q.Path) != ".csv" {
 		response.Error = fmt.Errorf("unsupported file type")
 		return response
 	}

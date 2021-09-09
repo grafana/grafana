@@ -1,4 +1,4 @@
-package grafana_ds
+package grafanads
 
 import (
 	"encoding/json"
