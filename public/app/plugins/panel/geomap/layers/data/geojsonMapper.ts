@@ -66,6 +66,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
             { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
           ],
+          allowCustomValue: true,
         },
         defaultValue: defaultOptions.src,
       });
