@@ -257,6 +257,46 @@ In Grafana 8 we have introduced a new improved version of our theming system. Th
 
 You can find more detailed information on how to apply the v2 theme [here](https://github.com/grafana/grafana/blob/main/contribute/style-guides/themes.md#theming-grafana).
 
+**How to style a functional component**
+
+The `useStyles` hook is the preferred way to access the theme when styling. It provides basic memoization and access to the theme object.
+
+```ts
+// before
+import React, { ReactElement } from 'react';
+import css from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
+
+function Component(): ReactElement | null {
+  const styles = useStyles(getStyles);
+}
+
+const getStyles = (theme: GrafanaTheme) => ({
+  myStyle: css`
+    background: ${theme.colors.bodyBg};
+    display: flex;
+  `,
+});
+
+// after
+import React, { ReactElement } from 'react';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+function Component(): ReactElement | null {
+  const theme = useStyles2(getStyles);
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  myStyle: css`
+    background: ${theme.colors.background.canvas};
+    display: flex;
+  `,
+});
+```
+
 **How to use the theme in a functional component**
 
 ```ts
