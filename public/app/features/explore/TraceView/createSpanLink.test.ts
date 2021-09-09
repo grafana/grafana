@@ -174,5 +174,49 @@ describe('createSpanLinkFactory', () => {
         )}`
       );
     });
+
+    it('filters by trace and span ID', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory(splitOpenFn, {
+        datasourceUid: 'lokiUid',
+        filterBySpanID: true,
+        filterByTraceID: true,
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!({
+        spanID: '6605c7b08e715d6c',
+        traceID: '7946b05c2e2e4e5a',
+        startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
+        duration: 1000 * 1000,
+        tags: [
+          {
+            key: 'host',
+            value: 'host',
+          },
+        ],
+        process: {
+          tags: [
+            {
+              key: 'cluster',
+              value: 'cluster1',
+            },
+            {
+              key: 'hostname',
+              value: 'hostname1',
+            },
+            {
+              key: 'label2',
+              value: 'val2',
+            },
+          ],
+        } as any,
+      } as any);
+
+      expect(linkDef.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"} |=\\"7946b05c2e2e4e5a\\" |=\\"6605c7b08e715d6c\\"","refId":""}]}'
+        )}`
+      );
+    });
   });
 });

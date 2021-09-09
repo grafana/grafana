@@ -1,12 +1,15 @@
 import React from 'react';
 import { cloneDeep } from 'lodash';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon, IconName } from '@grafana/ui';
-import SideMenuItem from './SideMenuItem';
+import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
 import config from '../../config';
-import { NavModelItem } from '@grafana/data';
+import SideMenuItem from './SideMenuItem';
 
 const TopSection = () => {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const mainLinks = navTree.filter((item) => !item.hideFromMenu);
 
@@ -15,7 +18,7 @@ const TopSection = () => {
   };
 
   return (
-    <div data-testid="top-section-items" className="sidemenu__top">
+    <div data-testid="top-section-items" className={styles.container}>
       <SideMenuItem label="Search dashboards" onClick={onOpenSearch}>
         <Icon name="search" size="xl" />
       </SideMenuItem>
@@ -38,3 +41,19 @@ const TopSection = () => {
 };
 
 export default TopSection;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: none;
+    flex-grow: 1;
+
+    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+      display: block;
+      margin-top: ${theme.spacing(5)};
+    }
+
+    .sidemenu-open--xs & {
+      display: block;
+    }
+  `,
+});
