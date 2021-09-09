@@ -23,6 +23,7 @@ load(
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
     'validate_scuemata_step',
+    'send_duration_metric_step',
 )
 
 load(
@@ -52,6 +53,7 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
+        send_duration_metric_step(ver_mode=ver_mode),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)

@@ -31,6 +31,7 @@ load(
     'publish_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
+    'send_duration_metric_step',
     'test_a11y_frontend_step'
 )
 
@@ -62,6 +63,7 @@ def get_steps(edition, is_downstream=False):
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
+        send_duration_metric_step(ver_mode=ver_mode),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
