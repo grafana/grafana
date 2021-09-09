@@ -92,10 +92,17 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
+	UID := cmd.UID
+	if len(UID) == 0 {
+		UID = util.GenerateShortUID()
+	}
+	if !util.IsValidShortUID(UID) {
+		return LibraryElementDTO{}, errLibraryElementInvalidUID
+	}
 	element := LibraryElement{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
-		UID:      util.GenerateShortUID(),
+		UID:      UID,
 		Name:     cmd.Name,
 		Model:    cmd.Model,
 		Version:  1,

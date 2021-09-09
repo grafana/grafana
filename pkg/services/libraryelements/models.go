@@ -147,8 +147,10 @@ var (
 	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 	// errLibraryElementUnSupportedElementKind is an error for when the kind is unsupported.
 	errLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
-	// ErrFolderHasConnectedLibraryElements is an error for when an user deletes a folder that contains connected library elements.
+	// ErrFolderHasConnectedLibraryElements is an error for when a user deletes a folder that contains connected library elements.
 	ErrFolderHasConnectedLibraryElements = errors.New("folder contains library elements that are linked in use")
+	// errLibraryElementInvalidUID is an error for when the uid of a library element is invalid
+	errLibraryElementInvalidUID = errors.New("uid contains illegal characters")
 )
 
 // Commands
@@ -159,6 +161,7 @@ type CreateLibraryElementCommand struct {
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 	Kind     int64           `json:"kind" binding:"Required"`
+	UID      string          `json:"uid"`
 }
 
 // patchLibraryElementCommand is the command for patching a LibraryElement
