@@ -109,18 +109,18 @@ RENDERING_MODE=reusable
 }
 ```
 
-#### Rendering modes performance and CPU / memory usage
+#### Optimize the performance, CPU and memory usage of the image renderer
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling so it's recommended to [monitor your image renderer service]({{< relref "./monitoring/" >}}).
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "./monitoring/" >}}).
 
-With no concurrent request, the different modes show very similar performance and CPU / memory usage.
+With no concurrent requests, the different modes show very similar performance and CPU / memory usage.
 
 When handling concurrent requests, we see the following trends:
 
-- Parallelizing incognito pages instead of browsers is better for performance and CPU / memory consumption meaning that [clustered](#clustered) (with clustering mode set as `context`) mode is the most performant.
+- To improve performance and reduce CPU and memory consumption, use [clustered](#clustered) mode with `RENDERING_CLUSTERING_MODE` set as `context`. This parallelizes incognito pages instead of browsers.
 - If you use the [clustered](#clustered) mode with a `maxConcurrency` setting below your average number of concurrent requests, performance will drop as the rendering requests will need to wait for the other to finish before getting access to an incognito page / browser.
 
-To achieve better performance, it's also recommended to monitor the machine on which your service is running. If you don't have enough memory and / or CPU, every rendering step will be slower than usual, increasing the duration of every rendering request.
+To achieve better performance, monitor the machine on which your service is running. If you don't have enough memory and / or CPU, every rendering step will be slower than usual, increasing the duration of every rendering request.
 
 ### Other available settings
 
