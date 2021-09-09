@@ -253,7 +253,7 @@ import { cx, css } from '@emotion/css';
 
 #### Grafana theme v1
 
-In Grafana 8 we have introduced a new improved version of our theming system. The previous version of the theming system is still available but deprecated and will be removed in the next major version of Grafana.
+In Grafana 8 we have introduced a new improved version of our theming system. The previous version of the theming system is still available but is deprecated and will be removed in the next major version of Grafana.
 
 You can find more detailed information on how to apply the v2 theme [here](https://github.com/grafana/grafana/blob/main/contribute/style-guides/themes.md#theming-grafana).
 
