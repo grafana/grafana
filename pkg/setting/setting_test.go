@@ -454,7 +454,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, false, cfg.UnifiedAerttingCopyLegacyOptions)
 				require.Equal(t, 120*time.Second, cfg.AdminConfigPollInterval)
-				require.Equal(t, 6, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(6), cfg.UnifiedAlertingMaxAttempts)
 				require.Equal(t, int64(60), cfg.UnifiedAlertingMinInterval)
 				require.Equal(t, false, cfg.UnifiedAlertingExecuteAlerts)
 				require.Equal(t, 90*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
@@ -479,7 +479,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, true, cfg.UnifiedAerttingCopyLegacyOptions)
 				require.Equal(t, 120*time.Second, cfg.AdminConfigPollInterval)
-				require.Equal(t, 12, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(12), cfg.UnifiedAlertingMaxAttempts)
 				require.Equal(t, int64(120), cfg.UnifiedAlertingMinInterval)
 				require.Equal(t, true, cfg.UnifiedAlertingExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
@@ -504,7 +504,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, true, cfg.UnifiedAerttingCopyLegacyOptions)
 				require.Equal(t, 120*time.Second, cfg.AdminConfigPollInterval)
-				require.Equal(t, 3, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(3), cfg.UnifiedAlertingMaxAttempts)
 				require.Equal(t, int64(10), cfg.UnifiedAlertingMinInterval)
 				require.Equal(t, true, cfg.UnifiedAlertingExecuteAlerts)
 				require.Equal(t, 30*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
@@ -529,7 +529,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, false, cfg.UnifiedAerttingCopyLegacyOptions)
 				require.Equal(t, 60*time.Second, cfg.AdminConfigPollInterval)
-				require.Equal(t, 3, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(3), cfg.UnifiedAlertingMaxAttempts)
 				require.Equal(t, int64(10), cfg.UnifiedAlertingMinInterval)
 				require.Equal(t, true, cfg.UnifiedAlertingExecuteAlerts)
 				require.Equal(t, 30*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
