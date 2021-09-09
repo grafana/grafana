@@ -41,7 +41,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
         catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
       );
       return datasourceObservable.pipe(
-        mergeMap((datasource: DataSourceApi) => {
+        mergeMap((datasource?: DataSourceApi) => {
           const runner = this.runners.find((r) => r.canRun(datasource));
           if (!runner) {
             return of([]);
