@@ -105,7 +105,7 @@ func (ng *AlertNG) init() error {
 		C:                       clock.New(),
 		BaseInterval:            baseInterval,
 		Logger:                  ng.Log,
-		MaxAttempts:             int64(ng.Cfg.AlertingMaxAttempts),
+		MaxAttempts:             int64(ng.Cfg.UnifiedAlertingMaxAttempts),
 		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
 		InstanceStore:           store,
 		RuleStore:               store,
@@ -149,7 +149,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 	children, subCtx := errgroup.WithContext(ctx)
 
-	if ng.Cfg.ExecuteAlerts {
+	if ng.Cfg.UnifiedAlertingExecuteAlerts {
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})
@@ -183,14 +183,14 @@ func (ng *AlertNG) getRuleDefaultIntervalSeconds() int64 {
 // If this value is less or equal to zero or not divided exactly by the scheduler interval
 // the scheduler interval (10 seconds) is returned.
 func (ng *AlertNG) getRuleMinIntervalSeconds() int64 {
-	if ng.Cfg.AlertingMinInterval <= 0 {
+	if ng.Cfg.UnifiedAlertingMinInterval <= 0 {
 		return defaultBaseIntervalSeconds // if it's not configured; apply default
 	}
 
-	if ng.Cfg.AlertingMinInterval%defaultBaseIntervalSeconds != 0 {
-		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.AlertingMinInterval, "baseIntervalSeconds", defaultBaseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
+	if ng.Cfg.UnifiedAlertingMinInterval%defaultBaseIntervalSeconds != 0 {
+		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.UnifiedAlertingMinInterval, "baseIntervalSeconds", defaultBaseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
 		return defaultBaseIntervalSeconds // if it's invalid; apply default
 	}
 
-	return ng.Cfg.AlertingMinInterval
+	return ng.Cfg.UnifiedAlertingMinInterval
 }

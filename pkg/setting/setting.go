@@ -414,11 +414,12 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	AdminConfigPollInterval   time.Duration
-	AlertingMaxAttempts       int
-	AlertingMinInterval       int64
-	AlertingEvaluationTimeout time.Duration
-	ExecuteAlerts             bool
+	AdminConfigPollInterval          time.Duration
+	UnifiedAerttingCopyLegacyOptions bool
+	UnifiedAlertingMaxAttempts       int
+	UnifiedAlertingMinInterval       int64
+	UnifiedAlertingEvaluationTimeout time.Duration
+	UnifiedAlertingExecuteAlerts     bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -1388,6 +1389,31 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
 	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
+
+	cfg.UnifiedAerttingCopyLegacyOptions = ua.Key("copy_legacy_options").MustBool(true)
+
+	if cfg.UnifiedAerttingCopyLegacyOptions {
+		// copy options from the legacy alerting section
+		alerting := iniFile.Section("alerting")
+		cfg.UnifiedAlertingExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+
+		evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
+		cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+		cfg.UnifiedAlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+		cfg.UnifiedAlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(int64(10))
+	} else {
+		cfg.UnifiedAlertingExecuteAlerts = ua.Key("execute_alerts").MustBool(true)
+
+		evaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(30)
+		cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+
+		cfg.UnifiedAlertingMaxAttempts = ua.Key("max_attempts").MustInt(3)
+		cfg.UnifiedAlertingMinInterval = ua.Key("min_interval_seconds").MustInt64(int64(10))
+	}
+	if cfg.UnifiedAlertingMinInterval < 10 {
+		cfg.UnifiedAlertingMinInterval = 10
+	}
+
 	return nil
 }
 
@@ -1395,7 +1421,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	cfg.ExecuteAlerts = ExecuteAlerts
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
 	AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
@@ -1403,16 +1428,10 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 
 	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
 	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-	cfg.AlertingEvaluationTimeout = AlertingEvaluationTimeout
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	cfg.AlertingMaxAttempts = AlertingMaxAttempts
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(int64(1))
-	if cfg.IsNgAlertEnabled() && AlertingMinInterval < 10 {
-		AlertingMinInterval = 10
-	}
-	cfg.AlertingMinInterval = AlertingMinInterval
 
 	return nil
 }

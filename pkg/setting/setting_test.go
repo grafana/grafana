@@ -417,7 +417,7 @@ func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
 	require.Equal(t, "http://cdn.grafana.com/sub/grafana/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
 }
 
-// Adding a case for this in case we switch to proper semver version strings
+// Adding a case for this in case we switch to proper semver version stringsrequire
 func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	var err error
 	cfg := NewCfg()
@@ -426,4 +426,136 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "http://cdn.grafana.com/grafana-oss/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
 	require.Equal(t, "http://cdn.grafana.com/grafana/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
+}
+
+func TestUnifiedAlertingSettings(t *testing.T) {
+	testCases := []struct {
+		desc                   string
+		unifiedAlertingOptions map[string]string
+		alertingOptions        map[string]string
+		verifyCfg              func(*testing.T, Cfg)
+	}{
+		{
+			desc: "do not copy legacy options",
+			unifiedAlertingOptions: map[string]string{
+				"copy_legacy_options":                "false",
+				"admin_config_poll_interval_seconds": "120",
+				"max_attempts":                       "6",
+				"min_interval_seconds":               "60",
+				"execute_alerts":                     "false",
+				"evaluation_timeout_seconds":         "90",
+			},
+			alertingOptions: map[string]string{
+				"max_attempts":               "12",
+				"min_interval_seconds":       "120",
+				"execute_alerts":             "true",
+				"evaluation_timeout_seconds": "120",
+			},
+			verifyCfg: func(t *testing.T, cfg Cfg) {
+				require.Equal(t, false, cfg.UnifiedAerttingCopyLegacyOptions)
+				require.Equal(t, 120*time.Second, cfg.AdminConfigPollInterval)
+				require.Equal(t, 6, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(60), cfg.UnifiedAlertingMinInterval)
+				require.Equal(t, false, cfg.UnifiedAlertingExecuteAlerts)
+				require.Equal(t, 90*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
+			},
+		},
+		{
+			desc: "copy legacy options",
+			unifiedAlertingOptions: map[string]string{
+				"copy_legacy_options":                "true",
+				"admin_config_poll_interval_seconds": "120",
+				"max_attempts":                       "6",
+				"min_interval_seconds":               "60",
+				"execute_alerts":                     "false",
+				"evaluation_timeout_seconds":         "90",
+			},
+			alertingOptions: map[string]string{
+				"max_attempts":               "12",
+				"min_interval_seconds":       "120",
+				"execute_alerts":             "true",
+				"evaluation_timeout_seconds": "160",
+			},
+			verifyCfg: func(t *testing.T, cfg Cfg) {
+				require.Equal(t, true, cfg.UnifiedAerttingCopyLegacyOptions)
+				require.Equal(t, 120*time.Second, cfg.AdminConfigPollInterval)
+				require.Equal(t, 12, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(120), cfg.UnifiedAlertingMinInterval)
+				require.Equal(t, true, cfg.UnifiedAlertingExecuteAlerts)
+				require.Equal(t, 160*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
+			},
+		},
+		{
+			desc: "apply legacy defaults",
+			unifiedAlertingOptions: map[string]string{
+				"copy_legacy_options":                "invalid",
+				"admin_config_poll_interval_seconds": "120",
+				"max_attempts":                       "6",
+				"min_interval_seconds":               "60",
+				"execute_alerts":                     "false",
+				"evaluation_timeout_seconds":         "90",
+			},
+			alertingOptions: map[string]string{
+				"max_attempts":               "invalid",
+				"min_interval_seconds":       "invalid",
+				"execute_alerts":             "invalid",
+				"evaluation_timeout_seconds": "invalid",
+			},
+			verifyCfg: func(t *testing.T, cfg Cfg) {
+				require.Equal(t, true, cfg.UnifiedAerttingCopyLegacyOptions)
+				require.Equal(t, 120*time.Second, cfg.AdminConfigPollInterval)
+				require.Equal(t, 3, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(10), cfg.UnifiedAlertingMinInterval)
+				require.Equal(t, true, cfg.UnifiedAlertingExecuteAlerts)
+				require.Equal(t, 30*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
+			},
+		},
+		{
+			desc: "apply defaults when copy legacy options is disabled",
+			unifiedAlertingOptions: map[string]string{
+				"copy_legacy_options":                "false",
+				"admin_config_poll_interval_seconds": "invalid",
+				"max_attempts":                       "invalid",
+				"min_interval_seconds":               "invalid",
+				"execute_alerts":                     "invalid",
+				"evaluation_timeout_seconds":         "invalid",
+			},
+			alertingOptions: map[string]string{
+				"max_attempts":               "12",
+				"min_interval_seconds":       "120",
+				"execute_alerts":             "true",
+				"evaluation_timeout_seconds": "160",
+			},
+			verifyCfg: func(t *testing.T, cfg Cfg) {
+				require.Equal(t, false, cfg.UnifiedAerttingCopyLegacyOptions)
+				require.Equal(t, 60*time.Second, cfg.AdminConfigPollInterval)
+				require.Equal(t, 3, cfg.UnifiedAlertingMaxAttempts)
+				require.Equal(t, int64(10), cfg.UnifiedAlertingMinInterval)
+				require.Equal(t, true, cfg.UnifiedAlertingExecuteAlerts)
+				require.Equal(t, 30*time.Second, cfg.UnifiedAlertingEvaluationTimeout)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			cfg := NewCfg()
+			unifiedAlertingSec, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+			for k, v := range tc.unifiedAlertingOptions {
+				_, err = unifiedAlertingSec.NewKey(k, v)
+				require.NoError(t, err)
+			}
+			alertingSec, err := f.NewSection("alerting")
+			require.NoError(t, err)
+			for k, v := range tc.alertingOptions {
+				_, err = alertingSec.NewKey(k, v)
+				require.NoError(t, err)
+			}
+			err = cfg.readUnifiedAlertingSettings(f)
+			require.NoError(t, err)
+			tc.verifyCfg(t, *cfg)
+		})
+	}
 }

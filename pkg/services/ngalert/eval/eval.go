@@ -431,7 +431,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 
 // ConditionEval executes conditions and evaluates the result.
 func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.AlertingEvaluationTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.UnifiedAlertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
@@ -444,7 +444,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
 func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.AlertingEvaluationTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.UnifiedAlertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}

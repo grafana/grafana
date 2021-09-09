@@ -1107,6 +1107,28 @@ For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{<
 
 Specify the frequency of polling for admin config changes. The default value is `60`.
 
+### copy_legacy_options
+
+If it's true, it will ignore the following options and will use the respective option values of the legacy [alerting]({{< relref "#alerting">}}) (used so thatt for the migrated dashboard alerts). Disable it for the following options to become effective. Default is `true`.
+
+### execute_alerts
+
+Turns off alert rule execution, but Grafana 8 Alerts are still visible in the Grafana UI. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default is `true`.
+
+### evaluation_timeout_seconds
+
+Sets the alert calculation timeout. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default value is `30`.
+
+### max_attempts
+
+Sets a maximum limit on attempts to sending alert notifications. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default value is `3`.
+
+### min_interval_seconds
+
+Sets the minimum interval between rule evaluations. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default value is `10` which equals the scheduler interval. This value should be multiple of `10`, otherwise it fallbacks to `10`.
+
+> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
+
 <hr>
 
 ## [alerting]
@@ -1119,7 +1141,7 @@ Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. D
 
 ### execute_alerts
 
-Turns off alert rule execution, but Alerting is still visible in the Grafana UI. This configuration is also supported in [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}. Default is `true`.
+Turns off alert rule execution, but Alerting is still visible in the Grafana UI. Default is `true`.
 
 ### error_or_timeout
 
@@ -1131,12 +1153,11 @@ Defines how Grafana handles nodata or null values in alerting. Options are `aler
 
 ### concurrent_render_limit
 
-Alert notifications can include images, but rendering many images at the same time can overload the server.
-This limit protects the server from render overloading and ensures notifications are sent out quickly. Default value is `5`.
+Alert notifications can include images, but rendering many images at the same time can overload the server. Default value is `5`.
 
 ### evaluation_timeout_seconds
 
-Sets the alert calculation timeout. This configuration is also supported in [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}. Default value is `30`.
+Sets the alert calculation timeout. Default value is `30`.
 
 ### notification_timeout_seconds
 
@@ -1144,11 +1165,11 @@ Sets the alert notification timeout. Default value is `30`.
 
 ### max_attempts
 
-Sets a maximum limit on attempts to sending alert notifications. This configuration is also supported in [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}. Default value is `3`.
+Sets a maximum limit on attempts to sending alert notifications. Default value is `3`.
 
 ### min_interval_seconds
 
-Sets the minimum interval between rule evaluations. This configuration is also supported in Grafana 8 Alerts. For dashboard alerts the default value is `1`, for [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}#min-interval-seconds) the default value is `10` that equals each alerting system's scheduler interval. For Grafana 8 Alerts, this value should be multiple of `10`, otherwise it fallbacks to `10`.
+Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
