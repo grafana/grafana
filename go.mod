@@ -14,8 +14,8 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.16.1
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.9.1
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
@@ -73,7 +73,7 @@ require (
 	github.com/ohler55/ojg v1.12.3
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
+	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.23.0-rc.0.0.20210906104939-8da517524a87
 	github.com/prometheus/client_golang v1.11.0
@@ -122,7 +122,7 @@ require (
 
 require (
 	cloud.google.com/go v0.90.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v0.5.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v0.7.0 // indirect
 	github.com/FZambia/eagle v0.0.1 // indirect
 	github.com/FZambia/sentinel v1.1.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
