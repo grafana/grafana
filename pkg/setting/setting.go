@@ -1383,6 +1383,13 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	cfg.UnifiedAlertingEnabled = ua.Key("enabled").MustBool(true)
 
+	alerting := iniFile.Section("alerting")
+	alertingEnabled := alerting.Key("enabled").MustBool(false)
+
+	if cfg.UnifiedAlertingEnabled && alertingEnabled {
+		return errors.New("both legacy and Grafana 8 Alerts are enabled")
+	}
+
 	cfg.UnifiedAlertingDisabledOrgs = make(map[int64]struct{})
 	orgsStr := valueAsString(ua, "disabled_orgs", "")
 	for _, org := range util.SplitString(orgsStr) {
