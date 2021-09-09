@@ -16,7 +16,7 @@ export interface PanelOptions {
   showHeader: boolean;
   showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
-  showFooter: boolean;
+  showFooter?: boolean;
   footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
 }
 
