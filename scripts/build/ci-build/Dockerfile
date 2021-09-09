@@ -45,7 +45,8 @@ RUN apt-get update && \
         cmake           \
         libssl-dev      \
         xz-utils        \
-        lzma-dev
+        lzma-dev        \
+        netcat
 RUN git clone https://github.com/tpoechtrager/osxcross.git /tmp/osxcross && \
       cd /tmp/osxcross && git reset --hard $OSX_CROSS_REV
 COPY MacOSX10.15.sdk.tar.xz /tmp/osxcross/tarballs/
