@@ -19,7 +19,9 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 		orgs: []int64{1, 2, 3},
 	}
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{
+		UnifiedAlertingDisabledOrgs: map[int64]struct{}{5: {}},
+	}, configStore, orgStore)
 	ctx := context.Background()
 
 	// Ensure that one Alertmanager is created per org.
@@ -36,6 +38,12 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	// if the org comes back, it should detect it.
 	{
 		orgStore.orgs = []int64{1, 2, 3, 4}
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 4)
+	}
+	// if the disabled org comes back, it should not detect it.
+	{
+		orgStore.orgs = []int64{1, 2, 3, 4, 5}
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 4)
 	}
