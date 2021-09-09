@@ -248,7 +248,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo
 			return nil, err
 		}
 
-		calculatedInterval := s.intervalCalculator.Calculate(queries[0].TimeRange, minInterval)
+		calculatedInterval := s.intervalCalculator.Calculate(queries[0].TimeRange, minInterval, queryModel.MaxDataPoints)
 
 		safeInterval := s.intervalCalculator.CalculateSafeInterval(queries[0].TimeRange, int64(safeRes))
 
