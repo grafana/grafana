@@ -47,14 +47,14 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}).
 
-| Metric Name                                 | Type      | Description                                                                              |
-| ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `alerting.alerts`                           | gauge     | How many alerts by state                                                                 |
-| `alerting.request_duration_seconds`         | histogram | Histogram of requests to the Alerting API                                                |
-| `alerting.active_configurations`            | gauge     | The number of active, non default Alertmanager configurations for grafana managed alerts |
-| `alerting.rule_evaluations_total`           | counter   | The total number of rule evaluations                                                     |
-| `alerting.rule_evaluation_failures_total`   | counter   | The total number of rule evaluation failures                                             |
-| `alerting.rule_evaluation_duration_seconds` | summary   | The duration for a rule to execute                                                       |
-| `alerting.rule_group_rules`                 | gauge     | The number of rules                                                                      |
+| Metric Name                                       | Type      | Description                                                                              |
+| ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| `grafana_alerting_alerts`                         | gauge     | How many alerts by state                                                                 |
+| `grafana_alerting_request_duration`               | histogram | Histogram of requests to the Alerting API                                                |
+| `grafana_alerting_active_configurations`          | gauge     | The number of active, non default Alertmanager configurations for grafana managed alerts |
+| `grafana_alerting_rule_evaluations_total`         | counter   | The total number of rule evaluations                                                     |
+| `grafana_alerting_rule_evaluation_failures_total` | counter   | The total number of rule evaluation failures                                             |
+| `grafana_alerting_rule_evaluation_duration`       | summary   | The duration for a rule to execute                                                       |
+| `grafana_alerting_rule_group_rules`               | gauge     | The number of rules                                                                      |
 
 - [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
