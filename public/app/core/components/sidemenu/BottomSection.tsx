@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { cloneDeep } from 'lodash';
-import { NavModelItem } from '@grafana/data';
-import { Icon, IconName } from '@grafana/ui';
-import appEvents from '../../app_events';
 import { useLocation } from 'react-router-dom';
-import SideMenuItem from './SideMenuItem';
-import { ShowModalReactEvent } from '../../../types/events';
+import { cloneDeep } from 'lodash';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import appEvents from '../../app_events';
+import { ShowModalReactEvent } from '../../../types/events';
+import config from '../../config';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
-import config from '../../config';
+import SideMenuItem from './SideMenuItem';
 import { getForcedLoginUrl } from './utils';
 
 export default function BottomSection() {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
@@ -39,7 +42,7 @@ export default function BottomSection() {
   }
 
   return (
-    <div data-testid="bottom-section-items" className="sidemenu__bottom">
+    <div data-testid="bottom-section-items" className={styles.container}>
       {!isSignedIn && (
         <SideMenuItem label="Sign In" target="_self" url={forcedLoginUrl}>
           <Icon name="signout" size="xl" />
@@ -90,3 +93,18 @@ export default function BottomSection() {
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: none;
+
+    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+      display: block;
+      margin-bottom: ${theme.spacing(2)};
+    }
+
+    .sidemenu-open--xs & {
+      display: block;
+    }
+  `,
+});

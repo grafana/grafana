@@ -6,7 +6,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, TagsInput, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles, InlineSwitch } from '@grafana/ui';
 import React from 'react';
 
 export interface TraceToLogsOptions {
@@ -14,6 +14,8 @@ export interface TraceToLogsOptions {
   tags?: string[];
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
+  filterByTraceID?: boolean;
+  filterBySpanID?: boolean;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -109,6 +111,44 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               })
             }
             value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Filter by Trace ID"
+          labelWidth={26}
+          grow
+          tooltip="Filters logs by Trace ID. Appends '|=<trace id>' to the query."
+        >
+          <InlineSwitch
+            value={options.jsonData.tracesToLogs?.filterByTraceID}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                filterByTraceID: event.currentTarget.checked,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Filter by Span ID"
+          labelWidth={26}
+          grow
+          tooltip="Filters logs by Span ID. Appends '|=<span id>' to the query."
+        >
+          <InlineSwitch
+            value={options.jsonData.tracesToLogs?.filterBySpanID}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                filterBySpanID: event.currentTarget.checked,
+              })
+            }
           />
         </InlineField>
       </InlineFieldRow>
