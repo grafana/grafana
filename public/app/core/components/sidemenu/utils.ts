@@ -1,3 +1,4 @@
+import { NavModelItem } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 
 export const getForcedLoginUrl = (url: string) => {
@@ -5,4 +6,8 @@ export const getForcedLoginUrl = (url: string) => {
   queryParams.append('forceLogin', 'true');
 
   return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
+};
+
+export const linkIsActive = (pathname: string, link: NavModelItem) => {
+  return Boolean(link.url === pathname || link.children?.some((childLink) => childLink.url === pathname));
 };

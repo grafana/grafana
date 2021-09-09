@@ -1,5 +1,6 @@
+import { NavModelItem } from '@grafana/data';
 import { updateConfig } from '../../config';
-import { getForcedLoginUrl } from './utils';
+import { getForcedLoginUrl, linkIsActive } from './utils';
 
 describe('getForcedLoginUrl', () => {
   it.each`
@@ -22,4 +23,53 @@ describe('getForcedLoginUrl', () => {
       expect(result).toBe(expected);
     }
   );
+});
+
+describe('linkIsActive', () => {
+  it('returns true if the link url matches the pathname', () => {
+    const mockPathName = '/test';
+    const mockLink: NavModelItem = {
+      text: 'Test',
+      url: '/test',
+    };
+    expect(linkIsActive(mockPathName, mockLink)).toBe(true);
+  });
+
+  it('returns true if a child link url matches the pathname', () => {
+    const mockPathName = '/testChild2';
+    const mockLink: NavModelItem = {
+      text: 'Test',
+      url: '/test',
+      children: [
+        {
+          text: 'TestChild',
+          url: '/testChild',
+        },
+        {
+          text: 'TestChild2',
+          url: '/testChild2',
+        },
+      ],
+    };
+    expect(linkIsActive(mockPathName, mockLink)).toBe(true);
+  });
+
+  it('returns false if none of the link urls match the pathname', () => {
+    const mockPathName = '/somethingWeird';
+    const mockLink: NavModelItem = {
+      text: 'Test',
+      url: '/test',
+      children: [
+        {
+          text: 'TestChild',
+          url: '/testChild',
+        },
+        {
+          text: 'TestChild2',
+          url: '/testChild2',
+        },
+      ],
+    };
+    expect(linkIsActive(mockPathName, mockLink)).toBe(false);
+  });
 });
