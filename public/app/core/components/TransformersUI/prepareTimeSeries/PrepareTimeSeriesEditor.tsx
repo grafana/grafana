@@ -27,12 +27,28 @@ const manyInfo = {
       <li>Multiple frames</li>
       <li>Each frame has two fields: time, value</li>
       <li>Time in ascending order</li>
+      <li>String values are represented as labels</li>
       <li>All values are numeric</li>
     </ul>
   ),
 };
 
-const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, manyInfo];
+const longInfo = {
+  label: 'Long time series',
+  value: timeSeriesFormat.TimeSeriesLong,
+  description: 'Convert each frame to long format',
+  info: (
+    <ul>
+      <li>Single frame</li>
+      <li>1st field is time field</li>
+      <li>Time in ascending order, but may have duplictes</li>
+      <li>String values are represented as separate fields rather than as labels</li>
+      <li>Multiple value fields may exist</li>
+    </ul>
+  ),
+};
+
+const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, manyInfo, longInfo];
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;
@@ -64,9 +80,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Info" labelWidth={12}>
-          <div className={styles.info}>
-            {options.format === timeSeriesFormat.TimeSeriesMany ? manyInfo.info : wideInfo.info}
-          </div>
+          <div className={styles.info}>{(formats.find((v) => v.value === options.format) || formats[0]).info}</div>
         </InlineField>
       </InlineFieldRow>
     </>
