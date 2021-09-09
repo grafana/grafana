@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	"github.com/grafana/grafana/pkg/tsdb/grafana_ds"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/loki"

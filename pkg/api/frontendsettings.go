@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/grafana"
+	"github.com/grafana/grafana/pkg/tsdb/grafana_ds"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -118,9 +118,9 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 				"name": ds.Name,
 				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
-			if ds.Name == grafana.DatasourceName {
-				info["id"] = grafana.DatasourceID
-				info["uid"] = grafana.DatasourceUID
+			if ds.Name == grafana_ds.DatasourceName {
+				info["id"] = grafana_ds.DatasourceID
+				info["uid"] = grafana_ds.DatasourceUID
 			}
 			dataSources[ds.Name] = info
 		}

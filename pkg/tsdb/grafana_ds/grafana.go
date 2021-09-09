@@ -1,4 +1,4 @@
-package grafana
+package grafana_ds
 
 import (
 	"context"
@@ -149,6 +149,8 @@ func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
 		count := len(s.roots)
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		names.Name = "name"
+		mtype.Name = "mediaType"
 		for i, f := range s.roots {
 			names.Set(i, f)
 			mtype.Set(i, "directory")
