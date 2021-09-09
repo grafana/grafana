@@ -7,6 +7,10 @@ import { handleAnnotationQueryRunnerError } from './utils';
 
 export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
   canRun(datasource: DataSourceApi): boolean {
+    if (!datasource) {
+      return false;
+    }
+
     return Boolean(datasource.annotationQuery && !datasource.annotations);
   }
 

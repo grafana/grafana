@@ -38,6 +38,14 @@ describe('LegacyAnnotationQueryRunner', () => {
     });
   });
 
+  describe('when canWork is called without datasource', () => {
+    it('then it should return false', () => {
+      const datasource: any = undefined;
+
+      expect(runner.canRun(datasource)).toBe(false);
+    });
+  });
+
   describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
       const datasource: any = {
