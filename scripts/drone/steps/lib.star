@@ -989,3 +989,14 @@ def validate_scuemata_step():
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
         ],
     }
+
+
+def send_duration_metric_step(ver_mode):
+    return {
+        'name': 'send-duration-metric',
+        'image': build_image,
+        'commands': [
+            'echo "grafana.build.duration;type=%s $(($(date +%%s)-DRONE_BUILD_STARTED)) $(date +%%s)" | nc graphite-us-central1.grafana.net'.format(ver_mode),
+        ],
+    }
+
