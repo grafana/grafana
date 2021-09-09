@@ -232,7 +232,13 @@ const OrgUnits = ({ units, icon }: OrgUnitProps) => {
       </div>
     </Tooltip>
   ) : (
-    <a href={units[0].url} title={units[0].name} key={units[0].name} aria-label={`Edit ${units[0].name}`}>
+    <a
+      href={units[0].url}
+      className={styles.unitItem}
+      title={units[0].name}
+      key={units[0].name}
+      aria-label={`Edit ${units[0].name}`}
+    >
       <Icon name={icon} /> {units[0].name}
     </a>
   );
@@ -259,10 +265,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       a {
         padding: ${theme.spacing(0.5)} 0 !important;
       }
-
-      svg {
-        margin-left: ${theme.spacing(1)};
-      }
     `,
     unitTooltip: css`
       display: flex;
@@ -271,6 +273,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     unitItem: css`
       cursor: pointer;
       padding: ${theme.spacing(0.5)} 0;
+      margin-right: ${theme.spacing(1)};
     `,
   };
 };
