@@ -114,7 +114,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 
 	channelID := "stream/" + streamID + "/" + path
 
-	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(context.Background(), ctx.OrgId, channelID, body)
+	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgId, channelID, body)
 	if err != nil {
 		logger.Error("Pipeline input processing error", "error", err, "body", string(body))
 		if errors.Is(err, liveDto.ErrInvalidChannelID) {

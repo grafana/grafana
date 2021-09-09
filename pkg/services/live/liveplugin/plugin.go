@@ -33,6 +33,7 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error 
 			return err
 		}
 		if ok {
+			// if rule found – we are done here. If not - fall through and process as usual.
 			return nil
 		}
 	}

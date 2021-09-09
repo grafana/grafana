@@ -35,7 +35,7 @@ func (s *CacheSegmentedTree) updatePeriodically() {
 		for _, orgID := range orgIDs {
 			err := s.fillOrg(orgID)
 			if err != nil {
-				logger.Error("error filling orgId", "error", err.Error(), "orgId", orgID)
+				logger.Error("error filling orgId", "error", err, "orgId", orgID)
 			}
 		}
 		time.Sleep(20 * time.Second)
