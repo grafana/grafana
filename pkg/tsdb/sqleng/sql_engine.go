@@ -291,9 +291,11 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	frame.SetMeta(&data.FrameMeta{
-		ExecutedQueryString: interpolatedQuery,
-	})
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.ExecutedQueryString = interpolatedQuery
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
