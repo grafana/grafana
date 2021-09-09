@@ -1141,7 +1141,7 @@ Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. D
 
 ### execute_alerts
 
-Turns off alert rule execution, but Alerting is still visible in the Grafana UI. Default is `true`.
+Turns off alert rule execution, but Alerting is still visible in the Grafana UI.
 
 ### error_or_timeout
 
@@ -1153,7 +1153,8 @@ Defines how Grafana handles nodata or null values in alerting. Options are `aler
 
 ### concurrent_render_limit
 
-Alert notifications can include images, but rendering many images at the same time can overload the server. Default value is `5`.
+Alert notifications can include images, but rendering many images at the same time can overload the server.
+This limit protects the server from render overloading and ensures notifications are sent out quickly. Default value is `5`.
 
 ### evaluation_timeout_seconds
 

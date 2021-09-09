@@ -405,6 +405,8 @@ type Cfg struct {
 	// Grafana.com URL
 	GrafanaComURL string
 
+	// Alerting
+
 	// AlertingBaseInterval controls the alerting base interval in seconds.
 	// Only for internal use and not user configuration.
 	AlertingBaseInterval time.Duration
@@ -416,7 +418,7 @@ type Cfg struct {
 	// Unified Alerting
 	AdminConfigPollInterval          time.Duration
 	UnifiedAerttingCopyLegacyOptions bool
-	UnifiedAlertingMaxAttempts       int
+	UnifiedAlertingMaxAttempts       int64
 	UnifiedAlertingMinInterval       int64
 	UnifiedAlertingEvaluationTimeout time.Duration
 	UnifiedAlertingExecuteAlerts     bool
@@ -928,7 +930,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 
-	if err := cfg.readAlertingSettings(iniFile); err != nil {
+	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1403,15 +1405,15 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 
 		evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
 		cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-		cfg.UnifiedAlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-		cfg.UnifiedAlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(int64(10))
+		cfg.UnifiedAlertingMaxAttempts = alerting.Key("max_attempts").MustInt64(3)
+		cfg.UnifiedAlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(10)
 	} else {
 		cfg.UnifiedAlertingExecuteAlerts = ua.Key("execute_alerts").MustBool(true)
 
 		evaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(30)
 		cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
 
-		cfg.UnifiedAlertingMaxAttempts = ua.Key("max_attempts").MustInt(3)
+		cfg.UnifiedAlertingMaxAttempts = ua.Key("max_attempts").MustInt64(3)
 		cfg.UnifiedAlertingMinInterval = ua.Key("min_interval_seconds").MustInt64(int64(10))
 	}
 	if cfg.UnifiedAlertingMinInterval < 10 {
@@ -1421,7 +1423,7 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	return nil
 }
 
-func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
+func readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
@@ -1435,7 +1437,7 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(int64(1))
+	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	return nil
 }

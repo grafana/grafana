@@ -417,7 +417,7 @@ func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
 	require.Equal(t, "http://cdn.grafana.com/sub/grafana/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
 }
 
-// Adding a case for this in case we switch to proper semver version stringsrequire
+// Adding a case for this in case we switch to proper semver version strings
 func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	var err error
 	cfg := NewCfg()
