@@ -46,7 +46,7 @@ To get your backend plugin running in Grafana 8 you need to use the new [plugin 
 
 Add a dependency on the `https://github.com/grafana/grafana-plugin-sdk-go`. We recommend using [go modules](https://go.dev/blog/using-go-modules) to manage your dependencies.
 
-#### 2. Update the way you bootrap your plugin
+#### 2. Update the way you bootstrap your plugin
 
 Update your `main` package to bootstrap via the new plugin sdk.
 
