@@ -125,7 +125,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
                 <input
                   name="createServiceAccount"
                   type="checkbox"
-                  checked={createServiceAccount}
+                  checked={Boolean(createServiceAccount)}
                   onChange={onCreateServiceAccountChange}
                 />
               </label>
