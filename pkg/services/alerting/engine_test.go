@@ -5,11 +5,9 @@ import (
 	"errors"
 	"math"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -294,7 +293,7 @@ func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn) (Noti
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
 // the given key. If the key is not present, then it returns the fallback value.
-type GetDecryptedValueFn func(securejsondata.SecureJsonData, string, string) string
+type GetDecryptedValueFn func(map[string][]byte, string, string, string) string
 
 // NotifierFactory is a signature for creating notifiers.
 type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn) (Notifier, error)

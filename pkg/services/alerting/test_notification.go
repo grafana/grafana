@@ -6,15 +6,12 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NotificationTestCommand initiates an test
@@ -72,20 +69,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Conte
 		return err
 	}
 
-	getDecryptedValueFn := func(sjd securejsondata.SecureJsonData, key, fallback string) string {
-		if value, ok := sjd[key]; ok {
-			decryptedData, err := s.EncryptionService.Decrypt(value, setting.SecretKey)
-			if err != nil {
-				return fallback
-			}
-
-			return string(decryptedData)
-		}
-
-		return fallback
-	}
-
-	notifiers, err := InitNotifier(model, getDecryptedValueFn)
+	notifiers, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return err

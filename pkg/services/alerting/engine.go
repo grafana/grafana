@@ -6,15 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/services/encryption"
-
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
@@ -63,20 +60,7 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
-
-	getDecryptedValueFn := func(sjd securejsondata.SecureJsonData, key, fallback string) string {
-		if value, ok := sjd[key]; ok {
-			decryptedData, err := encryptionService.Decrypt(value, setting.SecretKey)
-			if err != nil {
-				return fallback
-			}
-
-			return string(decryptedData)
-		}
-
-		return fallback
-	}
-	e.resultHandler = newResultHandler(e.RenderService, getDecryptedValueFn)
+	e.resultHandler = newResultHandler(e.RenderService, encryptionService.GetDecryptedValue)
 
 	return e
 }

@@ -108,6 +108,19 @@ func (s *Service) DecryptJsonData(sjd map[string][]byte, secret string) (map[str
 	return decrypted, nil
 }
 
+func (s *Service) GetDecryptedValue(sjd map[string][]byte, key, fallback, secret string) string {
+	if value, ok := sjd[key]; ok {
+		decryptedData, err := s.Decrypt(value, secret)
+		if err != nil {
+			return fallback
+		}
+
+		return string(decryptedData)
+	}
+
+	return fallback
+}
+
 // Key needs to be 32bytes
 func encryptionKeyToBytes(secret, salt string) ([]byte, error) {
 	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil

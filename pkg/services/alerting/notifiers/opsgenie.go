@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -85,7 +86,7 @@ const (
 func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := fn(model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
+	apiKey := fn(model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString(), setting.SecretKey)
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}

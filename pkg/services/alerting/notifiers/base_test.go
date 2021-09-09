@@ -5,19 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/services/validations"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
@@ -225,13 +218,4 @@ func TestBaseNotifier(t *testing.T) {
 			So(base.DisableResolveMessage, ShouldBeFalse)
 		})
 	})
-}
-
-func getDecryptedValueFn(sjd securejsondata.SecureJsonData, key, fallback string) string {
-	if value, ok := sjd[key]; ok {
-		decryptedData, _ := ossencryption.ProvideService().Decrypt(value, setting.SecretKey)
-		return string(decryptedData)
-	}
-
-	return fallback
 }

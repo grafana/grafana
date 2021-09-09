@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -76,7 +77,7 @@ func NewThreemaNotifier(model *models.AlertNotification, fn alerting.GetDecrypte
 
 	gatewayID := model.Settings.Get("gateway_id").MustString()
 	recipientID := model.Settings.Get("recipient_id").MustString()
-	apiSecret := fn(model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString())
+	apiSecret := fn(model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString(), setting.SecretKey)
 
 	// Validation
 	if gatewayID == "" {

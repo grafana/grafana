@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -170,25 +168,12 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 				return err
 			}
 
-			getDecryptedValueFn := func(sjd securejsondata.SecureJsonData, key, fallback string) string {
-				if value, ok := sjd[key]; ok {
-					decryptedData, err := cr.encryptionService.Decrypt(value, setting.SecretKey)
-					if err != nil {
-						return fallback
-					}
-
-					return string(decryptedData)
-				}
-
-				return fallback
-			}
-
 			_, err = alerting.InitNotifier(&models.AlertNotification{
 				Name:           notification.Name,
 				Settings:       notification.SettingsToJSON(),
 				SecureSettings: encryptedSecureSettings,
 				Type:           notification.Type,
-			}, getDecryptedValueFn)
+			}, cr.encryptionService.GetDecryptedValue)
 
 			if err != nil {
 				return err
