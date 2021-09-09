@@ -143,6 +143,10 @@ export function getLogLevelFromLabels(labels: Labels): LogLevel {
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
 
+/**
+ * Create a new data frame with a single field and values creating by adding field values
+ * from all provided data frames
+ */
 export function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFrame {
   const aggregatedDataFrame = new MutableDataFrame();
   if (!dataFrames.length) {

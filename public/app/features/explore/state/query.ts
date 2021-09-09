@@ -565,6 +565,8 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
   return (dispatch, getState) => {
     dispatch(changeAutoLogsVolumeAction({ exploreId, autoLoadLogsVolume }));
     const state = getState().explore[exploreId]!;
+
+    // load logs volume automatically after switching
     const { logsVolumeQuery, logsVolume } = state;
     if (logsVolumeQuery && !logsVolume && autoLoadLogsVolume) {
       dispatch(loadLogsVolume(exploreId));
@@ -739,7 +741,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       logsVolumeQuery,
-      logsVolume: undefined, // clear previous results
+      logsVolume: undefined,
       rawLogsVolume: undefined,
       logsVolumeLoadingInProgress: false,
       logsVolumeError: undefined,
@@ -749,7 +751,8 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   if (logsVolumeLoadingFailedAction.match(action)) {
     return {
       ...state,
-      logsVolume: undefined, // clear previous results
+      logsVolumeQuery: undefined,
+      logsVolume: undefined,
       rawLogsVolume: undefined,
       logsVolumeLoadingInProgress: false,
       logsVolumeError: action.payload.error,
