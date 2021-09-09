@@ -1,8 +1,10 @@
 import React from 'react';
+import { Provider } from 'react-redux';
 import { render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { config } from '@grafana/runtime';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 import { LocalPlugin, RemotePlugin } from '../types';
@@ -45,6 +47,15 @@ jest.mock('@grafana/runtime', () => {
             return Promise.resolve(remotePlugin({ slug: 'installed' }));
           case `${GRAFANA_API_ROOT}/plugins/enterprise`:
             return Promise.resolve(remotePlugin({ status: 'enterprise' }));
+          case `${GRAFANA_API_ROOT}/plugins`:
+            return Promise.resolve({
+              items: [
+                remotePlugin({ slug: 'not-installed' }),
+                remotePlugin({ slug: 'installed' }),
+                remotePlugin({ slug: 'has-update', version: '2.0.0' }),
+                remotePlugin({ slug: 'enterprise', status: 'enterprise' }),
+              ],
+            });
           default:
             return Promise.reject();
         }
@@ -63,13 +74,19 @@ jest.mock('@grafana/runtime', () => {
         ...original.config.buildInfo,
         version: 'v7.5.0',
       },
+      pluginAdminEnabled: true,
     },
   };
 });
 
 function setup(pluginId: string): RenderResult {
   const props = getRouteComponentProps({ match: { params: { pluginId }, isExact: true, url: '', path: '' } });
-  return render(<PluginDetailsPage {...props} />);
+  const store = configureStore();
+  return render(
+    <Provider store={store}>
+      <PluginDetailsPage {...props} />
+    </Provider>
+  );
 }
 
 describe('Plugin details page', () => {
@@ -89,6 +106,7 @@ describe('Plugin details page', () => {
 
   it('should display an overview (plugin readme) by default', async () => {
     const { queryByText } = setup('not-installed');
+
     await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
   });
 
@@ -262,7 +280,7 @@ function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     category: '',
     state: '',
     signature: PluginSignatureStatus.valid,
-    signatureType: 'community',
+    signatureType: PluginSignatureType.core,
     signatureOrg: 'Grafana Labs',
     ...plugin,
   };
