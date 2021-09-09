@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -125,6 +126,100 @@ func TestServer_Users(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Empty(t, searchResult)
+	})
+
+	t.Run("multiple DNs", func(t *testing.T) {
+		conn := &MockConnection{}
+		serviceDN := "dc=svc,dc=example,dc=org"
+		serviceEntry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"imgrenderer"}},
+				{Name: "name", Values: []string{"Image renderer"}},
+			}}
+		services := ldap.SearchResult{Entries: []*ldap.Entry{&serviceEntry}}
+
+		userDN := "dc=users,dc=example,dc=org"
+		userEntry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"grot"}},
+				{Name: "name", Values: []string{"Grot"}},
+			}}
+		users := ldap.SearchResult{Entries: []*ldap.Entry{&userEntry}}
+
+		conn.setSearchFunc(func(request *ldap.SearchRequest) (*ldap.SearchResult, error) {
+			switch request.BaseDN {
+			case userDN:
+				return &users, nil
+			case serviceDN:
+				return &services, nil
+			default:
+				return nil, fmt.Errorf("test case not defined for baseDN: '%s'", request.BaseDN)
+			}
+		})
+
+		server := &Server{
+			Config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+				},
+				SearchBaseDNs: []string{serviceDN, userDN},
+			},
+			Connection: conn,
+			log:        log.New("test-logger"),
+		}
+
+		searchResult, err := server.Users([]string{"imgrenderer", "grot"})
+		require.NoError(t, err)
+
+		assert.Len(t, searchResult, 2)
+	})
+
+	t.Run("same user in multiple DNs", func(t *testing.T) {
+		conn := &MockConnection{}
+		firstDN := "dc=users1,dc=example,dc=org"
+		firstEntry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"grot"}},
+				{Name: "name", Values: []string{"Grot the First"}},
+			}}
+		firsts := ldap.SearchResult{Entries: []*ldap.Entry{&firstEntry}}
+
+		secondDN := "dc=users2,dc=example,dc=org"
+		secondEntry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"grot"}},
+				{Name: "name", Values: []string{"Grot the Second"}},
+			}}
+		seconds := ldap.SearchResult{Entries: []*ldap.Entry{&secondEntry}}
+
+		conn.setSearchFunc(func(request *ldap.SearchRequest) (*ldap.SearchResult, error) {
+			switch request.BaseDN {
+			case secondDN:
+				return &seconds, nil
+			case firstDN:
+				return &firsts, nil
+			default:
+				return nil, fmt.Errorf("test case not defined for baseDN: '%s'", request.BaseDN)
+			}
+		})
+
+		server := &Server{
+			Config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+				},
+				SearchBaseDNs: []string{firstDN, secondDN},
+			},
+			Connection: conn,
+			log:        log.New("test-logger"),
+		}
+
+		res, err := server.Users([]string{"grot"})
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		assert.Equal(t, "Grot the First", res[0].Name)
 	})
 }
 
