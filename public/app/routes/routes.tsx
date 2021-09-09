@@ -270,6 +270,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/ldap',
       component: LdapPage,
     },
+    {
+      path: '/admin/live',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "AdminLive" */ 'app/features/admin/AdminLive')),
+    },
     // LOGIN / SIGNUP
     {
       path: '/login',
