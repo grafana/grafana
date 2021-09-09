@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMountedState } from 'react-use';
 import { AppEvents, PluginType } from '@grafana/data';
 import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -20,11 +21,12 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
   const styles = useStyles2(getStyles);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
+  const isMounted = useMountedState();
 
   const onInstall = async () => {
     await install(plugin.id, plugin.version);
     if (!errorInstalling) {
-      if (plugin.type === PluginType.panel) {
+      if (isMounted() && plugin.type === PluginType.panel) {
         setHasInstalledPanel(true);
       }
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
