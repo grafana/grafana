@@ -242,26 +242,6 @@ func TestPrometheusQueryParser_parseQuery(t *testing.T) {
 		require.Equal(t, time.Minute*4, models[0].Step)
 	})
 
-	t.Run("parsing query model with specified StepMS", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(48 * time.Hour),
-		}
-
-		query := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"intervalFactor": 1,
-			"refId": "A",
-			"StepMS": 500
-		}`, timeRange)
-
-		dsInfo := &DatasourceInfo{}
-		models, err := service.parseQuery(dsInfo, query)
-		require.NoError(t, err)
-		require.Equal(t, time.Millisecond*500, models[0].Step)
-	})
-
 	t.Run("parsing query model of instant query", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,

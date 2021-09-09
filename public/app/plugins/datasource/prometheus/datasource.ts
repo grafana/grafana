@@ -202,21 +202,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
     let targets = cloneDeep(options.targets);
-    let scopedVars = cloneDeep(options.scopedVars);
-
     if (options.app === CoreApp.Explore) {
       const processedTargets = targets.map((target) => {
-        const { scopedVars: intervalScopedVars, interval } = this.processIntervalV2(target, options);
-        let targetScopedVars = {
-          ...scopedVars,
-          ...intervalScopedVars,
-          ...this.getRangeScopedVars(options.range),
-        };
-
-        target.expr = this.templateSrv.replace(target.expr, targetScopedVars, this.interpolateQueryExpr);
-        target.interval = `${interval}s`;
-        target.stepMS = Math.round(interval * 1000);
-
         //If we run both - instant and range query, we have to create 2 separate queries
         if (target.instant && target.range) {
           const targetInstant: PromQuery = {
@@ -237,7 +224,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       targets = processedTargets.flat();
     }
 
-    return { ...options, targets, scopedVars };
+    return { ...options, targets };
   };
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -336,10 +323,13 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   }
 
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
+    const variables = cloneDeep(scopedVars);
+    delete variables.__interval;
+    delete variables.__interval_ms;
+
     return {
       ...target,
-      expr: this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr),
-      interval: this.templateSrv.replace(target.interval, scopedVars),
+      expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
     };
   }
 
@@ -554,41 +544,6 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   // This is the same logic as used before
   // TODO: Document how are different interval used
-  processIntervalV2(target: PromQuery, options: DataQueryRequest<PromQuery>) {
-    const stepInterval = rangeUtil.intervalToSeconds(
-      this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
-    );
-
-    let queryInterval = target.interval
-      ? rangeUtil.intervalToSeconds(this.templateSrv.replace(target.interval, options.scopedVars))
-      : rangeUtil.intervalToSeconds(this.interval);
-
-    let interval = rangeUtil.intervalToSeconds(options.interval);
-    const range = this.getPrometheusTime(options.range.to, true) - this.getPrometheusTime(options.range.from, false);
-
-    const adjustedInterval = this.adjustInterval(interval, stepInterval, range, target.intervalFactor);
-
-    // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
-    if (queryInterval === 0) {
-      queryInterval = 15;
-    }
-
-    let scopedVars = {
-      ...options.scopedVars,
-      ...this.getRateIntervalScopedVariable(interval, queryInterval),
-    };
-
-    if (interval !== adjustedInterval) {
-      interval = adjustedInterval;
-      scopedVars = Object.assign({}, scopedVars, {
-        __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, queryInterval),
-      });
-    }
-
-    return { scopedVars, interval };
-  }
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor = 1) {
     // Prometheus will drop queries that might return more than 11000 data points.
