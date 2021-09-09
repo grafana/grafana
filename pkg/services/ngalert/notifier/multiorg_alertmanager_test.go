@@ -2,8 +2,8 @@ package notifier
 
 import (
 	"context"
+	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -21,11 +21,16 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 		orgs: []int64{1, 2, 3},
 	}
 
+	tmpDir, err := ioutil.TempDir("", "test")
+	if err != nil {
+		t.Fatalf("ioutil.TempDir() err = %v", err)
+	}
+
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore)
 	ctx := context.Background()
 
-	t.Cleanup(cleanOrgDirectories(mam))
+	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 
 	// Ensure that one Alertmanager is created per org.
 	{
@@ -54,11 +59,16 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		orgs: []int64{1, 2, 3},
 	}
 
+	tmpDir, err := ioutil.TempDir("", "test")
+	if err != nil {
+		t.Fatalf("ioutil.TempDir() err = %v", err)
+	}
+
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore)
 	ctx := context.Background()
 
-	t.Cleanup(cleanOrgDirectories(mam))
+	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 
 	// Ensure that one Alertmanagers is created per org.
 	{
@@ -98,10 +108,10 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	}
 }
 
-func cleanOrgDirectories(mam *MultiOrgAlertmanager) func() {
+func cleanOrgDirectories(path string, t *testing.T) func() {
 	return func() {
-		for _, am := range mam.alertmanagers {
-			os.RemoveAll(filepath.Dir(am.WorkingDirPath()))
+		if err := os.RemoveAll(path); err != nil {
+			t.Fatalf("os.RemoveAll() err = %v", err)
 		}
 	}
 }
