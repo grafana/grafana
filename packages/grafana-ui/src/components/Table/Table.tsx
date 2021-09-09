@@ -45,6 +45,7 @@ export interface Props {
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
   onRowClick?: (row: any) => void;
+  onCellClick?: (cell: any) => void;
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -126,6 +127,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     initialSortBy,
     footerValues,
     onRowClick,
+    onCellClick,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -192,15 +194,23 @@ export const Table: FC<Props> = memo((props: Props) => {
           }}
         >
           {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
+            <div
+              onClick={() => {
+                if (onCellClick) {
+                  onCellClick(cell);
+                }
+              }}
               key={index}
-              field={fields[index]}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-            />
+            >
+              <TableCell
+                field={fields[index]}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            </div>
           ))}
         </div>
       );

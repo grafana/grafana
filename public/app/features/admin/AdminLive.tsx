@@ -9,6 +9,7 @@ interface Row {
   depth: number;
   values?: string[];
 }
+
 export default function AdminLive() {
   const buildData = (theme: GrafanaTheme2, rules: any): DataFrame => {
     const data = new MutableDataFrame({
@@ -71,11 +72,16 @@ export default function AdminLive() {
   }, []);
 
   const onRowClick = (row: Row) => {
-    console.log(row);
     setOpen(true);
     setRowClicked(row);
   };
+
+  const onCellClick = (cell: any) => {
+    setActiveTab(cell.column.Header.toLowerCase());
+  };
+
   const tabs = [
+    { label: 'pattern', value: 'pattern' },
     { label: 'convertor', value: 'convertor' },
     { label: 'processor', value: 'processor' },
     { label: 'output', value: 'output' },
@@ -86,7 +92,7 @@ export default function AdminLive() {
   return (
     <>
       <h2 style={{ margin: '10px 0 10px 10px' }}>{`Admin Live Config / ${host}`}</h2>
-      <Table data={data} width={width} height={height} onRowClick={onRowClick} />
+      <Table data={data} width={width} height={height} onRowClick={onRowClick} onCellClick={onCellClick} />
       {isOpen && (
         <Modal isOpen={isOpen} title={title} onDismiss={() => setOpen(false)} closeOnEscape>
           <TabsBar>
@@ -102,6 +108,7 @@ export default function AdminLive() {
             })}
           </TabsBar>
           <TabContent>
+            {activeTab === 'pattern' && <div>{title}</div>}
             {activeTab === 'convertor' && (
               <CodeEditor
                 height={height}
