@@ -422,7 +422,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// the channel path is in the name
 			liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
-			// POST influx line protocol
+			// POST influx line protocol.
 			liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
 			// List available streams and fields
@@ -430,6 +430,13 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
+
+			if hs.Cfg.FeatureToggles["live-pipeline"] {
+				// POST Live data to be processed according to channel rules.
+				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
+				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
+			}
 		})
 
 		// short urls

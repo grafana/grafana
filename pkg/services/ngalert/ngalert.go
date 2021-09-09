@@ -6,6 +6,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -37,13 +38,14 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
+	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, encryptionService encryption.Service, m *metrics.Metrics) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:               cfg,
 		DataSourceCache:   dataSourceCache,
 		RouteRegister:     routeRegister,
 		SQLStore:          sqlStore,
+		KVStore:           kvStore,
 		DataService:       dataService,
 		DataProxy:         dataProxy,
 		QuotaService:      quotaService,
@@ -69,6 +71,7 @@ type AlertNG struct {
 	DataSourceCache   datasources.CacheService
 	RouteRegister     routing.RouteRegister
 	SQLStore          *sqlstore.SQLStore
+	KVStore           kvstore.KVStore
 	DataService       *tsdb.Service
 	DataProxy         *datasourceproxy.DataSourceProxyService
 	QuotaService      *quota.QuotaService
@@ -96,7 +99,7 @@ func (ng *AlertNG) init() error {
 		Logger:                 ng.Log,
 	}
 
-	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store)
+	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore)
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
