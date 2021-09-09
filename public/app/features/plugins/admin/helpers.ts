@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse } from '@grafana/data';
 import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -172,3 +172,29 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): 
 }
 
 export const getExternalManageLink = (pluginId: string) => `https://grafana.com/grafana/plugins/${pluginId}`;
+
+export enum Sorters {
+  nameAsc = 'nameAsc',
+  nameDesc = 'nameDesc',
+  updated = 'updated',
+  published = 'published',
+  downloads = 'downloads',
+}
+
+export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
+  const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
+    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
+    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
+    updated: (a: CatalogPlugin, b: CatalogPlugin) =>
+      dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
+    published: (a: CatalogPlugin, b: CatalogPlugin) =>
+      dateTimeParse(b.publishedAt).valueOf() - dateTimeParse(a.publishedAt).valueOf(),
+    downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.downloads - a.downloads,
+  };
+
+  if (sorters[sortBy]) {
+    return plugins.sort(sorters[sortBy]);
+  }
+
+  return plugins;
+};

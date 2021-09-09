@@ -3,12 +3,40 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchAll, fetchDetails, install, uninstall } from './actions';
 import { CatalogPlugin, PluginCatalogStoreState } from '../types';
 import {
+  find,
   selectAll,
   selectById,
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
 } from './selectors';
+import { sortPlugins, Sorters } from '../helpers';
+
+type Filters = {
+  query?: string;
+  filterBy?: string;
+  filterByType?: string;
+  sortBy?: Sorters;
+};
+
+export const useGetAllWithFilters = ({
+  query = '',
+  filterBy = 'installed',
+  filterByType = 'all',
+  sortBy = Sorters.nameAsc,
+}: Filters) => {
+  useFetchAll();
+
+  const filtered = useSelector(find(query, filterBy, filterByType));
+  const { isLoading, error } = useFetchStatus();
+  const sortedAndFiltered = sortPlugins(filtered, sortBy);
+
+  return {
+    isLoading,
+    error,
+    plugins: sortedAndFiltered,
+  };
+};
 
 export const useGetAll = (): CatalogPlugin[] => {
   useFetchAll();
