@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
 import { FieldConfigSource, GrafanaTheme2, PanelData, ThresholdsConfig } from '@grafana/data';
@@ -25,26 +25,22 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   const vizHeight = useVizHeight(data, currentPanel, options.frameIndex);
   const styles = useStyles2(getStyles(vizHeight));
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(defaultFieldConfig(thresholds));
-  console.log('thresholds', thresholds);
 
-  const onFieldConfigChange = useCallback(
-    (config: FieldConfigSource) => {
-      setFieldConfig({
-        ...config,
-        defaults: {
-          ...config.defaults,
-          thresholds: thresholds,
-          custom: {
-            ...config.defaults.custom,
-            thresholdsStyle: {
-              mode: 'line',
-            },
+  useEffect(() => {
+    setFieldConfig((fieldConfig) => ({
+      ...fieldConfig,
+      defaults: {
+        ...fieldConfig.defaults,
+        thresholds: thresholds,
+        custom: {
+          ...fieldConfig.defaults.custom,
+          thresholdsStyle: {
+            mode: 'line',
           },
         },
-      });
-    },
-    [thresholds, setFieldConfig]
-  );
+      },
+    }));
+  }, [thresholds, setFieldConfig]);
 
   const context: PanelContext = useMemo(
     () => ({
@@ -58,8 +54,6 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   if (!options || !data) {
     return null;
   }
-
-  console.log('vizwrapper', fieldConfig);
 
   return (
     <div className={styles.wrapper}>
@@ -83,7 +77,7 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
                   onOptionsChange={setOptions}
                   options={options}
                   fieldConfig={fieldConfig}
-                  onFieldConfigChange={onFieldConfigChange}
+                  onFieldConfigChange={setFieldConfig}
                 />
               </PanelContextProvider>
             </div>

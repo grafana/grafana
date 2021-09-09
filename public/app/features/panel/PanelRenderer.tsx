@@ -42,7 +42,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   }
 
   const PanelComponent = plugin.panel;
-  console.log('panel rendererer', fieldConfig);
+
   return (
     <PanelComponent
       id={1}
