@@ -225,7 +225,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
 
     if (logsVolume.error) {
-      return <LogsVolumeContentWrapper>Failed to load volume logs for this query. </LogsVolumeContentWrapper>;
+      return (
+        <LogsVolumeContentWrapper>
+          Failed to load volume logs for this query: {logsVolume.error.data?.message || logsVolume.error.statusText}
+        </LogsVolumeContentWrapper>
+      );
     }
 
     if (logsVolume.isLoading) {

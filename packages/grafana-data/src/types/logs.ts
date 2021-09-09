@@ -2,6 +2,7 @@ import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+import { DataQueryError } from './datasource';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -145,6 +146,6 @@ export enum LogsDedupDescription {
 
 export type LogsVolume = {
   data?: DataFrame[];
-  error?: Error;
+  error?: DataQueryError;
   isLoading?: boolean;
 };
