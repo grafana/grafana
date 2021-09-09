@@ -34,7 +34,7 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise
     type: 'METRIC_NAME',
     label: metric.name,
     insertText: metric.name,
-    detail: metric.type,
+    detail: `${metric.name} : ${metric.type}`,
     documentation: metric.help,
   }));
 }
