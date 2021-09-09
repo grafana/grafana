@@ -59,7 +59,7 @@ func TestFileStore_Persist(t *testing.T) {
 	fs := NewFileStore(1, store, workingDir)
 	filekey := "silences"
 
-	size, err := fs.Persist(nil, filekey, state)
+	size, err := fs.Persist(context.Background(), filekey, state)
 	require.NoError(t, err)
 	require.Equal(t, int64(20), size)
 	store.mtx.Lock()
