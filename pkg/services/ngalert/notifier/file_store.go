@@ -13,7 +13,7 @@ import (
 const KVNamespace = "alertmanager"
 
 // State represents any of the two 'states' of the alertmanager. Notification log or Silences.
-// MarshalBinary returns the binary representation of its internal protobuf state.
+// MarshalBinary returns the binary representation of this internal state based on the protobuf.
 type State interface {
 	MarshalBinary() ([]byte, error)
 }
@@ -45,7 +45,7 @@ func (fs *FileStore) FilepathFor(filename string) (string, error) {
 		return fs.pathFor(filename), nil
 	}
 
-	// First, let's attempt to read it from the database.
+	// Then, let's attempt to read it from the database.
 	content, exists, err := fs.kv.Get(context.Background(), filename)
 	if err != nil {
 		return "", fmt.Errorf("error reading file '%s' from database: %w", filename, err)
@@ -70,7 +70,7 @@ func (fs *FileStore) FilepathFor(filename string) (string, error) {
 }
 
 // Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
-func (fs *FileStore) Persist(fn string, st State) (int64, error) {
+func (fs *FileStore) Persist(filename string, st State) (int64, error) {
 	var size int64
 
 	bytes, err := st.MarshalBinary()
@@ -78,7 +78,7 @@ func (fs *FileStore) Persist(fn string, st State) (int64, error) {
 		return size, err
 	}
 
-	if err = fs.kv.Set(context.Background(), fn, encode(bytes)); err != nil {
+	if err = fs.kv.Set(context.Background(), filename, encode(bytes)); err != nil {
 		return size, err
 	}
 
