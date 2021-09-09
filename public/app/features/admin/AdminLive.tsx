@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getBackendSrv } from '../../../../packages/grafana-runtime/src';
-import { Table, useTheme2, Modal, TabContent, TabsBar, Tab, CodeEditor } from '@grafana/ui';
+import { Table, useTheme2, Modal, TabContent, TabsBar, Tab, CodeEditor, PageToolbar } from '@grafana/ui';
 import { DataFrame, FieldType, GrafanaTheme2, MutableDataFrame, applyFieldOverrides } from '@grafana/data';
 
 interface Row {
@@ -48,6 +48,7 @@ export default function AdminLive() {
   const [isOpen, setOpen] = useState(false);
   const [rowClicked, setRowClicked] = useState<Row>();
   const [activeTab, setActiveTab] = useState('convertor');
+  const [host, setHost] = useState<string>();
   const selectedRule = rules.filter((rule) => rule.pattern === rowClicked?.values?.[0])[0];
 
   useEffect(() => {
@@ -56,6 +57,15 @@ export default function AdminLive() {
       .then((data) => {
         setRules(data.rules);
         setData(() => buildData(theme, data.rules));
+      })
+      .catch((e) => console.error(e));
+  }, []);
+
+  useEffect(() => {
+    getBackendSrv()
+      .get(`api/live/remote-write-backends`)
+      .then((data) => {
+        setHost(data.remoteWriteBackends[0].uid);
       })
       .catch((e) => console.error(e));
   }, []);
@@ -75,6 +85,7 @@ export default function AdminLive() {
   const title = rowClicked?.values?.[0] || 'Rules';
   return (
     <>
+      <h2 style={{ margin: '10px 0 10px 10px' }}>{`Admin Live Config / ${host}`}</h2>
       <Table data={data} width={width} height={height} onRowClick={onRowClick} />
       {isOpen && (
         <Modal isOpen={isOpen} title={title} onDismiss={() => setOpen(false)} closeOnEscape>
