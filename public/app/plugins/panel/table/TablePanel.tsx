@@ -1,26 +1,14 @@
 import React, { Component } from 'react';
 import { Select, Table } from '@grafana/ui';
-import {
-  DataFrame,
-  FieldMatcherID,
-  FieldType,
-  getFrameDisplayName,
-  PanelProps,
-  SelectableValue,
-  KeyValue,
-  formattedValueToString,
-  Field,
-  DynamicConfigValue,
-  getFieldDisplayValues,
-  FieldDisplay,
-} from '@grafana/data';
+import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import { FilterItem, FooterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { getFooterCells } from './footer';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -92,7 +80,7 @@ export class TablePanel extends Component<Props> {
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
 
-    const footerValues = this.getFooterValues(frame);
+    const footerValues = getFooterCells(frame, options.footer);
 
     return (
       <Table
@@ -111,162 +99,6 @@ export class TablePanel extends Component<Props> {
     );
   }
 
-  getFooterValues(frame: DataFrame): FooterItem[] | undefined {
-    const { options } = this.props;
-
-    if (options.footerMode === 'none') {
-      return undefined;
-    }
-
-    if (options.footerMode === 'frame') {
-      return this.getProvidedFooterValues(frame);
-    }
-
-    if (options.footerMode === 'summary') {
-      return this.getSummaryFooterValues(frame);
-    }
-
-    return undefined;
-  }
-
-  getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
-    const currentIndex = this.getCurrentFrameIndex(data.series);
-    return getFieldDisplayValues({
-      fieldConfig,
-      reduceOptions: options.footerSummary?.reduceOptions || { calcs: [] },
-      replaceVariables,
-      theme: config.theme2,
-      data: [data.series[currentIndex]],
-      timeZone,
-    });
-  };
-
-  getSummaryFooterValues(frame: DataFrame) {
-    const { options } = this.props;
-
-    const summary = options.footerSummary?.reduceOptions;
-    if (summary === undefined) {
-      return [];
-    }
-    if (Array.isArray(summary.calcs) && summary.calcs.length === 0) {
-      return [];
-    }
-
-    const fields = options.footerSummary?.fields;
-    // calculate the cells
-    const cells = frame.fields.map((f, i) => {
-      if (fields || fields === '') {
-        if (fields.includes('') && f.type === FieldType.number) {
-          return this.calculateSummaryCell(i);
-        }
-        if (fields.includes(f.name)) {
-          return this.calculateSummaryCell(i);
-        }
-        if (i === 0 && summary.calcs && summary.calcs.length > 0) {
-          const reducer = summary.calcs[0];
-          const formatted = this.capitalizeFirstLetter(reducer.replace(/([A-Z])/g, ' $1').trim());
-          return formatted;
-        }
-      }
-      return [];
-    });
-
-    // if there are no multi-value cells, don't show the label in the cell
-    // it will be shown on the first column
-    const multiValue = cells.find((cell) => Array.isArray(cell) && cell.length > 1);
-    if (!multiValue) {
-      const reducer = summary.calcs[0];
-      const formatted = this.capitalizeFirstLetter(reducer.replace(/([A-Z])/g, ' $1').trim());
-      const clean = cells.map((cell, i) => {
-        if (Array.isArray(cell) && cell.length > 0) {
-          const cellValue = cell[0];
-          const key: string = Object.keys(cellValue)[0];
-          return cellValue[key];
-        }
-        if (i === 0 && cell === '') {
-          return formatted;
-        }
-        return cell;
-      });
-      return clean;
-    }
-    return cells;
-  }
-
-  capitalizeFirstLetter(value: string) {
-    return value.charAt(0).toUpperCase() + value.slice(1);
-  }
-
-  // get the footer cells from data provided by another frame (pre-calculated)
-  getProvidedFooterValues(frame: DataFrame): FooterItem[] | undefined {
-    const { options, data } = this.props;
-
-    const summaryFrame = data.series.find((f) => f.name === options.footerFrame);
-    if (summaryFrame === undefined) {
-      return undefined;
-    }
-
-    // group cells by field for multi value cells
-    const cellsByField: KeyValue = {};
-    frame.fields.forEach((f, i) => {
-      for (const sf of summaryFrame!.fields) {
-        const referenceField: string = sf.config?.custom?.['referenceField'];
-        const reducer: string = sf.config?.custom?.['reducer'];
-        if (referenceField === f.name) {
-          const cell = this.getSummaryCell(reducer, sf);
-          const fieldCells = cellsByField[referenceField] || [];
-          fieldCells.push(cell);
-          cellsByField[referenceField] = fieldCells;
-          continue;
-        }
-        continue;
-      }
-    });
-
-    const cells = frame.fields.map((f, i) => {
-      const fieldCells = cellsByField[f.name];
-      if (fieldCells === undefined) {
-        if (i === 0) {
-          // set the first col val to "Total" if not in use
-          return 'Total';
-        }
-        return;
-      }
-      return fieldCells;
-    });
-
-    return cells;
-  }
-
-  getSummaryList(summaryProps: DynamicConfigValue[], fieldIndex: number) {
-    const summaries = summaryProps.map((o: any) => {
-      return this.calculateSummaryCell(fieldIndex);
-    });
-    return summaries;
-  }
-
-  getSummaryCell(functionName: string, f: Field): KeyValue {
-    const formatted = this.format(f.values.get(0), f);
-    const value: KeyValue<string> = { [functionName]: formatted };
-    return value;
-  }
-
-  calculateSummaryCell(i: number): FooterItem {
-    const values = this.getValues();
-    const value = values.find((v) => v.colIndex === i);
-    if (value === undefined) {
-      return undefined;
-    }
-
-    return [{ [value.name]: value.display.text }];
-  }
-
-  format(val: number, f: Field) {
-    const displayValue = f.display ? f.display(val) : { text: String(val) };
-    return f.display ? formattedValueToString(displayValue) : displayValue.text;
-  }
-
   getCurrentFrameIndex(frames: DataFrame[]) {
     const { options } = this.props;
     const count = frames.length;
@@ -274,15 +106,10 @@ export class TablePanel extends Component<Props> {
   }
 
   render() {
-    const { data, height, width, options } = this.props;
+    const { data, height, width } = this.props;
 
     let frames = data.series;
     let count = frames?.length;
-    // if using a frame as the footer, don't show it in the select list
-    if (options.footerMode === 'frame' && count > 1) {
-      frames = frames.filter((f) => f.name !== options.footerFrame);
-      count = frames.length;
-    }
     const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {

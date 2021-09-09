@@ -4,7 +4,6 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { TableCellDisplayMode, TableSortByFieldState } from '@grafana/ui';
-import { ReduceDataOptions } from '@grafana/data';
 
 // Only the latest schema version is translated to TypeScript, on the premise
 // that either the dashboard loading process, or (eventually) CUE-defined
@@ -30,22 +29,21 @@ export interface PanelOptions {
   showHeader: boolean;
   showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
-  footerMode?: FooterMode;
-  footerFrame?: number;
-  footerSummary?: TableFooterSummary; // TODO: should be array (options builder is limited)
-  footerLabelMode?: FooterLabelMode;
+  showFooter: boolean;
+  footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
 }
 
-interface TableFooterSummary {
-  reduceOptions?: ReduceDataOptions;
-  fields: string; // TODO!
+export interface TableFooterCalc {
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  label?: FooterLabelMode;
 }
 
 export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
-  footerSummary: { reduceOptions: { calcs: [] }, fields: '' },
   showTypeIcons: false,
+  showFooter: false,
 };
 
 export interface PanelFieldConfig {

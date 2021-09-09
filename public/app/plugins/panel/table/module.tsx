@@ -1,5 +1,6 @@
 import {
   FieldOverrideContext,
+  FieldType,
   getFieldDisplayName,
   PanelPlugin,
   ReducerID,
@@ -88,68 +89,48 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         description: "To display table's header or not to display",
         defaultValue: defaultPanelOptions.showHeader,
       })
-      .addRadio({
+      .addBooleanSwitch({
         category: ['Table footer'],
-        path: 'footerMode',
-        name: 'Mode',
-        settings: {
-          options: [
-            { label: 'None', value: 'none' },
-            // { label: 'auto', value: 'auto' },  // TODO: when frame meta supports this
-            { label: 'Summary', value: 'summary' },
-            { label: 'Provided', value: 'frame' },
-          ],
-        },
-        defaultValue: 'none',
+        path: 'showFooter',
+        name: 'Show Footer',
+        description: "To display table's footer or not to display",
+        defaultValue: defaultPanelOptions.showFooter,
       })
       .addCustomEditor({
         category: ['Table footer'],
-        id: 'footerSummary.reduceOptions.calcs',
-        path: 'footerSummary.reduceOptions.calcs',
-        name: 'Summarize',
+        id: 'footer.reducer',
+        path: 'footer.reducer',
+        name: 'Calculation',
         description: 'Choose a reducer function / calculation',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
         defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.footerMode === 'summary',
+        showIf: (cfg) => cfg.showFooter,
       })
       .addMultiSelect({
-        path: 'footerSummary.fields',
+        path: 'footer.fields',
         name: 'Fields',
-        description: 'Select the fields that should be summarized',
+        description: 'Select the fields that should be calculated',
         category: ['Table footer'],
         settings: {
           allowCustomValue: false,
           options: [],
+          placeholder: 'All Numeric Fields',
           getOptions: async (context: FieldOverrideContext) => {
-            const options = [{ value: '', label: 'Numeric Fields' }];
+            const options = [];
             if (context && context.data && context.data.length > 0) {
               const frame = context.data[0];
               for (const field of frame.fields) {
-                const name = getFieldDisplayName(field, frame, context.data);
-                const value = field.name;
-                options.push({ value, label: name });
+                if (field.type === FieldType.number) {
+                  const name = getFieldDisplayName(field, frame, context.data);
+                  const value = field.name;
+                  options.push({ value, label: name } as any);
+                }
               }
             }
             return options;
           },
         },
         defaultValue: '',
-        showIf: (cfg) => cfg.footerMode === 'summary',
-      })
-      .addSelect({
-        category: ['Table footer'],
-        path: 'footerFrame',
-        name: 'Frame',
-        description: 'Select a Frame to use as the summary',
-        settings: {
-          options: [],
-          getOptions: async (context: FieldOverrideContext) => {
-            if (context?.data?.length) {
-              return context.data.filter((_, i) => i > 0).map((f) => ({ value: f.name, label: f.name }));
-            }
-            return [];
-          },
-        },
-        showIf: (cfg) => cfg.footerMode === 'frame',
+        showIf: (cfg) => cfg.showFooter,
       });
   });
