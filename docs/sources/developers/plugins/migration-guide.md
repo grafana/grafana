@@ -213,7 +213,7 @@ If your plugin should support time series data we recommend you to make sure to 
 
 ### Update react-hook-form from v6 to v7
 
-We have upgrade the react-hook-form from version 6 to version 7. We recommend follow the [react-hook-form-migration-guide](#https://react-hook-form.com/migrate-v6-to-v7/) to get make your forms compatible with that version.
+We have upgraded the react-hook-form from version 6 to version 7. We recommend follow the [react-hook-form-migration-guide](https://react-hook-form.com/migrate-v6-to-v7/) to get make your forms compatible with that version.
 
 ### Update the plugin.json
 
