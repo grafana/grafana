@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 weight = 205
 +++
 
-# AWS Authentication
+# AWS authentication
 
 There are three different authentication methods available. 
 

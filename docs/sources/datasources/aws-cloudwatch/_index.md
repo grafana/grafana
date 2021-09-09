@@ -10,9 +10,9 @@ weight = 200
 
 Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
-This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+This topic explains queries, templates, variables and other configuration options specific to this data source. For instructions on how to add a data source to Grafan, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
-> **Note:** If you have issues with getting this data source to work and Grafana is giving you undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
+> **Note:** If you have issues setting up the data source and Grafana is returning undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
 
 ## Cloudwatch settings
 
@@ -31,7 +31,7 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 
 ## Authentication
 
-See [AWS authentication]({{< relref "aws-authentication.md" >}}) for available options and configuration details.
+For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic.
 
 ## Using the Query Editor
 
@@ -46,21 +46,17 @@ To create a valid query, you need to specify the namespace, metric name and at l
 
 ### Dynamic queries using dimension wildcards
 
-> Only available in Grafana v6.5+.
-
-In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
+You can monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
 {{< figure src="/static/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
-In the example, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
+In this example, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 
 By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
 You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling `Match Exact` also creates a search expression even if you don’t use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
 
 ### Multi-value template variables
-
-> Only available in Grafana v6.5+.
 
 When defining dimension values based on multi-valued template variables, a search expression is used to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
 
@@ -92,8 +88,6 @@ This feature is not available for metrics that are based on metric math expressi
 
 ## Using the Logs Query Editor
 
-> **Note:** Available in Grafana v7.0+.
-
 To query CloudWatch Logs, select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When making `stats` queries in Explore, you have to make sure you are in Metrics Explore mode.
@@ -106,8 +100,8 @@ To the right of the query input field is a CloudWatch Logs Insights link that op
 
 ### Using template variables
 
-As with several other data sources, the CloudWatch data source supports the use of template variables in queries.
-See the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+The CloudWatch data source supports use of template variables in queries.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/_index.md" >}}) documentation.
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -118,7 +112,7 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 ### Alerting
 
 Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
-See the [Alerting]({{< relref "../../alerting/_index.md" >}}) documentation for more on Grafana alerts.
+For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting/_index.md" >}}) documentation.
 
 ## Curated dashboards
 
@@ -136,9 +130,9 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 ## Templated queries
 
-Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+Instead of hard-coding server, application and sensor names in your metric queries, you can use variables. The variables are listed as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the display of data in your dashboard.
 
-See the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/_index.md" >}}) documentation.
 
 ### Query variable
 
@@ -287,7 +281,7 @@ When a custom namespace is specified in the query editor, the [List Metrics API]
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+You can configure the CloudWatch data sources using the configuration files with Grafana's provisioning system. To understand how it works and to learn more about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../administration/provisioning/#datasources" >}}) topic.
 
 Here are some provisioning examples for this data source.
 
