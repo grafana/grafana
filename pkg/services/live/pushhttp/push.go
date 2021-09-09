@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
+
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -45,7 +47,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 func (g *Gateway) Handle(ctx *models.ReqContext) {
 	streamID := ctx.Params(":streamId")
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -90,5 +92,41 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func (g *Gateway) HandlePath(ctx *models.ReqContext) {
+	streamID := ctx.Params(":streamId")
+	path := ctx.Params(":path")
+
+	body, err := io.ReadAll(ctx.Req.Body)
+	if err != nil {
+		logger.Error("Error reading body", "error", err)
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	logger.Debug("Live channel push request",
+		"protocol", "http",
+		"streamId", streamID,
+		"path", path,
+		"bodyLength", len(body),
+	)
+
+	channelID := "stream/" + streamID + "/" + path
+
+	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgId, channelID, body)
+	if err != nil {
+		logger.Error("Pipeline input processing error", "error", err, "body", string(body))
+		if errors.Is(err, liveDto.ErrInvalidChannelID) {
+			ctx.Resp.WriteHeader(http.StatusBadRequest)
+		} else {
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+	if !ruleFound {
+		logger.Error("No conversion rule for a channel", "error", err, "channel", channelID)
+		ctx.Resp.WriteHeader(http.StatusNotFound)
+		return
 	}
 }

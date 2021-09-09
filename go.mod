@@ -28,6 +28,7 @@ require (
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
+	github.com/dop251/goja v0.0.0-20210804101310-32956a348b49
 	github.com/fatih/color v1.10.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.10.0
@@ -39,7 +40,9 @@ require (
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
+	github.com/golang/snappy v0.0.4
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
@@ -67,6 +70,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
+	github.com/ohler55/ojg v1.12.3
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
@@ -137,6 +141,7 @@ require (
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/deepmap/oapi-codegen v1.3.13 // indirect
+	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
@@ -154,12 +159,10 @@ require (
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gogo/status v1.0.3 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/flatbuffers v1.12.0 // indirect
