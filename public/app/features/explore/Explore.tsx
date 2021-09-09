@@ -346,14 +346,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      logsVolumeQuery,
+      logsVolumeProvider,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showLogsVolume = !!logsVolumeQuery;
+    const showLogsVolume = !!logsVolumeProvider;
 
     return (
       <CustomScrollbar autoHeightMin={'100%'}>
@@ -438,7 +438,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeQuery,
+    logsVolumeProvider,
     logsVolume,
     logsVolumeLoadingInProgress,
     logsVolumeError,
@@ -459,7 +459,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeQuery,
+    logsVolumeProvider,
     logsVolume,
     logsVolumeLoadingInProgress,
     logsVolumeError,

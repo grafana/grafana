@@ -1,4 +1,4 @@
-import { Observable, Unsubscribable } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -12,7 +12,7 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
-  DataQueryResponse,
+  LogsVolumeProvider,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -158,11 +158,12 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: PanelData }>;
 
-  logsVolumeQuery?: Observable<DataQueryResponse>;
-  rawLogsVolume?: DataFrame[];
+  logsVolumeProvider?: LogsVolumeProvider;
   logsVolume?: DataFrame[];
+
   logsVolumeLoadingInProgress: boolean;
   logsVolumeError?: any;
+
   autoLoadLogsVolume: boolean;
 }
 

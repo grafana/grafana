@@ -1,20 +1,15 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, Observable, of, Unsubscribable } from 'rxjs';
+import { identity, of, Unsubscribable } from 'rxjs';
 import {
   DataFrame,
   DataQuery,
   DataQueryErrorType,
-  DataQueryResponse,
   DataSourceApi,
-  FieldCache,
-  FieldColorModeId,
-  FieldType,
   LoadingState,
-  LogLevel,
+  LogsVolumeProvider,
   PanelData,
   PanelEvents,
   QueryFixAction,
-  toDataFrame,
   toLegacyResponseData,
 } from '@grafana/data';
 
@@ -41,15 +36,7 @@ import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import {
-  aggregateFields,
-  createCacheKey,
-  createEmptyQueryResponse,
-  getLogLevelFromLabels,
-  getResultsFromCache,
-} from './utils';
-import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { LogLevelColor } from '../../../core/logs_model';
+import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
 
 //
 // Actions and Payloads
@@ -131,22 +118,24 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
 /**
  * Contains information if the histogram can be displayed
  */
-export interface StoreLogsVolumeQueryPayload {
+export interface StoreLogsVolumeProviderPayload {
   exploreId: ExploreId;
   /**
    * if defined - histogram is available and subscription can be created
    */
-  logsVolumeQuery?: Observable<DataQueryResponse>;
+  logsVolumeProvider?: LogsVolumeProvider;
 }
 
-export const storeLogsVolumeQueryAction = createAction<StoreLogsVolumeQueryPayload>('explore/storeLogsVolumeQuery');
+export const StoreLogsVolumeProviderAction = createAction<StoreLogsVolumeProviderPayload>(
+  'explore/StoreLogsVolumeProvider'
+);
 
 /**
  * Histogram data.
  */
 export interface LogsVolumeLoadedPayload {
   exploreId: ExploreId;
-  logsVolume: DataQueryResponse;
+  logsVolume: DataFrame[];
 }
 
 /**
@@ -493,16 +482,19 @@ export const runQueries = (
           }
         );
 
-      const logsVolumeQuery = datasourceInstance.getLogsVolumeQuery
-        ? datasourceInstance.getLogsVolumeQuery(transaction.request)
-        : undefined;
+      const dataProviders = datasourceInstance.getQueryRelatedDataProviders
+        ? datasourceInstance.getQueryRelatedDataProviders(transaction.request)
+        : {};
+      let logsVolumeProvider = dataProviders.logsVolume as LogsVolumeProvider;
+
       dispatch(
-        storeLogsVolumeQueryAction({
+        StoreLogsVolumeProviderAction({
           exploreId,
-          logsVolumeQuery,
+          logsVolumeProvider,
         })
       );
-      if (autoLoadLogsVolume && logsVolumeQuery) {
+
+      if (autoLoadLogsVolume && logsVolumeProvider) {
         dispatch(loadLogsVolume(exploreId));
       }
     }
@@ -567,8 +559,8 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
     const state = getState().explore[exploreId]!;
 
     // load logs volume automatically after switching
-    const { logsVolumeQuery, logsVolume } = state;
-    if (logsVolumeQuery && !logsVolume && autoLoadLogsVolume) {
+    const { logsVolumeProvider, logsVolume } = state;
+    if (logsVolumeProvider && !logsVolume && autoLoadLogsVolume) {
       dispatch(loadLogsVolume(exploreId));
     }
   };
@@ -577,10 +569,10 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
 export function loadLogsVolume(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const state = getState().explore[exploreId]!;
-    const logsVolumeQuery = state.logsVolumeQuery;
+    const logsVolumeProvider = state.logsVolumeProvider;
 
     dispatch(logsVolumeLoadingInProgressAction({ exploreId }));
-    logsVolumeQuery?.subscribe({
+    logsVolumeProvider?.getLogsVolume().subscribe({
       error: (error) => {
         dispatch(logsVolumeLoadingFailedAction({ exploreId, error }));
       },
@@ -736,13 +728,12 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (storeLogsVolumeQueryAction.match(action)) {
-    const { logsVolumeQuery } = action.payload;
+  if (StoreLogsVolumeProviderAction.match(action)) {
+    const { logsVolumeProvider } = action.payload;
     return {
       ...state,
-      logsVolumeQuery,
+      logsVolumeProvider,
       logsVolume: undefined,
-      rawLogsVolume: undefined,
       logsVolumeLoadingInProgress: false,
       logsVolumeError: undefined,
     };
@@ -751,64 +742,18 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   if (logsVolumeLoadingFailedAction.match(action)) {
     return {
       ...state,
-      logsVolumeQuery: undefined,
+      logsVolumeProvider: undefined,
       logsVolume: undefined,
-      rawLogsVolume: undefined,
       logsVolumeLoadingInProgress: false,
       logsVolumeError: action.payload.error,
     };
   }
 
   if (logsVolumeLoadedAction.match(action)) {
-    const { logsVolume } = action.payload;
-
-    const rawLogsVolume = (state.rawLogsVolume || []).concat(logsVolume.data.map(toDataFrame) || []);
-
-    // Aggregate data frames by level
-    const logsVolumeByLevelMap: Record<string, DataFrame[]> = {};
-    rawLogsVolume.forEach((dataFrame) => {
-      const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
-      const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
-      if (!logsVolumeByLevelMap[level]) {
-        logsVolumeByLevelMap[level] = [];
-      }
-      logsVolumeByLevelMap[level].push(dataFrame);
-    });
-
-    // Reduce all data frames to a single data frame containing total value
-    const totalLogsVolumeByLevel = Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
-      const dataFrames = logsVolumeByLevelMap[level];
-      const color = LogLevelColor[level];
-      const fieldConfig = {
-        displayNameFromDS: level,
-        color: {
-          mode: FieldColorModeId.Fixed,
-          fixedColor: color,
-        },
-        custom: {
-          drawStyle: GraphDrawStyle.Bars,
-          barAlignment: BarAlignment.Center,
-          barWidthFactor: 0.9,
-          barMaxWidth: 5,
-          lineColor: color,
-          pointColor: color,
-          fillColor: color,
-          lineWidth: 1,
-          fillOpacity: 100,
-          stacking: {
-            mode: StackingMode.Normal,
-            group: 'A',
-          },
-        },
-      };
-      return aggregateFields(dataFrames, fieldConfig);
-    });
-
     return {
       ...state,
       logsVolumeLoadingInProgress: false,
-      rawLogsVolume,
-      logsVolume: totalLogsVolumeByLevel,
+      logsVolume: action.payload.logsVolume,
     };
   }
 

@@ -25,6 +25,18 @@ export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQu
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
 export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
+export type QueryRelatedDataProviders = {
+  [name in string]: QueryRelatedDataProvider;
+};
+
+export interface QueryRelatedDataProvider {
+  setRequest(request: DataQueryRequest): void;
+}
+
+export interface LogsVolumeProvider extends QueryRelatedDataProvider {
+  getLogsVolume(): Observable<DataFrame[]>;
+}
+
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
@@ -232,13 +244,11 @@ abstract class DataSourceApi<
   abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
-   * Returns observable to get histogram data. If undefined is returned, histogram is not available for
-   * the given DataQueryRequest.
-   *
-   * Subscription to the returned observable may be created along with the query request (if auto loading
-   * the histogram is enabled, or on demand when the user clicks on load logs volume button)
+   * For a given query return a set of related data providers - object that can return data related to the
+   * given query, for example: logs volume for logs query.
+   * @param request
    */
-  getLogsVolumeQuery?(request?: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
+  getQueryRelatedDataProviders?(request?: DataQueryRequest<TQuery>): QueryRelatedDataProviders;
 
   /**
    * Test & verify datasource settings & connection details (returning TestingStatus)

@@ -1,6 +1,6 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError, tap } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import Prism from 'prismjs';
 
@@ -19,6 +19,7 @@ import {
   dateMath,
   DateTime,
   FieldCache,
+  QueryRelatedDataProviders,
   LoadingState,
   LogRowModel,
   QueryResultMeta,
@@ -52,6 +53,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import { LokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -102,36 +104,17 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return getBackendSrv().fetch<Record<string, any>>(req);
   }
 
-  getLogsVolumeQuery(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  getQueryRelatedDataProviders(request: DataQueryRequest<LokiQuery>): QueryRelatedDataProviders {
     const isLogsVolumeAvailable = request.targets.some((target) => !isMetricsQuery(target.expr) && !!target.expr);
     if (!isLogsVolumeAvailable) {
-      return;
-    }
-
-    const histogramRequest = cloneDeep(request!);
-    histogramRequest.targets = histogramRequest.targets
-      .filter((target) => !isMetricsQuery(target.expr))
-      .map((target) => {
-        target.expr = `count_over_time(${target.expr}[$__interval])`;
-        return target;
-      });
-
-    return new Observable((observer) => {
-      const subscription = this.query(histogramRequest!)
-        .pipe(
-          tap((value) => {
-            observer.next(value);
-          }),
-          catchError((error) => {
-            observer.error(error);
-            throw error;
-          })
-        )
-        .subscribe();
-      return () => {
-        subscription.unsubscribe();
+      return {};
+    } else {
+      const logsVolumeProvider = new LokiLogsVolumeProvider(this);
+      logsVolumeProvider.setRequest(request);
+      return {
+        logsVolume: logsVolumeProvider,
       };
-    });
+    }
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
@@ -730,7 +713,7 @@ export function lokiSpecialRegexEscape(value: any) {
  * Checks if the query expression uses function and so should return a time series instead of logs.
  * Sometimes important to know that before we actually do the query.
  */
-function isMetricsQuery(query: string): boolean {
+export function isMetricsQuery(query: string): boolean {
   const tokens = Prism.tokenize(query, syntax);
   return tokens.some((t) => {
     // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function

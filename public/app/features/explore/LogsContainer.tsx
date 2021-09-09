@@ -162,7 +162,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const {
     logsHighlighterExpressions,
     logsResult,
-    logsVolumeQuery,
+    logsVolumeProvider,
     loading,
     scanning,
     datasourceInstance,
@@ -181,7 +181,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsMeta: logsResult?.meta,
     logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
-    loadingLogsVolumeAvailable: !!logsVolumeQuery,
+    loadingLogsVolumeAvailable: !!logsVolumeProvider,
     scanning,
     timeZone,
     datasourceInstance,
