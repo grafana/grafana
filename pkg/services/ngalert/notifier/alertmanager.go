@@ -127,11 +127,11 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
 
-	nflogFilepath, err := am.fileStore.FilepathFor(notificationLogFilename)
+	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilePath, err := am.fileStore.FilepathFor(silencesFilename)
+	silencesFilePath, err := am.fileStore.FilepathFor(context.TODO(), silencesFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		nflog.WithRetention(retentionNotificationsAndSilences),
 		nflog.WithSnapshot(nflogFilepath),
 		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
-			return am.fileStore.Persist(notificationLogFilename, am.notificationLog)
+			return am.fileStore.Persist(context.TODO(), notificationLogFilename, am.notificationLog)
 		}),
 	)
 	if err != nil {
@@ -161,7 +161,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	am.wg.Add(1)
 	go func() {
 		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
-			return am.fileStore.Persist(silencesFilename, am.silences)
+			return am.fileStore.Persist(context.TODO(), silencesFilename, am.silences)
 		})
 		am.wg.Done()
 	}()

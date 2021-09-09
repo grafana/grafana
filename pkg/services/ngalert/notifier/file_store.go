@@ -38,7 +38,7 @@ func NewFileStore(orgID int64, store kvstore.KVStore, workingDirPath string) *Fi
 // If the file is already present on disk it no-ops.
 // If not, it tries to read the database and if there's no file it no-ops.
 // If there is a file in the database, it decodes it and writes to disk for Alertmanager consumption.
-func (fs *FileStore) FilepathFor(filename string) (string, error) {
+func (fs *FileStore) FilepathFor(ctx context.Context, filename string) (string, error) {
 	// If a file is already present, we'll use that one and eventually save it to the database.
 	// We don't need to do anything else.
 	if fs.IsExists(filename) {
@@ -46,7 +46,7 @@ func (fs *FileStore) FilepathFor(filename string) (string, error) {
 	}
 
 	// Then, let's attempt to read it from the database.
-	content, exists, err := fs.kv.Get(context.Background(), filename)
+	content, exists, err := fs.kv.Get(ctx, filename)
 	if err != nil {
 		return "", fmt.Errorf("error reading file '%s' from database: %w", filename, err)
 	}
@@ -70,7 +70,7 @@ func (fs *FileStore) FilepathFor(filename string) (string, error) {
 }
 
 // Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
-func (fs *FileStore) Persist(filename string, st State) (int64, error) {
+func (fs *FileStore) Persist(ctx context.Context, filename string, st State) (int64, error) {
 	var size int64
 
 	bytes, err := st.MarshalBinary()
@@ -78,7 +78,7 @@ func (fs *FileStore) Persist(filename string, st State) (int64, error) {
 		return size, err
 	}
 
-	if err = fs.kv.Set(context.Background(), filename, encode(bytes)); err != nil {
+	if err = fs.kv.Set(ctx, filename, encode(bytes)); err != nil {
 		return size, err
 	}
 

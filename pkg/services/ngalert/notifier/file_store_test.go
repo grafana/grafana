@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFileStore_FilepathFort(t *testing.T) {
+func TestFileStore_FilepathFor(t *testing.T) {
 	store := newFakeKVStore(t)
 	workingDir := t.TempDir()
 	fs := NewFileStore(1, store, workingDir)
@@ -20,7 +20,7 @@ func TestFileStore_FilepathFort(t *testing.T) {
 	// With a file already on disk, it returns the existing file's filepath and no modification to the original file.
 	{
 		require.NoError(t, os.WriteFile(filePath, []byte("silence1,silence2"), 0644))
-		r, err := fs.FilepathFor(filekey)
+		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
 		f, err := ioutil.ReadFile(filepath.Clean(filePath))
@@ -32,7 +32,7 @@ func TestFileStore_FilepathFort(t *testing.T) {
 	// With a file already on the database, it writes the file to disk and returns the filepath.
 	{
 		require.NoError(t, store.Set(context.Background(), 1, KVNamespace, filekey, encode([]byte("silence1,silence3"))))
-		r, err := fs.FilepathFor(filekey)
+		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
 		f, err := ioutil.ReadFile(filepath.Clean(filePath))
@@ -44,7 +44,7 @@ func TestFileStore_FilepathFort(t *testing.T) {
 
 	// With no file on disk or database, it returns the original filepath.
 	{
-		r, err := fs.FilepathFor(filekey)
+		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
 		_, err = ioutil.ReadFile(filepath.Clean(filePath))
@@ -59,7 +59,7 @@ func TestFileStore_Persist(t *testing.T) {
 	fs := NewFileStore(1, store, workingDir)
 	filekey := "silences"
 
-	size, err := fs.Persist(filekey, state)
+	size, err := fs.Persist(nil, filekey, state)
 	require.NoError(t, err)
 	require.Equal(t, int64(20), size)
 	store.mtx.Lock()
