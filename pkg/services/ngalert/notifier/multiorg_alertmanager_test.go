@@ -27,7 +27,8 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	}
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore)
+	kvStore := newFakeKVStore(t)
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore, kvStore)
 	ctx := context.Background()
 
 	t.Cleanup(cleanOrgDirectories(tmpDir, t))
@@ -65,7 +66,8 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	}
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore)
+	kvStore := newFakeKVStore(t)
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore, kvStore)
 	ctx := context.Background()
 
 	t.Cleanup(cleanOrgDirectories(tmpDir, t))

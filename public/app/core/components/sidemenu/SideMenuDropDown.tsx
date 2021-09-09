@@ -1,8 +1,8 @@
 import React from 'react';
-import DropDownChild from './DropDownChild';
-import { NavModelItem } from '@grafana/data';
-import { IconName, Link } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { IconName, Link, useTheme2 } from '@grafana/ui';
+import DropDownChild from './DropDownChild';
 
 interface Props {
   headerTarget?: HTMLAnchorElement['target'];
@@ -23,32 +23,30 @@ const SideMenuDropDown = ({
   reverseDirection = false,
   subtitleText,
 }: Props) => {
-  const headerContent = <span className="sidemenu-item-text">{headerText}</span>;
+  const theme = useTheme2();
+  const styles = getStyles(theme, reverseDirection);
+
   let header = (
-    <button onClick={onHeaderClick} className="side-menu-header-link">
-      {headerContent}
+    <button onClick={onHeaderClick} className={styles.header}>
+      {headerText}
     </button>
   );
   if (headerUrl) {
     header =
       !headerTarget && headerUrl.startsWith('/') ? (
-        <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
-          {headerContent}
+        <Link href={headerUrl} onClick={onHeaderClick} className={styles.header}>
+          {headerText}
         </Link>
       ) : (
-        <a href={headerUrl} target={headerTarget} onClick={onHeaderClick} className="side-menu-header-link">
-          {headerContent}
+        <a href={headerUrl} target={headerTarget} onClick={onHeaderClick} className={styles.header}>
+          {headerText}
         </a>
       );
   }
 
-  const menuClass = css`
-    flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
-  `;
-
   return (
-    <ul className={`${menuClass} dropdown-menu dropdown-menu--sidemenu`} role="menu">
-      <li className="side-menu-header">{header}</li>
+    <ul className={`${styles.menu} dropdown-menu dropdown-menu--sidemenu`} role="menu">
+      <li>{header}</li>
       {items
         .filter((item) => !item.hideFromMenu)
         .map((child, index) => (
@@ -62,13 +60,59 @@ const SideMenuDropDown = ({
             url={child.url}
           />
         ))}
-      {subtitleText && (
-        <li className="sidemenu-subtitle">
-          <span className="sidemenu-item-text">{subtitleText}</span>
-        </li>
-      )}
+      {subtitleText && <li className={styles.subtitle}>{subtitleText}</li>}
     </ul>
   );
 };
 
 export default SideMenuDropDown;
+
+const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirection']) => ({
+  header: css`
+    background-color: ${theme.colors.background.secondary};
+    border: none;
+    color: ${theme.colors.text.primary};
+    font-size: ${theme.typography.h4.fontSize};
+    font-weight: ${theme.typography.h4.fontWeight};
+    padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)} !important;
+    white-space: nowrap;
+    width: 100%;
+
+    &:hover {
+      background-color: ${theme.colors.action.hover};
+    }
+
+    .sidemenu-open--xs & {
+      display: flex;
+      font-size: ${theme.typography.body.fontSize};
+      font-weight: ${theme.typography.body.fontWeight};
+      padding-left: ${theme.spacing(1)} !important;
+    }
+  `,
+  menu: css`
+    flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
+
+    .sidemenu-open--xs & {
+      display: flex;
+      flex-direction: column;
+      float: none;
+      margin-bottom: ${theme.spacing(1)};
+      position: unset;
+      width: 100%;
+    }
+  `,
+  subtitle: css`
+    border-bottom: 1px solid ${theme.colors.border.weak};
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.bodySmall.fontWeight};
+    margin-bottom: ${theme.spacing(1)};
+    padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
+    white-space: nowrap;
+
+    .sidemenu-open--xs & {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+  `,
+});
