@@ -190,7 +190,6 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 	})
 
 	t.Run("user not in group", func(t *testing.T) {
-
 		server := &Server{
 			Config: &ServerConfig{
 				Groups: []*GroupToOrgRole{
