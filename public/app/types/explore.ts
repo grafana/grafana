@@ -162,6 +162,7 @@ export interface ExploreItemState {
   rawLogsVolume?: DataFrame[];
   logsVolume?: DataFrame[];
   logsVolumeLoadingInProgress: boolean;
+  logsVolumeError?: any;
   autoLoadLogsVolume: boolean;
 }
 

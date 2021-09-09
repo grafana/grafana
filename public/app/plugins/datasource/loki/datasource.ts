@@ -121,6 +121,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         .pipe(
           tap((value) => {
             observer.next(value);
+          }),
+          catchError((error) => {
+            observer.error(error);
+            throw error;
           })
         )
         .subscribe();

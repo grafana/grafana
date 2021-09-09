@@ -206,40 +206,33 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderLogsVolume(width: number) {
+  getLogsVolumeContent(width: number) {
     const {
       exploreId,
       loadLogsVolume,
       logsVolume,
-      logsVolumeQuery,
       logsVolumeLoadingInProgress,
+      logsVolumeError,
       absoluteRange,
       timeZone,
       splitOpen,
       queryResponse,
-      loading,
       theme,
     } = this.props;
+
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
 
-    return (
-      <Collapse label="Logs volume" isOpen={true} loading={loading || logsVolumeLoadingInProgress}>
-        {logsVolumeQuery && !logsVolume && !logsVolumeLoadingInProgress && (
-          <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
-            <Button
-              size="lg"
-              onClick={() => {
-                loadLogsVolume(exploreId);
-              }}
-            >
-              Load logs volume
-            </Button>
-          </div>
-        )}
-        {logsVolumeLoadingInProgress && !logsVolume && (
-          <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>Logs volume is loading...</div>
-        )}
-        {logsVolume && logsVolume.length > 0 && (
+    if (logsVolumeError) {
+      return <LogsVolumeContentWrapper>Failed to load volume logs for this query. </LogsVolumeContentWrapper>;
+    }
+
+    if (logsVolumeLoadingInProgress) {
+      return <LogsVolumeContentWrapper>Logs volume is loading...</LogsVolumeContentWrapper>;
+    }
+
+    if (logsVolume) {
+      if (logsVolume.length > 0) {
+        return (
           <ExploreGraphNGPanel
             data={logsVolume}
             height={150}
@@ -251,10 +244,32 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             annotations={queryResponse.annotations}
             splitOpenFn={splitOpen}
           />
-        )}
-        {logsVolume && logsVolume.length === 0 && (
-          <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>No volume data.</div>
-        )}
+        );
+      } else {
+        return <LogsVolumeContentWrapper>No volume data.</LogsVolumeContentWrapper>;
+      }
+    }
+
+    return (
+      <LogsVolumeContentWrapper>
+        <Button
+          size="lg"
+          onClick={() => {
+            loadLogsVolume(exploreId);
+          }}
+        >
+          Load logs volume
+        </Button>
+      </LogsVolumeContentWrapper>
+    );
+  }
+
+  renderLogsVolume(width: number) {
+    const { logsVolumeLoadingInProgress, loading } = this.props;
+
+    return (
+      <Collapse label="Logs volume" isOpen={true} loading={loading || logsVolumeLoadingInProgress}>
+        {this.getLogsVolumeContent(width)}
       </Collapse>
     );
   }
@@ -408,6 +423,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 }
 
+function LogsVolumeContentWrapper({ children }: { children: React.ReactNode }) {
+  return <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>{children}</div>;
+}
+
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { syncedTimes } = explore;
@@ -422,6 +441,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     logsVolumeQuery,
     logsVolume,
     logsVolumeLoadingInProgress,
+    logsVolumeError,
     logsResult,
     showLogs,
     showMetrics,
@@ -442,6 +462,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     logsVolumeQuery,
     logsVolume,
     logsVolumeLoadingInProgress,
+    logsVolumeError,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,

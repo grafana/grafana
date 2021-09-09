@@ -156,6 +156,9 @@ export const logsVolumeLoadedAction = createAction<LogsVolumeLoadedPayload>('exp
 export const logsVolumeLoadingInProgressAction = createAction<{ exploreId: ExploreId }>(
   'explore/logsVolumeLoadingInProgress'
 );
+export const logsVolumeLoadingFailedAction = createAction<{ exploreId: ExploreId; error: any }>(
+  'explore/logsVolumeLoadingFailed'
+);
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -575,8 +578,13 @@ export function loadLogsVolume(exploreId: ExploreId): ThunkResult<void> {
     const logsVolumeQuery = state.logsVolumeQuery;
 
     dispatch(logsVolumeLoadingInProgressAction({ exploreId }));
-    logsVolumeQuery?.subscribe((logsVolume) => {
-      dispatch(logsVolumeLoadedAction({ exploreId, logsVolume }));
+    logsVolumeQuery?.subscribe({
+      error: (error) => {
+        dispatch(logsVolumeLoadingFailedAction({ exploreId, error }));
+      },
+      next: (logsVolume) => {
+        dispatch(logsVolumeLoadedAction({ exploreId, logsVolume }));
+      },
     });
   };
 }
@@ -734,6 +742,17 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       logsVolume: undefined, // clear previous results
       rawLogsVolume: undefined,
       logsVolumeLoadingInProgress: false,
+      logsVolumeError: undefined,
+    };
+  }
+
+  if (logsVolumeLoadingFailedAction.match(action)) {
+    return {
+      ...state,
+      logsVolume: undefined, // clear previous results
+      rawLogsVolume: undefined,
+      logsVolumeLoadingInProgress: false,
+      logsVolumeError: action.payload.error,
     };
   }
 
