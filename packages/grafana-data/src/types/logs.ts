@@ -142,3 +142,9 @@ export enum LogsDedupDescription {
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
+
+export type LogsVolume = {
+  data?: DataFrame[];
+  error?: Error;
+  isLoading?: boolean;
+};

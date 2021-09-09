@@ -6,32 +6,38 @@ import {
   FieldColorModeId,
   FieldType,
   LogLevel,
-  LogsVolumeProvider,
+  LogsVolume,
+  QueryRelatedDataProvider,
   toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
-import { Observable } from 'rxjs';
+import { Observable, SubscriptionLike } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { aggregateFields, getLogLevelFromLabels } from '../../../../features/explore/state/utils';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
-export class LokiLogsVolumeProvider implements LogsVolumeProvider {
+export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolume> {
   private readonly datasource: LokiDatasource;
   private dataQueryRequest: DataQueryRequest<LokiQuery>;
-  private rawLogsVolume: DataFrame[];
+  private rawLogsVolume: DataFrame[] = [];
+  private currentSubscription?: SubscriptionLike;
 
   constructor(datasource: LokiDatasource) {
     this.datasource = datasource;
-    this.rawLogsVolume = [];
   }
 
   setRequest(dataQueryRequest: DataQueryRequest<LokiQuery>): void {
     this.dataQueryRequest = dataQueryRequest;
   }
 
-  getLogsVolume(): Observable<DataFrame[]> {
+  getData(): Observable<LogsVolume> {
+    if (this.currentSubscription) {
+      this.currentSubscription.unsubscribe();
+      this.currentSubscription = undefined;
+    }
+
     const histogramRequest = cloneDeep(this.dataQueryRequest);
     histogramRequest.targets = histogramRequest.targets
       .filter((target) => !isMetricsQuery(target.expr))
@@ -41,18 +47,38 @@ export class LokiLogsVolumeProvider implements LogsVolumeProvider {
       });
 
     return new Observable((observer) => {
-      const subscription = this.datasource.query(histogramRequest).subscribe({
+      observer.next({
+        isLoading: true,
+        error: undefined,
+        data: [],
+      });
+
+      this.currentSubscription = this.datasource.query(histogramRequest).subscribe({
         complete: () => {
           const aggregatedLogsVolume = this.aggregateRawLogsVolume();
-          observer.next(aggregatedLogsVolume);
+          observer.next({
+            isLoading: false,
+            error: undefined,
+            data: aggregatedLogsVolume,
+          });
           observer.complete();
         },
         next: (dataQueryResponse: DataQueryResponse) => {
           this.rawLogsVolume = this.rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
         },
+        error: (error) => {
+          observer.next({
+            isLoading: false,
+            error: error,
+            data: [],
+          });
+        },
       });
       return () => {
-        subscription.unsubscribe();
+        if (this.currentSubscription) {
+          this.currentSubscription.unsubscribe();
+          this.currentSubscription = undefined;
+        }
       };
     });
   }

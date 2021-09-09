@@ -26,15 +26,12 @@ export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQu
 export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
 export type QueryRelatedDataProviders = {
-  [name in string]: QueryRelatedDataProvider;
+  [name in string]: QueryRelatedDataProvider<any>;
 };
 
-export interface QueryRelatedDataProvider {
+export interface QueryRelatedDataProvider<TData> {
   setRequest(request: DataQueryRequest): void;
-}
-
-export interface LogsVolumeProvider extends QueryRelatedDataProvider {
-  getLogsVolume(): Observable<DataFrame[]>;
+  getData(): Observable<TData>;
 }
 
 export class DataSourcePlugin<

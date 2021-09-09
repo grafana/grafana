@@ -1,15 +1,15 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
 import { identity, of, Unsubscribable } from 'rxjs';
 import {
-  DataFrame,
   DataQuery,
   DataQueryErrorType,
   DataSourceApi,
   LoadingState,
-  LogsVolumeProvider,
+  LogsVolume,
   PanelData,
   PanelEvents,
   QueryFixAction,
+  QueryRelatedDataProvider,
   toLegacyResponseData,
 } from '@grafana/data';
 
@@ -115,39 +115,21 @@ export interface QueryStoreSubscriptionPayload {
 export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
   'explore/queryStoreSubscription'
 );
-/**
- * Contains information if the histogram can be displayed
- */
-export interface StoreLogsVolumeProviderPayload {
+
+export interface UpdateLogsVolumeProviderPayload {
   exploreId: ExploreId;
-  /**
-   * if defined - histogram is available and subscription can be created
-   */
-  logsVolumeProvider?: LogsVolumeProvider;
+  logsVolumeProvider?: QueryRelatedDataProvider<LogsVolume>;
 }
 
-export const StoreLogsVolumeProviderAction = createAction<StoreLogsVolumeProviderPayload>(
-  'explore/StoreLogsVolumeProvider'
-);
-
-/**
- * Histogram data.
- */
-export interface LogsVolumeLoadedPayload {
+export interface UpdateLogsVolumePayload {
   exploreId: ExploreId;
-  logsVolume: DataFrame[];
+  logsVolume: LogsVolume;
 }
 
-/**
- * Passes logs volume data when it's loaded. May be called multiple times if multiple queries are entered in Explore.
- */
-export const logsVolumeLoadedAction = createAction<LogsVolumeLoadedPayload>('explore/logsVolumeLoaded');
-export const logsVolumeLoadingInProgressAction = createAction<{ exploreId: ExploreId }>(
-  'explore/logsVolumeLoadingInProgress'
+export const updateLogsVolumeProviderAction = createAction<UpdateLogsVolumeProviderPayload>(
+  'explore/updateLogsVolumeProviderAction'
 );
-export const logsVolumeLoadingFailedAction = createAction<{ exploreId: ExploreId; error: any }>(
-  'explore/logsVolumeLoadingFailed'
-);
+export const updateLogsVolumeAction = createAction<UpdateLogsVolumePayload>('explore/updateLogsVolumeAction');
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -485,10 +467,10 @@ export const runQueries = (
       const dataProviders = datasourceInstance.getQueryRelatedDataProviders
         ? datasourceInstance.getQueryRelatedDataProviders(transaction.request)
         : {};
-      let logsVolumeProvider = dataProviders.logsVolume as LogsVolumeProvider;
+      let logsVolumeProvider = dataProviders.logsVolume as QueryRelatedDataProvider<LogsVolume>;
 
       dispatch(
-        StoreLogsVolumeProviderAction({
+        updateLogsVolumeProviderAction({
           exploreId,
           logsVolumeProvider,
         })
@@ -559,8 +541,8 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
     const state = getState().explore[exploreId]!;
 
     // load logs volume automatically after switching
-    const { logsVolumeProvider, logsVolume } = state;
-    if (logsVolumeProvider && !logsVolume && autoLoadLogsVolume) {
+    const { logsVolume } = state;
+    if (logsVolume && !logsVolume.data && autoLoadLogsVolume) {
       dispatch(loadLogsVolume(exploreId));
     }
   };
@@ -569,15 +551,10 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
 export function loadLogsVolume(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const state = getState().explore[exploreId]!;
-    const logsVolumeProvider = state.logsVolumeProvider;
 
-    dispatch(logsVolumeLoadingInProgressAction({ exploreId }));
-    logsVolumeProvider?.getLogsVolume().subscribe({
-      error: (error) => {
-        dispatch(logsVolumeLoadingFailedAction({ exploreId, error }));
-      },
-      next: (logsVolume) => {
-        dispatch(logsVolumeLoadedAction({ exploreId, logsVolume }));
+    state.logsVolumeProvider?.getData().subscribe({
+      next: (logsVolume: LogsVolume) => {
+        dispatch(updateLogsVolumeAction({ exploreId, logsVolume }));
       },
     });
   };
@@ -728,39 +705,21 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (StoreLogsVolumeProviderAction.match(action)) {
-    const { logsVolumeProvider } = action.payload;
+  if (updateLogsVolumeProviderAction.match(action)) {
+    let { logsVolumeProvider } = action.payload;
     return {
       ...state,
       logsVolumeProvider,
-      logsVolume: undefined,
-      logsVolumeLoadingInProgress: false,
-      logsVolumeError: undefined,
+      logsVolume: {},
     };
   }
 
-  if (logsVolumeLoadingFailedAction.match(action)) {
-    return {
-      ...state,
-      logsVolumeProvider: undefined,
-      logsVolume: undefined,
-      logsVolumeLoadingInProgress: false,
-      logsVolumeError: action.payload.error,
-    };
-  }
+  if (updateLogsVolumeAction.match(action)) {
+    let { logsVolume } = action.payload;
 
-  if (logsVolumeLoadedAction.match(action)) {
     return {
       ...state,
-      logsVolumeLoadingInProgress: false,
-      logsVolume: action.payload.logsVolume,
-    };
-  }
-
-  if (logsVolumeLoadingInProgressAction.match(action)) {
-    return {
-      ...state,
-      logsVolumeLoadingInProgress: true,
+      logsVolume,
     };
   }
 

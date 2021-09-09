@@ -12,7 +12,8 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
-  LogsVolumeProvider,
+  LogsVolume,
+  QueryRelatedDataProvider,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -158,12 +159,8 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: PanelData }>;
 
-  logsVolumeProvider?: LogsVolumeProvider;
-  logsVolume?: DataFrame[];
-
-  logsVolumeLoadingInProgress: boolean;
-  logsVolumeError?: any;
-
+  logsVolumeProvider?: QueryRelatedDataProvider<LogsVolume>;
+  logsVolume?: LogsVolume;
   autoLoadLogsVolume: boolean;
 }
 

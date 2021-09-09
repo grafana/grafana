@@ -211,8 +211,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       exploreId,
       loadLogsVolume,
       logsVolume,
-      logsVolumeLoadingInProgress,
-      logsVolumeError,
       absoluteRange,
       timeZone,
       splitOpen,
@@ -222,19 +220,23 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
 
-    if (logsVolumeError) {
+    if (!logsVolume) {
+      return undefined;
+    }
+
+    if (logsVolume.error) {
       return <LogsVolumeContentWrapper>Failed to load volume logs for this query. </LogsVolumeContentWrapper>;
     }
 
-    if (logsVolumeLoadingInProgress) {
+    if (logsVolume.isLoading) {
       return <LogsVolumeContentWrapper>Logs volume is loading...</LogsVolumeContentWrapper>;
     }
 
-    if (logsVolume) {
-      if (logsVolume.length > 0) {
+    if (logsVolume.data) {
+      if (logsVolume.data.length > 0) {
         return (
           <ExploreGraphNGPanel
-            data={logsVolume}
+            data={logsVolume.data}
             height={150}
             width={width - spacing}
             tooltipDisplayMode={TooltipDisplayMode.Single}
@@ -265,10 +267,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const { logsVolumeLoadingInProgress, loading } = this.props;
+    const { logsVolume } = this.props;
 
     return (
-      <Collapse label="Logs volume" isOpen={true} loading={loading || logsVolumeLoadingInProgress}>
+      <Collapse label="Logs volume" isOpen={true} loading={logsVolume?.isLoading}>
         {this.getLogsVolumeContent(width)}
       </Collapse>
     );
@@ -438,10 +440,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeProvider,
     logsVolume,
-    logsVolumeLoadingInProgress,
-    logsVolumeError,
+    logsVolumeProvider,
     logsResult,
     showLogs,
     showMetrics,
@@ -459,10 +459,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeProvider,
     logsVolume,
-    logsVolumeLoadingInProgress,
-    logsVolumeError,
+    logsVolumeProvider,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
