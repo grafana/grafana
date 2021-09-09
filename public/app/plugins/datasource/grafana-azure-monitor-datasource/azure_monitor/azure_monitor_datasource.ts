@@ -18,6 +18,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import { resourceTypeDisplayNames } from '../azureMetadata';
 import { routeNames } from '../utils/common';
+import { createResourceURI } from '../utils/resourceURIUtils';
 
 const defaultDropdownValue = 'select';
 
@@ -181,40 +182,56 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const metricNamespaceQuery = query.match(/^MetricNamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i);
     if (metricNamespaceQuery && this.defaultSubscriptionId) {
       const resourceGroup = this.toVariable(metricNamespaceQuery[1]);
-      const metricDefinition = this.toVariable(metricNamespaceQuery[2]);
-      const resourceName = this.toVariable(metricNamespaceQuery[3]);
+      const resourceType = this.toVariable(metricNamespaceQuery[2]);
+      const resource = this.toVariable(metricNamespaceQuery[3]);
       // TODO: recreate a resource URI
-      return this.getMetricNamespaces(this.defaultSubscriptionId, resourceGroup, metricDefinition, resourceName);
+
+      const resourceURI = createResourceURI({
+        subscriptionID: this.defaultSubscriptionId,
+        resourceGroup,
+        resourceType,
+        resource,
+      });
+
+      return this.getMetricNamespaces(resourceURI);
     }
 
     const metricNamespaceQueryWithSub = query.match(
       /^metricnamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i
     );
     if (metricNamespaceQueryWithSub) {
-      const subscription = this.toVariable(metricNamespaceQueryWithSub[1]);
+      const subscriptionID = this.toVariable(metricNamespaceQueryWithSub[1]);
       const resourceGroup = this.toVariable(metricNamespaceQueryWithSub[2]);
-      const metricDefinition = this.toVariable(metricNamespaceQueryWithSub[3]);
-      const resourceName = this.toVariable(metricNamespaceQueryWithSub[4]);
+      const resourceType = this.toVariable(metricNamespaceQueryWithSub[3]);
+      const resource = this.toVariable(metricNamespaceQueryWithSub[4]);
       // TODO: recreate a resource URI
-      return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
+
+      const resourceURI = createResourceURI({
+        subscriptionID,
+        resourceGroup,
+        resourceType,
+        resource,
+      });
+
+      return this.getMetricNamespaces(resourceURI);
     }
 
     const metricNamesQuery = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i);
     if (metricNamesQuery && this.defaultSubscriptionId) {
       if (metricNamesQuery[3].indexOf(',') === -1) {
         const resourceGroup = this.toVariable(metricNamesQuery[1]);
-        const metricDefinition = this.toVariable(metricNamesQuery[2]);
-        const resourceName = this.toVariable(metricNamesQuery[3]);
+        const resourceType = this.toVariable(metricNamesQuery[2]);
+        const resource = this.toVariable(metricNamesQuery[3]);
         const metricNamespace = this.toVariable(metricNamesQuery[4]);
-        // TODO: recreate a resource URI
 
-        return this.getMetricNames(
-          this.defaultSubscriptionId,
+        const resourceURI = createResourceURI({
+          subscriptionID: this.defaultSubscriptionId,
           resourceGroup,
-          metricDefinition,
-          resourceName,
-          metricNamespace
-        );
+          resourceType,
+          resource,
+        });
+
+        return this.getMetricNames(resourceURI, metricNamespace);
       }
     }
 
@@ -223,13 +240,19 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     );
 
     if (metricNamesQueryWithSub) {
-      const subscription = this.toVariable(metricNamesQueryWithSub[1]);
+      const subscriptionID = this.toVariable(metricNamesQueryWithSub[1]);
       const resourceGroup = this.toVariable(metricNamesQueryWithSub[2]);
-      const metricDefinition = this.toVariable(metricNamesQueryWithSub[3]);
-      const resourceName = this.toVariable(metricNamesQueryWithSub[4]);
+      const resourceType = this.toVariable(metricNamesQueryWithSub[3]);
+      const resource = this.toVariable(metricNamesQueryWithSub[4]);
       const metricNamespace = this.toVariable(metricNamesQueryWithSub[5]);
-      // TODO: recreate a resource URI
-      return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
+
+      const resourceURI = createResourceURI({
+        subscriptionID: subscriptionID,
+        resourceGroup,
+        resourceType,
+        resource,
+      });
+      return this.getMetricNames(resourceURI, metricNamespace);
     }
 
     return null;

@@ -1,6 +1,6 @@
-import { parseResourceURI } from './utils';
+import { parseResourceURI } from './resourceURIUtils';
 
-describe('AzureMonitor ResourcePicker utils', () => {
+describe('AzureMonitor resourceURIUtils', () => {
   describe('parseResourceURI', () => {
     it('should parse subscription URIs', () => {
       expect(parseResourceURI('/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572')).toEqual({
