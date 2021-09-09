@@ -217,7 +217,7 @@ We have upgraded the react-hook-form from version 6 to version 7. We recommend f
 
 ### Update the plugin.json
 
-The property of defining what Grafana version your plugin support has been renamed.
+The property of defining what Grafana version your plugin supports has been renamed.
 
 ```json
 // before
