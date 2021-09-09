@@ -20,7 +20,7 @@ func TestResponseLimitMiddleware(t *testing.T) {
 		body       string
 		err        error
 	}{
-		{limit: 1, bodyLength: 1, body: "d", err: errors.New("http: request body too large")},
+		{limit: 1, bodyLength: 1, body: "d", err: errors.New("http: response body too large")},
 		{limit: 1000000, bodyLength: 5, body: "dummy", err: nil},
 		{limit: 0, bodyLength: 5, body: "dummy", err: nil},
 	}
