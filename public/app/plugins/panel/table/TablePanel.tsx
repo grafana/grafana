@@ -99,17 +99,15 @@ export class TablePanel extends Component<Props> {
     );
   }
 
-  getCurrentFrameIndex(frames: DataFrame[]) {
-    const { options } = this.props;
-    const count = frames.length;
-    return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
+  getCurrentFrameIndex(frames: DataFrame[], options: PanelOptions) {
+    return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
   }
 
   render() {
-    const { data, height, width } = this.props;
+    const { data, height, width, options } = this.props;
 
-    let frames = data.series;
-    let count = frames?.length;
+    const frames = data.series;
+    const count = frames?.length;
     const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {
@@ -119,7 +117,7 @@ export class TablePanel extends Component<Props> {
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
       const padding = 8 * 2;
-      const currentIndex = this.getCurrentFrameIndex(frames);
+      const currentIndex = this.getCurrentFrameIndex(frames, options);
       const names = frames.map((frame, index) => {
         return {
           label: getFrameDisplayName(frame),
