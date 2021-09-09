@@ -2,7 +2,6 @@ import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { TooltipDisplayMode } from '@grafana/schema';
 import {
   rangeUtil,
   RawTimeRange,
@@ -17,7 +16,6 @@ import {
   LinkModel,
   Field,
   DataQuery,
-  DataFrame,
   GrafanaTheme2,
 } from '@grafana/data';
 import {
@@ -35,7 +33,6 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -48,7 +45,6 @@ interface Props extends Themeable2 {
   width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
-  logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   theme: GrafanaTheme2;
@@ -257,10 +253,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   render() {
     const {
-      width,
       logRows,
       logsMeta,
-      logsSeries,
       visibleRange,
       highlighterExpressions,
       loading = false,
@@ -305,21 +299,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className={styles.infoText}>
-          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
-        </div>
-        {logsSeries && logsSeries.length ? (
-          <ExploreGraphNGPanel
-            data={logsSeries}
-            height={150}
-            width={width}
-            tooltipDisplayMode={TooltipDisplayMode.Multi}
-            absoluteRange={visibleRange || absoluteRange}
-            timeZone={timeZone}
-            onUpdateTimeRange={onChangeTime}
-            onHiddenSeriesChanged={this.onToggleLogLevel}
-          />
-        ) : undefined}
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>

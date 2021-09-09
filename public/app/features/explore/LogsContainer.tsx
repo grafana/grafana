@@ -65,7 +65,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       logsHighlighterExpressions,
       logRows,
       logsMeta,
-      logsSeries,
       logsQueries,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -123,7 +122,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
             <Logs
               logRows={logRows}
               logsMeta={logsMeta}
-              logsSeries={logsSeries}
               logsQueries={logsQueries}
               width={width}
               highlighterExpressions={logsHighlighterExpressions}
@@ -181,7 +179,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsHighlighterExpressions,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
-    logsSeries: logsResult?.series,
     logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
     loadingLogsVolumeAvailable: !!logsVolumeQuery,

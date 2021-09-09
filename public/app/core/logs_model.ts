@@ -1,5 +1,4 @@
 import { size } from 'lodash';
-import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 
 import {
@@ -26,7 +25,6 @@ import {
   rangeUtil,
   sortInAscendingOrder,
   textUtil,
-  toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
@@ -90,83 +88,6 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-/**
- * CODE: Move aggregation by level logic to new logs volume
- */
-export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
-  // currently interval is rangeMs / resolution, which is too low for showing series as bars.
-  // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
-
-  // Graph time series by log level
-  const seriesByLevel: any = {};
-  const seriesList: any[] = [];
-
-  for (const row of sortedRows) {
-    let series = seriesByLevel[row.logLevel];
-
-    if (!series) {
-      seriesByLevel[row.logLevel] = series = {
-        lastTs: null,
-        datapoints: [],
-        target: row.logLevel,
-        color: LogLevelColor[row.logLevel],
-      };
-
-      seriesList.push(series);
-    }
-
-    // align time to bucket size - used Math.floor for calculation as time of the bucket
-    // must be in the past (before Date.now()) to be displayed on the graph
-    const time = Math.floor(row.timeEpochMs / bucketSize) * bucketSize;
-
-    // Entry for time
-    if (time === series.lastTs) {
-      series.datapoints[series.datapoints.length - 1][0]++;
-    } else {
-      series.datapoints.push([1, time]);
-      series.lastTs = time;
-    }
-
-    // add zero to other levels to aid stacking so each level series has same number of points
-    for (const other of seriesList) {
-      if (other !== series && other.lastTs !== time) {
-        other.datapoints.push([0, time]);
-        other.lastTs = time;
-      }
-    }
-  }
-
-  return seriesList.map((series, i) => {
-    series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
-
-    const data = toDataFrame(series);
-    const fieldCache = new FieldCache(data);
-
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
-
-    data.fields[valueField.index].config.min = 0;
-    data.fields[valueField.index].config.decimals = 0;
-
-    data.fields[valueField.index].config.custom = {
-      drawStyle: GraphDrawStyle.Bars,
-      barAlignment: BarAlignment.Center,
-      barWidthFactor: 0.9,
-      barMaxWidth: 5,
-      lineColor: series.color,
-      pointColor: series.color,
-      fillColor: series.color,
-      lineWidth: 0,
-      fillOpacity: 100,
-      stacking: {
-        mode: StackingMode.Normal,
-        group: 'A',
-      },
-    };
-
-    return data;
-  });
-}
-
 function isLogsData(series: DataFrame) {
   return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
@@ -190,19 +111,16 @@ export function dataFrameToLogsModel(
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-      const { visibleRange, bucketSize, visibleRangeMs, requestedRangeMs } = getSeriesProperties(
+      const { visibleRange, visibleRangeMs, requestedRangeMs } = getSeriesProperties(
         sortedRows,
         intervalMs,
         absoluteRange
       );
       logsModel.visibleRange = visibleRange;
-      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
       }
-    } else {
-      logsModel.series = [];
     }
     logsModel.queries = queries;
     return logsModel;
@@ -212,7 +130,6 @@ export function dataFrameToLogsModel(
     hasUniqueLabels: false,
     rows: [],
     meta: [],
-    series: [],
     queries,
   };
 }
