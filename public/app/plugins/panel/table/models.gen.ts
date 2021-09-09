@@ -11,19 +11,6 @@ import { TableCellDisplayMode, TableSortByFieldState } from '@grafana/ui';
 // need directly consider the most recent version of the schema.
 export const modelVersion = Object.freeze([1, 0]);
 
-export enum FooterMode {
-  auto = 'auto',
-  summary = 'summary',
-  frame = 'frame',
-  none = 'none',
-}
-
-export enum FooterLabelMode {
-  auto = 'auto',
-  first = 'first',
-  inline = 'inline',
-}
-
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
@@ -36,7 +23,6 @@ export interface PanelOptions {
 export interface TableFooterCalc {
   reducer: string[]; // actually 1 value
   fields?: string[];
-  label?: FooterLabelMode;
 }
 
 export const defaultPanelOptions: PanelOptions = {
