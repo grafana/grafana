@@ -221,10 +221,18 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         })
         .pipe(
           map(({ data }) => {
-            return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
-              ? data.results.getGCEDefaultProject.meta.defaultProject
-              : '';
+            const dataQueryResponse = toDataQueryResponse({
+              data: data,
+            });
+
+            if (dataQueryResponse.data.length !== 0 && dataQueryResponse.data[0].meta) {
+              return dataQueryResponse.data[0].meta.custom
+                ? dataQueryResponse.data[0].meta.custom['defaultProject']
+                : '';
+            }
+            return '';
           }),
+
           catchError((err) => {
             return throwError(err.data.error);
           })
