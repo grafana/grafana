@@ -124,7 +124,7 @@ function getStateDisplayModel(state: string) {
       return {
         text: 'UNKNOWN',
         iconClass: 'question-circle',
-        stateClass: 'alert-state-paused',
+        stateClass: '.alert-state-paused',
       };
     }
 
@@ -141,6 +141,14 @@ function getStateDisplayModel(state: string) {
         text: 'INACTIVE',
         iconClass: 'check',
         stateClass: '',
+      };
+    }
+
+    case 'error': {
+      return {
+        text: 'ERROR',
+        iconClass: 'heart-break',
+        stateClass: 'alert-state-critical',
       };
     }
   }
