@@ -269,7 +269,8 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 			},
 		},
 		Headers: map[string]string{
-			"FromAlert": "true",
+			"FromAlert":    "true",
+			"X-Cache-Skip": "true",
 		},
 		Debug: debug,
 	}
