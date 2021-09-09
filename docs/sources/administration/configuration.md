@@ -435,6 +435,10 @@ The length of time that Grafana maintains idle connections before closing them. 
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
 
+### row_limit
+
+Limit the amount of rows being processed from data sources that returns rows, e.g. SQL data sources. Default is `1000000`.
+
 <hr />
 
 ## [analytics]
