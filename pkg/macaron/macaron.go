@@ -160,7 +160,6 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Data:     make(map[string]interface{}),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
-	c.Map(defaultReturnHandler())
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)

@@ -31,8 +31,11 @@ const (
 	PrivateType PluginSignatureType = "private"
 )
 
+type PluginFiles map[string]struct{}
+
 type PluginSignatureState struct {
 	Status     PluginSignatureStatus
 	Type       PluginSignatureType
 	SigningOrg string
+	Files      PluginFiles
 }

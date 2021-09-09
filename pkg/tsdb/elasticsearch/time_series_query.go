@@ -70,12 +70,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if err != nil {
 		return err
 	}
-	intrvl, err := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, intervalv2.Min)
-	if err != nil {
-		return err
-	}
+	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval)
 
-	b := ms.Search(intrvl)
+	b := ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)

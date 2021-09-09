@@ -238,7 +238,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		RuleStore:               rs,
 		InstanceStore:           is,
 		AdminConfigStore:        acs,
-		MultiOrgNotifier:        notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}),
+		MultiOrgNotifier:        notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}),
 		Logger:                  logger,
 		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.

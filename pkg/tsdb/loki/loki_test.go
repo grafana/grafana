@@ -178,8 +178,8 @@ type mockCalculator struct {
 	interval intervalv2.Interval
 }
 
-func (m mockCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode intervalv2.IntervalMode) (intervalv2.Interval, error) {
-	return m.interval, nil
+func (m mockCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) intervalv2.Interval {
+	return m.interval
 }
 
 func (m mockCalculator) CalculateSafeInterval(timerange backend.TimeRange, resolution int64) intervalv2.Interval {
