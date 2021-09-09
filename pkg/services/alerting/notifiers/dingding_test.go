@@ -24,7 +24,7 @@ func TestDingDingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := newDingDingNotifier(model)
+			_, err := newDingDingNotifier(model, getDecryptedValueFn)
 			So(err, ShouldNotBeNil)
 		})
 		Convey("settings should trigger incident", func() {
@@ -37,7 +37,7 @@ func TestDingDingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := newDingDingNotifier(model)
+			not, err := newDingDingNotifier(model, getDecryptedValueFn)
 			notifier := not.(*DingDingNotifier)
 
 			So(err, ShouldBeNil)

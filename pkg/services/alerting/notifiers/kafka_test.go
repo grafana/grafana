@@ -21,7 +21,7 @@ func TestKafkaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewKafkaNotifier(model)
+				_, err := NewKafkaNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +39,7 @@ func TestKafkaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewKafkaNotifier(model)
+				not, err := NewKafkaNotifier(model, getDecryptedValueFn)
 				kafkaNotifier := not.(*KafkaNotifier)
 
 				So(err, ShouldBeNil)

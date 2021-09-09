@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -83,16 +84,18 @@ type ShowWhen struct {
 	Is    string `json:"is"`
 }
 
-func newNotificationService(renderService rendering.Service) *notificationService {
+func newNotificationService(renderService rendering.Service, decryptFn GetDecryptedValueFn) *notificationService {
 	return &notificationService{
 		log:           log.New("alerting.notifier"),
 		renderService: renderService,
+		decryptFn:     decryptFn,
 	}
 }
 
 type notificationService struct {
 	log           log.Logger
 	renderService rendering.Service
+	decryptFn     GetDecryptedValueFn
 }
 
 func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
@@ -250,7 +253,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 
 	var result notifierStateSlice
 	for _, notification := range query.Result {
-		not, err := InitNotifier(notification)
+		not, err := InitNotifier(notification, n.decryptFn)
 		if err != nil {
 			n.log.Error("Could not create notifier", "notifier", notification.Uid, "error", err)
 			continue
@@ -280,17 +283,21 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 }
 
 // InitNotifier instantiate a new notifier based on the model.
-func InitNotifier(model *models.AlertNotification) (Notifier, error) {
+func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, fmt.Errorf("unsupported notification type %q", model.Type)
 	}
 
-	return notifierPlugin.Factory(model)
+	return notifierPlugin.Factory(model, fn)
 }
 
+// GetDecryptedValueFn is a function that returns the decrypted value of
+// the given key. If the key is not present, then it returns the fallback value.
+type GetDecryptedValueFn func(securejsondata.SecureJsonData, string, string) string
+
 // NotifierFactory is a signature for creating notifiers.
-type NotifierFactory func(notification *models.AlertNotification) (Notifier, error)
+type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 

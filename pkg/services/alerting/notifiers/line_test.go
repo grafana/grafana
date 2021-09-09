@@ -20,7 +20,7 @@ func TestLineNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewLINENotifier(model)
+			_, err := NewLINENotifier(model, getDecryptedValueFn)
 			So(err, ShouldNotBeNil)
 		})
 		Convey("settings should trigger incident", func() {
@@ -35,7 +35,7 @@ func TestLineNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewLINENotifier(model)
+			not, err := NewLINENotifier(model, getDecryptedValueFn)
 			lineNotifier := not.(*LineNotifier)
 
 			So(err, ShouldBeNil)

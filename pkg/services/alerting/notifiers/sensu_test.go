@@ -21,7 +21,7 @@ func TestSensuNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewSensuNotifier(model)
+				_, err := NewSensuNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -40,7 +40,7 @@ func TestSensuNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewSensuNotifier(model)
+				not, err := NewSensuNotifier(model, getDecryptedValueFn)
 				sensuNotifier := not.(*SensuNotifier)
 
 				So(err, ShouldBeNil)

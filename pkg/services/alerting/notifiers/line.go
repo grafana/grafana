@@ -35,8 +35,8 @@ const (
 )
 
 // NewLINENotifier is the constructor for the LINE notifier
-func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+func NewLINENotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+	token := fn(model.SecureSettings, "token", model.Settings.Get("token").MustString())
 	if token == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
 	}

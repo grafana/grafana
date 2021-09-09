@@ -58,13 +58,13 @@ func init() {
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewWebHookNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	password := model.DecryptedValue("password", model.Settings.Get("password").MustString())
+	password := fn(model.SecureSettings, "password", model.Settings.Get("password").MustString())
 
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),

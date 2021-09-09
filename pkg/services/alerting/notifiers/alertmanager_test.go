@@ -93,7 +93,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewAlertmanagerNotifier(model)
+				_, err := NewAlertmanagerNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -107,7 +107,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewAlertmanagerNotifier(model)
+				not, err := NewAlertmanagerNotifier(model, getDecryptedValueFn)
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)
@@ -126,7 +126,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewAlertmanagerNotifier(model)
+				not, err := NewAlertmanagerNotifier(model, getDecryptedValueFn)
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)

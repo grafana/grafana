@@ -25,7 +25,7 @@ func TestTelegramNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewTelegramNotifier(model)
+				_, err := NewTelegramNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -43,7 +43,7 @@ func TestTelegramNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTelegramNotifier(model)
+				not, err := NewTelegramNotifier(model, getDecryptedValueFn)
 				telegramNotifier := not.(*TelegramNotifier)
 
 				So(err, ShouldBeNil)

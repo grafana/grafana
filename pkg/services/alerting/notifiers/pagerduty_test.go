@@ -40,7 +40,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err = NewPagerdutyNotifier(model)
+				_, err = NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -56,7 +56,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 				So(err, ShouldBeNil)
@@ -79,7 +79,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 				So(err, ShouldBeNil)
@@ -106,7 +106,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 				So(err, ShouldBeNil)
@@ -131,7 +131,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -188,7 +188,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -245,7 +245,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -315,7 +315,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -395,7 +395,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -474,7 +474,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model)
+				not, err := NewPagerdutyNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)

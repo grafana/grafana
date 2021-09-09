@@ -22,7 +22,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewHipChatNotifier(model)
+				_, err := NewHipChatNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +38,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewHipChatNotifier(model)
+				not, err := NewHipChatNotifier(model, getDecryptedValueFn)
 				hipchatNotifier := not.(*HipChatNotifier)
 
 				So(err, ShouldBeNil)
@@ -64,7 +64,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewHipChatNotifier(model)
+				not, err := NewHipChatNotifier(model, getDecryptedValueFn)
 				hipchatNotifier := not.(*HipChatNotifier)
 
 				So(err, ShouldBeNil)

@@ -21,7 +21,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := newGoogleChatNotifier(model)
+				_, err := newGoogleChatNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +38,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := newGoogleChatNotifier(model)
+				not, err := newGoogleChatNotifier(model, getDecryptedValueFn)
 				webhookNotifier := not.(*GoogleChatNotifier)
 
 				So(err, ShouldBeNil)

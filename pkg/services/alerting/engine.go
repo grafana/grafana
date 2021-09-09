@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -45,7 +49,7 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler, cfg *setting.Cfg) *AlertEngine {
+	dataService plugins.DataRequestHandler, encryptionService encryption.Service, cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:              cfg,
 		RenderService:    renderer,
@@ -59,7 +63,20 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService)
+
+	getDecryptedValueFn := func(sjd securejsondata.SecureJsonData, key, fallback string) string {
+		if value, ok := sjd[key]; ok {
+			decryptedData, err := encryptionService.Decrypt(value, setting.SecretKey)
+			if err != nil {
+				return fallback
+			}
+
+			return string(decryptedData)
+		}
+
+		return fallback
+	}
+	e.resultHandler = newResultHandler(e.RenderService, getDecryptedValueFn)
 
 	return e
 }

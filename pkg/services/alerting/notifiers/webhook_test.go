@@ -21,7 +21,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewWebHookNotifier(model)
+		_, err = NewWebHookNotifier(model, getDecryptedValueFn)
 		require.Error(t, err)
 	})
 
@@ -36,7 +36,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewWebHookNotifier(model)
+		not, err := NewWebHookNotifier(model, getDecryptedValueFn)
 		require.NoError(t, err)
 		webhookNotifier := not.(*WebhookNotifier)
 

@@ -35,7 +35,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewVictoropsNotifier(model)
+				_, err := NewVictoropsNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -52,7 +52,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model)
+				not, err := NewVictoropsNotifier(model, getDecryptedValueFn)
 				victoropsNotifier := not.(*VictoropsNotifier)
 
 				So(err, ShouldBeNil)
@@ -76,7 +76,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model)
+				not, err := NewVictoropsNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				victoropsNotifier := not.(*VictoropsNotifier)
@@ -124,7 +124,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model)
+				not, err := NewVictoropsNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 
 				victoropsNotifier := not.(*VictoropsNotifier)

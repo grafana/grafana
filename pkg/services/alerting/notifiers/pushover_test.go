@@ -27,7 +27,7 @@ func TestPushoverNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewPushoverNotifier(model)
+				_, err := NewPushoverNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -49,7 +49,7 @@ func TestPushoverNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPushoverNotifier(model)
+				not, err := NewPushoverNotifier(model, getDecryptedValueFn)
 				pushoverNotifier := not.(*PushoverNotifier)
 
 				So(err, ShouldBeNil)

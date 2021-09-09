@@ -170,11 +170,3 @@ type GetOrCreateNotificationStateQuery struct {
 
 	Result *AlertNotificationState
 }
-
-// decryptedValue returns decrypted value from secureSettings
-func (an *AlertNotification) DecryptedValue(field string, fallback string) string {
-	if value, ok := an.SecureSettings.DecryptedValue(field); ok {
-		return value
-	}
-	return fallback
-}

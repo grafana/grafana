@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -32,7 +34,7 @@ var (
 )
 
 func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Context, cmd *NotificationTestCommand) error {
-	notifier := newNotificationService(nil)
+	notifier := newNotificationService(nil, nil)
 
 	model := &models.AlertNotification{
 		Name:     cmd.Name,
@@ -70,7 +72,20 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Conte
 		return err
 	}
 
-	notifiers, err := InitNotifier(model)
+	getDecryptedValueFn := func(sjd securejsondata.SecureJsonData, key, fallback string) string {
+		if value, ok := sjd[key]; ok {
+			decryptedData, err := s.EncryptionService.Decrypt(value, setting.SecretKey)
+			if err != nil {
+				return fallback
+			}
+
+			return string(decryptedData)
+		}
+
+		return fallback
+	}
+
+	notifiers, err := InitNotifier(model, getDecryptedValueFn)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return err

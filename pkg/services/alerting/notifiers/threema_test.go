@@ -23,7 +23,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewThreemaNotifier(model)
+				_, err := NewThreemaNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -42,7 +42,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, getDecryptedValueFn)
 				So(err, ShouldBeNil)
 				threemaNotifier := not.(*ThreemaNotifier)
 
@@ -69,7 +69,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, getDecryptedValueFn)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)
@@ -91,7 +91,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, getDecryptedValueFn)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)
@@ -113,7 +113,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, getDecryptedValueFn)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)

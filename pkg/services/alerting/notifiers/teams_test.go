@@ -21,7 +21,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewTeamsNotifier(model)
+				_, err := NewTeamsNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +38,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTeamsNotifier(model)
+				not, err := NewTeamsNotifier(model, getDecryptedValueFn)
 				teamsNotifier := not.(*TeamsNotifier)
 
 				So(err, ShouldBeNil)
@@ -60,7 +60,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTeamsNotifier(model)
+				not, err := NewTeamsNotifier(model, getDecryptedValueFn)
 				teamsNotifier := not.(*TeamsNotifier)
 
 				So(err, ShouldBeNil)

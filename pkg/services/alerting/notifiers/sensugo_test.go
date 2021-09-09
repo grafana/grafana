@@ -21,7 +21,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		Settings: settingsJSON,
 	}
 
-	_, err = NewSensuGoNotifier(model)
+	_, err = NewSensuGoNotifier(model, getDecryptedValueFn)
 	require.Error(t, err)
 
 	json = `
@@ -42,7 +42,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		Settings: settingsJSON,
 	}
 
-	not, err := NewSensuGoNotifier(model)
+	not, err := NewSensuGoNotifier(model, getDecryptedValueFn)
 	require.NoError(t, err)
 	sensuGoNotifier := not.(*SensuGoNotifier)
 

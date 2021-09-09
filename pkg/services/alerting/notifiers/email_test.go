@@ -21,7 +21,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewEmailNotifier(model)
+				_, err := NewEmailNotifier(model, getDecryptedValueFn)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +38,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewEmailNotifier(model)
+				not, err := NewEmailNotifier(model, getDecryptedValueFn)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)
@@ -62,7 +62,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewEmailNotifier(model)
+				not, err := NewEmailNotifier(model, getDecryptedValueFn)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)
