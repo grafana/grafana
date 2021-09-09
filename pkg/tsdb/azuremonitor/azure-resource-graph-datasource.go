@@ -102,7 +102,6 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo, client *http.Client, dsURL string) backend.DataResponse {
-
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
