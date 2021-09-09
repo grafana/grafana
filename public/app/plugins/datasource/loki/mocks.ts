@@ -1,5 +1,5 @@
 import { LokiDatasource, LOKI_ENDPOINT } from './datasource';
-import { AbsoluteTimeRange, DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { LokiOptions } from './types';
 import { createDatasourceSettings } from '../../../features/datasources/mocks';
 
@@ -20,9 +20,9 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
   const lokiSeriesEndpointRegex = /^\/loki\/api\/v1\/series/;
 
   const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/label`;
-  const rangeMock: AbsoluteTimeRange = {
-    from: 1560153109000,
-    to: 1560163909000,
+  const rangeMock = {
+    start: 1560153109000,
+    end: 1560163909000,
   };
 
   const labels = Object.keys(labelsAndValues);
@@ -37,7 +37,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
         if (labelsMatch) {
           return labelsAndValues[labelsMatch[1]] || [];
         } else if (seriesMatch && series && params) {
-          return series[params.match] || [];
+          return series[params['match[]']] || [];
         } else {
           throw new Error(`Unexpected url error, ${url}`);
         }

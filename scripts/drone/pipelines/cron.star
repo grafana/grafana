@@ -1,4 +1,4 @@
-load('scripts/star/vault.star', 'from_secret')
+load('scripts/drone/vault.star', 'from_secret')
 
 def cronjobs(edition):
     if edition != 'oss':

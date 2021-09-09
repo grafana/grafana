@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { SelectableValue, dateTimeParse, GrafanaTheme2 } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
@@ -8,30 +8,34 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { useHistory } from '../hooks/useHistory';
-import { CatalogPlugin, PluginAdminRoutes } from '../types';
+import { PluginAdminRoutes } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
-import { usePluginsByFilter } from '../hooks/usePlugins';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { useGetAll, useGetAllWithFilters } from '../state/hooks';
+import { Sorters } from '../helpers';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
+  useGetAll();
   const location = useLocation();
-  const query = locationSearchToObject(location.search);
+  const locationSearch = locationSearchToObject(location.search);
   const navModelId = getNavModelId(route.routeName);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
   const styles = useStyles2(getStyles);
-
-  const q = (query.q as string) ?? '';
-  const filterBy = (query.filterBy as string) ?? 'installed';
-  const filterByType = (query.filterByType as string) ?? 'all';
-  const sortBy = (query.sortBy as string) ?? 'nameAsc';
-
-  const { plugins, isLoading, error } = usePluginsByFilter({ searchBy: q, filterBy, filterByType });
-  const sortedPlugins = plugins.sort(sorters[sortBy]);
   const history = useHistory();
+  const query = (locationSearch.q as string) || '';
+  const filterBy = (locationSearch.filterBy as string) || 'installed';
+  const filterByType = (locationSearch.filterByType as string) || 'all';
+  const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
+  const { isLoading, error, plugins } = useGetAllWithFilters({
+    query,
+    filterBy,
+    filterByType,
+    sortBy,
+  });
 
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
@@ -60,7 +64,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       <Page.Contents>
         <PluginPage>
           <HorizontalGroup wrap>
-            <SearchField value={q} onSearch={onSearch} />
+            <SearchField value={query} onSearch={onSearch} />
             <HorizontalGroup wrap className={styles.actionBar}>
               <div>
                 <RadioButtonGroup
@@ -110,7 +114,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 text="Loading results"
               />
             ) : (
-              <PluginList plugins={sortedPlugins} />
+              <PluginList plugins={plugins} />
             )}
           </div>
         </PluginPage>
@@ -138,14 +142,4 @@ const getNavModelId = (routeName?: string) => {
   }
 
   return 'plugins';
-};
-
-const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
-  nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
-  nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
-  updated: (a: CatalogPlugin, b: CatalogPlugin) =>
-    dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
-  published: (a: CatalogPlugin, b: CatalogPlugin) =>
-    dateTimeParse(b.publishedAt).valueOf() - dateTimeParse(a.publishedAt).valueOf(),
-  downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.downloads - a.downloads,
 };

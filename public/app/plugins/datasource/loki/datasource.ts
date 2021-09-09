@@ -375,7 +375,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const timeParams = this.getTimeRangeParams();
     const params = {
       ...timeParams,
-      match: expr,
+      'match[]': expr,
     };
     const url = `${LOKI_ENDPOINT}/series`;
     const streams = new Set();
