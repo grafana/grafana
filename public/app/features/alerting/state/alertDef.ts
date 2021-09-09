@@ -81,7 +81,10 @@ function createReducerPart(model: any) {
 }
 
 function getStateDisplayModel(state: string) {
-  switch (state) {
+  const normalizedState = state.toLowerCase().replace(/_/g, '');
+
+  switch (normalizedState) {
+    case 'normal':
     case 'ok': {
       return {
         text: 'OK',
@@ -96,7 +99,7 @@ function getStateDisplayModel(state: string) {
         stateClass: 'alert-state-critical',
       };
     }
-    case 'no_data': {
+    case 'nodata': {
       return {
         text: 'NO DATA',
         iconClass: 'question-circle',
