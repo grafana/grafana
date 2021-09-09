@@ -66,10 +66,9 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 			return models.ErrInvalidApiKeyExpiration
 		}
 
-		serviceAccountId, _ := strconv.Atoi(cmd.ServiceAccountId)
-		if cmd.CreateNewServiceAccount == "on" { //FIXME
-			//FIXME Create service account here
-			serviceAccountId = 123456
+		ServiceAccountId, err := strconv.Atoi(cmd.ServiceAccountId)
+		if err != nil {
+			panic("Invalid service account id!")
 		}
 		t := models.ApiKey{
 			OrgId:            cmd.OrgId,
@@ -79,7 +78,7 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: int64(serviceAccountId),
+			ServiceAccountId: int64(ServiceAccountId),
 		}
 
 		if _, err := sess.Insert(&t); err != nil {

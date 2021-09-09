@@ -69,7 +69,8 @@ type CreateUserCommand struct {
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
-	Result User
+	Result         User
+	ServiceAccount bool
 }
 
 type UpdateUserCommand struct {

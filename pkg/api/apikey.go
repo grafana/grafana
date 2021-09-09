@@ -2,8 +2,11 @@ package api
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -69,6 +72,27 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		}
 	}
 	cmd.OrgId = c.OrgId
+	serviceAccountId, _ := strconv.Atoi(cmd.ServiceAccountId)
+	if cmd.CreateNewServiceAccount == "on" { //FIXME
+		//FIXME Create service account here
+
+		cmd := models.CreateUserCommand{
+			Login:          "Service-Account-" + uuid.New().String(),
+			Email:          uuid.New().String(),
+			Password:       "", //FIXME, make random?
+			Name:           "ServiceAccount",
+			OrgId:          cmd.OrgId,
+			ServiceAccount: true,
+		}
+
+		user, err := hs.Login.CreateUser(cmd)
+		if err != nil {
+			panic("Could not create service account")
+		}
+		serviceAccountId = int(user.Id)
+	}
+
+	cmd.ServiceAccountId = fmt.Sprintf("%v", serviceAccountId)
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {
