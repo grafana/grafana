@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { PromQuery, StepMode } from '../types';
+import { PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
@@ -24,29 +24,11 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
   label: '1/' + value,
 }));
 
-export const DEFAULT_STEP_MODE: SelectableValue<StepMode> = {
-  value: 'min',
-  label: 'Minimum',
-};
-
-export const STEP_MODES: Array<SelectableValue<StepMode>> = [
-  DEFAULT_STEP_MODE,
-  {
-    value: 'max',
-    label: 'Maximum',
-  },
-  {
-    value: 'exact',
-    label: 'Exact',
-  },
-];
-
 interface State {
   legendFormat?: string;
   formatOption: SelectableValue<string>;
   interval?: string;
   intervalFactorOption: SelectableValue<number>;
-  stepMode: SelectableValue<StepMode>;
   instant: boolean;
   exemplar: boolean;
 }
@@ -63,7 +45,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       legendFormat: '',
       interval: '',
       exemplar: true,
-      stepMode: DEFAULT_STEP_MODE.value,
     };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
@@ -76,8 +57,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       formatOption: FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0],
       intervalFactorOption:
         INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
-      // Step mode
-      stepMode: STEP_MODES.find((option) => option.value === query.stepMode) || DEFAULT_STEP_MODE,
       // Switch options
       instant: Boolean(query.instant),
       exemplar: Boolean(query.exemplar),
@@ -110,11 +89,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
     this.setState({ intervalFactorOption: option }, this.onRunQuery);
   };
 
-  onStepChange = (option: SelectableValue<StepMode>) => {
-    this.query.stepMode = option.value;
-    this.setState({ stepMode: option }, this.onRunQuery);
-  };
-
   onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const legendFormat = e.currentTarget.value;
     this.query.legendFormat = legendFormat;
@@ -136,7 +110,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, stepMode, legendFormat, exemplar } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
 
     return (
       <PromQueryField
@@ -170,37 +144,27 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
             <div className="gf-form">
               <InlineFormLabel
-                width={5}
+                width={7}
                 tooltip={
                   <>
-                    Use &apos;Minimum&apos; or &apos;Maximum&apos; step mode to set the lower or upper bounds
-                    respectively on the interval between data points. For example, set &quot;minimum 1h&quot; to hint
-                    that measurements were not taken more frequently. Use the &apos;Exact&apos; step mode to set an
-                    exact interval between data points. <code>$__interval</code> and <code>$__rate_interval</code> are
-                    supported.
+                    An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                    <code>$__interval</code> and <code>$__rate_interval</code> variables. The limit is absolute and not
+                    modified by the &quot;Resolution&quot; setting.
                   </>
                 }
               >
-                Step
+                Min step
               </InlineFormLabel>
-              <Select
-                menuShouldPortal
-                className={'select-container'}
-                width={16}
-                isSearchable={false}
-                options={STEP_MODES}
-                onChange={this.onStepChange}
-                value={stepMode}
-              />
               <input
                 type="text"
-                className="gf-form-input width-4"
-                placeholder="15s"
+                className="gf-form-input width-8"
+                placeholder={interval}
                 onChange={this.onIntervalChange}
                 onBlur={this.onRunQuery}
                 value={interval}
               />
             </div>
+
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
@@ -211,11 +175,12 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 value={intervalFactorOption}
               />
             </div>
+
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
                 menuShouldPortal
-                className={'select-container'}
+                className="select-container"
                 width={16}
                 isSearchable={false}
                 options={FORMAT_OPTIONS}

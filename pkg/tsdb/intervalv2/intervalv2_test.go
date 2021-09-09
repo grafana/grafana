@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntervalCalculator_Calculate(t *testing.T) {
@@ -16,29 +15,19 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 	timeNow := time.Now()
 
 	testCases := []struct {
-		name         string
-		timeRange    backend.TimeRange
-		intervalMode IntervalMode
-		expected     string
+		name      string
+		timeRange backend.TimeRange
+		expected  string
 	}{
-		{"from 5m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, Min, "200ms"},
-		{"from 5m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, Max, "1ms"},
-		{"from 5m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, Exact, "1ms"},
-		{"from 15m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, Min, "500ms"},
-		{"from 15m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, Max, "1ms"},
-		{"from 15m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, Exact, "1ms"},
-		{"from 30m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, Min, "1s"},
-		{"from 30m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, Max, "1ms"},
-		{"from 30m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, Exact, "1ms"},
-		{"from 1h to now", backend.TimeRange{From: timeNow, To: timeNow.Add(1440 * time.Minute)}, Min, "1m"},
-		{"from 1h to now", backend.TimeRange{From: timeNow, To: timeNow.Add(1440 * time.Minute)}, Max, "1ms"},
-		{"from 1h to now", backend.TimeRange{From: timeNow, To: timeNow.Add(1440 * time.Minute)}, Exact, "1ms"},
+		{"from 5m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(5 * time.Minute)}, "200ms"},
+		{"from 15m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, "500ms"},
+		{"from 30m to now", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, "1s"},
+		{"from 1h to now", backend.TimeRange{From: timeNow, To: timeNow.Add(60 * time.Minute)}, "2s"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			interval, err := calculator.Calculate(tc.timeRange, time.Millisecond*1, tc.intervalMode)
-			require.Nil(t, err)
+			interval := calculator.Calculate(tc.timeRange, time.Millisecond*1)
 			assert.Equal(t, tc.expected, interval.Text)
 		})
 	}
