@@ -2,9 +2,10 @@ import React from 'react';
 import DropDownChild from './DropDownChild';
 import { NavModelItem } from '@grafana/data';
 import { IconName, Link } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 interface Props {
+  headerTarget?: HTMLAnchorElement['target'];
   headerText: string;
   headerUrl?: string;
   items?: NavModelItem[];
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const SideMenuDropDown = ({
+  headerTarget,
   headerText,
   headerUrl,
   items = [],
@@ -21,20 +23,24 @@ const SideMenuDropDown = ({
   reverseDirection = false,
   subtitleText,
 }: Props) => {
-  const resetButtonStyles = css`
-    background-color: transparent;
-    font-size: inherit;
-  `;
   const headerContent = <span className="sidemenu-item-text">{headerText}</span>;
-  const header = headerUrl ? (
-    <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
-      {headerContent}
-    </Link>
-  ) : (
-    <button onClick={onHeaderClick} className={cx(resetButtonStyles, 'side-menu-header-link')}>
+  let header = (
+    <button onClick={onHeaderClick} className="side-menu-header-link">
       {headerContent}
     </button>
   );
+  if (headerUrl) {
+    header =
+      !headerTarget && headerUrl.startsWith('/') ? (
+        <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
+          {headerContent}
+        </Link>
+      ) : (
+        <a href={headerUrl} target={headerTarget} onClick={onHeaderClick} className="side-menu-header-link">
+          {headerContent}
+        </a>
+      );
+  }
 
   const menuClass = css`
     flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};

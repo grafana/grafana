@@ -25,7 +25,7 @@ Before actually merging a pull request there's a couple of things to take into c
 
 Make sure that the pull request title is properly formatted according to `<Area>: <Summary>` and try to make the summary short and understandable for the community as a whole.
 
-All commits in a pull request is squashed when merged and the pull request title will be the the default subject line of the squashed commit message. It's also used for [changelog/release notes](#include-in-changelog-and-release-notes).
+All commits in a pull request are squashed when merged and the pull request title will be the default subject line of the squashed commit message. It's also used for [changelog/release notes](#include-in-changelog-and-release-notes).
 
 See [formatting guidelines](create-pull-request.md#formatting-guidelines) for more information.
 
@@ -39,7 +39,7 @@ There's also various tooling built that in some cases requires a pull request to
 
 At Grafana we generate the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) and [release notes](https://grafana.com/docs/grafana/latest/release-notes/) based on merged pull requests. Including changes in the changelog/release notes is very important to provide a somewhat complete picture of what changes a Grafana release actually includes.
 
-Exactly what changes should be added to the changelog is hard to answer but some general guideance would be any change that you think would be interesting for the community as a whole. Use your best judjement and/or ask other maintainers for advice.
+Exactly what changes should be added to the changelog is hard to answer but some general guidance would be any change that you think would be interesting for the community as a whole. Use your best judgement and/or ask other maintainers for advice.
 
 There's a GitHub action available in the repository named [Update changelog](https://github.com/grafana/grafana/blob/main/.github/workflows/update-changelog.yml) that can manually be triggered to re-generate the changelog and release notes for any release.
 
@@ -49,11 +49,11 @@ The changelog/release notes are divided into sections and here's a description o
 
 **Features and enhancements:**
 
-Milestone assigned and labeled with `add to changelog` and any of the other section rules doesn't apply.
+Milestone assigned and labeled with `add to changelog` and any of the other section rules don't apply.
 
 **Bug fixes:**
 
-Milestone assigned and labeled with `add to changelog` and either labeled with `type/bug` or either the pull request title contains `fix` or `fixes`.
+Milestone assigned and labeled with `add to changelog` and either labeled with `type/bug` or the pull request title contains `fix` or `fixes`.
 
 **Plugin development fixes & changes:**
 
@@ -81,7 +81,7 @@ In case the pull request introduces a breaking change you should document this. 
 
 ### Should the pull request be backported?
 
-If your pull request has changes that needs to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](.github/bot.md#backport-pr) for detailed instructions.
+If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](.github/bot.md#backport-pr) for detailed instructions.
 
 Some examples when backport is required:
 
@@ -91,28 +91,28 @@ Some examples when backport is required:
 
 Some examples when backport is not required:
 
-- The change is supposed to be release in the next major/minor release, e.g. v8.0.0, but the release branch, e.g. v8.0.x, has not yet been created.
+- The change is supposed to be released in the next major/minor release, e.g. v8.0.0, but the release branch, e.g. v8.0.x, has not yet been created.
 
-> **Note:** You can still backport a pull request after its been merged.
+> **Note:** You can still backport a pull request after it's been merged.
 
 ## Doing the actual merge
 
 Time to actually merge the pull request changes. All commits in a pull request are squashed, hence the GitHub `Squash and merge` button is used to initialize the merge.
 
-This will present you with options allowing you to optionally change the commit message before merging. Please remember that developers might use the commit information when reviewing changes of files, doing git blame and resolving merge conflicts etc trying to quickly figuring out what the actual change was. But there's not really any best practices around this, however the following are an attempt to bring some guidance.
+This will present you with options allowing you to optionally change the commit message before merging. Please remember that developers might use the commit information when reviewing changes of files, doing git blame and resolving merge conflicts etc., trying to quickly figure out what the actual change was. But there's not really any best practices around this, the following is an attempt to bring some guidance.
 
 Do:
 
 - Make sure the pull request title is formatted properly before merging, this will automatically give you a good and short summary of the commit/change.
-- Leave `Co-authored-by:` lines as is so that co-authors will be acccounted for the contribution.
+- Leave `Co-authored-by:` lines as is so that co-authors will be accounted for the contribution.
 - Remove any commit information that doesn't bring any context to the change.
 
 Consider:
 
-- Add any references to issues that the pull request fixes/closes/references to ease giving quick context to things. Doing this allow cross-reference between the commit and referenced issue(s).
+- Add any references to issues that the pull request fixes/closes/references to ease giving quick context to things. Doing this allows cross-reference between the commit and referenced issue(s).
 
 Finalize the merge by clicking on the `Confirm squash and merge` button.
 
 ## After the merge
 
-Make sure to close any referenced/related issues. It's recommended assigning the same milestone on the issues that the pull request fixes/closes, but not a requirement.
+Make sure to close any referenced/related issues. It's recommended to assign the same milestone on the issues that the pull request fixes/closes, but not required.
