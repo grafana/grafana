@@ -1,5 +1,5 @@
 import { EntityState } from '@reduxjs/toolkit';
-import { PluginType, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { PluginType, PluginSignatureStatus, PluginSignatureType, PluginDependencies } from '@grafana/data';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
@@ -62,10 +62,7 @@ export type RemotePlugin = {
   id: number;
   internal: boolean;
   json?: {
-    dependencies: {
-      grafanaDependency: string;
-      grafanaVersion: string;
-    };
+    dependencies: PluginDependencies;
     info: {
       links: Array<{
         name: string;

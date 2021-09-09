@@ -237,6 +237,7 @@ function remotePlugin(plugin: Partial<RemotePlugin> = {}): RemotePlugin {
       dependencies: {
         grafanaDependency: '>=7.3.0',
         grafanaVersion: '7.3',
+        plugins: [],
       },
       info: {
         links: [],
