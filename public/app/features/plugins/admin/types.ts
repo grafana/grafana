@@ -44,6 +44,7 @@ export interface CatalogPluginDetails {
     url: string;
   }>;
   grafanaDependency?: string;
+  pluginDependencies?: PluginDependencies['plugins'];
 }
 
 export interface CatalogPluginInfo {
