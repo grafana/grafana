@@ -14,6 +14,7 @@ export interface MenuItemsGroup<T = any> {
   /** Items of the group */
   items: Array<MenuItemProps<T>>;
 }
+
 /** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {
   /** special children prop to pass children elements */

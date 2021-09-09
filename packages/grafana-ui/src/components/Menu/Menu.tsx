@@ -90,7 +90,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
         role="menu"
         aria-label={ariaLabel}
         onKeyDown={handleKeys}
-        onFocusCapture={handleFocus}
+        onFocus={handleFocus}
       >
         {header && <div className={styles.header}>{header}</div>}
         {children}
