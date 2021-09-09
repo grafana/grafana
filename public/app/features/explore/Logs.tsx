@@ -70,6 +70,7 @@ interface Props extends Themeable2 {
   clearCache: () => void;
   autoLoadLogsVolume: boolean;
   onChangeAutoLogsVolume: (value: boolean) => void;
+  loadingLogsVolumeAvailable: boolean;
 }
 
 interface State {
@@ -277,6 +278,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       autoLoadLogsVolume,
+      loadingLogsVolumeAvailable,
     } = this.props;
 
     const {
@@ -332,9 +334,11 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Prettify JSON" transparent>
               <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
             </InlineField>
-            <InlineField label="Auto-load logs volume" transparent>
-              <InlineSwitch value={autoLoadLogsVolume} onChange={this.handleOnChangeAutoLogsVolume} transparent />
-            </InlineField>
+            {loadingLogsVolumeAvailable && (
+              <InlineField label="Auto-load logs volume" transparent>
+                <InlineSwitch value={autoLoadLogsVolume} onChange={this.handleOnChangeAutoLogsVolume} transparent />
+              </InlineField>
+            )}
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
                 options={Object.values(LogsDedupStrategy).map((dedupType) => ({

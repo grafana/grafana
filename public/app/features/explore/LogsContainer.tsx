@@ -83,6 +83,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       clearCache,
       autoLoadLogsVolume,
       changeAutoLogsVolume,
+      loadingLogsVolumeAvailable,
     } = this.props;
 
     if (!logRows) {
@@ -147,6 +148,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
                 changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
                 store.set(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, autoLoadLogsVolume);
               }}
+              loadingLogsVolumeAvailable={loadingLogsVolumeAvailable}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -162,6 +164,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const {
     logsHighlighterExpressions,
     logsResult,
+    logsVolumeQuery,
     loading,
     scanning,
     datasourceInstance,
@@ -181,6 +184,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsSeries: logsResult?.series,
     logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
+    loadingLogsVolumeAvailable: !!logsVolumeQuery,
     scanning,
     timeZone,
     datasourceInstance,
