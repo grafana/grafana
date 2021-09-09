@@ -275,7 +275,6 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", models[0].Expr)
 	})
-
 }
 
 func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {
