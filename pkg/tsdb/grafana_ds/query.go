@@ -1,4 +1,4 @@
-package grafana
+package grafana_ds
 
 const (
 	// QueryTypeRandomWalk returns a random walk series
