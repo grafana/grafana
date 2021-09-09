@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,7 +17,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -39,6 +40,17 @@ type DatasourceInfo struct {
 	URL            string
 	HTTPMethod     string
 	TimeInterval   string
+}
+
+type QueryModel struct {
+	Expr           string `json:"expr"`
+	LegendFormat   string `json:"legendFormat"`
+	Interval       string `json:"interval"`
+	IntervalMS     int64  `json:"intervalMS"`
+	StepMode       string `json:"stepMode"`
+	RangeQuery     bool   `json:"range"`
+	InstantQuery   bool   `json:"instant"`
+	IntervalFactor int64  `json:"intervalFactor"`
 }
 
 type Service struct {
@@ -130,7 +142,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	queries, err := s.parseQuery(req.Queries, dsInfo)
+	queries, err := s.parseQuery(req, dsInfo)
 	if err != nil {
 		return &result, err
 	}
@@ -225,48 +237,59 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo) ([]*PrometheusQuery, error) {
+func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *DatasourceInfo) ([]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
-	for _, queryModel := range queries {
-		jsonModel, err := simplejson.NewJson(queryModel.JSON)
-		if err != nil {
-			return nil, err
-		}
-		expr, err := jsonModel.Get("expr").String()
-		if err != nil {
-			return nil, err
-		}
-
-		format := jsonModel.Get("legendFormat").MustString("")
-
-		start := queryModel.TimeRange.From
-		end := queryModel.TimeRange.To
-		queryInterval := jsonModel.Get("interval").MustString("")
-
-		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, 0, 15*time.Second)
+	for _, query := range queryContext.Queries {
+		model := &QueryModel{}
+		err := json.Unmarshal(query.JSON, model)
 		if err != nil {
 			return nil, err
 		}
 
-		calculatedInterval := s.intervalCalculator.Calculate(queries[0].TimeRange, minInterval)
+		//Calculate interval
+		queryInterval := model.Interval
+		//If we are using variable or interval/step, we will replace it with calculated interval
+		if queryInterval == "$__interval" || queryInterval == "$__interval_ms" {
+			queryInterval = ""
+		}
+		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
+		if err != nil {
+			return nil, err
+		}
 
-		safeInterval := s.intervalCalculator.CalculateSafeInterval(queries[0].TimeRange, int64(safeRes))
+		calculatedInterval := s.intervalCalculator.Calculate(query.TimeRange, minInterval)
+		safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
 
 		adjustedInterval := safeInterval.Value
 		if calculatedInterval.Value > safeInterval.Value {
 			adjustedInterval = calculatedInterval.Value
 		}
 
-		intervalFactor := jsonModel.Get("intervalFactor").MustInt64(1)
-		step := time.Duration(int64(adjustedInterval) * intervalFactor)
+		intervalFactor := model.IntervalFactor
+		if intervalFactor == 0 {
+			intervalFactor = 1
+		}
+
+		interval := time.Duration(int64(adjustedInterval) * intervalFactor)
+		intervalMs := int64(interval / time.Millisecond)
+		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
+
+		// Interpolate variables in expr
+		expr := model.Expr
+		expr = strings.ReplaceAll(expr, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
+		expr = strings.ReplaceAll(expr, "$__interval", intervalv2.FormatDuration(interval))
+		expr = strings.ReplaceAll(expr, "$__range_ms", strconv.FormatInt(rangeS*1000, 10))
+		expr = strings.ReplaceAll(expr, "$__range_s", strconv.FormatInt(rangeS, 10))
+		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
+		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
-			Step:         step,
-			LegendFormat: format,
-			Start:        start,
-			End:          end,
-			RefId:        queryModel.RefID,
+			Step:         interval,
+			LegendFormat: model.LegendFormat,
+			Start:        query.TimeRange.From,
+			End:          query.TimeRange.To,
+			RefId:        query.RefID,
 		})
 	}
 
@@ -316,4 +339,19 @@ func ConvertAPIError(err error) error {
 		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
 	}
 	return err
+}
+
+func calculateRateInterval(interval time.Duration, scrapeInterval string, intervalCalculator intervalv2.Calculator) time.Duration {
+	scrape := scrapeInterval
+	if scrape == "" {
+		scrape = "15s"
+	}
+
+	scrapeIntervalDuration, err := intervalv2.ParseIntervalStringToTimeDuration(scrape)
+	if err != nil {
+		return time.Duration(0)
+	}
+
+	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
+	return rateInterval
 }
