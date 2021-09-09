@@ -265,52 +265,7 @@ export function fetchUsers(): ThunkResult<void> {
       const result = await getBackendSrv().get(
         `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&filter=${filter}`
       );
-      // TODO remove after data from api is available
-      const mockData = {
-        licensedRole: 'Viewer',
-        permissions: ['dashboard', 'folder'],
-        teams: [
-          {
-            name: 'Permissions Team',
-            url: 'team url',
-          },
-          {
-            name: 'SECOND TEAM',
-            url: 'team url',
-          },
-        ],
-        orgs: [
-          {
-            name: 'Main org.',
-            url: 'org url',
-          },
-          {
-            name: 'Second org',
-            url: 'org url',
-          },
-        ],
-      };
-      dispatch(
-        usersFetched({
-          ...result,
-          users: result.users.map((user: any, i: number) => {
-            if (i === result.users.length - 1) {
-              return {
-                ...user,
-                ...mockData,
-                teams: [
-                  {
-                    name: 'Permissions Team',
-                    url: 'team url',
-                  },
-                ],
-              };
-            }
-
-            return { ...user, ...mockData };
-          }),
-        })
-      );
+      dispatch(usersFetched(result));
     } catch (error) {
       usersFetchEnd();
       console.error(error);

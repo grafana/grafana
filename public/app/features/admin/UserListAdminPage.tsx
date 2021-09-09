@@ -57,7 +57,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   }, [fetchUsers]);
 
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
-  const showUnits = useMemo(() => users.some((user) => user.teams || user.orgs), [users]);
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -97,7 +97,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th>Login</th>
                     <th>Email</th>
                     <th>Name</th>
-                    {showUnits && <th>Belongs to</th>}
+                    <th>Belongs to</th>
                     {showLicensedRole && <th>Licensed role</th>}
                     <th>
                       Last active&nbsp;
@@ -110,7 +110,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <UserListItem user={user} showLicensedRole={showLicensedRole} showUnits={showUnits} key={user.id} />
+                    <UserListItem user={user} showLicensedRole={showLicensedRole} key={user.id} />
                   ))}
                 </tbody>
               </table>
@@ -131,9 +131,9 @@ const iconMap = new Map<string, IconName>([
 type UserListItemProps = {
   user: UserDTO;
   showLicensedRole: boolean;
-  showUnits: boolean;
 };
-const UserListItem = memo(({ user, showUnits, showLicensedRole }: UserListItemProps) => {
+
+const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
   const styles = useStyles2(getStyles);
   const editUrl = `admin/users/edit/${user.id}`;
 
@@ -160,7 +160,7 @@ const UserListItem = memo(({ user, showUnits, showLicensedRole }: UserListItemPr
         </a>
       </td>
 
-      <td className={cx('link-td', styles.iconRow, styles.row)}>
+      <td className={styles.row}>
         <OrgUnits units={user.orgs} icon={'building'} />
         <OrgUnits units={user.teams} icon={'users-alt'} />
         {user.isAdmin && (
@@ -232,14 +232,8 @@ const OrgUnits = ({ units, icon }: OrgUnitProps) => {
       </div>
     </Tooltip>
   ) : (
-    <a
-      className="ellipsis"
-      href={units[0].url}
-      title={units[0].name}
-      key={units[0].name}
-      aria-label={`Edit ${units[0].name}`}
-    >
-      <Icon name={'users-alt'} /> {units[0].name}
+    <a href={units[0].url} title={units[0].name} key={units[0].name} aria-label={`Edit ${units[0].name}`}>
+      <Icon name={icon} /> {units[0].name}
     </a>
   );
 };
@@ -260,6 +254,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     row: css`
       display: flex;
       align-items: center;
+      height: 100% !important;
+
+      a {
+        padding: ${theme.spacing(0.5)} 0 !important;
+      }
 
       svg {
         margin-left: ${theme.spacing(1)};
@@ -271,6 +270,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     unitItem: css`
       cursor: pointer;
+      padding: ${theme.spacing(0.5)} 0;
     `,
   };
 };
