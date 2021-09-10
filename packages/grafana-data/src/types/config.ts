@@ -52,6 +52,7 @@ export interface FeatureToggles {
   tempoSearch: boolean;
   recordedQueries: boolean;
   prometheusMonaco: boolean;
+  newNavigation: boolean;
 }
 
 /**

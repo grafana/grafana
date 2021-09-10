@@ -405,6 +405,11 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	_, err = sess.Exec("delete from ngalert_configuration")
+	if err != nil {
+		return err
+	}
+
 	_, err = sess.Exec("delete from alert_instance")
 	if err != nil {
 		return err

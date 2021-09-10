@@ -81,9 +81,6 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
 							}),
 						},
-						Meta: &data.FrameMeta{
-							PreferredVisualization: "logs",
-						},
 					},
 				},
 			},
@@ -141,9 +138,6 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 							data.NewField("logGroupName", nil, []*string{
 								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
 							}),
-						},
-						Meta: &data.FrameMeta{
-							PreferredVisualization: "logs",
 						},
 					},
 				},
@@ -219,9 +213,6 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 			data.NewField("percent", nil, []*int64{
 				aws.Int64(100), aws.Int64(30), aws.Int64(55),
 			}),
-		},
-		Meta: &data.FrameMeta{
-			PreferredVisualization: "logs",
 		},
 	}
 	expFrame.RefID = refID
@@ -357,7 +348,6 @@ func TestQuery_StartQuery(t *testing.T) {
 			Custom: map[string]interface{}{
 				"Region": "default",
 			},
-			PreferredVisualization: "logs",
 		}
 		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
 			refID: {
@@ -430,9 +420,6 @@ func TestQuery_StopQuery(t *testing.T) {
 		Name: "StopQueryResponse",
 		Fields: []*data.Field{
 			data.NewField("success", nil, []bool{true}),
-		},
-		Meta: &data.FrameMeta{
-			PreferredVisualization: "logs",
 		},
 	}
 	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{

@@ -326,6 +326,7 @@ type Cfg struct {
 	DataProxyMaxIdleConns          int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
+	ResponseLimit                  int64
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -444,6 +445,10 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 // some graceperiod to update all the monitoring tools.
 func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 	return cfg.FeatureToggles["disable_http_request_histogram"]
+}
+
+func (cfg Cfg) IsNewNavigationEnabled() bool {
+	return cfg.FeatureToggles["newNavigation"]
 }
 
 type CommandLineArgs struct {

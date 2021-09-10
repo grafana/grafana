@@ -162,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(30);
+      expect(model.schemaVersion).toBe(31);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1418,6 +1418,147 @@ describe('DashboardModel', () => {
 
     it('should ignore fieldConfig.defaults', () => {
       expect(model.panels[0].panels[0].fieldConfig.defaults).toEqual(undefined);
+    });
+  });
+
+  describe('labelsToFields should be split into two transformers', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        schemaVersion: 29,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            transformations: [{ id: 'labelsToFields' }],
+          },
+        ],
+      });
+    });
+
+    it('should create two transormatoins', () => {
+      const xforms = model.panels[0].transformations;
+      expect(xforms).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "id": "labelsToFields",
+          },
+          Object {
+            "id": "merge",
+            "options": Object {},
+          },
+        ]
+      `);
+    });
+  });
+
+  describe('migrating legacy CloudWatch queries', () => {
+    let model: any;
+    let panelTargets: any;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        annotations: {
+          list: [
+            {
+              actionPrefix: '',
+              alarmNamePrefix: '',
+              alias: '',
+              dimensions: {
+                InstanceId: 'i-123',
+              },
+              enable: true,
+              expression: '',
+              iconColor: 'red',
+              id: '',
+              matchExact: true,
+              metricName: 'CPUUtilization',
+              name: 'test',
+              namespace: 'AWS/EC2',
+              period: '',
+              prefixMatching: false,
+              region: 'us-east-2',
+              statistics: ['Minimum', 'Sum'],
+            },
+          ],
+        },
+        panels: [
+          {
+            gridPos: {
+              h: 8,
+              w: 12,
+              x: 0,
+              y: 0,
+            },
+            id: 4,
+            options: {
+              legend: {
+                calcs: [],
+                displayMode: 'list',
+                placement: 'bottom',
+              },
+              tooltipOptions: {
+                mode: 'single',
+              },
+            },
+            targets: [
+              {
+                alias: '',
+                dimensions: {
+                  InstanceId: 'i-123',
+                },
+                expression: '',
+                id: '',
+                matchExact: true,
+                metricName: 'CPUUtilization',
+                namespace: 'AWS/EC2',
+                period: '',
+                refId: 'A',
+                region: 'default',
+                statistics: ['Average', 'Minimum', 'p12.21'],
+              },
+              {
+                alias: '',
+                dimensions: {
+                  InstanceId: 'i-123',
+                },
+                expression: '',
+                hide: false,
+                id: '',
+                matchExact: true,
+                metricName: 'CPUUtilization',
+                namespace: 'AWS/EC2',
+                period: '',
+                refId: 'B',
+                region: 'us-east-2',
+                statistics: ['Sum'],
+              },
+            ],
+            title: 'Panel Title',
+            type: 'timeseries',
+          },
+        ],
+      });
+      panelTargets = model.panels[0].targets;
+    });
+
+    it('multiple stats query should have been split into three', () => {
+      expect(panelTargets.length).toBe(4);
+    });
+
+    it('new stats query should get the right statistic', () => {
+      expect(panelTargets[0].statistic).toBe('Average');
+      expect(panelTargets[1].statistic).toBe('Sum');
+      expect(panelTargets[2].statistic).toBe('Minimum');
+      expect(panelTargets[3].statistic).toBe('p12.21');
+    });
+
+    it('new stats queries should be put in the end of the array', () => {
+      expect(panelTargets[0].refId).toBe('A');
+      expect(panelTargets[1].refId).toBe('B');
+      expect(panelTargets[2].refId).toBe('C');
+      expect(panelTargets[3].refId).toBe('D');
     });
   });
 });

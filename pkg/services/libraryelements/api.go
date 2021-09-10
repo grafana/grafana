@@ -125,5 +125,11 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, errLibraryElementHasConnections) {
 		return response.Error(403, errLibraryElementHasConnections.Error(), err)
 	}
+	if errors.Is(err, errLibraryElementInvalidUID) {
+		return response.Error(400, errLibraryElementInvalidUID.Error(), err)
+	}
+	if errors.Is(err, errLibraryElementUIDTooLong) {
+		return response.Error(400, errLibraryElementUIDTooLong.Error(), err)
+	}
 	return response.Error(500, message, err)
 }

@@ -1,6 +1,6 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { HTMLAttributes, useCallback, useRef, useState } from 'react';
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
-import { Portal, useStyles2, usePanelContext, usePlotContext } from '@grafana/ui';
+import { Portal, useStyles2, usePanelContext } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { AnnotationEditorForm } from './AnnotationEditorForm';
 import { getCommonAnnotationStyles } from '../styles';
@@ -8,7 +8,7 @@ import { usePopper } from 'react-popper';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { AnnotationTooltip } from './AnnotationTooltip';
 
-interface Props {
+interface Props extends HTMLAttributes<HTMLDivElement> {
   timeZone: TimeZone;
   annotation: AnnotationsDataFrameViewDTO;
 }
@@ -26,11 +26,10 @@ const POPPER_CONFIG = {
   ],
 };
 
-export function AnnotationMarker({ annotation, timeZone }: Props) {
+export function AnnotationMarker({ annotation, timeZone, style }: Props) {
+  const { canAddAnnotations, ...panelCtx } = usePanelContext();
   const commonStyles = useStyles2(getCommonAnnotationStyles);
   const styles = useStyles2(getStyles);
-  const plotCtx = usePlotContext();
-  const { canAddAnnotations, ...panelCtx } = usePanelContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -101,24 +100,9 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
     <div className={commonStyles(annotation).markerTriangle} style={{ transform: 'translate3d(-100%,-50%, 0)' }} />
   );
 
-  if (isRegionAnnotation && plotCtx.plot) {
-    let x0 = plotCtx.plot!.valToPos(annotation.time, 'x');
-    let x1 = plotCtx.plot!.valToPos(annotation.timeEnd, 'x');
-
-    // markers are rendered relatively to uPlot canvas overly, not caring about axes width
-    if (x0 < 0) {
-      x0 = 0;
-    }
-
-    if (x1 > plotCtx.plot!.bbox.width / window.devicePixelRatio) {
-      x1 = plotCtx.plot!.bbox.width / window.devicePixelRatio;
-    }
-
+  if (isRegionAnnotation) {
     marker = (
-      <div
-        className={commonStyles(annotation).markerBar}
-        style={{ width: `${x1 - x0}px`, transform: 'translate3d(0,-50%, 0)' }}
-      />
+      <div className={commonStyles(annotation).markerBar} style={{ ...style, transform: 'translate3d(0,-50%, 0)' }} />
     );
   }
   return (

@@ -15,6 +15,7 @@ import {
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId, SplitOpen } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -67,6 +68,7 @@ export function TraceView(props: Props) {
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
+  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -130,6 +132,7 @@ export function TraceView(props: Props) {
           searchValue={search}
           onSearchValueChange={setSearch}
           hideSearchButtons={true}
+          timeZone={timeZone}
         />
         <TraceTimelineViewer
           registerAccessors={noop}
