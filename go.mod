@@ -11,6 +11,9 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
+// Temporary replace till https://github.com/ohler55/ojg/issues/72 solved to fix builds on 32-bit CPU.
+replace github.com/ohler55/ojg => github.com/FZambia/ojg v1.12.6-0.20210910083152-5e71da98845c
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
