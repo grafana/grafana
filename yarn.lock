@@ -17314,7 +17314,7 @@ ol-mapbox-style@^6.4.1:
     mapbox-to-css-font "^2.4.0"
     webfont-matcher "^1.1.0"
 
-ol@^6.7.0:
+ol@6.7.0:
   version "6.7.0"
   resolved "https://registry.yarnpkg.com/ol/-/ol-6.7.0.tgz#5d85e33c652d2332074a20da2150d246a2260e71"
   integrity sha512-MEdU3MQCT1KUb0Tt2/9oemUze9qi/O+1IsXCWivSaEIzf9sIbYe2UcKwJzjmmrQpe87em+T3gk9SICSF/p3z7Q==
