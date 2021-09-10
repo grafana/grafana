@@ -187,11 +187,6 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 				Status: plugins.PluginSignatureModified,
 			}, nil
 		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Warn("Failed to close plugin file", "path", fp, "err", err)
-			}
-		}()
 
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
@@ -206,6 +201,9 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 			return plugins.PluginSignatureState{
 				Status: plugins.PluginSignatureModified,
 			}, nil
+		}
+		if err := f.Close(); err != nil {
+			log.Warn("Failed to close plugin file", "path", fp, "err", err)
 		}
 		manifestFiles[p] = struct{}{}
 	}
