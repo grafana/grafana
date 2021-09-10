@@ -98,6 +98,8 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 	}
 	if !util.IsValidShortUID(UID) {
 		return LibraryElementDTO{}, errLibraryElementInvalidUID
+	} else if len(UID) > 40 {
+		return LibraryElementDTO{}, errLibraryElementUIDTooLong
 	}
 	element := LibraryElement{
 		OrgID:    c.SignedInUser.OrgId,

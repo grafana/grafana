@@ -122,6 +122,14 @@ func TestCreateLibraryElement(t *testing.T) {
 			require.Equal(t, 400, resp.Status())
 		})
 
+	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an UID that is too long, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
+			command.UID = "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K"
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 400, resp.Status())
+		})
+
 	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should not update panel title",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(1, "Library Panel Name")

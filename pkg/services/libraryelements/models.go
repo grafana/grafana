@@ -151,6 +151,8 @@ var (
 	ErrFolderHasConnectedLibraryElements = errors.New("folder contains library elements that are linked in use")
 	// errLibraryElementInvalidUID is an error for when the uid of a library element is invalid
 	errLibraryElementInvalidUID = errors.New("uid contains illegal characters")
+	// errLibraryElementUIDTooLong is an error for when the uid of a library element is invalid
+	errLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
 )
 
 // Commands
