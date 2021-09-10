@@ -3,7 +3,6 @@
   "name": "InfluxDB",
   "id": "influxdb",
   "category": "tsdb",
-  "backend": true,
   "defaultMatchFormat": "regex values",
   "metrics": true,
   "logs": true,

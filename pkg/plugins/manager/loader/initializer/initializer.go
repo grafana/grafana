@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 
 	"github.com/gosimple/slug"
@@ -28,16 +26,14 @@ import (
 var logger = log.New("plugin.initializer")
 
 type Initializer struct {
-	cfg             *setting.Cfg
-	license         models.Licensing
-	factoryProvider coreplugin.BackendFactoryProvider
+	cfg     *setting.Cfg
+	license models.Licensing
 }
 
-func New(cfg *setting.Cfg, license models.Licensing, factoryProvider coreplugin.BackendFactoryProvider) Initializer {
+func New(cfg *setting.Cfg, license models.Licensing) Initializer {
 	return Initializer{
-		cfg:             cfg,
-		license:         license,
-		factoryProvider: factoryProvider,
+		cfg:     cfg,
+		license: license,
 	}
 }
 
@@ -101,12 +97,6 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 					return nil
 				},
 			)
-		} else if p.IsCorePlugin() {
-			var err error
-			backendFactory, err = i.factoryProvider.BackendFactory(p.ID)
-			if err != nil {
-				return err
-			}
 		} else {
 			cmd := plugins.ComposePluginStartCommand(p.Executable)
 			backendFactory = grpcplugin.NewBackendPlugin(p.ID, filepath.Join(p.PluginDir, cmd))

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -91,8 +90,8 @@ var wireBasicSet = wire.NewSet(
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	manager.ProvideServiceV2,
-	coreplugin.ProvideService,
 	wire.Bind(new(plugins.ManagerV2), new(*manager.PluginManagerV2)),
+	wire.Bind(new(plugins.CoreBackendRegistrar), new(*manager.PluginManagerV2)),
 	backendmanager.ProvideService,
 	wire.Bind(new(backendplugin.Manager), new(*backendmanager.Manager)),
 	cloudwatch.ProvideService,

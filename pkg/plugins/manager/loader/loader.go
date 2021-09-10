@@ -8,8 +8,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -38,37 +36,36 @@ type Loader struct {
 	AllowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc
 }
 
-func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg,
-	backendFactoryProvider coreplugin.BackendFactoryProvider) Loader {
+func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg) Loader {
 	return Loader{
 		cfg:                           cfg,
 		AllowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
 		pluginFinder:                  finder.New(cfg),
-		pluginInitializer:             initializer.New(cfg, license, backendFactoryProvider),
+		pluginInitializer:             initializer.New(cfg, license),
 		errs:                          make(map[string]error),
 	}
 }
 
-func (l *Loader) Load(path string, existingPlugins map[string]struct{}) (*plugins.PluginV2, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find(path)
+func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.PluginV2, error) {
+	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
 	if err != nil {
 		logger.Error("failed to find plugin", "err", err)
 	}
 
-	loadedPlugins, err := l.loadPlugins(pluginJSONPaths, existingPlugins)
+	loadedPlugins, err := l.loadPlugins(pluginJSONPaths, ignore)
 	if err != nil {
 		return nil, err
 	}
 	return loadedPlugins[0], nil
 }
 
-func (l *Loader) LoadAll(path string, existingPlugins map[string]struct{}) ([]*plugins.PluginV2, error) {
+func (l *Loader) LoadAll(path []string, ignore map[string]struct{}) ([]*plugins.PluginV2, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(path)
 	if err != nil {
 		logger.Error("plugin finder encountered an error", "err", err)
 	}
 
-	return l.loadPlugins(pluginJSONPaths, existingPlugins)
+	return l.loadPlugins(pluginJSONPaths, ignore)
 }
 
 func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.PluginV2, error) {

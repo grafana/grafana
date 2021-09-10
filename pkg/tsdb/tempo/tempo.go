@@ -7,6 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -21,12 +25,21 @@ type Service struct {
 	tlog log.Logger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
 		tlog: log.New("tsdb.tempo"),
 		im:   im,
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := registrar.Register("tempo", factory); err != nil {
+		s.tlog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
 
 	return s, nil

@@ -14,16 +14,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -44,17 +42,15 @@ type PluginManagerV2 struct {
 	log             log.Logger
 }
 
-func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator,
-	backendFactoryProvider coreplugin.BackendFactoryProvider) (*PluginManagerV2, error) {
-	pm := newManagerV2(cfg, license, requestValidator, backendFactoryProvider)
+func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator) (*PluginManagerV2, error) {
+	pm := newManagerV2(cfg, license, requestValidator)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator,
-	backendFactoryProvider coreplugin.BackendFactoryProvider) *PluginManagerV2 {
+func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator) *PluginManagerV2 {
 	return &PluginManagerV2{
 		Cfg:                    cfg,
 		License:                license,
@@ -62,7 +58,7 @@ func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValid
 		plugins:                map[string]*plugins.PluginV2{},
 		log:                    log.New("plugin.manager.v2"),
 		pluginInstaller:        installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		pluginLoader:           loader.New(nil, nil, cfg, backendFactoryProvider),
+		pluginLoader:           loader.New(nil, nil, cfg),
 	}
 }
 
@@ -72,19 +68,19 @@ func (m *PluginManagerV2) init() error {
 	}
 
 	// install Core plugins
-	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins")) // wording
+	err := m.loadPlugins(m.corePluginDirs()...) // wording
 	if err != nil {
 		return err
 	}
 
 	// install Bundled plugins
-	err = m.installPlugins(m.Cfg.BundledPluginsPath)
+	err = m.loadPlugins(m.Cfg.BundledPluginsPath)
 	if err != nil {
 		return err
 	}
 
 	// install External plugins
-	err = m.installPlugins(m.Cfg.PluginsPath)
+	err = m.loadPlugins(m.Cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
@@ -107,7 +103,7 @@ func (m *PluginManagerV2) IsEnabled() bool {
 	return !m.IsDisabled()
 }
 
-func (m *PluginManagerV2) installPlugins(path string) error {
+func (m *PluginManagerV2) loadPlugins(path ...string) error {
 	// think about state + their transitions
 	loadedPlugins, err := m.pluginLoader.LoadAll(path, m.registeredPlugins())
 	if err != nil {
@@ -523,7 +519,7 @@ func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string)
 		return err
 	}
 
-	err = m.installPlugins(m.Cfg.PluginsPath)
+	err = m.loadPlugins(m.Cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
@@ -584,6 +580,42 @@ func (m *PluginManagerV2) stop(ctx context.Context) {
 		}(p, ctx)
 	}
 	wg.Wait()
+}
+
+func (m *PluginManagerV2) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	if m.isRegistered(pluginID) {
+		return fmt.Errorf("backend plugin %s already registered", pluginID)
+	}
+
+	path := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
+
+	p, err := m.pluginLoader.LoadWithFactory(path, factory)
+	if err != nil {
+		return err
+	}
+
+	err = m.register(p)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PluginManagerV2) corePluginDirs() []string {
+	datasourcePaths := []string{
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/grafana"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/mixed"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
+	}
+
+	panelsPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/panel")
+
+	return append(datasourcePaths, panelsPath)
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.PluginV2) error {

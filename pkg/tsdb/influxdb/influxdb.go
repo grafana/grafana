@@ -10,6 +10,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -30,13 +34,22 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(httpClient httpclient.Provider) (*Service, error) {
+func ProvideService(httpClient httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
 		glog:           log.New("tsdb.influxdb"),
 		im:             im,
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := registrar.Register("influxdb", factory); err != nil {
+		s.glog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
 
 	return s, nil

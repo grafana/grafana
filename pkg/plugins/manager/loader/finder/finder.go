@@ -22,27 +22,31 @@ func New(cfg *setting.Cfg) Finder {
 	return Finder{cfg: cfg}
 }
 
-func (f *Finder) Find(pluginsDir string) ([]string, error) { //io.fs
-	exists, err := fs.Exists(pluginsDir)
-	if err != nil {
-		return nil, err
-	}
-
+func (f *Finder) Find(pluginDirs []string) ([]string, error) { //io.fs
 	var pluginJSONPaths []string
-	if !exists {
-		if fs.NaiveEqual(f.cfg.PluginsPath, pluginsDir) {
-			if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-				logger.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
-			} else {
-				logger.Info("External plugins directory created", "directory", pluginsDir)
-			}
-		} else {
-			return nil, fmt.Errorf("aborting install as plugins directory %s does not exist", pluginsDir)
+
+	for _, dir := range pluginDirs {
+		exists, err := fs.Exists(dir)
+		if err != nil {
+			return nil, err
 		}
-	}
-	pluginJSONPaths, err = f.getPluginJSONPaths(pluginsDir)
-	if err != nil {
-		return nil, err
+
+		if !exists {
+			if fs.NaiveEqual(f.cfg.PluginsPath, dir) {
+				if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+					logger.Error("Failed to create external plugins directory", "dir", dir, "error", err)
+				} else {
+					logger.Info("External plugins directory created", "directory", dir)
+				}
+			} else {
+				return nil, fmt.Errorf("aborting install as plugins directory %s does not exist", dir)
+			}
+		}
+		paths, err := f.getPluginJSONPaths(dir)
+		if err != nil {
+			return nil, err
+		}
+		pluginJSONPaths = append(pluginJSONPaths, paths...)
 	}
 
 	var pluginSettingJSONPaths []string
@@ -61,16 +65,16 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) { //io.fs
 	return append(pluginJSONPaths, pluginSettingJSONPaths...), nil
 }
 
-func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
+func (f *Finder) getPluginJSONPaths(dir string) ([]string, error) {
 	var pluginJSONPaths []string
 
 	var err error
-	rootDirPath, err = filepath.Abs(rootDirPath)
+	dir, err = filepath.Abs(dir)
 	if err != nil {
 		return []string{}, err
 	}
 
-	if err := util.Walk(rootDirPath, true, true,
+	if err := util.Walk(dir, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
@@ -92,15 +96,15 @@ func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 			return nil
 		}); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			logger.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", rootDirPath, "err", err)
+			logger.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", dir, "err", err)
 			return []string{}, err
 		}
 		if errors.Is(err, os.ErrPermission) {
-			logger.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", rootDirPath, "err", err)
+			logger.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", dir, "err", err)
 			return []string{}, err
 		}
-		if rootDirPath != "data/plugins" {
-			logger.Warn("Could not scan dir", "pluginDir", rootDirPath, "err", err)
+		if dir != "data/plugins" {
+			logger.Warn("Could not scan dir", "pluginDir", dir, "err", err)
 		}
 
 		return []string{}, err

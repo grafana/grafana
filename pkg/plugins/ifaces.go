@@ -3,6 +3,8 @@ package plugins
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -121,4 +123,9 @@ type ManagerV2 interface {
 	Install(ctx context.Context, pluginID, version string) error
 	// Uninstall uninstalls a plugin.
 	Uninstall(ctx context.Context, pluginID string) error
+}
+
+type CoreBackendRegistrar interface {
+	//Register registers a backend plugin
+	Register(pluginID string, factory backendplugin.PluginFactoryFunc) error
 }

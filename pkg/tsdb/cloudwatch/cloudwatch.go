@@ -7,6 +7,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -53,13 +57,23 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService) (*CloudWatchService, error) {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, registrar plugins.CoreBackendRegistrar) (*CloudWatchService, error) {
 	plog.Debug("initing")
+
+	executor := newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache())
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: executor,
+	})
+
+	if err := registrar.Register("cloudwatch", factory); err != nil {
+		plog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
 
 	return &CloudWatchService{
 		LogsService: logsService,
 		Cfg:         cfg,
-		Executor:    newExecutor(logsService, datasource.NewInstanceManager(NewInstanceSettings()), cfg, awsds.NewSessionCache()),
+		Executor:    executor,
 	}, nil
 }
 

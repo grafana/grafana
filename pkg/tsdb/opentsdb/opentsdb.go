@@ -11,6 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"encoding/json"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -29,11 +33,19 @@ type Service struct {
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		logger: log.New("tsdb.opentsdb"),
 		im:     im,
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+	err := registrar.Register("opentsdb", factory)
+	if err != nil {
+		return nil, err
 	}
 
 	return s, nil

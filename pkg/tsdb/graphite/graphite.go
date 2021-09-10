@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -33,10 +35,19 @@ type Service struct {
 	im     instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
 	s := &Service{
 		logger: log.New("tsdb.graphite"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := registrar.Register("graphite", factory); err != nil {
+		s.logger.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
 
 	return s, nil
