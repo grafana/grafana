@@ -12,6 +12,9 @@ import {
   getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
+  getActiveThreshold,
+  Threshold,
+  getFieldConfigWithMinMax,
   outerJoinDataFrames,
   ThresholdsMode,
 } from '@grafana/data';
@@ -257,10 +260,73 @@ export function unsetSameFutureValues(values: any[]): any[] | undefined {
   return clone;
 }
 
+/**
+ * Merge values by the threshold
+ */
+export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
+  const thresholds = field.config.thresholds;
+  if (field.type !== FieldType.number || !thresholds || !thresholds.steps.length) {
+    return undefined;
+  }
+
+  const items = getThresholdItems(field.config, theme);
+  if (items.length !== thresholds.steps.length) {
+    return undefined; // should not happen
+  }
+
+  const thresholdToText = new Map<Threshold, string>();
+  const textToColor = new Map<string, string>();
+  for (let i = 0; i < items.length; i++) {
+    thresholdToText.set(thresholds.steps[i], items[i].label);
+    textToColor.set(items[i].label, items[i].color!);
+  }
+
+  let prev: Threshold | undefined = undefined;
+  let input = field.values.toArray();
+  const vals = new Array<String | undefined>(field.values.length);
+  if (thresholds.mode === ThresholdsMode.Percentage) {
+    const { min, max } = getFieldConfigWithMinMax(field);
+    const delta = max! - min!;
+    input = input.map((v) => {
+      if (v == null) {
+        return v;
+      }
+      return ((v - min!) / delta) * 100;
+    });
+  }
+
+  for (let i = 0; i < vals.length; i++) {
+    const v = input[i];
+    if (v == null) {
+      vals[i] = v;
+      prev = undefined;
+    }
+    const active = getActiveThreshold(v, thresholds.steps);
+    if (active === prev) {
+      vals[i] = undefined;
+    } else {
+      vals[i] = thresholdToText.get(active);
+    }
+    prev = active;
+  }
+
+  return {
+    ...field,
+    type: FieldType.string,
+    values: new ArrayVector(vals),
+    display: (value: string) => ({
+      text: value,
+      color: textToColor.get(value),
+      numeric: NaN,
+    }),
+  };
+}
+
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
-  mergeValues: boolean
+  mergeValues: boolean,
+  theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
@@ -279,6 +345,15 @@ export function prepareTimelineFields(
           fields.push(field);
           break;
         case FieldType.number:
+          if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
+            const f = mergeThresholdValues(field, theme);
+            if (f) {
+              fields.push(f);
+              changed = true;
+              continue;
+            }
+          }
+
         case FieldType.boolean:
         case FieldType.string:
           field = {
@@ -332,6 +407,30 @@ export function prepareTimelineFields(
   return { frames };
 }
 
+export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+  const items: VizLegendItem[] = [];
+  const thresholds = fieldConfig.thresholds;
+  if (!thresholds || !thresholds.steps.length) {
+    return items;
+  }
+
+  const steps = thresholds.steps;
+  const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+
+  const fmt = (v: number) => formattedValueToString(disp(v));
+
+  for (let i = 1; i <= steps.length; i++) {
+    const step = steps[i - 1];
+    items.push({
+      label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
+      color: theme.visualization.getColorByName(step.color),
+      yAxis: 1,
+    });
+  }
+
+  return items;
+}
+
 export function prepareTimelineLegendItems(
   frames: DataFrame[] | undefined,
   options: VizLegendOptions,
@@ -353,21 +452,7 @@ export function prepareTimelineLegendItems(
 
   // If thresholds are enabled show each step in the legend
   if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
-    const steps = thresholds.steps;
-    const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
-
-    const fmt = (v: number) => formattedValueToString(disp(v));
-
-    for (let i = 1; i <= steps.length; i++) {
-      const step = steps[i - 1];
-      items.push({
-        label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
-        color: theme.visualization.getColorByName(step.color),
-        yAxis: 1,
-      });
-    }
-
-    return items;
+    return getThresholdItems(fieldConfig, theme);
   }
 
   // If thresholds are enabled show each step in the legend

@@ -1,3 +1,4 @@
+//go:build go1.3
 // +build go1.3
 
 // Copyright 2014 The Macaron Authors
@@ -128,7 +129,7 @@ func FromContext(c context.Context) *Context {
 func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		c := FromContext(req.Context())
-		c.Req.Request = req
+		c.Req = req
 		if mrw, ok := rw.(*responseWriter); ok {
 			c.Resp = mrw
 		} else {
@@ -159,11 +160,10 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Data:     make(map[string]interface{}),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
-	c.Map(defaultReturnHandler())
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
-	c.Req = Request{req}
+	c.Req = req
 	return c
 }
 

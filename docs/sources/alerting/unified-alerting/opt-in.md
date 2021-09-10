@@ -10,7 +10,9 @@ weight = 128
 
 Since [Grafana alerting is enabled]({{< relref "../../administration/configuration.md">}}#unified_alerting) by default (and legacy dashboard alerting is disabled), existing dashboard alerts are migrated into a format that is compatible with the Grafana 8 alerting system. You can view these migrated rules, alongside any new alerts you create after the migration, from the Alerting page of your Grafana instance.
 
-> **Note:** Since the new system stores the notification log and silences on disk, we require the use of persistent disks for using Grafana 8 alerts. Otherwise, the silences and notification log will get lost on a restart, and you might get unwanted or duplicate notifications.
+> **Note - v8.2 or earlier:** Since the new system stores the notification log and silences on disk, we require the use of persistent disks for using Grafana 8 alerts. Otherwise, the silences and notification log will get lost on a restart, and you might get unwanted or duplicate notifications.
+
+> **Note - v8.3+**: We have removed the need of persistent disk. The notification log and silences are now stored in the database. If you used the file-based approach, we'll read those files and eventually (every 15 minutes) persist them to the database.
 
 Read and write access to dashboard alerts in Grafana versions 7 and earlier were governed by the dashboard and folder permissions under which the alerts were stored. In Grafana 8, alerts are stored in folders and inherit the permissions of those folders. During the migration, dashboard alert permissions are matched to the new rules permissions as follows:
 

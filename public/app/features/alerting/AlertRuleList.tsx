@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
@@ -141,4 +140,4 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connector(AlertRuleListUnconnected));
+export default connector(AlertRuleListUnconnected);

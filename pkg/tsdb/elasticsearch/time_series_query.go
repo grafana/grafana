@@ -9,18 +9,18 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type timeSeriesQuery struct {
 	client             es.Client
 	dataQueries        []backend.DataQuery
-	intervalCalculator tsdb.Calculator
+	intervalCalculator intervalv2.Calculator
 }
 
 var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
-	intervalCalculator tsdb.Calculator) *timeSeriesQuery {
+	intervalCalculator intervalv2.Calculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
 		dataQueries:        dataQuery,
@@ -70,12 +70,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if err != nil {
 		return err
 	}
-	intrvl, err := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, tsdb.Min)
-	if err != nil {
-		return err
-	}
+	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval)
 
-	b := ms.Search(intrvl)
+	b := ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)

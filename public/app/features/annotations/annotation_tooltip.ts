@@ -36,7 +36,7 @@ export function annotationTooltipDirective(
       let tooltip = '<div class="graph-annotation">';
       let titleStateClass = '';
 
-      if (event.alertId) {
+      if (event.alertId !== undefined) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="${stateModel.iconClass}"></i> ${stateModel.text}`;

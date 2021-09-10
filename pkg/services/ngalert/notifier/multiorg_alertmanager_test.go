@@ -19,9 +19,10 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 		orgs: []int64{1, 2, 3},
 	}
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
+	kvStore := newFakeKVStore(t)
 	mam := NewMultiOrgAlertmanager(&setting.Cfg{
 		UnifiedAlertingDisabledOrgs: map[int64]struct{}{5: {}},
-	}, configStore, orgStore)
+	}, configStore, orgStore, kvStore)
 	ctx := context.Background()
 
 	// Ensure that one Alertmanager is created per org.
@@ -58,7 +59,8 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	}
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
+	kvStore := newFakeKVStore(t)
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore)
 	ctx := context.Background()
 
 	// Ensure that one Alertmanagers is created per org.

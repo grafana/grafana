@@ -34,8 +34,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg.UnifiedAlertingEnabled = true
 
 	m := metrics.NewMetrics(prometheus.NewRegistry())
-	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil,
-		m)
+	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil, nil, m)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
 		SQLStore:     ng.SQLStore,

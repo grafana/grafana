@@ -204,13 +204,14 @@ func (s *fakeRenderService) Init() error {
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
+	cfg.Quota.Enabled = false
 
 	hs := &HTTPServer{
 		Cfg:           cfg,
+		Bus:           bus.GetBus(),
+		Live:          newTestLive(t),
+		QuotaService:  &quota.QuotaService{Cfg: cfg},
 		RouteRegister: routing.NewRouteRegister(),
-		QuotaService: &quota.QuotaService{
-			Cfg: cfg,
-		},
 		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
 	}
 
