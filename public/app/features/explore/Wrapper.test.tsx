@@ -15,7 +15,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { setTimeSrv } from '../dashboard/services/TimeSrv';
 import { from, Observable } from 'rxjs';
 import { LokiDatasource } from '../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../plugins/datasource/loki/types';
@@ -325,20 +324,14 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
     },
   } as any);
 
-  setTimeSrv({
-    init() {},
-    getValidIntervals(intervals: string[]): string[] {
-      return intervals;
-    },
-  } as any);
-  setEchoSrv(new Echo());
-
   const store = configureStore();
   store.getState().user = {
     ...initialUserState,
     orgId: 1,
     timeZone: 'utc',
   };
+
+  setEchoSrv(new Echo());
 
   store.getState().navIndex = {
     explore: {
