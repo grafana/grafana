@@ -141,7 +141,8 @@ func (s *SocialGitlab) extractRole(rawJSON []byte) (string, error) {
 		return "", nil
 	}
 
-	role, err := s.searchJSONForAttr(s.roleAttributePath, rawJSON)
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
+
 	if err != nil {
 		return "", err
 	}
