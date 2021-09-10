@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/ohler55/ojg/jp"
-	"github.com/ohler55/ojg/oj"
+	"github.com/spyzhov/ajson"
 )
 
 type ExactJsonConverterConfig struct {
@@ -29,10 +28,10 @@ func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
 }
 
 func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
-	obj, err := oj.Parse(body)
-	if err != nil {
-		return nil, err
-	}
+	//obj, err := oj.Parse(body)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	var fields []*data.Field
 
@@ -46,15 +45,17 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 
 		if strings.HasPrefix(f.Value, "$") {
 			// JSON path.
-			x, err := jp.ParseString(f.Value[1:])
+			nodes, err := ajson.JSONPath(body, f.Value)
 			if err != nil {
 				return nil, err
 			}
-			value := x.Get(obj)
-			if len(value) == 0 {
+			if len(nodes) == 0 {
 				field.Set(0, nil)
-			} else if len(value) == 1 {
-				val := value[0]
+			} else if len(nodes) == 1 {
+				val, err := nodes[0].Value()
+				if err != nil {
+					return nil, err
+				}
 				switch f.Type {
 				case data.FieldTypeNullableFloat64:
 					if val == nil {
@@ -81,6 +82,41 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 			} else {
 				return nil, errors.New("too many values")
 			}
+			//x, err := jp.ParseString(f.Value[1:])
+			//if err != nil {
+			//	return nil, err
+			//}
+			//value := x.Get(obj)
+			//if len(value) == 0 {
+			//	field.Set(0, nil)
+			//} else if len(value) == 1 {
+			//	val := value[0]
+			//	switch f.Type {
+			//	case data.FieldTypeNullableFloat64:
+			//		if val == nil {
+			//			field.Set(0, nil)
+			//		} else {
+			//			switch v := val.(type) {
+			//			case float64:
+			//				field.SetConcrete(0, v)
+			//			case int64:
+			//				field.SetConcrete(0, float64(v))
+			//			default:
+			//				return nil, errors.New("malformed float64 type for: " + f.Name)
+			//			}
+			//		}
+			//	case data.FieldTypeNullableString:
+			//		v, ok := val.(string)
+			//		if !ok {
+			//			return nil, errors.New("malformed string type")
+			//		}
+			//		field.SetConcrete(0, v)
+			//	default:
+			//		return nil, fmt.Errorf("unsupported field type: %s (%s)", f.Type, f.Name)
+			//	}
+			//} else {
+			//	return nil, errors.New("too many values")
+			//}
 		} else if strings.HasPrefix(f.Value, "{") {
 			// Goja script.
 			script := strings.Trim(f.Value, "{}")
@@ -120,18 +156,33 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 		labels := map[string]string{}
 		for _, label := range f.Labels {
 			if strings.HasPrefix(label.Value, "$") {
-				x, err := jp.ParseString(label.Value[1:])
+				nodes, err := ajson.JSONPath(body, label.Value)
 				if err != nil {
 					return nil, err
 				}
-				value := x.Get(obj)
-				if len(value) == 0 {
+				if len(nodes) == 0 {
 					labels[label.Name] = ""
-				} else if len(value) == 1 {
-					labels[label.Name] = fmt.Sprintf("%v", value[0])
+				} else if len(nodes) == 1 {
+					value, err := nodes[0].Value()
+					if err != nil {
+						return nil, err
+					}
+					labels[label.Name] = fmt.Sprintf("%v", value)
 				} else {
 					return nil, errors.New("too many values for a label")
 				}
+				//x, err := jp.ParseString(label.Value[1:])
+				//if err != nil {
+				//	return nil, err
+				//}
+				//value := x.Get(obj)
+				//if len(value) == 0 {
+				//	labels[label.Name] = ""
+				//} else if len(value) == 1 {
+				//	labels[label.Name] = fmt.Sprintf("%v", value[0])
+				//} else {
+				//	return nil, errors.New("too many values for a label")
+				//}
 			} else if strings.HasPrefix(label.Value, "{") {
 				script := strings.Trim(label.Value, "{}")
 				var err error
