@@ -23,10 +23,10 @@ export interface PanelContext {
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
   /**
-   * splitOpenFn is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
+   * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
    * For example TimeSeries panel.
    */
-  splitOpenFn?: SplitOpen;
+  onSplitOpen?: SplitOpen;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

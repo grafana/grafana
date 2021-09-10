@@ -126,7 +126,7 @@ export function ExploreGraph({
 
   const panelContext: PanelContext = {
     eventBus: appEvents,
-    splitOpenFn,
+    onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setBaseStructureRev((r) => r + 1);
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
