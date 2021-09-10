@@ -21,9 +21,16 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const isInstalled = Boolean(local);
   const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
   const dependencies = remote?.json?.dependencies;
+  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
+  // otherwise plugins cannot be installed.
+  const grafanaDependency = dependencies?.grafanaDependency
+    ? dependencies?.grafanaDependency
+    : dependencies?.grafanaVersion
+    ? `>=${dependencies?.grafanaVersion}`
+    : '';
 
   return {
-    grafanaDependency: dependencies?.grafanaDependency || dependencies?.grafanaVersion || '',
+    grafanaDependency,
     pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
     readme: remote?.readme,
