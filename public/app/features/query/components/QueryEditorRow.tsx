@@ -29,7 +29,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { getAllExtraRenderQueryAction } from './QueryActionComponent';
+import { RowActionComponents } from './QueryActionComponent';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -275,9 +275,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderExtraActions = () => {
-    const { query, queries } = this.props;
-    return getAllExtraRenderQueryAction().map((c) => {
-      return React.createElement(c, { query, queries, onAddQuery: this.props.onAddQuery });
+    const { query, queries, data, onAddQuery } = this.props;
+    return RowActionComponents.getAllExtraRenderAction().map((c) => {
+      return React.createElement(c, { query, queries, timeRange: data.timeRange, onAddQuery: onAddQuery });
     });
   };
 

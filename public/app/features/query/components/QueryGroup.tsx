@@ -39,7 +39,7 @@ import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
-import { getAllExtraRenderCreateAction } from './CreateActionComponent';
+import { GroupActionComponents } from './QueryActionComponent';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -329,7 +329,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderExtraActions() {
-    return getAllExtraRenderCreateAction().map((c) => {
+    return GroupActionComponents.getAllExtraRenderAction().map((c) => {
       return React.createElement(c, { onAddQuery: this.onAddQuery });
     });
   }

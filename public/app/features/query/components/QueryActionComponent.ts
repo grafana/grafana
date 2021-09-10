@@ -1,25 +1,32 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, TimeRange } from '@grafana/data';
 
-export interface QueryActionComponentProps {
+interface ActionComponentProps {
   query?: DataQuery;
   queries?: Array<Partial<DataQuery>>;
   onAddQuery?: (q: Partial<DataQuery>) => void;
+  timeRange?: TimeRange;
 }
 
-export type QueryActionComponent = React.ComponentType<QueryActionComponentProps>;
+type QueryActionComponent = React.ComponentType<ActionComponentProps>;
 
-let extraRenderQueryActions: QueryActionComponent[] = [];
+class QueryActionComponents {
+  extraRenderActions: QueryActionComponent[] = [];
+
+  addExtraRenderAction(extra: QueryActionComponent) {
+    this.extraRenderActions = this.extraRenderActions.concat(extra);
+  }
+
+  getAllExtraRenderAction(): QueryActionComponent[] {
+    return this.extraRenderActions;
+  }
+}
 
 /**
  * @internal and experimental
  */
-export function addExtraRenderQueryAction(extra: QueryActionComponent) {
-  extraRenderQueryActions = extraRenderQueryActions.concat(extra);
-}
+export const GroupActionComponents = new QueryActionComponents();
 
 /**
  * @internal and experimental
  */
-export function getAllExtraRenderQueryAction(): QueryActionComponent[] {
-  return extraRenderQueryActions;
-}
+export const RowActionComponents = new QueryActionComponents();
