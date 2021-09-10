@@ -189,7 +189,7 @@ If you set Format as to _Time series_, then the query must have a column named t
 
 A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
-> **Note:** For pre-v8 backward-compatibility there's an exception to the above rule when a query returns 3 columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, which makes the series name be formatted as the value of the metric column. See example with metric column below.
+> For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
 You can optionally customize the default series name formatting using instructions in [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}).
 
