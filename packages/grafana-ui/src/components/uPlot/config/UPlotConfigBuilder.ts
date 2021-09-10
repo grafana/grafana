@@ -46,6 +46,7 @@ export class UPlotConfigBuilder {
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
   private sync = false;
+  private mode = 1;
   private frame: DataFrame | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
@@ -110,6 +111,10 @@ export class UPlotConfigBuilder {
 
   setCursor(cursor?: Cursor) {
     this.cursor = merge({}, this.cursor, cursor);
+  }
+
+  setMode(mode: uPlot.Mode) {
+    this.mode = mode;
   }
 
   setSelect(select: Select) {

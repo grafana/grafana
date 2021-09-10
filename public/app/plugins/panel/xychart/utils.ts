@@ -10,7 +10,7 @@ import {
 } from 'app/features/dimensions';
 import { ScatterSeries, XYChartOptions } from './types';
 import { config } from '@grafana/runtime';
-import { ScaleDirection, ScaleOrientation, UPlotConfigBuilder, UPlotConfigPrepFnXY } from '@grafana/ui';
+import { AxisPlacement, ScaleDirection, ScaleOrientation, UPlotConfigBuilder, UPlotConfigPrepFnXY } from '@grafana/ui';
 
 export function prepDims(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
   if (!frames.length) {
@@ -135,8 +135,11 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
 }) => {
   const builder = new UPlotConfigBuilder();
 
+  builder.setMode(2);
+
   builder.addScale({
     scaleKey: 'x',
+    isTime: false,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
     range: [0, 100],
@@ -151,11 +154,13 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
 
   builder.addAxis({
     scaleKey: 'x',
+    placement: AxisPlacement.Bottom,
     theme,
   });
 
   builder.addAxis({
     scaleKey: 'y',
+    placement: AxisPlacement.Left,
     theme,
   });
 

@@ -91,7 +91,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   return (
     <VizLayout width={width} height={height}>
       {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart config={config} data={data} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+        <UPlotChart config={config} data={data2} width={vizWidth} height={vizHeight} timeRange={timeRange}>
           {/*children ? children(config, alignedFrame) : null*/}
         </UPlotChart>
       )}
