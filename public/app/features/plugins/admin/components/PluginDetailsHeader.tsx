@@ -143,8 +143,5 @@ export const getStyles = (theme: GrafanaTheme2) => {
     textUnderline: css`
       text-decoration: underline;
     `,
-    textBold: css`
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
   };
 };
