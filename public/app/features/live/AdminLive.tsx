@@ -12,8 +12,6 @@ export default function AdminLive() {
   const [selectedRule, setSelectedRule] = useState<any>();
   const [currentPattern, setCurrentPattern] = useState<string>();
   const [activeTab, setActiveTab] = useState<string>('converter');
-  // TODO: do we want to show the uid somewhere?
-  const [uid, setUid] = useState<string>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live');
   const styles = useStyles(getStyles);
@@ -24,15 +22,6 @@ export default function AdminLive() {
       .then((data) => {
         setRules(data.rules);
         setDefaultRules(data.rules);
-      })
-      .catch((e) => console.error(e));
-  }, []);
-
-  useEffect(() => {
-    getBackendSrv()
-      .get(`api/live/remote-write-backends`)
-      .then((data) => {
-        setUid(data.remoteWriteBackends[0].uid);
       })
       .catch((e) => console.error(e));
   }, []);
