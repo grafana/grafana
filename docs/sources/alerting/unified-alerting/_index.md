@@ -8,7 +8,7 @@ weight = 113
 
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
-> **Note:** Starting from the 8.2, out of the box, Grafana 8 alerts are enabled by default.
+> **Note:** Out of the box, Grafana 8 alerts are enabled. You can optionally enable legacy alerts by updating your Grafana configuration. 
 
 Grafana 8 alerts have four main components:
 

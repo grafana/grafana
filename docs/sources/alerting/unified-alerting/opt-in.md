@@ -10,7 +10,7 @@ Grafana 8 alerting system is enabled by default.
 
 > **Note:** We recommend that you backup Grafana's database before upgrading to the next 8.2 release. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
 
-At startup, since [the unified alerting is enabled]({{< relref "../../administration/configuration.md">}}#unified_alerting) by default, the legacy Grafana dashboard alerting is disabled and existing dashboard alerts are migrated into a format that is compatible with the Grafana 8 alerting system. You can view these migrated rules, alongside any new alerts you create after the migration, from the Alerting page of your Grafana instance.
+Since [Grafana alerting is enabled]({{< relref "../../administration/configuration.md">}}#unified_alerting) by default (and legacy dashboard alerting is disabled), existing dashboard alerts are migrated into a format that is compatible with the Grafana 8 alerting system. You can view these migrated rules, alongside any new alerts you create after the migration, from the Alerting page of your Grafana instance.
 
 > **Note:** Since the new system stores the notification log and silences on disk, we require the use of persistent disks for using Grafana 8 alerts. Otherwise, the silences and notification log will get lost on a restart, and you might get unwanted or duplicate notifications.
 
@@ -31,4 +31,4 @@ Finally, silences (expiring after one year) are created for all paused dashboard
 
 To switch to the legacy dashboard alerts (disabled by default), disable [unified alerting]({{< relref "../../administration/configuration.md">}}#unified_alerting) and enable [legacy alerting]({{< relref "../../administration/configuration.md">}}#alerting). Dashboard alerts will be re-enabled and any alerts created during or after the migration are deleted.
 
-> **Note:** Any alerting rules created in the Grafana 8 Alerting system will be lost when migrating back to dashboard alerts
+> **Note:** Any alerting rules created in the Grafana 8 Alerting system when you switch back to dashboard alerts.
