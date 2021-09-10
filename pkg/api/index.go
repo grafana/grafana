@@ -316,6 +316,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon:        "key-skeleton-alt",
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
 		})
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Live",
+			Id:          "live",
+			Description: "Create & manage data streams",
+			Icon:        "exchange-alt",
+			Url:         hs.Cfg.AppSubURL + "/live",
+		})
 	}
 
 	if len(configNodes) > 0 {
