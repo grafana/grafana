@@ -347,9 +347,9 @@ Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "
 For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
 Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.
 
-#### Prefix added to legend/alias
+#### Prefix added to series names
 
-Given you have a query similar to below, where there's a time value and a numeric value selected together with a string value that's not named `metric`. Then you might notice that the graph panel renders series legends/aliases as `value <hostname>` rather than just `<hostname>` which was the case before Grafana 8.
+Given you have a query similar to below, where there's a time value and a numeric value selected together with a string value that's not named _metric_. Then you might notice that the graph panel renders series names as `value <hostname>` rather than just `<hostname>` which was the case before Grafana 8.
 
 ```sql
 SELECT
@@ -366,6 +366,8 @@ There's two possible workarounds to resolve this problem:
 
 1. Starting from Grafana v8.0.3 you should alias the string column selected as `metric`, i.e. `hostname as metric`.
 2. Use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to format the alias. Given example query above you would use `${__field.labels.hostname}`.
+
+For more information please refer to the documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
 
 ## Upgrading to v8.1
 

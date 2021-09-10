@@ -228,6 +228,8 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
+Given the data frame result below and using the graph panel you'll get 2 series named _value 10.0.1.1_ and _value 10.0.1.2_ given the name of the field and its labels. If you would like to render the series with a name of _10.0.1.1_ and _10.0.1.2_ you could use a [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) value of `${__field.labels.hostname}`.
+
 Data frame result:
 
 ```text
