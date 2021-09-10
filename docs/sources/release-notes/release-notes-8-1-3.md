@@ -24,4 +24,3 @@ list = false
 - **Plugins:** Track signed files + add warn log for plugin assets which are not signed. [#38938](https://github.com/grafana/grafana/pull/38938), [@wbrowne](https://github.com/wbrowne)
 - **Postgres/MySQL/MSSQL:** Fix region annotations not displayed correctly. [#38936](https://github.com/grafana/grafana/pull/38936), [@marefr](https://github.com/marefr)
 - **Prometheus:** Fix validate selector in metrics browser. [#38921](https://github.com/grafana/grafana/pull/38921), [@ivanahuckova](https://github.com/ivanahuckova)
-

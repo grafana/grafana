@@ -17,8 +17,8 @@ replace github.com/prometheus/alertmanager => /home/kbrandt/go/github.com/promet
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.16.1
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.9.1
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
@@ -26,11 +26,12 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.18.2
+	github.com/centrifugal/centrifuge v0.18.3
 	github.com/cortexproject/cortex v1.8.2-0.20210428155238-d382e1d80eaf
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
+	github.com/dop251/goja v0.0.0-20210804101310-32956a348b49
 	github.com/fatih/color v1.10.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.10.0
@@ -42,14 +43,16 @@ require (
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
+	github.com/golang/snappy v0.0.4
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.112.0
+	github.com/grafana/grafana-plugin-sdk-go v0.113.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1
@@ -72,9 +75,9 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
+	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.22.2
+	github.com/prometheus/alertmanager v0.23.0-rc.0.0.20210906104939-8da517524a87
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.30.0
@@ -83,6 +86,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/smartystreets/goconvey v1.6.4
+	github.com/spyzhov/ajson v0.4.2
 	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
@@ -121,7 +125,7 @@ require (
 
 require (
 	cloud.google.com/go v0.90.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v0.5.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v0.7.0 // indirect
 	github.com/FZambia/eagle v0.0.1 // indirect
 	github.com/FZambia/sentinel v1.1.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -133,13 +137,14 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/centrifugal/protocol v0.7.1 // indirect
+	github.com/centrifugal/protocol v0.7.2 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/deepmap/oapi-codegen v1.3.13 // indirect
+	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
@@ -157,12 +162,10 @@ require (
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gogo/status v1.0.3 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/flatbuffers v1.12.0 // indirect
@@ -204,8 +207,6 @@ require (
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/common/sigv4 v0.1.0 // indirect
-	github.com/prometheus/exporter-toolkit v0.6.1 // indirect
 	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect

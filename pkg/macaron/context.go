@@ -64,27 +64,13 @@ func (ctx *Context) Next() {
 	ctx.run()
 }
 
-// Written returns whether the context response has been written to
-func (ctx *Context) Written() bool {
-	return ctx.Resp.Written()
-}
-
 func (ctx *Context) run() {
 	for ctx.index <= len(ctx.handlers) {
-		vals, err := ctx.Invoke(ctx.handler())
-		if err != nil {
+		if _, err := ctx.Invoke(ctx.handler()); err != nil {
 			panic(err)
 		}
 		ctx.index++
-
-		// if the handler returned something, write it to the http response
-		if len(vals) > 0 {
-			ev := ctx.GetVal(reflect.TypeOf(ReturnHandler(nil)))
-			handleReturn := ev.Interface().(ReturnHandler)
-			handleReturn(ctx, vals)
-		}
-
-		if ctx.Written() {
+		if ctx.Resp.Written() {
 			return
 		}
 	}

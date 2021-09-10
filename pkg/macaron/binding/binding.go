@@ -419,6 +419,10 @@ func validateField(errors Errors, zero interface{}, field reflect.StructField, f
 				sliceVal = sliceVal.Elem()
 			}
 
+			if sliceVal.Kind() == reflect.Invalid {
+				continue
+			}
+
 			sliceValue := sliceVal.Interface()
 			zero := reflect.Zero(sliceVal.Type()).Interface()
 			if sliceVal.Kind() == reflect.Struct ||

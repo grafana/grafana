@@ -142,6 +142,7 @@ func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	manager := &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM,
 	}
+
 	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
