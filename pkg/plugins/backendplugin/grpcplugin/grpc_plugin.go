@@ -75,10 +75,10 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
-		p.Logger().Debug("Error checking plugin process execution privilege", "err", err)
+		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
 	}
 	if elevated {
-		p.Logger().Warn("Plugin process is running with elevated privileges. This is not recommended")
+		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
 	}
 
 	return nil
