@@ -63,10 +63,6 @@ func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValid
 }
 
 func (m *PluginManagerV2) init() error {
-	if !m.IsEnabled() {
-		return nil
-	}
-
 	// install Core plugins
 	err := m.loadPlugins(m.corePluginDirs()...) // wording
 	if err != nil {
@@ -89,18 +85,27 @@ func (m *PluginManagerV2) init() error {
 }
 
 func (m *PluginManagerV2) Run(ctx context.Context) error {
+	//go func() {
+	//	m.checkForUpdates()
+	//
+	//	ticker := time.NewTicker(time.Minute * 10)
+	//	run := true
+	//
+	//	for run {
+	//		select {
+	//		case <-ticker.C:
+	//			m.checkForUpdates()
+	//		case <-ctx.Done():
+	//			run = false
+	//		}
+	//	}
+	//
+	//	return ctx.Err()
+	//}()
+
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
-}
-
-func (m *PluginManagerV2) IsDisabled() bool {
-	_, exists := m.Cfg.FeatureToggles["pluginManagerV2"]
-	return !exists
-}
-
-func (m *PluginManagerV2) IsEnabled() bool {
-	return !m.IsDisabled()
 }
 
 func (m *PluginManagerV2) loadPlugins(path ...string) error {
@@ -600,6 +605,15 @@ func (m *PluginManagerV2) Register(pluginID string, factory backendplugin.Plugin
 	}
 
 	return nil
+}
+
+func (m *PluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {
+	var staticRoutes []*plugins.PluginStaticRoute
+
+	for _, p := range m.Plugins() {
+		staticRoutes = append(staticRoutes, p.StaticRoute())
+	}
+	return staticRoutes
 }
 
 func (m *PluginManagerV2) corePluginDirs() []string {

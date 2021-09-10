@@ -68,48 +68,49 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	UsageStatsService      usagestats.UsageStats
-	PluginContextProvider  *plugincontext.Provider
-	RouteRegister          routing.RouteRegister
-	Bus                    bus.Bus
-	RenderService          rendering.Service
-	Cfg                    *setting.Cfg
-	SettingsProvider       setting.Provider
-	HooksService           *hooks.HooksService
-	CacheService           *localcache.CacheService
-	DataSourceCache        datasources.CacheService
-	AuthTokenService       models.UserTokenService
-	QuotaService           *quota.QuotaService
-	RemoteCacheService     *remotecache.RemoteCache
-	ProvisioningService    provisioning.ProvisioningService
-	Login                  login.Service
-	License                models.Licensing
-	AccessControl          accesscontrol.AccessControl
-	BackendPluginManager   backendplugin.Manager
-	DataProxy              *datasourceproxy.DataSourceProxyService
-	PluginRequestValidator models.PluginRequestValidator
-	PluginManager          plugins.Manager
-	PluginManagerV2        plugins.ManagerV2
-	SearchService          *search.SearchService
-	ShortURLService        shorturls.Service
-	Live                   *live.GrafanaLive
-	LivePushGateway        *pushhttp.Gateway
-	ContextHandler         *contexthandler.ContextHandler
-	SQLStore               *sqlstore.SQLStore
-	DataService            *tsdb.Service
-	AlertEngine            *alerting.AlertEngine
-	LoadSchemaService      *schemaloader.SchemaLoaderService
-	AlertNG                *ngalert.AlertNG
-	LibraryPanelService    librarypanels.Service
-	LibraryElementService  libraryelements.Service
-	notificationService    *notifications.NotificationService
-	SocialService          social.Service
-	OAuthTokenService      oauthtoken.OAuthTokenService
-	Listener               net.Listener
-	EncryptionService      encryption.Service
-	cleanUpService         *cleanup.CleanUpService
-	tracingService         *tracing.TracingService
-	internalMetricsSvc     *metrics.InternalMetricsService
+	UsageStatsService         usagestats.UsageStats
+	PluginContextProvider     *plugincontext.Provider
+	RouteRegister             routing.RouteRegister
+	Bus                       bus.Bus
+	RenderService             rendering.Service
+	Cfg                       *setting.Cfg
+	SettingsProvider          setting.Provider
+	HooksService              *hooks.HooksService
+	CacheService              *localcache.CacheService
+	DataSourceCache           datasources.CacheService
+	AuthTokenService          models.UserTokenService
+	QuotaService              *quota.QuotaService
+	RemoteCacheService        *remotecache.RemoteCache
+	ProvisioningService       provisioning.ProvisioningService
+	Login                     login.Service
+	License                   models.Licensing
+	AccessControl             accesscontrol.AccessControl
+	BackendPluginManager      backendplugin.Manager
+	DataProxy                 *datasourceproxy.DataSourceProxyService
+	PluginRequestValidator    models.PluginRequestValidator
+	PluginManagerV2           plugins.ManagerV2
+	PluginResolver            plugins.Resolver
+	PluginStaticRouteResolver plugins.StaticRouteResolver
+	SearchService             *search.SearchService
+	ShortURLService           shorturls.Service
+	Live                      *live.GrafanaLive
+	LivePushGateway           *pushhttp.Gateway
+	ContextHandler            *contexthandler.ContextHandler
+	SQLStore                  *sqlstore.SQLStore
+	DataService               *tsdb.Service
+	AlertEngine               *alerting.AlertEngine
+	LoadSchemaService         *schemaloader.SchemaLoaderService
+	AlertNG                   *ngalert.AlertNG
+	LibraryPanelService       librarypanels.Service
+	LibraryElementService     libraryelements.Service
+	notificationService       *notifications.NotificationService
+	SocialService             social.Service
+	OAuthTokenService         oauthtoken.OAuthTokenService
+	Listener                  net.Listener
+	EncryptionService         encryption.Service
+	cleanUpService            *cleanup.CleanUpService
+	tracingService            *tracing.TracingService
+	internalMetricsSvc        *metrics.InternalMetricsService
 }
 
 type ServerOptions struct {
@@ -151,7 +152,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AlertEngine:            alertEngine,
 		UsageStatsService:      usageStatsService,
 		PluginRequestValidator: pluginRequestValidator,
-		PluginManager:          pluginManager,
 		PluginManagerV2:        pluginManagerV2,
 		BackendPluginManager:   backendPM,
 		SettingsProvider:       settingsProvider,

@@ -99,10 +99,16 @@ type PluginInstallerLogger interface {
 	Errorf(format string, args ...interface{})
 }
 
-type ManagerV2 interface {
-	// IsEnabled confirms if the manager service feature toggle is enabled or not.
-	IsEnabled() bool
+type Resolver interface {
+	// Plugin finds a plugin by its ID.
+	Plugin(pluginID string) *PluginV2
+	// Plugins returns plugins by their requested type.
+	Plugins(pluginType ...PluginType) []*PluginV2
+	// Renderer returns a renderer plugin.
+	Renderer() *PluginV2
+}
 
+type ManagerV2 interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(pluginID string) *PluginV2
 	// Plugins returns plugins by their requested type.
@@ -128,4 +134,8 @@ type ManagerV2 interface {
 type CoreBackendRegistrar interface {
 	//Register registers a backend plugin
 	Register(pluginID string, factory backendplugin.PluginFactoryFunc) error
+}
+
+type StaticRouteResolver interface {
+	StaticRoutes() []*PluginStaticRoute
 }

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -74,21 +76,21 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
 
-	appLinks := []*dtos.NavLink{}
-	for _, plugin := range enabledPlugins.Apps {
+	var appLinks []*dtos.NavLink
+	for _, plugin := range enabledPlugins[plugins.App] {
 		if !plugin.Pinned {
 			continue
 		}
 
 		appLink := &dtos.NavLink{
 			Text:       plugin.Name,
-			Id:         "plugin-page-" + plugin.Id,
-			Url:        plugin.DefaultNavUrl,
+			Id:         "plugin-page-" + plugin.ID,
+			Url:        plugin.DefaultNavURL,
 			Img:        plugin.Info.Logos.Small,
 			SortWeight: dtos.WeightPlugin,
 		}
@@ -110,7 +112,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 					}
 				} else {
 					link = &dtos.NavLink{
-						Url:  hs.Cfg.AppSubURL + "/plugins/" + plugin.Id + "/page/" + include.Slug,
+						Url:  hs.Cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug,
 						Text: include.Name,
 					}
 				}

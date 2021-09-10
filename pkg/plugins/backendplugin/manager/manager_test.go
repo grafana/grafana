@@ -341,7 +341,6 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 			PluginRequestValidator: validator,
 			logger:                 log.New("test"),
 			plugins:                map[string]backendplugin.Plugin{},
-			PluginManagerV2:        &fakePluginManagerV2{},
 		},
 	}
 

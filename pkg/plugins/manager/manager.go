@@ -54,7 +54,6 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager
 	Cfg                  *setting.Cfg
 	SQLStore             *sqlstore.SQLStore
-	PluginManagerV2      plugins.ManagerV2
 	pluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error
@@ -75,22 +74,19 @@ type PluginManager struct {
 	pluginsMu    sync.RWMutex
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager,
-	pluginManagerV2 plugins.ManagerV2) (*PluginManager, error) {
-	pm := newManager(cfg, sqlStore, backendPM, pluginManagerV2)
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) (*PluginManager, error) {
+	pm := newManager(cfg, sqlStore, backendPM)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager,
-	pluginManagerV2 plugins.ManagerV2) *PluginManager {
+func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
 	return &PluginManager{
 		Cfg:                  cfg,
 		SQLStore:             sqlStore,
 		BackendPluginManager: backendPM,
-		PluginManagerV2:      pluginManagerV2,
 		dataSources:          map[string]*plugins.DataSourcePlugin{},
 		plugins:              map[string]*plugins.PluginBase{},
 		panels:               map[string]*plugins.PanelPlugin{},
@@ -103,10 +99,6 @@ func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backend
 func (pm *PluginManager) init() error {
 	plog = log.New("plugins")
 	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
-
-	if pm.v2Enabled() {
-		return nil
-	}
 
 	pm.log.Info("Starting plugin search")
 
@@ -208,9 +200,6 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 }
 
 func (pm *PluginManager) Renderer() *plugins.RendererPlugin {
-	if pm.v2Enabled() {
-		return rendererFromV2(pm.PluginManagerV2.Renderer())
-	}
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -230,14 +219,6 @@ func (pm *PluginManager) AppCount() int {
 }
 
 func (pm *PluginManager) Plugins() []*plugins.PluginBase {
-	if pm.v2Enabled() {
-		var rslt []*plugins.PluginBase
-		for _, p := range pm.PluginManagerV2.Plugins() {
-			rslt = append(rslt, fromV2(p))
-		}
-		return rslt
-	}
-
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -250,14 +231,6 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 }
 
 func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
-	if pm.v2Enabled() {
-		var rslt []*plugins.DataSourcePlugin
-		for _, p := range pm.PluginManagerV2.Plugins(plugins.DataSource) {
-			rslt = append(rslt, dataSourceFromV2(p))
-		}
-		return rslt
-	}
-
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -270,14 +243,6 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 }
 
 func (pm *PluginManager) Apps() []*plugins.AppPlugin {
-	if pm.v2Enabled() {
-		var rslt []*plugins.AppPlugin
-		for _, p := range pm.PluginManagerV2.Plugins(plugins.App) {
-			rslt = append(rslt, appFromV2(p))
-		}
-		return rslt
-	}
-
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -290,14 +255,6 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 }
 
 func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
-	if pm.v2Enabled() {
-		var rslt []*plugins.PanelPlugin
-		for _, p := range pm.PluginManagerV2.Plugins(plugins.Panel) {
-			rslt = append(rslt, panelFromV2(p))
-		}
-		return rslt
-	}
-
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -310,10 +267,6 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 }
 
 func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
-	if pm.v2Enabled() {
-		return fromV2(pm.PluginManagerV2.Plugin(id))
-	}
-
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -321,9 +274,6 @@ func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
 }
 
 func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	if pm.v2Enabled() {
-		return dataSourceFromV2(pm.PluginManagerV2.Plugin(id))
-	}
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -331,10 +281,6 @@ func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 }
 
 func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
-	if pm.v2Enabled() {
-		return appFromV2(pm.PluginManagerV2.Plugin(id))
-	}
-
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
@@ -770,22 +716,10 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 }
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
-	if pm.v2Enabled() {
-		var staticRoutes []*plugins.PluginStaticRoute
-
-		for _, p := range pm.PluginManagerV2.Plugins() {
-			staticRoutes = append(staticRoutes, p.StaticRoute())
-		}
-		return staticRoutes
-	}
-
 	return pm.staticRoutes
 }
 
 func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
-	if pm.v2Enabled() {
-		return pm.PluginManagerV2.Install(ctx, pluginID, version)
-	}
 	plugin := pm.GetPlugin(pluginID)
 
 	var pluginZipURL string
@@ -830,9 +764,6 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 }
 
 func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
-	if pm.v2Enabled() {
-		return pm.PluginManagerV2.Uninstall(ctx, pluginID)
-	}
 	plugin := pm.GetPlugin(pluginID)
 	if plugin == nil {
 		return plugins.ErrPluginNotInstalled
@@ -892,8 +823,4 @@ func (pm *PluginManager) removeStaticRoute(pluginID string) {
 			return
 		}
 	}
-}
-
-func (pm *PluginManager) v2Enabled() bool {
-	return pm.PluginManagerV2 != nil && pm.PluginManagerV2.IsEnabled()
 }
