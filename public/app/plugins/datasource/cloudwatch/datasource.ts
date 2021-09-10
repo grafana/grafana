@@ -62,10 +62,10 @@ import {
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import config from 'app/core/config';
+import { addDataLinksToLogsResponse } from './utils/datalinks';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -166,7 +166,13 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
     return response.pipe(
       map((dataQueryResponse) => {
-        this.addDataLinksToLogsResponse(dataQueryResponse, options);
+        addDataLinksToLogsResponse(
+          dataQueryResponse,
+          options,
+          this.timeSrv.timeRange(),
+          this.replace.bind(this),
+          this.getActualRegion.bind(this)
+        );
         return dataQueryResponse;
       })
     );
@@ -421,44 +427,6 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     );
 
     return withTeardown(queryResponse, () => this.stopQueries());
-  }
-
-  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>): void {
-    for (const dataFrame of response.data as DataFrame[]) {
-      const range = this.timeSrv.timeRange();
-      const start = range.from.toISOString();
-      const end = range.to.toISOString();
-
-      const curTarget = options.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
-      const interpolatedGroups =
-        curTarget.logGroupNames?.map((logGroup: string) =>
-          this.replace(logGroup, options.scopedVars, true, 'log groups')
-        ) ?? [];
-      const urlProps: AwsUrl = {
-        end,
-        start,
-        timeType: 'ABSOLUTE',
-        tz: 'UTC',
-        editorString: curTarget.expression ? this.replace(curTarget.expression, options.scopedVars, true) : '',
-        isLiveTail: false,
-        source: interpolatedGroups,
-      };
-
-      const encodedUrl = encodeUrl(
-        urlProps,
-        this.getActualRegion(this.replace(curTarget.region, options.scopedVars, true, 'region'))
-      );
-
-      for (const field of dataFrame.fields) {
-        field.config.links = [
-          {
-            url: encodedUrl,
-            title: 'View in CloudWatch console',
-            targetBlank: true,
-          },
-        ];
-      }
-    }
   }
 
   stopQueries() {
