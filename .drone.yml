@@ -1,57 +1,3255 @@
 ---
-{"kind": "pipeline", "type": "docker", "name": "test-pr", "trigger": {"event": ["pull_request"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition oss"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition oss", "./bin/grabpl integration-tests --edition oss"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": null, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck"], "commands": ["./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": null, "commands": [". scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001"]}, {"name": "build-storybook", "image": "grafana/build-container:1.4.2", "depends_on": ["package"], "environment": {"NODE_OPTIONS": "--max_old_space_size=4096"}, "commands": ["yarn storybook:build", "./bin/grabpl verify-storybook"]}, {"name": "build-frontend-docs", "image": "grafana/build-container:1.4.2", "depends_on": ["build-frontend"], "commands": ["./scripts/ci-reference-docs-lint.sh ci"]}, {"name": "build-docs-website", "image": "grafana/docs-base:latest", "depends_on": ["build-frontend-docs"], "commands": ["mkdir -p /hugo/content/docs/grafana", "cp -r docs/sources/* /hugo/content/docs/grafana/latest/", "cd /hugo && make prod"]}, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "oss", "ubuntu": false, "archs": "amd64"}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on: []
+kind: pipeline
+name: test-pr
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition oss
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  depends_on:
+  - test-backend
+  environment: {}
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  depends_on:
+  - lint-backend
+  environment: null
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
+    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  depends_on:
+  - gen-version
+  environment: null
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PORT: 3001
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.2
+  name: build-storybook
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - build-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend-docs
+- commands:
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
+  depends_on:
+  - build-frontend-docs
+  image: grafana/docs-base:latest
+  name: build-docs-website
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    archs: amd64
+    dry_run: true
+    edition: oss
+    ubuntu: false
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+trigger:
+  event:
+  - pull_request
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "build-main", "trigger": {"event": ["push"], "branch": "main"}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "trigger-enterprise-downstream", "image": "grafana/drone-downstream", "settings": {"server": "https://drone.grafana.net", "token": {"from_secret": "drone_token"}, "repositories": ["grafana/grafana-enterprise@main"], "params": ["SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}", "SOURCE_COMMIT=${DRONE_COMMIT}"]}}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition oss"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition oss", "./bin/grabpl integration-tests --edition oss"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck"], "commands": ["./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --sign"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001"]}, {"name": "build-storybook", "image": "grafana/build-container:1.4.2", "depends_on": ["package"], "environment": {"NODE_OPTIONS": "--max_old_space_size=4096"}, "commands": ["yarn storybook:build", "./bin/grabpl verify-storybook"]}, {"name": "publish-storybook", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["build-storybook", "end-to-end-tests"], "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "gcloud auth activate-service-account --key-file=/tmp/gcpkey.json", "gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary"]}, {"name": "test-a11y-frontend", "image": "buildkite/puppeteer", "depends_on": ["end-to-end-tests-server"], "environment": {"GRAFANA_MISC_STATS_API_KEY": {"from_secret": "grafana_misc_stats_api_key"}, "HOST": "end-to-end-tests-server", "PORT": 3001}, "failure": "ignore", "commands": ["yarn wait-on http://$HOST:$PORT", "yarn -s test:accessibility --json > pa11y-ci-results.json"]}, {"name": "publish-frontend-metrics", "image": "grafana/build-container:1.4.2", "depends_on": ["test-a11y-frontend"], "environment": {"GRAFANA_MISC_STATS_API_KEY": {"from_secret": "grafana_misc_stats_api_key"}}, "failure": "ignore", "commands": ["./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}"]}, {"name": "build-frontend-docs", "image": "grafana/build-container:1.4.2", "depends_on": ["build-frontend"], "commands": ["./scripts/ci-reference-docs-lint.sh ci"]}, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": false, "edition": "oss", "ubuntu": false, "username": {"from_secret": "docker_user"}, "password": {"from_secret": "docker_password"}}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": false, "edition": "oss", "ubuntu": true, "username": {"from_secret": "docker_user"}, "password": {"from_secret": "docker_password"}}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "release-canary-npm-packages", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests"], "environment": {"GITHUB_PACKAGE_TOKEN": {"from_secret": "github_package_token"}}, "commands": ["./scripts/circle-release-canary-packages.sh"]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads"]}, null, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition oss --bucket \"grafana-static-assets\""]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on: []
+kind: pipeline
+name: build-main
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- image: grafana/drone-downstream
+  name: trigger-enterprise-downstream
+  settings:
+    params:
+    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
+    repositories:
+    - grafana/grafana-enterprise@main
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition oss
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - test-backend
+  environment: {}
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+    --sign
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PORT: 3001
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.2
+  name: build-storybook
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
+  depends_on:
+  - build-storybook
+  - end-to-end-tests
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-storybook
+- commands:
+  - yarn wait-on http://$HOST:$PORT
+  - yarn -s test:accessibility --json > pa11y-ci-results.json
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
+    PORT: 3001
+  failure: ignore
+  image: buildkite/puppeteer
+  name: test-a11y-frontend
+- commands:
+  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  depends_on:
+  - test-a11y-frontend
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+  failure: ignore
+  image: grafana/build-container:1.4.2
+  name: publish-frontend-metrics
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - build-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend-docs
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: false
+    edition: oss
+    password:
+      from_secret: docker_password
+    ubuntu: false
+    username:
+      from_secret: docker_user
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: false
+    edition: oss
+    password:
+      from_secret: docker_password
+    ubuntu: true
+    username:
+      from_secret: docker_user
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./scripts/circle-release-canary-packages.sh
+  depends_on:
+  - end-to-end-tests
+  environment:
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
+  image: grafana/build-container:1.4.2
+  name: release-canary-npm-packages
+- commands:
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+- null
+- commands:
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "windows-main", "trigger": {"event": ["push"], "branch": "main"}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip .", ".\\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER", "$$fname = ((Get-Childitem grafana*.msi -name) -split \"`n\")[0]", "gsutil cp $$fname gs://grafana-downloads/oss/main/", "gsutil cp \"$$fname.sha256\" gs://grafana-downloads/oss/main/"], "depends_on": ["initialize"]}], "depends_on": ["build-main"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}}
+depends_on:
+- build-main
+kind: pipeline
+name: windows-main
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "publish-main", "trigger": {"event": ["push"], "branch": "main"}, "services": [], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone"]}, {"name": "publish-packages-oss", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["initialize"], "environment": {"GRAFANA_COM_API_KEY": {"from_secret": "grafana_api_key"}, "GCP_KEY": {"from_secret": "gcp_key"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id ${DRONE_BUILD_NUMBER}"]}], "depends_on": ["build-main", "windows-main"], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on:
+- build-main
+- windows-main
+kind: pipeline
+name: publish-main
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
+    ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-packages-oss
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "platform": {"os": "linux", "arch": "amd64"}, "name": "notify-main", "trigger": {"event": ["push"], "branch": "main", "status": ["failure"]}, "steps": [{"name": "slack", "image": "plugins/slack", "settings": {"webhook": {"from_secret": "slack_webhook"}, "channel": "grafana-ci-notifications", "template": "Build {{build.number}} failed for commit: \u003chttps://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}\u003e: {{build.link}}\nBranch: \u003chttps://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}\u003e\nAuthor: {{build.author}}"}}], "depends_on": ["build-main", "windows-main", "publish-main"]}
+depends_on:
+- build-main
+- windows-main
+- publish-main
+kind: pipeline
+name: notify-main
+platform:
+  arch: amd64
+  os: linux
+steps:
+- image: plugins/slack
+  name: slack
+  settings:
+    channel: grafana-ci-notifications
+    template: |-
+      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
+      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
+      Author: {{build.author}}
+    webhook:
+      from_secret: slack_webhook
+trigger:
+  branch: main
+  event:
+  - push
+  status:
+  - failure
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "oss-build-release", "trigger": {"ref": ["refs/tags/v*"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "./bin/grabpl verify-version ${DRONE_TAG}", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition oss"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition oss --tries 5", "./bin/grabpl integration-tests --edition oss --tries 5"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise ${DRONE_TAG}"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck"], "commands": ["./bin/grabpl gen-version ${DRONE_TAG}"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign ${DRONE_TAG}"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001 --tries 3"]}, {"name": "build-storybook", "image": "grafana/build-container:1.4.2", "depends_on": ["package"], "environment": {"NODE_OPTIONS": "--max_old_space_size=4096"}, "commands": ["yarn storybook:build", "./bin/grabpl verify-storybook"]}, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": false, "edition": "oss", "ubuntu": false, "username": {"from_secret": "docker_user"}, "password": {"from_secret": "docker_password"}}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": false, "edition": "oss", "ubuntu": true, "username": {"from_secret": "docker_user"}, "password": {"from_secret": "docker_password"}}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition oss --bucket \"grafana-static-assets\""]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads"]}, {"name": "publish-storybook", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["build-storybook", "end-to-end-tests"], "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "gcloud auth activate-service-account --key-file=/tmp/gcpkey.json", "gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest", "gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}"]}, {"name": "release-npm-packages", "image": "grafana/build-container:1.4.2", "depends_on": ["publish-storybook"], "environment": {"NPM_TOKEN": {"from_secret": "npm_token"}, "GITHUB_PACKAGE_TOKEN": {"from_secret": "github_package_token"}}, "commands": ["./scripts/build/release-packages.sh ${DRONE_TAG}"]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on: []
+kind: pipeline
+name: oss-build-release
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - ./bin/grabpl verify-version ${DRONE_TAG}
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise ${DRONE_TAG}
+  depends_on:
+  - test-backend
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
+    --edition oss --no-pull-enterprise ${DRONE_TAG}
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
+    --sign ${DRONE_TAG}
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PORT: 3001
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.2
+  name: build-storybook
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: false
+    edition: oss
+    password:
+      from_secret: docker_password
+    ubuntu: false
+    username:
+      from_secret: docker_user
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: false
+    edition: oss
+    password:
+      from_secret: docker_password
+    ubuntu: true
+    username:
+      from_secret: docker_user
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+- commands:
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}
+  depends_on:
+  - build-storybook
+  - end-to-end-tests
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-storybook
+- commands:
+  - ./scripts/build/release-packages.sh ${DRONE_TAG}
+  depends_on:
+  - publish-storybook
+  environment:
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
+    NPM_TOKEN:
+      from_secret: npm_token
+  image: grafana/build-container:1.4.2
+  name: release-npm-packages
+trigger:
+  ref:
+  - refs/tags/v*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "oss-windows-release", "trigger": {"ref": ["refs/tags/v*"]}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip .", ".\\grabpl.exe windows-installer --edition oss ${DRONE_TAG}", "$$fname = ((Get-Childitem grafana*.msi -name) -split \"`n\")[0]", "gsutil cp $$fname gs://grafana-downloads/oss/release/", "gsutil cp \"$$fname.sha256\" gs://grafana-downloads/oss/release/"], "depends_on": ["initialize"]}], "depends_on": ["oss-build-release"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}}
+depends_on:
+- oss-build-release
+kind: pipeline
+name: oss-windows-release
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-downloads/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/release/
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  ref:
+  - refs/tags/v*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "enterprise-build-release", "trigger": {"ref": ["refs/tags/v*"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}, {"name": "redis", "image": "redis:6.2.1-alpine", "environment": {}}, {"name": "memcached", "image": "memcached:1.6.9-alpine", "environment": {}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "clone", "image": "grafana/build-container:1.4.2", "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "git clone \"https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git\"", "cd grafana-enterprise", "git checkout ${DRONE_TAG}"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "depends_on": ["clone"], "commands": ["mv bin/grabpl /tmp/", "rmdir bin", "mv grafana-enterprise /tmp/", "/tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}", "mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json", "mkdir bin", "mv /tmp/grabpl bin/", "./bin/grabpl verify-drone", "./bin/grabpl verify-version ${DRONE_TAG}", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition enterprise"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition enterprise --tries 5", "./bin/grabpl integration-tests --edition enterprise --tries 5"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise ${DRONE_TAG}"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "lint-backend-enterprise2", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition enterprise2"]}, {"name": "test-backend-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition enterprise2 --tries 5", "./bin/grabpl integration-tests --edition enterprise2 --tries 5"]}, {"name": "build-backend-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend-enterprise2"], "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}"]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck", "build-backend-enterprise2", "test-backend-enterprise2"], "commands": ["./bin/grabpl gen-version ${DRONE_TAG}"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign ${DRONE_TAG}"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001, "PACKAGE_FILE": "dist/grafana-enterprise-*linux-amd64.tar.gz", "RUNDIR": "e2e/tmp-grafana-enterprise"}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001 --tries 3"]}, null, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": false, "edition": "enterprise", "ubuntu": false, "username": {"from_secret": "docker_user"}, "password": {"from_secret": "docker_password"}}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": false, "edition": "enterprise", "ubuntu": true, "username": {"from_secret": "docker_user"}, "password": {"from_secret": "docker_password"}}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "redis-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"REDIS_URL": "redis://redis:6379/0"}, "commands": ["./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s", "./bin/grabpl integration-tests"]}, {"name": "memcached-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"MEMCACHED_HOSTS": "memcached:11211"}, "commands": ["./bin/dockerize -wait tcp://memcached:11211 -timeout 120s", "./bin/grabpl integration-tests"]}, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition enterprise --bucket \"grafana-static-assets\""]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests", "redis-integration-tests", "memcached-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads"]}, null, null, {"name": "package-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign ${DRONE_TAG}"]}, {"name": "end-to-end-tests-server-enterprise2", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package-enterprise2"], "environment": {"PORT": 3002, "PACKAGE_FILE": "dist/grafana-enterprise2-*linux-amd64.tar.gz", "RUNDIR": "e2e/tmp-grafana-enterprise2"}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests-enterprise2", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server-enterprise2"], "environment": {"HOST": "end-to-end-tests-server-enterprise2"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3002 --tries 3"]}, {"name": "upload-cdn-assets-enterprise2", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server-enterprise2"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition enterprise2 --bucket \"grafana-static-assets\""]}, {"name": "upload-packages-enterprise2", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-enterprise2", "mysql-integration-tests", "postgres-integration-tests", "redis-integration-tests", "memcached-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2"]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}, "image_pull_secrets": ["dockerconfigjson"], "clone": {"disable": true}}
+clone:
+  disable: true
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: enterprise-build-release
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: clone
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  - ./bin/grabpl verify-drone
+  - ./bin/grabpl verify-version ${DRONE_TAG}
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  depends_on:
+  - clone
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise ${DRONE_TAG}
+  depends_on:
+  - test-backend
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
+    --edition enterprise --no-pull-enterprise ${DRONE_TAG}
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
+    --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise2
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend-enterprise2
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend-enterprise2
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise ${DRONE_TAG}
+  depends_on:
+  - test-backend-enterprise2
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: build-backend-enterprise2
+- commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise --sign ${DRONE_TAG}
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    PORT: 3001
+    RUNDIR: e2e/tmp-grafana-enterprise
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- null
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: false
+    edition: enterprise
+    password:
+      from_secret: docker_password
+    ubuntu: false
+    username:
+      from_secret: docker_user
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: false
+    edition: enterprise
+    password:
+      from_secret: docker_password
+    ubuntu: true
+    username:
+      from_secret: docker_user
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.4.2
+  name: redis-integration-tests
+- commands:
+  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.4.2
+  name: memcached-integration-tests
+- commands:
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+- commands:
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  - redis-integration-tests
+  - memcached-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+- null
+- null
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise --sign ${DRONE_TAG}
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package-enterprise2
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package-enterprise2
+  detach: true
+  environment:
+    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
+    PORT: 3002
+    RUNDIR: e2e/tmp-grafana-enterprise2
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server-enterprise2
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3002 --tries 3
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+  environment:
+    HOST: end-to-end-tests-server-enterprise2
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests-enterprise2
+- commands:
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets-enterprise2
+- commands:
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
+  depends_on:
+  - end-to-end-tests-enterprise2
+  - mysql-integration-tests
+  - postgres-integration-tests
+  - redis-integration-tests
+  - memcached-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages-enterprise2
+trigger:
+  ref:
+  - refs/tags/v*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "enterprise-windows-release", "trigger": {"ref": ["refs/tags/v*"]}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "clone", "image": "grafana/ci-wix:0.1.1", "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe", "git clone \"https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git\"", "cd grafana-enterprise", "git checkout ${DRONE_TAG}"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["cp -r grafana-enterprise C:\\App\\grafana-enterprise", "rm -r -force grafana-enterprise", "cp grabpl.exe C:\\App\\grabpl.exe", "rm -force grabpl.exe", "C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise", "cp C:\\App\\grabpl.exe grabpl.exe"], "depends_on": ["clone"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip .", ".\\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}", "$$fname = ((Get-Childitem grafana*.msi -name) -split \"`n\")[0]", "gsutil cp $$fname gs://grafana-downloads/enterprise/release/", "gsutil cp \"$$fname.sha256\" gs://grafana-downloads/enterprise/release/"], "depends_on": ["initialize"]}], "depends_on": ["enterprise-build-release"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}, "image_pull_secrets": ["dockerconfigjson"], "clone": {"disable": true}}
+clone:
+  disable: true
+depends_on:
+- enterprise-build-release
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: enterprise-windows-release
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cp -r grafana-enterprise C:\App\grafana-enterprise
+  - rm -r -force grafana-enterprise
+  - cp grabpl.exe C:\App\grabpl.exe
+  - rm -force grabpl.exe
+  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - cp C:\App\grabpl.exe grabpl.exe
+  depends_on:
+  - clone
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-downloads/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/enterprise/release/
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  ref:
+  - refs/tags/v*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "publish-release", "trigger": {"ref": ["refs/tags/v*"]}, "services": [], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "./bin/grabpl verify-version ${DRONE_TAG}"]}, {"name": "publish-packages-oss", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["initialize"], "environment": {"GRAFANA_COM_API_KEY": {"from_secret": "grafana_api_key"}, "GCP_KEY": {"from_secret": "gcp_key"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}"]}, {"name": "publish-packages-enterprise", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["initialize"], "environment": {"GRAFANA_COM_API_KEY": {"from_secret": "grafana_api_key"}, "GCP_KEY": {"from_secret": "gcp_key"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}"]}], "depends_on": ["oss-build-release", "oss-windows-release", "enterprise-build-release", "enterprise-windows-release"], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on:
+- oss-build-release
+- oss-windows-release
+- enterprise-build-release
+- enterprise-windows-release
+kind: pipeline
+name: publish-release
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - ./bin/grabpl verify-version ${DRONE_TAG}
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-packages-oss
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json
+    ${DRONE_TAG}
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-packages-enterprise
+trigger:
+  ref:
+  - refs/tags/v*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "platform": {"os": "linux", "arch": "amd64"}, "name": "notify-release", "trigger": {"ref": ["refs/tags/v*"], "status": ["failure"]}, "steps": [{"name": "slack", "image": "plugins/slack", "settings": {"webhook": {"from_secret": "slack_webhook"}, "channel": "grafana-ci-notifications", "template": "Build {{build.number}} failed for commit: \u003chttps://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}\u003e: {{build.link}}\nBranch: \u003chttps://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}\u003e\nAuthor: {{build.author}}"}}], "depends_on": ["oss-build-release", "oss-windows-release", "enterprise-build-release", "enterprise-windows-release", "publish-release"]}
+depends_on:
+- oss-build-release
+- oss-windows-release
+- enterprise-build-release
+- enterprise-windows-release
+- publish-release
+kind: pipeline
+name: notify-release
+platform:
+  arch: amd64
+  os: linux
+steps:
+- image: plugins/slack
+  name: slack
+  settings:
+    channel: grafana-ci-notifications
+    template: |-
+      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
+      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
+      Author: {{build.author}}
+    webhook:
+      from_secret: slack_webhook
+trigger:
+  ref:
+  - refs/tags/v*
+  status:
+  - failure
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "oss-build-test-release", "trigger": {"event": ["custom"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "./bin/grabpl verify-version v7.3.0-test", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition oss"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition oss --tries 5", "./bin/grabpl integration-tests --edition oss --tries 5"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise v7.3.0-test"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise v7.3.0-test"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck"], "commands": ["./bin/grabpl gen-version v7.3.0-test"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign v7.3.0-test"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001 --tries 3"]}, {"name": "build-storybook", "image": "grafana/build-container:1.4.2", "depends_on": ["package"], "environment": {"NODE_OPTIONS": "--max_old_space_size=4096"}, "commands": ["yarn storybook:build", "./bin/grabpl verify-storybook"]}, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "oss", "ubuntu": false}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "oss", "ubuntu": true}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition oss --bucket \"grafana-static-assets\""]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads-test"]}, {"name": "publish-storybook", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["build-storybook", "end-to-end-tests"], "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["echo Testing release"]}, {"name": "release-npm-packages", "image": "grafana/build-container:1.4.2", "depends_on": ["publish-storybook"], "environment": {"NPM_TOKEN": {"from_secret": "npm_token"}, "GITHUB_PACKAGE_TOKEN": {"from_secret": "github_package_token"}}, "commands": []}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on: []
+kind: pipeline
+name: oss-build-test-release
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - ./bin/grabpl verify-version v7.3.0-test
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise v7.3.0-test
+  depends_on:
+  - test-backend
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
+    --edition oss --no-pull-enterprise v7.3.0-test
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - ./bin/grabpl gen-version v7.3.0-test
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
+    --sign v7.3.0-test
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PORT: 3001
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.2
+  name: build-storybook
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: true
+    edition: oss
+    ubuntu: false
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: true
+    edition: oss
+    ubuntu: true
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+- commands:
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads-test
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+- commands:
+  - echo Testing release
+  depends_on:
+  - build-storybook
+  - end-to-end-tests
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-storybook
+- commands: []
+  depends_on:
+  - publish-storybook
+  environment:
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
+    NPM_TOKEN:
+      from_secret: npm_token
+  image: grafana/build-container:1.4.2
+  name: release-npm-packages
+trigger:
+  event:
+  - custom
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "oss-windows-test-release", "trigger": {"event": ["custom"]}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip .", ".\\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads-test v7.3.0-test", "$$fname = ((Get-Childitem grafana*.msi -name) -split \"`n\")[0]", "gsutil cp $$fname gs://grafana-downloads-test/oss/release/", "gsutil cp \"$$fname.sha256\" gs://grafana-downloads-test/oss/release/"], "depends_on": ["initialize"]}], "depends_on": ["oss-build-test-release"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}}
+depends_on:
+- oss-build-test-release
+kind: pipeline
+name: oss-windows-test-release
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads-test
+    v7.3.0-test
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-downloads-test/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/oss/release/
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  event:
+  - custom
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "enterprise-build-test-release", "trigger": {"event": ["custom"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}, {"name": "redis", "image": "redis:6.2.1-alpine", "environment": {}}, {"name": "memcached", "image": "memcached:1.6.9-alpine", "environment": {}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "clone", "image": "grafana/build-container:1.4.2", "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "git clone \"https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git\"", "cd grafana-enterprise", "git checkout main"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "depends_on": ["clone"], "commands": ["mv bin/grabpl /tmp/", "rmdir bin", "mv grafana-enterprise /tmp/", "/tmp/grabpl init-enterprise /tmp/grafana-enterprise", "mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json", "mkdir bin", "mv /tmp/grabpl bin/", "./bin/grabpl verify-drone", "./bin/grabpl verify-version v7.3.0-test", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition enterprise"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition enterprise --tries 5", "./bin/grabpl integration-tests --edition enterprise --tries 5"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise v7.3.0-test"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise v7.3.0-test"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "lint-backend-enterprise2", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition enterprise2"]}, {"name": "test-backend-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition enterprise2 --tries 5", "./bin/grabpl integration-tests --edition enterprise2 --tries 5"]}, {"name": "build-backend-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend-enterprise2"], "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN} --no-pull-enterprise v7.3.0-test"]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck", "build-backend-enterprise2", "test-backend-enterprise2"], "commands": ["./bin/grabpl gen-version v7.3.0-test"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign v7.3.0-test"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001, "PACKAGE_FILE": "dist/grafana-enterprise-*linux-amd64.tar.gz", "RUNDIR": "e2e/tmp-grafana-enterprise"}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001 --tries 3"]}, null, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "enterprise", "ubuntu": false}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "enterprise", "ubuntu": true}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "redis-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"REDIS_URL": "redis://redis:6379/0"}, "commands": ["./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s", "./bin/grabpl integration-tests"]}, {"name": "memcached-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"MEMCACHED_HOSTS": "memcached:11211"}, "commands": ["./bin/dockerize -wait tcp://memcached:11211 -timeout 120s", "./bin/grabpl integration-tests"]}, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition enterprise --bucket \"grafana-static-assets\""]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests", "redis-integration-tests", "memcached-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads-test"]}, null, null, {"name": "package-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign v7.3.0-test"]}, {"name": "end-to-end-tests-server-enterprise2", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package-enterprise2"], "environment": {"PORT": 3002, "PACKAGE_FILE": "dist/grafana-enterprise2-*linux-amd64.tar.gz", "RUNDIR": "e2e/tmp-grafana-enterprise2"}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests-enterprise2", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server-enterprise2"], "environment": {"HOST": "end-to-end-tests-server-enterprise2"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3002 --tries 3"]}, {"name": "upload-cdn-assets-enterprise2", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server-enterprise2"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition enterprise2 --bucket \"grafana-static-assets\""]}, {"name": "upload-packages-enterprise2", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-enterprise2", "mysql-integration-tests", "postgres-integration-tests", "redis-integration-tests", "memcached-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-test"]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}, "image_pull_secrets": ["dockerconfigjson"], "clone": {"disable": true}}
+clone:
+  disable: true
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: enterprise-build-test-release
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout main
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: clone
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  - ./bin/grabpl verify-drone
+  - ./bin/grabpl verify-version v7.3.0-test
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  depends_on:
+  - clone
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise v7.3.0-test
+  depends_on:
+  - test-backend
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
+    --edition enterprise --no-pull-enterprise v7.3.0-test
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
+    --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise2
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend-enterprise2
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend-enterprise2
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise v7.3.0-test
+  depends_on:
+  - test-backend-enterprise2
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: build-backend-enterprise2
+- commands:
+  - ./bin/grabpl gen-version v7.3.0-test
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise --sign v7.3.0-test
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    PORT: 3001
+    RUNDIR: e2e/tmp-grafana-enterprise
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- null
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: true
+    edition: enterprise
+    ubuntu: false
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: true
+    edition: enterprise
+    ubuntu: true
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.4.2
+  name: redis-integration-tests
+- commands:
+  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.4.2
+  name: memcached-integration-tests
+- commands:
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+- commands:
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads-test
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  - redis-integration-tests
+  - memcached-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+- null
+- null
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
+    --no-pull-enterprise --sign v7.3.0-test
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package-enterprise2
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package-enterprise2
+  detach: true
+  environment:
+    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
+    PORT: 3002
+    RUNDIR: e2e/tmp-grafana-enterprise2
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server-enterprise2
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3002 --tries 3
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+  environment:
+    HOST: end-to-end-tests-server-enterprise2
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests-enterprise2
+- commands:
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets-enterprise2
+- commands:
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-test
+  depends_on:
+  - end-to-end-tests-enterprise2
+  - mysql-integration-tests
+  - postgres-integration-tests
+  - redis-integration-tests
+  - memcached-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages-enterprise2
+trigger:
+  event:
+  - custom
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "enterprise-windows-test-release", "trigger": {"event": ["custom"]}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "clone", "image": "grafana/ci-wix:0.1.1", "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe", "git clone \"https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git\"", "cd grafana-enterprise", "git checkout main"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["cp -r grafana-enterprise C:\\App\\grafana-enterprise", "rm -r -force grafana-enterprise", "cp grabpl.exe C:\\App\\grabpl.exe", "rm -force grabpl.exe", "C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise", "cp C:\\App\\grabpl.exe grabpl.exe"], "depends_on": ["clone"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip .", ".\\grabpl.exe windows-installer --edition enterprise --packages-bucket grafana-downloads-test v7.3.0-test", "$$fname = ((Get-Childitem grafana*.msi -name) -split \"`n\")[0]", "gsutil cp $$fname gs://grafana-downloads-test/enterprise/release/", "gsutil cp \"$$fname.sha256\" gs://grafana-downloads-test/enterprise/release/"], "depends_on": ["initialize"]}], "depends_on": ["enterprise-build-test-release"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}, "image_pull_secrets": ["dockerconfigjson"], "clone": {"disable": true}}
+clone:
+  disable: true
+depends_on:
+- enterprise-build-test-release
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: enterprise-windows-test-release
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout main
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cp -r grafana-enterprise C:\App\grafana-enterprise
+  - rm -r -force grafana-enterprise
+  - cp grabpl.exe C:\App\grabpl.exe
+  - rm -force grabpl.exe
+  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - cp C:\App\grabpl.exe grabpl.exe
+  depends_on:
+  - clone
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition enterprise --packages-bucket grafana-downloads-test
+    v7.3.0-test
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-downloads-test/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/enterprise/release/
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  event:
+  - custom
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "publish-test-release", "trigger": {"event": ["custom"]}, "services": [], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "./bin/grabpl verify-version v7.3.0-test"]}, {"name": "publish-packages-oss", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["initialize"], "environment": {"GRAFANA_COM_API_KEY": {"from_secret": "grafana_api_key"}, "GCP_KEY": {"from_secret": "gcp_key"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release v7.3.0-test"]}, {"name": "publish-packages-enterprise", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["initialize"], "environment": {"GRAFANA_COM_API_KEY": {"from_secret": "grafana_api_key"}, "GCP_KEY": {"from_secret": "gcp_key"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["printenv GCP_KEY | base64 -d > /tmp/gcpkey.json", "./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release v7.3.0-test"]}], "depends_on": ["oss-build-test-release", "oss-windows-test-release", "enterprise-build-test-release", "enterprise-windows-test-release"], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on:
+- oss-build-test-release
+- oss-windows-test-release
+- enterprise-build-test-release
+- enterprise-windows-test-release
+kind: pipeline
+name: publish-test-release
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - ./bin/grabpl verify-version v7.3.0-test
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --deb-db-bucket
+    grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket
+    grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release
+    v7.3.0-test
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-packages-oss
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json
+    --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo
+    --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
+    --simulate-release v7.3.0-test
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: publish-packages-enterprise
+trigger:
+  event:
+  - custom
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "platform": {"os": "linux", "arch": "amd64"}, "name": "notify-test-release", "trigger": {"event": ["custom"], "status": ["failure"]}, "steps": [{"name": "slack", "image": "plugins/slack", "settings": {"webhook": {"from_secret": "slack_webhook"}, "channel": "grafana-ci-notifications", "template": "Build {{build.number}} failed for commit: \u003chttps://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}\u003e: {{build.link}}\nBranch: \u003chttps://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}\u003e\nAuthor: {{build.author}}"}}], "depends_on": ["oss-build-test-release", "oss-windows-test-release", "enterprise-build-test-release", "enterprise-windows-test-release", "publish-test-release"]}
+depends_on:
+- oss-build-test-release
+- oss-windows-test-release
+- enterprise-build-test-release
+- enterprise-windows-test-release
+- publish-test-release
+kind: pipeline
+name: notify-test-release
+platform:
+  arch: amd64
+  os: linux
+steps:
+- image: plugins/slack
+  name: slack
+  settings:
+    channel: grafana-ci-notifications
+    template: |-
+      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
+      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
+      Author: {{build.author}}
+    webhook:
+      from_secret: slack_webhook
+trigger:
+  event:
+  - custom
+  status:
+  - failure
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "oss-build-release-branch", "trigger": {"ref": ["refs/heads/v[0-9]*"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "./bin/grabpl verify-drone", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition oss"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition oss", "./bin/grabpl integration-tests --edition oss"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck"], "commands": ["./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --sign"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001 --tries 3"]}, {"name": "build-storybook", "image": "grafana/build-container:1.4.2", "depends_on": ["package"], "environment": {"NODE_OPTIONS": "--max_old_space_size=4096"}, "commands": ["yarn storybook:build", "./bin/grabpl verify-storybook"]}, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "oss", "ubuntu": false}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "oss", "ubuntu": true}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition oss --bucket \"grafana-static-assets\""]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads"]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}}
+depends_on: []
+kind: pipeline
+name: oss-build-release-branch
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition oss
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - test-backend
+  environment: {}
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+    --sign
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PORT: 3001
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.2
+  name: build-storybook
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: true
+    edition: oss
+    ubuntu: false
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: true
+    edition: oss
+    ubuntu: true
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+- commands:
+  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "oss-windows-release-branch", "trigger": {"ref": ["refs/heads/v[0-9]*"]}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip ."], "depends_on": ["initialize"]}], "depends_on": ["oss-build-release-branch"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}}
+depends_on:
+- oss-build-release-branch
+kind: pipeline
+name: oss-windows-release-branch
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "enterprise-build-release-branch", "trigger": {"ref": ["refs/heads/v[0-9]*"]}, "services": [{"name": "postgres", "image": "postgres:12.3-alpine", "environment": {"POSTGRES_USER": "grafanatest", "POSTGRES_PASSWORD": "grafanatest", "POSTGRES_DB": "grafanatest"}}, {"name": "mysql", "image": "mysql:5.6.48", "environment": {"MYSQL_ROOT_PASSWORD": "rootpass", "MYSQL_DATABASE": "grafana_tests", "MYSQL_USER": "grafana", "MYSQL_PASSWORD": "password"}}, {"name": "redis", "image": "redis:6.2.1-alpine", "environment": {}}, {"name": "memcached", "image": "memcached:1.6.9-alpine", "environment": {}}], "steps": [{"name": "identify-runner", "image": "alpine:3.14.2", "commands": ["echo $DRONE_RUNNER_NAME"]}, {"name": "clone", "image": "grafana/build-container:1.4.2", "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["mkdir -p bin", "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl", "chmod +x bin/grabpl", "git clone \"https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git\"", "cd grafana-enterprise", "git checkout ${DRONE_BRANCH}"]}, {"name": "initialize", "image": "grafana/build-container:1.4.2", "environment": {"DOCKERIZE_VERSION": "0.6.1"}, "depends_on": ["clone"], "commands": ["mv bin/grabpl /tmp/", "rmdir bin", "mv grafana-enterprise /tmp/", "/tmp/grabpl init-enterprise /tmp/grafana-enterprise", "mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json", "mkdir bin", "mv /tmp/grabpl bin/", "./bin/grabpl verify-drone", "curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz", "yarn install --frozen-lockfile --no-progress"]}, {"name": "codespell", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" \u003e words_to_ignore.txt", "codespell -I words_to_ignore.txt docs/"]}, {"name": "shellcheck", "image": "grafana/build-container:1.4.2", "depends_on": ["initialize"], "commands": ["./bin/grabpl shellcheck"]}, {"name": "lint-backend", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition enterprise"]}, {"name": "test-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition enterprise", "./bin/grabpl integration-tests --edition enterprise"]}, {"name": "test-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"TEST_MAX_WORKERS": "50%"}, "commands": ["yarn run ci:test-frontend"]}, {"name": "build-backend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend"], "environment": {}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-frontend", "image": "grafana/build-container:1.4.2", "depends_on": ["test-frontend"], "commands": ["./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise"]}, {"name": "build-plugins", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}}, "commands": ["./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign --signing-admin"]}, {"name": "validate-scuemata", "image": "grafana/build-container:1.4.2", "depends_on": ["build-backend"], "commands": ["./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root ."]}, {"name": "lint-backend-enterprise2", "image": "grafana/build-container:1.4.2", "environment": {"CGO_ENABLED": "1"}, "depends_on": ["initialize"], "commands": ["make gen-go", "./bin/grabpl lint-backend --edition enterprise2"]}, {"name": "test-backend-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["lint-backend"], "commands": ["[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1", "./bin/grabpl test-backend --edition enterprise2", "./bin/grabpl integration-tests --edition enterprise2"]}, {"name": "build-backend-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend-enterprise2"], "environment": {}, "commands": ["./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64 --no-pull-enterprise"]}, {"name": "gen-version", "image": "grafana/build-container:1.4.2", "depends_on": ["build-plugins", "build-backend", "build-frontend", "codespell", "shellcheck", "build-backend-enterprise2", "test-backend-enterprise2"], "commands": ["./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}"]}, {"name": "package", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --sign"]}, {"name": "end-to-end-tests-server", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package"], "environment": {"PORT": 3001, "PACKAGE_FILE": "dist/grafana-enterprise-*linux-amd64.tar.gz", "RUNDIR": "e2e/tmp-grafana-enterprise"}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server"], "environment": {"HOST": "end-to-end-tests-server"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3001 --tries 3"]}, {"name": "build-storybook", "image": "grafana/build-container:1.4.2", "depends_on": ["package"], "environment": {"NODE_OPTIONS": "--max_old_space_size=4096"}, "commands": ["yarn storybook:build", "./bin/grabpl verify-storybook"]}, {"name": "copy-packages-for-docker", "image": "grafana/build-container:1.4.2", "depends_on": ["end-to-end-tests-server"], "commands": ["ls dist/*.tar.gz*", "cp dist/*.tar.gz* packaging/docker/"]}, {"name": "build-docker-images", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "enterprise", "ubuntu": false}}, {"name": "build-docker-images-ubuntu", "image": "grafana/drone-grafana-docker:0.3.2", "depends_on": ["copy-packages-for-docker"], "settings": {"dry_run": true, "edition": "enterprise", "ubuntu": true}}, {"name": "postgres-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"PGPASSWORD": "grafanatest", "GRAFANA_TEST_DB": "postgres", "POSTGRES_HOST": "postgres"}, "commands": ["apt-get update", "apt-get install -yq postgresql-client", "./bin/dockerize -wait tcp://postgres:5432 -timeout 120s", "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql", "go clean -testcache", "./bin/grabpl integration-tests --database postgres"]}, {"name": "mysql-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"GRAFANA_TEST_DB": "mysql", "MYSQL_HOST": "mysql"}, "commands": ["apt-get update", "apt-get install -yq default-mysql-client", "./bin/dockerize -wait tcp://mysql:3306 -timeout 120s", "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass", "go clean -testcache", "./bin/grabpl integration-tests --database mysql"]}, {"name": "redis-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"REDIS_URL": "redis://redis:6379/0"}, "commands": ["./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s", "./bin/grabpl integration-tests"]}, {"name": "memcached-integration-tests", "image": "grafana/build-container:1.4.2", "depends_on": ["test-backend", "test-frontend"], "environment": {"MEMCACHED_HOSTS": "memcached:11211"}, "commands": ["./bin/dockerize -wait tcp://memcached:11211 -timeout 120s", "./bin/grabpl integration-tests"]}, {"name": "upload-cdn-assets", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition enterprise --bucket \"grafana-static-assets\""]}, {"name": "upload-packages", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests", "mysql-integration-tests", "postgres-integration-tests", "redis-integration-tests", "memcached-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads"]}, {"name": "package-enterprise2", "image": "grafana/build-container:1.4.2", "depends_on": ["gen-version"], "environment": {"GRAFANA_API_KEY": {"from_secret": "grafana_api_key"}, "GITHUB_TOKEN": {"from_secret": "github_token"}, "GPG_PRIV_KEY": {"from_secret": "gpg_priv_key"}, "GPG_PUB_KEY": {"from_secret": "gpg_pub_key"}, "GPG_KEY_PASSWORD": {"from_secret": "gpg_key_password"}}, "commands": ["./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64 --sign"]}, {"name": "end-to-end-tests-server-enterprise2", "image": "grafana/build-container:1.4.2", "detach": true, "depends_on": ["package-enterprise2"], "environment": {"PORT": 3002, "PACKAGE_FILE": "dist/grafana-enterprise2-*linux-amd64.tar.gz", "RUNDIR": "e2e/tmp-grafana-enterprise2"}, "commands": ["./e2e/start-server"]}, {"name": "end-to-end-tests-enterprise2", "image": "grafana/ci-e2e:12.19.0-1", "depends_on": ["end-to-end-tests-server-enterprise2"], "environment": {"HOST": "end-to-end-tests-server-enterprise2"}, "commands": ["./node_modules/.bin/cypress install", "./bin/grabpl e2e-tests --port 3002 --tries 3"]}, {"name": "upload-cdn-assets-enterprise2", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-server-enterprise2"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-cdn --edition enterprise2 --bucket \"grafana-static-assets\""]}, {"name": "upload-packages-enterprise2", "image": "grafana/grafana-ci-deploy:1.3.1", "depends_on": ["end-to-end-tests-enterprise2", "mysql-integration-tests", "postgres-integration-tests", "redis-integration-tests", "memcached-integration-tests"], "environment": {"GCP_GRAFANA_UPLOAD_KEY": {"from_secret": "gcp_key"}}, "commands": ["./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2"]}], "depends_on": [], "platform": {"os": "linux", "arch": "amd64"}, "node": {"type": "no-parallel"}, "image_pull_secrets": ["dockerconfigjson"], "clone": {"disable": true}}
+clone:
+  disable: true
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: enterprise-build-release-branch
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/grabpl
+  - chmod +x bin/grabpl
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_BRANCH}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.4.2
+  name: clone
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  - ./bin/grabpl verify-drone
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  depends_on:
+  - clone
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+  image: grafana/build-container:1.4.2
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition enterprise
+  - ./bin/grabpl integration-tests --edition enterprise
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
+  depends_on:
+  - test-backend
+  environment: {}
+  image: grafana/build-container:1.4.2
+  name: build-backend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- commands:
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
+    --signing-admin
+  depends_on:
+  - lint-backend
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: build-plugins
+- commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
+  depends_on:
+  - build-backend
+  image: grafana/build-container:1.4.2
+  name: validate-scuemata
+- commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise2
+  depends_on:
+  - initialize
+  environment:
+    CGO_ENABLED: "1"
+  image: grafana/build-container:1.4.2
+  name: lint-backend-enterprise2
+- commands:
+  - '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1'
+  - ./bin/grabpl test-backend --edition enterprise2
+  - ./bin/grabpl integration-tests --edition enterprise2
+  depends_on:
+  - lint-backend
+  image: grafana/build-container:1.4.2
+  name: test-backend-enterprise2
+- commands:
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
+    --variants linux-x64 --no-pull-enterprise
+  depends_on:
+  - test-backend-enterprise2
+  environment: {}
+  image: grafana/build-container:1.4.2
+  name: build-backend-enterprise2
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
+  image: grafana/build-container:1.4.2
+  name: gen-version
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise --sign
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package
+  detach: true
+  environment:
+    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    PORT: 3001
+    RUNDIR: e2e/tmp-grafana-enterprise
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    HOST: end-to-end-tests-server
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.2
+  name: build-storybook
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - end-to-end-tests-server
+  image: grafana/build-container:1.4.2
+  name: copy-packages-for-docker
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images
+  settings:
+    dry_run: true
+    edition: enterprise
+    ubuntu: false
+- depends_on:
+  - copy-packages-for-docker
+  image: grafana/drone-grafana-docker:0.3.2
+  name: build-docker-images-ubuntu
+  settings:
+    dry_run: true
+    edition: enterprise
+    ubuntu: true
+- commands:
+  - apt-get update
+  - apt-get install -yq postgresql-client
+  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database postgres
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.4.2
+  name: postgres-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - ./bin/grabpl integration-tests --database mysql
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql
+  image: grafana/build-container:1.4.2
+  name: mysql-integration-tests
+- commands:
+  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  image: grafana/build-container:1.4.2
+  name: redis-integration-tests
+- commands:
+  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - test-backend
+  - test-frontend
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  image: grafana/build-container:1.4.2
+  name: memcached-integration-tests
+- commands:
+  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets
+- commands:
+  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
+  depends_on:
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+  - redis-integration-tests
+  - memcached-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages
+- commands:
+  - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise --variants linux-x64 --sign
+  depends_on:
+  - gen-version
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/build-container:1.4.2
+  name: package-enterprise2
+- commands:
+  - ./e2e/start-server
+  depends_on:
+  - package-enterprise2
+  detach: true
+  environment:
+    PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
+    PORT: 3002
+    RUNDIR: e2e/tmp-grafana-enterprise2
+  image: grafana/build-container:1.4.2
+  name: end-to-end-tests-server-enterprise2
+- commands:
+  - ./node_modules/.bin/cypress install
+  - ./bin/grabpl e2e-tests --port 3002 --tries 3
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+  environment:
+    HOST: end-to-end-tests-server-enterprise2
+  image: grafana/ci-e2e:12.19.0-1
+  name: end-to-end-tests-enterprise2
+- commands:
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-cdn-assets-enterprise2
+- commands:
+  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
+  depends_on:
+  - end-to-end-tests-enterprise2
+  - mysql-integration-tests
+  - postgres-integration-tests
+  - redis-integration-tests
+  - memcached-integration-tests
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: upload-packages-enterprise2
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "name": "enterprise-windows-release-branch", "trigger": {"ref": ["refs/heads/v[0-9]*"]}, "services": [], "steps": [{"name": "identify-runner", "image": "mcr.microsoft.com/windows:1809", "commands": ["echo $env:DRONE_RUNNER_NAME"]}, {"name": "clone", "image": "grafana/ci-wix:0.1.1", "environment": {"GITHUB_TOKEN": {"from_secret": "github_token"}}, "commands": ["$$ProgressPreference = \"SilentlyContinue\"", "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe -OutFile grabpl.exe", "git clone \"https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git\"", "cd grafana-enterprise", "git checkout $$env:DRONE_BRANCH"]}, {"name": "initialize", "image": "grafana/ci-wix:0.1.1", "commands": ["cp -r grafana-enterprise C:\\App\\grafana-enterprise", "rm -r -force grafana-enterprise", "cp grabpl.exe C:\\App\\grabpl.exe", "rm -force grabpl.exe", "C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise", "cp C:\\App\\grabpl.exe grabpl.exe"], "depends_on": ["clone"]}, {"name": "build-windows-installer", "image": "grafana/ci-wix:0.1.1", "environment": {"GCP_KEY": {"from_secret": "gcp_key"}}, "commands": ["$$gcpKey = $$env:GCP_KEY", "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json", "dos2unix gcpkey.json", "gcloud auth activate-service-account --key-file=gcpkey.json", "rm gcpkey.json", "cp C:\\App\\nssm-2.24.zip ."], "depends_on": ["initialize"]}], "depends_on": ["enterprise-build-release-branch"], "platform": {"os": "windows", "arch": "amd64", "version": "1809"}, "image_pull_secrets": ["dockerconfigjson"], "clone": {"disable": true}}
+clone:
+  disable: true
+depends_on:
+- enterprise-build-release-branch
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: enterprise-windows-release-branch
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.5/windows/grabpl.exe
+    -OutFile grabpl.exe
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout $$env:DRONE_BRANCH
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cp -r grafana-enterprise C:\App\grafana-enterprise
+  - rm -r -force grafana-enterprise
+  - cp grabpl.exe C:\App\grabpl.exe
+  - rm -force grabpl.exe
+  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - cp C:\App\grabpl.exe grabpl.exe
+  depends_on:
+  - clone
+  image: grafana/ci-wix:0.1.1
+  name: initialize
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  depends_on:
+  - initialize
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "platform": {"os": "linux", "arch": "amd64"}, "name": "notify-release-branch", "trigger": {"ref": ["refs/heads/v[0-9]*"], "status": ["failure"]}, "steps": [{"name": "slack", "image": "plugins/slack", "settings": {"webhook": {"from_secret": "slack_webhook"}, "channel": "grafana-ci-notifications", "template": "Build {{build.number}} failed for commit: \u003chttps://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}\u003e: {{build.link}}\nBranch: \u003chttps://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}\u003e\nAuthor: {{build.author}}"}}], "depends_on": ["oss-build-release-branch", "oss-windows-release-branch", "enterprise-build-release-branch", "enterprise-windows-release-branch"]}
+depends_on:
+- oss-build-release-branch
+- oss-windows-release-branch
+- enterprise-build-release-branch
+- enterprise-windows-release-branch
+kind: pipeline
+name: notify-release-branch
+platform:
+  arch: amd64
+  os: linux
+steps:
+- image: plugins/slack
+  name: slack
+  settings:
+    channel: grafana-ci-notifications
+    template: |-
+      Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}
+      Branch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>
+      Author: {{build.author}}
+    webhook:
+      from_secret: slack_webhook
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+  status:
+  - failure
+type: docker
 ---
-{"kind": "pipeline", "type": "docker", "platform": {"os": "linux", "arch": "amd64"}, "name": "scan-docker-images", "trigger": {"event": "cron", "cron": "nightly"}, "services": [], "steps": [{"name": "scan-docker-images-unkown-low-medium-vulnerabilities", "image": "aquasec/trivy:0.18.3", "commands": ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest", "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main", "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu", "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu"]}, {"name": "scan-docker-images-high-critical-vulnerabilities", "image": "aquasec/trivy:0.18.3", "commands": ["trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest", "trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main", "trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu", "trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu"]}, {"name": "slack-notify-failure", "image": "plugins/slack", "settings": {"webhook": {"from_secret": "slack_webhook_backend"}, "channel": "grafana-backend-ops", "template": "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"}, "when": {"status": "failure"}}]}
+kind: pipeline
+name: scan-docker-images
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  image: aquasec/trivy:0.18.3
+  name: scan-docker-images-unkown-low-medium-vulnerabilities
+- commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+  image: aquasec/trivy:0.18.3
+  name: scan-docker-images-high-critical-vulnerabilities
+- image: plugins/slack
+  name: slack-notify-failure
+  settings:
+    channel: grafana-backend-ops
+    template: 'Nightly docker image scan job for {{repo.name}} failed: {{build.link}}'
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status: failure
+trigger:
+  cron: nightly
+  event: cron
+type: docker
 ---
-{"kind": "secret", "name": "dockerconfigjson", "get": {"path": "secret/data/common/gcr", "name": ".dockerconfigjson"}}
+get:
+  name: .dockerconfigjson
+  path: secret/data/common/gcr
+kind: secret
+name: dockerconfigjson
 ---
-{"kind": "secret", "name": "github_token", "get": {"path": "infra/data/ci/github/grafanabot", "name": "pat"}}
+get:
+  name: pat
+  path: infra/data/ci/github/grafanabot
+kind: secret
+name: github_token
 ---
-{"kind": "secret", "name": "drone_token", "get": {"path": "infra/data/ci/drone", "name": "machine-user-token"}}
+get:
+  name: machine-user-token
+  path: infra/data/ci/drone
+kind: secret
+name: drone_token
 ---
 kind: signature
-hmac: 2fabbb2f50f440cdbd09676a6fc8ed2dd642ac971afbb36501d7e69398c4e829
+hmac: a3d662c51dc186bcac2843a6403d50236bce805fbf756037124569a6868b2b99
 
 ...
