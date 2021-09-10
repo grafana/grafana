@@ -3,6 +3,7 @@ package loader
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -56,6 +57,11 @@ func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.PluginV
 	if err != nil {
 		return nil, err
 	}
+
+	if len(loadedPlugins) == 0 {
+		return nil, fmt.Errorf("could not load plugin at path %s", path)
+	}
+
 	return loadedPlugins[0], nil
 }
 
@@ -72,6 +78,7 @@ func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactor
 	p, err := l.Load(path, map[string]struct{}{})
 	if err != nil {
 		logger.Error("failed to load core plugin", "err", err)
+		return nil, err
 	}
 
 	err = l.pluginInitializer.InitializeWithFactory(p, factory)

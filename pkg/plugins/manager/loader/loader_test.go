@@ -1,15 +1,10 @@
 package loader
 
 import (
-	"context"
 	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 
@@ -19,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,22 +33,18 @@ func TestLoader_LoadAll(t *testing.T) {
 	tests := []struct {
 		name            string
 		cfg             *setting.Cfg
-		factoryProvider coreplugin.BackendFactoryProvider
 		log             log.Logger
-		pluginPath      string
+		pluginPaths     []string
 		existingPlugins map[string]struct{}
 		want            []*plugins.PluginV2
 		wantErr         bool
 	}{
 		{
 			name: "Load a Core plugin",
-			factoryProvider: &fakeFactoryProvider{registry: map[string]struct{}{
-				"cloudwatch": {},
-			}},
 			cfg: &setting.Cfg{
 				StaticRootPath: corePluginDir,
 			},
-			pluginPath: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
+			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.PluginV2{
 				{
 					JSONData: plugins.JSONData{
@@ -105,7 +95,7 @@ func TestLoader_LoadAll(t *testing.T) {
 			cfg: &setting.Cfg{
 				BundledPluginsPath: filepath.Join(parentDir, "testdata"),
 			},
-			pluginPath: "../testdata/unsigned-datasource",
+			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.PluginV2{
 				{
 					JSONData: plugins.JSONData{
@@ -143,7 +133,7 @@ func TestLoader_LoadAll(t *testing.T) {
 			cfg: &setting.Cfg{
 				PluginsPath: filepath.Join(parentDir),
 			},
-			pluginPath: "../testdata/symbolic-plugin-dirs",
+			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
 			want: []*plugins.PluginV2{
 				{
 					JSONData: plugins.JSONData{
@@ -219,8 +209,8 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, tt.cfg, tt.factoryProvider)
-			got, err := l.LoadAll(tt.pluginPath, tt.existingPlugins)
+			l := New(nil, nil, tt.cfg)
+			got, err := l.LoadAll(tt.pluginPaths, tt.existingPlugins)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -312,9 +302,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		}
 
-		l := New(nil, nil, cfg, &coreplugin.Registry{})
+		l := New(nil, nil, cfg)
 
-		got, err := l.LoadAll("../testdata/nested-plugins", map[string]struct{}{})
+		got, err := l.LoadAll([]string{"../testdata/nested-plugins"}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -336,9 +326,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		}
 
-		l := New(nil, nil, cfg, &coreplugin.Registry{})
+		l := New(nil, nil, cfg)
 
-		got, err := l.LoadAll("../testdata/nested-plugins", map[string]struct{}{
+		got, err := l.LoadAll([]string{"../testdata/nested-plugins"}, map[string]struct{}{
 			"test-panel": {},
 		})
 		assert.NoError(t, err)
@@ -418,7 +408,7 @@ func TestLoader_readPluginJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, nil, &coreplugin.Registry{})
+			l := New(nil, nil, nil)
 			got, err := l.readPluginJSON(tt.pluginPath)
 			if (err != nil) && !tt.failed {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
@@ -476,85 +466,4 @@ func Test_validatePluginJSON(t *testing.T) {
 			}
 		})
 	}
-}
-
-type fakeFactoryProvider struct {
-	registry map[string]struct{}
-}
-
-func (f *fakeFactoryProvider) BackendFactory(pluginID string) (backendplugin.PluginFactoryFunc, error) {
-	if _, exists := f.registry[pluginID]; exists {
-		return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
-			return &testPlugin{
-				pluginID: pluginID,
-			}, nil
-		}, nil
-	}
-
-	return nil, nil
-}
-
-type testPlugin struct {
-	pluginID string
-}
-
-func (tp *testPlugin) PluginID() string {
-	return tp.pluginID
-}
-
-func (tp *testPlugin) Logger() log.Logger {
-	return nil
-}
-
-func (tp *testPlugin) Start(ctx context.Context) error {
-
-	return nil
-}
-
-func (tp *testPlugin) Stop(ctx context.Context) error {
-	return nil
-}
-
-func (tp *testPlugin) IsManaged() bool {
-	return false
-}
-
-func (tp *testPlugin) Exited() bool {
-	return false
-}
-
-func (tp *testPlugin) Decommission() error {
-	return nil
-}
-
-func (tp *testPlugin) IsDecommissioned() bool {
-	return false
-}
-
-func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return backendplugin.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return nil, backendplugin.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return backendplugin.ErrMethodNotImplemented
 }
