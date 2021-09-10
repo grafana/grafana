@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 import { useTheme2 } from '../../../themes/ThemeContext';
@@ -63,6 +64,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     let plotInstance: uPlot | undefined = undefined;
     let bbox: DOMRect | undefined = undefined;
 
+    let focusSeriesIdx: number | null = null;
+
     const plotMouseLeave = () => {
       if (!isMounted()) {
         return;
@@ -99,38 +102,36 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     const tooltipInterpolator = config.getTooltipInterpolator();
 
     if (tooltipInterpolator) {
-      // Custom toolitp positioning
+      // Custom tooltip positioning
       config.addHook('setCursor', (u) => {
-        tooltipInterpolator(
-          setFocusedSeriesIdx,
-          setFocusedPointIdx,
-          (clear) => {
-            if (clear) {
-              setCoords(null);
-              return;
-            }
-
-            if (!bbox) {
-              return;
-            }
-
-            const { x, y } = positionTooltip(u, bbox);
-            if (x !== undefined && y !== undefined) {
-              setCoords({ x, y });
-            }
-          },
-          u
-        );
-      });
-    } else {
-      config.addHook('setLegend', (u) => {
-        if (!isMounted()) {
+        if (!bbox || !isMounted()) {
           return;
         }
-        setFocusedPointIdx(u.legend.idx!);
-        setFocusedPointIdxs(u.legend.idxs!.slice());
-      });
 
+        ReactDOM.unstable_batchedUpdates(() => {
+          tooltipInterpolator(
+            setFocusedSeriesIdx,
+            setFocusedPointIdx,
+            (clear) => {
+              if (clear) {
+                setCoords(null);
+                return;
+              }
+
+              if (!bbox) {
+                return;
+              }
+
+              const { x, y } = positionTooltip(u, bbox);
+              if (x !== undefined && y !== undefined) {
+                setCoords({ x, y });
+              }
+            },
+            u
+          );
+        });
+      });
+    } else {
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
         if (!bbox || !isMounted()) {
@@ -138,18 +139,26 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         }
 
         const { x, y } = positionTooltip(u, bbox);
-        if (x !== undefined && y !== undefined) {
-          setCoords({ x, y });
-        } else {
-          setCoords(null);
-        }
+
+        ReactDOM.unstable_batchedUpdates(() => {
+          if (x !== undefined && y !== undefined) {
+            setCoords({ x, y });
+          } else {
+            setCoords(null);
+          }
+
+          setFocusedPointIdx(u.cursor.idx!);
+          setFocusedPointIdxs(u.cursor.idxs!.slice());
+          if (focusSeriesIdx !== -1) {
+            setFocusedSeriesIdx(focusSeriesIdx);
+          }
+          focusSeriesIdx = -1;
+        });
       });
 
+      // this fires before setCursor, so we can defer the actual setState
       config.addHook('setSeries', (_, idx) => {
-        if (!isMounted()) {
-          return;
-        }
-        setFocusedSeriesIdx(idx);
+        focusSeriesIdx = idx;
       });
     }
 
@@ -160,7 +169,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         plotInstance.over.removeEventListener('mouseenter', plotMouseEnter);
       }
     };
-  }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
+  }, [config]);
 
   if (focusedPointIdx === null || (!isActive && sync === DashboardCursorSync.Crosshair)) {
     return null;
