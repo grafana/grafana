@@ -9,6 +9,8 @@ import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { selectors } from '@grafana/e2e-selectors';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {
@@ -202,6 +204,8 @@ export const TimePickerCalendar = memo<Props>((props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;
+  const ref = React.createRef<HTMLElement>();
+  let { overlayProps, underlayProps } = useOverlay(props, ref);
 
   if (!isOpen) {
     return null;
@@ -209,28 +213,34 @@ export const TimePickerCalendar = memo<Props>((props) => {
 
   if (isFullscreen) {
     return (
-      <ClickOutsideWrapper onClick={props.onClose}>
-        <section
-          className={styles.container}
-          onClick={stopPropagation}
-          aria-label={selectors.components.TimePicker.calendar}
-        >
-          <Body {...props} />
-        </section>
-      </ClickOutsideWrapper>
+      <div {...underlayProps}>
+        <FocusScope contain restoreFocus autoFocus>
+          <section
+            className={styles.container}
+            onClick={stopPropagation}
+            aria-label={selectors.components.TimePicker.calendar}
+            ref={ref}
+            {...overlayProps}
+          >
+            <Body {...props} />
+          </section>
+        </FocusScope>
+      </div>
     );
   }
 
   return (
     <Portal>
-      <div className={styles.modal} onClick={stopPropagation}>
-        <div className={styles.content} aria-label={selectors.components.TimePicker.calendar}>
-          <Header {...props} />
-          <Body {...props} />
-          <Footer {...props} />
+      <FocusScope contain restoreFocus autoFocus>
+        <div className={styles.modal} onClick={stopPropagation}>
+          <div className={styles.content} aria-label={selectors.components.TimePicker.calendar}>
+            <Header {...props} />
+            <Body {...props} />
+            <Footer {...props} />
+          </div>
         </div>
-      </div>
-      <div className={styles.backdrop} onClick={stopPropagation} />
+        <div className={styles.backdrop} onClick={stopPropagation} />
+      </FocusScope>
     </Portal>
   );
 });
@@ -244,7 +254,7 @@ const Header = memo<Props>(({ onClose }) => {
   return (
     <div className={styles.container}>
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <Icon name="times" onClick={onClose} />
+      <Icon name="times" onClick={onClose} tabIndex={0} />
     </div>
   );
 });
