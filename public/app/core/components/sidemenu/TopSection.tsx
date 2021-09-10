@@ -6,13 +6,11 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
 import config from '../../config';
-import { linkIsActive } from './utils';
+import { isLinkActive, isSearchActive } from './utils';
 import SideMenuItem from './SideMenuItem';
 
 const TopSection = () => {
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const isSearchActive = query.get('search') === 'open';
   const theme = useTheme2();
   const styles = getStyles(theme);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
@@ -24,14 +22,14 @@ const TopSection = () => {
 
   return (
     <div data-testid="top-section-items" className={styles.container}>
-      <SideMenuItem isActive={isSearchActive} label="Search dashboards" onClick={onOpenSearch}>
+      <SideMenuItem isActive={isSearchActive(location)} label="Search dashboards" onClick={onOpenSearch}>
         <Icon name="search" size="xl" />
       </SideMenuItem>
       {mainLinks.map((link, index) => {
         return (
           <SideMenuItem
             key={`${link.id}-${index}`}
-            isActive={!isSearchActive && linkIsActive(location.pathname, link)}
+            isActive={!isSearchActive(location) && isLinkActive(location.pathname, link)}
             label={link.text}
             menuItems={link.children}
             target={link.target}
