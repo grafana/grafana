@@ -64,14 +64,6 @@ type NotificationChannelConfig struct {
 	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
 }
 
-// DecryptedValue returns decrypted value from secureSettings
-func (an *NotificationChannelConfig) DecryptedValue(field string, fallback string) string {
-	if value, ok := an.SecureSettings.DecryptedValue(field); ok {
-		return value
-	}
-	return fallback
-}
-
 type httpCfg struct {
 	body     []byte
 	user     string

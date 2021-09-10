@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +20,8 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	}
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	kvStore := newFakeKVStore(t)
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore)
+	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore, decryptFn)
 	ctx := context.Background()
 
 	// Ensure that one Alertmanager is created per org.
@@ -52,7 +53,8 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	kvStore := newFakeKVStore(t)
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore)
+	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore, decryptFn)
 	ctx := context.Background()
 
 	// Ensure that one Alertmanagers is created per org.

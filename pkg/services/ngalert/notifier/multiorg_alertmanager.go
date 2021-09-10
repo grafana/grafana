@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,9 +32,12 @@ type MultiOrgAlertmanager struct {
 	kvStore     kvstore.KVStore
 
 	orgRegistry *metrics.OrgRegistries
+
+	decryptFn alerting.GetDecryptedValueFn
 }
 
-func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore, kvStore kvstore.KVStore) *MultiOrgAlertmanager {
+func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
+	kvStore kvstore.KVStore, decryptFn alerting.GetDecryptedValueFn) *MultiOrgAlertmanager {
 	return &MultiOrgAlertmanager{
 		settings:      cfg,
 		logger:        log.New("multiorg.alertmanager"),
@@ -42,6 +46,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		orgStore:      orgStore,
 		kvStore:       kvStore,
 		orgRegistry:   metrics.NewOrgRegistries(),
+		decryptFn:     decryptFn,
 	}
 }
 
@@ -86,7 +91,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 		existing, found := moa.alertmanagers[orgID]
 		if !found {
 			reg := moa.orgRegistry.GetOrCreateOrgRegistry(orgID)
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, metrics.NewMetrics(reg))
+			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.decryptFn, metrics.NewMetrics(reg))
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}
