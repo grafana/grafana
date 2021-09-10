@@ -15,9 +15,14 @@ interface OwnProps {
 }
 
 class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector>> {
-  onChange = (queries: DataQuery[]) => {
+  onChange = (newQueries: DataQuery[], oldQueries?: DataQuery[]) => {
     const { exploreId } = this.props;
-    this.props.changeQueriesAction({ queries, exploreId });
+    this.props.changeQueriesAction({ queries: newQueries, exploreId });
+
+    // if we are removing a query we want to run the remaining ones
+    if (oldQueries && newQueries.length < oldQueries?.length) {
+      this.runQueries();
+    }
   };
 
   onAddQuery = (query: DataQuery) => {
@@ -36,7 +41,7 @@ class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector
       <QueryEditorRows
         dsSettings={dsSettings}
         queries={queries}
-        onQueriesChange={this.onChange}
+        onQueriesChange={(newQueries) => this.onChange(newQueries, queries)}
         onAddQuery={this.onAddQuery}
         onRunQueries={this.runQueries}
         data={this.props.queryResponse}
