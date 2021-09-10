@@ -20,7 +20,7 @@ func TestResponseLimitMiddleware(t *testing.T) {
 		body       string
 		err        error
 	}{
-		{limit: 1, bodyLength: 1, body: "d", err: errors.New("error: http: response body too large")},
+		{limit: 1, bodyLength: 1, body: "d", err: errors.New("error: http: response body too large, response limit is set to: 1")},
 		{limit: 1000000, bodyLength: 5, body: "dummy", err: nil},
 		{limit: 0, bodyLength: 5, body: "dummy", err: nil},
 	}
@@ -44,6 +44,7 @@ func TestResponseLimitMiddleware(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, res)
 			require.NotNil(t, res.Body)
+			require.NoError(t, res.Body.Close())
 
 			bodyBytes, err := ioutil.ReadAll(res.Body)
 			if err != nil {
