@@ -23,6 +23,7 @@ import { AxisPlacement, ScaleDirection, ScaleOrientation, UPlotConfigBuilder, UP
 import uPlot from 'uplot';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 export function prepDims(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
   if (!frames.length) {
@@ -325,7 +326,8 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
       pathBuilder: drawBubbles,
       theme,
       scaleKey: '', // facets' scales used internally (x/y)
-      fillColor: seriesColor,
+      lineColor: seriesColor,
+      fillColor: alpha(seriesColor, 0.5),
     });
   });
 
