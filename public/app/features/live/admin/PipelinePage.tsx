@@ -1,17 +1,17 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
-import { getBackendSrv } from '../../../../packages/grafana-runtime/src';
-import { Modal, TabContent, TabsBar, Tab, CodeEditor, Input, useStyles } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { Input, useStyles } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
+import { Rule } from './types';
+import { RuleModal } from './RuleModal';
 
-export default function AdminLive() {
-  const [rules, setRules] = useState<any[]>([]);
+export default function PipelinePage() {
+  const [rules, setRules] = useState<Rule[]>([]);
   const [isOpen, setOpen] = useState(false);
-  const [selectedRule, setSelectedRule] = useState<any>();
-  const [currentPattern, setCurrentPattern] = useState<string>();
-  const [activeTab, setActiveTab] = useState<string>('converter');
+  const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live');
   const styles = useStyles(getStyles);
@@ -28,12 +28,13 @@ export default function AdminLive() {
 
   const onRowClick = (event: any) => {
     const pattern = event.target.getAttribute('data-pattern');
-    setCurrentPattern(pattern);
     const column = event.target.getAttribute('data-column');
-    setActiveTab(column);
+    console.log('show:', column);
+    // setActiveTab(column);
     setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
     setOpen(true);
   };
+
   const onSearchQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
       setRules(rules.filter((rule) => rule.pattern.toLowerCase().includes(e.target.value.toLowerCase())));
@@ -42,15 +43,6 @@ export default function AdminLive() {
       setRules(defaultRules);
     }
   };
-
-  const tabs = [
-    { label: 'pattern', value: 'pattern' },
-    { label: 'converter', value: 'converter' },
-    { label: 'processor', value: 'processor' },
-    { label: 'output', value: 'output' },
-  ];
-  const height = 500;
-  const title = currentPattern || 'Rules';
 
   return (
     <Page navModel={navModel}>
@@ -90,57 +82,7 @@ export default function AdminLive() {
             </tbody>
           </table>
         </div>
-        {isOpen && (
-          <Modal isOpen={isOpen} title={title} onDismiss={() => setOpen(false)} closeOnEscape>
-            <TabsBar>
-              {tabs.map((tab, index) => {
-                return (
-                  <Tab
-                    key={index}
-                    label={tab.label}
-                    active={tab.value === activeTab}
-                    onChangeTab={() => {
-                      setActiveTab(tab.value);
-                    }}
-                  />
-                );
-              })}
-            </TabsBar>
-            <TabContent>
-              {activeTab === 'pattern' && <div>{title}</div>}
-              {activeTab === 'converter' && (
-                <CodeEditor
-                  height={height}
-                  value={JSON.stringify(selectedRule?.settings?.converter, null, '\t')}
-                  showLineNumbers={true}
-                  readOnly={true}
-                  language="json"
-                  showMiniMap={false}
-                />
-              )}
-              {activeTab === 'processor' && (
-                <CodeEditor
-                  height={height}
-                  value={JSON.stringify(selectedRule?.settings?.processor, null, '\t')}
-                  showLineNumbers={true}
-                  readOnly={true}
-                  language="json"
-                  showMiniMap={false}
-                />
-              )}
-              {activeTab === 'output' && (
-                <CodeEditor
-                  height={height}
-                  value={JSON.stringify(selectedRule?.settings?.output, null, '\t')}
-                  showLineNumbers={true}
-                  readOnly={true}
-                  language="json"
-                  showMiniMap={false}
-                />
-              )}
-            </TabContent>
-          </Modal>
-        )}
+        {isOpen && selectedRule && <RuleModal rule={selectedRule} isOpen={isOpen} onClose={() => setOpen(false)} />}
       </Page.Contents>
     </Page>
   );

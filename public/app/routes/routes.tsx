@@ -274,7 +274,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     // live
     {
       path: '/live',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "AdminLive" */ 'app/features/live/AdminLive')),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PipelinePage" */ 'app/features/live/admin/PipelinePage')
+      ),
     },
     // LOGIN / SIGNUP
     {

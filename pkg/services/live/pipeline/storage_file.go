@@ -27,7 +27,8 @@ func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([
 }
 
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
-	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
+	p := "/home/ryan/workspace/grafana/grafana/data/rules/rules.json" // os.Getenv("GF_LIVE_CHANNEL_RULES_FILE")
+	ruleBytes, _ := ioutil.ReadFile(p)
 	var channelRules ChannelRules
 	err := json.Unmarshal(ruleBytes, &channelRules)
 	if err != nil {
