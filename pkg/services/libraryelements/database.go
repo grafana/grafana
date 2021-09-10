@@ -444,17 +444,18 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 		if elementInDB.Version != cmd.Version {
 			return errLibraryElementVersionMismatch
 		}
-		UID := cmd.UID
-		if len(UID) == 0 {
-			UID = uid
+		updateUID := cmd.UID
+		if len(updateUID) == 0 {
+			updateUID = uid // if UID isn't provided in the PATCH request let's use the existing UID
 		}
-		if !util.IsValidShortUID(UID) {
+		if !util.IsValidShortUID(updateUID) {
 			return errLibraryElementInvalidUID
-		} else if util.IsShortUIDTooLong(UID) {
+		} else if util.IsShortUIDTooLong(updateUID) {
 			return errLibraryElementUIDTooLong
 		}
-		if UID != uid {
-			_, err := getLibraryElement(l.SQLStore.Dialect, session, UID, c.SignedInUser.OrgId)
+		if updateUID != uid {
+			// if we're trying to update the UID we need to check if the new UID is already used
+			_, err := getLibraryElement(l.SQLStore.Dialect, session, updateUID, c.SignedInUser.OrgId)
 			if !errors.Is(err, errLibraryElementNotFound) {
 				return errLibraryElementAlreadyExists
 			}
@@ -464,7 +465,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 			ID:          elementInDB.ID,
 			OrgID:       c.SignedInUser.OrgId,
 			FolderID:    cmd.FolderID,
-			UID:         UID,
+			UID:         updateUID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
 			Type:        elementInDB.Type,
