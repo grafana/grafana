@@ -73,6 +73,14 @@ The following list contains fine-grained access control actions.
 | `datasources:write`        | `datasources:*`<br>`datasources:id:*`                                                       | Update data sources.                                                                                                                                       |
 | `datasources:delete`       | `datasources:id:*`<br>`datasources:uid:*`<br>`datasources:name:*`                           | Delete data sources.                                                                                                                                       |
 
+[comment]: <> (I will remove this after it to reduce conflicts for now)
+| | | |
+|----------------------------------|---------------------------------------|---------------------------------------------|
+| `datasources:permissions:read` | `datasources:*`<br>`datasources:id:*` | List data sources permissions. |
+| `datasources:permissions:create` | `datasources:*`<br>`datasources:id:*` | Create data sources permissions. |
+| `datasources:permissions:delete` | `datasources:*`<br>`datasources:id:*` | Delete data sources permissions. |
+| `datasources:permissions:toggle` | `datasources:*`<br>`datasources:id:*` | Enable or Disable data sources permissions. |
+
 ## Scope definitions
 
 The following list contains fine-grained access control scopes.
