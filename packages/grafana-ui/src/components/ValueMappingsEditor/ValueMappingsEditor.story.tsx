@@ -33,11 +33,9 @@ export function Example() {
     {
       type: MappingType.RegexToText,
       options: {
-        // TODO correct format?
         pattern: '(.*).example.com',
         result: {
           index: 5,
-          // TODO correct format?
           text: '$1',
           color: 'green',
         },
