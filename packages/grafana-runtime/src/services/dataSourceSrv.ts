@@ -28,7 +28,7 @@ export interface DataSourceSrv {
 
 /** @public */
 export interface GetDataSourceListFilters {
-  /** Include mixed deta source by setting this to true */
+  /** Include mixed data source by setting this to true */
   mixed?: boolean;
 
   /** Only return data sources that support metrics response */

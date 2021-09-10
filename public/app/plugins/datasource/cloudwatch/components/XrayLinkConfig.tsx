@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { InlineField, useStyles2 } from '@grafana/ui';
+import { Alert, InlineField, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -21,7 +21,7 @@ interface Props {
 const xRayDsId = 'grafana-x-ray-datasourc';
 
 export function XrayLinkConfig({ datasourceUid, onChange }: Props) {
-  const hasXrayDatasource = Boolean(getDatasourceSrv().getList({ type: xRayDsId }).length);
+  const hasXrayDatasource = Boolean(getDatasourceSrv().getList({ pluginId: xRayDsId }).length);
 
   const styles = useStyles2(getStyles);
 
@@ -32,21 +32,25 @@ export function XrayLinkConfig({ datasourceUid, onChange }: Props) {
       <div className={styles.infoText}>
         Grafana will automatically create a link to a trace in X-ray data source if logs contain xrayTraceId field
       </div>
+
+      {!hasXrayDatasource && (
+        <Alert
+          title={
+            'There is no X-ray datasource to link to. First add an X-ray data source and then link it to Cloud Watch. '
+          }
+          severity="info"
+        />
+      )}
+
       <div className="gf-form-group">
-        {hasXrayDatasource ? (
-          <InlineField label="Data source" labelWidth={28} tooltip="X-ray data source containing traces">
-            <DataSourcePicker
-              type={xRayDsId}
-              onChange={(ds) => onChange(ds.uid)}
-              current={datasourceUid}
-              noDefault={true}
-            />
-          </InlineField>
-        ) : (
-          <div className={styles.infoText}>
-            There is no X-ray datasource to link to. First add an X-ray data source and then link it to Cloud Watch.
-          </div>
-        )}
+        <InlineField label="Data source" labelWidth={28} tooltip="X-ray data source containing traces">
+          <DataSourcePicker
+            pluginId={xRayDsId}
+            onChange={(ds) => onChange(ds.uid)}
+            current={datasourceUid}
+            noDefault={true}
+          />
+        </InlineField>
       </div>
     </>
   );
