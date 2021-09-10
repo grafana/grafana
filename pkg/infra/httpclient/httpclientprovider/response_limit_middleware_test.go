@@ -24,8 +24,8 @@ func TestResponseLimitMiddleware(t *testing.T) {
 		{limit: 1000000, bodyLength: 5, body: "dummy", err: nil},
 		{limit: 0, bodyLength: 5, body: "dummy", err: nil},
 	}
-	for i, tc := range tcs {
-		t.Run(fmt.Sprintf("Test ResponseLimitMiddleware with limit: %d", i), func(t *testing.T) {
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Test ResponseLimitMiddleware with limit: %d", tc.limit), func(t *testing.T) {
 			finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: http.StatusOK, Request: req, Body: ioutil.NopCloser(strings.NewReader("dummy"))}, nil
 			})

@@ -57,7 +57,7 @@ func (l *maxBytesReader) Read(p []byte) (n int, err error) {
 	n = int(l.n)
 	l.n = 0
 
-	l.err = fmt.Errorf("error: %w", ErrResponseBodyTooLarge)
+	l.err = fmt.Errorf("error: %w, response limit is set to: %d", ErrResponseBodyTooLarge, n)
 	return n, l.err
 }
 
