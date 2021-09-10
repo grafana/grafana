@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package server
@@ -56,9 +57,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
+	"github.com/grafana/grafana/pkg/tsdb/mssql"
+	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
@@ -94,6 +98,8 @@ var wireBasicSet = wire.NewSet(
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
+	mysql.ProvideService,
+	mssql.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
@@ -136,6 +142,7 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
 )
 

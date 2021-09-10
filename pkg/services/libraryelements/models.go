@@ -136,7 +136,7 @@ type LibraryElementConnectionDTO struct {
 
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
-	errLibraryElementAlreadyExists = errors.New("library element with that name already exists")
+	errLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
 	// errLibraryElementNotFound is an error for when a library element can't be found.
 	errLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
@@ -147,8 +147,12 @@ var (
 	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 	// errLibraryElementUnSupportedElementKind is an error for when the kind is unsupported.
 	errLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
-	// ErrFolderHasConnectedLibraryElements is an error for when an user deletes a folder that contains connected library elements.
+	// ErrFolderHasConnectedLibraryElements is an error for when a user deletes a folder that contains connected library elements.
 	ErrFolderHasConnectedLibraryElements = errors.New("folder contains library elements that are linked in use")
+	// errLibraryElementInvalidUID is an error for when the uid of a library element is invalid
+	errLibraryElementInvalidUID = errors.New("uid contains illegal characters")
+	// errLibraryElementUIDTooLong is an error for when the uid of a library element is invalid
+	errLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
 )
 
 // Commands
@@ -159,6 +163,7 @@ type CreateLibraryElementCommand struct {
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 	Kind     int64           `json:"kind" binding:"Required"`
+	UID      string          `json:"uid"`
 }
 
 // patchLibraryElementCommand is the command for patching a LibraryElement
@@ -168,6 +173,7 @@ type patchLibraryElementCommand struct {
 	Model    json.RawMessage `json:"model"`
 	Kind     int64           `json:"kind" binding:"Required"`
 	Version  int64           `json:"version" binding:"Required"`
+	UID      string          `json:"uid"`
 }
 
 // searchLibraryElementsQuery is the query used for searching for Elements

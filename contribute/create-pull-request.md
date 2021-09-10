@@ -102,6 +102,8 @@ For changes to panels, the area should be the name of the panel, suffixed with P
 - `GraphPanel: Fix legend sorting issues`
 - `Docs: Changed url to URL in all documentation files`
 
+If you're unsure, please have a look at the existing [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) for inspiration/guidance.
+
 ### Pull request titles
 
 The Grafana team _squashes_ all commits into one when we accept a pull request. The title of the pull request becomes the subject line of the squashed commit message. We still encourage contributors to write informative commit messages, as they becomes a part of the Git commit body.

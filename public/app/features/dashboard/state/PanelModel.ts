@@ -65,6 +65,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   configRev: true,
   getDisplayTitle: true,
   dataSupport: true,
+  key: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -177,6 +178,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
+  key: string; // unique in dashboard, changes will force a react reload
 
   /**
    * The PanelModel event bus only used for internal and legacy angular support.
@@ -190,6 +192,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
+    this.key = this.id ? `${this.id}` : `panel-${Math.floor(Math.random() * 100000)}`;
   }
 
   /** Given a persistened PanelModel restores property values */

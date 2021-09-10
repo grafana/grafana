@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ var now = time.Now()
 
 func TestPrometheus(t *testing.T) {
 	service := Service{
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
 	t.Run("converting metric name", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestPrometheus(t *testing.T) {
 		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
 	})
 
-	t.Run("parsing query model with step and default stepMode", func(t *testing.T) {
+	t.Run("parsing query model with step", func(t *testing.T) {
 		query := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
@@ -59,78 +59,6 @@ func TestPrometheus(t *testing.T) {
 		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
-	})
-
-	t.Run("parsing query model with step and exact stepMode", func(t *testing.T) {
-		query := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"refId": "A",
-			"stepMode": "exact",
-			"interval": "7s"
-		}`)
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(12 * time.Hour),
-		}
-		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
-		require.NoError(t, err)
-		require.Equal(t, time.Second*7, models[0].Step)
-	})
-
-	t.Run("parsing query model with short step and max stepMode", func(t *testing.T) {
-		query := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"refId": "A",
-			"stepMode": "max",
-			"interval": "6s"
-		}`)
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(12 * time.Hour),
-		}
-		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
-		require.NoError(t, err)
-		require.Equal(t, time.Second*6, models[0].Step)
-	})
-
-	t.Run("parsing query model with long step and max stepMode", func(t *testing.T) {
-		query := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"refId": "A",
-			"stepMode": "max",
-			"interval": "100s"
-		}`)
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(12 * time.Hour),
-		}
-		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
-		require.NoError(t, err)
-		require.Equal(t, time.Second*30, models[0].Step)
-	})
-
-	t.Run("parsing query model with unsafe interval", func(t *testing.T) {
-		query := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"refId": "A",
-			"stepMode": "max",
-			"interval": "2s"
-		}`)
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(12 * time.Hour),
-		}
-		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
-		require.NoError(t, err)
-		require.Equal(t, time.Second*5, models[0].Step)
 	})
 
 	t.Run("parsing query model without step parameter", func(t *testing.T) {
