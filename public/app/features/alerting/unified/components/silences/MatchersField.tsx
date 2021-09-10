@@ -29,7 +29,7 @@ const MatchersField: FC<Props> = ({ className }) => {
           <div className={styles.matchers}>
             {matchers.map((matcher, index) => {
               return (
-                <div className={styles.row} key={`${matcher.id}`}>
+                <div className={styles.row} key={`${matcher.id}`} data-testid="matcher">
                   <Field
                     label="Label"
                     invalid={!!errors?.matchers?.[index]?.name}
@@ -52,6 +52,7 @@ const MatchersField: FC<Props> = ({ className }) => {
                           onChange={(value) => onChange(value.value)}
                           className={styles.matcherOptions}
                           options={matcherFieldOptions}
+                          aria-label="operator"
                         />
                       )}
                       defaultValue={matcher.operator || matcherFieldOptions[0].value}

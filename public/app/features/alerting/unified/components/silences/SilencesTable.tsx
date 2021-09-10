@@ -33,7 +33,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   };
 
   return (
-    <>
+    <div data-testid="silences-table">
       {!!silences.length && (
         <>
           <SilencesFilter />
@@ -97,7 +97,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
         </>
       )}
       {!silences.length && <NoSilencesSplash alertManagerSourceName={alertManagerSourceName} />}
-    </>
+    </div>
   );
 };
 
