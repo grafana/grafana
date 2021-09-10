@@ -1,5 +1,5 @@
 import React, { createRef, MutableRefObject } from 'react';
-import uPlot, { Options } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 import { PlotContext, PlotContextType } from './context';
 import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
@@ -84,7 +84,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     };
 
     pluginLog('UPlot', false, 'Reinitializing plot', config);
-    const plot = new uPlot(config, this.props.data, this.plotContainer!.current!);
+    const plot = new uPlot(config, this.props.data as AlignedData, this.plotContainer!.current!);
 
     if (plotRef) {
       plotRef(plot);
@@ -118,7 +118,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     } else if (!sameConfig(prevProps, this.props)) {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
-      ctx.plot?.setData(this.props.data);
+      ctx.plot?.setData(this.props.data as AlignedData);
     } else if (!sameTimeRange(prevProps, this.props)) {
       ctx.plot?.setScale('x', {
         min: this.props.timeRange.from.valueOf(),

@@ -12,8 +12,12 @@ export interface PlotPluginProps {
   id: string;
 }
 
+type FacetValues = any[];
+
+export type FacetedData = [_: null, ...series: FacetValues[]];
+
 export interface PlotProps {
-  data: AlignedData;
+  data: AlignedData | FacetedData;
   width: number;
   height: number;
   config: UPlotConfigBuilder;

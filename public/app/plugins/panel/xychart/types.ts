@@ -38,7 +38,7 @@ export interface SeriesConfig {
   label?: TextDimensionConfig;
 }
 
-export interface Options extends OptionsWithLegend, OptionsWithTooltip {
+export interface XYChartOptions extends OptionsWithLegend, OptionsWithTooltip {
   dims: XYDimensionConfig;
 
   // Flag to trigger new behavior

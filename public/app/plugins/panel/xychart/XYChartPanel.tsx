@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
-import { Button, GraphNGLegendEvent, TimeSeries, TooltipPlugin } from '@grafana/ui';
+import React, { /*useCallback,*/ useContext, useMemo } from 'react';
+import { /*Button, GraphNGLegendEvent,*/ UPlotChart, usePanelContext, useTheme2, VizLayout } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
-import { Options } from './types';
-import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
-import { getXYDimensions } from './dims';
-import { prepareSeries } from './utils';
+import { XYChartOptions } from './types';
+//import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+//import { getXYDimensions } from './dims';
+import { prepDims, prepLookup, prepConfig } from './utils';
 
-interface XYChartPanelProps extends PanelProps<Options> {}
+interface XYChartPanelProps extends PanelProps<XYChartOptions> {}
 
 export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   data,
@@ -18,17 +18,44 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   fieldConfig,
   onFieldConfigChange,
 }) => {
-  const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
+  const theme = useTheme2();
+  //const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
 
-  const frames = useMemo(() => [dims.frame], [dims]);
+  const { eventBus } = usePanelContext();
 
+  const { lookup, config } = useMemo(() => {
+    // dim mapping from panel config
+    const dims = prepDims(options, data.series);
+    // seriesIndex enumerator & fast lookup cache (displayName <-> seriesIndex <-> DataFrameFieldIndex)
+    const lookup = prepLookup(dims, data.series);
+    // initial uplot config, custom renderer, data prepper, can be extended by plugins or children of vis component below
+    const config = prepConfig({
+      frames: data.series,
+      lookup,
+      eventBus,
+      theme,
+      ...options,
+    });
+    return {
+      lookup,
+      config,
+    };
+  }, [data.structureRev, options]); // optionsRev?
+
+  // enumerates field.state.seriesIdx based on internal lookup
+  // preps data in various shapes...aligned, stacked, merged, interpolated, etc..
+  const data2 = useMemo(() => config.prepData(data.series), data.series);
+
+  /*
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frames));
     },
     [fieldConfig, onFieldConfigChange, frames]
   );
+  */
 
+  /*
   if (dims.error) {
     return (
       <div>
@@ -42,7 +69,9 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       </div>
     );
   }
+  */
 
+  /*
   if (options.mode === 'scatter') {
     const series = prepareSeries(options, data.series)[0];
     return (
@@ -57,29 +86,15 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       </div>
     );
   }
+  */
 
   return (
-    <TimeSeries
-      frames={frames}
-      structureRev={data.structureRev}
-      fields={dims.fields}
-      timeRange={timeRange}
-      timeZone={timeZone}
-      width={width}
-      height={height}
-      legend={options.legend}
-      onLegendClick={onLegendClick}
-    >
-      {(config, alignedDataFrame) => {
-        return (
-          <TooltipPlugin
-            config={config}
-            data={alignedDataFrame}
-            mode={options.tooltip.mode as any}
-            timeZone={timeZone}
-          />
-        );
-      }}
-    </TimeSeries>
+    <VizLayout width={width} height={height}>
+      {(vizWidth: number, vizHeight: number) => (
+        <UPlotChart config={config} data={data} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+          {/*children ? children(config, alignedFrame) : null*/}
+        </UPlotChart>
+      )}
+    </VizLayout>
   );
 };

@@ -4,12 +4,13 @@ import {
   DataFrame,
   DefaultTimeZone,
   EventBus,
+  FieldLookup,
   getTimeZoneInfo,
   GrafanaTheme2,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { PlotConfig, PlotTooltipInterpolator } from '../types';
+import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
@@ -31,7 +32,7 @@ const cursorDefaults: Cursor = {
   },
 };
 
-type PrepData = (frame: DataFrame) => AlignedData;
+type PrepData = (frame: DataFrame[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -264,4 +265,18 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
 } & T;
 
 /** @alpha */
+//type UPlotConfigPrepOptsXY = Omit<UPlotConfigPrepOpts, 'frame' | 'getTimeRange' | 'timeZone'>;
+
+/** @alpha */
+type UPlotConfigPrepOptsXY<T extends Record<string, any> = {}> = {
+  theme: GrafanaTheme2;
+  eventBus: EventBus;
+  frames: DataFrame[];
+  lookup: FieldLookup;
+} & T;
+
+/** @alpha */
 export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;
+
+/** @alpha */
+export type UPlotConfigPrepFnXY<T extends {} = {}> = (opts: UPlotConfigPrepOptsXY<T>) => UPlotConfigBuilder;
