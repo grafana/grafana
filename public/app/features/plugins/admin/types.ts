@@ -13,6 +13,13 @@ export enum PluginAdminRoutes {
   DetailsAdmin = 'plugins-details-admin',
 }
 
+export enum IconName {
+  app = 'apps',
+  datasource = 'database',
+  panel = 'credit-card',
+  renderer = 'pen',
+}
+
 export interface CatalogPlugin {
   description: string;
   downloads: number;
