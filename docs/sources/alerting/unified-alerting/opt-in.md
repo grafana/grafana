@@ -4,9 +4,7 @@ description = "Enable Grafana 8 Alerts"
 weight = 128
 +++
 
-# Enable Grafana 8 Alerts
-
-Grafana 8 alerting system is enabled by default.
+# Upgrading to Grafana 8 alerts
 
 > **Note:** We recommend that you backup Grafana's database before upgrading to the next 8.2 release. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
 
