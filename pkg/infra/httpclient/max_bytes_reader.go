@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -10,6 +11,9 @@ import (
 // What's happening differently here, is that the field that
 // is limited is the response and not the request, thus
 // the error handling/message needed to be accurate.
+
+// ErrResponseBodyTooLarge indicates response body is too large
+var ErrResponseBodyTooLarge = errors.New("http: response body too large")
 
 // MaxBytesReader is similar to io.LimitReader but is intended for
 // limiting the size of incoming request bodies. In contrast to
@@ -53,7 +57,7 @@ func (l *maxBytesReader) Read(p []byte) (n int, err error) {
 	n = int(l.n)
 	l.n = 0
 
-	l.err = errors.New("http: response body too large")
+	l.err = fmt.Errorf("error: %w", ErrResponseBodyTooLarge)
 	return n, l.err
 }
 

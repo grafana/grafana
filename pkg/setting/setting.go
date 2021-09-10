@@ -56,9 +56,6 @@ const (
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
-// maxResponseSize is the maximum number of bytes that a http response body can be
-const maxResponseSize = 1000000
-
 var (
 	// App settings.
 	Env              = Dev
@@ -329,6 +326,7 @@ type Cfg struct {
 	DataProxyMaxIdleConns          int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
+	ResponseLimit                  int64
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -361,7 +359,6 @@ type Cfg struct {
 
 	// Data sources
 	DataSourceLimit int
-	ResponseLimit   int64
 
 	// Snapshots
 	SnapshotPublicMode bool
@@ -1508,7 +1505,6 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
-	cfg.ResponseLimit = datasources.Key("response_limit").MustInt64(maxResponseSize)
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
