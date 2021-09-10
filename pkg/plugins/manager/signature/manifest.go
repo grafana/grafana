@@ -58,11 +58,11 @@ type pluginManifest struct {
 	Files   map[string]string `json:"files"`
 
 	// V2 supported fields
-	ManifestVersion string                      `json:"manifestVersion"`
-	SignatureType   plugins.PluginSignatureType `json:"signatureType"`
-	SignedByOrg     string                      `json:"signedByOrg"`
-	SignedByOrgName string                      `json:"signedByOrgName"`
-	RootURLs        []string                    `json:"rootUrls"`
+	ManifestVersion string                `json:"manifestVersion"`
+	SignatureType   plugins.SignatureType `json:"signatureType"`
+	SignedByOrg     string                `json:"signedByOrg"`
+	SignedByOrgName string                `json:"signedByOrgName"`
+	RootURLs        []string              `json:"rootUrls"`
 }
 
 func (m *pluginManifest) isV2() bool {
@@ -98,10 +98,10 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
-func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
+func Calculate(log log.Logger, plugin *plugins.PluginV2) (plugins.Signature, error) {
 	if plugin.IsCorePlugin() {
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureInternal,
+		return plugins.Signature{
+			Status: plugins.SignatureInternal,
 		}, nil
 	}
 
@@ -113,23 +113,23 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
 		log.Debug("Plugin is unsigned", "id", plugin.ID)
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureUnsigned,
+		return plugins.Signature{
+			Status: plugins.SignatureUnsigned,
 		}, nil
 	}
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
 		log.Debug("Plugin signature invalid", "id", plugin.ID)
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureInvalid,
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
 		}, nil
 	}
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.ID || manifest.Version != plugin.Info.Version {
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureModified,
+		return plugins.Signature{
+			Status: plugins.SignatureModified,
 		}, nil
 	}
 
@@ -137,7 +137,7 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 	if manifest.SignatureType == plugins.PrivateType {
 		appURL, err := url.Parse(setting.AppUrl)
 		if err != nil {
-			return plugins.PluginSignatureState{}, err
+			return plugins.Signature{}, err
 		}
 
 		foundMatch := false
@@ -145,7 +145,7 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 			rootURL, err := url.Parse(u)
 			if err != nil {
 				log.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
-				return plugins.PluginSignatureState{}, err
+				return plugins.Signature{}, err
 			}
 			if rootURL.Scheme == appURL.Scheme &&
 				rootURL.Host == appURL.Host &&
@@ -158,13 +158,13 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 		if !foundMatch {
 			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
 				"appUrl", appURL, "rootUrls", manifest.RootURLs)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureInvalid,
+			return plugins.Signature{
+				Status: plugins.SignatureInvalid,
 			}, nil
 		}
 	}
 
-	manifestFiles := make(map[string]bool, len(manifest.Files))
+	manifestFiles := make(map[string]struct{}, len(manifest.Files))
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
@@ -177,39 +177,36 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 		f, err := os.Open(fp)
 		if err != nil {
 			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.ID, "filename", p, "dir", plugin.PluginDir)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
+			return plugins.Signature{
+				Status: plugins.SignatureModified,
 			}, nil
 		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Warn("Failed to close plugin file", "path", fp, "err", err)
-			}
-		}()
-
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
 			log.Warn("Couldn't read plugin file", "plugin", plugin.ID, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
+			return plugins.Signature{
+				Status: plugins.SignatureModified,
 			}, nil
 		}
 		sum := hex.EncodeToString(h.Sum(nil))
 		if sum != hash {
 			log.Warn("Plugin file has been modified", "plugin", plugin.ID, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
+			return plugins.Signature{
+				Status: plugins.SignatureModified,
 			}, nil
 		}
-		manifestFiles[p] = true
+		if err := f.Close(); err != nil {
+			log.Warn("Failed to close plugin file", "path", fp, "err", err)
+		}
+		manifestFiles[p] = struct{}{}
 	}
 
 	if manifest.isV2() {
 		pluginFiles, err := pluginFilesRequiringVerification(plugin)
 		if err != nil {
 			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureInvalid,
+			return plugins.Signature{
+				Status: plugins.SignatureInvalid,
 			}, err
 		}
 
@@ -223,15 +220,15 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 
 		if len(unsignedFiles) > 0 {
 			log.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
+			return plugins.Signature{
+				Status: plugins.SignatureModified,
 			}, nil
 		}
 	}
 
 	log.Debug("Plugin signature valid", "id", plugin.ID)
-	return plugins.PluginSignatureState{
-		Status:     plugins.PluginSignatureValid,
+	return plugins.Signature{
+		Status:     plugins.SignatureValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil

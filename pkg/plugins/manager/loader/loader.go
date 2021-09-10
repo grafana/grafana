@@ -118,14 +118,15 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 			Class:     l.pluginClass(pluginDir),
 		}
 
-		signatureState, err := signature.CalculateState(logger, plugin)
+		sig, err := signature.Calculate(logger, plugin)
 		if err != nil {
-			logger.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
+			logger.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
 			return nil, err
 		}
-		plugin.Signature = signatureState.Status
-		plugin.SignatureType = signatureState.Type
-		plugin.SignatureOrg = signatureState.SigningOrg
+		plugin.Signature = sig.Status
+		plugin.SignatureType = sig.Type
+		plugin.SignatureOrg = sig.SigningOrg
+		plugin.SignedFiles = sig.Files
 
 		loadedPlugins[plugin.PluginDir] = plugin
 	}

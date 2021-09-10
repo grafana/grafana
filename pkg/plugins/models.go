@@ -45,16 +45,16 @@ func (e DuplicatePluginError) Is(err error) bool {
 
 type PluginSignatureError struct {
 	PluginID        string
-	SignatureStatus PluginSignatureStatus
+	SignatureStatus SignatureStatus
 }
 
 func (e PluginSignatureError) Error() string {
 	switch e.SignatureStatus {
-	case PluginSignatureInvalid:
+	case SignatureInvalid:
 		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
-	case PluginSignatureModified:
+	case SignatureModified:
 		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
-	case PluginSignatureUnsigned:
+	case SignatureUnsigned:
 		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
 	}
 
@@ -69,28 +69,28 @@ type PluginLoader interface {
 
 // PluginBase is the base plugin type.
 type PluginBase struct {
-	Type         string                `json:"type"`
-	Name         string                `json:"name"`
-	Id           string                `json:"id"`
-	Info         PluginInfo            `json:"info"`
-	Dependencies PluginDependencies    `json:"dependencies"`
-	Includes     []*PluginInclude      `json:"includes"`
-	Module       string                `json:"module"`
-	BaseUrl      string                `json:"baseUrl"`
-	Category     string                `json:"category"`
-	HideFromList bool                  `json:"hideFromList,omitempty"`
-	Preload      bool                  `json:"preload"`
-	State        PluginState           `json:"state,omitempty"`
-	Signature    PluginSignatureStatus `json:"signature"`
-	Backend      bool                  `json:"backend"`
+	Type         string             `json:"type"`
+	Name         string             `json:"name"`
+	Id           string             `json:"id"`
+	Info         PluginInfo         `json:"info"`
+	Dependencies PluginDependencies `json:"dependencies"`
+	Includes     []*PluginInclude   `json:"includes"`
+	Module       string             `json:"module"`
+	BaseUrl      string             `json:"baseUrl"`
+	Category     string             `json:"category"`
+	HideFromList bool               `json:"hideFromList,omitempty"`
+	Preload      bool               `json:"preload"`
+	State        State              `json:"state,omitempty"`
+	Signature    SignatureStatus    `json:"signature"`
+	Backend      bool               `json:"backend"`
 
-	IncludedInAppId string              `json:"-"`
-	PluginDir       string              `json:"-"`
-	DefaultNavUrl   string              `json:"-"`
-	IsCorePlugin    bool                `json:"-"`
-	SignatureType   PluginSignatureType `json:"-"`
-	SignatureOrg    string              `json:"-"`
-	SignedFiles     PluginFiles         `json:"-"`
+	IncludedInAppId string        `json:"-"`
+	PluginDir       string        `json:"-"`
+	DefaultNavUrl   string        `json:"-"`
+	IsCorePlugin    bool          `json:"-"`
+	SignatureType   SignatureType `json:"-"`
+	SignatureOrg    string        `json:"-"`
+	SignedFiles     PluginFiles   `json:"-"`
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`

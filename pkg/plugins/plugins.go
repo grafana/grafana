@@ -21,11 +21,12 @@ type PluginV2 struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature     PluginSignatureStatus
-	SignatureType PluginSignatureType
+	Signature     SignatureStatus
+	SignatureType SignatureType
 	SignatureOrg  string
 	Parent        *PluginV2
 	Children      []*PluginV2
+	SignedFiles   PluginFiles
 
 	// GCOM update checker fields
 	GrafanaComVersion   string
@@ -49,7 +50,7 @@ type JSONData struct {
 	Info         PluginInfo         `json:"info"`
 	Dependencies PluginDependencies `json:"dependencies"`
 	Includes     []*PluginInclude   `json:"includes"`
-	State        PluginState        `json:"state,omitempty"`
+	State        State              `json:"state,omitempty"`
 	Category     string             `json:"category"`
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	Preload      bool               `json:"preload"`

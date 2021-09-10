@@ -1,41 +1,41 @@
 package plugins
 
-type PluginSignatureStatus string
+type SignatureStatus string
 
-func (pss PluginSignatureStatus) IsValid() bool {
-	return pss == PluginSignatureValid
+func (ss SignatureStatus) IsValid() bool {
+	return ss == SignatureValid
 }
 
-func (pss PluginSignatureStatus) IsInternal() bool {
-	return pss == PluginSignatureInternal
+func (ss SignatureStatus) IsInternal() bool {
+	return ss == SignatureInternal
 }
 
 const (
-	PluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
-	PluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
-	PluginSignatureInvalid  PluginSignatureStatus = "invalid"  // invalid signature
-	PluginSignatureModified PluginSignatureStatus = "modified" // valid signature, but content mismatch
-	PluginSignatureUnsigned PluginSignatureStatus = "unsigned" // no MANIFEST file
+	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
+	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
+	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
+	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
+	SignatureUnsigned SignatureStatus = "unsigned" // no MANIFEST file
 )
 
-type PluginState string
+type State string
 
 const (
-	PluginStateAlpha PluginState = "alpha"
+	StateAlpha State = "alpha"
 )
 
-type PluginSignatureType string
+type SignatureType string
 
 const (
-	GrafanaType PluginSignatureType = "grafana"
-	PrivateType PluginSignatureType = "private"
+	GrafanaType SignatureType = "grafana"
+	PrivateType SignatureType = "private"
 )
 
 type PluginFiles map[string]struct{}
 
-type PluginSignatureState struct {
-	Status     PluginSignatureStatus
-	Type       PluginSignatureType
+type Signature struct {
+	Status     SignatureStatus
+	Type       SignatureType
 	SigningOrg string
 	Files      PluginFiles
 }

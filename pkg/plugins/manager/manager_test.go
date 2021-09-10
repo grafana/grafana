@@ -92,7 +92,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 		plugin := pm.GetPlugin(pluginID)
 		assert.NotNil(t, plugin)
-		assert.Equal(t, plugins.PluginSignatureUnsigned, plugin.Signature)
+		assert.Equal(t, plugins.SignatureUnsigned, plugin.Signature)
 	})
 
 	t.Run("With external panel plugin lacking signature (production)", func(t *testing.T) {
@@ -123,7 +123,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 		plugin := pm.GetPlugin(pluginID)
 		assert.NotNil(t, plugin)
-		assert.Equal(t, plugins.PluginSignatureUnsigned, plugin.Signature)
+		assert.Equal(t, plugins.SignatureUnsigned, plugin.Signature)
 	})
 
 	t.Run("With external unsigned back-end plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
@@ -216,7 +216,7 @@ func TestPluginManager_Init(t *testing.T) {
 				PluginDir:     pluginFolder,
 				Backend:       false,
 				IsCorePlugin:  false,
-				Signature:     plugins.PluginSignatureValid,
+				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaType,
 				SignatureOrg:  "Grafana Labs",
 				SignedFiles:   plugins.PluginFiles{"plugin.json": {}},
@@ -296,7 +296,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
 		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
 		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
-		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.SignatureValid, pm.plugins[pluginID].Signature)
 		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
 		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
 		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
@@ -322,7 +322,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
 		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
 		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
-		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.SignatureValid, pm.plugins[pluginID].Signature)
 		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
 		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
 		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
@@ -383,7 +383,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "app", p.Type)
 		assert.Equal(t, "Test App", p.Name)
 		assert.Equal(t, "1.0.0", p.Info.Version)
-		assert.Equal(t, plugins.PluginSignatureValid, p.Signature)
+		assert.Equal(t, plugins.SignatureValid, p.Signature)
 		assert.Equal(t, plugins.GrafanaType, p.SignatureType)
 		assert.Equal(t, "Grafana Labs", p.SignatureOrg)
 		assert.False(t, p.IsCorePlugin)
@@ -482,7 +482,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			PluginDir:     pluginFolder,
 			Backend:       false,
 			IsCorePlugin:  false,
-			Signature:     plugins.PluginSignatureValid,
+			Signature:     plugins.SignatureValid,
 			SignatureType: plugins.GrafanaType,
 			SignatureOrg:  "Grafana Labs",
 			SignedFiles:   plugins.PluginFiles{"plugin.json": {}},

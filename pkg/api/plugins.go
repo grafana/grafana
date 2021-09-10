@@ -52,7 +52,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
-		if pluginDef.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == plugins.StateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
