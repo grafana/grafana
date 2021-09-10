@@ -316,7 +316,6 @@ export const runQueries = (
       // If we don't have results saved in cache, run new queries
     } else {
       if (!hasNonEmptyQuery(queries)) {
-        dispatch(clearQueriesAction({ exploreId }));
         dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
         return;
       }
