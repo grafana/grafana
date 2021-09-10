@@ -50,3 +50,8 @@
 {"kind": "secret", "name": "github_token", "get": {"path": "infra/data/ci/github/grafanabot", "name": "pat"}}
 ---
 {"kind": "secret", "name": "drone_token", "get": {"path": "infra/data/ci/drone", "name": "machine-user-token"}}
+---
+kind: signature
+hmac: 2fabbb2f50f440cdbd09676a6fc8ed2dd642ac971afbb36501d7e69398c4e829
+
+...
