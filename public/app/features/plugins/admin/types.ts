@@ -1,4 +1,7 @@
-import { GrafanaPlugin, PluginMeta, PluginType, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { EntityState } from '@reduxjs/toolkit';
+import { PluginType, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { StoreState, PluginsState } from 'app/types';
+
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export enum PluginAdminRoutes {
@@ -23,16 +26,19 @@ export interface CatalogPlugin {
   name: string;
   orgName: string;
   signature: PluginSignatureStatus;
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
   popularity: number;
   publishedAt: string;
   type?: PluginType;
   updatedAt: string;
   version: string;
+  details?: CatalogPluginDetails;
 }
 
-export interface CatalogPluginDetails extends CatalogPlugin {
-  readme: string;
-  versions: Version[];
+export interface CatalogPluginDetails {
+  readme?: string;
+  versions?: Version[];
   links: Array<{
     name: string;
     url: string;
@@ -126,7 +132,7 @@ export type LocalPlugin = {
   pinned: boolean;
   signature: PluginSignatureStatus;
   signatureOrg: string;
-  signatureType: string;
+  signatureType: PluginSignatureType;
   state: string;
   type: PluginType;
 };
@@ -164,65 +170,11 @@ export interface Org {
   avatarUrl: string;
 }
 
-export interface PluginDetailsState {
-  hasInstalledPanel: boolean;
-  hasUpdate: boolean;
-  isInstalled: boolean;
-  isInflight: boolean;
-  loading: boolean;
-  error?: Error;
-  plugin?: CatalogPluginDetails;
-  pluginConfig?: GrafanaPlugin<PluginMeta<{}>>;
-  tabs: Array<{ label: string }>;
-  activeTab: number;
-}
-
-export enum ActionTypes {
-  LOADING = 'LOADING',
-  INFLIGHT = 'INFLIGHT',
-  INSTALLED = 'INSTALLED',
-  UNINSTALLED = 'UNINSTALLED',
-  UPDATED = 'UPDATED',
-  ERROR = 'ERROR',
-  FETCHED_PLUGIN = 'FETCHED_PLUGIN',
-  FETCHED_PLUGIN_CONFIG = 'FETCHED_PLUGIN_CONFIG',
-  UPDATE_TABS = 'UPDATE_TABS',
-  SET_ACTIVE_TAB = 'SET_ACTIVE_TAB',
-}
-
-export type PluginDetailsActions =
-  | { type: ActionTypes.FETCHED_PLUGIN; payload: CatalogPluginDetails }
-  | { type: ActionTypes.ERROR; payload: Error }
-  | { type: ActionTypes.FETCHED_PLUGIN_CONFIG; payload?: GrafanaPlugin<PluginMeta<{}>> }
-  | {
-      type: ActionTypes.UPDATE_TABS;
-      payload: Array<{ label: string }>;
-    }
-  | { type: ActionTypes.INSTALLED; payload: boolean }
-  | { type: ActionTypes.SET_ACTIVE_TAB; payload: number }
-  | {
-      type: ActionTypes.LOADING | ActionTypes.INFLIGHT | ActionTypes.UNINSTALLED | ActionTypes.UPDATED;
-    };
-
 export type CatalogPluginsState = {
   loading: boolean;
   error?: Error;
   plugins: CatalogPlugin[];
 };
-
-export type FilteredPluginsState = {
-  isLoading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
-
-export type PluginsByFilterType = {
-  searchBy: string;
-  filterBy: string;
-  filterByType: string;
-};
-
-export type PluginFilter = (plugin: CatalogPlugin, query: string) => boolean;
 
 export enum PluginStatus {
   INSTALL = 'INSTALL',
@@ -236,3 +188,30 @@ export enum PluginTabLabels {
   CONFIG = 'Config',
   DASHBOARDS = 'Dashboards',
 }
+
+export enum RequestStatus {
+  Pending = 'Pending',
+  Fulfilled = 'Fulfilled',
+  Rejected = 'Rejected',
+}
+
+export type RequestInfo = {
+  status: RequestStatus;
+  // The whole error object
+  error?: any;
+  // An optional error message
+  errorMessage?: string;
+};
+
+export type PluginDetailsTab = {
+  label: PluginTabLabels | string;
+};
+
+// TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>
+export type ReducerState = PluginsState & {
+  items: EntityState<CatalogPlugin>;
+  requests: Record<string, RequestInfo>;
+};
+
+// TODO<remove when the "plugin_admin_enabled" feature flag is removed>
+export type PluginCatalogStoreState = StoreState & { plugins: ReducerState };

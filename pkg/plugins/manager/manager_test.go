@@ -219,6 +219,7 @@ func TestPluginManager_Init(t *testing.T) {
 				Signature:     plugins.PluginSignatureValid,
 				SignatureType: plugins.GrafanaType,
 				SignatureOrg:  "Grafana Labs",
+				SignedFiles:   plugins.PluginFiles{"plugin.json": {}},
 				Dependencies: plugins.PluginDependencies{
 					GrafanaVersion: "*",
 					Plugins:        []plugins.PluginDependencyItem{},
@@ -484,6 +485,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			Signature:     plugins.PluginSignatureValid,
 			SignatureType: plugins.GrafanaType,
 			SignatureOrg:  "Grafana Labs",
+			SignedFiles:   plugins.PluginFiles{"plugin.json": {}},
 			Dependencies: plugins.PluginDependencies{
 				GrafanaVersion: "*",
 				Plugins:        []plugins.PluginDependencyItem{},

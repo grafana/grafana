@@ -12,23 +12,34 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
 
 type Service struct {
 	HTTPClientProvider httpclient.Provider
-	intervalCalculator tsdb.Calculator
+	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	eslog.Debug("initializing")
 
 	im := datasource.NewInstanceManager(newInstanceSettings())
 	s := newService(im, httpClientProvider)
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: newService(im, s.HTTPClientProvider),
+	})
+
+	if err := backendPluginManager.Register("elasticsearch", factory); err != nil {
+		eslog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
 
 	return s, nil
 }
@@ -38,7 +49,7 @@ func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.P
 	return &Service{
 		im:                 im,
 		HTTPClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 

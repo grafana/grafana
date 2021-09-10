@@ -17,16 +17,16 @@ func TestTemplateCaptureValueStringer(t *testing.T) {
 		value    templateCaptureValue
 		expected string
 	}{{
-		name:     "nil value returns null",
-		value:    templateCaptureValue{Value: nil},
-		expected: "null",
+		name:     "0 is returned as integer value",
+		value:    templateCaptureValue{Value: 0},
+		expected: "0",
 	}, {
 		name:     "1.0 is returned as integer value",
-		value:    templateCaptureValue{Value: ptr.Float64(1.0)},
+		value:    templateCaptureValue{Value: 1.0},
 		expected: "1",
 	}, {
 		name:     "1.1 is returned as decimal value",
-		value:    templateCaptureValue{Value: ptr.Float64(1.1)},
+		value:    templateCaptureValue{Value: 1.1},
 		expected: "1.1",
 	}}
 
@@ -46,12 +46,12 @@ func TestExpandTemplate(t *testing.T) {
 		expected      string
 		expectedError error
 	}{{
-		name:     "instance labels are expanded into $labels",
+		name:     "labels are expanded into $labels",
 		text:     "{{ $labels.instance }} is down",
 		labels:   data.Labels{"instance": "foo"},
 		expected: "foo is down",
 	}, {
-		name:          "missing instance label returns error",
+		name:          "missing label in $labels returns error",
 		text:          "{{ $labels.instance }} is down",
 		labels:        data.Labels{},
 		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$labels.instance>: map has no entry for key \"instance\""),
@@ -63,11 +63,24 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{"instance": "foo"},
-					Value:  ptr.Float64(10),
+					Value:  ptr.Float64(1),
 				},
 			},
 		},
-		expected: "foo has value 10",
+		expected: "foo has value 1",
+	}, {
+		name: "values can be passed to template functions such as printf",
+		text: "{{ $values.A.Labels.instance }} has value {{ $values.A.Value | printf \"%.1f\" }}",
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"instance": "foo"},
+					Value:  ptr.Float64(1.1),
+				},
+			},
+		},
+		expected: "foo has value 1.1",
 	}, {
 		name: "missing label in $values returns error",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
@@ -76,13 +89,26 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(10),
+					Value:  ptr.Float64(1),
 				},
 			},
 		},
 		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$values.A.Labels.instance>: map has no entry for key \"instance\""),
 	}, {
-		name: "value string is expanded into $value",
+		name: "missing value in $values is returned as NaN",
+		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"instance": "foo"},
+					Value:  nil,
+				},
+			},
+		},
+		expected: "foo has value NaN",
+	}, {
+		name: "assert value string is expanded into $value",
 		text: "{{ $value }}",
 		alertInstance: eval.Result{
 			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",

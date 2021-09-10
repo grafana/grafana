@@ -169,7 +169,7 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		}
 	}
 
-	manifestFiles := make(map[string]bool, len(manifest.Files))
+	manifestFiles := make(map[string]struct{}, len(manifest.Files))
 
 	// Verify the manifest contents
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
@@ -207,7 +207,7 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 				Status: plugins.PluginSignatureModified,
 			}, nil
 		}
-		manifestFiles[p] = true
+		manifestFiles[p] = struct{}{}
 	}
 
 	if manifest.isV2() {
@@ -241,6 +241,7 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		Status:     plugins.PluginSignatureValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
+		Files:      manifestFiles,
 	}, nil
 }
 

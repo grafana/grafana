@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,17 +32,29 @@ type UsageStatsService struct {
 	AlertingUsageStats alerting.UsageStatsQuerier
 	PluginManager      plugins.Manager
 	SocialService      social.Service
+	grafanaLive        *live.GrafanaLive
 
 	log log.Logger
 
 	oauthProviders           map[string]bool
 	externalMetrics          []MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
+	liveStats                liveUsageStats
+}
+
+type liveUsageStats struct {
+	numClientsMax int
+	numClientsMin int
+	numClientsSum int
+	numUsersMax   int
+	numUsersMin   int
+	numUsersSum   int
+	sampleCount   int
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 	alertingStats alerting.UsageStatsQuerier, pluginManager plugins.Manager,
-	socialService social.Service) *UsageStatsService {
+	socialService social.Service, grafanaLive *live.GrafanaLive) *UsageStatsService {
 	s := &UsageStatsService{
 		Cfg:                cfg,
 		Bus:                bus,
@@ -49,6 +62,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		AlertingUsageStats: alertingStats,
 		oauthProviders:     socialService.GetOAuthProviders(),
 		PluginManager:      pluginManager,
+		grafanaLive:        grafanaLive,
 		log:                log.New("infra.usagestats"),
 	}
 	return s
@@ -59,6 +73,7 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 
 	sendReportTicker := time.NewTicker(time.Hour * 24)
 	updateStatsTicker := time.NewTicker(time.Minute * 30)
+
 	defer sendReportTicker.Stop()
 	defer updateStatsTicker.Stop()
 
@@ -68,8 +83,11 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 			if err := uss.sendUsageStats(ctx); err != nil {
 				metricsLogger.Warn("Failed to send usage stats", "err", err)
 			}
+			// always reset live stats every report tick
+			uss.resetLiveStats()
 		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
+			uss.sampleLiveStats()
 		case <-ctx.Done():
 			return ctx.Err()
 		}

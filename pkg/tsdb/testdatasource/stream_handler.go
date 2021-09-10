@@ -97,9 +97,14 @@ func (s *Service) runTestStream(ctx context.Context, path string, conf testStrea
 				continue
 			}
 
+			mode := data.IncludeDataOnly
+			if s.cfg.FeatureToggles["live-pipeline"] {
+				mode = data.IncludeAll
+			}
+
 			if flight != nil {
 				flight.set(0, conf.Flight.getNextPoint(t))
-				if err := sender.SendFrame(flight.frame, data.IncludeDataOnly); err != nil {
+				if err := sender.SendFrame(flight.frame, mode); err != nil {
 					return err
 				}
 			} else {
@@ -110,7 +115,7 @@ func (s *Service) runTestStream(ctx context.Context, path string, conf testStrea
 				s.frame.Fields[1].Set(0, walker)                                // Value
 				s.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 				s.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
-				if err := sender.SendFrame(s.frame, data.IncludeDataOnly); err != nil {
+				if err := sender.SendFrame(s.frame, mode); err != nil {
 					return err
 				}
 			}

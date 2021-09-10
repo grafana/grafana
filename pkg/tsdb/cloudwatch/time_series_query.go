@@ -21,7 +21,6 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("request contains no queries")
 	}
-
 	// startTime and endTime are always the same for all queries
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
@@ -62,12 +61,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 				return err
 			}
 
-			queries, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
-			if err != nil {
-				return err
-			}
-
-			metricDataInput, err := e.buildMetricDataInput(startTime, endTime, queries)
+			metricDataInput, err := e.buildMetricDataInput(startTime, endTime, requestQueries)
 			if err != nil {
 				return err
 			}
@@ -77,22 +71,15 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 				return err
 			}
 
-			responses, err := e.parseResponse(mdo, queries)
+			res, err := e.parseResponse(startTime, endTime, mdo, requestQueries)
 			if err != nil {
 				return err
 			}
 
-			res, err := e.transformQueryResponsesToQueryResult(responses, requestQueries, startTime, endTime)
-			if err != nil {
-				return err
+			for _, responseWrapper := range res {
+				resultChan <- responseWrapper
 			}
 
-			for refID, queryRes := range res {
-				resultChan <- &responseWrapper{
-					DataResponse: queryRes,
-					RefId:        refID,
-				}
-			}
 			return nil
 		})
 	}
