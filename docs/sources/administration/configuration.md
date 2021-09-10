@@ -437,7 +437,7 @@ If enabled and user is not anonymous, data proxy will add X-Grafana-User header 
 
 ### response_limit
 
-Adds limit for the response bytes, after http data source request. Default is `1000000`.
+Limits the amount of bytes that will be read/accepted from responses of outgoing HTTP requests. Default is `0` which means disabled.
 
 <hr />
 
