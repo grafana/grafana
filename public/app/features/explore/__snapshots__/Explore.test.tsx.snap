@@ -14,9 +14,8 @@ exports[`Explore should render component 1`] = `
     <div
       className="panel-container css-18dr9jf-queryContainer"
     >
-      <QueryRows
+      <Connect(QueryRows)
         exploreId="left"
-        queryKeys={Array []}
       />
       <SecondaryActions
         addQueryRowButtonDisabled={false}
