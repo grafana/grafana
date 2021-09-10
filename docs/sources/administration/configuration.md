@@ -435,6 +435,10 @@ The length of time that Grafana maintains idle connections before closing them. 
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
 
+### response_limit
+
+Adds limit for the response bytes, after http data source request. Default is `1000000`.
+
 <hr />
 
 ## [analytics]
