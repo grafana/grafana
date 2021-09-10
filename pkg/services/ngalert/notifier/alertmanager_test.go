@@ -47,7 +47,8 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		Logger:                 log.New("alertmanager-test"),
 	}
 
-	am, err := newAlertmanager(1, cfg, store, m)
+	kvStore := newFakeKVStore(t)
+	am, err := newAlertmanager(1, cfg, store, kvStore, m)
 	require.NoError(t, err)
 	return am
 }
@@ -310,7 +311,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}
