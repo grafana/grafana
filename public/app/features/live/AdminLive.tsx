@@ -12,8 +12,8 @@ export default function AdminLive() {
   const [selectedRule, setSelectedRule] = useState<any>();
   const [currentPattern, setCurrentPattern] = useState<string>();
   const [activeTab, setActiveTab] = useState<string>('converter');
-  // TODO: do we want to show host somewhere?
-  const [host, setHost] = useState<string>();
+  // TODO: do we want to show the uid somewhere?
+  const [uid, setUid] = useState<string>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live');
   const styles = useStyles(getStyles);
@@ -32,7 +32,7 @@ export default function AdminLive() {
     getBackendSrv()
       .get(`api/live/remote-write-backends`)
       .then((data) => {
-        setHost(data.remoteWriteBackends[0].uid);
+        setUid(data.remoteWriteBackends[0].uid);
       })
       .catch((e) => console.error(e));
   }, []);
@@ -68,7 +68,7 @@ export default function AdminLive() {
       <Page.Contents>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <Input placeholder="Search..." onChange={onSearchQueryChange} />
+            <Input placeholder="Search pattern..." onChange={onSearchQueryChange} />
           </div>
         </div>
         <div className="admin-list-table">
