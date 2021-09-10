@@ -136,7 +136,7 @@ type LibraryElementConnectionDTO struct {
 
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
-	errLibraryElementAlreadyExists = errors.New("library element with that name already exists")
+	errLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
 	// errLibraryElementNotFound is an error for when a library element can't be found.
 	errLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
@@ -173,6 +173,7 @@ type patchLibraryElementCommand struct {
 	Model    json.RawMessage `json:"model"`
 	Kind     int64           `json:"kind" binding:"Required"`
 	Version  int64           `json:"version" binding:"Required"`
+	UID      string          `json:"uid"`
 }
 
 // searchLibraryElementsQuery is the query used for searching for Elements

@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -443,12 +444,27 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 		if elementInDB.Version != cmd.Version {
 			return errLibraryElementVersionMismatch
 		}
+		UID := cmd.UID
+		if len(UID) == 0 {
+			UID = uid
+		}
+		if !util.IsValidShortUID(UID) {
+			return errLibraryElementInvalidUID
+		} else if util.IsShortUIDTooLong(UID) {
+			return errLibraryElementUIDTooLong
+		}
+		if UID != uid {
+			_, err := getLibraryElement(l.SQLStore.Dialect, session, UID, c.SignedInUser.OrgId)
+			if !errors.Is(err, errLibraryElementNotFound) {
+				return errLibraryElementAlreadyExists
+			}
+		}
 
 		var libraryElement = LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       c.SignedInUser.OrgId,
 			FolderID:    cmd.FolderID,
-			UID:         uid,
+			UID:         UID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
 			Type:        elementInDB.Type,
