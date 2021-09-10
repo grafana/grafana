@@ -63,7 +63,7 @@ func TestFinder_Find(t *testing.T) {
 			f := &Finder{
 				cfg: tc.cfg,
 			}
-			pluginPaths, err := f.Find(tc.pluginsDir)
+			pluginPaths, err := f.Find([]string{tc.pluginsDir})
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
 				return
@@ -91,7 +91,7 @@ func TestFinder_Find(t *testing.T) {
 			defer func() {
 				assert.NoError(t, os.RemoveAll(nonExistingDir))
 			}()
-			pluginPaths, err := f.Find(nonExistingDir)
+			pluginPaths, err := f.Find([]string{nonExistingDir})
 			assert.NoError(t, err)
 
 			exists, err = fs.Exists(nonExistingDir)

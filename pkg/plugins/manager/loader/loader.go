@@ -51,6 +51,7 @@ func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.PluginV
 	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
 	if err != nil {
 		logger.Error("failed to find plugin", "err", err)
+		return nil, err
 	}
 
 	loadedPlugins, err := l.loadPlugins(pluginJSONPaths, ignore)
