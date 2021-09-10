@@ -86,6 +86,15 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			return response.Error(http.StatusInternalServerError, "Metric request error", err)
 		}
 
+		// frame post-processing to prevent breaking change
+		for refID, r := range resp.Responses {
+			for _, f := range r.Frames {
+				if f.RefID == "" {
+					f.RefID = refID
+				}
+			}
+		}
+
 		return response.JSONStreaming(http.StatusOK, resp)
 	}
 
