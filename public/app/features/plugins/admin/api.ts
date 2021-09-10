@@ -16,13 +16,15 @@ export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
 }
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
-  const localPlugins = await getLocalPlugins(); // /api/plugins/<id>/settings
+  const localPlugins = await getLocalPlugins();
   const local = localPlugins.find((p) => p.id === id);
   const isInstalled = Boolean(local);
   const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
+  const dependencies = remote?.json?.dependencies;
 
   return {
-    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
+    grafanaDependency: dependencies?.grafanaDependency || dependencies?.grafanaVersion || '',
+    pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
     readme: remote?.readme,
     versions,
