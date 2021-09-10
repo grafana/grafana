@@ -99,8 +99,8 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     <div aria-label="Absolute time ranges">
       <Field label="From" invalid={from.invalid} error={from.errorMessage}>
         <Input
-          onClick={(event) => event.stopPropagation()}
-          onFocus={onFocus}
+          onClick={onFocus}
+          onKeyPress={onFocus}
           onChange={(event) => onChange(event.currentTarget.value, to.value)}
           addonAfter={icon}
           aria-label={selectors.components.TimePicker.fromField}
@@ -109,8 +109,8 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
       </Field>
       <Field label="To" invalid={to.invalid} error={to.errorMessage}>
         <Input
-          onClick={(event) => event.stopPropagation()}
-          onFocus={onFocus}
+          onClick={onFocus}
+          onKeyPress={onFocus}
           onChange={(event) => onChange(from.value, event.currentTarget.value)}
           addonAfter={icon}
           aria-label={selectors.components.TimePicker.toField}
