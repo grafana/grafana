@@ -37,7 +37,7 @@ export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions
         datasourceUid: dataSourceSettings.uid,
         datasourceName: dataSourceSettings.name,
         query: {
-          expr: getLokiQueryFromSpan(span, traceToLogsOptions.tags),
+          expr: getLokiQueryFromSpan(span, traceToLogsOptions),
           refId: '',
         },
       },
@@ -66,7 +66,8 @@ export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
-function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
+function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string {
+  const { tags: keys, filterByTraceID, filterBySpanID } = options;
   const keysToCheck = keys?.length ? keys : defaultKeys;
   const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
     if (keysToCheck.includes(tag.key)) {
@@ -74,7 +75,17 @@ function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
     }
     return acc;
   }, [] as string[]);
-  return `{${tags.join(', ')}}`;
+
+  let query = `{${tags.join(', ')}}`;
+
+  if (filterByTraceID && span.traceID) {
+    query += ` |="${span.traceID}"`;
+  }
+  if (filterBySpanID && span.spanID) {
+    query += ` |="${span.spanID}"`;
+  }
+
+  return query;
 }
 
 /**

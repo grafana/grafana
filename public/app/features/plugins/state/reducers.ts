@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PluginMeta, PanelPlugin, PluginError } from '@grafana/data';
 import { PluginsState } from 'app/types';
+import { config } from 'app/core/config';
+import { reducer as pluginCatalogReducer } from '../admin/state/reducer';
 import { PluginDashboard } from '../../../types/plugins';
 
 export const initialState: PluginsState = {
@@ -50,7 +52,7 @@ export const {
   panelPluginLoaded,
 } = pluginsSlice.actions;
 
-export const pluginsReducer = pluginsSlice.reducer;
+export const pluginsReducer = config.pluginAdminEnabled ? pluginCatalogReducer : pluginsSlice.reducer;
 
 export default {
   plugins: pluginsReducer,

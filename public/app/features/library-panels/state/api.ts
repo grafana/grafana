@@ -66,15 +66,11 @@ export async function addLibraryPanel(
   return result;
 }
 
-export async function updateLibraryPanel(
-  panelSaveModel: PanelModelWithLibraryPanel,
-  folderId: number
-): Promise<LibraryElementDTO> {
+export async function updateLibraryPanel(panelSaveModel: PanelModelWithLibraryPanel): Promise<LibraryElementDTO> {
   const { uid, name, version } = panelSaveModel.libraryPanel;
   const kind = LibraryElementKind.Panel;
   const model = panelSaveModel;
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
-    folderId,
     name,
     model,
     version,
