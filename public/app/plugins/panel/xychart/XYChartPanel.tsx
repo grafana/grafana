@@ -19,32 +19,27 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   onFieldConfigChange,
 }) => {
   const theme = useTheme2();
-  //const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
-
   const { eventBus } = usePanelContext();
 
-  const { lookup, config } = useMemo(() => {
+  const config = useMemo(() => {
     // dim mapping from panel config
     const dims = prepDims(options, data.series);
     // seriesIndex enumerator & fast lookup cache (displayName <-> seriesIndex <-> DataFrameFieldIndex)
     const lookup = prepLookup(dims, data.series);
     // initial uplot config, custom renderer, data prepper, can be extended by plugins or children of vis component below
-    const config = prepConfig({
+    return prepConfig({
       frames: data.series,
       lookup,
       eventBus,
       theme,
       ...options,
     });
-    return {
-      lookup,
-      config,
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.structureRev, options]); // optionsRev?
 
   // enumerates field.state.seriesIdx based on internal lookup
   // preps data in various shapes...aligned, stacked, merged, interpolated, etc..
-  const data2 = useMemo(() => config.prepData(data.series), data.series);
+  const preparedData = useMemo(() => config.prepData!(data.series), [config, data.series]);
 
   /*
   const onLegendClick = useCallback(
@@ -91,7 +86,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   return (
     <VizLayout width={width} height={height}>
       {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart config={config} data={data2} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+        <UPlotChart config={config} data={preparedData} width={vizWidth} height={vizHeight} timeRange={timeRange}>
           {/*children ? children(config, alignedFrame) : null*/}
         </UPlotChart>
       )}
