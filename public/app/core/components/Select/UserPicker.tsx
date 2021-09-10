@@ -37,12 +37,6 @@ export class UserPicker extends Component<Props, State> {
   }
 
   search(query?: string) {
-    // prevent fetching users if disabled
-    if (this.props.disabled) {
-      this.setState({ isLoading: false });
-      return;
-    }
-
     this.setState({ isLoading: true });
 
     if (isNil(query)) {
@@ -76,7 +70,7 @@ export class UserPicker extends Component<Props, State> {
           isClearable
           className={className}
           isLoading={isLoading}
-          defaultOptions={true}
+          defaultOptions={!disabled}
           loadOptions={this.debouncedSearch}
           onChange={onSelected}
           placeholder="Start typing to search for user"
