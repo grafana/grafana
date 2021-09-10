@@ -5,6 +5,7 @@ import { useStyles2, Icon } from '@grafana/ui';
 
 import { InstallControls } from './InstallControls';
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
+import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependencies';
 import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
 
@@ -73,15 +74,10 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
           <PluginDetailsHeaderSignature plugin={plugin} />
         </div>
 
-        {/* Plugins dependencies information */}
-        <div className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}>
-          <div className={styles.textBold}>Dependencies:</div>
-
-          <div>
-            <Icon name="grafana" />
-            Grafana {plugin.details?.grafanaDependency}
-          </div>
-        </div>
+        <PluginDetailsHeaderDependencies
+          plugin={plugin}
+          className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
+        />
 
         <p>{plugin.description}</p>
 
