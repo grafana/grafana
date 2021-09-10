@@ -12,6 +12,7 @@ import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 import { getFocusStyles } from '../../../themes/mixins';
 import { selectors } from '@grafana/e2e-selectors';
+import { FilterInput } from '../../FilterInput/FilterInput';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
@@ -46,10 +47,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
     rightSide: css`
       width: 40% !important;
       border-right: ${isReversed ? `1px solid ${theme.colors.border.weak}` : 'none'};
-
+      display: flex;
+      flex-direction: column;
       @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
         width: 100% !important;
       }
+    `,
+    timeRangeFilter: css`
+      padding: ${theme.spacing(1)};
     `,
     spacing: css`
       margin-top: 16px;
@@ -170,6 +175,10 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   const styles = getStyles(theme, isReversed, hideQuickRanges, isContainerTall);
   const historyOptions = mapToHistoryOptions(history, timeZone);
   const timeOption = useTimeOption(value.raw, otherOptions, quickOptions);
+  const [searchTerm, setSearchQuery] = useState('');
+
+  const filteredQuickOptions = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredOtherOptions = otherOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption));
@@ -179,26 +188,37 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
     <div id="TimePickerContent" className={cx(styles.container, className)}>
       <div className={styles.body}>
         {(!isFullscreen || !hideQuickRanges) && (
-          <CustomScrollbar className={styles.rightSide}>
-            {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
-            {!hideQuickRanges && (
-              <>
-                <TimeRangeList
-                  title="Relative time ranges"
-                  options={quickOptions}
-                  onChange={onChangeTimeOption}
-                  value={timeOption}
-                />
-                <div className={styles.spacing} />
-                <TimeRangeList
-                  title="Other quick ranges"
-                  options={otherOptions}
-                  onChange={onChangeTimeOption}
-                  value={timeOption}
-                />
-              </>
-            )}
-          </CustomScrollbar>
+          <div className={styles.rightSide}>
+            <div className={styles.timeRangeFilter}>
+              <FilterInput width={0} value={searchTerm} onChange={setSearchQuery} placeholder={'Search quick ranges'} />
+            </div>
+            <CustomScrollbar>
+              {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+              {!hideQuickRanges && (
+                <>
+                  {filteredQuickOptions.length > 0 && (
+                    <>
+                      <TimeRangeList
+                        title="Relative time ranges"
+                        options={filteredQuickOptions}
+                        onChange={onChangeTimeOption}
+                        value={timeOption}
+                      />
+                      <div className={styles.spacing} />
+                    </>
+                  )}
+                  {filteredOtherOptions.length > 0 && (
+                    <TimeRangeList
+                      title="Other quick ranges"
+                      options={filteredOtherOptions}
+                      onChange={onChangeTimeOption}
+                      value={timeOption}
+                    />
+                  )}
+                </>
+              )}
+            </CustomScrollbar>
+          </div>
         )}
         {isFullscreen && (
           <div className={styles.leftSide}>

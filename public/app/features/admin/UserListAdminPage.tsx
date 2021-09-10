@@ -6,11 +6,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 const mapDispatchToProps = {
   fetchUsers,

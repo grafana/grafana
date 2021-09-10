@@ -121,7 +121,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     if (isNaN(parseInt(strippedMathString.charAt(i), 10))) {
       num = 1;
     } else if (strippedMathString.length === 2) {
-      num = strippedMathString.charAt(i);
+      num = parseInt(strippedMathString.charAt(i), 10);
     } else {
       const numFrom = i;
       while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
@@ -140,6 +140,10 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
       }
     }
     unit = strippedMathString.charAt(i++);
+
+    if (unit === 'f') {
+      unit = strippedMathString.charAt(i++);
+    }
 
     if (!includes(units, unit)) {
       return undefined;

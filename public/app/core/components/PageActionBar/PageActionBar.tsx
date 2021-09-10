@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FilterInput } from '../FilterInput/FilterInput';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 import { LinkButton } from '@grafana/ui';
 
 export interface Props {

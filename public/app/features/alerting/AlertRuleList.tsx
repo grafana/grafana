@@ -7,7 +7,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { AlertRule, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
@@ -15,6 +14,7 @@ import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ShowModalReactEvent } from '../../types/events';
 import { AlertHowToModal } from './AlertHowToModal';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 function mapStateToProps(state: StoreState) {
   return {

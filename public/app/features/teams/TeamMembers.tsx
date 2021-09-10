@@ -6,7 +6,6 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, OrgUser } from 'app/types';
 import { addTeamMember } from './state/actions';
 import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -15,6 +14,7 @@ import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 function mapStateToProps(state: any) {
   return {

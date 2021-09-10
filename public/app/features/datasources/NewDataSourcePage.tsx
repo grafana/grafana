@@ -8,10 +8,10 @@ import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { Card } from 'app/core/components/Card/Card';
 import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 function mapStateToProps(state: StoreState) {
   return {

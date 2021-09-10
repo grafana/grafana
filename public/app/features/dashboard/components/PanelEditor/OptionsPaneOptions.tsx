@@ -5,7 +5,6 @@ import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -14,6 +13,7 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 interface Props {
   plugin: PanelPlugin;

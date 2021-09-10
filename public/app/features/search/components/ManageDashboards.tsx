@@ -4,7 +4,6 @@ import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { FolderDTO } from 'app/types';
 import { useManageDashboards } from '../hooks/useManageDashboards';
 import { SearchLayout } from '../types';
@@ -14,6 +13,7 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 export interface Props {
   folder?: FolderDTO;

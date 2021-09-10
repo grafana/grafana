@@ -20,8 +20,8 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { useDebounce } from 'react-use';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 export interface Props {
   queries: RichHistoryQuery[];

@@ -13,10 +13,15 @@ export const quickOptions: TimeOption[] = [
   { from: 'now-7d', to: 'now', display: 'Last 7 days' },
   { from: 'now-30d', to: 'now', display: 'Last 30 days' },
   { from: 'now-90d', to: 'now', display: 'Last 90 days' },
+  { from: 'now-1fq', to: 'now', display: 'Last fiscal quarter' },
   { from: 'now-6M', to: 'now', display: 'Last 6 months' },
+  { from: 'now-2fq', to: 'now', display: 'Last fiscal half' },
   { from: 'now-1y', to: 'now', display: 'Last 1 year' },
   { from: 'now-2y', to: 'now', display: 'Last 2 years' },
   { from: 'now-5y', to: 'now', display: 'Last 5 years' },
+  { from: 'now-1fy', to: 'now', display: 'Last 1 fiscal year' },
+  { from: 'now-2fy', to: 'now', display: 'Last 2 fiscal years' },
+  { from: 'now-5fy', to: 'now', display: 'Last 5 fiscal years' },
 ];
 
 export const otherOptions: TimeOption[] = [
@@ -25,7 +30,10 @@ export const otherOptions: TimeOption[] = [
   { from: 'now-7d/d', to: 'now-7d/d', display: 'This day last week' },
   { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
   { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
+  { from: 'now-1fq/fq', to: 'now-1fq/fq', display: 'Previous fiscal quarter' },
+  { from: 'now-2fq/fq', to: 'now-2fq/fq', display: 'Previous fiscal half' },
   { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
+  { from: 'now-1y/fy', to: 'now-1y/fy', display: 'Previous fiscal year' },
   { from: 'now/d', to: 'now/d', display: 'Today' },
   { from: 'now/d', to: 'now', display: 'Today so far' },
   { from: 'now/w', to: 'now/w', display: 'This week' },

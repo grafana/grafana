@@ -7,11 +7,11 @@ import { OrgRole, StoreState, Team } from 'app/types';
 import { deleteTeam, loadTeams } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { setSearchQuery } from './state/reducers';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;

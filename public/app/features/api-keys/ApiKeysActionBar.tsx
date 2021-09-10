@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Button } from '@grafana/ui';
-import { FilterInput } from '../../core/components/FilterInput/FilterInput';
+import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 interface Props {
   searchQuery: string;
