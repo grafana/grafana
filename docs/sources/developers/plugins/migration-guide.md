@@ -6,16 +6,16 @@ title = "Plugin migration guide"
 
 ## Introduction
 
-This guide explains how to migrate Grafana plugins from previous version to the latest version available. It is structured in a way where you easily should be able to identify what steps you need to take given the Grafana version your plugin currently support.
+This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 8.2.x or a later version. 
 
-> If you've successfully migrated your plugin by using this guide and think something is missing, please [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) and share your experiences with us so that we can improve this guide!
+> **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide! 
 
 ## Table of contents
 
 - [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
-    - [2. Update the way you bootrap your plugin](#2-update-the-way-you-bootrap-your-plugin)
+    - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
     - [3. Update the plugin package](#3-update-the-plugin-package)
   - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
   - [Time series data can now be in wide or many format](#time-series-data-can-now-be-in-wide-or-many-format)
@@ -36,11 +36,11 @@ This guide explains how to migrate Grafana plugins from previous version to the 
 
 ## From version 7.x.x to 8.x.x
 
-This guide will help you migrate Grafana v7.x.x plugins to the updated plugin system released with Grafana v8.x.x. All the changes described below might not be applicable to your plugin but we will try to cover all breaking changes in Grafana v8.x.x and what steps you need to take to upgrade your plugin.
+This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform  one or more of the following steps. We have documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
 
 ### Backend plugin v1 support has been dropped
 
-To get your backend plugin running in Grafana 8 you need to use the new [plugin sdk](https://github.com/grafana/grafana-plugin-sdk-go).
+Use the new [plugin sdk](https://github.com/grafana/grafana-plugin-sdk-go) to run your backend plugin running in Grafana 8.
 
 #### 1. Add dependency on grafana-plugin-sdk-go
 
@@ -173,11 +173,9 @@ func (d *SampleDatasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 
 ### Unsigned backend plugins will not be loaded
 
-We strongly recommend our Grafana users not to allow unsigned plugins in their Grafana installation. By allowing unsigned plugins, we can’t guarantee the authenticity of the plugin which could compromise the security of your Grafana installation.
+Before you can run a backend plugin on Grafana installations, you must sign the plugin. Grafana Labs strongly recommends you upload signed plugins since we cannot guarantee the integrity of unsigned plugins.
 
-This means that you, as a plugin developer, need to get your plugin signed if you want it to be able to run on all Grafana installations.
-
-Follow the following [steps](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) to get instructions on how to set up plugin signing.
+For instructions on plugin signing, refer to the [Plugin signatures](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) topic.
 
 You will still be able to run and develop your plugin during development by running your Grafana [instance in development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode).
 
@@ -213,7 +211,7 @@ If your plugin should support time series data we recommend you to make sure to 
 
 ### Update react-hook-form from v6 to v7
 
-We have upgraded the react-hook-form from version 6 to version 7. We recommend follow the [react-hook-form-migration-guide](https://react-hook-form.com/migrate-v6-to-v7/) to get make your forms compatible with that version.
+We have upgraded react-hook-form from version 6 to version 7. We recommend following the [react-hook-form-migration-guide](https://react-hook-form.com/migrate-v6-to-v7/) to make your forms compatible with version 7.
 
 ### Update the plugin.json
 
