@@ -15,6 +15,7 @@ import { SelectableValue } from '@grafana/data';
 export interface Props {
   onSelected: (user: SelectableValue<OrgUser['userId']>) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export interface State {
@@ -36,6 +37,12 @@ export class UserPicker extends Component<Props, State> {
   }
 
   search(query?: string) {
+    // prevent fetching users if disabled
+    if (this.props.disabled) {
+      this.setState({ isLoading: false });
+      return;
+    }
+
     this.setState({ isLoading: true });
 
     if (isNil(query)) {
@@ -59,7 +66,7 @@ export class UserPicker extends Component<Props, State> {
   }
 
   render() {
-    const { className, onSelected } = this.props;
+    const { className, onSelected, disabled } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -74,6 +81,7 @@ export class UserPicker extends Component<Props, State> {
           onChange={onSelected}
           placeholder="Start typing to search for user"
           noOptionsMessage="No users found"
+          disabled={disabled}
         />
       </div>
     );
