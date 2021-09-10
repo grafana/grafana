@@ -437,7 +437,7 @@ If enabled and user is not anonymous, data proxy will add X-Grafana-User header 
 
 ### row_limit
 
-Limit the amount of rows being processed from data sources that returns rows, e.g. SQL data sources. Default is `1000000`.
+Limits the number of rows that Grafana will process from SQL (relational) data sources.  Default is `1000000`.
 
 <hr />
 
