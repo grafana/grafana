@@ -31,7 +31,7 @@ The reference information that follows complements conceptual information about 
 | `fixed:datasources:admin`       | `datasources:read`<br>`datasources:create`<br>`datasources:write`<br>`datasources:delete`                                                                                                                                                                                    | Grant access to create, read, update, delete data sources.                                                                                                                      |
 | `fixed:datasources:id:viewer`   | `datasources:id:read`                                                                                                                                                                                                                                                        | Grant access to read data sources ID.                                                                                                                                           |
 
-[comment]: <> (I will remove this after it to reduce conflicts for now)
+[comment]: <> (I will remove this after. This is just to reduce conflicts for now)
 | | | |
 |---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | `fixed:datasources:permissions:admin` | `datasources.permissions:create`<br> `datasources.permissions:read`<br> `datasources.permissions:delete`<br>`datasources.permissions:toggle` | Grant access to create, read, delete, enable, or disable data source permissions |

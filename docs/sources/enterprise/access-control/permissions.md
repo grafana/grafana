@@ -73,7 +73,7 @@ The following list contains fine-grained access control actions.
 | `datasources:write`        | `datasources:*`<br>`datasources:id:*`                                                       | Update data sources.                                                                                                                                       |
 | `datasources:delete`       | `datasources:id:*`<br>`datasources:uid:*`<br>`datasources:name:*`                           | Delete data sources.                                                                                                                                       |
 
-[comment]: <> (I will remove this after it to reduce conflicts for now)
+[comment]: <> (I will remove this after. This is just to reduce conflicts for now)
 | | | |
 |----------------------------------|---------------------------------------|---------------------------------------------|
 | `datasources:permissions:read` | `datasources:*`<br>`datasources:id:*` | List data sources permissions. |
