@@ -2,18 +2,11 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Icon, useStyles2, CardContainer, HorizontalGroup, VerticalGroup, Tooltip } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, IconName } from '../types';
 import { PluginLogo } from './PluginLogo';
 import { PluginListBadges } from './PluginListBadges';
 
 const LOGO_SIZE = '48px';
-
-enum IconName {
-  app = 'apps',
-  datasource = 'database',
-  panel = 'credit-card',
-  renderer = 'pen',
-}
 
 type PluginListCardProps = {
   plugin: CatalogPlugin;
