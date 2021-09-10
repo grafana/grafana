@@ -200,10 +200,7 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
 
-		interval, err := s.intervalCalculator.Calculate(query.TimeRange, dsInterval, intervalv2.Min)
-		if err != nil {
-			return nil, err
-		}
+		interval := s.intervalCalculator.Calculate(query.TimeRange, dsInterval)
 
 		var resolution int64 = 1
 		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {

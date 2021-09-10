@@ -377,10 +377,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	if err != nil {
 		return "", err
 	}
-	interval, err := sqlIntervalCalculator.Calculate(timeRange, minInterval, "min")
-	if err != nil {
-		return "", err
-	}
+	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
