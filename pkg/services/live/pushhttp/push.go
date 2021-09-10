@@ -97,8 +97,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 }
 
 func (g *Gateway) HandlePath(ctx *models.ReqContext) {
-	streamID := ctx.Params(":streamId")
-	path := ctx.Params(":path")
+	streamID := macaron.Vars(ctx.Req)[":streamId"]
+	path := macaron.Vars(ctx.Req)[":path"]
 
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
