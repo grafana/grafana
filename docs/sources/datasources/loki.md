@@ -1,4 +1,3 @@
-+++
 title = "Loki"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
