@@ -18,6 +18,7 @@ export interface Props {
   text?: string;
   noIntervalPicker?: boolean;
   width?: string;
+  minWidth?: string;
   primary?: boolean;
 }
 
@@ -52,13 +53,16 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker } = this.props;
+    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, minWidth } = this.props;
 
     const currentValue = value || '';
     const variant = this.getVariant();
     const options = intervalsToOptions({ intervals });
     const option = options.find(({ value }) => value === currentValue);
     let selectedValue = option || RefreshPicker.offOption;
+    let style = {
+      minWidth: minWidth,
+    };
 
     if (selectedValue.label === RefreshPicker.offOption.label) {
       selectedValue = { value: '' };
@@ -72,6 +76,7 @@ export class RefreshPicker extends PureComponent<Props> {
           variant={variant}
           icon={isLoading ? 'fa fa-spinner' : 'sync'}
           aria-label={selectors.components.RefreshPicker.runButton}
+          style={style}
         >
           {text}
         </ToolbarButton>
