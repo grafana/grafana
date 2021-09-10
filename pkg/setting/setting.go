@@ -1491,10 +1491,6 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 		url := *cfg.CDNRootURL
 		preReleaseFolder := ""
 
-		if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
-			preReleaseFolder = "pre-releases"
-		}
-
 		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
 		return url.String() + "/"
 	}
