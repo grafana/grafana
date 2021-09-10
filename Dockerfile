@@ -25,6 +25,8 @@ WORKDIR $GOPATH/src/github.com/grafana/grafana
 
 COPY go.mod go.sum embed.go ./
 COPY cue cue
+COPY cue.mod cue.mod
+COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY pkg pkg
 COPY build.go package.json ./

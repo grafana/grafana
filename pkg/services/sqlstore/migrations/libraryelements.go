@@ -50,4 +50,8 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("create "+models.LibraryElementConnectionTableName+" table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
 	mg.AddMigration("add index "+models.LibraryElementConnectionTableName+" element_id-kind-connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
+
+	mg.AddMigration("add unique index library_element org_id_uid", migrator.NewAddIndexMigration(libraryElementsV1, &migrator.Index{
+		Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex,
+	}))
 }

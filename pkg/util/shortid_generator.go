@@ -20,6 +20,11 @@ func IsValidShortUID(uid string) bool {
 	return validUIDPattern(uid)
 }
 
+// IsShortUIDTooLong checks if short unique identifier is too long
+func IsShortUIDTooLong(uid string) bool {
+	return len(uid) > 40
+}
+
 // GenerateShortUID generates a short unique identifier.
 func GenerateShortUID() string {
 	return shortid.MustGenerate()

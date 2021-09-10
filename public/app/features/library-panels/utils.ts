@@ -56,5 +56,5 @@ function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<Library
     return addLibraryPanel(panel, folderId!);
   }
 
-  return updateLibraryPanel(panel, folderId!);
+  return updateLibraryPanel(panel);
 }

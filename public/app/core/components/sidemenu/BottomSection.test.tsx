@@ -60,7 +60,9 @@ describe('BottomSection', () => {
   it('creates the correct children for the help link', () => {
     render(
       <BrowserRouter>
-        <BottomSection />
+        <div className="sidemenu-open--xs">
+          <BottomSection />
+        </div>
       </BrowserRouter>
     );
 

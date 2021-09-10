@@ -84,7 +84,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 .map((field) => field.matcherRegex) || [];
             if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
               return throwError(
-                'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
+                () =>
+                  new Error(
+                    'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
+                  )
               );
             } else {
               return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(

@@ -1,68 +1,56 @@
-import React from 'react';
-import { AppEvents } from '@grafana/data';
+import React, { useState } from 'react';
+import { useMountedState } from 'react-use';
+import { AppEvents, PluginType } from '@grafana/data';
 import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { api } from '../../api';
-import { ActionTypes, CatalogPlugin, PluginStatus } from '../../types';
+
+import { CatalogPlugin, PluginStatus } from '../../types';
 import { getStyles } from './index';
+import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
 
 type InstallControlsButtonProps = {
-  isInProgress: boolean;
-  hasInstalledPanel: boolean;
-  dispatch: React.Dispatch<any>;
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
 };
 
-export function InstallControlsButton({
-  isInProgress,
-  dispatch,
-  plugin,
-  pluginStatus,
-  hasInstalledPanel,
-}: InstallControlsButtonProps) {
-  const uninstallBtnText = isInProgress ? 'Uninstalling' : 'Uninstall';
-  const updateBtnText = isInProgress ? 'Updating' : 'Update';
-  const installBtnText = isInProgress ? 'Installing' : 'Install';
+export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsButtonProps) {
+  const { isInstalling, error: errorInstalling } = useInstallStatus();
+  const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
+  const install = useInstall();
+  const uninstall = useUninstall();
+  const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
   const styles = useStyles2(getStyles);
+  const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
+  const isMounted = useMountedState();
 
   const onInstall = async () => {
-    dispatch({ type: ActionTypes.INFLIGHT });
-    try {
-      await api.installPlugin(plugin.id, plugin.version);
+    await install(plugin.id, plugin.version);
+    if (!errorInstalling) {
+      if (isMounted() && plugin.type === PluginType.panel) {
+        setHasInstalledPanel(true);
+      }
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
-      dispatch({ type: ActionTypes.INSTALLED, payload: plugin.type === 'panel' });
-    } catch (error) {
-      dispatch({ type: ActionTypes.ERROR, payload: { error } });
     }
   };
 
   const onUninstall = async () => {
-    dispatch({ type: ActionTypes.INFLIGHT });
-    try {
-      await api.uninstallPlugin(plugin.id);
+    await uninstall(plugin.id);
+    if (!errorUninstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
-      dispatch({ type: ActionTypes.UNINSTALLED });
-    } catch (error) {
-      dispatch({ type: ActionTypes.ERROR, payload: error });
     }
   };
 
   const onUpdate = async () => {
-    dispatch({ type: ActionTypes.INFLIGHT });
-    try {
-      await api.installPlugin(plugin.id, plugin.version);
+    await install(plugin.id, plugin.version, true);
+    if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
-      dispatch({ type: ActionTypes.UPDATED });
-    } catch (error) {
-      dispatch({ type: ActionTypes.ERROR, payload: error });
     }
   };
 
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <HorizontalGroup height="auto">
-        <Button variant="destructive" disabled={isInProgress} onClick={onUninstall}>
+        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
           {uninstallBtnText}
         </Button>
         {hasInstalledPanel && (
@@ -75,10 +63,10 @@ export function InstallControlsButton({
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
       <HorizontalGroup height="auto">
-        <Button disabled={isInProgress} onClick={onUpdate}>
-          {updateBtnText}
+        <Button disabled={isInstalling} onClick={onUpdate}>
+          {isInstalling ? 'Updating' : 'Update'}
         </Button>
-        <Button variant="destructive" disabled={isInProgress} onClick={onUninstall}>
+        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
           {uninstallBtnText}
         </Button>
       </HorizontalGroup>
@@ -86,8 +74,8 @@ export function InstallControlsButton({
   }
 
   return (
-    <Button disabled={isInProgress} onClick={onInstall}>
-      {installBtnText}
+    <Button disabled={isInstalling} onClick={onInstall}>
+      {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
 }
