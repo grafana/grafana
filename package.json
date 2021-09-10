@@ -143,7 +143,7 @@
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.2",
     "angular-mocks": "1.6.6",
     "autoprefixer": "10.2.6",
-    "axios": "0.21.1",
+    "axios": "0.21.2",
     "babel-jest": "26.6.3",
     "babel-loader": "8.2.2",
     "babel-plugin-angularjs-annotate": "0.10.0",
