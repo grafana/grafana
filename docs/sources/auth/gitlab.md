@@ -103,12 +103,26 @@ enabled = true
 allow_sign_up = true
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = api
+scopes = read_api
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
 api_url = https://gitlab.com/api/v4
 allowed_groups = example, foo/bar
 ```
+
+### Map roles
+
+Grafana can attempt to do role mapping through Gitlab OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
+
+Grafana uses JSON obtained from querying the `/api/v4/user` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
+
+An example Query could look like the following:
+
+```bash
+role_attribute_path = is_admin && 'Admin' || 'Viewer'
+```
+
+This would allow you every Gitlab Admin to be an Admin in Grafana.
 
 ### Team Sync (Enterprise only)
 
