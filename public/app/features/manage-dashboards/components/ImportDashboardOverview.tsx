@@ -1,29 +1,33 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
 import { Legend, Form } from '@grafana/ui';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
-import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
+import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
 import { locationService } from '@grafana/runtime';
 
-interface OwnProps {}
+const mapStateToProps = (state: StoreState) => {
+  const searchObj = locationService.getSearchObject();
 
-interface ConnectedProps {
-  dashboard: ImportDashboardDTO;
-  inputs: DashboardInputs;
-  source: DashboardSource;
-  meta?: any;
-  folder: { id: number; title?: string };
-}
+  return {
+    dashboard: state.importDashboard.dashboard,
+    meta: state.importDashboard.meta,
+    source: state.importDashboard.source,
+    inputs: state.importDashboard.inputs,
+    folder: searchObj.folderId ? { id: Number(searchObj.folderId) } : { id: 0 },
+  };
+};
 
-interface DispatchProps {
-  clearLoadedDashboard: typeof clearLoadedDashboard;
-  importDashboard: typeof importDashboard;
-}
+const mapDispatchToProps = {
+  clearLoadedDashboard,
+  importDashboard,
+};
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
 
 interface State {
   uidReset: boolean;
@@ -109,22 +113,5 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => {
-  const searchObj = locationService.getSearchObject();
-
-  return {
-    dashboard: state.importDashboard.dashboard,
-    meta: state.importDashboard.meta,
-    source: state.importDashboard.source,
-    inputs: state.importDashboard.inputs,
-    folder: searchObj.folderId ? { id: Number(searchObj.folderId) } : { id: 0 },
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  clearLoadedDashboard,
-  importDashboard,
-};
-
-export const ImportDashboardOverview = connect(mapStateToProps, mapDispatchToProps)(ImportDashboardOverviewUnConnected);
+export const ImportDashboardOverview = connector(ImportDashboardOverviewUnConnected);
 ImportDashboardOverview.displayName = 'ImportDashboardOverview';

@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce, has } from 'lodash';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import AngularQueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
@@ -201,4 +200,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default hot(module)(connector(QueryRow));
+export default connector(QueryRow);

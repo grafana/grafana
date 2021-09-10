@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -22,7 +21,6 @@ import (
 
 type TestingApiService interface {
 	RouteEvalQueries(*models.ReqContext, apimodels.EvalQueriesPayload) response.Response
-	RouteTestReceiverConfig(*models.ReqContext, apimodels.ExtendedReceiver) response.Response
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
@@ -35,16 +33,6 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.Me
 				http.MethodPost,
 				"/api/v1/eval",
 				srv.RouteEvalQueries,
-				m,
-			),
-		)
-		group.Post(
-			toMacaronPath("/api/v1/receiver/test/{Recipient}"),
-			binding.Bind(apimodels.ExtendedReceiver{}),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/v1/receiver/test/{Recipient}",
-				srv.RouteTestReceiverConfig,
 				m,
 			),
 		)

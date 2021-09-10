@@ -69,6 +69,7 @@ export const Basic: Story = (args) => {
       {(value, updateValue) => {
         return (
           <Select
+            menuShouldPortal
             {...args}
             onChange={(value: SelectableValue<string>) => {
               action('onChanged fired')(value);

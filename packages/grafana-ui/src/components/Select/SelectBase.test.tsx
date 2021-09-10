@@ -19,11 +19,11 @@ describe('SelectBase', () => {
   ];
 
   it('renders without error', () => {
-    render(<SelectBase onChange={onChangeHandler} />);
+    render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
   });
 
   it('renders empty options information', () => {
-    render(<SelectBase onChange={onChangeHandler} />);
+    render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
     userEvent.click(screen.getByText(/choose/i));
     expect(screen.queryByText(/no options found/i)).toBeVisible();
   });
@@ -32,7 +32,7 @@ describe('SelectBase', () => {
     render(
       <>
         <label htmlFor="my-select">My select</label>
-        <SelectBase onChange={onChangeHandler} options={options} inputId="my-select" />
+        <SelectBase menuShouldPortal onChange={onChangeHandler} options={options} inputId="my-select" />
       </>
     );
 
@@ -47,7 +47,7 @@ describe('SelectBase', () => {
       return (
         <>
           <button onClick={() => setValue(null)}>clear value</button>
-          <SelectBase value={value} onChange={setValue} options={[option]} />
+          <SelectBase menuShouldPortal value={value} onChange={setValue} options={[option]} />
         </>
       );
     };
@@ -61,7 +61,7 @@ describe('SelectBase', () => {
   describe('when openMenuOnFocus prop', () => {
     describe('is provided', () => {
       it('opens on focus', () => {
-        render(<SelectBase onChange={onChangeHandler} openMenuOnFocus />);
+        render(<SelectBase menuShouldPortal onChange={onChangeHandler} openMenuOnFocus />);
         fireEvent.focus(screen.getByRole('textbox'));
         expect(screen.queryByText(/no options found/i)).toBeVisible();
       });
@@ -73,7 +73,7 @@ describe('SelectBase', () => {
         ${'ArrowUp'}
         ${' '}
       `('opens on arrow down/up or space', ({ key }) => {
-        render(<SelectBase onChange={onChangeHandler} />);
+        render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
         fireEvent.focus(screen.getByRole('textbox'));
         fireEvent.keyDown(screen.getByRole('textbox'), { key });
         expect(screen.queryByText(/no options found/i)).toBeVisible();
@@ -112,6 +112,7 @@ describe('SelectBase', () => {
       it('should only display maxVisibleValues options, and additional number of values should be displayed as indicator', () => {
         render(
           <SelectBase
+            menuShouldPortal
             onChange={onChangeHandler}
             isMulti={true}
             maxVisibleValues={3}
@@ -128,6 +129,7 @@ describe('SelectBase', () => {
         it('should show all selected options when menu is open', () => {
           render(
             <SelectBase
+              menuShouldPortal
               onChange={onChangeHandler}
               isMulti={true}
               maxVisibleValues={3}
@@ -147,6 +149,7 @@ describe('SelectBase', () => {
         it('should not show all selected options when menu is open', () => {
           render(
             <SelectBase
+              menuShouldPortal
               onChange={onChangeHandler}
               isMulti={true}
               maxVisibleValues={3}
@@ -167,6 +170,7 @@ describe('SelectBase', () => {
       it('should always show all selected options', () => {
         render(
           <SelectBase
+            menuShouldPortal
             onChange={onChangeHandler}
             isMulti={true}
             options={excessiveOptions}
@@ -183,7 +187,7 @@ describe('SelectBase', () => {
 
   describe('options', () => {
     it('renders menu with provided options', () => {
-      render(<SelectBase options={options} onChange={onChangeHandler} />);
+      render(<SelectBase menuShouldPortal options={options} onChange={onChangeHandler} />);
       userEvent.click(screen.getByText(/choose/i));
       const menuOptions = screen.getAllByLabelText('Select option');
       expect(menuOptions).toHaveLength(2);
@@ -192,7 +196,7 @@ describe('SelectBase', () => {
     it('call onChange handler when option is selected', async () => {
       const spy = jest.fn();
 
-      render(<SelectBase onChange={spy} options={options} aria-label="My select" />);
+      render(<SelectBase menuShouldPortal onChange={spy} options={options} aria-label="My select" />);
 
       const selectEl = screen.getByLabelText('My select');
       expect(selectEl).toBeInTheDocument();

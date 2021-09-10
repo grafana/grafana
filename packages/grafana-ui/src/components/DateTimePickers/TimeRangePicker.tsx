@@ -25,6 +25,7 @@ import {
 import { Themeable } from '../../types';
 import { otherOptions, quickOptions } from './rangeOptions';
 import { ButtonGroup, ToolbarButton } from '../Button';
+import { selectors } from '@grafana/e2e-selectors';
 
 /** @public */
 export interface TimeRangePickerProps extends Themeable {
@@ -89,11 +90,21 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
     return (
       <ButtonGroup className={styles.container}>
-        {hasAbsolute && <ToolbarButton variant={variant} onClick={onMoveBackward} icon="angle-left" narrow />}
+        {hasAbsolute && (
+          <ToolbarButton
+            aria-label="Move time range backwards"
+            variant={variant}
+            onClick={onMoveBackward}
+            icon="angle-left"
+            narrow
+          />
+        )}
 
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
-            aria-label="TimePicker Open Button"
+            data-testid={selectors.components.TimePicker.openButton}
+            aria-label={`Time range picker with current time range ${formattedRange(value, timeZone)} selected`}
+            aria-controls="TimePickerContent"
             onClick={this.onOpen}
             icon="clock-nine"
             isOpen={isOpen}
@@ -120,10 +131,18 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
         {timeSyncButton}
 
-        {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow variant={variant} />}
+        {hasAbsolute && (
+          <ToolbarButton
+            aria-label="Move time range forwards"
+            onClick={onMoveForward}
+            icon="angle-right"
+            narrow
+            variant={variant}
+          />
+        )}
 
         <Tooltip content={ZoomOutTooltip} placement="bottom">
-          <ToolbarButton onClick={onZoom} icon="search-minus" variant={variant} />
+          <ToolbarButton aria-label="Zoom out time range" onClick={onZoom} icon="search-minus" variant={variant} />
         </Tooltip>
       </ButtonGroup>
     );

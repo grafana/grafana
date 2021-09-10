@@ -3,12 +3,10 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -254,10 +252,10 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
-// GetPluginAssets returns public plugin assets (images, JS, etc.)
+// getPluginAssets returns public plugin assets (images, JS, etc.)
 //
 // /public/plugins/:pluginId/*
-func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
+func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
@@ -267,6 +265,11 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 
 	requestedFile := filepath.Clean(c.Params("*"))
 	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
+
+	if !plugin.IncludedInSignature(requestedFile) {
+		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
+			"is not included in the plugin signature", "file", requestedFile)
+	}
 
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
@@ -292,19 +295,13 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if shouldExclude(fi) {
-		c.JsonApiErr(403, "Plugin file access forbidden",
-			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
-		return
-	}
-
 	if hs.Cfg.Env == setting.Dev {
 		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
+	http.ServeContent(c.Resp, c.Req, pluginFilePath, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
@@ -439,14 +436,4 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	}
 
 	return response.Error(500, "Plugin request failed", err)
-}
-
-func shouldExclude(fi os.FileInfo) bool {
-	normalizedFilename := strings.ToLower(fi.Name())
-
-	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
-	isScript := strings.HasSuffix(normalizedFilename, ".sh")
-
-	return isUnixExecutable || isWindowsExecutable || isScript
 }

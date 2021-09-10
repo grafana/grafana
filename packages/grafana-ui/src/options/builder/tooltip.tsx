@@ -1,4 +1,4 @@
-import { OptionsWithTooltip } from '../models.gen';
+import { OptionsWithTooltip } from '@grafana/schema';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(

@@ -1,10 +1,7 @@
 import { createContext, useCallback, useContext } from 'react';
+import { Action } from '@reduxjs/toolkit';
 
-export interface Action<T extends string = string> {
-  type: T;
-}
-
-export type Reducer<S, A extends Action = Action> = (state: S, action: A) => S;
+export type Reducer<S, A extends Action> = (state: S, action: A) => S;
 
 export const combineReducers = <S, A extends Action = Action>(reducers: { [P in keyof S]: Reducer<S[P], A> }) => (
   state: S,

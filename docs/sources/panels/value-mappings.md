@@ -72,7 +72,7 @@ You can enter any Ascii character or emoji in this field.
 You can select a color to for Grafana to display the value mapping text in.
 
 - **Set color -** Click **Set color** to see a range of recommended colors. Click **Custom** to choose your own color.
-- **Text color -** The primary text color for the current theme, i.e. white in dark theme and black in light theme. 
+- **Text color -** The primary text color for the current theme, i.e. white in dark theme and black in light theme.
 - **Transparent -** Makes the color transparent so that the value mapping color shows whatever color is behind it, such as a panel background color.
 
 ![Set color](/static/img/docs/value-mappings/set-color-8-0.png)

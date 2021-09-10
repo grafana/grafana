@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { Alert, Button, LegacyForms } from '@grafana/ui';
@@ -160,4 +159,4 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export default hot(module)(connector(LdapPage));
+export default connector(LdapPage);

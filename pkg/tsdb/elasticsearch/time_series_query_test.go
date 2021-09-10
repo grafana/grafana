@@ -8,8 +8,8 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1150,7 +1150,7 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 			},
 		},
 	}
-	query := newTimeSeriesQuery(c, dataRequest.Queries, tsdb.NewCalculator(tsdb.CalculatorOptions{MinInterval: minInterval}))
+	query := newTimeSeriesQuery(c, dataRequest.Queries, intervalv2.NewCalculator(intervalv2.CalculatorOptions{MinInterval: minInterval}))
 	return query.execute()
 }
 

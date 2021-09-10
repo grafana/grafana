@@ -61,7 +61,7 @@ Clicking anywhere on the span row shows span details.
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
 
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png "Node graph")
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
 
 ##### Trace to logs
 
@@ -83,15 +83,15 @@ Data source needs to return data frame and set `frame.meta.preferredVisualisatio
 
 Required fields:
 
-| Field name   | Type                | Description                                                                                                                       |
-| ------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| traceID      | string              | Identifier for the entire trace. There should be only one trace in the data frame.                                                |
-| spanID       | string              | Identifier for the current span. SpanIDs should be unique per trace.                                                              |
+| Field name   | Type                | Description                                                                                                                         |
+| ------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| traceID      | string              | Identifier for the entire trace. There should be only one trace in the data frame.                                                  |
+| spanID       | string              | Identifier for the current span. SpanIDs should be unique per trace.                                                                |
 | parentSpanID | string              | SpanID of the parent span to create child parent relationship in the trace view. Can be `undefined` for root span without a parent. |
-| serviceName  | string              | Name of the service this span is part of.                                                                                         |
-| serviceTags  | TraceKeyValuePair[] | List of tags relevant for the service.                                                                                            |
-| startTime    | number              | Start time of the span in millisecond epoch time.                                                                                 |
-| duration     | number              | Duration of the span in milliseconds.                                                                                             |
+| serviceName  | string              | Name of the service this span is part of.                                                                                           |
+| serviceTags  | TraceKeyValuePair[] | List of tags relevant for the service.                                                                                              |
+| startTime    | number              | Start time of the span in millisecond epoch time.                                                                                   |
+| duration     | number              | Duration of the span in milliseconds.                                                                                               |
 
 Optional fields:
 

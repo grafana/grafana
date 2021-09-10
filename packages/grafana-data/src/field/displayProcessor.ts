@@ -6,7 +6,7 @@ import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { dateTime } from '../datetime';
+import { dateTime, dateTimeParse } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
@@ -45,10 +45,23 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
+  let showMs = false;
 
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+    if (field.values && field.values.length > 1) {
+      let start = field.values.get(0);
+      let end = field.values.get(field.values.length - 1);
+      if (typeof start === 'string') {
+        start = dateTimeParse(start).unix();
+        end = dateTimeParse(end).unix();
+      } else {
+        start /= 1e3;
+        end /= 1e3;
+      }
+      showMs = end - start < 60; //show ms when minute or less
+    }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
       unit = 'bool';
@@ -93,7 +106,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!isNaN(numeric)) {
       if (shouldFormat && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone);
+        const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;

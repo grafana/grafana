@@ -1,21 +1,20 @@
 import { chunk, flatten, isString } from 'lodash';
-
+import { from, lastValueFrom, Observable, of, throwError } from 'rxjs';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceInstanceSettings,
   ScopedVars,
   SelectableValue,
-  DataQueryResponse,
 } from '@grafana/data';
+import { DataSourceWithBackend, toDataQueryResponse } from '@grafana/runtime';
+
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType, EditorMode } from './types';
+import { CloudMonitoringOptions, CloudMonitoringQuery, EditorMode, Filter, MetricDescriptor, QueryType } from './types';
 import API from './api';
-import { DataSourceWithBackend, toDataQueryResponse } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
-import { catchError, map, mergeMap } from 'rxjs/operators';
-import { from, Observable, of, throwError } from 'rxjs';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
@@ -72,35 +71,36 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       },
     ];
 
-    return this.api
-      .post({
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      })
-      .pipe(
-        map(({ data }) => {
-          const dataQueryResponse = toDataQueryResponse({
-            data: data,
-          });
-          const df: any = [];
-          if (dataQueryResponse.data.length !== 0) {
-            for (let i = 0; i < dataQueryResponse.data.length; i++) {
-              for (let j = 0; j < dataQueryResponse.data[i].fields[0].values.length; j++) {
-                df.push({
-                  annotation: annotation,
-                  time: Date.parse(dataQueryResponse.data[i].fields[0].values.get(j)),
-                  title: dataQueryResponse.data[i].fields[1].values.get(j),
-                  tags: [],
-                  text: dataQueryResponse.data[i].fields[3].values.get(j),
-                });
+    return lastValueFrom(
+      this.api
+        .post({
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries,
+        })
+        .pipe(
+          map(({ data }) => {
+            const dataQueryResponse = toDataQueryResponse({
+              data: data,
+            });
+            const df: any = [];
+            if (dataQueryResponse.data.length !== 0) {
+              for (let i = 0; i < dataQueryResponse.data.length; i++) {
+                for (let j = 0; j < dataQueryResponse.data[i].fields[0].values.length; j++) {
+                  df.push({
+                    annotation: annotation,
+                    time: Date.parse(dataQueryResponse.data[i].fields[0].values.get(j)),
+                    title: dataQueryResponse.data[i].fields[1].values.get(j),
+                    tags: [],
+                    text: dataQueryResponse.data[i].fields[3].values.get(j),
+                  });
+                }
               }
             }
-          }
-          return df;
-        })
-      )
-      .toPromise();
+            return df;
+          })
+        )
+    );
   }
 
   applyTemplateVariables(
@@ -150,11 +150,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     const queries = options.targets;
 
     if (!queries.length) {
-      return of({ results: [] }).toPromise();
+      return lastValueFrom(of({ results: [] }));
     }
 
-    return from(this.ensureGCEDefaultProject())
-      .pipe(
+    return lastValueFrom(
+      from(this.ensureGCEDefaultProject()).pipe(
         mergeMap(() => {
           return this.api.post({
             from: options.range.from.valueOf().toString(),
@@ -170,7 +170,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           return result && result.meta ? result.meta.labels : {};
         })
       )
-      .toPromise();
+    );
   }
 
   async testDatasource() {
@@ -206,27 +206,28 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   async getGCEDefaultProject() {
-    return this.api
-      .post({
-        queries: [
-          {
-            refId: 'getGCEDefaultProject',
-            type: 'getGCEDefaultProject',
-            datasourceId: this.id,
-          },
-        ],
-      })
-      .pipe(
-        map(({ data }) => {
-          return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
-            ? data.results.getGCEDefaultProject.meta.defaultProject
-            : '';
-        }),
-        catchError((err) => {
-          return throwError(err.data.error);
+    return lastValueFrom(
+      this.api
+        .post({
+          queries: [
+            {
+              refId: 'getGCEDefaultProject',
+              type: 'getGCEDefaultProject',
+              datasourceId: this.id,
+            },
+          ],
         })
-      )
-      .toPromise();
+        .pipe(
+          map(({ data }) => {
+            return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
+              ? data.results.getGCEDefaultProject.meta.defaultProject
+              : '';
+          }),
+          catchError((err) => {
+            return throwError(err.data.error);
+          })
+        )
+    );
   }
 
   getDefaultProject(): string {

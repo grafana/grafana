@@ -57,17 +57,19 @@ export const bundlePlugin = async ({ watch, production, preserveConsole }: Plugi
     } else {
       compiler.run((err: Error, stats: webpack.Stats) => {
         if (err) {
-          reject(err.message);
-
+          reject(err);
           return;
         }
+
         if (stats.hasErrors()) {
           stats.compilation.errors.forEach((e) => {
             console.log(e.message);
           });
 
           reject('Build failed');
+          return;
         }
+
         console.log('\n', stats.toString({ colors: true }), '\n');
         resolve();
       });

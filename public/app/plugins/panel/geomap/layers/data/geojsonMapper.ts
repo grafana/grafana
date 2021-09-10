@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -16,7 +16,7 @@ export interface GeoJSONMapperConfig {
 }
 
 const defaultOptions: GeoJSONMapperConfig = {
-  src: 'https://openlayers.org/en/latest/examples/data/geojson/countries.geojson',
+  src: 'public/maps/countries.geojson',
 };
 
 export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
@@ -24,12 +24,13 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   name: 'Map values to GeoJSON file',
   description: 'color features based on query results',
   isBaseMap: false,
+  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -44,14 +45,30 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
-        console.log( "todo... find values matching the ID and update");
+        console.log('todo... find values matching the ID and update');
 
         // Update each feature
-        source.getFeatures().forEach( f => {
-          console.log( "Find: ", f.getId(), f.getProperties() );
+        source.getFeatures().forEach((f) => {
+          console.log('Find: ', f.getId(), f.getProperties());
         });
       },
     };
+  },
+
+  // Geojson source url
+  registerOptionsUI: (builder) => {
+    builder.addSelect({
+      path: 'config.src',
+      name: 'GeoJSON URL',
+      settings: {
+        options: [
+          { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
+          { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
+        ],
+        allowCustomValue: true,
+      },
+      defaultValue: defaultOptions.src,
+    });
   },
 
   // fill in the default values

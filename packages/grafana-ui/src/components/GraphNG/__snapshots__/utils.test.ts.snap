@@ -69,6 +69,7 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
     },
@@ -117,7 +118,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "dash": Array [
         1,
@@ -137,6 +140,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -158,6 +162,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -179,6 +184,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -200,6 +206,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
     Object {
@@ -221,6 +228,7 @@ Object {
       "show": true,
       "spanGaps": false,
       "stroke": "#ff0000",
+      "value": [Function],
       "width": 2,
     },
   ],

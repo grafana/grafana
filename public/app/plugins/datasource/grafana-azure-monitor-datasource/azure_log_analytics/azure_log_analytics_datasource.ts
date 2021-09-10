@@ -20,7 +20,7 @@ import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import { isGUIDish } from '../components/ResourcePicker/utils';
-import { routeNames } from '../utils/common';
+import { interpolateVariable, routeNames } from '../utils/common';
 
 interface AdhocQuery {
   datasourceId: number;
@@ -34,12 +34,12 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 > {
   resourcePath: string;
   azurePortalUrl: string;
-  applicationId: string;
+  declare applicationId: string;
 
   defaultSubscriptionId?: string;
 
   azureMonitorPath: string;
-  defaultOrFirstWorkspace: string;
+  firstWorkspace?: string;
   cache: Map<string, any>;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
@@ -52,7 +52,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
-    this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
   isConfigured(): boolean {
@@ -76,7 +75,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return (
       map(response.value, (val: any) => {
-        return { text: val.name, value: val.id };
+        return {
+          text: val.name,
+          value: val.id,
+        };
       }) || []
     );
   }
@@ -112,11 +114,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const resource = templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-    if (!workspace && !resource && this.defaultOrFirstWorkspace) {
-      workspace = this.defaultOrFirstWorkspace;
+    if (!workspace && !resource && this.firstWorkspace) {
+      workspace = this.firstWorkspace;
     }
 
-    const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
+    const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
     return {
       refId: target.refId,
@@ -218,7 +220,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    * And some of the azure internal data sources return null in this function, which the
    * external interface does not support
    */
-  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
+  metricFindQueryInternal(query: string, optionalOptions?: unknown): Promise<MetricFindValue[]> {
     // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
@@ -238,12 +240,12 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     // Execute the query as KQL to the default or first workspace
-    return this.getDefaultOrFirstWorkspace().then((resourceURI) => {
+    return this.getFirstWorkspace().then((resourceURI) => {
       if (!resourceURI) {
         return [];
       }
 
-      const queries = this.buildQuery(query, null, resourceURI);
+      const queries = this.buildQuery(query, optionalOptions, resourceURI);
       const promises = this.doQueries(queries);
 
       return Promise.all(promises)
@@ -270,7 +272,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
     const querystringBuilder = new LogAnalyticsQuerystringBuilder(
-      getTemplateSrv().replace(query, {}, this.interpolateVariable),
+      getTemplateSrv().replace(query, {}, interpolateVariable),
       options,
       'TimeGenerated'
     );
@@ -291,29 +293,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return queries;
   }
 
-  interpolateVariable(value: string, variable: { multi: any; includeAll: any }) {
-    if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
-      } else {
-        return value;
-      }
-    }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    const quotedValues = map(value, (val) => {
-      if (typeof value === 'number') {
-        return value;
-      }
-
-      return "'" + val + "'";
-    });
-    return quotedValues.join(',');
-  }
-
   async getDefaultOrFirstSubscription(): Promise<string | undefined> {
     if (this.defaultSubscriptionId) {
       return this.defaultSubscriptionId;
@@ -322,9 +301,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return subscriptions[0]?.value;
   }
 
-  async getDefaultOrFirstWorkspace(): Promise<string | undefined> {
-    if (this.defaultOrFirstWorkspace) {
-      return this.defaultOrFirstWorkspace;
+  async getFirstWorkspace(): Promise<string | undefined> {
+    if (this.firstWorkspace) {
+      return this.firstWorkspace;
     }
 
     const subscriptionId = await this.getDefaultOrFirstSubscription();
@@ -336,7 +315,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const workspace = workspaces[0]?.value;
 
     if (workspace) {
-      this.defaultOrFirstWorkspace = workspace;
+      this.firstWorkspace = workspace;
     }
 
     return workspace;
@@ -384,7 +363,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     let resourceOrWorkspace: string;
     try {
-      const result = await this.getDefaultOrFirstWorkspace();
+      const result = await this.getFirstWorkspace();
       if (!result) {
         return {
           status: 'error',
@@ -403,7 +382,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     try {
       const path = isGUIDish(resourceOrWorkspace)
         ? `${this.resourcePath}/v1/workspaces/${resourceOrWorkspace}/metadata`
-        : `${this.resourcePath}/v1/${resourceOrWorkspace}/metadata`;
+        : `${this.resourcePath}/v1${resourceOrWorkspace}/metadata`;
 
       return await this.getResource(path).then<DatasourceValidationResult>((response: any) => {
         return {

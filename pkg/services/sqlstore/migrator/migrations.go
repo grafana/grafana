@@ -21,6 +21,10 @@ func (m *MigrationBase) GetCondition() MigrationCondition {
 	return m.Condition
 }
 
+func (m *MigrationBase) SkipMigrationLog() bool {
+	return false
+}
+
 type RawSQLMigration struct {
 	MigrationBase
 

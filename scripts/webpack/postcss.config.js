@@ -1,9 +1,7 @@
-module.exports = () => {
-  return {
-    plugins: {
-      autoprefixer: {},
-      'postcss-reporter': {},
-      'postcss-browser-reporter': {},
-    },
-  };
+module.exports = {
+  plugins: {
+    autoprefixer: {},
+    'postcss-reporter': {},
+    'postcss-browser-reporter': {},
+  },
 };

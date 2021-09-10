@@ -1,6 +1,6 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useState } from 'react';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { isGrafanaRulerRule } from '../../utils/rules';
@@ -12,6 +12,7 @@ import { useHasRuler } from '../../hooks/useHasRuler';
 import kbn from 'app/core/utils/kbn';
 import { useFolder } from '../../hooks/useFolder';
 import { RuleStats } from './RuleStats';
+import { EditCloudGroupModal } from './EditCloudGroupModal';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -23,16 +24,27 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   const styles = useStyles2(getStyles);
 
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const hasRuler = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
+  // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
+  const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+
   const actionIcons: React.ReactNode[] = [];
 
   // for grafana, link to folder views
-  if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
+  if (isDeleting) {
+    actionIcons.push(
+      <HorizontalGroup key="is-deleting">
+        <Spinner />
+        deleting
+      </HorizontalGroup>
+    );
+  } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
       const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
       if (folder?.canSave) {
@@ -51,9 +63,17 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           />
         );
       }
-    } else if (hasRuler(rulesSource)) {
-      actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />); // @TODO
     }
+  } else if (hasRuler(rulesSource)) {
+    actionIcons.push(
+      <ActionIcon
+        data-testid="edit-group"
+        key="edit"
+        icon="pen"
+        tooltip="edit"
+        onClick={() => setIsEditingGroup(true)}
+      />
+    );
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
@@ -87,6 +107,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
       </div>
       {!isCollapsed && (
         <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+      )}
+      {isEditingGroup && (
+        <EditCloudGroupModal group={group} namespace={namespace} onClose={() => setIsEditingGroup(false)} />
       )}
     </div>
   );

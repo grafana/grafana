@@ -1,29 +1,59 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
-import { Icon, IconName, Link, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
-  child: any;
+  isDivider?: boolean;
+  icon?: IconName;
+  onClick?: () => void;
+  target?: HTMLAnchorElement['target'];
+  text: string;
+  url?: string;
 }
 
-const DropDownChild: FC<Props> = (props) => {
-  const { child } = props;
-  const listItemClassName = child.divider ? 'divider' : '';
-  const theme = useTheme();
-  const iconClassName = css`
-    margin-right: ${theme.spacing.sm};
-  `;
+const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: Props) => {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
   const linkContent = (
     <>
-      {child.icon && <Icon name={child.icon as IconName} className={iconClassName} />}
-      {child.text}
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
+      {text}
     </>
   );
 
-  const anchor = child.url ? <Link href={child.url}>{linkContent}</Link> : <a>{linkContent}</a>;
+  let element = (
+    <button className={styles.element} onClick={onClick}>
+      {linkContent}
+    </button>
+  );
+  if (url) {
+    element =
+      !target && url.startsWith('/') ? (
+        <Link className={styles.element} onClick={onClick} href={url}>
+          {linkContent}
+        </Link>
+      ) : (
+        <a className={styles.element} href={url} target={target} rel="noopener" onClick={onClick}>
+          {linkContent}
+        </a>
+      );
+  }
 
-  return <li className={listItemClassName}>{anchor}</li>;
+  return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{element}</li>;
 };
 
 export default DropDownChild;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  element: css`
+    background-color: transparent;
+    border: none;
+    display: flex;
+    width: 100%;
+  `,
+  icon: css`
+    margin-right: ${theme.spacing(1)};
+  `,
+});

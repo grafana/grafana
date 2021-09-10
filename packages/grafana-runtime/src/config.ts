@@ -8,6 +8,7 @@ import {
   GrafanaTheme,
   GrafanaTheme2,
   LicenseInfo,
+  MapLayerOptions,
   PanelPluginMeta,
   systemDateFormats,
   SystemDateFormatSettings,
@@ -62,6 +63,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
     ngalert: false,
     accesscontrol: false,
     trimDefaults: false,
+    tempoServiceGraph: false,
+    tempoSearch: false,
+    prometheusMonaco: false,
+    newNavigation: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -87,6 +92,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   caching = {
     enabled: false,
   };
+  geomapDefaultBaseLayerConfig?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

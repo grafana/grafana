@@ -32,6 +32,10 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing testDatasource', () => {
+    beforeEach(() => {
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+    });
+
     describe('and an error is returned', () => {
       const error = {
         data: {
@@ -45,7 +49,6 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockRejectedValue(error);
       });
 
@@ -57,6 +60,13 @@ describe('AzureLogAnalyticsDatasource', () => {
           );
         });
       });
+    });
+
+    it('should not include double slashes when getting the resource', async () => {
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = '/foo/bar';
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockResolvedValue(true);
+      await ctx.ds.azureLogAnalyticsDatasource.testDatasource();
+      expect(ctx.ds.azureLogAnalyticsDatasource.getResource).toHaveBeenCalledWith('loganalytics/v1/foo/bar/metadata');
     });
   });
 
@@ -225,6 +235,30 @@ describe('AzureLogAnalyticsDatasource', () => {
         expect(results[1].value).toBe('Policy');
       });
     });
+
+    describe('and contain options', () => {
+      const queryResponse = {
+        tables: [],
+      };
+
+      it('should substitute macros', async () => {
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const params = new URLSearchParams(path.split('?')[1]);
+          const query = params.get('query');
+          expect(query).toEqual(
+            'Perf| where TimeGenerated >= datetime(2021-01-01T05:01:00.000Z) and TimeGenerated <= datetime(2021-01-01T05:02:00.000Z)'
+          );
+          return Promise.resolve(queryResponse);
+        });
+        ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'foo';
+        await ctx.ds.metricFindQuery('Perf| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()', {
+          range: {
+            from: new Date('2021-01-01 00:01:00'),
+            to: new Date('2021-01-01 00:02:00'),
+          },
+        });
+      });
+    });
   });
 
   describe('When performing annotationQuery', () => {
@@ -305,6 +339,41 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(annotationResults[1].time).toBe(1527971280000);
       expect(annotationResults[1].text).toBe('Computer2');
       expect(annotationResults[1].tags[0]).toBe('tag2');
+    });
+  });
+
+  describe('When performing getWorkspaces', () => {
+    beforeEach(() => {
+      ctx.ds.azureLogAnalyticsDatasource.getWorkspaceList = jest
+        .fn()
+        .mockResolvedValue({ value: [{ name: 'foobar', id: 'foo', properties: { customerId: 'bar' } }] });
+    });
+
+    it('should return the workspace id', async () => {
+      const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub');
+      expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
+    });
+  });
+
+  describe('When performing getFirstWorkspace', () => {
+    beforeEach(() => {
+      ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription = jest.fn().mockResolvedValue('foo');
+      ctx.ds.azureLogAnalyticsDatasource.getWorkspaces = jest
+        .fn()
+        .mockResolvedValue([{ text: 'foobar', value: 'foo' }]);
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = undefined;
+    });
+
+    it('should return the stored workspace', async () => {
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'bar';
+      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      expect(workspace).toEqual('bar');
+      expect(ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription).not.toHaveBeenCalled();
+    });
+
+    it('should return the first workspace', async () => {
+      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      expect(workspace).toEqual('foo');
     });
   });
 });

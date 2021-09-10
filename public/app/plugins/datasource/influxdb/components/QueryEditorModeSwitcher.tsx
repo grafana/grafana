@@ -29,7 +29,7 @@ export const QueryEditorModeSwitcher = ({ isRaw, onChange }: Props): JSX.Element
         <ConfirmModal
           isOpen={isModalOpen}
           title="Switch to visual editor mode"
-          body="Are you sure to switch to visual editor mode? You will loose the changes done in raw query mode."
+          body="Are you sure to switch to visual editor mode? You will lose the changes done in raw query mode."
           confirmText="Yes, switch to editor mode"
           dismissText="No, stay in raw query mode"
           onConfirm={() => {

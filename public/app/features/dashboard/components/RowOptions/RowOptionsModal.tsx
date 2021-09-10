@@ -5,8 +5,8 @@ import { css } from '@emotion/css';
 import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 
 export interface RowOptionsModalProps {
-  title: string | null;
-  repeat: string | null;
+  title: string;
+  repeat?: string | null;
   onDismiss: () => void;
   onUpdate: OnRowOptionsUpdate;
 }

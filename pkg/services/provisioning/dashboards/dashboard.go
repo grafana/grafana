@@ -27,9 +27,10 @@ type DashboardProvisionerFactory func(string, dashboards.Store) (DashboardProvis
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
-	log         log.Logger
-	fileReaders []*FileReader
-	configs     []*config
+	log                log.Logger
+	fileReaders        []*FileReader
+	configs            []*config
+	duplicateValidator duplicateValidator
 }
 
 // New returns a new DashboardProvisioner
@@ -47,9 +48,10 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 	}
 
 	d := &Provisioner{
-		log:         logger,
-		fileReaders: fileReaders,
-		configs:     configs,
+		log:                logger,
+		fileReaders:        fileReaders,
+		configs:            configs,
+		duplicateValidator: newDuplicateValidator(logger, fileReaders),
 	}
 
 	return d, nil
@@ -70,6 +72,7 @@ func (provider *Provisioner) Provision() error {
 		}
 	}
 
+	provider.duplicateValidator.validate()
 	return nil
 }
 
@@ -92,6 +95,8 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 	for _, reader := range provider.fileReaders {
 		go reader.pollChanges(ctx)
 	}
+
+	go provider.duplicateValidator.Run(ctx)
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate

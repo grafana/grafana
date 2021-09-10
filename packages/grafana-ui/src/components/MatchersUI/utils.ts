@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { getFieldTypeIcon } from '../../types';
 
 /**
  * @internal
@@ -66,18 +67,24 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
  */
 export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
-  currentName?: string
+  currentName?: string,
+  firstItem?: SelectableValue<string>
 ): Array<SelectableValue<string>> {
   return useMemo(() => {
     let found = false;
     const options: Array<SelectableValue<string>> = [];
+    if (firstItem) {
+      options.push(firstItem);
+    }
     for (const name of displayNames.display) {
       if (!found && name === currentName) {
         found = true;
       }
+      const field = displayNames.fields.get(name);
       options.push({
         value: name,
         label: name,
+        icon: field ? getFieldTypeIcon(field) : undefined,
       });
     }
     for (const name of displayNames.raw) {
@@ -99,5 +106,5 @@ export function useSelectOptions(
       });
     }
     return options;
-  }, [displayNames, currentName]);
+  }, [displayNames, currentName, firstItem]);
 }

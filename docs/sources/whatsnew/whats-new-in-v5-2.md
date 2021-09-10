@@ -55,12 +55,12 @@ We hope this encourages users to follow Grafana's best practices and change the 
 
 ## Prometheus
 
-The Prometheus data source now aligns the start/end of the query sent to Prometheus with the step, which ensures PromQL expressions with *rate*
+The Prometheus data source now aligns the start/end of the query sent to Prometheus with the step, which ensures PromQL expressions with _rate_
 functions get consistent results, and thus avoids graphs jumping around on reload.
 
 ## InfluxDB
 
-The InfluxDB data source now includes support for the *mode* function which returns the most frequent value in a list of field values.
+The InfluxDB data source now includes support for the _mode_ function which returns the most frequent value in a list of field values.
 
 ## Alerting
 
@@ -88,7 +88,7 @@ Grafana v5.0 introduced support for dashboard folders and permissions. The impor
 and should now make it more clear if a possible import will overwrite an existing dashboard, or not.
 
 This release also adds some improvements for those users only having editor or admin permissions in certain folders. The links to
-*Create Dashboard* and *Import Dashboard* are now available in the side navigation, in dashboard search and on the manage dashboards/folder page for a
+_Create Dashboard_ and _Import Dashboard_ are now available in the side navigation, in dashboard search and on the manage dashboards/folder page for a
 user that has editor role in an organization or the edit permission in at least one folder.
 
 <div class="clearfix"></div>

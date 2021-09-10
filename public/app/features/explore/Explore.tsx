@@ -1,20 +1,12 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  ErrorBoundaryAlert,
-  stylesFactory,
-  withTheme,
-  CustomScrollbar,
-  Collapse,
-  TooltipDisplayMode,
-} from '@grafana/ui';
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme, LoadingState, RawTimeRange, DataFrame } from '@grafana/data';
+import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
@@ -32,12 +24,12 @@ import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { ExploreGraph } from './ExploreGraph';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css`
       label: exploreMain;
@@ -54,14 +46,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       // Need to override normal css class and don't want to count on ordering of the classes in html.
       height: auto !important;
       flex: unset !important;
-      padding: ${theme.panelPadding}px;
+      display: unset !important;
+      padding: ${theme.spacing(1)};
     `,
   };
-});
+};
 
-export interface ExploreProps {
+export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
 }
 
 enum ExploreDrawer {
@@ -194,18 +187,18 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <Collapse label="Graph" loading={loading} isOpen>
-        <ExploreGraphNGPanel
+        <ExploreGraph
           data={graphResult!}
           height={400}
-          width={width - theme.panelPadding * 2}
-          tooltipDisplayMode={TooltipDisplayMode.Single}
+          width={width - spacing}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
-          onUpdateTimeRange={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
           splitOpenFn={splitOpen}
+          loadingState={queryResponse.state}
         />
       </Collapse>
     );
@@ -224,13 +217,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme } = this.props;
-
+    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
         exploreId={exploreId}
+        loadingState={queryResponse.state}
         syncedTimes={syncedTimes}
-        width={width - theme.panelPadding * 2}
+        width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
@@ -412,4 +406,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(hot(module), connector, withTheme)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;

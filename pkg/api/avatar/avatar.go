@@ -118,7 +118,7 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
 		log.Warnf("avatar encode error: %v", err)
-		ctx.WriteHeader(500)
+		ctx.Resp.WriteHeader(500)
 	}
 }
 

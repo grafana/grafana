@@ -50,12 +50,12 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     };
     assertEditor(
       query,
-      'from[default][select measurement]where[+]' +
-        'select[field]([value])[mean]()[+]' +
-        'group by[time]([$__interval])[fill]([null])[+]' +
-        'timezone[(optional)]order by time[ASC]' +
-        'limit[(optional)]slimit[(optional)]' +
-        'format as[time_series]alias[Naming pattern]'
+      'FROM[default][select measurement]WHERE[+]' +
+        'SELECT[field]([value])[mean]()[+]' +
+        'GROUP BY[time]([$__interval])[fill]([null])[+]' +
+        'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
+        'LIMIT[(optional)]SLIMIT[(optional)]' +
+        'FORMAT AS[time_series]ALIAS[Naming pattern]'
     );
   });
   it('should have the alias-field hidden when format-as-table', () => {
@@ -66,12 +66,12 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     };
     assertEditor(
       query,
-      'from[default][select measurement]where[+]' +
-        'select[field]([value])[mean]()[+]' +
-        'group by[time]([$__interval])[fill]([null])[+]' +
-        'timezone[(optional)]order by time[ASC]' +
-        'limit[(optional)]slimit[(optional)]' +
-        'format as[table]'
+      'FROM[default][select measurement]WHERE[+]' +
+        'SELECT[field]([value])[mean]()[+]' +
+        'GROUP BY[time]([$__interval])[fill]([null])[+]' +
+        'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
+        'LIMIT[(optional)]SLIMIT[(optional)]' +
+        'FORMAT AS[table]'
     );
   });
   it('should handle complex query', () => {
@@ -145,13 +145,13 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     };
     assertEditor(
       query,
-      'from[default][cpu]where[cpu][=][cpu1][AND][cpu][<][cpu3][+]' +
-        'select[field]([usage_idle])[mean]()[+]' +
+      'FROM[default][cpu]WHERE[cpu][=][cpu1][AND][cpu][<][cpu3][+]' +
+        'SELECT[field]([usage_idle])[mean]()[+]' +
         '[field]([usage_guest])[median]()[holt_winters_with_fit]([10],[2])[+]' +
-        'group by[time]([$__interval])[tag]([cpu])[tag]([host])[fill]([null])[+]' +
-        'timezone[UTC]order by time[DESC]' +
-        'limit[4]slimit[5]' +
-        'format as[logs]alias[all i as]'
+        'GROUP BY[time]([$__interval])[tag]([cpu])[tag]([host])[fill]([null])[+]' +
+        'TIMEZONE[UTC]ORDER BY TIME[DESC]' +
+        'LIMIT[4]SLIMIT[5]' +
+        'FORMAT AS[logs]ALIAS[all i as]'
     );
   });
 });

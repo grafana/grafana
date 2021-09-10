@@ -67,10 +67,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   timeRange?: { start: number; end: number };
   metrics: string[];
   metricsMetadata?: PromMetricsMetadata;
-  startTask: Promise<any>;
+  declare startTask: Promise<any>;
   datasource: PrometheusDatasource;
-  labelKeys: string[];
-  labelFetchTs: number;
+  labelKeys: string[] = [];
+  declare labelFetchTs: number;
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -494,7 +494,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
-    const params = { ...range, match };
+    const params = { ...range, 'match[]': match };
     return await this.request(url, {}, params);
   };
 

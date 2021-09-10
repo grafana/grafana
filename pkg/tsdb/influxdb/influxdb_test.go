@@ -22,10 +22,10 @@ func TestExecutor_createRequest(t *testing.T) {
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
+		glog:           log.New("test"),
 	}
 
 	t.Run("createRequest with GET httpMode", func(t *testing.T) {
-		glog = log.New("test")
 		req, err := s.createRequest(context.Background(), datasource, query)
 
 		require.NoError(t, err)

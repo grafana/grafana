@@ -68,6 +68,7 @@ export class StatsPicker extends PureComponent<Props> {
     const select = fieldReducers.selectOptions(stats);
     return (
       <Select
+        menuShouldPortal
         value={select.current}
         className={className}
         isClearable={!defaultStat}

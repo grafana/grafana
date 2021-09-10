@@ -33,6 +33,7 @@ export enum PluginSignatureType {
   commercial = 'commercial',
   community = 'community',
   private = 'private',
+  core = 'core',
 }
 
 /** Describes error code returned from Grafana plugins API call */
@@ -86,6 +87,7 @@ interface PluginDependencyInfo {
 }
 
 export interface PluginDependencies {
+  grafanaDependency?: string;
   grafanaVersion: string;
   plugins: PluginDependencyInfo[];
 }

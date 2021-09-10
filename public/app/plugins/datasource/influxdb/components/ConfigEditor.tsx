@@ -215,6 +215,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               HTTP Method
             </InlineFormLabel>
             <Select
+              menuShouldPortal
               className="width-10"
               value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
               options={httpModes}
@@ -257,6 +258,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <div className="gf-form">
               <Select
+                menuShouldPortal
                 className="width-30"
                 value={options.jsonData.version === InfluxVersion.Flux ? versions[1] : versions[0]}
                 options={versions}

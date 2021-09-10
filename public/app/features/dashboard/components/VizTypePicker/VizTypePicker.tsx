@@ -8,7 +8,7 @@ import { css } from '@emotion/css';
 
 export interface Props {
   current: PanelPluginMeta;
-  onTypeChange: (newType: PanelPluginMeta, withModKey?: boolean) => void;
+  onTypeChange: (newType: PanelPluginMeta, withModKey: boolean) => void;
   searchQuery: string;
   onClose: () => void;
 }
@@ -80,7 +80,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
-        onClick={(e) => onTypeChange(plugin, e.metaKey || e.ctrlKey || e.altKey)}
+        onClick={(e) => onTypeChange(plugin, Boolean(e.metaKey || e.ctrlKey || e.altKey))}
       />
     );
   };

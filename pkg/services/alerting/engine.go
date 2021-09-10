@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
@@ -24,11 +23,11 @@ import (
 // schedules alert evaluations and makes sure notifications
 // are sent.
 type AlertEngine struct {
-	RenderService    rendering.Service             `inject:""`
-	Bus              bus.Bus                       `inject:""`
-	RequestValidator models.PluginRequestValidator `inject:""`
-	DataService      plugins.DataRequestHandler    `inject:""`
-	Cfg              *setting.Cfg                  `inject:""`
+	RenderService    rendering.Service
+	Bus              bus.Bus
+	RequestValidator models.PluginRequestValidator
+	DataService      plugins.DataRequestHandler
+	Cfg              *setting.Cfg
 
 	execQueue     chan *Job
 	ticker        *Ticker
@@ -39,17 +38,21 @@ type AlertEngine struct {
 	resultHandler resultHandler
 }
 
-func init() {
-	registry.RegisterService(&AlertEngine{})
-}
-
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (e *AlertEngine) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.IsNgAlertEnabled()
 }
 
-// Init initializes the AlertingService.
-func (e *AlertEngine) Init() error {
+// ProvideAlertEngine returns a new AlertEngine.
+func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
+	dataService plugins.DataRequestHandler, cfg *setting.Cfg) *AlertEngine {
+	e := &AlertEngine{
+		Cfg:              cfg,
+		RenderService:    renderer,
+		Bus:              bus,
+		RequestValidator: requestValidator,
+		DataService:      dataService,
+	}
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -57,7 +60,8 @@ func (e *AlertEngine) Init() error {
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService)
-	return nil
+
+	return e
 }
 
 // Run starts the alerting service background process.

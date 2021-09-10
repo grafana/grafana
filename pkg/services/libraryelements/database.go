@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -41,9 +42,7 @@ func syncFieldsWithModel(libraryElement *LibraryElement) error {
 		return err
 	}
 
-	if models.LibraryElementKind(libraryElement.Kind) == models.PanelElement {
-		model["title"] = libraryElement.Name
-	} else if models.LibraryElementKind(libraryElement.Kind) == models.VariableElement {
+	if models.LibraryElementKind(libraryElement.Kind) == models.VariableElement {
 		model["name"] = libraryElement.Name
 	}
 	if model["type"] != nil {
@@ -94,10 +93,20 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
+	createUID := cmd.UID
+	if len(createUID) == 0 {
+		createUID = util.GenerateShortUID()
+	} else {
+		if !util.IsValidShortUID(createUID) {
+			return LibraryElementDTO{}, errLibraryElementInvalidUID
+		} else if util.IsShortUIDTooLong(createUID) {
+			return LibraryElementDTO{}, errLibraryElementUIDTooLong
+		}
+	}
 	element := LibraryElement{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
-		UID:      util.GenerateShortUID(),
+		UID:      createUID,
 		Name:     cmd.Name,
 		Model:    cmd.Model,
 		Version:  1,
@@ -436,12 +445,27 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 		if elementInDB.Version != cmd.Version {
 			return errLibraryElementVersionMismatch
 		}
+		updateUID := cmd.UID
+		if len(updateUID) == 0 {
+			updateUID = uid
+		} else if updateUID != uid {
+			if !util.IsValidShortUID(updateUID) {
+				return errLibraryElementInvalidUID
+			} else if util.IsShortUIDTooLong(updateUID) {
+				return errLibraryElementUIDTooLong
+			}
+
+			_, err := getLibraryElement(l.SQLStore.Dialect, session, updateUID, c.SignedInUser.OrgId)
+			if !errors.Is(err, errLibraryElementNotFound) {
+				return errLibraryElementAlreadyExists
+			}
+		}
 
 		var libraryElement = LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       c.SignedInUser.OrgId,
 			FolderID:    cmd.FolderID,
-			UID:         uid,
+			UID:         updateUID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
 			Type:        elementInDB.Type,

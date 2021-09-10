@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,7 @@ import (
 func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: macaron.Request{Request: httpReq}}}
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
@@ -86,10 +87,8 @@ type testState struct {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
-	gLive := live.NewGrafanaLive()
-	gLive.RouteRegister = routing.NewRouteRegister()
-	gLive.Cfg = &setting.Cfg{AppURL: "http://localhost:3000/"}
-	err := gLive.Init()
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
 	require.NoError(t, err)
 	return gLive
 }

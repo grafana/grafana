@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { NavigationKey } from '../types';
 
-export interface Props {
+export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange' | 'value'> {
   onChange: (value: string) => void;
   onNavigate: (key: NavigationKey, clearOthers: boolean) => void;
   value: string | null;
@@ -21,8 +21,10 @@ export class VariableInput extends PureComponent<Props> {
   };
 
   render() {
+    const { value, id, onNavigate, ...restProps } = this.props;
     return (
       <input
+        {...restProps}
         ref={(instance) => {
           if (instance) {
             instance.focus();
@@ -31,9 +33,10 @@ export class VariableInput extends PureComponent<Props> {
         }}
         type="text"
         className="gf-form-input"
-        value={this.props.value ?? ''}
+        value={value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
+        placeholder="Enter variable value"
       />
     );
   }

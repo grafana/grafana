@@ -92,11 +92,11 @@ const AmRoutes: FC = () => {
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {resultError && !resultLoading && (
-        <Alert severity="error" title="Error loading alert manager config">
+        <Alert severity="error" title="Error loading Alertmanager config">
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
-      {resultLoading && <LoadingPlaceholder text="Loading alert manager config..." />}
+      {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
       {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute

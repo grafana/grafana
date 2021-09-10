@@ -52,7 +52,7 @@ After you have enabled permissions for a data source you can assign query permis
 
 If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
 
-Note that *all* existing permissions created for the data source will be deleted.
+Note that _all_ existing permissions created for the data source will be deleted.
 
 **Disable permissions for a data source:**
 

@@ -1,41 +1,19 @@
 package prometheus
 
 import (
-	"context"
-	"net/http"
 	"testing"
 	"time"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
-func TestPrometheus(t *testing.T) {
-	json, _ := simplejson.NewJson([]byte(`
-		{ "customQueryParameters": "custom=par/am&second=f oo"}
-	`))
-	dsInfo := &models.DataSource{
-		JsonData: json,
-	}
-	var capturedRequest *http.Request
-	mw := sdkhttpclient.MiddlewareFunc(func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			capturedRequest = req
-			return &http.Response{StatusCode: http.StatusOK}, nil
-		})
-	})
-	provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
-		Middlewares: []sdkhttpclient.Middleware{mw},
-	})
-	plug, err := New(provider)(dsInfo)
-	require.NoError(t, err)
-	executor := plug.(*PrometheusExecutor)
+var now = time.Now()
 
+func TestPrometheus_formatLeged(t *testing.T) {
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
 			p.LabelName("app"):    p.LabelValue("backend"),
@@ -62,90 +40,259 @@ func TestPrometheus(t *testing.T) {
 
 		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
 	})
+}
+
+func TestPrometheus_parseQuery(t *testing.T) {
+	service := Service{
+		intervalCalculator: intervalv2.NewCalculator(),
+	}
 
 	t.Run("parsing query model with step", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
 		query := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"refId": "A"
-		}`)
-		timerange := plugins.NewDataTimeRange("12h", "now")
-		query.TimeRange = &timerange
-		models, err := executor.parseQuery(dsInfo, query)
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
 
 	t.Run("parsing query model without step parameter", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(1 * time.Hour),
+		}
+
 		query := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
 			"refId": "A"
-		}`)
-		models, err := executor.parseQuery(dsInfo, query)
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*2, models[0].Step)
+		}`, timeRange)
 
-		timeRange := plugins.NewDataTimeRange("1h", "now")
-		query.TimeRange = &timeRange
-		models, err = executor.parseQuery(dsInfo, query)
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 	})
 
 	t.Run("parsing query model with high intervalFactor", func(t *testing.T) {
-		models, err := executor.parseQuery(dsInfo, queryContext(`{
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 10,
 			"refId": "A"
-		}`))
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, models[0].Step)
 	})
 
 	t.Run("parsing query model with low intervalFactor", func(t *testing.T) {
-		models, err := executor.parseQuery(dsInfo, queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"intervalFactor": 1,
-			"refId": "A"
-		}`))
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*2, models[0].Step)
-	})
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
 
-	t.Run("runs query with custom params", func(t *testing.T) {
 		query := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
 			"refId": "A"
-		}`)
-		_, _ = executor.DataQuery(context.Background(), dsInfo, query)
-		require.NotNil(t, capturedRequest)
-		require.Equal(t, "custom=par%2Fam&second=f+oo", capturedRequest.URL.RawQuery)
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, time.Minute*2, models[0].Step)
+	})
+
+	t.Run("parsing query model specified scrape-interval in the data source", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{
+			TimeInterval: "240s",
+		}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, time.Minute*4, models[0].Step)
+	})
+
+	t.Run("parsing query model with $__interval variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__interval_ms variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__interval_ms]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__interval_ms and $__interval variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__interval_ms]}) + rate(ALERTS{job=\"test\" [$__interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__range variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__range]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__range_s variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__range_s]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [172800]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__range_ms variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__range_ms]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [172800000]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__rate_interval variable", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(5 * time.Minute),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__rate_interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", models[0].Expr)
 	})
 }
 
-func queryContext(json string) plugins.DataQuery {
-	jsonModel, _ := simplejson.NewJson([]byte(json))
-	queryModels := []plugins.DataSubQuery{
-		{Model: jsonModel},
-	}
-
-	timeRange := plugins.NewDataTimeRange("48h", "now")
-	return plugins.DataQuery{
-		TimeRange: &timeRange,
-		Queries:   queryModels,
+func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {
+	return &backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				JSON:      []byte(json),
+				TimeRange: timeRange,
+				RefID:     "A",
+			},
+		},
 	}
 }
 
 func TestParseResponse(t *testing.T) {
 	t.Run("value is not of type matrix", func(t *testing.T) {
 		//nolint: staticcheck // plugins.DataQueryResult deprecated
-		queryRes := plugins.DataQueryResult{}
+		queryRes := data.Frames{}
 		value := p.Vector{}
 		res, err := parseResponse(value, nil)
 
@@ -173,19 +320,18 @@ func TestParseResponse(t *testing.T) {
 		res, err := parseResponse(value, query)
 		require.NoError(t, err)
 
-		decoded, _ := res.Dataframes.Decoded()
-		require.Len(t, decoded, 1)
-		require.Equal(t, decoded[0].Name, "legend Application")
-		require.Len(t, decoded[0].Fields, 2)
-		require.Len(t, decoded[0].Fields[0].Labels, 0)
-		require.Equal(t, decoded[0].Fields[0].Name, "time")
-		require.Len(t, decoded[0].Fields[1].Labels, 2)
-		require.Equal(t, decoded[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, decoded[0].Fields[1].Name, "value")
-		require.Equal(t, decoded[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
+		require.Len(t, res, 1)
+		require.Equal(t, res[0].Name, "legend Application")
+		require.Len(t, res[0].Fields, 2)
+		require.Len(t, res[0].Fields[0].Labels, 0)
+		require.Equal(t, res[0].Fields[0].Name, "time")
+		require.Len(t, res[0].Fields[1].Labels, 2)
+		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
+		require.Equal(t, res[0].Fields[1].Name, "value")
+		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
 
 		// Ensure the timestamps are UTC zoned
-		testValue := decoded[0].Fields[0].At(0)
+		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 	})
 }

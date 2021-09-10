@@ -69,7 +69,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
       <div>
         <InlineField label="Data" labelWidth={8}>
           <>
-            <Select width={20} options={options} value={selected} onChange={this.onSourceChange} />
+            <Select menuShouldPortal width={20} options={options} value={selected} onChange={this.onSourceChange} />
             {query.data ? (
               <div style={{ alignSelf: 'center' }}>{describeDataFrame(query.data)}</div>
             ) : (
