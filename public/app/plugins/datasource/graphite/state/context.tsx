@@ -50,13 +50,13 @@ export const GraphiteQueryEditorContext = ({
     if (state) {
       dispatch(actions.queriesChanged(queries));
     }
-  }, [dispatch, queries]);
+  }, [dispatch, queries, state]);
 
   useEffect(() => {
     if (state && state.target?.target !== query.target) {
       dispatch(actions.queryChanged(query));
     }
-  }, [dispatch, query]);
+  }, [dispatch, query, state]);
 
   if (!state) {
     dispatch(
