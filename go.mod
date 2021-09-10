@@ -11,9 +11,6 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
-// Temporary replace till https://github.com/ohler55/ojg/issues/72 solved to fix builds on 32-bit CPU.
-replace github.com/ohler55/ojg => github.com/FZambia/ojg v1.12.6-0.20210910083152-5e71da98845c
-
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
@@ -73,7 +70,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
-	github.com/ohler55/ojg v1.12.3
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
@@ -87,6 +83,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/smartystreets/goconvey v1.6.4
+	github.com/spyzhov/ajson v0.4.2
 	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
