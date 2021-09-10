@@ -1,7 +1,6 @@
-import React, { useState, useLayoutEffect, useMemo } from 'react';
-import { css } from '@emotion/css';
+import React, { useState, useLayoutEffect, useMemo, useRef } from 'react';
 import { FieldConfigSource, ThresholdsConfig, getValueFormat } from '@grafana/data';
-import { UPlotConfigBuilder, usePlotContext, FIXED_UNIT } from '@grafana/ui';
+import { UPlotConfigBuilder, FIXED_UNIT } from '@grafana/ui';
 import { ThresholdDragHandle } from './ThresholdDragHandle';
 
 const GUTTER_SIZE = 60;
@@ -17,38 +16,27 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
   fieldConfig,
   onThresholdsChange,
 }) => {
-  const plotCtx = usePlotContext();
-  const plotInstance = plotCtx.plot;
+  const plotInstance = useRef<uPlot>();
   const [renderToken, setRenderToken] = useState(0);
 
   useLayoutEffect(() => {
     config.setPadding([0, GUTTER_SIZE, 0, 0]);
+
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+    });
     // render token required to re-render handles when resizing uPlot
     config.addHook('draw', () => {
       setRenderToken((s) => s + 1);
     });
   }, [config]);
 
-  const className = useMemo(() => {
-    if (!plotInstance) {
-      return;
-    }
-    return css`
-      position: absolute;
-      overflow: visible;
-      left: ${(plotInstance.bbox.left + plotInstance.bbox.width) / window.devicePixelRatio}px;
-      top: ${plotInstance.bbox.top / window.devicePixelRatio}px;
-      width: ${GUTTER_SIZE}px;
-      height: ${plotInstance.bbox.height / window.devicePixelRatio}px;
-    `;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plotInstance, renderToken]);
-
   const thresholdHandles = useMemo(() => {
-    if (!plotInstance) {
+    const plot = plotInstance.current;
+
+    if (!plot) {
       return null;
     }
-
     const thresholds = fieldConfig.defaults.thresholds;
     if (!thresholds) {
       return null;
@@ -60,9 +48,12 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const step = thresholds.steps[i];
-      const yPos = plotInstance.valToPos(step.value, scale);
+      const yPos = plot.valToPos(step.value, scale);
 
       if (Number.isNaN(yPos) || !Number.isFinite(yPos)) {
+        continue;
+      }
+      if (yPos < 0 || yPos > plot.bbox.height / window.devicePixelRatio) {
         continue;
       }
 
@@ -71,8 +62,8 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
           key={`${step.value}-${i}`}
           step={step}
           y={yPos}
-          dragBounds={{ top: 0, bottom: plotInstance.bbox.height / window.devicePixelRatio }}
-          mapPositionToValue={(y) => plotInstance.posToVal(y, scale)}
+          dragBounds={{ top: 0, bottom: plot.bbox.height / window.devicePixelRatio }}
+          mapPositionToValue={(y) => plot.posToVal(y, scale)}
           formatValue={(v) => getValueFormat(scale)(v, decimals).text}
           onChange={(value) => {
             const nextSteps = [
@@ -93,12 +84,26 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
 
     return handles;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plotInstance, renderToken, fieldConfig, onThresholdsChange]);
+  }, [renderToken, fieldConfig, onThresholdsChange]);
 
-  if (!plotInstance) {
+  if (!plotInstance.current) {
     return null;
   }
-  return <div className={className}>{thresholdHandles}</div>;
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        overflow: 'visible',
+        left: `${(plotInstance.current.bbox.left + plotInstance.current.bbox.width) / window.devicePixelRatio}px`,
+        top: `${plotInstance.current.bbox.top / window.devicePixelRatio}px`,
+        width: `${GUTTER_SIZE}px`,
+        height: `${plotInstance.current.bbox.height / window.devicePixelRatio}px`,
+      }}
+    >
+      {thresholdHandles}
+    </div>
+  );
 };
 
 ThresholdControlsPlugin.displayName = 'ThresholdControlsPlugin';
