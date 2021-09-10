@@ -35,7 +35,7 @@ const cursorDefaults: Cursor = {
 type PrepData = (frame: DataFrame[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
-  private series: UPlotSeriesBuilder[] = [];
+  private series: Array<UPlotSeriesBuilder | null> = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
@@ -172,10 +172,13 @@ export class UPlotConfigBuilder {
 
   getConfig() {
     const config: PlotConfig = {
+      mode: this.mode,
       series: [
-        {
-          value: () => '',
-        },
+        this.mode === 2
+          ? null
+          : {
+              value: () => '',
+            },
       ],
     };
     config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());

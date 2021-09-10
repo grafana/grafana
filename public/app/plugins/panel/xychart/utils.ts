@@ -1,4 +1,13 @@
-import { DataFrame, DataFrameFieldIndex, FieldLookup, FieldMap, FieldType, getFieldDisplayName } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameFieldIndex,
+  FieldLookup,
+  FieldMap,
+  FieldType,
+  getFieldColorModeForField,
+  getFieldDisplayName,
+  getFieldSeriesColor,
+} from '@grafana/data';
 import {
   getColorDimension,
   getScaledDimension,
@@ -11,6 +20,9 @@ import {
 import { ScatterSeries, XYChartOptions } from './types';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, UPlotConfigBuilder, UPlotConfigPrepFnXY } from '@grafana/ui';
+import uPlot from 'uplot';
+import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
+import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 export function prepDims(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
   if (!frames.length) {
@@ -101,6 +113,7 @@ export const prepLookup: PrepFieldLookup = (dims, frames) => {
         }
         return false;
       }),
+      size: frame.fields.findIndex((field) => field === dims[frameIndex].size?.field),
     };
 
     fieldMap.legend = [fieldMap.y as number];
@@ -133,7 +146,145 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
   eventBus,
   ...options
 }) => {
+  let qt: Quadtree;
+  let hRect: Rect | null;
+
+  // temp
+  let minSize = 6;
+  let maxSize = 60;
+
+  const drawBubbles: uPlot.Series.PathBuilder = (u, seriesIdx, idx0, idx1) => {
+    uPlot.orient(
+      u,
+      seriesIdx,
+      (
+        series,
+        dataX,
+        dataY,
+        scaleX,
+        scaleY,
+        valToPosX,
+        valToPosY,
+        xOff,
+        yOff,
+        xDim,
+        yDim,
+        moveTo,
+        lineTo,
+        rect,
+        arc
+      ) => {
+        let d = u.data[seriesIdx] as FacetSeries;
+
+        let strokeWidth = 1;
+
+        u.ctx.save();
+
+        u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+        u.ctx.clip();
+
+        u.ctx.fillStyle = series.fill();
+        u.ctx.strokeStyle = series.stroke();
+        u.ctx.lineWidth = strokeWidth;
+
+        let deg360 = 2 * Math.PI;
+
+        // todo: this depends on direction & orientation
+        // todo: calc once per redraw, not per path
+        let filtLft = u.posToVal(-maxSize / 2, 'x');
+        let filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + maxSize / 2, 'x');
+        let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, 'y');
+        let filtTop = u.posToVal(-maxSize / 2, 'y');
+
+        for (let i = 0; i < d[0].length; i++) {
+          let xVal = d[0][i];
+          let yVal = d[1][i];
+          let size = d[2][i];
+
+          if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
+            let cx = valToPosX(xVal, scaleX, xDim, xOff);
+            let cy = valToPosY(yVal, scaleY, yDim, yOff);
+
+            u.ctx.moveTo(cx + size / 2, cy);
+            u.ctx.beginPath();
+            u.ctx.arc(cx, cy, size / 2, 0, deg360);
+            u.ctx.fill();
+            u.ctx.stroke();
+            qt.add({
+              x: cx - size / 2 - strokeWidth / 2 - u.bbox.left,
+              y: cy - size / 2 - strokeWidth / 2 - u.bbox.top,
+              w: size + strokeWidth,
+              h: size + strokeWidth,
+              sidx: seriesIdx,
+              didx: i,
+            });
+          }
+        }
+
+        u.ctx.restore();
+      }
+    );
+
+    return null;
+  };
+
+  lookup.enumerate(frames);
+
   const builder = new UPlotConfigBuilder();
+
+  builder.setCursor({
+    dataIdx: (u, seriesIdx) => {
+      if (seriesIdx === 1) {
+        hRect = null;
+
+        let dist = Infinity;
+        let cx = u.cursor.left! * devicePixelRatio;
+        let cy = u.cursor.top! * devicePixelRatio;
+
+        qt.get(cx, cy, 1, 1, (o) => {
+          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+            let ocx = o.x + o.w / 2;
+            let ocy = o.y + o.h / 2;
+
+            let dx = ocx - cx;
+            let dy = ocy - cy;
+
+            let d = Math.sqrt(dx ** 2 + dy ** 2);
+
+            // test against radius for actual hover
+            if (d <= o.w / 2) {
+              // only hover bbox with closest distance
+              if (d <= dist) {
+                dist = d;
+                hRect = o;
+              }
+            }
+          }
+        });
+      }
+
+      return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
+    },
+    points: {
+      size: (u, seriesIdx) => {
+        return hRect && seriesIdx === hRect.sidx ? hRect.w / devicePixelRatio : 0;
+      },
+    },
+  });
+
+  builder.addHook('drawClear', (u) => {
+    qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
+
+    qt.clear();
+
+    // force-clear the path cache to cause drawBars() to rebuild new quadtree
+    u.series.forEach((s, i) => {
+      if (i > 0) {
+        // @ts-ignore
+        s._paths = null;
+      }
+    });
+  });
 
   builder.setMode(2);
 
@@ -142,14 +293,14 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
     isTime: false,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: [0, 100],
+    range: (u, min, max) => [min, max],
   });
 
   builder.addScale({
     scaleKey: 'y',
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
-    range: [0, 100],
+    range: (u, min, max) => [min, max],
   });
 
   builder.addAxis({
@@ -164,13 +315,31 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
     theme,
   });
 
+  lookup.fieldMaps.forEach((map, frameIndex) => {
+    let field = frames[frameIndex].fields[map.y as number];
+
+    const scaleColor = getFieldSeriesColor(field, theme);
+    const seriesColor = scaleColor.color;
+
+    builder.addSeries({
+      pathBuilder: drawBubbles,
+      theme,
+      scaleKey: '', // facets' scales used internally (x/y)
+      fillColor: seriesColor,
+    });
+  });
+
   builder.setPrepData((frames) => {
     lookup.enumerate(frames);
 
     let seriesData = lookup.fieldMaps.map((f, i) => {
       let { fields } = frames[i];
 
-      return [fields[f.x], fields[f.y as number]];
+      return [
+        fields[f.x].values.toArray(),
+        fields[f.y as number].values.toArray(),
+        fields[f.size as number].values.toArray(),
+      ];
     });
 
     return [null, ...seriesData];

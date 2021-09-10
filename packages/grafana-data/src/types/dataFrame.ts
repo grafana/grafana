@@ -292,7 +292,7 @@ export interface FieldLookup {
   // maps displayName => DataFrameFieldIndex
   byName: Map<string, DataFrameFieldIndex>;
   // maps enumerated/flat seriesIndex => DataFrameFieldIndex
-  byIndex: Map<string, DataFrameFieldIndex>;
+  byIndex: Map<number, DataFrameFieldIndex>;
 
   // util exposed to mutate field.state.seriesIndex of 'y' fields
   //   a. using 'y' fields of all frames (AlignedData)
