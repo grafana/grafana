@@ -14,6 +14,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { PageBanner } from './core/components/PageBanner/PageBanner';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -98,6 +99,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <Router history={locationService.getHistory()}>
                     <SideMenu />
                     <main className="main-view">
+                      <PageBanner />
                       <div
                         ref={this.container}
                         dangerouslySetInnerHTML={{
