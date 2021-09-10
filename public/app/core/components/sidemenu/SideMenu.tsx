@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,9 +12,37 @@ import BottomSection from './BottomSection';
 
 const homeUrl = config.appSubUrl || '/';
 
-export const SideMenu: FC = React.memo(() => {
+const getOpposite = (position: Props['position']) => {
+  switch (position) {
+    case 'left': {
+      return 'right';
+    }
+    case 'right': {
+      return 'left';
+    }
+    case 'top': {
+      return 'bottom';
+    }
+    case 'bottom': {
+      return 'top';
+    }
+    default: {
+      return 'left';
+    }
+  }
+};
+
+const isHorizontal = (position: Props['position']) => {
+  return position === 'top' || position === 'bottom';
+};
+
+interface Props {
+  position: 'left' | 'right' | 'top' | 'bottom';
+}
+
+export const SideMenu = ({ position }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, position);
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
@@ -39,21 +67,21 @@ export const SideMenu: FC = React.memo(() => {
           Close
         </span>
       </div>
-      <TopSection />
-      <BottomSection />
+      <TopSection position={position} />
+      <BottomSection position={position} />
     </nav>
   );
-});
+};
 
 SideMenu.displayName = 'SideMenu';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, position: Props['position']) => ({
   sidemenu: css`
-    border-right: 1px solid ${theme.components.panel.borderColor};
+    border-${getOpposite(position)}: 1px solid ${theme.components.panel.borderColor};
     display: flex;
-    flex-direction: column;
+    flex-direction: ${isHorizontal(position) ? 'row' : 'column'};
+    min-width: ${theme.components.sidemenu.width}px;
     position: fixed;
-    width: ${theme.components.sidemenu.width}px;
     z-index: ${theme.zIndex.sidemenu};
 
     @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
@@ -76,6 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   homeLogo: css`
     display: none;
     min-height: ${theme.components.sidemenu.width}px;
+    min-width: ${theme.components.sidemenu.width}px;
 
     &:focus-visible,
     &:hover {

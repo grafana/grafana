@@ -4,6 +4,10 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Link, styleMixins, useTheme2 } from '@grafana/ui';
 import SideMenuDropDown from './SideMenuDropDown';
 
+const isHorizontal = (position: Props['position']) => {
+  return position === 'top' || position === 'bottom';
+};
+
 export interface Props {
   isActive?: boolean;
   children: ReactNode;
@@ -11,6 +15,7 @@ export interface Props {
   menuItems?: NavModelItem[];
   menuSubTitle?: string;
   onClick?: () => void;
+  position?: 'left' | 'right' | 'top' | 'bottom';
   reverseMenuDirection?: boolean;
   target?: HTMLAnchorElement['target'];
   url?: string;
@@ -23,12 +28,13 @@ const SideMenuItem = ({
   menuItems = [],
   menuSubTitle,
   onClick,
+  position = 'left',
   reverseMenuDirection = false,
   target,
   url,
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive);
+  const styles = getStyles(theme, isActive, position, reverseMenuDirection);
   let element = (
     <button className={styles.element} onClick={onClick} aria-label={label}>
       <span className={styles.icon}>{children}</span>
@@ -64,6 +70,7 @@ const SideMenuItem = ({
         headerUrl={url}
         items={menuItems}
         onHeaderClick={onClick}
+        position={position}
         reverseDirection={reverseMenuDirection}
         subtitleText={menuSubTitle}
       />
@@ -73,7 +80,12 @@ const SideMenuItem = ({
 
 export default SideMenuItem;
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  isActive: Props['isActive'],
+  position: Props['position'],
+  reverseMenuDirection: Props['reverseMenuDirection']
+) => ({
   container: css`
     position: relative;
 
@@ -99,15 +111,21 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
           display: flex;
           // important to overlap it otherwise it can be hidden
           // again by the mouse getting outside the hover space
-          left: ${theme.components.sidemenu.width - 1}px;
+          left: ${position === 'left'
+            ? `${theme.components.sidemenu.width - 1}px`
+            : `${isHorizontal(position) && !reverseMenuDirection ? 0 : 'unset'}`};
+          right: ${position === 'right'
+            ? `${theme.components.sidemenu.width - 1}px`
+            : `${isHorizontal(position) && reverseMenuDirection ? 0 : 'unset'}`};
+          top: ${position === 'top'
+            ? `${theme.components.sidemenu.width - 1}px`
+            : `${!isHorizontal(position) && !reverseMenuDirection ? 0 : 'unset'}`};
+          bottom: ${position === 'bottom'
+            ? `${theme.components.sidemenu.width - 1}px`
+            : `${!isHorizontal(position) && reverseMenuDirection ? 0 : 'unset'}`};
           margin: 0;
           opacity: 0;
-          top: 0;
           z-index: ${theme.zIndex.sidemenu};
-        }
-
-        &.dropup .dropdown-menu {
-          top: auto;
         }
       }
     }
@@ -117,7 +135,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     border: none;
     color: inherit;
     display: block;
-    line-height: 42px;
+    height: ${theme.components.sidemenu.width - 1}px;
+    line-height: ${theme.components.sidemenu.width - 1}px;
     text-align: center;
     width: ${theme.components.sidemenu.width - 1}px;
 
@@ -125,12 +144,16 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       display: ${isActive ? 'block' : 'none'};
       content: ' ';
       position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
+      left: ${position === 'right' ? 'unset' : 0};
+      top: ${position === 'bottom' ? 'unset' : 0};
+      bottom: ${position === 'top' ? 'unset' : 0};
+      right: ${position === 'left' ? 'unset' : 0};
+      width: ${position === 'left' || position === 'right' ? '4px' : 'auto'};
+      height: ${position === 'top' || position === 'bottom' ? '4px' : 'auto'};
       border-radius: 2px;
-      background-image: ${theme.colors.gradients.brandVertical};
+      background-image: ${isHorizontal(position)
+        ? theme.colors.gradients.brandHorizontal
+        : theme.colors.gradients.brandVertical};
     }
 
     &:focus-visible {

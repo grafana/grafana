@@ -4,12 +4,16 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconName, Link, useTheme2 } from '@grafana/ui';
 import DropDownChild from './DropDownChild';
 
+const isHorizontal = (position: Props['position']) => {
+  return position === 'top' || position === 'bottom';
+};
 interface Props {
   headerTarget?: HTMLAnchorElement['target'];
   headerText: string;
   headerUrl?: string;
   items?: NavModelItem[];
   onHeaderClick?: () => void;
+  position: 'left' | 'right' | 'top' | 'bottom';
   reverseDirection?: boolean;
   subtitleText?: string;
 }
@@ -20,11 +24,12 @@ const SideMenuDropDown = ({
   headerUrl,
   items = [],
   onHeaderClick,
+  position = 'left',
   reverseDirection = false,
   subtitleText,
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, reverseDirection);
+  const styles = getStyles(theme, reverseDirection, position);
 
   let header = (
     <button onClick={onHeaderClick} className={styles.header}>
@@ -67,7 +72,7 @@ const SideMenuDropDown = ({
 
 export default SideMenuDropDown;
 
-const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirection']) => ({
+const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirection'], position: Props['position']) => ({
   header: css`
     background-color: ${theme.colors.background.secondary};
     border: none;
@@ -90,7 +95,9 @@ const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirecti
     }
   `,
   menu: css`
-    flex-direction: ${reverseDirection ? 'column-reverse' : 'column'};
+    flex-direction: ${position === 'bottom' || (!isHorizontal(position) && reverseDirection)
+      ? 'column-reverse'
+      : 'column'};
 
     .sidemenu-open--xs & {
       display: flex;

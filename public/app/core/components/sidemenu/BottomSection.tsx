@@ -14,9 +14,17 @@ import { HelpModal } from '../help/HelpModal';
 import SideMenuItem from './SideMenuItem';
 import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
 
-export default function BottomSection() {
+const isHorizontal = (position: Props['position']) => {
+  return position === 'top' || position === 'bottom';
+};
+
+interface Props {
+  position?: 'left' | 'right' | 'top' | 'bottom';
+}
+
+export default function BottomSection({ position }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, position);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
@@ -45,7 +53,7 @@ export default function BottomSection() {
   return (
     <div data-testid="bottom-section-items" className={styles.container}>
       {!isSignedIn && (
-        <SideMenuItem label="Sign In" target="_self" url={forcedLoginUrl}>
+        <SideMenuItem position={position} label="Sign In" target="_self" url={forcedLoginUrl}>
           <Icon name="signout" size="xl" />
         </SideMenuItem>
       )}
@@ -82,6 +90,7 @@ export default function BottomSection() {
             menuItems={menuItems}
             menuSubTitle={link.subTitle}
             onClick={link.onClick}
+            position={position}
             reverseMenuDirection
             target={link.target}
             url={link.url}
@@ -96,13 +105,14 @@ export default function BottomSection() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, position: Props['position']) => ({
   container: css`
     display: none;
 
     @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
-      display: block;
-      margin-bottom: ${theme.spacing(2)};
+      display: flex;
+      flex-direction: inherit;
+      margin-${isHorizontal(position) ? 'right' : 'bottom'}: ${theme.spacing(2)};
     }
 
     .sidemenu-open--xs & {
