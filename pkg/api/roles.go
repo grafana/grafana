@@ -53,7 +53,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     1,
 				Name:        "fixed:datasources:admin",
-				Description: "Grant access to create, read, update, delete datasources",
+				Description: "Grant access to create, read, update, delete data sources",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesRead,
@@ -76,7 +76,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Role: accesscontrol.RoleDTO{
 				Version:     1,
 				Name:        "fixed:datasources:id:viewer",
-				Description: "Grant access to read datasources ID",
+				Description: "Grant access to read data sources ID",
 				Permissions: []accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesIDRead,
