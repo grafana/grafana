@@ -349,7 +349,7 @@ Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#is
 
 #### Prefix added to series names
 
-Given you have a query similar to below, where there's a time value and a numeric value selected together with a string value that's not named _metric_. Then you might notice that the graph panel renders series names as `value <hostname>` rather than just `<hostname>` which was the case before Grafana 8.
+When you have a query where there's a time value and a numeric value selected together with a string value that's not named _metric_, the graph panel renders series names as `value <hostname>` rather than just `<hostname>` which was the case before Grafana 8.
 
 ```sql
 SELECT
@@ -362,12 +362,12 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-There's two possible workarounds to resolve this problem:
+There are two possible workarounds to resolve this problem:
 
-1. Starting from Grafana v8.0.3 you should alias the string column selected as `metric`, i.e. `hostname as metric`.
-2. Use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to format the alias. Given example query above you would use `${__field.labels.hostname}`.
+1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
+2. Use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to format the alias. For the preceeding example query, you would use `${__field.labels.hostname}` option.
 
-For more information please refer to the documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
+For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
 
 ## Upgrading to v8.1
 
@@ -375,6 +375,6 @@ For more information please refer to the documentation of [Postgres]({{< relref 
 
 As of Grafana v8.1, we no longer support unencrypted storage of passwords and basic auth passwords.
 
-> **Note":** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
+> **Note":** In Grafana v6.2.x stored passwords of new or updated data sources and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
 
 To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
