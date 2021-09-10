@@ -326,6 +326,7 @@ type Cfg struct {
 	DataProxyMaxIdleConns          int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
+	ResponseLimit                  int64
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions

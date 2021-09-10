@@ -303,7 +303,7 @@
         "version": {
           "type": "string",
           "description": "Project version of this commit, e.g. `6.7.x`.",
-          "pattern": "^([0-9x]+\\.[0-9x]+\\.*[0-9x]*$|\\%VERSION\\%)"
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
         }
       }
     },

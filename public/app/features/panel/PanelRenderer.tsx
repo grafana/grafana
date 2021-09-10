@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
@@ -18,10 +18,9 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     title,
     onOptionsChange = () => {},
     onChangeTimeRange = () => {},
-    fieldConfig: config = { defaults: {}, overrides: [] },
   } = props;
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(config);
+  const [fieldConfig, setFieldConfig] = useFieldConfigState(props);
   const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
   const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
@@ -117,4 +116,36 @@ function useFieldOverrides(
 
 function pluginIsLoading(loading: boolean, plugin: PanelPlugin<any, any> | undefined, pluginId: string) {
   return loading || plugin?.meta.id !== pluginId;
+}
+
+function useFieldConfigState(props: PanelRendererProps): [FieldConfigSource, (config: FieldConfigSource) => void] {
+  const {
+    onFieldConfigChange,
+    fieldConfig = {
+      defaults: {},
+      overrides: [],
+    },
+  } = props;
+
+  // First render will detect if the PanelRenderer will manage the
+  // field config state internally or externally by the consuming
+  // component. This will also prevent the way of managing state to
+  // change during the components life cycle.
+  const isManagedInternally = useRef(() => !!onFieldConfigChange);
+  const [internalConfig, setInternalConfig] = useState(fieldConfig);
+
+  const setExternalConfig = useCallback(
+    (config: FieldConfigSource) => {
+      if (!onFieldConfigChange) {
+        return;
+      }
+      onFieldConfigChange(config);
+    },
+    [onFieldConfigChange]
+  );
+
+  if (isManagedInternally) {
+    return [internalConfig, setInternalConfig];
+  }
+  return [fieldConfig, setExternalConfig];
 }

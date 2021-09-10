@@ -47,7 +47,7 @@
     "@types/webpack": "4.41.7",
     "@typescript-eslint/eslint-plugin": "4.28.0",
     "@typescript-eslint/parser": "4.28.0",
-    "axios": "0.21.1",
+    "axios": "0.21.2",
     "babel-jest": "26.6.3",
     "babel-loader": "8.2.2",
     "babel-plugin-angularjs-annotate": "0.10.0",
