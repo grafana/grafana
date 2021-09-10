@@ -79,8 +79,7 @@ export class TablePanel extends Component<Props> {
 
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
-
-    const footerValues = getFooterCells(frame, options.footer);
+    const footerValues = options.showFooter ? getFooterCells(frame, options.footer) : undefined;
 
     return (
       <Table
