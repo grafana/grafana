@@ -35,7 +35,7 @@ To edit a specific policy, find it in the specific routing table and click **Edi
 ### Root policy fields
 
 - **Default contact point -** The [contact point]({{< relref "./contact-points.md" >}}) to send notifications to that did not match any specific policy.
-- **Group by -** Labels to group alerts by. If multiple alerts are matched for this policy, they will be grouped based on these labels and a notification will be sent per group. If the field is empty (the default), then all notifications will be sent in a single group. A special case label `...` can be used to group alerts by all labels, which effectively disables grouping.
+- **Group by -** Labels to group alerts by. If multiple alerts are matched for this policy, they will be grouped based on these labels and a notification will be sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels, which effectively disables grouping.
 
 Group timing options
 
