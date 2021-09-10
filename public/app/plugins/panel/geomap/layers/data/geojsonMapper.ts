@@ -57,19 +57,18 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
   // Geojson source url
   registerOptionsUI: (builder) => {
-    builder
-      .addSelect({
-        path: 'config.src',
-        name: 'GeoJSON URL',
-        settings: {
-          options: [
-            { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
-            { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
-          ],
-          allowCustomValue: true,
-        },
-        defaultValue: defaultOptions.src,
-      });
+    builder.addSelect({
+      path: 'config.src',
+      name: 'GeoJSON URL',
+      settings: {
+        options: [
+          { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
+          { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
+        ],
+        allowCustomValue: true,
+      },
+      defaultValue: defaultOptions.src,
+    });
   },
 
   // fill in the default values
