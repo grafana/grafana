@@ -93,19 +93,20 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
-	UID := cmd.UID
-	if len(UID) == 0 {
-		UID = util.GenerateShortUID()
-	}
-	if !util.IsValidShortUID(UID) {
-		return LibraryElementDTO{}, errLibraryElementInvalidUID
-	} else if util.IsShortUIDTooLong(UID) {
-		return LibraryElementDTO{}, errLibraryElementUIDTooLong
+	createUID := cmd.UID
+	if len(createUID) == 0 {
+		createUID = util.GenerateShortUID()
+	} else {
+		if !util.IsValidShortUID(createUID) {
+			return LibraryElementDTO{}, errLibraryElementInvalidUID
+		} else if util.IsShortUIDTooLong(createUID) {
+			return LibraryElementDTO{}, errLibraryElementUIDTooLong
+		}
 	}
 	element := LibraryElement{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
-		UID:      UID,
+		UID:      createUID,
 		Name:     cmd.Name,
 		Model:    cmd.Model,
 		Version:  1,
@@ -446,15 +447,14 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 		}
 		updateUID := cmd.UID
 		if len(updateUID) == 0 {
-			updateUID = uid // if UID isn't provided in the PATCH request let's use the existing UID
-		}
-		if !util.IsValidShortUID(updateUID) {
-			return errLibraryElementInvalidUID
-		} else if util.IsShortUIDTooLong(updateUID) {
-			return errLibraryElementUIDTooLong
-		}
-		if updateUID != uid {
-			// if we're trying to update the UID we need to check if the new UID is already used
+			updateUID = uid
+		} else if updateUID != uid {
+			if !util.IsValidShortUID(updateUID) {
+				return errLibraryElementInvalidUID
+			} else if util.IsShortUIDTooLong(updateUID) {
+				return errLibraryElementUIDTooLong
+			}
+
 			_, err := getLibraryElement(l.SQLStore.Dialect, session, updateUID, c.SignedInUser.OrgId)
 			if !errors.Is(err, errLibraryElementNotFound) {
 				return errLibraryElementAlreadyExists
