@@ -11,6 +11,9 @@ export interface Processor {
 export interface Output {
   type: string;
   [t: string]: any;
+  multiple?: {
+    outputs: Output[];
+  };
 }
 
 export interface RuleSettings {

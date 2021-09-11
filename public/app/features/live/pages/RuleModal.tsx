@@ -9,11 +9,11 @@ interface Props {
 }
 
 const tabs = [
-  { label: 'converter', value: 'converter' },
-  { label: 'processor', value: 'processor' },
-  { label: 'output', value: 'output' },
+  { label: 'Converter', value: 'converter' },
+  { label: 'Processor', value: 'processor' },
+  { label: 'Output', value: 'output' },
 ];
-const height = 500;
+const height = 600;
 
 export const RuleModal: React.FC<Props> = ({ rule, isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<string>('converter');

@@ -1,19 +1,29 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, useStyles } from '@grafana/ui';
+import { Input, Tag, useStyles } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Rule } from './types';
+import { Rule, Output } from './types';
 import { RuleModal } from './RuleModal';
 
-export default function PipelinePage() {
+function renderOutputTags(key: string, output?: Output): React.ReactNode {
+  if (!output?.type) {
+    return null;
+  }
+  if (output.multiple?.outputs?.length) {
+    return output.multiple?.outputs.map((v, i) => renderOutputTags(`${key}-${i}`, v));
+  }
+  return <Tag key={key} name={output.type} />;
+}
+
+export default function PipelineAdminPage() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [isOpen, setOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
-  const navModel = useNavModel('live');
+  const navModel = useNavModel('live-pipeline');
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -75,7 +85,7 @@ export default function PipelinePage() {
                     {rule.settings?.processor?.type}
                   </td>
                   <td data-pattern={rule.pattern} data-column="output">
-                    {rule.settings?.output?.type}
+                    {renderOutputTags('out', rule.settings?.output)}
                   </td>
                 </tr>
               ))}
