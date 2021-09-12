@@ -112,9 +112,9 @@ allowed_groups = example, foo/bar
 
 ### Map roles
 
-Grafana can attempt to do role mapping through Gitlab OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
+Grafana can attempt to do role mapping through GitLab OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-Grafana uses JSON obtained from querying the `/api/v4/user` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
+Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
 
 An example Query could look like the following:
 
@@ -122,7 +122,7 @@ An example Query could look like the following:
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 ```
 
-This would allow you every Gitlab Admin to be an Admin in Grafana.
+This would allow you every GitLab Admin to be an Admin in Grafana.
 
 ### Team Sync (Enterprise only)
 
