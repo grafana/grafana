@@ -26,10 +26,10 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select _read_api_ as the _Scope_ and submit the form. Note that if you're
+Finally, select _read_api_as the_Scope_and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select _read_user_ instead of _read_api_ as
-the _Scope_, thus giving a more restricted access to your GitLab API.
+`allowed_groups`, see below), you can select_read_user_ instead of _read_api_as
+the_Scope_, thus giving a more restricted access to your GitLab API.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
@@ -95,7 +95,7 @@ characters. Make sure you always use the group or subgroup name as it appears
 in the URL of the group or subgroup.
 
 Here's a complete example with `allow_sign_up` enabled, and access limited to
-the `example` and `foo/bar` groups:
+the `example` and `foo/bar` groups it also promotes all GitLab Admins to Grafana Admins:
 
 ```ini
 [auth.gitlab]
@@ -108,6 +108,7 @@ auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
 api_url = https://gitlab.com/api/v4
 allowed_groups = example, foo/bar
+role_attribute_path = is_admin && 'Admin' || 'Viewer'
 ```
 
 ### Map roles
