@@ -28,6 +28,7 @@ e2e.scenario({
         e2e.components.QueryTab.content().should('be.visible');
         e2e.components.TransformTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
+        e2e.components.PanelAlertTabContent.content().should('not.exist');
 
         //  Bottom pane tabs
         //  Can change to Transform tab
@@ -38,15 +39,17 @@ e2e.scenario({
         e2e.components.Transforms.card('Merge').scrollIntoView().should('be.visible');
         e2e.components.QueryTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
+        e2e.components.PanelAlertTabContent.content().should('not.exist');
 
         //  Can change to Alerts tab (graph panel is the default vis so the alerts tab should be rendered)
         e2e.components.Tab.title('Alert').should('be.visible').click();
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
           expect(li.text()).equals('Alert'); // there's no alert so therefore Alert
         });
-        e2e.components.AlertTab.content().should('be.visible');
+        e2e.components.PanelAlertTabContent.content().should('be.visible');
         e2e.components.QueryTab.content().should('not.exist');
         e2e.components.TransformTab.content().should('not.exist');
+        e2e.components.AlertTab.content().should('not.exist');
 
         e2e.components.Tab.title('Query').should('be.visible').click();
       });
