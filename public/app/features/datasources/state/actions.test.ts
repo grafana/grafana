@@ -19,6 +19,8 @@ import { initDataSourceSettings } from '../state/actions';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { of } from 'rxjs';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
@@ -81,9 +83,9 @@ describe('getDataSourceUsingUidOrId', () => {
 
   it('should return UID response data', async () => {
     (getBackendSrv as jest.Mock).mockReturnValueOnce({
-      fetch: () => ({
-        toPromise: jest.fn().mockResolvedValue(uidResponse),
-      }),
+      fetch: (options: BackendSrvRequest) => {
+        return of(uidResponse as FetchResponse);
+      },
     });
 
     expect(await getDataSourceUsingUidOrId('abcdefg')).toBe(uidResponse.data);
@@ -96,14 +98,14 @@ describe('getDataSourceUsingUidOrId', () => {
 
     (getBackendSrv as jest.Mock)
       .mockReturnValueOnce({
-        fetch: () => ({
-          toPromise: jest.fn().mockResolvedValue(uidResponse),
-        }),
+        fetch: (options: BackendSrvRequest) => {
+          return of(uidResponse as FetchResponse);
+        },
       })
       .mockReturnValueOnce({
-        fetch: () => ({
-          toPromise: jest.fn().mockResolvedValue(idResponse),
-        }),
+        fetch: (options: BackendSrvRequest) => {
+          return of(idResponse as FetchResponse);
+        },
       });
 
     expect(await getDataSourceUsingUidOrId(222)).toBe(idResponse.data);
@@ -120,14 +122,14 @@ describe('getDataSourceUsingUidOrId', () => {
 
     (getBackendSrv as jest.Mock)
       .mockReturnValueOnce({
-        fetch: () => ({
-          toPromise: jest.fn().mockResolvedValue(uidResponse),
-        }),
+        fetch: (options: BackendSrvRequest) => {
+          return of(uidResponse as FetchResponse);
+        },
       })
       .mockReturnValueOnce({
-        fetch: () => ({
-          toPromise: jest.fn().mockResolvedValue(idResponse),
-        }),
+        fetch: (options: BackendSrvRequest) => {
+          return of(idResponse as FetchResponse);
+        },
       });
 
     expect(await getDataSourceUsingUidOrId('222')).toStrictEqual({});
