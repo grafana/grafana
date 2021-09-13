@@ -45,7 +45,7 @@ export interface ImportDashboardState {
   isLoaded: boolean;
 }
 
-const initialImportDashboardState: ImportDashboardState = {
+export const initialImportDashboardState: ImportDashboardState = {
   meta: { updatedAt: '', orgName: '' },
   dashboard: {},
   source: DashboardSource.Json,
