@@ -18,7 +18,7 @@ interface Props {
   onChange: (uid: string) => void;
 }
 
-const xRayDsId = 'grafana-x-ray-datasourc';
+const xRayDsId = 'grafana-x-ray-datasource';
 
 export function XrayLinkConfig({ datasourceUid, onChange }: Props) {
   const hasXrayDatasource = Boolean(getDatasourceSrv().getList({ pluginId: xRayDsId }).length);

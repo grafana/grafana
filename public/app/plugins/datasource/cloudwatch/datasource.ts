@@ -1,7 +1,7 @@
 import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import {
   catchError,
   concatMap,
@@ -94,6 +94,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
+  tracingDataSourceUid?: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -116,8 +117,8 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.datasourceName = instanceSettings.name;
-
     this.languageProvider = new CloudWatchLanguageProvider(this);
+    this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -165,15 +166,21 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       : this.handleLegacyLogQueries(validLogQueries, options);
 
     return response.pipe(
-      map((dataQueryResponse) => {
-        addDataLinksToLogsResponse(
-          dataQueryResponse,
-          options,
-          this.timeSrv.timeRange(),
-          this.replace.bind(this),
-          this.getActualRegion.bind(this)
+      mergeMap((dataQueryResponse) => {
+        return from(
+          (async () => {
+            await addDataLinksToLogsResponse(
+              dataQueryResponse,
+              options,
+              this.timeSrv.timeRange(),
+              this.replace.bind(this),
+              this.getActualRegion.bind(this),
+              this.tracingDataSourceUid
+            );
+
+            return dataQueryResponse;
+          })()
         );
-        return dataQueryResponse;
       })
     );
   };
