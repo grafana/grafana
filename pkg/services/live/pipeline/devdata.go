@@ -98,8 +98,9 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
-			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
+			Pattern:    "plugin/testdata/random-20Hz-stream",
+			Subscriber: NewManagedStreamSubscriber(f.ManagedStream),
+			Converter:  NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRedirectOutput(RedirectOutputConfig{
