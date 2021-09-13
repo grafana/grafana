@@ -54,9 +54,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
-	metrics["stats.plugins.panels.count"] = uss.PluginManager.PanelCount()
-	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
+	metrics["stats.plugins.apps.count"] = uss.pluginManager.AppCount()
+	metrics["stats.plugins.panels.count"] = uss.pluginManager.PanelCount()
+	metrics["stats.plugins.datasources.count"] = uss.pluginManager.DataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
@@ -385,7 +385,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
-	ds := uss.PluginManager.GetDataSource(dsType)
+	ds := uss.pluginManager.GetDataSource(dsType)
 	if ds == nil {
 		return false
 	}

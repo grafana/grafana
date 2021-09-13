@@ -21,12 +21,13 @@ type PluginV2 struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature     SignatureStatus
-	SignatureType SignatureType
-	SignatureOrg  string
-	Parent        *PluginV2
-	Children      []*PluginV2
-	SignedFiles   PluginFiles
+	Signature      SignatureStatus
+	SignatureType  SignatureType
+	SignatureOrg   string
+	Parent         *PluginV2
+	Children       []*PluginV2
+	SignedFiles    PluginFiles
+	SignatureError PluginSignatureError
 
 	// GCOM update checker fields
 	GrafanaComVersion   string
@@ -239,6 +240,23 @@ func (p *PluginV2) IsBundledPlugin() bool {
 
 func (p *PluginV2) IsExternalPlugin() bool {
 	return p.Class == External
+}
+
+func (p *PluginV2) IncludedInSignature(file string) bool {
+	// permit Core plugin files
+	if p.IsCorePlugin() {
+		return true
+	}
+
+	// permit when no signed files (no MANIFEST)
+	if p.SignedFiles == nil {
+		return true
+	}
+
+	if _, exists := p.SignedFiles[file]; !exists {
+		return false
+	}
+	return true
 }
 
 type PluginClient interface {

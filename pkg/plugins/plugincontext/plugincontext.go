@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
+func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Store,
 	dataSourceCache datasources.CacheService) *Provider {
 	return &Provider{
 		Bus:             bus,
@@ -29,7 +29,7 @@ func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginMa
 type Provider struct {
 	Bus             bus.Bus
 	CacheService    *localcache.CacheService
-	PluginManager   plugins.Manager
+	PluginManager   plugins.Store
 	DataSourceCache datasources.CacheService
 }
 
@@ -38,7 +38,7 @@ type Provider struct {
 // returned context.
 func (p *Provider) Get(pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
-	plugin := p.PluginManager.GetPlugin(pluginID)
+	plugin := p.PluginManager.Plugin(pluginID)
 	if plugin == nil {
 		return pc, false, nil
 	}
@@ -65,7 +65,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 
 	pCtx := backend.PluginContext{
 		OrgID:    user.OrgId,
-		PluginID: plugin.Id,
+		PluginID: plugin.ID,
 		User:     adapters.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
 			JSONData:                jsonData,

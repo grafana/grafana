@@ -50,7 +50,7 @@ type RenderingService struct {
 
 	Cfg                *setting.Cfg
 	RemoteCacheService *remotecache.RemoteCache
-	PluginManagerV2    plugins.ManagerV2
+	PluginManager      plugins.Store
 }
 
 type RendererPluginManager interface {
@@ -58,7 +58,7 @@ type RendererPluginManager interface {
 	StartRenderer(ctx context.Context) error
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager, pmV2 plugins.ManagerV2) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Store) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -91,7 +91,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 	s := &RenderingService{
 		Cfg:                cfg,
 		RemoteCacheService: remoteCache,
-		PluginManagerV2:    pmV2,
+		PluginManager:      pm,
 		log:                log.New("rendering"),
 		domain:             domain,
 	}
@@ -101,7 +101,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 func (rs *RenderingService) Run(ctx context.Context) error {
 	<-ctx.Done()
 
-	p := rs.PluginManagerV2.Renderer()
+	p := rs.PluginManager.Renderer()
 	if p != nil {
 		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
 		debugFilePath := path.Join(p.PluginDir, "chrome-win/debug.log")
@@ -118,7 +118,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return rs.PluginManagerV2.Renderer() != nil
+	return rs.PluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -211,7 +211,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 			return nil, err
 		}
 
-		rs.version = rs.PluginManagerV2.Renderer().Info.Version
+		rs.version = rs.PluginManager.Renderer().Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 	}
@@ -344,7 +344,7 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 }
 
 func (rs *RenderingService) StartRenderer(ctx context.Context) error {
-	return rs.PluginManagerV2.Renderer().Start(ctx)
+	return rs.PluginManager.Renderer().Start(ctx)
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {

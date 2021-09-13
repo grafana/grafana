@@ -2,21 +2,21 @@ package api
 
 import "github.com/grafana/grafana/pkg/plugins"
 
-type fakePluginResolver struct {
-	plugins.Resolver
+type fakePluginStore struct {
+	plugins.Store
 }
 
-func (pr *fakePluginResolver) Plugin(pluginID string) *plugins.PluginV2 {
+func (pr *fakePluginStore) Plugin(pluginID string) *plugins.PluginV2 {
 	return nil
 }
 
 // Plugins returns plugins by their requested type.
-func (pr *fakePluginResolver) Plugins(pluginType ...plugins.PluginType) []*plugins.PluginV2 {
+func (pr *fakePluginStore) Plugins(pluginType ...plugins.PluginType) []*plugins.PluginV2 {
 	return nil
 }
 
 // Renderer returns a renderer plugin.
-func (pr *fakePluginResolver) Renderer() *plugins.PluginV2 {
+func (pr *fakePluginStore) Renderer() *plugins.PluginV2 {
 	return nil
 }
 

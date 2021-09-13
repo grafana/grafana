@@ -88,7 +88,7 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 				},
 			},
 		}
-		pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+		pm := newManager(cfg, nil, nil, &sqlstore.SQLStore{})
 		err := pm.init()
 		require.NoError(t, err)
 

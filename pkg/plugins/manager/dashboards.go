@@ -8,10 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin := pm.GetPlugin(pluginID)
+func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
+	plugin := m.Plugin(pluginID)
 	if plugin == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
@@ -30,14 +31,14 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 			continue
 		}
 
-		dashboard, err := pm.LoadPluginDashboard(plugin.Id, include.Path)
+		dashboard, err := m.LoadPluginDashboard(plugin.ID, include.Path)
 		if err != nil {
 			return nil, err
 		}
 
 		res := &plugins.PluginDashboardInfoDTO{}
 		res.Path = include.Path
-		res.PluginId = plugin.Id
+		res.PluginId = plugin.ID
 		res.Title = dashboard.Title
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
 
@@ -70,8 +71,8 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 	return result, nil
 }
 
-func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
-	plugin := pm.GetPlugin(pluginID)
+func (m *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
+	plugin := m.Plugin(pluginID)
 	if plugin == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
@@ -98,4 +99,63 @@ func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Das
 	}
 
 	return models.NewDashboardFromJson(data), nil
+}
+
+func (m *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser) (plugins.PluginDashboardInfoDTO,
+	*models.Dashboard, error) {
+	var dashboard *models.Dashboard
+	if pluginID != "" {
+		var err error
+		if dashboard, err = m.LoadPluginDashboard(pluginID, path); err != nil {
+			return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
+		}
+	} else {
+		dashboard = models.NewDashboardFromJson(dashboardModel)
+	}
+
+	evaluator := &DashTemplateEvaluator{
+		template: dashboard.Data,
+		inputs:   inputs,
+	}
+
+	generatedDash, err := evaluator.Eval()
+	if err != nil {
+		return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
+	}
+
+	saveCmd := models.SaveDashboardCommand{
+		Dashboard: generatedDash,
+		OrgId:     orgID,
+		UserId:    user.UserId,
+		Overwrite: overwrite,
+		PluginId:  pluginID,
+		FolderId:  folderID,
+	}
+
+	dto := &dashboards.SaveDashboardDTO{
+		OrgId:     orgID,
+		Dashboard: saveCmd.GetDashboardModel(),
+		Overwrite: saveCmd.Overwrite,
+		User:      user,
+	}
+
+	savedDash, err := dashboards.NewService(m.sqlStore).ImportDashboard(dto)
+	if err != nil {
+		return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
+	}
+
+	return plugins.PluginDashboardInfoDTO{
+		PluginId:         pluginID,
+		Title:            savedDash.Title,
+		Path:             path,
+		Revision:         savedDash.Data.Get("revision").MustInt64(1),
+		FolderId:         savedDash.FolderId,
+		ImportedUri:      "db/" + savedDash.Slug,
+		ImportedUrl:      savedDash.GetUrl(),
+		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
+		Imported:         true,
+		DashboardId:      savedDash.Id,
+		Slug:             savedDash.Slug,
+	}, savedDash, nil
 }

@@ -66,7 +66,7 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider) *Service {
+func ProvideService(cfg *setting.Cfg, pluginManager plugins.Store, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
 		PluginManager:      pluginManager,
 		HTTPClientProvider: httpClientProvider,
@@ -75,7 +75,7 @@ func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientP
 }
 
 type Service struct {
-	PluginManager      plugins.Manager
+	PluginManager      plugins.Store
 	HTTPClientProvider httpclient.Provider
 	Cfg                *setting.Cfg
 }
@@ -84,7 +84,7 @@ type Service struct {
 type Executor struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
-	pluginManager plugins.Manager
+	pluginManager plugins.Store
 	cfg           *setting.Cfg
 }
 
@@ -535,7 +535,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 	req.Header.Set("Content-Type", "application/json")
 
 	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	plugin := e.pluginManager.Plugin(dsInfo.Type)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}

@@ -43,7 +43,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &pluginResolver{
+		service := &pluginStore{
 			plugins: map[string]*plugins.PluginV2{
 				pluginID: p,
 			},
@@ -68,7 +68,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &pluginResolver{
+		service := &pluginStore{
 			plugins: map[string]*plugins.PluginV2{
 				pluginID: p,
 			},
@@ -93,7 +93,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &pluginResolver{
+		service := &pluginStore{
 			plugins: map[string]*plugins.PluginV2{
 				pluginID: p,
 			},
@@ -116,7 +116,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &pluginResolver{
+		service := &pluginStore{
 			plugins: map[string]*plugins.PluginV2{},
 		}
 		l := &logger{}
@@ -137,7 +137,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &pluginResolver{
+		service := &pluginStore{
 			plugins: map[string]*plugins.PluginV2{
 				pluginID: {
 					Class: plugins.Core,
@@ -162,15 +162,15 @@ func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginManager plugins.Resolver,
+func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginManager plugins.Store,
 	logger log.Logger, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Cfg:            setting.NewCfg(),
-			PluginResolver: pluginManager,
-			log:            logger,
+			Cfg:         setting.NewCfg(),
+			PluginStore: pluginManager,
+			log:         logger,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -185,13 +185,13 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 	})
 }
 
-type pluginResolver struct {
-	plugins.Resolver
+type pluginStore struct {
+	plugins.Store
 
 	plugins map[string]*plugins.PluginV2
 }
 
-func (pm *pluginResolver) Plugin(id string) *plugins.PluginV2 {
+func (pm *pluginStore) Plugin(id string) *plugins.PluginV2 {
 	return pm.plugins[id]
 }
 

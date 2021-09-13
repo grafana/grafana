@@ -88,8 +88,9 @@ type HTTPServer struct {
 	BackendPluginManager      backendplugin.Manager
 	DataProxy                 *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator    models.PluginRequestValidator
-	PluginManagerV2           plugins.ManagerV2
-	PluginResolver            plugins.Resolver
+	PluginManagerV2           plugins.Client
+	PluginStore               plugins.Store
+	PluginDashboardManager    plugins.PluginDashboardManager
 	PluginStaticRouteResolver plugins.StaticRouteResolver
 	SearchService             *search.SearchService
 	ShortURLService           shorturls.Service
@@ -122,7 +123,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
 	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
-	pluginManager plugins.Manager, pluginManagerV2 plugins.ManagerV2, backendPM backendplugin.Manager, settingsProvider setting.Provider,
+	pluginManager plugins.Manager, pluginManagerV2 plugins.Client, backendPM backendplugin.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,

@@ -578,4 +578,4 @@ func (f *fakePluginManagerV2) Uninstall(ctx context.Context, pluginID string) er
 	return nil
 }
 
-var _ plugins.ManagerV2 = &fakePluginManagerV2{}
+var _ plugins.Client = &fakePluginManagerV2{}

@@ -39,3 +39,20 @@ type Signature struct {
 	SigningOrg string
 	Files      PluginFiles
 }
+
+type SignatureError struct {
+	PluginID string          `json:"pluginId"`
+	Status   SignatureStatus `json:"status"`
+}
+
+//const (
+//	signatureMissing  SignatureErrorCode = "signatureMissing"
+//	signatureModified SignatureErrorCode = "signatureModified"
+//	signatureInvalid  SignatureErrorCode = "signatureInvalid"
+//)
+//type SignatureErrorCode string
+//
+////type SignatureError struct {
+////	PluginID string             `json:"pluginId"`
+////	Code     SignatureErrorCode `json:"errorCode"`
+////}

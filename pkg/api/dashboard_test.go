@@ -39,7 +39,7 @@ func TestGetHomeDashboard(t *testing.T) {
 
 	hs := &HTTPServer{
 		Cfg: cfg, Bus: bus.New(),
-		PluginResolver: &fakePluginResolver{},
+		PluginStore: &fakePluginStore{},
 	}
 	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
@@ -1114,7 +1114,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
-			PluginResolver:        &fakePluginResolver{},
+			PluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 		}

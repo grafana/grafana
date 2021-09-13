@@ -152,10 +152,11 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 
 	// validate signatures
 	for _, plugin := range loadedPlugins {
-		signingError := signature.NewValidator(l.cfg, plugin.Class, l.AllowUnsignedPluginsCondition).Validate(plugin)
-		if signingError != nil {
+		signingError := signature.NewValidator(l.cfg, l.AllowUnsignedPluginsCondition).Validate(plugin) // covert to field
+		if signingError.Error() != "" {
 			logger.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
+			plugin.SignatureError = signingError
 			l.errs[plugin.ID] = signingError
 			continue
 		}

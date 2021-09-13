@@ -13,11 +13,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -36,11 +37,24 @@ type DataSourceProxy struct {
 	targetUrl         *url.URL
 	proxyPath         string
 	route             *plugins.AppPluginRoute
-	plugin            *plugins.DataSourcePlugin
+	pluginRoutes      []*plugins.AppPluginRoute
 	cfg               *setting.Cfg
 	clientProvider    httpclient.Provider
 	oAuthTokenService oauthtoken.OAuthTokenService
 }
+
+//type PluginRoute struct {
+//	Path      string                   `json:"path"`
+//	Method    string                   `json:"method"`
+//	ReqRole   models.RoleType          `json:"reqRole"`
+//	URL       string                   `json:"url"`
+//	URLParams []AppPluginRouteURLParam `json:"urlParams"`
+//	Headers   []AppPluginRouteHeader   `json:"headers"`
+//	//AuthType     string                   `json:"authType"`
+//	//TokenAuth    *JwtTokenAuth            `json:"tokenAuth"`
+//	//JwtTokenAuth *JwtTokenAuth            `json:"jwtTokenAuth"`
+//	Body json.RawMessage `json:"body"`
+//}
 
 type handleResponseTransport struct {
 	transport http.RoundTripper
@@ -71,7 +85,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.AppPluginRoute, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthTokenService oauthtoken.OAuthTokenService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
@@ -80,7 +94,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 
 	return &DataSourceProxy{
 		ds:                ds,
-		plugin:            plugin,
+		pluginRoutes:      pluginRoutes,
 		ctx:               ctx,
 		proxyPath:         proxyPath,
 		targetUrl:         targetURL,
@@ -264,27 +278,25 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// found route if there are any
-	if len(proxy.plugin.Routes) > 0 {
-		for _, route := range proxy.plugin.Routes {
-			// method match
-			if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
-				continue
-			}
-
-			// route match
-			if !strings.HasPrefix(proxy.proxyPath, route.Path) {
-				continue
-			}
-
-			if route.ReqRole.IsValid() {
-				if !proxy.ctx.HasUserRole(route.ReqRole) {
-					return errors.New("plugin proxy route access denied")
-				}
-			}
-
-			proxy.route = route
-			return nil
+	for _, route := range proxy.pluginRoutes {
+		// method match
+		if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
+			continue
 		}
+
+		// route match
+		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+			continue
+		}
+
+		if route.ReqRole.IsValid() {
+			if !proxy.ctx.HasUserRole(route.ReqRole) {
+				return errors.New("plugin proxy route access denied")
+			}
+		}
+
+		proxy.route = route
+		return nil
 	}
 
 	// Trailing validation below this point for routes that were not matched

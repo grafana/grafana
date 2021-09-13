@@ -300,9 +300,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
-			assert.Equal(t, uss.PluginManager.PanelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
-			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
+			assert.Equal(t, uss.pluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
+			assert.Equal(t, uss.pluginManager.PanelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
+			assert.Equal(t, uss.pluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())
@@ -567,7 +567,7 @@ func (pm *fakePluginManager) AppCount() int {
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStatsService) {
 	t.Helper()
 
-	uss.PluginManager = &fakePluginManager{
+	uss.pluginManager = &fakePluginManager{
 		dataSources: map[string]*plugins.DataSourcePlugin{
 			models.DS_ES: {
 				FrontendPluginBase: plugins.FrontendPluginBase{
@@ -616,7 +616,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		SQLStore:           sqlstore.InitTestDB(t),
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
-		PluginManager:      &fakePluginManager{},
+		pluginManager:      &fakePluginManager{},
 		grafanaLive:        newTestLive(t),
 	}
 }

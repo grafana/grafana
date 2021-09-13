@@ -20,7 +20,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 	}
-	pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+	pm := newManager(cfg, nil, nil, &sqlstore.SQLStore{})
 	err := pm.init()
 	require.NoError(t, err)
 

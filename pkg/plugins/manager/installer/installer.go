@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -33,7 +32,7 @@ type Installer struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	grafanaVersion      string
-	log                 plugins.PluginInstallerLogger
+	log                 Logger
 }
 
 const (
@@ -43,6 +42,10 @@ const (
 var (
 	reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
+
+type UpdateInfo struct {
+	PluginZipURL string
+}
 
 type Response4xxError struct {
 	Message    string
@@ -80,8 +83,8 @@ func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
-	return &Installer{
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) Installer {
+	return Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
@@ -410,18 +413,18 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
-func (i *Installer) GetUpdateInfo(pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+func (i *Installer) GetUpdateInfo(pluginID, version, pluginRepoURL string) (UpdateInfo, error) {
 	plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 	if err != nil {
-		return plugins.UpdateInfo{}, err
+		return UpdateInfo{}, err
 	}
 
 	v, err := i.selectVersion(&plugin, version)
 	if err != nil {
-		return plugins.UpdateInfo{}, err
+		return UpdateInfo{}, err
 	}
 
-	return plugins.UpdateInfo{
+	return UpdateInfo{
 		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", pluginRepoURL, pluginID, v.Version),
 	}, nil
 }

@@ -99,8 +99,8 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
-// getPluginSignatureState returns the signature state for a plugin.
-func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugins.Signature, error) {
+// pluginSignatureState returns the signature state for a plugin.
+func pluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugins.Signature, error) {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
