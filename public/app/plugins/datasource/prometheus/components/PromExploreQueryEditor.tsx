@@ -18,10 +18,6 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     if (query.exemplar === undefined) {
       onChange({ ...query, exemplar: true });
     }
-
-    if (!query.range && !query.instant) {
-      onChange({ ...query, instant: true, range: true });
-    }
   }, [onChange, query]);
 
   function onChangeQueryStep(value: string) {
@@ -67,7 +63,8 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       data={data}
       ExtraFieldElement={
         <PromExploreExtraField
-          queryType={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          // Select "both" as default option when Explore is opened. In legacy requests, range and instant can be undefined. In this case, we want to run queries with "both".
+          queryType={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
           stepValue={query.interval || ''}
           onQueryTypeChange={onQueryTypeChange}
           onStepChange={onStepChange}
