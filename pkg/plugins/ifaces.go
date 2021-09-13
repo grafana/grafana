@@ -28,7 +28,6 @@ type Manager interface {
 	// AppCount gets the number of apps.
 	AppCount() int
 	// GetEnabledPlugins gets enabled plugins.
-	// GetEnabledPlugins gets enabled plugins.
 	GetEnabledPlugins(orgID int64) (*EnabledPlugins, error)
 	// GrafanaLatestVersion gets the latest Grafana version.
 	GrafanaLatestVersion() string
@@ -74,11 +73,12 @@ type DataRequestHandler interface {
 }
 
 type PluginInstaller interface {
-	// Install finds the plugin given the provided information
-	// and installs in the provided plugins directory.
+	// Install finds the plugin given the provided information and installs in the provided plugins directory.
 	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
 	Uninstall(ctx context.Context, pluginPath string) error
+	// GetUpdateInfo returns update information if the requested plugin is supported on the running system.
+	GetUpdateInfo(pluginID, version, pluginRepoURL string) (UpdateInfo, error)
 }
 
 type PluginInstallerLogger interface {

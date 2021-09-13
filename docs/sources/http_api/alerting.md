@@ -7,9 +7,9 @@ aliases = ["/docs/grafana/latest/http_api/alerting/"]
 
 # Alerting API
 
->**Note:** This topic is relevant for the [legacy dashboard alerts]({{< relref "../alerting/old-alerting/_index.md" >}}) only. 
+> **Note:** This topic is relevant for the [legacy dashboard alerts]({{< relref "../alerting/old-alerting/_index.md" >}}) only.
 
-You can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).  Also, refer to [Grafana 8 alerts documentation]({{< relref "../alerting/unified-alerting/_index.md" >}}) for details on how to create and manage new alerts.
+You can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana 8 alerts documentation]({{< relref "../alerting/unified-alerting/_index.md" >}}) for details on how to create and manage new alerts.
 
 You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert.
 To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.
@@ -26,21 +26,21 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
-  Querystring Parameters:
 
-  These parameters are used as querystring parameters. For example:
+Querystring Parameters:
 
-  `/api/alerts?dashboardId=1`
+These parameters are used as querystring parameters. For example:
 
-  - **dashboardId** – Limit response to alerts in specified dashboard(s). You can specify multiple dashboards, e.g. dashboardId=23&dashboardId=35.
-  - **panelId** – Limit response to alert for a specified panel on a dashboard.
-  - **query** - Limit response to alerts having a name like this value.
-  - **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
-  - **limit** - Limit response to *X* number of alerts.
-  - **folderId** – Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders, e.g. folderId=23&folderId=35.
-  - **dashboardQuery** - Limit response to alerts having a dashboard name like this value.
-  - **dashboardTag** - Limit response to alerts of dashboards with specified tags. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. dashboardTag=tag1&dashboardTag=tag2.
+`/api/alerts?dashboardId=1`
 
+- **dashboardId** – Limit response to alerts in specified dashboard(s). You can specify multiple dashboards, e.g. dashboardId=23&dashboardId=35.
+- **panelId** – Limit response to alert for a specified panel on a dashboard.
+- **query** - Limit response to alerts having a name like this value.
+- **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
+- **limit** - Limit response to _X_ number of alerts.
+- **folderId** – Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders, e.g. folderId=23&folderId=35.
+- **dashboardQuery** - Limit response to alerts having a dashboard name like this value.
+- **dashboardTag** - Limit response to alerts of dashboards with specified tags. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. dashboardTag=tag1&dashboardTag=tag2.
 
 **Example Response**:
 

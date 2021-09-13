@@ -65,8 +65,9 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 ;apple_touch_icon =
 
 # Set to complete URL to override loading logo
-;loading_logo_url =
+;loading_logo =
 ```
+
 You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.
 An example follows for replacing the default footer and help links with new custom links.
 
@@ -93,6 +94,7 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
 > **Note:** The following two links are always present in the footer:
+
 - Grafana edition
 - Grafana version with build number
 

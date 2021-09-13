@@ -163,4 +163,23 @@ describe('LogAnalyticsDatasource', () => {
       expect(query).toContain(`%24__escapeMulti(%5Cgrafana-vm%2CNetwork(eth0)Total%20Bytes%20Received)`);
     });
   });
+
+  describe('when there is no raw range', () => {
+    it('should still generate a time filter condition', () => {
+      builder = new LogAnalyticsQuerystringBuilder(
+        'query=Tablename | where $__timeFilter()',
+        {
+          interval: '5m',
+          range: {
+            from: dateTime().subtract(24, 'hours'),
+            to: dateTime(),
+          },
+        },
+        'TimeGenerated'
+      );
+      const query = builder.generate().uriString;
+
+      expect(query).toContain('where%20TimeGenerated%20%20%3E%3D%20datetime(');
+    });
+  });
 });

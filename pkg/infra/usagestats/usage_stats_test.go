@@ -11,13 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +47,19 @@ func TestMetrics(t *testing.T) {
 				Dashboards:                1,
 				Datasources:               2,
 				Users:                     3,
+				Admins:                    31,
+				Editors:                   32,
+				Viewers:                   33,
 				ActiveUsers:               4,
+				ActiveAdmins:              21,
+				ActiveEditors:             22,
+				ActiveViewers:             23,
+				ActiveSessions:            24,
+				DailyActiveUsers:          25,
+				DailyActiveAdmins:         26,
+				DailyActiveEditors:        27,
+				DailyActiveViewers:        28,
+				DailyActiveSessions:       29,
 				Orgs:                      5,
 				Playlists:                 6,
 				Alerts:                    7,
@@ -297,6 +310,9 @@ func TestMetrics(t *testing.T) {
 			metrics := j.Get("metrics")
 			assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Admins, metrics.Get("stats.admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Editors, metrics.Get("stats.editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Viewers, metrics.Get("stats.viewers.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
 			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
@@ -304,6 +320,15 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveAdmins, metrics.Get("stats.active_admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveEditors, metrics.Get("stats.active_editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveViewers, metrics.Get("stats.active_viewers.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveSessions, metrics.Get("stats.active_sessions.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveUsers, metrics.Get("stats.daily_active_users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveAdmins, metrics.Get("stats.daily_active_admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveEditors, metrics.Get("stats.daily_active_editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveViewers, metrics.Get("stats.daily_active_viewers.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveSessions, metrics.Get("stats.daily_active_sessions.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Stars, metrics.Get("stats.stars.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Folders, metrics.Get("stats.folders.count").MustInt64())
@@ -323,6 +348,8 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
 			assert.Equal(t, 19, metrics.Get("stats.library_panels.count").MustInt())
 			assert.Equal(t, 20, metrics.Get("stats.library_variables.count").MustInt())
+			assert.Equal(t, 0, metrics.Get("stats.live_users.count").MustInt())
+			assert.Equal(t, 0, metrics.Get("stats.live_clients.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
@@ -606,9 +633,16 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		Bus:                bus.New(),
 		Cfg:                &cfg,
 		SQLStore:           sqlstore.InitTestDB(t),
-		License:            &licensing.OSSLicensingService{},
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
+		grafanaLive:        newTestLive(t),
 	}
+}
+
+func newTestLive(t *testing.T) *live.GrafanaLive {
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
+	require.NoError(t, err)
+	return gLive
 }

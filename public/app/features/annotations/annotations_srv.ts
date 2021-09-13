@@ -1,11 +1,6 @@
-// Libaries
 import { cloneDeep, flattenDeep } from 'lodash';
-// Components
-import coreModule from 'app/core/core_module';
-// Utils & Services
-import { dedupAnnotations } from './events_processing';
-// Types
-import { DashboardModel } from '../dashboard/state';
+import { lastValueFrom, Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import {
   AnnotationEvent,
   AppEvents,
@@ -16,10 +11,12 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+
+import coreModule from 'app/core/core_module';
+import { dedupAnnotations } from './events_processing';
+import { DashboardModel } from '../dashboard/state';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
@@ -154,11 +151,9 @@ export class AnnotationsSrv {
               });
             }
             // Note: future annotation lifecycle will use observables directly
-            return executeAnnotationQuery(options, datasource, annotation)
-              .toPromise()
-              .then((res) => {
-                return res.events ?? [];
-              });
+            return lastValueFrom(executeAnnotationQuery(options, datasource, annotation)).then((res) => {
+              return res.events ?? [];
+            });
           })
           .then((results) => {
             // store response in annotation object if this is a snapshot call

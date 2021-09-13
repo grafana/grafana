@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -35,30 +34,39 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &ContextHandler{},
-		InitPriority: registry.High,
-	})
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore) *ContextHandler {
+	return &ContextHandler{
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+		JWTAuthService:   jwtService,
+		RemoteCache:      remoteCache,
+		RenderService:    renderService,
+		SQLStore:         sqlStore,
+	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg             `inject:""`
-	AuthTokenService models.UserTokenService  `inject:""`
-	JWTAuthService   models.JWTService        `inject:""`
-	RemoteCache      *remotecache.RemoteCache `inject:""`
-	RenderService    rendering.Service        `inject:""`
-	SQLStore         *sqlstore.SQLStore       `inject:""`
+	Cfg              *setting.Cfg
+	AuthTokenService models.UserTokenService
+	JWTAuthService   models.JWTService
+	RemoteCache      *remotecache.RemoteCache
+	RenderService    rendering.Service
+	SQLStore         *sqlstore.SQLStore
 
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
 }
 
-// Init initializes the service.
-func (h *ContextHandler) Init() error {
+type reqContextKey struct{}
+
+// FromContext returns the ReqContext value stored in a context.Context, if any.
+func FromContext(c context.Context) *models.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*models.ReqContext); ok {
+		return reqCtx
+	}
 	return nil
 }
 
@@ -76,7 +84,11 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 		Logger:         log.New("context"),
 	}
 
-	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
+	// Inject ReqContext into a request context and replace the request instance in the macaron context
+	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Map(mContext.Req)
+
+	traceID, exists := cw.ExtractTraceID(mContext.Req.Context())
 	if exists {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
@@ -109,7 +121,6 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
-	reqContext.Data["ctx"] = reqContext
 
 	span.LogFields(
 		ol.String("uname", reqContext.Login),
@@ -287,7 +298,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
-		reqContext.Data["lookupTokenErr"] = err
+		reqContext.LookupTokenErr = err
 		return false
 	}
 

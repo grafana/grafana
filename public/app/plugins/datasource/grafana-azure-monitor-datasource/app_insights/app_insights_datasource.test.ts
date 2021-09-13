@@ -1,9 +1,10 @@
+import { lastValueFrom, of } from 'rxjs';
 import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
+import { setBackendSrv } from '@grafana/runtime';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { setBackendSrv } from '@grafana/runtime';
 import AppInsightsDatasource from './app_insights_datasource';
-import { of } from 'rxjs';
 
 const templateSrv = new TemplateSrv();
 
@@ -15,7 +16,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('AppInsightsDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx: any = {};
@@ -53,8 +53,8 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => {
-          return Promise.resolve({ data: response, status: 200 });
+        ctx.ds.getResource = jest.fn().mockImplementation(() => {
+          return Promise.resolve(response);
         });
       });
 
@@ -78,7 +78,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => {
+        ctx.ds.getResource = jest.fn().mockImplementation(() => {
           return Promise.reject(error);
         });
       });
@@ -106,7 +106,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => {
+        ctx.ds.getResource = jest.fn().mockImplementation(() => {
           return Promise.reject(error);
         });
       });
@@ -175,17 +175,14 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of datapoints', () => {
-        return ctx.ds
-          .query(options)
-          .toPromise()
-          .then((results: any) => {
-            expect(results.data.length).toBe(1);
-            const data = results.data[0] as DataFrame;
-            expect(getFrameDisplayName(data)).toEqual('PrimaryResult');
-            expect(data.fields[0].values.length).toEqual(1);
-            expect(data.fields[0].values.get(0)).toEqual(1558278660000);
-            expect(data.fields[1].values.get(0)).toEqual(2.2075);
-          });
+        return lastValueFrom(ctx.ds.query(options)).then((results: any) => {
+          expect(results.data.length).toBe(1);
+          const data = results.data[0] as DataFrame;
+          expect(getFrameDisplayName(data)).toEqual('PrimaryResult');
+          expect(data.fields[0].values.length).toEqual(1);
+          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+          expect(data.fields[1].values.get(0)).toEqual(2.2075);
+        });
       });
     });
 
@@ -217,17 +214,14 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of datapoints', () => {
-        return ctx.ds
-          .query(options)
-          .toPromise()
-          .then((results: any) => {
-            expect(results.data.length).toBe(1);
-            const data = results.data[0] as DataFrame;
-            expect(getFrameDisplayName(data)).toEqual('paritionA');
-            expect(data.fields[0].values.length).toEqual(1);
-            expect(data.fields[0].values.get(0)).toEqual(1558278660000);
-            expect(data.fields[1].values.get(0)).toEqual(2.2075);
-          });
+        return lastValueFrom(ctx.ds.query(options)).then((results: any) => {
+          expect(results.data.length).toBe(1);
+          const data = results.data[0] as DataFrame;
+          expect(getFrameDisplayName(data)).toEqual('paritionA');
+          expect(data.fields[0].values.length).toEqual(1);
+          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+          expect(data.fields[1].values.get(0)).toEqual(2.2075);
+        });
       });
     });
   });
@@ -281,16 +275,13 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a single datapoint', () => {
-        return ctx.ds
-          .query(options)
-          .toPromise()
-          .then((results: any) => {
-            expect(results.data.length).toBe(1);
-            const data = results.data[0] as DataFrame;
-            expect(getFrameDisplayName(data)).toEqual('exceptions/server');
-            expect(data.fields[0].values.get(0)).toEqual(1558278660000);
-            expect(data.fields[1].values.get(0)).toEqual(2.2075);
-          });
+        return lastValueFrom(ctx.ds.query(options)).then((results: any) => {
+          expect(results.data.length).toBe(1);
+          const data = results.data[0] as DataFrame;
+          expect(getFrameDisplayName(data)).toEqual('exceptions/server');
+          expect(data.fields[0].values.get(0)).toEqual(1558278660000);
+          expect(data.fields[1].values.get(0)).toEqual(2.2075);
+        });
       });
     });
 
@@ -327,19 +318,16 @@ describe('AppInsightsDatasource', () => {
       });
 
       it('should return a list of datapoints', () => {
-        return ctx.ds
-          .query(options)
-          .toPromise()
-          .then((results: any) => {
-            expect(results.data.length).toBe(1);
-            const data = results.data[0] as DataFrame;
-            expect(getFrameDisplayName(data)).toEqual('exceptions/server');
-            expect(data.fields[0].values.length).toEqual(2);
-            expect(data.fields[0].values.get(0)).toEqual(1504108800000);
-            expect(data.fields[1].values.get(0)).toEqual(3);
-            expect(data.fields[0].values.get(1)).toEqual(1504112400000);
-            expect(data.fields[1].values.get(1)).toEqual(6);
-          });
+        return lastValueFrom(ctx.ds.query(options)).then((results: any) => {
+          expect(results.data.length).toBe(1);
+          const data = results.data[0] as DataFrame;
+          expect(getFrameDisplayName(data)).toEqual('exceptions/server');
+          expect(data.fields[0].values.length).toEqual(2);
+          expect(data.fields[0].values.get(0)).toEqual(1504108800000);
+          expect(data.fields[1].values.get(0)).toEqual(3);
+          expect(data.fields[0].values.get(1)).toEqual(1504112400000);
+          expect(data.fields[1].values.get(1)).toEqual(6);
+        });
       });
     });
 
@@ -384,26 +372,23 @@ describe('AppInsightsDatasource', () => {
         });
 
         it('should return a list of datapoints', () => {
-          return ctx.ds
-            .query(options)
-            .toPromise()
-            .then((results: any) => {
-              expect(results.data.length).toBe(2);
-              let data = results.data[0] as DataFrame;
-              expect(getFrameDisplayName(data)).toEqual('exceptions/server{client/city="Miami"}');
-              expect(data.fields[1].values.length).toEqual(2);
-              expect(data.fields[0].values.get(0)).toEqual(1504108800000);
-              expect(data.fields[1].values.get(0)).toEqual(10);
-              expect(data.fields[0].values.get(1)).toEqual(1504112400000);
-              expect(data.fields[1].values.get(1)).toEqual(20);
-              data = results.data[1] as DataFrame;
-              expect(getFrameDisplayName(data)).toEqual('exceptions/server{client/city="San Antonio"}');
-              expect(data.fields[1].values.length).toEqual(2);
-              expect(data.fields[0].values.get(0)).toEqual(1504108800000);
-              expect(data.fields[1].values.get(0)).toEqual(1);
-              expect(data.fields[0].values.get(1)).toEqual(1504112400000);
-              expect(data.fields[1].values.get(1)).toEqual(2);
-            });
+          return lastValueFrom(ctx.ds.query(options)).then((results: any) => {
+            expect(results.data.length).toBe(2);
+            let data = results.data[0] as DataFrame;
+            expect(getFrameDisplayName(data)).toEqual('exceptions/server{client/city="Miami"}');
+            expect(data.fields[1].values.length).toEqual(2);
+            expect(data.fields[0].values.get(0)).toEqual(1504108800000);
+            expect(data.fields[1].values.get(0)).toEqual(10);
+            expect(data.fields[0].values.get(1)).toEqual(1504112400000);
+            expect(data.fields[1].values.get(1)).toEqual(20);
+            data = results.data[1] as DataFrame;
+            expect(getFrameDisplayName(data)).toEqual('exceptions/server{client/city="San Antonio"}');
+            expect(data.fields[1].values.length).toEqual(2);
+            expect(data.fields[0].values.get(0)).toEqual(1504108800000);
+            expect(data.fields[1].values.get(0)).toEqual(1);
+            expect(data.fields[0].values.get(1)).toEqual(1504112400000);
+            expect(data.fields[1].values.get(1)).toEqual(2);
+          });
         });
       });
     });
@@ -419,9 +404,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('/metrics/metadata');
-          return Promise.resolve({ data: response, status: 200 });
+        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+          expect(path).toContain('/metrics/metadata');
+          return Promise.resolve(response);
         });
       });
 
@@ -457,9 +442,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('/metrics/metadata');
-          return Promise.resolve({ data: response, status: 200 });
+        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+          expect(path).toContain('/metrics/metadata');
+          return Promise.resolve(response);
         });
       });
 
@@ -485,8 +470,8 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('/metrics/metadata');
+      ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+        expect(path).toContain('/metrics/metadata');
         return Promise.resolve({ data: response, status: 200 });
       });
     });
@@ -523,8 +508,8 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('/metrics/metadata');
+      ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+        expect(path).toContain('/metrics/metadata');
         return Promise.resolve({ data: response, status: 200 });
       });
     });

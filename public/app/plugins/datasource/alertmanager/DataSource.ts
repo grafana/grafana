@@ -1,6 +1,6 @@
+import { lastValueFrom, Observable, of } from 'rxjs';
 import { DataQuery, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
 
 export type AlertManagerQuery = {
   query: string;
@@ -35,7 +35,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery> {
       options.headers!.Authorization = this.instanceSettings.basicAuth;
     }
 
-    return getBackendSrv().fetch<any>(options).toPromise();
+    return lastValueFrom(getBackendSrv().fetch<any>(options));
   }
 
   async testDatasource() {

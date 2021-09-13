@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,9 +51,9 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	SQLStore             *sqlstore.SQLStore    `inject:""`
+	BackendPluginManager backendplugin.Manager
+	Cfg                  *setting.Cfg
+	SQLStore             *sqlstore.SQLStore
 	pluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error
@@ -75,28 +74,30 @@ type PluginManager struct {
 	pluginsMu    sync.RWMutex
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PluginManager",
-		Instance:     newManager(nil),
-		InitPriority: registry.MediumHigh,
-	})
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) (*PluginManager, error) {
+	pm := newManager(cfg, sqlStore, backendPM)
+	if err := pm.init(); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
-func newManager(cfg *setting.Cfg) *PluginManager {
+func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
 	return &PluginManager{
-		Cfg:         cfg,
-		dataSources: map[string]*plugins.DataSourcePlugin{},
-		plugins:     map[string]*plugins.PluginBase{},
-		panels:      map[string]*plugins.PanelPlugin{},
-		apps:        map[string]*plugins.AppPlugin{},
+		Cfg:                  cfg,
+		SQLStore:             sqlStore,
+		BackendPluginManager: backendPM,
+		dataSources:          map[string]*plugins.DataSourcePlugin{},
+		plugins:              map[string]*plugins.PluginBase{},
+		panels:               map[string]*plugins.PanelPlugin{},
+		apps:                 map[string]*plugins.AppPlugin{},
+		pluginScanningErrors: map[string]plugins.PluginError{},
+		log:                  log.New("plugins"),
 	}
 }
 
-func (pm *PluginManager) Init() error {
-	pm.log = log.New("plugins")
+func (pm *PluginManager) init() error {
 	plog = log.New("plugins")
-	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
 	pm.log.Info("Starting plugin search")
@@ -119,12 +120,7 @@ func (pm *PluginManager) Init() error {
 		}
 	}
 
-	err = pm.initExternalPlugins()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return pm.initExternalPlugins()
 }
 
 func (pm *PluginManager) initExternalPlugins() error {
@@ -516,6 +512,7 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	pb.Signature = pluginBase.Signature
 	pb.SignatureType = pluginBase.SignatureType
 	pb.SignatureOrg = pluginBase.SignatureOrg
+	pb.SignedFiles = pluginBase.SignedFiles
 
 	pm.plugins[pb.Id] = pb
 	pm.log.Debug("Successfully added plugin", "id", pb.Id)
@@ -585,6 +582,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	pluginCommon.Signature = signatureState.Status
 	pluginCommon.SignatureType = signatureState.Type
 	pluginCommon.SignatureOrg = signatureState.SigningOrg
+	pluginCommon.SignedFiles = signatureState.Files
 
 	s.plugins[currentDir] = &pluginCommon
 
@@ -726,6 +724,8 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 
 func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
 	plugin := pm.GetPlugin(pluginID)
+
+	var pluginZipURL string
 	if plugin != nil {
 		if plugin.IsCorePlugin {
 			return plugins.ErrInstallCorePlugin
@@ -738,14 +738,22 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 			}
 		}
 
+		// get plugin update information to confirm if upgrading is possible
+		updateInfo, err := pm.pluginInstaller.GetUpdateInfo(pluginID, version, grafanaComURL)
+		if err != nil {
+			return err
+		}
+
+		pluginZipURL = updateInfo.PluginZipURL
+
 		// remove existing installation of plugin
-		err := pm.Uninstall(context.Background(), plugin.Id)
+		err = pm.Uninstall(context.Background(), plugin.Id)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := pm.pluginInstaller.Install(ctx, pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
+	err := pm.pluginInstaller.Install(ctx, pluginID, version, pm.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
 	if err != nil {
 		return err
 	}

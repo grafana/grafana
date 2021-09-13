@@ -29,7 +29,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -116,6 +116,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 }
 
 export function buildQueryTransaction(
+  exploreId: ExploreId,
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
@@ -148,7 +149,7 @@ export function buildQueryTransaction(
     panelId: panelId as any,
     targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
-    requestId: 'explore',
+    requestId: 'explore_' + exploreId,
     rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },

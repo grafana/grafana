@@ -21,6 +21,7 @@ export const Aggregation: FC<Props> = (props) => {
   return (
     <QueryEditorField labelWidth={18} label="Group by function" data-testid="cloud-monitoring-aggregation">
       <Select
+        menuShouldPortal
         width={16}
         onChange={({ value }) => props.onChange(value!)}
         value={selected}

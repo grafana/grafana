@@ -218,7 +218,7 @@ type fakeFolderService struct {
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(ctx context.Context, limit int64) ([]*models.Folder, error) {
+func (s *fakeFolderService) GetFolders(ctx context.Context, limit int64, page int64) ([]*models.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
@@ -239,7 +239,7 @@ func (s *fakeFolderService) UpdateFolder(ctx context.Context, existingUID string
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, uid string) (*models.Folder, error) {
+func (s *fakeFolderService) DeleteFolder(ctx context.Context, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }

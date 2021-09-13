@@ -1,6 +1,7 @@
 import { vectorToArray } from './vectorToArray';
 import { Vector } from '../types';
 
+/** @public */
 export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T> {
   abstract get length(): number;
 

@@ -104,14 +104,14 @@ Continuous color modes use the percentage of a value relative to min and max to 
 
 Select a palette from the **Color scheme** list.
 
-| Color mode  | Description                    |
-| ------------------ | ----------------------- |
-| **Single color**   | Specify a single color, useful in an override rule  |
-| **From thresholds**   | Informs Grafana to take the color from the matching threshold  |
-| **Classic palette**   | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
-| **Green-Yellow-Red (by value)** | Continuous color scheme |
-| **Blue-Yellow-Red (by value)** | Continuous color scheme |
-| **Blues (by value)**  | Continuous color scheme (panel background to blue) |
-| **Reds (by value)**   |  Continuous color scheme (panel background color to blue) |
-| **Greens (by value)** | Continuous color scheme (panel background color to blue) |
-| **Purple (by value)** |  Continuous color scheme (panel background color to blue) |
+| Color mode                      | Description                                                                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single color**                | Specify a single color, useful in an override rule                                                                                                       |
+| **From thresholds**             | Informs Grafana to take the color from the matching threshold                                                                                            |
+| **Classic palette**             | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
+| **Green-Yellow-Red (by value)** | Continuous color scheme                                                                                                                                  |
+| **Blue-Yellow-Red (by value)**  | Continuous color scheme                                                                                                                                  |
+| **Blues (by value)**            | Continuous color scheme (panel background to blue)                                                                                                       |
+| **Reds (by value)**             | Continuous color scheme (panel background color to blue)                                                                                                 |
+| **Greens (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
+| **Purple (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |

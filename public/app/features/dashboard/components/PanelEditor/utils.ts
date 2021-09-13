@@ -1,11 +1,10 @@
-import { CSSProperties } from 'react';
 import { omit } from 'lodash';
 import { FieldConfigSource, PanelPlugin } from '@grafana/data';
 import { PanelModel } from '../../state/PanelModel';
 import { DisplayMode } from './types';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
-export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel): CSSProperties {
+export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel) {
   if (mode === DisplayMode.Fill) {
     return { width, height };
   }

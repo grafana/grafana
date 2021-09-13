@@ -489,6 +489,10 @@ Object {
           "fill": "dash",
         },
         "lineWidth": 1,
+        "scaleDistribution": Object {
+          "log": 10,
+          "type": "log",
+        },
         "showPoints": "never",
         "spanNulls": true,
       },

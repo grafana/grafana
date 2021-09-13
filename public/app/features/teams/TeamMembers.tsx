@@ -1,33 +1,46 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User } from 'app/types';
+import { TeamMember, OrgUser } from 'app/types';
 import { addTeamMember } from './state/actions';
 import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
-import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Button } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
-export interface Props {
-  members: TeamMember[];
-  searchMemberQuery: string;
-  addTeamMember: typeof addTeamMember;
-  setSearchMemberQuery: typeof setSearchMemberQuery;
-  syncEnabled: boolean;
-  editorsCanAdmin: boolean;
-  signedInUser: SignedInUser;
+function mapStateToProps(state: any) {
+  return {
+    searchMemberQuery: getSearchMemberQuery(state.team),
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
+  };
 }
+
+const mapDispatchToProps = {
+  addTeamMember,
+  setSearchMemberQuery,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {
+  members: TeamMember[];
+  syncEnabled: boolean;
+}
+
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export interface State {
   isAdding: boolean;
-  newTeamMember?: User | null;
+  newTeamMember?: SelectableValue<OrgUser['userId']> | null;
 }
 
 export class TeamMembers extends PureComponent<Props, State> {
@@ -44,7 +57,7 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onUserSelected = (user: User) => {
+  onUserSelected = (user: SelectableValue<OrgUser['userId']>) => {
     this.setState({ newTeamMember: user });
   };
 
@@ -132,17 +145,4 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: any) {
-  return {
-    searchMemberQuery: getSearchMemberQuery(state.team),
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
-  };
-}
-
-const mapDispatchToProps = {
-  addTeamMember,
-  setSearchMemberQuery,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+export default connector(TeamMembers);

@@ -27,7 +27,7 @@ type Manager interface {
 	// QueryData query data from a registered backend plugin.
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
 	// CallResource calls a plugin resource.
-	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
+	CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string)
 	// Get plugin by its ID.
 	Get(pluginID string) (Plugin, bool)
 }

@@ -73,6 +73,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
             <td className={styles.labelCell}>{row.fieldName}</td>
             <td className={styles.selectCell} data-testid={`${row.fieldName}-config-key`}>
               <Select
+                menuShouldPortal
                 options={configProps}
                 value={row.configOption}
                 placeholder={row.placeholder}

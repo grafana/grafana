@@ -60,6 +60,11 @@ describe('useFields hook', () => {
     result.current();
     expect(getFields).toHaveBeenLastCalledWith(['date'], timeRange);
 
+    // Histrogram only works on numbers
+    rerender('histogram');
+    result.current();
+    expect(getFields).toHaveBeenLastCalledWith(['number'], timeRange);
+
     // Geohash Grid only works on geo_point data
     rerender('geohash_grid');
     result.current();

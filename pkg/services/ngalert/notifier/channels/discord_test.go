@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestDiscordNotifier(t *testing.T) {
@@ -29,7 +28,7 @@ func TestDiscordNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       map[string]interface{}
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -57,8 +56,7 @@ func TestDiscordNotifier(t *testing.T) {
 				}},
 				"username": "Grafana",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name: "Custom config with multiple alerts",
@@ -95,13 +93,12 @@ func TestDiscordNotifier(t *testing.T) {
 				}},
 				"username": "Grafana",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name:         "Error in initialization",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find webhook url property in settings"},
+			expInitError: `failed to validate receiver "discord_testing" of type "discord": could not find webhook url property in settings`,
 		},
 	}
 
@@ -117,9 +114,8 @@ func TestDiscordNotifier(t *testing.T) {
 			}
 
 			dn, err := NewDiscordNotifier(m, tmpl)
-			if c.expInitError != nil {
-				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+			if c.expInitError != "" {
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

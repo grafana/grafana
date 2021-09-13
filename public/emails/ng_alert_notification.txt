@@ -1,0 +1,41 @@
+{{Subject .Subject "{{.Title}}"}}
+
+{{.Title}}
+----------------
+
+{{ .Alerts | len }} alert{{ if gt (len .Alerts) 1 }}s{{ end }} for
+{{ range .GroupLabels.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{ end }}
+{{ if gt (len .Alerts.Firing) 0 }}({{ .Alerts.Firing | len }}) Firing{{ end }}
+{{ range .Alerts.Firing }}
+Labels:
+{{ range .Labels.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{ end }}
+{{ if gt (len .Annotations) 0 }}
+Annotations:
+{{ end }}
+{{ range .Annotations.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{ end }}
+{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}({{ .Alerts.Resolved | len }}) Resolved{{ end
+}}
+{{ range .Alerts.Resolved }}
+Labels:
+{{ range .Labels.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{ end }}
+{{ if gt (len .Annotations) 0 }}
+Annotations:
+{{ end }}
+{{ range .Annotations.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{ end }}
+{{ end }}View your Alert rule:
+{{.RuleUrl}}
+
+Go to the Alerts page:
+{{.AlertPageUrl}}
+
+Sent by Grafana v{{.BuildVersion}} (c) 2021 Grafana Labs

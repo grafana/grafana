@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
 import { decodeGeohash } from './geohash';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -50,6 +51,7 @@ export interface LocationFieldMatchers {
   h3: FieldFinder;
   wkt: FieldFinder;
   lookup: FieldFinder;
+  gazetteer?: Gazetteer;
 }
 
 const defaultMatchers: LocationFieldMatchers = {
@@ -62,7 +64,7 @@ const defaultMatchers: LocationFieldMatchers = {
   lookup: matchLowerNames(new Set(['lookup'])),
 };
 
-export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMatchers {
+export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
   const info: LocationFieldMatchers = {
     ...defaultMatchers,
     mode: src?.mode ?? FrameGeometrySourceMode.Auto,
@@ -77,6 +79,7 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
       }
+      info.gazetteer = await getGazetteer(src?.gazetteer);
       break;
     case FrameGeometrySourceMode.Coords:
       if (src?.latitude) {
@@ -172,6 +175,18 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
       }
       break;
 
+    case FrameGeometrySourceMode.Lookup:
+      if (fields.lookup) {
+        if (location.gazetteer) {
+          info.points = getPointsFromGazetteer(location.gazetteer, fields.lookup);
+        } else {
+          info.warning = 'Gazetteer not found';
+        }
+      } else {
+        info.warning = 'Missing lookup field';
+      }
+      break;
+
     case FrameGeometrySourceMode.Auto:
       info.warning = 'Unable to find location fields';
   }
@@ -195,6 +210,18 @@ function getPointsFromGeohash(field: Field<string>): Point[] {
     const coords = decodeGeohash(field.values.get(i));
     if (coords) {
       points[i] = new Point(fromLonLat(coords));
+    }
+  }
+  return points;
+}
+
+function getPointsFromGazetteer(gaz: Gazetteer, field: Field<string>): Point[] {
+  const count = field.values.length;
+  const points = new Array<Point>(count);
+  for (let i = 0; i < count; i++) {
+    const info = gaz.find(field.values.get(i));
+    if (info?.coords) {
+      points[i] = new Point(fromLonLat(info.coords));
     }
   }
   return points;

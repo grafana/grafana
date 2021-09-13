@@ -2,71 +2,136 @@
 
 A Grafana _service_ encapsulates and exposes application logic to the rest of the application, through a set of related operations.
 
-Before a service can start communicating with the rest of Grafana, it needs to be registered in the _service registry_.
-
-The service registry keeps track of all available services during runtime. On start-up, Grafana uses the registry to build a dependency graph of services, a _service graph_.
+Grafana uses [Wire](https://github.com/google/wire), which is a code generation tool that automates connecting components using [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection). Dependencies between components are represented in Wire as function parameters, encouraging explicit initialization instead of global variables.
 
 Even though the services in Grafana do different things, they share a number of patterns. To better understand how a service works, let's build one from scratch!
 
-## Create a service
+Before a service can start communicating with the rest of Grafana, it needs to be registered with Wire, see `ProvideService` factory function/method in the service example below and how it's being referenced in the wire.go example below.
 
-To start building a service:
+When Wire is run it will inspect the parameters of `ProvideService` and make sure that all it's dependencies has been wired up and initialized properly.
 
-- Create a new Go package `mysvc` in the [pkg/services](/pkg/services) directory.
-- Create a `service.go` file inside your new directory.
-
-All services need to implement the [Service](https://godoc.org/github.com/grafana/grafana/pkg/registry#Service) interface:
+**Service example:**
 
 ```go
-type MyService struct {
+package example
+
+// Service service is the service responsible for X, Y and Z.
+type Service struct {
+    logger   log.Logger
+    cfg      *setting.Cfg
+    sqlStore *sqlstore.SQLStore
 }
 
-func (s *MyService) Init() error {
+// ProvideService provides Service as dependency for other services.
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*Service, error) {
+    s := &Service{
+        logger:     log.New("service"),
+        cfg:        cfg,
+        sqlStore:   sqlStore,
+    }
+
+    if s.IsDisabled() {
+        // skip certain initialization logic
+        return s, nil
+    }
+
+    if err := s.init(); err != nil {
+        return nil, err
+    }
+
+    return s, nil
+}
+
+func (s *Service) init() error {
+    // additional initialization logic...
     return nil
 }
-```
 
-The `Init` method is used to initialize and configure the service to make it ready to use. Services that return an error halt Grafana's startup process and cause the error to be logged as it exits.
+// IsDisabled returns true if the service is disabled.
+//
+// Satisfies the registry.CanBeDisabled interface which will guarantee
+// that Run() is not called if the service is disabled.
+func (s *Service) IsDisabled() bool {
+	return !s.cfg.IsServiceEnabled()
+}
 
-## Register a service
-
-Every service needs to be registered with the application for it to be included in the service graph.
-
-To register a service, call the `registry.RegisterService` function in an `init` function within your package.
-
-```go
-func init() {
-    registry.RegisterService(&MyService{})
+// Run runs the service in the background.
+//
+// Satisfies the registry.BackgroundService interface which will
+// guarantee that the service can be registered as a background service.
+func (s *Service) Run(ctx context.Context) error {
+    // background service logic...
+    <-ctx.Done()
+    return ctx.Err()
 }
 ```
 
-`init` functions are only run whenever a package is imported, so we also need to import the package in the application. In the `server.go` file under `pkg/server`, import the package we just created:
+[wire.go](/pkg/server/wire.go)
 
 ```go
-import _ "github.com/grafana/grafana/pkg/services/mysvc"
-```
+// +build wireinject
 
-## Dependencies
+package server
 
-Grafana uses the [inject](https://github.com/facebookgo/inject) package to inject dependencies during runtime.
+import (
+	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/example"
+    "github.com/grafana/grafana/pkg/services/sqlstore"
+)
 
-For example, to access the [bus](communication.md), add it to the `MyService` struct:
+var wireBasicSet = wire.NewSet(
+	example.ProvideService,
 
-```go
-type MyService struct {
-    Bus bus.Bus `inject:""`
+)
+
+var wireSet = wire.NewSet(
+	wireBasicSet,
+	sqlstore.ProvideService,
+)
+
+var wireTestSet = wire.NewSet(
+	wireBasicSet,
+)
+
+func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
+	wire.Build(wireExtsSet)
+	return &Server{}, nil
 }
-```
 
-You can also inject other services in the same way:
-
-```go
-type MyService struct {
-    Service other.Service `inject:""`
+func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, sqlStore *sqlstore.SQLStore) (*Server, error) {
+	wire.Build(wireExtsTestSet)
+	return &Server{}, nil
 }
+
 ```
 
-> **Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.
+## Background services
+
+A background service is a service that runs in the background of the lifecycle between Grafana starts up and shutdown. If you want a service to be run in the background your Service should satisfy the `registry.BackgroundService` interface and add it as argument to the [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) function and add it as argument to `NewBackgroundServiceRegistry` to register it as a background service.
+
+You can see an example implementation above of the Run method.
+
+## Disabled services
+
+If you want to guarantee that a background service is not run by Grafana when certain criteria is met/service is disabled your service should satisfy the `registry.CanBeDisabled` interface. When the service.IsDisabled method return false Grafana would not call the service.Run method.
+
+If you want to run certain initialization code if service is disabled or not, you need to handle this in the service factory method.
+
+You can see an example implementation above of the IsDisabled method and custom initialization code when service is disabled.
+
+## Run Wire / generate code
+
+When running `make run` it will call `make gen-go` on the first run. `gen-go` in turn will call the wire binary and generate the code in [wire_gen.go](/pkg/server/wire_gen.go). The wire binary is installed using [bingo](https://github.com/bwplotka/bingo) which will make sure to download and install all the tools needed, including the Wire binary at using a specific version.
+
+## OSS vs Enterprise
+
+Grafana OSS and Grafana Enterprise shares code and dependencies. Grafana Enterprise might need to override/extend certain OSS services.
+
+There's a [wireexts_oss.go](/pkg/server/wireexts_oss.go) that has the `wireinject` and `oss` build tags as requirements. Here services that might have other implementations, e.g. Grafana Enterprise, can be registered.
+
+Similarly, there's a wireexts_enterprise.go file in the Enterprise source code repository where other service implementations can be overridden/be registered.
+
+To extend oss background service create a specific background interface for that type and inject that type to [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) instead of the concrete type. Then add a wire binding for that interface in [wireexts_oss.go](/pkg/server/wireexts_oss.go) and in the enterprise wireexts file.
 
 ## Methods
 

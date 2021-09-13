@@ -68,7 +68,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), "uid")
+				_, err := service.DeleteFolder(context.Background(), "uid", false)
 				require.Error(t, err)
 				require.Equal(t, err, models.ErrFolderAccessDenied)
 			})
@@ -122,7 +122,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), "uid")
+				_, err := service.DeleteFolder(context.Background(), "uid", false)
 				require.NoError(t, err)
 			})
 

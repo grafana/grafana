@@ -18,7 +18,7 @@ interface Props {
   dashboard: DashboardModel;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
-  onPanelConfigChange: (configKey: string, value: any) => void;
+  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
 }
 
 export const OptionsPane: React.FC<Props> = ({

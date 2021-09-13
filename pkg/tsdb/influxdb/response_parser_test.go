@@ -8,39 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 )
 
 func prepare(text string) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(text))
-}
-
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func decodedFrames(t *testing.T, result plugins.DataQueryResult) data.Frames {
-	decoded, err := result.Dataframes.Decoded()
-	require.NoError(t, err)
-	return decoded
-}
-
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func assertSeriesName(t *testing.T, result plugins.DataQueryResult, index int, name string) {
-	decoded := decodedFrames(t, result)
-
-	frame := decoded[index]
-
-	require.Equal(t, frame.Name, name)
-
-	// the current version of the alerting-code does not use the dataframe-name
-	// when generating the metric-names for the alerts.
-	// instead, it goes through multiple attributes on the Field.
-	// we use the `field.Config.DisplayNameFromDS` attribute.
-
-	valueFieldConfig := frame.Fields[1].Config
-
-	require.NotNil(t, valueFieldConfig)
-	require.Equal(t, valueFieldConfig.DisplayNameFromDS, name)
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {
@@ -53,8 +28,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(prepare(response), query)
 
-		require.Nil(t, result.Dataframes)
-		require.Error(t, result.Error)
+		require.Nil(t, result.Responses["A"].Frames)
+		require.Error(t, result.Responses["A"].Error)
 	})
 
 	t.Run("Influxdb response parser should parse everything normally", func(t *testing.T) {
@@ -82,28 +57,28 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		`
 
 		query := &Query{}
+		labels, err := data.LabelsFromString("datacenter=America")
+		require.Nil(t, err)
+		newField := data.NewField("value", labels, []*float64{
+			pointer.Float64(222), pointer.Float64(222), nil,
+		})
+		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
+		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+				}),
+			newField,
+		)
 
 		result := parser.Parse(prepare(response), query)
 
-		decoded := decodedFrames(t, result)
-		require.Len(t, decoded, 2)
-		frame1 := decoded[0]
-		frame2 := decoded[1]
-
-		assertSeriesName(t, result, 0, "cpu.mean { datacenter: America }")
-		assertSeriesName(t, result, 1, "cpu.sum { datacenter: America }")
-
-		require.Len(t, frame1.Fields, 2)
-		require.Len(t, frame2.Fields, 2)
-
-		require.Equal(t, frame1.Fields[0].Len(), 3)
-		require.Equal(t, frame1.Fields[1].Len(), 3)
-		require.Equal(t, frame2.Fields[0].Len(), 3)
-		require.Equal(t, frame2.Fields[1].Len(), 3)
-
-		require.Equal(t, *frame1.Fields[1].At(1).(*float64), 222.0)
-		require.Equal(t, *frame2.Fields[1].At(1).(*float64), 333.0)
-		require.Nil(t, frame1.Fields[1].At(2))
+		frame := result.Responses["A"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
@@ -131,28 +106,26 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		query := &Query{}
 
+		newField := data.NewField("value", nil, []*float64{
+			pointer.Float64(50), nil, pointer.Float64(52),
+		})
+		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
+		testFrame := data.NewFrame("cpu.mean",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 1, 40, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 41, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 42, 0, time.UTC),
+				}),
+			newField,
+		)
+
 		result := parser.Parse(prepare(response), query)
 
-		// the current behavior is that we do not report an error, we turn the invalid value into `nil`
-		require.Nil(t, result.Error)
-		require.Equal(t, result.ErrorString, "")
-
-		decoded := decodedFrames(t, result)
-		require.Len(t, decoded, 1)
-
-		frame := decoded[0]
-
-		require.Len(t, frame.Fields, 2)
-
-		field1 := frame.Fields[0]
-		field2 := frame.Fields[1]
-
-		require.Equal(t, field1.Len(), 3)
-		require.Equal(t, field2.Len(), 3)
-
-		require.Equal(t, *field2.At(0).(*float64), 50.0)
-		require.Nil(t, field2.At(1))
-		require.Equal(t, *field2.At(2).(*float64), 52.0)
+		frame := result.Responses["A"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
@@ -181,27 +154,25 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		query := &Query{}
 
+		newField := data.NewField("value", nil, []*float64{
+			pointer.Float64(50), pointer.Float64(52),
+		})
+		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
+		testFrame := data.NewFrame("cpu.mean",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 1, 40, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 42, 0, time.UTC),
+				}),
+			newField,
+		)
+
 		result := parser.Parse(prepare(response), query)
 
-		// the current behavior is that we do not report an error, we skip the item with the invalid timestamp
-		require.Nil(t, result.Error)
-		require.Equal(t, result.ErrorString, "")
-
-		decoded := decodedFrames(t, result)
-		require.Len(t, decoded, 1)
-
-		frame := decoded[0]
-
-		require.Len(t, frame.Fields, 2)
-
-		field1 := frame.Fields[0]
-		field2 := frame.Fields[1]
-
-		require.Equal(t, field1.Len(), 2)
-		require.Equal(t, field2.Len(), 2)
-
-		require.Equal(t, *field2.At(0).(*float64), 50.0)
-		require.Equal(t, *field2.At(1).(*float64), 52.0)
+		frame := result.Responses["A"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
@@ -233,76 +204,170 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		`
 
 		query := &Query{Alias: "series alias"}
+		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
+		require.Nil(t, err)
+		newField := data.NewField("value", labels, []*float64{
+			pointer.Float64(222),
+		})
+		newField.Config = &data.FieldConfig{DisplayNameFromDS: "series alias"}
+		testFrame := data.NewFrame("series alias",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+				}),
+			newField,
+		)
 		result := parser.Parse(prepare(response), query)
 
-		assertSeriesName(t, result, 0, "series alias")
+		frame := result.Responses["A"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
 
-		assertSeriesName(t, result, 0, "alias 10m 10m")
+		frame = result.Responses["A"]
+		name := "alias 10m 10m"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias $col", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias mean")
-		assertSeriesName(t, result, 1, "alias sum")
+		frame = result.Responses["A"]
+		name = "alias mean"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+		name = "alias sum"
+		testFrame.Name = name
+		newField = data.NewField("value", labels, []*float64{
+			pointer.Float64(333),
+		})
+		testFrame.Fields[1] = newField
+		testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+		if diff := cmp.Diff(testFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias $tag_datacenter"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias America")
-
-		query = &Query{Alias: "alias $1"}
-		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias upc")
-
-		query = &Query{Alias: "alias $5"}
-		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias $5")
-
-		query = &Query{Alias: "series alias"}
-		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "series alias")
-
-		query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
-		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias 10m 10m")
+		frame = result.Responses["A"]
+		name = "alias America"
+		testFrame.Name = name
+		newField = data.NewField("value", labels, []*float64{
+			pointer.Float64(222),
+		})
+		testFrame.Fields[1] = newField
+		testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
+		frame = result.Responses["A"]
+		name = "alias mean"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
-		assertSeriesName(t, result, 0, "alias mean")
-		assertSeriesName(t, result, 1, "alias sum")
+		query = &Query{Alias: "alias $1"}
+		result = parser.Parse(prepare(response), query)
+		frame = result.Responses["A"]
+		name = "alias upc"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
+		query = &Query{Alias: "alias $5"}
+		result = parser.Parse(prepare(response), query)
+		frame = result.Responses["A"]
+		name = "alias $5"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
+		query = &Query{Alias: "series alias"}
+		result = parser.Parse(prepare(response), query)
+		frame = result.Responses["A"]
+		name = "series alias"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
+		query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
+		result = parser.Parse(prepare(response), query)
+		frame = result.Responses["A"]
+		name = "alias 10m 10m"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias [[tag_datacenter]]"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias America")
+		frame = result.Responses["A"]
+		name = "alias America"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias [[tag_dc.region.name]]"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias Northeast")
+		frame = result.Responses["A"]
+		name = "alias Northeast"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias [[tag_cluster-name]]"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias Cluster")
+		frame = result.Responses["A"]
+		name = "alias Cluster"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias Cluster/")
+		frame = result.Responses["A"]
+		name = "alias Cluster/"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
 		result = parser.Parse(prepare(response), query)
-
-		assertSeriesName(t, result, 0, "alias Cluster@")
+		frame = result.Responses["A"]
+		name = "alias Cluster@"
+		testFrame.Name = name
+		testFrame.Fields[1].Config.DisplayNameFromDS = name
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
@@ -333,19 +398,29 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		`
 
 		query := &Query{}
-
+		labels, err := data.LabelsFromString("datacenter=America")
+		require.Nil(t, err)
+		newField := data.NewField("value", labels, []*float64{
+			pointer.Float64(222), pointer.Float64(222), nil,
+		})
+		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
+		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+				}),
+			newField,
+		)
 		result := parser.Parse(prepare(response), query)
 
-		decoded := decodedFrames(t, result)
+		frame := result.Responses["A"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
-		require.Len(t, decoded, 2)
-
-		require.Equal(t, decoded[0].Fields[0].Len(), 3)
-		require.Equal(t, decoded[0].Fields[1].Len(), 3)
-		require.Equal(t, decoded[1].Fields[0].Len(), 3)
-		require.Equal(t, decoded[1].Fields[1].Len(), 3)
-
-		require.EqualError(t, result.Error, "query-timeout limit exceeded")
+		require.EqualError(t, result.Responses["A"].Error, "query-timeout limit exceeded")
 	})
 
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
@@ -361,9 +436,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(prepare(response), query)
 
-		require.Nil(t, result.Dataframes)
+		require.Nil(t, result.Responses["A"].Frames)
 
-		require.EqualError(t, result.Error, "error parsing query: found THING")
+		require.EqualError(t, result.Responses["A"].Error, "error parsing query: found THING")
 	})
 
 	t.Run("Influxdb response parser parseValue nil", func(t *testing.T) {

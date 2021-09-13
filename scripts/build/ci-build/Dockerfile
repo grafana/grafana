@@ -100,10 +100,10 @@ RUN tar xf cue_${CUE_VERSION}_Linux_x86_64.tar.gz -C /tmp cue
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20210208
 
-ENV GOVERSION=1.16.1 \
+ENV GOVERSION=1.17 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.16.0-1nodesource1 \
+    NODEVERSION=14.17.5-1nodesource1 \
     YARNVERSION=1.22.5-1
 
 # Use ARG so as not to persist environment variable in image

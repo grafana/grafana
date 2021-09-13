@@ -20,6 +20,7 @@ import { getConfigValue } from '../utils/config/get-config';
 import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse } from '../types/trace';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
+import { getTraceName } from './trace-viewer';
 
 // exported for tests
 export function deduplicateTags(spanTags: TraceKeyValuePair[]) {
@@ -121,7 +122,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   const tree = getTraceSpanIdsAsTree(data);
   const spans: TraceSpan[] = [];
   const svcCounts: Record<string, number> = {};
-  let traceName = '';
 
   // Eslint complains about number type not needed but then TS complains it is implicitly any.
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
@@ -135,9 +135,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     }
     const { serviceName } = span.process;
     svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
-    if (!span.references || !span.references.length) {
-      traceName = `${serviceName}: ${span.operationName}`;
-    }
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
@@ -166,6 +163,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     });
     spans.push(span);
   });
+  const traceName = getTraceName(spans);
   const services = Object.keys(svcCounts).map((name) => ({ name, numberOfSpans: svcCounts[name] }));
   return {
     services,

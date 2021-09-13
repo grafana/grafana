@@ -76,6 +76,7 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   return (
     <div className={selectClass}>
       <AsyncSelect
+        menuShouldPortal
         formatCreateLabel={formatCreateLabel}
         defaultOptions
         autoFocus
@@ -100,12 +101,13 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
 
   useEffect(() => {
-    doLoad();
+    doLoad('');
   }, [doLoad, loadOptions]);
 
   return (
     <div className={selectClass}>
       <Select
+        menuShouldPortal
         isLoading={loadState.loading}
         formatCreateLabel={formatCreateLabel}
         autoFocus

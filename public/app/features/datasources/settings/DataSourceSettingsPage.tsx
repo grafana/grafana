@@ -7,6 +7,8 @@ import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
+
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import {
@@ -19,8 +21,8 @@ import {
 import { getNavModel } from 'app/core/selectors/navModel';
 
 // Types
-import { StoreState } from 'app/types/';
-import { DataSourceSettings } from '@grafana/data';
+import { StoreState, AccessControlAction } from 'app/types/';
+import { DataSourceSettings, urlUtil } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
 import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
@@ -140,6 +142,14 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     );
   }
 
+  renderMissingEditRightsMessage() {
+    return (
+      <Alert severity="info" title="Missing rights">
+        You are not allowed to modify this data source. Please contact your server admin to update this data source.
+      </Alert>
+    );
+  }
+
   testDataSource() {
     const { dataSource, testDataSource } = this.props;
     testDataSource(dataSource.name);
@@ -147,6 +157,13 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   get hasDataSource() {
     return this.props.dataSource.id > 0;
+  }
+
+  onNavigateToExplore() {
+    const { dataSource } = this.props;
+    const exploreState = JSON.stringify({ datasource: dataSource.name, context: 'explore' });
+    const url = urlUtil.renderUrl('/explore', { left: exploreState });
+    return url;
   }
 
   renderLoadError(loadError: any) {
@@ -221,9 +238,11 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderSettings() {
     const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, plugin, testingStatus } = this.props;
+    const canEditDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
     return (
       <form onSubmit={this.onSubmit}>
+        {!canEditDataSources && this.renderMissingEditRightsMessage()}
         {this.isReadOnly() && this.renderIsReadOnlyMessage()}
         {dataSourceMeta.state && (
           <div className="gf-form">
@@ -269,6 +288,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           isReadOnly={this.isReadOnly()}
           onDelete={this.onDelete}
           onTest={(event) => this.onTest(event)}
+          exploreUrl={this.onNavigateToExplore()}
         />
       </form>
     );

@@ -173,6 +173,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         <div className="gf-form">
           <div className="gf-form-label">Use results from panel</div>
           <Select
+            menuShouldPortal
             placeholder="Choose Panel"
             isSearchable={true}
             options={panels}

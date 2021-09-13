@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 
 	"github.com/gorilla/websocket"
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -165,7 +166,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		stream, err := s.managedStreamRunner.GetOrCreateStream(user.OrgId, streamID)
+		stream, err := s.managedStreamRunner.GetOrCreateStream(user.OrgId, liveDto.ScopeStream, streamID)
 		if err != nil {
 			logger.Error("Error getting stream", "error", err)
 			continue
@@ -189,7 +190,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, mf := range metricFrames {
-			err := stream.Push(user.OrgId, mf.Key(), mf.Frame())
+			err := stream.Push(mf.Key(), mf.Frame())
 			if err != nil {
 				logger.Error("Error pushing frame", "error", err, "data", string(body))
 				return

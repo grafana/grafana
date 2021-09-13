@@ -16,9 +16,11 @@ import (
 type testStreamHandler struct {
 	logger log.Logger
 	frame  *data.Frame
+	// If Live Pipeline enabled we are sending the whole frame to have a chance to process stream with rules.
+	livePipelineEnabled bool
 }
 
-func newTestStreamHandler(logger log.Logger) *testStreamHandler {
+func newTestStreamHandler(logger log.Logger, livePipelineEnabled bool) *testStreamHandler {
 	frame := data.NewFrame("testdata",
 		data.NewField("Time", nil, make([]time.Time, 1)),
 		data.NewField("Value", nil, make([]float64, 1)),
@@ -26,8 +28,9 @@ func newTestStreamHandler(logger log.Logger) *testStreamHandler {
 		data.NewField("Max", nil, make([]float64, 1)),
 	)
 	return &testStreamHandler{
-		frame:  frame,
-		logger: logger,
+		frame:               frame,
+		logger:              logger,
+		livePipelineEnabled: livePipelineEnabled,
 	}
 }
 
@@ -117,9 +120,14 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 				continue
 			}
 
+			mode := data.IncludeDataOnly
+			if p.livePipelineEnabled {
+				mode = data.IncludeAll
+			}
+
 			if flight != nil {
 				flight.set(0, conf.Flight.getNextPoint(t))
-				if err := sender.SendFrame(flight.frame, data.IncludeDataOnly); err != nil {
+				if err := sender.SendFrame(flight.frame, mode); err != nil {
 					return err
 				}
 			} else {
@@ -130,7 +138,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 				p.frame.Fields[1].Set(0, walker)                                // Value
 				p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 				p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
-				if err := sender.SendFrame(p.frame, data.IncludeDataOnly); err != nil {
+				if err := sender.SendFrame(p.frame, mode); err != nil {
 					return err
 				}
 			}

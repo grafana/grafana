@@ -2,7 +2,7 @@ import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZo
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
-import { AxisPlacement } from '../config';
+import { AxisPlacement } from '@grafana/schema';
 import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
@@ -13,7 +13,7 @@ export interface AxisProps {
   size?: number | null;
   gap?: number;
   placement?: AxisPlacement;
-  grid?: boolean;
+  grid?: Axis.Grid;
   ticks?: boolean;
   formatValue?: (v: any) => string;
   incrs?: Axis.Incrs;
@@ -43,7 +43,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       label,
       show = true,
       placement = AxisPlacement.Auto,
-      grid = true,
+      grid = { show: true },
       ticks = true,
       gap = 5,
       formatValue,
@@ -71,11 +71,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       size: this.props.size ?? calculateAxisSize,
       gap,
 
-      // @ts-ignore (TODO: remove once uPlot adds this in 1.6.15)
       labelGap: 0,
 
       grid: {
-        show: grid,
+        show: grid.show,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
@@ -94,7 +93,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       config.label = label;
       config.labelSize = fontSize + labelPad;
       config.labelFont = font;
-      // @ts-ignore (TODO: remove once uPlot adds this in 1.6.15)
       config.labelGap = labelPad;
     }
 
@@ -145,9 +143,8 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   if (axis.side === 2) {
     axisSize += axis!.gap! + fontSize;
   } else if (values?.length) {
-    let longestValue = values.reduce((acc, value) => (value.length > acc.length ? value : acc), '');
-    // @ts-ignore (TODO: remove axis!.labelGap! once uPlot adds this in 1.6.15)
-    axisSize += axis!.gap! + axis!.labelGap! + measureText(longestValue, fontSize).width;
+    let maxTextWidth = values.reduce((acc, value) => Math.max(acc, measureText(value, fontSize).width), 0);
+    axisSize += axis!.gap! + axis!.labelGap! + maxTextWidth;
   }
 
   return Math.ceil(axisSize);

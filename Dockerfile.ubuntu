@@ -17,19 +17,19 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.16 AS go-builder
+FROM golang:1.17.0 AS go-builder
 
 WORKDIR /src/grafana
 
 COPY go.mod go.sum embed.go ./
-
-RUN go mod verify
-
 COPY build.go package.json ./
 COPY pkg pkg/
 COPY cue cue/
+COPY cue.mod cue.mod/
+COPY packages/grafana-schema packages/grafana-schema/
 COPY public/app/plugins public/app/plugins/
 
+RUN go mod verify
 RUN go run build.go build
 
 FROM ubuntu:20.04

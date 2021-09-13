@@ -99,8 +99,8 @@ describe('findTemplateVarChanges', () => {
       aaa: 'ignore me',
     };
 
-    expect(findTemplateVarChanges(b, a)).toEqual({ 'var-xyz': 'hello' });
-    expect(findTemplateVarChanges(a, b)).toEqual({ 'var-xyz': '' });
+    expect(findTemplateVarChanges(b, a)).toEqual({ 'var-xyz': { value: 'hello' } });
+    expect(findTemplateVarChanges(a, b)).toEqual({ 'var-xyz': { value: '', removed: true } });
   });
 
   it('then should ignore equal values', () => {
@@ -161,7 +161,7 @@ describe('findTemplateVarChanges', () => {
       'var-test': 'asd',
     };
 
-    expect(findTemplateVarChanges(a, b)!['var-test']).toEqual(['test']);
+    expect(findTemplateVarChanges(a, b)!['var-test']).toEqual({ value: ['test'] });
   });
 });
 

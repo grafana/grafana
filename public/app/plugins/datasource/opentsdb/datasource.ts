@@ -10,10 +10,10 @@ import {
   includes,
   isArray,
   isEmpty,
-  toPairs,
   map as _map,
+  toPairs,
 } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import {
@@ -133,8 +133,8 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     const queries = compact(qs);
 
-    return this.performTimeSeriesQuery(queries, start, end)
-      .pipe(
+    return lastValueFrom(
+      this.performTimeSeriesQuery(queries, start, end).pipe(
         map((results) => {
           if (results.data[0]) {
             let annotationObject = results.data[0].annotations;
@@ -156,7 +156,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
           return eventList;
         })
       )
-      .toPromise();
+    );
   }
 
   targetContainsTemplate(target: any) {
@@ -332,42 +332,42 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     const metricsQuery = interpolated.match(metricsRegex);
     if (metricsQuery) {
-      return this._performSuggestQuery(metricsQuery[1], 'metrics').pipe(map(responseTransform)).toPromise();
+      return lastValueFrom(this._performSuggestQuery(metricsQuery[1], 'metrics').pipe(map(responseTransform)));
     }
 
     const tagNamesQuery = interpolated.match(tagNamesRegex);
     if (tagNamesQuery) {
-      return this._performMetricKeyLookup(tagNamesQuery[1]).pipe(map(responseTransform)).toPromise();
+      return lastValueFrom(this._performMetricKeyLookup(tagNamesQuery[1]).pipe(map(responseTransform)));
     }
 
     const tagValuesQuery = interpolated.match(tagValuesRegex);
     if (tagValuesQuery) {
-      return this._performMetricKeyValueLookup(tagValuesQuery[1], tagValuesQuery[2])
-        .pipe(map(responseTransform))
-        .toPromise();
+      return lastValueFrom(
+        this._performMetricKeyValueLookup(tagValuesQuery[1], tagValuesQuery[2]).pipe(map(responseTransform))
+      );
     }
 
     const tagNamesSuggestQuery = interpolated.match(tagNamesSuggestRegex);
     if (tagNamesSuggestQuery) {
-      return this._performSuggestQuery(tagNamesSuggestQuery[1], 'tagk').pipe(map(responseTransform)).toPromise();
+      return lastValueFrom(this._performSuggestQuery(tagNamesSuggestQuery[1], 'tagk').pipe(map(responseTransform)));
     }
 
     const tagValuesSuggestQuery = interpolated.match(tagValuesSuggestRegex);
     if (tagValuesSuggestQuery) {
-      return this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv').pipe(map(responseTransform)).toPromise();
+      return lastValueFrom(this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv').pipe(map(responseTransform)));
     }
 
     return Promise.resolve([]);
   }
 
   testDatasource() {
-    return this._performSuggestQuery('cpu', 'metrics')
-      .pipe(
+    return lastValueFrom(
+      this._performSuggestQuery('cpu', 'metrics').pipe(
         map(() => {
           return { status: 'success', message: 'Data source is working' };
         })
       )
-      .toPromise();
+    );
   }
 
   getAggregators() {
@@ -375,8 +375,8 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       return this.aggregatorsPromise;
     }
 
-    this.aggregatorsPromise = this._get('/api/aggregators')
-      .pipe(
+    this.aggregatorsPromise = lastValueFrom(
+      this._get('/api/aggregators').pipe(
         map((result: any) => {
           if (result.data && isArray(result.data)) {
             return result.data.sort();
@@ -384,7 +384,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
           return [];
         })
       )
-      .toPromise();
+    );
     return this.aggregatorsPromise;
   }
 
@@ -393,8 +393,8 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       return this.filterTypesPromise;
     }
 
-    this.filterTypesPromise = this._get('/api/config/filters')
-      .pipe(
+    this.filterTypesPromise = lastValueFrom(
+      this._get('/api/config/filters').pipe(
         map((result: any) => {
           if (result.data) {
             return Object.keys(result.data).sort();
@@ -402,7 +402,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
           return [];
         })
       )
-      .toPromise();
+    );
     return this.filterTypesPromise;
   }
 

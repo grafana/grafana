@@ -11,6 +11,8 @@ The enhanced LDAP integration adds additional functionality on top of the [LDAP 
 
 > Enhanced LDAP integration is only available in Grafana Enterprise.
 
+> Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+
 ## LDAP group synchronization for teams
 
 {{< figure src="/static/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}

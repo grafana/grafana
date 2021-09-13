@@ -1,11 +1,10 @@
 import React from 'react';
+import { LegendDisplayMode, BarValueVisibility } from '@grafana/schema';
 import {
   PanelContext,
   PanelContextRoot,
   GraphNG,
   GraphNGProps,
-  BarValueVisibility,
-  LegendDisplayMode,
   UPlotConfigBuilder,
   VizLayout,
   VizLegend,

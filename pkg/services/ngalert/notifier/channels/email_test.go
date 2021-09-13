@@ -80,7 +80,7 @@ func TestEmailNotifier(t *testing.T) {
 			"subject":      "[FIRING:1]  (AlwaysFiring warning)",
 			"to":           []string{"someops@example.com", "somedev@example.com"},
 			"single_email": false,
-			"template":     "ng_alert_notification.html",
+			"template":     "ng_alert_notification",
 			"data": map[string]interface{}{
 				"Title":   "[FIRING:1]  (AlwaysFiring warning)",
 				"Message": "[FIRING:1]  (AlwaysFiring warning)",

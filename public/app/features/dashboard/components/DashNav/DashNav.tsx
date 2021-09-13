@@ -1,6 +1,6 @@
 // Libaries
 import React, { PureComponent, FC, ReactNode } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 // Utils & Services
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
@@ -12,12 +12,18 @@ import { locationUtil, textUtil } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+
+const mapDispatchToProps = {
+  updateTimeZoneForSession,
+};
+
+const connector = connect(null, mapDispatchToProps);
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -27,10 +33,6 @@ export interface OwnProps {
   folderTitle?: string;
   title: string;
   onAddPanel: () => void;
-}
-
-interface DispatchProps {
-  updateTimeZoneForSession: typeof updateTimeZoneForSession;
 }
 
 interface DashNavButtonModel {
@@ -50,7 +52,7 @@ export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
 
-type Props = OwnProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class DashNav extends PureComponent<Props> {
   constructor(props: Props) {
@@ -114,9 +116,10 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canStar) {
+      let desc = isStarred ? 'Unmark as favorite' : 'Mark as favorite';
       buttons.push(
         <DashNavButton
-          tooltip="Mark as favorite"
+          tooltip={desc}
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
           iconSize="lg"
@@ -127,11 +130,12 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canShare) {
+      let desc = 'Share dashboard or panel';
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Share dashboard or panel"
+              tooltip={desc}
               icon="share-alt"
               iconSize="lg"
               onClick={() => {
@@ -261,10 +265,4 @@ class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateTimeZoneForSession,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(DashNav);
+export default connector(DashNav);

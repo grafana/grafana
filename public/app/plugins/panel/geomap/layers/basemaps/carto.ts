@@ -31,7 +31,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<CartoConfig>, theme: GrafanaTheme2) => ({
+  create: async (map: Map, options: MapLayerOptions<CartoConfig>, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
       let style = cfg.theme as string;

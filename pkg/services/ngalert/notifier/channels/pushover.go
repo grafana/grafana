@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -43,7 +42,7 @@ type PushoverNotifier struct {
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template) (*PushoverNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No settings supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
@@ -64,10 +63,10 @@ func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template)
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if userKey == "" {
-		return nil, alerting.ValidationError{Reason: "user key not found"}
+		return nil, receiverInitError{Cfg: *model, Reason: "user key not found"}
 	}
 	if APIToken == "" {
-		return nil, alerting.ValidationError{Reason: "API token not found"}
+		return nil, receiverInitError{Cfg: *model, Reason: "API token not found"}
 	}
 	return &PushoverNotifier{
 		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{

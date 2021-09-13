@@ -18,10 +18,10 @@ export default class ResponseParser {
       return list;
     }
 
-    for (let i = 0; i < result.data.value.length; i++) {
-      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
-        const value = get(result.data.value[i], valueFieldName);
-        const text = get(result.data.value[i], textFieldName, value);
+    for (let i = 0; i < result.value.length; i++) {
+      if (!find(list, ['value', get(result.value[i], valueFieldName)])) {
+        const value = get(result.value[i], valueFieldName);
+        const text = get(result.value[i], textFieldName, value);
 
         list.push({
           text: text,
@@ -39,11 +39,11 @@ export default class ResponseParser {
       return list;
     }
 
-    for (let i = 0; i < result.data.value.length; i++) {
-      if (result.data.value[i].type === metricDefinition) {
+    for (let i = 0; i < result.value.length; i++) {
+      if (result.value[i].type === metricDefinition) {
         list.push({
-          text: result.data.value[i].name,
-          value: result.data.value[i].name,
+          text: result.value[i].name,
+          value: result.value[i].name,
         });
       }
     }
@@ -113,11 +113,11 @@ export default class ResponseParser {
 
     const valueFieldName = 'subscriptionId';
     const textFieldName = 'displayName';
-    for (let i = 0; i < result.data.value.length; i++) {
-      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
+    for (let i = 0; i < result.value.length; i++) {
+      if (!find(list, ['value', get(result.value[i], valueFieldName)])) {
         list.push({
-          text: `${get(result.data.value[i], textFieldName)}`,
-          value: get(result.data.value[i], valueFieldName),
+          text: `${get(result.value[i], textFieldName)}`,
+          value: get(result.value[i], valueFieldName),
         });
       }
     }

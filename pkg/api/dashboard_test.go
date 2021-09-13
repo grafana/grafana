@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 	"testing"
 
@@ -22,13 +23,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}}
+	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
+	require.NoError(t, err)
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
@@ -36,7 +41,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg: cfg, Bus: bus.New(),
 		PluginManager: &fakePluginManager{},
 	}
-	hs.Bus.AddHandler(func(query *models.GetPreferencesWithDefaultsQuery) error {
+	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
 			HomeDashboardId: 0,
 		}
@@ -82,10 +87,8 @@ type testState struct {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
-	gLive := live.NewGrafanaLive()
-	gLive.RouteRegister = routing.NewRouteRegister()
-	gLive.Cfg = &setting.Cfg{AppURL: "http://localhost:3000/"}
-	err := gLive.Init()
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
 	require.NoError(t, err)
 	return gLive
 }

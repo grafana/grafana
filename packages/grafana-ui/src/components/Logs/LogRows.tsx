@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
 import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
-import { Themeable } from '../../types/theme';
-import { withTheme } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { withTheme2 } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
@@ -12,7 +12,7 @@ import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
@@ -20,6 +20,7 @@ export interface Props extends Themeable {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   timeZone: TimeZone;
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
@@ -84,6 +85,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       showLabels,
       showTime,
       wrapLogMessage,
+      prettifyLogMessage,
       logRows,
       deduplicatedRows,
       highlighterExpressions,
@@ -135,6 +137,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showTime={showTime}
                 showDetectedFields={showDetectedFields}
                 wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
                 timeZone={timeZone}
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
@@ -160,6 +163,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showTime={showTime}
                 showDetectedFields={showDetectedFields}
                 wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
                 timeZone={timeZone}
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
@@ -182,5 +186,5 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   }
 }
 
-export const LogRows = withTheme(UnThemedLogRows);
+export const LogRows = withTheme2(UnThemedLogRows);
 LogRows.displayName = 'LogsRows';

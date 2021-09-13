@@ -145,6 +145,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 aria-label="User preferences home dashboard drop down"
               >
                 <Select
+                  menuShouldPortal
                   value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
                   getOptionValue={(i) => i.id}
                   getOptionLabel={this.getFullDashName}

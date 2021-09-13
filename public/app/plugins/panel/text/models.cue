@@ -14,11 +14,11 @@
 
 package grafanaschema
 
-Family: {
+Panel: {
     lineages: [
         [
             {
-                TextMode: "html" | "markdown" @cuetsy(targetType="enum",withName="TextMode") 
+                TextMode: "html" | "markdown" @cuetsy(kind="enum",withName="TextMode")
 
                 PanelOptions: {
                     mode: TextMode | *"markdown"

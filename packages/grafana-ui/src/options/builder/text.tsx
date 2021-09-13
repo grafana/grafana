@@ -1,4 +1,4 @@
-import { OptionsWithTextFormatting } from '../models.gen';
+import { OptionsWithTextFormatting } from '@grafana/schema';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 /**
