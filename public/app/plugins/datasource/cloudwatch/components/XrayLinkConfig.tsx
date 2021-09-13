@@ -30,7 +30,7 @@ export function XrayLinkConfig({ datasourceUid, onChange }: Props) {
       <h3 className="page-heading">X-ray trace link</h3>
 
       <div className={styles.infoText}>
-        Grafana will automatically create a link to a trace in X-ray data source if logs contain xrayTraceId field
+        Grafana will automatically create a link to a trace in X-ray data source if logs contain @xrayTraceId field
       </div>
 
       {!hasXrayDatasource && (
