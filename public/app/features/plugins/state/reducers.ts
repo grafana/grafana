@@ -52,7 +52,9 @@ export const {
   panelPluginLoaded,
 } = pluginsSlice.actions;
 
-export const pluginsReducer = config.pluginAdminEnabled ? pluginCatalogReducer : pluginsSlice.reducer;
+export const pluginsReducer: typeof pluginsSlice.reducer = config.pluginAdminEnabled
+  ? pluginCatalogReducer
+  : pluginsSlice.reducer;
 
 export default {
   plugins: pluginsReducer,
