@@ -10,11 +10,30 @@ export const getForcedLoginUrl = (url: string) => {
 };
 
 export const isLinkActive = (pathname: string, link: NavModelItem) => {
-  return Boolean(
-    link.url === pathname ||
-      (link.url && link.url !== '/' && pathname.startsWith(link.url)) ||
-      link.children?.some((childLink) => childLink.url && childLink.url !== '/' && pathname.startsWith(childLink.url))
-  );
+  if (link.url === pathname) {
+    // exact match
+    return true;
+  } else if (link.url && link.url !== '/' && pathname.startsWith(link.url)) {
+    // partial match
+    if (pathname === '/dashboards/folder/new') {
+      // ignore this partial match since there is already an exact match under the '+' route
+      // TODO remove this ignore once the '+' button is moved under the dashboard link
+      return false;
+    }
+    return true;
+  } else if (link.url === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
+    // alert channel match
+    // TODO refactor routes such that we don't need this custom logic
+    return true;
+  } else if (link.url === '/' && pathname.startsWith('/d/')) {
+    // dashboard match
+    // TODO refactor routes such that we don't need this custom logic
+    return true;
+  } else if (link.children?.some((childLink) => isLinkActive(pathname, childLink))) {
+    // child match
+    return true;
+  }
+  return false;
 };
 
 export const isSearchActive = (location: Location<unknown>) => {
