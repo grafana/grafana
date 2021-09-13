@@ -72,6 +72,8 @@ Grafana also attempts to map teams through OAuth as described below.
 
 Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result should be a string array of groups.
 
+Furthermore, Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
+
 See [JMESPath examples](#jmespath-examples) for more information.
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
@@ -126,6 +128,8 @@ scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
 token_url = https://bitbucket.org/site/oauth2/access_token
 api_url = https://api.bitbucket.org/2.0/user
+teams_url = https://api.bitbucket.org/2.0/user/permissions/workspaces
+team_ids_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
 ```

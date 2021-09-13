@@ -1,10 +1,9 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { isEmpty } from 'lodash';
 
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { ExploreQueryFieldProps, PanelData } from '@grafana/data';
 import { LegacyForms, ValidationEvents, EventsWithValidation, Icon } from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
-import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchJsonData } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchJsonData, ExecutedQueryPreview } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryField, Alias, MetricsQueryFieldsEditor } from './';
 
@@ -31,7 +30,7 @@ export const normalizeQuery = ({
   region,
   id,
   alias,
-  statistics,
+  statistic,
   period,
   ...rest
 }: CloudWatchMetricsQuery): CloudWatchMetricsQuery => {
@@ -43,7 +42,7 @@ export const normalizeQuery = ({
     region: region || 'default',
     id: id || '',
     alias: alias || '',
-    statistics: isEmpty(statistics) ? ['Average'] : statistics,
+    statistic: statistic ?? 'Average',
     period: period || '',
     ...rest,
   };
@@ -65,55 +64,65 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   }
 
+  getExecutedQueryPreview(data?: PanelData): ExecutedQueryPreview {
+    if (!(data?.series.length && data?.series[0].meta?.custom)) {
+      return {
+        executedQuery: '',
+        period: '',
+        id: '',
+      };
+    }
+
+    return {
+      executedQuery: data?.series[0].meta.executedQueryString ?? '',
+      period: data.series[0].meta.custom['period'],
+      id: data.series[0].meta.custom['id'],
+    };
+  }
+
   render() {
     const { data, onRunQuery } = this.props;
     const metricsQuery = this.props.query as CloudWatchMetricsQuery;
     const { showMeta } = this.state;
     const query = normalizeQuery(metricsQuery);
-    const executedQueries =
-      data && data.series.length && data.series[0].meta && data.state === 'Done'
-        ? data.series[0].meta.executedQueryString
-        : null;
-
+    const executedQueryPreview = this.getExecutedQueryPreview(data);
     return (
       <>
         <MetricsQueryFieldsEditor {...{ ...this.props, query }}></MetricsQueryFieldsEditor>
-        {query.statistics.length <= 1 && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <QueryField
-                label="Id"
-                tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
-              >
-                <Input
-                  className="gf-form-input width-8"
-                  onBlur={onRunQuery}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    this.onChange({ ...metricsQuery, id: event.target.value })
-                  }
-                  validationEvents={idValidationEvents}
-                  value={query.id}
-                />
-              </QueryField>
-            </div>
-            <div className="gf-form gf-form--grow">
-              <QueryField
-                className="gf-form--grow"
-                label="Expression"
-                tooltip="Optionally you can add an expression here. Please note that if a math expression that is referencing other queries is being used, it will not be possible to create an alert rule based on this query"
-              >
-                <Input
-                  className="gf-form-input"
-                  onBlur={onRunQuery}
-                  value={query.expression || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    this.onChange({ ...metricsQuery, expression: event.target.value })
-                  }
-                />
-              </QueryField>
-            </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <QueryField
+              label="Id"
+              tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
+            >
+              <Input
+                className="gf-form-input width-8"
+                onBlur={onRunQuery}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  this.onChange({ ...metricsQuery, id: event.target.value })
+                }
+                validationEvents={idValidationEvents}
+                value={query.id}
+              />
+            </QueryField>
           </div>
-        )}
+          <div className="gf-form gf-form--grow">
+            <QueryField
+              className="gf-form--grow"
+              label="Expression"
+              tooltip="Optionally you can add an expression here. Please note that if a math expression that is referencing other queries is being used, it will not be possible to create an alert rule based on this query"
+            >
+              <Input
+                className="gf-form-input"
+                onBlur={onRunQuery}
+                value={query.expression || ''}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  this.onChange({ ...metricsQuery, expression: event.target.value })
+                }
+              />
+            </QueryField>
+          </div>
+        </div>
         <div className="gf-form-inline">
           <div className="gf-form">
             <QueryField label="Period" tooltip="Minimum interval between points in seconds">
@@ -153,21 +162,20 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             <label className="gf-form-label">
               <a
                 onClick={() =>
-                  executedQueries &&
+                  executedQueryPreview &&
                   this.setState({
                     showMeta: !showMeta,
                   })
                 }
               >
-                <Icon name={showMeta && executedQueries ? 'angle-down' : 'angle-right'} />{' '}
-                {showMeta && executedQueries ? 'Hide' : 'Show'} Query Preview
+                <Icon name={showMeta ? 'angle-down' : 'angle-right'} /> {showMeta ? 'Hide' : 'Show'} Query Preview
               </a>
             </label>
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
-          {showMeta && executedQueries && (
+          {showMeta && (
             <table className="filter-table form-inline">
               <thead>
                 <tr>
@@ -178,13 +186,11 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
                 </tr>
               </thead>
               <tbody>
-                {JSON.parse(executedQueries).map(({ ID, Expression, Period }: any) => (
-                  <tr key={ID}>
-                    <td>{ID}</td>
-                    <td>{Expression}</td>
-                    <td>{Period}</td>
-                  </tr>
-                ))}
+                <tr>
+                  <td>{executedQueryPreview.id}</td>
+                  <td>{executedQueryPreview.executedQuery}</td>
+                  <td>{executedQueryPreview.period}</td>
+                </tr>
               </tbody>
             </table>
           )}

@@ -5,7 +5,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { TooltipDisplayMode } from '@grafana/schema';
 import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2 } from '@grafana/ui';
 import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
@@ -25,10 +24,10 @@ import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { ExploreGraph } from './ExploreGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -191,16 +190,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <Collapse label="Graph" loading={loading} isOpen>
-        <ExploreGraphNGPanel
+        <ExploreGraph
           data={graphResult!}
           height={400}
           width={width - spacing}
-          tooltipDisplayMode={TooltipDisplayMode.Single}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
-          onUpdateTimeRange={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
           splitOpenFn={splitOpen}
+          loadingState={queryResponse.state}
         />
       </Collapse>
     );
@@ -219,11 +217,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme } = this.props;
+    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
         exploreId={exploreId}
+        loadingState={queryResponse.state}
         syncedTimes={syncedTimes}
         width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}

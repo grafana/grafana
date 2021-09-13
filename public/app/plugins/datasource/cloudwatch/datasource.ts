@@ -263,8 +263,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     const validMetricsQueries = metricQueries
       .filter(
         (item) =>
-          (!!item.region && !!item.namespace && !!item.metricName && !isEmpty(item.statistics)) ||
-          item.expression?.length > 0
+          (!!item.region && !!item.namespace && !!item.metricName && !!item.statistic) || item.expression?.length > 0
       )
       .map(
         (item: CloudWatchMetricsQuery): MetricQuery => {
@@ -272,24 +271,10 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
           item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
           item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-          item.statistics = item.statistics.map((stat) => this.replace(stat, options.scopedVars, true, 'statistics'));
+          item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
           item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
           item.id = this.templateSrv.replace(item.id, options.scopedVars);
           item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
-
-          // valid ExtendedStatistics is like p90.00, check the pattern
-          const hasInvalidStatistics = item.statistics.some((s) => {
-            if (s.indexOf('p') === 0) {
-              const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-              return !matches || matches[0] !== s;
-            }
-
-            return false;
-          });
-
-          if (hasInvalidStatistics) {
-            throw { message: 'Invalid extended statistics' };
-          }
 
           return {
             intervalMs: options.intervalMs,
@@ -558,22 +543,32 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
         };
       }),
       catchError((err) => {
-        if (/^Throttling:.*/.test(err.data.message)) {
+        const isFrameError = err.data.results;
+
+        // Error is not frame specific
+        if (!isFrameError && err.data && err.data.message === 'Metric request error' && err.data.error) {
+          err.message = err.data.error;
+          return throwError(() => err);
+        }
+
+        // The error is either for a specific frame or for all the frames
+        const results: Array<{ error?: string }> = Object.values(err.data.results);
+        const firstErrorResult = results.find((r) => r.error);
+        if (firstErrorResult) {
+          err.message = firstErrorResult.error;
+        }
+
+        if (results.some((r) => r.error && /^Throttling:.*/.test(r.error))) {
           const failedRedIds = Object.keys(err.data.results);
           const regionsAffected = Object.values(request.queries).reduce(
             (res: string[], { refId, region }) =>
               (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []
           ) as string[];
-
           regionsAffected.forEach((region) => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
         }
 
-        if (err.data && err.data.message === 'Metric request error' && err.data.error) {
-          err.data.message = err.data.error;
-        }
-
-        return throwError(err);
+        return throwError(() => err);
       })
     );
   }
@@ -827,7 +822,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
   annotationQuery(options: any) {
     const annotation = options.annotation;
-    const statistics = annotation.statistics.map((s: any) => this.templateSrv.replace(s));
+    const statistic = this.templateSrv.replace(annotation.statistic);
     const defaultPeriod = annotation.prefixMatching ? '' : '300';
     let period = annotation.period || defaultPeriod;
     period = parseInt(period, 10);
@@ -837,7 +832,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       namespace: this.templateSrv.replace(annotation.namespace),
       metricName: this.templateSrv.replace(annotation.metricName),
       dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
-      statistics: statistics,
+      statistic: statistic,
       period: period,
       actionPrefix: annotation.actionPrefix || '',
       alarmNamePrefix: annotation.alarmNamePrefix || '',
