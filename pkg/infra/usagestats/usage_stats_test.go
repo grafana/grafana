@@ -309,6 +309,10 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, runtime.GOOS, j.Get("os").MustString())
 			assert.Equal(t, runtime.GOARCH, j.Get("arch").MustString())
 
+			usageId := uss.GetUsageStatsId(context.Background())
+			assert.NotEmpty(t, usageId)
+			assert.Equal(t, usageId, j.Get("usageStatsId").MustString())
+
 			metrics := j.Get("metrics")
 			assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
@@ -395,6 +399,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
 			assert.Equal(t, 6, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
+
+			assert.LessOrEqual(t, 60, metrics.Get("stats.uptime").MustInt())
+			assert.Greater(t, 70, metrics.Get("stats.uptime").MustInt())
 		})
 	})
 
@@ -643,6 +650,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		grafanaLive:        newTestLive(t),
 		kvStore:            kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:                log.New("infra.usagestats"),
+		startTime:          time.Now().Add(-1 * time.Minute),
 	}
 }
 
