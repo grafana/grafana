@@ -26,9 +26,9 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select _read_api as the _Scope_ and submit the form. Note that if you're
+Finally, select _read_api_ as the _Scope_ and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select _read_user_ instead of _read_api as
+`allowed_groups`, see below), you can select _read_user_ instead of _read_api_ as
 the _Scope_, thus giving a more restricted access to your GitLab API.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
@@ -94,8 +94,8 @@ display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears
 in the URL of the group or subgroup.
 
-Here's a complete example with `allow_sign_up` enabled, and access limited to
-the `example` and `foo/bar` groups it also promotes all GitLab Admins to Grafana Admins:
+Here's a complete example with `allow_sign_up` enabled, with access limited to
+the `example` and `foo/bar` groups. The example also promotes all GitLab Admins to Grafana Admins:
 
 ```ini
 [auth.gitlab]
@@ -113,9 +113,9 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 
 ### Map roles
 
-Grafana can attempt to do role mapping through GitLab OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
+Grafana can attempt role mapping through GitLab OAuth. To do so, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified using the `role_attribute_path` configuration option.
 
-Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
+Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role; `Viewer`, `Editor`, or `Admin`. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
 
 An example Query could look like the following:
 
@@ -123,7 +123,7 @@ An example Query could look like the following:
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 ```
 
-This would allow you every GitLab Admin to be an Admin in Grafana.
+This allows every GitLab Admin to be an Admin in Grafana.
 
 ### Team Sync (Enterprise only)
 
