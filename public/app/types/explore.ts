@@ -82,11 +82,6 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Log line substrings to be highlighted as you type in a query field.
-   * Currently supports only the first query row.
-   */
-  logsHighlighterExpressions?: string[];
-  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;

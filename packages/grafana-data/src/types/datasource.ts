@@ -295,7 +295,8 @@ abstract class DataSourceApi<
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
 
   /**
-   * Used in explore
+   * @deprecated since version 8.2.0
+   * Not used anymore.
    */
   getHighlighterExpression?(query: TQuery): string[];
 

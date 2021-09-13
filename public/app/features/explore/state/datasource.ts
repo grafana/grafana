@@ -97,7 +97,6 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       queryKeys: [],
       history,
       datasourceMissing: false,
-      logsHighlighterExpressions: undefined,
     };
   }
 
