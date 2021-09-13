@@ -1,4 +1,5 @@
-import { RawTimeRange } from './time';
+import { DataQuery } from './query';
+import { RawTimeRange, TimeRange } from './time';
 
 /** @internal */
 export interface ExploreUrlState {
@@ -8,3 +9,10 @@ export interface ExploreUrlState {
   originPanelId?: number;
   context?: string;
 }
+
+/**
+ * SplitOpen type is used in Explore and related components.
+ */
+export type SplitOpen = <T extends DataQuery = any>(
+  options?: { datasourceUid: string; query: T; range?: TimeRange } | undefined
+) => void;
