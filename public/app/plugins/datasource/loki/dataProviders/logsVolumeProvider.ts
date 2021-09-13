@@ -24,12 +24,8 @@ export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolu
   private rawLogsVolume: DataFrame[] = [];
   private currentSubscription?: SubscriptionLike;
 
-  constructor(datasource: LokiDatasource) {
+  constructor(datasource: LokiDatasource, dataQueryRequest: DataQueryRequest<LokiQuery>) {
     this.datasource = datasource;
-  }
-
-  setRequest(dataQueryRequest: DataQueryRequest<LokiQuery>): void {
-    this.dataQueryRequest = dataQueryRequest;
   }
 
   getData(): Observable<LogsVolume> {
@@ -43,6 +39,7 @@ export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolu
       .filter((target) => !isMetricsQuery(target.expr))
       .map((target) => {
         target.expr = `count_over_time(${target.expr}[$__interval])`;
+        // target.expr = `sum by (level) (count_over_time(${target.expr}[$__interval]))`;
         return target;
       });
 

@@ -30,7 +30,6 @@ export type QueryRelatedDataProviders = {
 };
 
 export interface QueryRelatedDataProvider<TData> {
-  setRequest(request: DataQueryRequest): void;
   getData(): Observable<TData>;
 }
 
