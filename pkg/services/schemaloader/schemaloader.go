@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
 
+	"github.com/grafana/grafana/pkg/infra/featuretoggle"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const ServiceName = "SchemaLoader"
@@ -26,30 +26,29 @@ type RenderUser struct {
 	OrgRole string
 }
 
-func ProvideService(cfg *setting.Cfg) (*SchemaLoaderService, error) {
+func ProvideService(featureToggles *featuretoggle.Service) (*SchemaLoaderService, error) {
 	dashFam, err := load.BaseDashboardFamily(baseLoadPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load dashboard cue schema from path %q: %w", baseLoadPath, err)
 	}
 	s := &SchemaLoaderService{
-		Cfg:        cfg,
-		DashFamily: dashFam,
-		log:        log.New("schemaloader"),
+		featureToggles: featureToggles,
+		DashFamily:     dashFam,
+		log:            log.New("schemaloader"),
 	}
 	return s, nil
 }
 
 type SchemaLoaderService struct {
-	log        log.Logger
-	DashFamily schema.VersionedCueSchema
-	Cfg        *setting.Cfg
+	log            log.Logger
+	DashFamily     schema.VersionedCueSchema
+	featureToggles *featuretoggle.Service
 }
 
+const featureToggleTrimDefaults = "trimDefaults"
+
 func (rs *SchemaLoaderService) IsDisabled() bool {
-	if rs.Cfg == nil {
-		return true
-	}
-	return !rs.Cfg.IsTrimDefaultsEnabled()
+	return !rs.featureToggles.IsEnabled(featureToggleTrimDefaults)
 }
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {
