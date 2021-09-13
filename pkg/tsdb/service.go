@@ -44,7 +44,6 @@ type Service struct {
 	Cfg                  *setting.Cfg
 	BackendPluginManager backendplugin.Manager
 	OAuthTokenService    oauthtoken.OAuthTokenService
-
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
@@ -62,7 +61,6 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 		return plugin.DataQuery(ctx, ds, query)
 	}
-
 	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager, s.OAuthTokenService).DataQuery(ctx, ds, query)
 }
 

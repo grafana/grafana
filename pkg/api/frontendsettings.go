@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -112,11 +113,16 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 	// the datasource table)
 	for _, ds := range hs.PluginResolver.Plugins(plugins.DataSource) {
 		if ds.BuiltIn {
-			dataSources[ds.Name] = map[string]interface{}{
+			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
 				"meta": ds,
 			}
+			if ds.Name == grafanads.DatasourceName {
+				info["id"] = grafanads.DatasourceID
+				info["uid"] = grafanads.DatasourceUID
+			}
+			dataSources[ds.Name] = info
 		}
 	}
 

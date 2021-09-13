@@ -1,10 +1,11 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
 import { InstallControls } from './InstallControls';
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
+import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependencies';
 import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
 
@@ -47,7 +48,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
           </ol>
         </nav>
 
-        <div className={styles.headerInformation}>
+        <div className={styles.headerInformationRow}>
           {/* Org name */}
           <span>{plugin.orgName}</span>
 
@@ -72,6 +73,11 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
           {/* Signature information */}
           <PluginDetailsHeaderSignature plugin={plugin} />
         </div>
+
+        <PluginDetailsHeaderDependencies
+          plugin={plugin}
+          className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
+        />
 
         <p>{plugin.description}</p>
 
@@ -106,11 +112,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    headerInformation: css`
+    headerInformationRow: css`
       display: flex;
       align-items: center;
       margin-top: ${theme.spacing()};
-      margin-bottom: ${theme.spacing(3)};
+      margin-bottom: ${theme.spacing()};
 
       & > * {
         &::after {
@@ -123,6 +129,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
       font-size: ${theme.typography.h4.fontSize};
+    `,
+    headerInformationRowSecondary: css`
+      font-size: ${theme.typography.body.fontSize};
     `,
     headerOrgName: css`
       font-size: ${theme.typography.h4.fontSize};

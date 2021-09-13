@@ -197,6 +197,15 @@ describe('Plugin details page', () => {
     await waitFor(() => expect(queryByRole('link', { name: /update via grafana.com/i })).toBeInTheDocument());
     expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
   });
+
+  it('should display grafana dependencies for a plugin if they are available', async () => {
+    const { queryByText } = setup('not-installed');
+
+    // Wait for the dependencies part to be loaded
+    await waitFor(() => expect(queryByText(/dependencies:/i)).toBeInTheDocument());
+
+    expect(queryByText('Grafana >=7.3.0')).toBeInTheDocument();
+  });
 });
 
 function remotePlugin(plugin: Partial<RemotePlugin> = {}): RemotePlugin {
@@ -237,6 +246,7 @@ function remotePlugin(plugin: Partial<RemotePlugin> = {}): RemotePlugin {
       dependencies: {
         grafanaDependency: '>=7.3.0',
         grafanaVersion: '7.3',
+        plugins: [],
       },
       info: {
         links: [],
