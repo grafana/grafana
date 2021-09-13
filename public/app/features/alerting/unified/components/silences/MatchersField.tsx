@@ -49,6 +49,7 @@ const MatchersField: FC<Props> = ({ className }) => {
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
                           {...field}
+                          menuShouldPortal
                           onChange={(value) => onChange(value.value)}
                           className={styles.matcherOptions}
                           options={matcherFieldOptions}

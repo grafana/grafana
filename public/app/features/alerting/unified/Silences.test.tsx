@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { dateTime } from '@grafana/data';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { fetchSilences, fetchAlerts, createOrUpdateSilence } from './api/alertmanager';
@@ -51,9 +52,6 @@ const ui = {
   queryBar: byPlaceholderText('Search'),
   editor: {
     timeRange: byLabelText('Timepicker', { exact: false }),
-    timeRangeStart: byRole('textbox', { name: /timepicker from field/i }),
-    timeRangeEnd: byRole('textbox', { name: /timepicker to field/i }),
-    applyTimeRange: byText(/apply time range/i),
     durationField: byLabelText('Duration'),
     durationInput: byRole('textbox', { name: /duration/i }),
     matchersField: byTestId('matcher'),
@@ -69,6 +67,7 @@ const ui = {
 };
 
 const resetMocks = () => {
+  jest.resetAllMocks();
   mocks.api.fetchSilences.mockImplementation(() => {
     return Promise.resolve([
       mockSilence({ id: '12345' }),
@@ -139,7 +138,7 @@ describe('Silences', () => {
     await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
     const queryBar = ui.queryBar.get();
-    userEvent.type(queryBar, 'foo=bar');
+    userEvent.paste(queryBar, 'foo=bar');
 
     await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(1));
   });
@@ -152,12 +151,6 @@ describe('Silence edit', () => {
 
   beforeEach(() => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-  });
-
-  it('renders the editor', async () => {
-    renderSilences(baseUrlPath);
-
-    await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
   });
 
   it('prefills the matchers field with matchers params', async () => {
@@ -191,27 +184,17 @@ describe('Silence edit', () => {
     await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
     const start = new Date();
-    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
 
-    userEvent.click(ui.editor.timeRange.get());
-    userEvent.clear(ui.editor.timeRangeStart.get());
-    await userEvent.type(
-      ui.editor.timeRangeStart.get(),
-      `${start.getFullYear()}-${
-        start.getMonth() + 1
-      }-${start.getDate()} ${start.getHours()}:${start.getMinutes()}:${start.getSeconds()}`
-    );
+    const startDateString = dateTime(start).format('YYYY-MM-DD');
+    const endDateString = dateTime(end).format('YYYY-MM-DD');
 
-    userEvent.clear(ui.editor.timeRangeEnd.get());
-    await userEvent.type(
-      ui.editor.timeRangeEnd.get(),
-      `${end.getFullYear()}-${
-        end.getMonth() + 1
-      }-${end.getDate()} ${end.getHours()}:${end.getMinutes()}:${end.getSeconds()}`
-    );
-    userEvent.click(ui.editor.applyTimeRange.get());
+    userEvent.clear(ui.editor.durationInput.get());
+    await userEvent.type(ui.editor.durationInput.get(), '1d');
 
-    await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1h'));
+    await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1d'));
+    await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
+    await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(endDateString));
 
     await userEvent.type(ui.editor.matcherName.get(), 'foo');
     await userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
