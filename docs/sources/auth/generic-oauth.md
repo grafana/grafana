@@ -70,15 +70,13 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 
 Grafana will check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath will be applied to the `id_token` first. If there is no match, the UserInfo endpoint specified via the `api_url` configuration option will be tried next. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
-See [JMESPath examples](#jmespath-examples) for more information.
+For more information, refer to the [JMESPath examples](#jmespath-examples).
 
 ### Groups / Teams
 
 Similarly, group mappings can be made using [JMESPath](http://jmespath.org/examples.html) with the `groups_attribute_path` configuration option. The `id_token` will be attempted first, followed by the UserInfo from the `api_url`. The result of the JMESPath expression should be a string array of groups.
 
 Furthermore, Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
-
-
 
 ### Login
 
