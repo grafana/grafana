@@ -143,6 +143,67 @@ grafana_image_renderer_service_http_request_duration_seconds_count{status_code="
 # TYPE up gauge
 up 1
 
+# HELP grafana_image_renderer_http_request_in_flight A gauge of requests currently being served by the image renderer.
+# TYPE grafana_image_renderer_http_request_in_flight gauge
+grafana_image_renderer_http_request_in_flight 1
+
+# HELP grafana_image_renderer_step_duration_seconds duration histogram of browser steps for rendering an image labeled with: step
+# TYPE grafana_image_renderer_step_duration_seconds histogram
+grafana_image_renderer_step_duration_seconds_bucket{le="0.3",step="launch"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="0.5",step="launch"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="1",step="launch"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="2",step="launch"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="3",step="launch"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="5",step="launch"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="+Inf",step="launch"} 1
+grafana_image_renderer_step_duration_seconds_sum{step="launch"} 0.7914972
+grafana_image_renderer_step_duration_seconds_count{step="launch"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.3",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.5",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="1",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="2",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="3",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="5",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="+Inf",step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_sum{step="newPage"} 0.2217868
+grafana_image_renderer_step_duration_seconds_count{step="newPage"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.3",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.5",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="1",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="2",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="3",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="5",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="+Inf",step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_sum{step="prepare"} 0.0819274
+grafana_image_renderer_step_duration_seconds_count{step="prepare"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.3",step="navigate"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="0.5",step="navigate"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="1",step="navigate"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="2",step="navigate"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="3",step="navigate"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="5",step="navigate"} 0
+grafana_image_renderer_step_duration_seconds_bucket{le="+Inf",step="navigate"} 1
+grafana_image_renderer_step_duration_seconds_sum{step="navigate"} 15.3311258
+grafana_image_renderer_step_duration_seconds_count{step="navigate"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.3",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.5",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="1",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="2",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="3",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="5",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="+Inf",step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_sum{step="panelsRendered"} 0.0205577
+grafana_image_renderer_step_duration_seconds_count{step="panelsRendered"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.3",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="0.5",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="1",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="2",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="3",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="5",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_bucket{le="+Inf",step="screenshot"} 1
+grafana_image_renderer_step_duration_seconds_sum{step="screenshot"} 0.2866623
+grafana_image_renderer_step_duration_seconds_count{step="screenshot"} 1
+
 # HELP grafana_image_renderer_browser_info A metric with a constant '1 value labeled by version of the browser in use
 # TYPE grafana_image_renderer_browser_info gauge
 grafana_image_renderer_browser_info{version="HeadlessChrome/79.0.3945.0"} 1
