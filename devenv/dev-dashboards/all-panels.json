@@ -151,9 +151,7 @@
       ]
     },
     "editable": false,
-    "gnetId": null,
     "graphTooltip": 0,
-    "id": null,
     "iteration": 1629464729438,
     "links": [
       {
@@ -186,7 +184,6 @@
     ],
     "panels": [
       {
-        "datasource": null,
         "gridPos": {
           "h": 3,
           "w": 12,
@@ -203,7 +200,6 @@
         "type": "text"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 3,
           "w": 12,
@@ -221,7 +217,6 @@
       },
       {
         "collapsed": false,
-        "datasource": null,
         "gridPos": {
           "h": 1,
           "w": 24,
@@ -234,7 +229,6 @@
         "type": "row"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -271,8 +265,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -324,7 +317,6 @@
         "type": "state-timeline"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -335,8 +327,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -407,7 +398,6 @@
         "type": "geomap"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -434,8 +424,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -466,7 +455,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -494,7 +482,6 @@
         "type": "logs"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -503,7 +490,6 @@
         },
         "id": 8,
         "options": {
-          "folderId": null,
           "maxItems": 10,
           "query": "",
           "showHeadings": true,
@@ -517,7 +503,6 @@
         "type": "dashlist"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -529,7 +514,6 @@
         "type": "pluginlist"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -540,7 +524,6 @@
         "options": {
           "alertName": "",
           "dashboardAlerts": false,
-          "folder": null,
           "maxItems": 20,
           "showInstances": false,
           "sortOrder": 1,
@@ -555,8 +538,6 @@
       },
       {
         "cards": {
-          "cardPadding": null,
-          "cardRound": null
         },
         "color": {
           "cardColor": "#b4ff00",
@@ -566,7 +547,6 @@
           "mode": "spectrum"
         },
         "dataFormat": "timeseries",
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -596,23 +576,14 @@
         "xAxis": {
           "show": true
         },
-        "xBucketNumber": null,
-        "xBucketSize": null,
         "yAxis": {
-          "decimals": null,
           "format": "short",
           "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true,
-          "splitFactor": null
+          "show": true
         },
-        "yBucketBound": "auto",
-        "yBucketNumber": null,
-        "yBucketSize": null
+        "yBucketBound": "auto"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -623,8 +594,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -667,7 +637,6 @@
         "type": "bargauge"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -719,7 +688,6 @@
         "type": "piechart"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -730,8 +698,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -773,7 +740,6 @@
         "type": "gauge"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -788,8 +754,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -821,7 +786,6 @@
         "type": "table"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -843,7 +807,6 @@
         "type": "annolist"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -854,8 +817,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -893,7 +855,6 @@
         "type": "stat"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -932,8 +893,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -979,7 +939,6 @@
         "type": "timeseries"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1003,8 +962,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1049,7 +1007,6 @@
         "type": "barchart"
       },
       {
-        "datasource": null,
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -1075,15 +1032,11 @@
     "templating": {
       "list": [
         {
-          "allValue": null,
           "current": {},
           "datasource": "${DS_GDEV-TESTDATA}",
           "definition": "*",
-          "description": null,
-          "error": null,
           "hide": 0,
           "includeAll": true,
-          "label": null,
           "multi": true,
           "name": "query0",
           "options": [],
@@ -1098,17 +1051,13 @@
           "type": "query"
         },
         {
-          "allValue": null,
           "current": {
             "selected": true,
             "text": "7",
             "value": "7"
           },
-          "description": null,
-          "error": null,
           "hide": 0,
           "includeAll": false,
-          "label": null,
           "multi": false,
           "name": "query1",
           "options": [
@@ -1145,7 +1094,6 @@
             "value": ""
           },
           "description": "This is some descriptive text",
-          "error": null,
           "hide": 0,
           "label": "Plain text",
           "name": "text",
