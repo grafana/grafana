@@ -24,7 +24,6 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
-import { GraphiteQueryEditor } from '../plugins/datasource/graphite/components/GraphiteQueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -201,7 +200,4 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     'onChange',
   ]);
-
-  // Temporal wrappers for Graphite migration
-  react2AngularDirective('graphiteQueryEditor', GraphiteQueryEditor, ['state', 'dispatch']);
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"
@@ -108,6 +109,30 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plug
 	}, nil
 }
 
+func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
+	// if there is no min-interval specified in the datasource or in the dashboard-panel,
+	// the value of 1ms is used (this is how it is done in the dashboard-interval-calculation too,
+	// see https://github.com/grafana/grafana/blob/9a0040c0aeaae8357c650cec2ee644a571dddf3d/packages/grafana-data/src/datetime/rangeutil.ts#L264)
+	defaultMinInterval := time.Millisecond * 1
+
+	// interval.GetIntervalFrom has two problems (but they do not affect us here):
+	// - it returns the min-interval, so it should be called interval.GetMinIntervalFrom
+	// - it falls back to model.intervalMs. it should not, because that one is the real final
+	//   interval-value calculated by the browser. but, in this specific case (old-alert),
+	//   that value is not set, so the fallback never happens.
+	minInterval, err := interval.GetIntervalFrom(dsInfo, model, defaultMinInterval)
+
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	calc := interval.NewCalculator()
+
+	interval := calc.Calculate(timeRange, minInterval)
+
+	return interval.Value, nil
+}
+
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange plugins.DataTimeRange,
 	requestHandler plugins.DataRequestHandler) (plugins.DataTimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceQuery{
@@ -124,7 +149,10 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	req, err := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	if err != nil {
+		return nil, fmt.Errorf("interval calculation failed: %w", err)
+	}
 	result := make(plugins.DataTimeSeriesSlice, 0)
 
 	if context.IsDebug {
@@ -220,25 +248,34 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 }
 
 func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange plugins.DataTimeRange,
-	debug bool) plugins.DataQuery {
+	debug bool) (plugins.DataQuery, error) {
 	queryModel := c.Query.Model
+
+	calculatedInterval, err := calculateInterval(timeRange, queryModel, datasource)
+	if err != nil {
+		return plugins.DataQuery{}, err
+	}
+
 	req := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Queries: []plugins.DataSubQuery{
 			{
-				RefID:      "A",
-				Model:      queryModel,
-				DataSource: datasource,
-				QueryType:  queryModel.Get("queryType").MustString(""),
+				RefID:         "A",
+				Model:         queryModel,
+				DataSource:    datasource,
+				QueryType:     queryModel.Get("queryType").MustString(""),
+				MaxDataPoints: interval.DefaultRes,
+				IntervalMS:    calculatedInterval.Milliseconds(),
 			},
 		},
 		Headers: map[string]string{
-			"FromAlert": "true",
+			"FromAlert":    "true",
+			"X-Cache-Skip": "true",
 		},
 		Debug: debug,
 	}
 
-	return req
+	return req, nil
 }
 
 func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {

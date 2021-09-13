@@ -1,4 +1,5 @@
-//+build !windows,!nacl,!plan9
+//go:build !windows && !nacl && !plan9
+// +build !windows,!nacl,!plan9
 
 package log
 

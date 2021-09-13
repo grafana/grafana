@@ -1,5 +1,5 @@
 import { MapLayerOptions } from '@grafana/data';
-import Units from 'ol/proj/Units';
+import { Units } from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {

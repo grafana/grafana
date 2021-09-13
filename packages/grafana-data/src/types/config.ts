@@ -50,6 +50,8 @@ export interface FeatureToggles {
   accesscontrol: boolean;
   tempoServiceGraph: boolean;
   tempoSearch: boolean;
+  prometheusMonaco: boolean;
+  newNavigation: boolean;
 }
 
 /**

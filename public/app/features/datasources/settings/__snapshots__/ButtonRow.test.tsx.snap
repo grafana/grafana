@@ -12,6 +12,7 @@ exports[`Render should render component 1`] = `
     Back
   </LinkButton>
   <LinkButton
+    disabled={false}
     fill="solid"
     href="/explore"
     variant="secondary"
@@ -49,6 +50,7 @@ exports[`Render should render with buttons enabled 1`] = `
     Back
   </LinkButton>
   <LinkButton
+    disabled={false}
     fill="solid"
     href="/explore"
     variant="secondary"
