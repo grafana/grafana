@@ -197,7 +197,7 @@ Grafana supported only the `many` format before. For example:
 | 2021-05-08T09:31:45Z | 55       |
 | 2021-05-08T11:31:45Z | 55       |
 
-> Data delivered as an array of data frames (time field needs to be repeated).
+> Data is delivered as an array of data frames where the `time` field is repeated.
 
 That made it possible to detect time series data by inspecting the data frame. If it had two fields (time + value) it most likley was time series data. This is no longer possible since the same data can be delivered in the following `wide` format.
 
@@ -217,7 +217,7 @@ We have upgraded react-hook-form from version 6 to version 7. We recommend follo
 
 ### Update the plugin.json
 
-The property of defining what Grafana version your plugin supports has been renamed.
+The property that defines which Grafana version your plugin supports has been renamed.
 
 ```json
 // before
@@ -239,7 +239,7 @@ The property of defining what Grafana version your plugin supports has been rena
 
 ### Update imports to match emotion 11
 
-Grafana uses emotion to manage the styling of the frontend. The emotion package has now been updated which might affect your frontend plugin if you have any custom styling in it. Luckily you only need to update the import statements to get it working in Grafana 8.
+Grafana uses Emotion library to manage frontend styling. We have updated the Emotion package and this can affect your frontend plugin if you have custom styling. You only need to update the import statements to get it working in Grafana 8.
 
 ```ts
 // before
