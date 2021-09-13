@@ -223,7 +223,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
 		reqContext.Logger.Error(
-			"Failed at user signed in",
+			"Failed to link API key to service account in",
 			"id", query.UserId,
 			"org", query.OrgId,
 		)
