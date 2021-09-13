@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"os"
 )
 
 // FileStorage can load channel rules from a file on disk.
 type FileStorage struct{}
 
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
-	backendBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_REMOTE_WRITE_BACKENDS_FILE"))
+	p := "/home/ryan/workspace/grafana/grafana/data/rules/remotewritebackends.json" // os.Getenv("GF_LIVE_CHANNEL_RULES_FILE")
+	backendBytes, _ := ioutil.ReadFile(p)
 	var remoteWriteBackends RemoteWriteBackends
 	err := json.Unmarshal(backendBytes, &remoteWriteBackends)
 	if err != nil {
