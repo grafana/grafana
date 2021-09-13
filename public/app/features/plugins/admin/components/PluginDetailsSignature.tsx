@@ -1,24 +1,18 @@
 import React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
-import { GrafanaPlugin, PluginMeta, PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data';
 import { Alert } from '@grafana/ui';
+import { CatalogPlugin } from '../types';
 
-type PluginDetailsSignatureProps = {
+type Props = {
   className?: string;
-  installedPlugin?: GrafanaPlugin<PluginMeta<{}>>;
+  plugin: CatalogPlugin;
 };
 
 // Designed to show signature information inside the active tab on the plugin's details page
-export function PluginDetailsSignature({
-  className,
-  installedPlugin,
-}: PluginDetailsSignatureProps): React.ReactElement | null {
-  if (!installedPlugin) {
-    return null;
-  }
-
-  const isSignatureValid = installedPlugin.meta.signature === PluginSignatureStatus.valid;
-  const isCore = installedPlugin.meta.signature === PluginSignatureStatus.internal;
+export function PluginDetailsSignature({ className, plugin }: Props): React.ReactElement | null {
+  const isSignatureValid = plugin.signature === PluginSignatureStatus.valid;
+  const isCore = plugin.signature === PluginSignatureStatus.internal;
 
   // The basic information is already available in the header
   if (isSignatureValid || isCore) {

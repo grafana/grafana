@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
-import { filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
+import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 
@@ -10,7 +10,7 @@ import {
   DashboardQueryRunnerWorker,
   DashboardQueryRunnerWorkerResult,
 } from './types';
-import { emptyResult, translateQueryResult } from './utils';
+import { emptyResult, handleDatasourceSrvError, translateQueryResult } from './utils';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
@@ -37,9 +37,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     const { dashboard, range } = options;
     const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
     const observables = annotations.map((annotation) => {
-      const datasourcePromise = getDataSourceSrv().get(annotation.datasource);
-      return from(datasourcePromise).pipe(
-        mergeMap((datasource: DataSourceApi) => {
+      const datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(
+        catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
+      );
+      return datasourceObservable.pipe(
+        mergeMap((datasource?: DataSourceApi) => {
           const runner = this.runners.find((r) => r.canRun(datasource));
           if (!runner) {
             return of([]);

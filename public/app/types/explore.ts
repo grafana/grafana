@@ -210,7 +210,3 @@ export interface ExplorePanelData extends PanelData {
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }
-
-export type SplitOpen = <T extends DataQuery = any>(
-  options?: { datasourceUid: string; query: T; range?: TimeRange } | undefined
-) => void;

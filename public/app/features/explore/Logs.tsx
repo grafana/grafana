@@ -17,6 +17,7 @@ import {
   Field,
   DataQuery,
   GrafanaTheme2,
+  LoadingState,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -50,6 +51,7 @@ interface Props extends Themeable2 {
   theme: GrafanaTheme2;
   highlighterExpressions?: string[];
   loading: boolean;
+  loadingState: LoadingState;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
@@ -258,6 +260,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       visibleRange,
       highlighterExpressions,
       loading = false,
+      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
