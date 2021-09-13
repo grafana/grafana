@@ -195,6 +195,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           height={400}
           width={width - spacing}
           absoluteRange={absoluteRange}
+          onChangeTime={this.onUpdateTimeRange}
           timeZone={timeZone}
           annotations={queryResponse.annotations}
           splitOpenFn={splitOpen}
