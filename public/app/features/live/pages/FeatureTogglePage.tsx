@@ -9,7 +9,7 @@ export default function FeatureTogglePage() {
     <Page navModel={navModel}>
       <Page.Contents>
         <h1>Pipeline is not enabled</h1>
-        To enabled pipelines, enable the feature toggle
+        To enable pipelines, enable the feature toggle:
         <pre>
           {`[feature_toggles] 
 enable = live-pipeline

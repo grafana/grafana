@@ -334,9 +334,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, &dtos.NavLink{
 			Id:           "live",
 			Text:         "Live",
-			SubTitle:     "event streaming",
+			SubTitle:     "Event Streaming",
 			Icon:         "exchange-alt",
-			Url:          configNodes[0].Url,
+			Url:          hs.Cfg.AppSubURL + "/live",
 			Children:     liveNavLinks,
 			HideFromMenu: true,
 		})
