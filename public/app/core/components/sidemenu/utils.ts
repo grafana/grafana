@@ -10,29 +10,31 @@ export const getForcedLoginUrl = (url: string) => {
 };
 
 export const isLinkActive = (pathname: string, link: NavModelItem) => {
-  if (link.url === pathname) {
-    // exact match
-    return true;
-  } else if (link.url && link.url !== '/' && pathname.startsWith(link.url)) {
-    // partial match
-    if (pathname === '/dashboards/folder/new') {
-      // ignore this partial match since there is already an exact match under the '+' route
-      // TODO remove this ignore once the '+' button is moved under the dashboard link
-      return false;
+  // strip out any query params
+  const linkPathname = link.url?.split('?')[0];
+  if (linkPathname) {
+    if (linkPathname === pathname) {
+      // exact match
+      return true;
+    } else if (linkPathname !== '/' && pathname.startsWith(linkPathname)) {
+      // partial match
+      return true;
+    } else if (linkPathname === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
+      // alert channel match
+      // TODO refactor routes such that we don't need this custom logic
+      return true;
+    } else if (linkPathname === '/' && pathname.startsWith('/d/')) {
+      // dashboard match
+      // TODO refactor routes such that we don't need this custom logic
+      return true;
     }
-    return true;
-  } else if (link.url === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
-    // alert channel match
-    // TODO refactor routes such that we don't need this custom logic
-    return true;
-  } else if (link.url === '/' && pathname.startsWith('/d/')) {
-    // dashboard match
-    // TODO refactor routes such that we don't need this custom logic
-    return true;
-  } else if (link.children?.some((childLink) => isLinkActive(pathname, childLink))) {
-    // child match
+  }
+
+  // child match
+  if (link.children?.some((childLink) => isLinkActive(pathname, childLink))) {
     return true;
   }
+
   return false;
 };
 

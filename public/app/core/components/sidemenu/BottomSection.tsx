@@ -21,6 +21,7 @@ export default function BottomSection() {
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
   const location = useLocation();
+  const activeItemId = bottomNav.find((item) => isLinkActive(location.pathname, item))?.id;
   const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
   const user = contextSrv.user;
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -76,7 +77,7 @@ export default function BottomSection() {
         return (
           <SideMenuItem
             key={`${link.url}-${index}`}
-            isActive={!isSearchActive(location) && isLinkActive(location.pathname, link)}
+            isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={menuItems}
             menuSubTitle={link.subTitle}
