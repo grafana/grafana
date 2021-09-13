@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 export enum DashboardSource {
@@ -57,43 +57,34 @@ const importDashboardSlice = createSlice({
   name: 'manageDashboards',
   initialState: initialImportDashboardState,
   reducers: {
-    setGcomDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {
-          ...action.payload.json,
-          id: null,
-        },
-        meta: { updatedAt: action.payload.updatedAt, orgName: action.payload.orgName },
-        source: DashboardSource.Gcom,
-        isLoaded: true,
+    setGcomDashboard: (state: Draft<ImportDashboardState>, action: PayloadAction<any>) => {
+      state.dashboard = {
+        ...action.payload.json,
+        id: null,
       };
+      state.meta = { updatedAt: action.payload.updatedAt, orgName: action.payload.orgName };
+      state.source = DashboardSource.Gcom;
+      state.isLoaded = true;
     },
-    setJsonDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {
-          ...action.payload,
-          id: null,
-        },
-        source: DashboardSource.Json,
-        isLoaded: true,
+    setJsonDashboard: (state: Draft<ImportDashboardState>, action: PayloadAction<any>) => {
+      state.dashboard = {
+        ...action.payload,
+        id: null,
       };
+      state.meta = initialImportDashboardState.meta;
+      state.source = DashboardSource.Json;
+      state.isLoaded = true;
     },
-    clearDashboard: (state): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {},
-        isLoaded: false,
-      };
+    clearDashboard: (state: Draft<ImportDashboardState>) => {
+      state.dashboard = {};
+      state.isLoaded = false;
     },
-    setInputs: (state, action: PayloadAction<any[]>): ImportDashboardState => ({
-      ...state,
-      inputs: {
+    setInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<any[]>) => {
+      state.inputs = {
         dataSources: action.payload.filter((p) => p.type === InputType.DataSource),
         constants: action.payload.filter((p) => p.type === InputType.Constant),
-      },
-    }),
+      };
+    },
   },
 });
 
