@@ -25,10 +25,10 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds } = usePanelContext();
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
   const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);

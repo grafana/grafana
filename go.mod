@@ -11,9 +11,6 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
-// Temporary replace till https://github.com/ohler55/ojg/issues/72 solved to fix builds on 32-bit CPU.
-replace github.com/ohler55/ojg => github.com/FZambia/ojg v1.12.6-0.20210910083152-5e71da98845c
-
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
@@ -26,7 +23,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.18.2
+	github.com/centrifugal/centrifuge v0.18.3
 	github.com/cortexproject/cortex v1.8.2-0.20210428155238-d382e1d80eaf
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
@@ -73,7 +70,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
-	github.com/ohler55/ojg v1.12.3
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210904010418-6d279e18f982 // indirect
@@ -87,6 +83,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/smartystreets/goconvey v1.6.4
+	github.com/spyzhov/ajson v0.4.2
 	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/timberio/go-datemath v0.1.1-0.20200323150745-74ddef604fff
@@ -137,7 +134,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/centrifugal/protocol v0.7.1 // indirect
+	github.com/centrifugal/protocol v0.7.2 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect

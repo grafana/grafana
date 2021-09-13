@@ -1,4 +1,11 @@
-import { EventBusSrv, EventBus, DashboardCursorSync, AnnotationEventUIModel, ThresholdsConfig } from '@grafana/data';
+import {
+  EventBusSrv,
+  EventBus,
+  DashboardCursorSync,
+  AnnotationEventUIModel,
+  ThresholdsConfig,
+  SplitOpen,
+} from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
@@ -36,6 +43,11 @@ export interface PanelContext {
    * @alpha -- experimental
    */
   onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
+  /**
+   * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
+   * For example TimeSeries panel.
+   */
+  onSplitOpen?: SplitOpen;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

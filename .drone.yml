@@ -73,7 +73,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.4.2
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
   depends_on:
   - test-backend
 
@@ -112,7 +112,7 @@ steps:
 - name: package
   image: grafana/build-container:1.4.2
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - gen-version
 
@@ -3478,6 +3478,6 @@ get:
 
 ---
 kind: signature
-hmac: eebc686a9e915b42d88dbe2e56efe4850e95b5e22bfcc31973c21774f718b137
+hmac: 1ed78e5f23e4e069c2a2cdb34d5220b556a76c812b23fe4bdfad09289363370b
 
 ...

@@ -1,10 +1,9 @@
-import { DataLink, dateTime, Field, mapInternalLinkToExplore, rangeUtil, TimeRange } from '@grafana/data';
+import { DataLink, dateTime, Field, mapInternalLinkToExplore, rangeUtil, SplitOpen, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { SplitOpen } from 'app/types/explore';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 
