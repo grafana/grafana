@@ -46,17 +46,27 @@ export const GraphiteQueryEditorContext = ({
     }
   }, [dispatch, range, previousRange]);
 
-  useEffect(() => {
-    if (state) {
-      dispatch(actions.queriesChanged(queries));
-    }
-  }, [dispatch, queries, state]);
+  useEffect(
+    () => {
+      if (state) {
+        dispatch(actions.queriesChanged(queries));
+      }
+    },
+    // adding state to dependencies causes infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, queries]
+  );
 
-  useEffect(() => {
-    if (state && state.target?.target !== query.target) {
-      dispatch(actions.queryChanged(query));
-    }
-  }, [dispatch, query, state]);
+  useEffect(
+    () => {
+      if (state && state.target?.target !== query.target) {
+        dispatch(actions.queryChanged(query));
+      }
+    },
+    // adding state to dependencies causes infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, query]
+  );
 
   if (!state) {
     dispatch(

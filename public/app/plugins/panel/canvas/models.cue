@@ -14,7 +14,7 @@
 
 package grafanaschema
 
-Family: {
+Panel: {
     lineages: [
         [
             {
