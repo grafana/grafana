@@ -45,15 +45,15 @@ export const QueryRows = ({ exploreId }: Props) => {
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    (newQueries: DataQuery[], oldQueries?: DataQuery[]) => {
+    (newQueries: DataQuery[]) => {
       dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
 
       // if we are removing a query we want to run the remaining ones
-      if (oldQueries && newQueries.length < oldQueries?.length) {
+      if (newQueries.length < queries.length) {
         onRunQueries();
       }
     },
-    [dispatch, exploreId, onRunQueries]
+    [dispatch, exploreId, onRunQueries, queries]
   );
 
   const onAddQuery = useCallback(
@@ -67,7 +67,7 @@ export const QueryRows = ({ exploreId }: Props) => {
     <QueryEditorRows
       dsSettings={dsSettings}
       queries={queries}
-      onQueriesChange={(newQueries) => onChange(newQueries, queries)}
+      onQueriesChange={onChange}
       onAddQuery={onAddQuery}
       onRunQueries={onRunQueries}
       data={queryResponse}
