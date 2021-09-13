@@ -26,10 +26,10 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select _read_api_ as the _Scope_ and submit the form. Note that if you're
+Finally, select _read_api_as the_Scope_and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select _read_user_ instead of _read_api_ as
-the _Scope_, thus giving a more restricted access to your GitLab API.
+`allowed_groups`, see below), you can select_read_user_ instead of _read_api_as
+the_Scope_, thus giving a more restricted access to your GitLab API.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
@@ -113,9 +113,9 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 
 ### Map roles
 
-Grafana can attempt role mapping through GitLab OAuth. To do so, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified using the `role_attribute_path` configuration option.
+You can use GitLab OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role; `Viewer`, `Editor`, or `Admin`. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information about roles and permissions in Grafana.
+For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}).
 
 An example Query could look like the following:
 
