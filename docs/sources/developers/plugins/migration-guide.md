@@ -6,9 +6,9 @@ title = "Plugin migration guide"
 
 ## Introduction
 
-This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 8.2.x or a later version. 
+This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 8.2.x or a later version.
 
-> **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide! 
+> **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide!
 
 ## Table of contents
 
@@ -36,7 +36,7 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 
 ## From version 7.x.x to 8.x.x
 
-This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform  one or more of the following steps. We have documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
+This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps. We have documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
 
 ### Backend plugin v1 support has been dropped
 
@@ -177,7 +177,7 @@ Before you can run a backend plugin on Grafana installations, you must sign the 
 
 For instructions on plugin signing, refer to the [Plugin signatures](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) topic.
 
-You will still be able to run and develop your plugin during development by running your Grafana [instance in development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode).
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode).
 
 ### Time series data can now be structured in a wide or many format.
 
