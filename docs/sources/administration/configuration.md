@@ -439,6 +439,10 @@ If enabled and user is not anonymous, data proxy will add X-Grafana-User header 
 
 Limits the amount of bytes that will be read/accepted from responses of outgoing HTTP requests. Default is `0` which means disabled.
 
+### row_limit
+
+Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
+
 <hr />
 
 ## [analytics]
