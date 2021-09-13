@@ -285,7 +285,7 @@ describe('RuleEditor', () => {
     userEvent.click(ui.buttons.save.get());
     expect(
       await byText(
-        'Recording rule name must be valid metric name. It may only contain letters, numbers and colons.'
+        'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
       ).find()
     ).toBeInTheDocument();
     expect(mocks.api.setRulerRuleGroup).not.toBeCalled();

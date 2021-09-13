@@ -15,7 +15,8 @@ interface Props {
 }
 
 const recordingRuleNameValidationPattern = {
-  message: 'Recording rule name must be valid metric name. It may only contain letters, numbers and colons.',
+  message:
+    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
 };
 
