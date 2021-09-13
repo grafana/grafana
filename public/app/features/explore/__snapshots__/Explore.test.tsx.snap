@@ -14,7 +14,7 @@ exports[`Explore should render component 1`] = `
     <div
       className="panel-container css-18dr9jf-queryContainer"
     >
-      <Connect(QueryRows)
+      <QueryRows
         exploreId="left"
       />
       <SecondaryActions
