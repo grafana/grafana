@@ -6,7 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import { Space } from '../Space';
-import { addResources, findRow, parseResourceURI } from './utils';
+import { addResources, findRow } from './utils';
+import { parseResourceURI } from '../../utils/resourceURIUtils';
 
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;

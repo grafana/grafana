@@ -183,7 +183,6 @@ class DataSourceWithBackend<
    */
   async getResource(path: string, params?: any): Promise<any> {
     const resourceApiPath = `/api/datasources/${this.id}/resources/${path}`;
-    console.log('resourceApiPath', resourceApiPath);
     return getBackendSrv().get(resourceApiPath, params);
   }
 

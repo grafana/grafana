@@ -624,6 +624,8 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing getMetricNames', () => {
+    const resourceURI =
+      '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeApp/providers/microsoft.insights/components/resource1';
     const response = {
       value: [
         {
@@ -661,10 +663,8 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
-          basePath +
-          '/providers/microsoft.insights/components/resource1' +
+          resourceURI +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(path).toBe(expected);
         return Promise.resolve(response);
@@ -672,25 +672,19 @@ describe('AzureMonitorDatasource', () => {
     });
 
     it('should return list of Metric Definitions', () => {
-      return ctx.ds
-        .getMetricNames(
-          '9935389e-9122-4ef9-95f9-1513dd24753f',
-          'nodeapp',
-          'microsoft.insights/components',
-          'resource1',
-          'default'
-        )
-        .then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toEqual(2);
-          expect(results[0].text).toEqual('Used capacity');
-          expect(results[0].value).toEqual('UsedCapacity');
-          expect(results[1].text).toEqual('Free capacity');
-          expect(results[1].value).toEqual('FreeCapacity');
-        });
+      return ctx.ds.getMetricNames(resourceURI, 'default').then((results: Array<{ text: string; value: string }>) => {
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Used capacity');
+        expect(results[0].value).toEqual('UsedCapacity');
+        expect(results[1].text).toEqual('Free capacity');
+        expect(results[1].value).toEqual('FreeCapacity');
+      });
     });
   });
 
   describe('When performing getMetricMetadata', () => {
+    const resourceURI =
+      '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeApp/providers/microsoft.insights/components/resource1';
     const response = {
       value: [
         {
@@ -739,24 +733,17 @@ describe('AzureMonitorDatasource', () => {
     });
 
     it('should return Aggregation metadata for a Metric', () => {
-      return ctx.ds
-        .getMetricMetadata(
-          '9935389e-9122-4ef9-95f9-1513dd24753f',
-          'nodeapp',
-          'microsoft.insights/components',
-          'resource1',
-          'default',
-          'UsedCapacity'
-        )
-        .then((results) => {
-          expect(results.primaryAggType).toEqual('Total');
-          expect(results.supportedAggTypes.length).toEqual(6);
-          expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
-        });
+      return ctx.ds.getMetricMetadata(resourceURI, 'default', 'UsedCapacity').then((results) => {
+        expect(results.primaryAggType).toEqual('Total');
+        expect(results.supportedAggTypes.length).toEqual(6);
+        expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
+      });
     });
   });
 
   describe('When performing getMetricMetadata on metrics with dimensions', () => {
+    const resourceURI =
+      '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeApp/providers/microsoft.insights/components/resource1';
     const response = {
       value: [
         {
@@ -808,17 +795,8 @@ describe('AzureMonitorDatasource', () => {
     });
 
     it('should return dimensions for a Metric that has dimensions', () => {
-      return ctx.ds
-        .getMetricMetadata(
-          '9935389e-9122-4ef9-95f9-1513dd24753f',
-          'nodeapp',
-          'microsoft.insights/components',
-          'resource1',
-          'default',
-          'Transactions'
-        )
-        .then((results: any) => {
-          expect(results.dimensions).toMatchInlineSnapshot(`
+      return ctx.ds.getMetricMetadata(resourceURI, 'default', 'Transactions').then((results: any) => {
+        expect(results.dimensions).toMatchInlineSnapshot(`
             Array [
               Object {
                 "label": "Response type",
@@ -834,22 +812,13 @@ describe('AzureMonitorDatasource', () => {
               },
             ]
           `);
-        });
+      });
     });
 
     it('should return an empty array for a Metric that does not have dimensions', () => {
-      return ctx.ds
-        .getMetricMetadata(
-          '9935389e-9122-4ef9-95f9-1513dd24753f',
-          'nodeapp',
-          'microsoft.insights/components',
-          'resource1',
-          'default',
-          'FreeCapacity'
-        )
-        .then((results: any) => {
-          expect(results.dimensions.length).toEqual(0);
-        });
+      return ctx.ds.getMetricMetadata(resourceURI, 'default', 'FreeCapacity').then((results: any) => {
+        expect(results.dimensions.length).toEqual(0);
+      });
     });
   });
 });

@@ -1,5 +1,4 @@
 import { filter, startsWith } from 'lodash';
-import UrlBuilder from './url_builder';
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
 import TimegrainConverter from '../time_grain_converter';
@@ -360,7 +359,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     console.log('getMetricNamespaces', url);
     return this.getResource(url).then((result: any) => {
-      console.log('getMetricNamespaces results', result);
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
   }

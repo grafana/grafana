@@ -7,7 +7,7 @@ import {
   resourceTypeDisplayNames,
 } from '../azureMetadata';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
-import { parseResourceURI } from '../components/ResourcePicker/utils';
+import { parseResourceURI } from '../utils/resourceURIUtils';
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,

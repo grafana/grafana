@@ -18,6 +18,7 @@ export function parseResourceURI(resourceURI: string) {
   return { subscriptionID, resourceGroup, resource };
 }
 
+// TODO: test this with NetApp and Database resources!!! Their resourceURI format might not be so simple
 export function createResourceURI({
   subscriptionID,
   resourceGroup,

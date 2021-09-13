@@ -6,7 +6,7 @@ import Datasource from '../../datasource';
 import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
-import { parseResourceURI } from '../ResourcePicker/utils';
+import { parseResourceURI } from '../../utils/resourceURIUtils';
 import { Space } from '../Space';
 import { setResource } from './setQueryValue';
 
