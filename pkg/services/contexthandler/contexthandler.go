@@ -121,7 +121,6 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
-	reqContext.Data["ctx"] = reqContext
 
 	span.LogFields(
 		ol.String("uname", reqContext.Login),
@@ -299,7 +298,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
-		reqContext.Data["lookupTokenErr"] = err
+		reqContext.LookupTokenErr = err
 		return false
 	}
 
