@@ -86,7 +86,7 @@ The `Endpoint` field allows you to specify a custom endpoint URL that overrides 
 
 ## EKS IAM roles for service accounts
 
-The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. In order to allow user 472 to access the credentials (and avoid it falling back to the IAM role attached to the EC2 instance), you will need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
+The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. To allow user 472 to access the credentials (and avoid falling back to the IAM role attached to the EC2 instance), you need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
 
 ```yaml
 securityContext:
