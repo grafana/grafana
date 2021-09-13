@@ -308,6 +308,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             absoluteRange={visibleRange || absoluteRange}
             timeZone={timeZone}
             loadingState={loadingState}
+            onChangeTime={onChangeTime}
             onHiddenSeriesChanged={this.onToggleLogLevel}
           />
         ) : undefined}
