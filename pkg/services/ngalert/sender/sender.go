@@ -15,6 +15,7 @@ import (
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
@@ -40,7 +41,7 @@ type Sender struct {
 	sdManager *discovery.Manager
 }
 
-func New(metrics *metrics.Scheduler) (*Sender, error) {
+func New(_ *metrics.Scheduler) (*Sender, error) {
 	l := log.New("sender")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &Sender{
@@ -50,7 +51,9 @@ func New(metrics *metrics.Scheduler) (*Sender, error) {
 	}
 
 	s.manager = notifier.NewManager(
-		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: metrics.Registerer},
+		// Injecting a new registry here means these metrics are not exported.
+		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
+		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.gokitLogger,
 	)
 
