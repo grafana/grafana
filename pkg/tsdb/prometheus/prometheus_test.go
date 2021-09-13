@@ -306,7 +306,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
-			"refId": "A",
+			"refId": "A"
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
