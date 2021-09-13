@@ -10,7 +10,7 @@ weight = 200
 
 Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
-This topic explains queries, templates, variables and other configuration options specific to this data source. For instructions on how to add a data source to Grafan, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
+This topic describes queries, templates, variables, and other configuration specific to this data source. For instructions on how to add a data source to Grafan, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
 > **Note:** If you have issues setting up the data source and Grafana is returning undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
 
@@ -50,9 +50,9 @@ You can monitor a dynamic list of metrics by using the asterisk (\*) wildcard fo
 
 {{< figure src="/static/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
-In this example, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
+In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances are created as part of an auto scaling event, they will automatically appear in the graph without needing to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. 
 
-By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
+Click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html). By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
 You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling `Match Exact` also creates a search expression even if you don’t use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
 
@@ -130,7 +130,7 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 ## Templated queries
 
-Instead of hard-coding server, application and sensor names in your metric queries, you can use variables. The variables are listed as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the display of data in your dashboard.
+Instead of hard-coding server, application, and sensor names in your metric queries, you can use variables. The variables are listed as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the display of data in your dashboard.
 
 For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/_index.md" >}}) documentation.
 
@@ -265,7 +265,7 @@ Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.co
 
 ## Configure the data source with grafana.ini
 
-In the Grafana [configuration]({{< relref "../../administration/configuration.md#aws" >}}) file, there's an `AWS` section that allows you to customize the data source.
+The Grafana [configuration]({{< relref "../../administration/configuration.md#aws" >}}) file includes an `AWS` section where you can customize the data source.
 
 ### allowed_auth_providers
 
@@ -281,7 +281,7 @@ When a custom namespace is specified in the query editor, the [List Metrics API]
 
 ## Configure the data source with provisioning
 
-You can configure the CloudWatch data sources using the configuration files with Grafana's provisioning system. To understand how it works and to learn more about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../administration/provisioning/#datasources" >}}) topic.
+You can configure the CloudWatch data sources using the configuration files with Grafana's provisioning system. To know more about provisioning and learn about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../administration/provisioning/#datasources" >}}) topic.
 
 Here are some provisioning examples for this data source.
 
