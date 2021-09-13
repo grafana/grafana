@@ -40,7 +40,7 @@ ver_mode = 'pr'
 
 def pr_pipelines(edition):
     services = integration_test_services(edition)
-    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64',]
+    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
         codespell_step(),

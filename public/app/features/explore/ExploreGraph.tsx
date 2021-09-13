@@ -1,3 +1,4 @@
+import { css, cx } from '@emotion/css';
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
@@ -6,36 +7,31 @@ import {
   createFieldConfigRegistry,
   DataFrame,
   dateTime,
-  Field,
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
   GrafanaTheme2,
+  LoadingState,
+  SplitOpen,
   TimeZone,
 } from '@grafana/data';
+import { PanelRenderer } from '@grafana/runtime';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
   PanelContextProvider,
   SeriesVisibilityChangeMode,
-  TimeSeries,
-  TooltipPlugin,
   useStyles2,
   useTheme2,
-  ZoomPlugin,
 } from '@grafana/ui';
-import { LegendDisplayMode, TooltipDisplayMode, GraphDrawStyle } from '@grafana/schema';
-import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
-import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
-import { css, cx } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getFieldLinksForExplore } from './utils/links';
-import { usePrevious } from 'react-use';
 import appEvents from 'app/core/app_events';
-import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
+import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 import { identity } from 'lodash';
-import { SplitOpen } from 'app/types/explore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
+import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -43,26 +39,26 @@ interface Props {
   data: DataFrame[];
   height: number;
   width: number;
-  annotations?: DataFrame[];
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
-  onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
+  loadingState: LoadingState;
+  annotations?: DataFrame[];
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  tooltipDisplayMode: TooltipDisplayMode;
+  tooltipDisplayMode?: TooltipDisplayMode;
   splitOpenFn?: SplitOpen;
 }
 
-export function ExploreGraphNGPanel({
+export function ExploreGraph({
   data,
   height,
   width,
   timeZone,
   absoluteRange,
-  onUpdateTimeRange,
+  loadingState,
   annotations,
-  tooltipDisplayMode,
-  splitOpenFn,
   onHiddenSeriesChanged,
+  splitOpenFn,
+  tooltipDisplayMode = TooltipDisplayMode.Single,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -128,12 +124,9 @@ export function ExploreGraphNGPanel({
 
   const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range: timeRange });
-  };
-
   const panelContext: PanelContext = {
     eventBus: appEvents,
+    onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setBaseStructureRev((r) => r + 1);
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
@@ -155,33 +148,19 @@ export function ExploreGraphNGPanel({
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
-      <TimeSeries
-        frames={seriesToShow}
-        structureRev={structureRev}
+      <PanelRenderer
+        data={{ series: seriesToShow, timeRange, structureRev, state: loadingState, annotations }}
+        pluginId="timeseries"
+        title=""
         width={width}
         height={height}
-        timeRange={timeRange}
-        legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
-        timeZone={timeZone}
-      >
-        {(config, alignedDataFrame) => {
-          return (
-            <>
-              <ZoomPlugin config={config} onZoom={onUpdateTimeRange} />
-              <TooltipPlugin config={config} data={alignedDataFrame} mode={tooltipDisplayMode} timeZone={timeZone} />
-              <ContextMenuPlugin config={config} data={alignedDataFrame} timeZone={timeZone} />
-              {annotations && (
-                <ExemplarsPlugin
-                  config={config}
-                  exemplars={annotations}
-                  timeZone={timeZone}
-                  getFieldLinks={getFieldLinks}
-                />
-              )}
-            </>
-          );
-        }}
-      </TimeSeries>
+        options={
+          {
+            tooltip: { mode: tooltipDisplayMode },
+            legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
+          } as TimeSeriesOptions
+        }
+      />
     </PanelContextProvider>
   );
 }

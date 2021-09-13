@@ -83,7 +83,10 @@ import (
 //       200: Ack
 //       207: MultiStatus
 //       400: ValidationError
+//       403: PermissionDenied
+//       404: AlertManagerNotFound
 //       408: Failure
+//       409: AlertManagerNotReady
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
 //
@@ -118,12 +121,20 @@ import (
 //       400: ValidationError
 
 // swagger:model
-type TestReceiversConfig struct {
-	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
+type PermissionDenied struct{}
+
+// swagger:model
+type AlertManagerNotFound struct{}
+
+// swagger:model
+type AlertManagerNotReady struct{}
+
+// swagger:model
+type MultiStatus struct{}
 
 // swagger:parameters RoutePostTestReceivers
 type TestReceiversConfigParams struct {
+	// in:body
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
@@ -311,7 +322,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
