@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
@@ -99,10 +99,13 @@ function useFieldOverrides(
   const series = data?.series;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const theme = useTheme2();
+  const structureRev = useRef(0);
+
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
       return;
     }
+    structureRev.current = structureRev.current + 1;
 
     return {
       ...data,
@@ -114,6 +117,7 @@ function useFieldOverrides(
         theme,
         timeZone,
       }),
+      structureRev: structureRev.current,
     };
   }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
 }
