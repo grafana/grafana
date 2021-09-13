@@ -190,6 +190,9 @@ export class QueryRows extends PureComponent<Props, State> {
         const threshold = condition.evaluator.params[0];
         const refId = condition.query.params[0];
 
+        if (condition.evaluator.type === 'outside_range' || condition.evaluator.type === 'within_range') {
+          continue;
+        }
         if (!record[refId]) {
           record[refId] = {
             mode: ThresholdsMode.Absolute,
