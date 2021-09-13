@@ -1,7 +1,13 @@
 import React, { createRef } from 'react';
 import uPlot, { Options } from 'uplot';
+import { throttle } from 'lodash';
 import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
+
+const PIXELS_PER_MS = 0.1;
+const SHIFT_MULTIPLIER = 2;
+const SUPPORTED_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Shift'] as const;
+type SupportedKey = typeof SUPPORTED_KEYS[number];
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
@@ -27,6 +33,8 @@ function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
 
 type UPlotChartState = {
   plot: uPlot | null;
+  pressedKeys: Record<SupportedKey, boolean>;
+  keyHandleTimestamp: number;
 };
 
 /**
@@ -38,13 +46,24 @@ type UPlotChartState = {
 export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
+  throttledHandleKeys: (e: React.KeyboardEvent) => void;
 
   constructor(props: PlotProps) {
     super(props);
 
     this.state = {
       plot: null,
+      pressedKeys: {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false,
+        Shift: false,
+      },
+      keyHandleTimestamp: 0,
     };
+
+    this.throttledHandleKeys = throttle(this.handleKeys, 16.7);
   }
 
   reinitPlot() {
@@ -109,10 +128,111 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     }
   }
 
+  moveCursor = (dx: number, dy: number) => {
+    const cursor = this.state.plot?.cursor;
+
+    this.state.plot?.setCursor({
+      left: (cursor?.left ?? this.state.plot?.width / 2) + dx,
+      top: (cursor?.top ?? this.state.plot?.height / 2) + dy,
+    });
+  };
+
+  handleKeys = (e: React.KeyboardEvent) => {
+    if (!SUPPORTED_KEYS.includes(e.key as SupportedKey)) {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const initiateAnimationLoop = Object.values(this.state.pressedKeys).every((pressed) => pressed === false);
+
+    this.setState(
+      (state) => ({
+        pressedKeys: { ...state.pressedKeys, [e.key]: true },
+        keyHandleTimestamp: initiateAnimationLoop ? performance.now() : state.keyHandleTimestamp,
+      }),
+      () => {
+        if (initiateAnimationLoop) {
+          window.requestAnimationFrame(this.handlePressedKeys);
+        }
+      }
+    );
+  };
+
+  handleKeyRelease = (e: React.KeyboardEvent) => {
+    if (!SUPPORTED_KEYS.includes(e.key as SupportedKey)) {
+      return;
+    }
+
+    this.setState((state) => ({
+      pressedKeys: { ...state.pressedKeys, [e.key]: false },
+    }));
+  };
+
+  handlePressedKeys = (time: number) => {
+    const nothingPressed = Object.values(this.state.pressedKeys).every((pressed) => pressed === false);
+    if (nothingPressed) {
+      return;
+    }
+
+    const dt = time - this.state.keyHandleTimestamp;
+    const dx = dt * PIXELS_PER_MS;
+    let horValue = 0;
+    let vertValue = 0;
+    if (this.state.pressedKeys['ArrowUp']) {
+      vertValue -= dx;
+    }
+    if (this.state.pressedKeys['ArrowDown']) {
+      vertValue += dx;
+    }
+    if (this.state.pressedKeys['ArrowLeft']) {
+      horValue -= dx;
+    }
+    if (this.state.pressedKeys['ArrowRight']) {
+      horValue += dx;
+    }
+    if (this.state.pressedKeys['Shift']) {
+      horValue *= SHIFT_MULTIPLIER;
+      vertValue *= SHIFT_MULTIPLIER;
+    }
+
+    this.moveCursor(horValue, vertValue);
+    this.setState(
+      {
+        keyHandleTimestamp: time,
+      },
+      () => {
+        window.requestAnimationFrame(this.handlePressedKeys);
+      }
+    );
+  };
+
+  handleFocus = () => {
+    this.state.plot?.setCursor({ left: this.state.plot.width / 2, top: this.state.plot.height / 2 });
+  };
+
+  handleBlur = () => {
+    this.setState({
+      pressedKeys: SUPPORTED_KEYS.reduce(
+        (pressed, cur) => ({ ...pressed, [cur]: false }),
+        {} as Record<SupportedKey, boolean>
+      ),
+    });
+  };
+
   render() {
     return (
       <div style={{ position: 'relative' }}>
-        <div ref={this.plotContainer} data-testid="uplot-main-div" />
+        <div
+          ref={this.plotContainer}
+          data-testid="uplot-main-div"
+          tabIndex={0}
+          onFocusCapture={this.handleFocus}
+          onBlur={this.handleBlur}
+          onKeyDown={this.throttledHandleKeys}
+          onKeyUp={this.handleKeyRelease}
+        />
         {this.props.children}
       </div>
     );
