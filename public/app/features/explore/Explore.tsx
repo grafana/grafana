@@ -9,7 +9,7 @@ import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2 }
 import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
-import QueryRows from './QueryRows';
+import { QueryRows } from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';

@@ -1,77 +1,79 @@
-// Libraries
-import React, { PureComponent } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ExploreId } from 'app/types/explore';
-import { StoreState } from 'app/types';
-import { connect, ConnectedProps } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { runQueries, changeQueriesAction } from './state/query';
 import { CoreApp, DataQuery } from '@grafana/data';
-import { highlightLogsExpressionAction } from './state/explorePane';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
+import { createSelector } from '@reduxjs/toolkit';
+import { getExploreItemSelector } from './state/selectors';
 
-interface OwnProps {
+interface Props {
   exploreId: ExploreId;
 }
 
-class QueryRows extends PureComponent<OwnProps & ConnectedProps<typeof connector>> {
-  onChange = (newQueries: DataQuery[], oldQueries?: DataQuery[]) => {
-    const { exploreId } = this.props;
-    this.props.changeQueriesAction({ queries: newQueries, exploreId });
-
-    // if we are removing a query we want to run the remaining ones
-    if (oldQueries && newQueries.length < oldQueries?.length) {
-      this.runQueries();
-    }
-  };
-
-  onAddQuery = (query: DataQuery) => {
-    this.onChange([...this.props.queries, { ...query, refId: getNextRefIdChar(this.props.queries) }]);
-  };
-
-  runQueries = () => {
-    this.props.runQueries(this.props.exploreId);
-  };
-
-  render() {
-    const { queries, datasourceInstance, history, eventBus } = this.props;
-    const dsSettings = getDatasourceSrv().getInstanceSettings(datasourceInstance?.name)!;
-
-    return (
-      <QueryEditorRows
-        dsSettings={dsSettings}
-        queries={queries}
-        onQueriesChange={(newQueries) => this.onChange(newQueries, queries)}
-        onAddQuery={this.onAddQuery}
-        onRunQueries={this.runQueries}
-        data={this.props.queryResponse}
-        app={CoreApp.Explore}
-        history={history}
-        eventBus={eventBus}
-      />
-    );
-  }
-}
-
-function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
-  const explore = state.explore;
-  const { queries, datasourceInstance, queryResponse, history, eventBridge } = explore[exploreId]!;
-
+const makeSelectors = (exploreId: ExploreId) => {
+  const exploreItemSelector = getExploreItemSelector(exploreId);
   return {
-    queries,
-    datasourceInstance,
-    queryResponse,
-    history,
-    eventBus: eventBridge,
+    getQueries: createSelector(exploreItemSelector, (s) => s!.queries),
+    getQueryResponse: createSelector(exploreItemSelector, (s) => s!.queryResponse),
+    getHistory: createSelector(exploreItemSelector, (s) => s!.history),
+    getEventBridge: createSelector(exploreItemSelector, (s) => s!.eventBridge),
+    getDatasourceInstanceSettings: createSelector(
+      exploreItemSelector,
+      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.name)!
+    ),
   };
-}
-
-const mapDispatchToProps = {
-  changeQueriesAction,
-  highlightLogsExpressionAction,
-  runQueries,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+export const QueryRows = ({ exploreId }: Props) => {
+  const dispatch = useDispatch();
+  const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
+    () => makeSelectors(exploreId),
+    [exploreId]
+  );
 
-export default connector(QueryRows);
+  const queries = useSelector(getQueries);
+  const dsSettings = useSelector(getDatasourceInstanceSettings);
+  const queryResponse = useSelector(getQueryResponse);
+  const history = useSelector(getHistory);
+  const eventBridge = useSelector(getEventBridge);
+
+  const onRunQueries = useCallback(() => {
+    dispatch(runQueries(exploreId));
+  }, [dispatch, exploreId]);
+
+  const onChange = useCallback(
+    (newQueries: DataQuery[], oldQueries?: DataQuery[]) => {
+      dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
+
+      // if we are removing a query we want to run the remaining ones
+      if (oldQueries && newQueries.length < oldQueries?.length) {
+        onRunQueries();
+      }
+    },
+    [dispatch, exploreId, onRunQueries]
+  );
+
+  const onAddQuery = useCallback(
+    (query: DataQuery) => {
+      onChange([...queries, { ...query, refId: getNextRefIdChar(queries) }]);
+    },
+    [onChange, queries]
+  );
+
+  return (
+    <QueryEditorRows
+      dsSettings={dsSettings}
+      queries={queries}
+      onQueriesChange={(newQueries) => onChange(newQueries, queries)}
+      onAddQuery={onAddQuery}
+      onRunQueries={onRunQueries}
+      data={queryResponse}
+      app={CoreApp.Explore}
+      history={history}
+      eventBus={eventBridge}
+    />
+  );
+};
