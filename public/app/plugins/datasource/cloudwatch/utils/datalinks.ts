@@ -1,4 +1,4 @@
-import {DataFrame, DataLink, DataQueryRequest, DataQueryResponse, ScopedVars, TimeRange} from '@grafana/data';
+import { DataFrame, DataLink, DataQueryRequest, DataQueryResponse, ScopedVars, TimeRange } from '@grafana/data';
 import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { AwsUrl, encodeUrl } from '../aws_url';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -16,7 +16,7 @@ export async function addDataLinksToLogsResponse(
   range: TimeRange,
   replaceFn: ReplaceFn,
   getRegion: (region: string) => string,
-  tracingDatasourceUid?: string,
+  tracingDatasourceUid?: string
 ): Promise<void> {
   const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
 
@@ -26,8 +26,8 @@ export async function addDataLinksToLogsResponse(
 
     for (const field of dataFrame.fields) {
       if (field.name === '@xrayTraceId' && tracingDatasourceUid) {
-        getRegion(replace(curTarget.region, 'region'))
-        const xrayLink = await createInternalXrayLink(tracingDatasourceUid, interpolatedRegion)
+        getRegion(replace(curTarget.region, 'region'));
+        const xrayLink = await createInternalXrayLink(tracingDatasourceUid, interpolatedRegion);
         if (xrayLink) {
           field.config.links = [xrayLink];
         }
@@ -64,7 +64,7 @@ function createAwsConsoleLink(
   target: CloudWatchLogsQuery,
   range: TimeRange,
   region: string,
-  replace: (target: string, fieldName?: string) => string,
+  replace: (target: string, fieldName?: string) => string
 ) {
   const interpolatedExpression = target.expression ? replace(target.expression) : '';
   const interpolatedGroups = target.logGroupNames?.map((logGroup: string) => replace(logGroup, 'log groups')) ?? [];
