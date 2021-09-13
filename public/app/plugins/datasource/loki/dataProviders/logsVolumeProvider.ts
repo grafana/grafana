@@ -20,12 +20,13 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
 export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolume> {
   private readonly datasource: LokiDatasource;
-  private dataQueryRequest: DataQueryRequest<LokiQuery>;
+  private readonly dataQueryRequest: DataQueryRequest<LokiQuery>;
   private rawLogsVolume: DataFrame[] = [];
   private currentSubscription?: SubscriptionLike;
 
   constructor(datasource: LokiDatasource, dataQueryRequest: DataQueryRequest<LokiQuery>) {
     this.datasource = datasource;
+    this.dataQueryRequest = dataQueryRequest;
   }
 
   getData(): Observable<LogsVolume> {
@@ -38,8 +39,9 @@ export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolu
     histogramRequest.targets = histogramRequest.targets
       .filter((target) => !isMetricsQuery(target.expr))
       .map((target) => {
+        // TODO: add level to configuration and use:
+        // sum by (level) (count_over_time(${target.expr}[$__interval])
         target.expr = `count_over_time(${target.expr}[$__interval])`;
-        // target.expr = `sum by (level) (count_over_time(${target.expr}[$__interval]))`;
         return target;
       });
 
