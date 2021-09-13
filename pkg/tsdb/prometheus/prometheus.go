@@ -297,12 +297,16 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 			queryType = Instant
 		}
 
+		// Align query range to step. It rounds start and end down to a multiple of step.
+		start := int64(math.Floor((float64(query.TimeRange.From.Unix()) / interval.Seconds())) * interval.Seconds())
+		end := int64(math.Floor((float64(query.TimeRange.To.Unix()) / interval.Seconds())) * interval.Seconds())
+
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
 			Step:         interval,
 			LegendFormat: model.LegendFormat,
-			Start:        query.TimeRange.From,
-			End:          query.TimeRange.To,
+			Start:        time.Unix(start, 0),
+			End:          time.Unix(end, 0),
 			RefId:        query.RefID,
 			QueryType:    queryType,
 		})

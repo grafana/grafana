@@ -290,14 +290,12 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   };
 
   prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
-    let targets = cloneDeep(options.targets);
-
-    const processedTargets = targets.map((target) => {
+    const targets = options.targets.map((target) => {
       // We want to format Explore + range queries as time_series
       return { ...target, instant: false, range: true, format: 'time_series' };
     });
 
-    return { ...options, targets: processedTargets };
+    return { ...options, targets };
   };
 
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
