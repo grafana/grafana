@@ -31,7 +31,61 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 
 ## Authentication
 
-For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic.
+For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic. 
+
+## IAM policies
+
+Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
+and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
+utilize Grafana's built-in support for assuming roles.
+
+Here is a minimal policy example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadingMetricsFromCloudWatch",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:DescribeAlarmsForMetric",
+        "cloudwatch:DescribeAlarmHistory",
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:ListMetrics",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:GetMetricData"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingLogsFromCloudWatch",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:GetLogGroupFields",
+        "logs:StartQuery",
+        "logs:StopQuery",
+        "logs:GetQueryResults",
+        "logs:GetLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
+      "Effect": "Allow",
+      "Action": ["ec2:DescribeTags", "ec2:DescribeInstances", "ec2:DescribeRegions"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingResourcesForTags",
+      "Effect": "Allow",
+      "Action": "tag:GetResources",
+      "Resource": "*"
+    }
+  ]
+}
+```
 
 ## Using the Query Editor
 
@@ -281,7 +335,7 @@ When a custom namespace is specified in the query editor, the [List Metrics API]
 
 ## Configure the data source with provisioning
 
-You can configure the CloudWatch data sources using the configuration files with Grafana's provisioning system. To know more about provisioning and learn about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../administration/provisioning/#datasources" >}}) topic.
+You can configure the CloudWatch data source by customizing configuration files in Grafana's provisioning system. To know more about provisioning and learn about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../administration/provisioning/#datasources" >}}) topic.
 
 Here are some provisioning examples for this data source.
 

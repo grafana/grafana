@@ -8,7 +8,7 @@ weight = 205
 
 # AWS authentication
 
-You can use one of the following authentication methods:
+You can use one of the following authentication methods. All of these methods are enabled by default. You can disable them if necessary if you have server configuration access. For more information, refer to [allowed_auth_providers]({{< relref "../../administration/configuration.md#allowed_auth_providers" >}}) documentation.
 
 - `AWS SDK Default` performs no custom configuration and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. It requires you to configure your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html), or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
@@ -16,7 +16,7 @@ You can use one of the following authentication methods:
 
 - `Access and secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
 
-> **Note:** Although there are four different authentication methods available, only three of them (that are discussed here) are enabled by default for Grafana OSS.
+> **Note:** Grafana also supports the `Workspace IAM role` method. We will be add documentation for this authentication method soon.
 
 ## IAM roles
 
@@ -24,59 +24,7 @@ Currently all access to CloudWatch is done server side by the Grafana backend us
 
 For more information, refer to the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html).
 
-## IAM policies
-
-Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
-and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
-utilize Grafana's built-in support for assuming roles.
-
-Here is a minimal policy example:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowReadingMetricsFromCloudWatch",
-      "Effect": "Allow",
-      "Action": [
-        "cloudwatch:DescribeAlarmsForMetric",
-        "cloudwatch:DescribeAlarmHistory",
-        "cloudwatch:DescribeAlarms",
-        "cloudwatch:ListMetrics",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:GetMetricData"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowReadingLogsFromCloudWatch",
-      "Effect": "Allow",
-      "Action": [
-        "logs:DescribeLogGroups",
-        "logs:GetLogGroupFields",
-        "logs:StartQuery",
-        "logs:StopQuery",
-        "logs:GetQueryResults",
-        "logs:GetLogEvents"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
-      "Effect": "Allow",
-      "Action": ["ec2:DescribeTags", "ec2:DescribeInstances", "ec2:DescribeRegions"],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowReadingResourcesForTags",
-      "Effect": "Allow",
-      "Action": "tag:GetResources",
-      "Resource": "*"
-    }
-  ]
-}
-```
+> **Note:** IAM policies are data source specific. Refer to Authentication section of the [Cloudwatch]({{< relref "./_index.md" >}}) topic for more information.
 
 ## Assuming a role
 
