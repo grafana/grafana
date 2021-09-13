@@ -1,6 +1,17 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button, ConfirmButton, Field, HorizontalGroup, Modal, stylesFactory, Themeable, withTheme } from '@grafana/ui';
+import {
+  Button,
+  ConfirmButton,
+  Field,
+  HorizontalGroup,
+  Icon,
+  Modal,
+  stylesFactory,
+  Themeable,
+  Tooltip,
+  withTheme,
+} from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { AccessControlAction, Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
@@ -9,6 +20,7 @@ import { contextSrv } from 'app/core/core';
 
 interface Props {
   orgs: UserOrg[];
+  isExternalUser: boolean | undefined;
 
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
@@ -29,13 +41,12 @@ export class UserOrgs extends PureComponent<Props, State> {
   };
 
   render() {
-    const { orgs, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
+    const { orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
     const { showAddOrgModal } = this.state;
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
     `;
     const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
-
     return (
       <>
         <h3 className="page-heading">Organizations</h3>
@@ -46,6 +57,7 @@ export class UserOrgs extends PureComponent<Props, State> {
                 {orgs.map((org, index) => (
                   <OrgRow
                     key={`${org.orgId}-${index}`}
+                    isExternalUser={isExternalUser}
                     org={org}
                     onOrgRoleChange={onOrgRoleChange}
                     onOrgRemove={onOrgRemove}
@@ -78,11 +90,21 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
     label: css`
       font-weight: 500;
     `,
+    disabledTooltip: css`
+      display: flex;
+    `,
+    tooltipItem: css`
+      margin-left: 5px;
+    `,
+    tooltipItemLink: css`
+      color: ${theme.palette.blue95};
+    `,
   };
 });
 
 interface OrgRowProps extends Themeable {
   org: UserOrg;
+  isExternalUser: boolean | undefined;
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
 }
@@ -121,7 +143,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   };
 
   render() {
-    const { org, theme } = this.props;
+    const { org, isExternalUser, theme } = this.props;
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
@@ -133,7 +155,33 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         <td className={labelClass}>{org.name}</td>
         {isChangingRole ? (
           <td>
-            <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
+            <div className={styles.disabledTooltip}>
+              <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} disabled={isExternalUser} />
+              {isExternalUser && (
+                <Tooltip
+                  placement="right-end"
+                  content={
+                    <div>
+                      This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                      the&nbsp;
+                      <a
+                        className={styles.tooltipItemLink}
+                        href={'https://grafana.com/docs/grafana/latest/auth'}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Grafana authentication docs
+                      </a>
+                      .
+                    </div>
+                  }
+                >
+                  <div className={styles.tooltipItem}>
+                    <Icon name="question-circle" />
+                  </div>
+                </Tooltip>
+              )}
+            </div>
           </td>
         ) : (
           <td className="width-25">{org.role}</td>
