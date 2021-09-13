@@ -324,14 +324,14 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
     },
   } as any);
 
+  setEchoSrv(new Echo());
+
   const store = configureStore();
   store.getState().user = {
     ...initialUserState,
     orgId: 1,
     timeZone: 'utc',
   };
-
-  setEchoSrv(new Echo());
 
   store.getState().navIndex = {
     explore: {
