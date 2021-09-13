@@ -57,6 +57,14 @@ Grafana generates a TXT file in your default browser download location. You can 
 1. Inspect the log query results as described above.
 1. Click **Download logs**.
 
+### Download trace results
+
+Based on the data source type, Grafana generates a JSON file for the trace results in one of the supported formats: Jaeger, Zipkin, or OTLP formats.
+
+1. Open the inspector.
+1. Inspect the trace query results [as described above](#inspect-raw-query-results).
+1. Click **Download traces**.
+
 ### Inspect query performance
 
 The Stats tab displays statistics that tell you how long your query takes, how many queries you send, and the number of rows returned. This information can help you troubleshoot your queries, especially if any of the numbers are unexpectedly high or low.

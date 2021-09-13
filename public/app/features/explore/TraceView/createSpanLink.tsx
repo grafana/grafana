@@ -1,10 +1,9 @@
-import { DataLink, dateTime, Field, mapInternalLinkToExplore, rangeUtil, TimeRange } from '@grafana/data';
+import { DataLink, dateTime, Field, mapInternalLinkToExplore, rangeUtil, SplitOpen, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { SplitOpen } from 'app/types/explore';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 
@@ -38,7 +37,7 @@ export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions
         datasourceUid: dataSourceSettings.uid,
         datasourceName: dataSourceSettings.name,
         query: {
-          expr: getLokiQueryFromSpan(span, traceToLogsOptions.tags),
+          expr: getLokiQueryFromSpan(span, traceToLogsOptions),
           refId: '',
         },
       },
@@ -67,7 +66,8 @@ export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
-function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
+function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string {
+  const { tags: keys, filterByTraceID, filterBySpanID } = options;
   const keysToCheck = keys?.length ? keys : defaultKeys;
   const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
     if (keysToCheck.includes(tag.key)) {
@@ -75,7 +75,17 @@ function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
     }
     return acc;
   }, [] as string[]);
-  return `{${tags.join(', ')}}`;
+
+  let query = `{${tags.join(', ')}}`;
+
+  if (filterByTraceID && span.traceID) {
+    query += ` |="${span.traceID}"`;
+  }
+  if (filterBySpanID && span.spanID) {
+    query += ` |="${span.spanID}"`;
+  }
+
+  return query;
 }
 
 /**

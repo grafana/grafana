@@ -51,6 +51,8 @@ module.exports = {
     fallback: {
       fs: false,
       stream: false,
+      http: false,
+      https: false,
     },
   },
   ignoreWarnings: [/export .* was not found in/],
