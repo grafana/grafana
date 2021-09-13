@@ -5,6 +5,7 @@ import {
   setTimeGrain as setMetricsTimeGrain,
 } from '../components/MetricsQueryEditor/setQueryValue';
 import { setKustoQuery } from '../components/LogsQueryEditor/setQueryValue';
+import { createResourceURI } from './resourceURIUtils';
 
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 
@@ -21,6 +22,7 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
   workingQuery = migrateToDefaultNamespace(workingQuery);
   workingQuery = migrateApplicationInsightsDimensions(workingQuery);
   workingQuery = migrateMetricsDimensionFilters(workingQuery);
+  workingQuery = migrateMetricsToResourceURI(workingQuery);
 
   return workingQuery;
 }
@@ -131,6 +133,38 @@ function migrateMetricsDimensionFilters(query: AzureMonitorQuery): AzureMonitorQ
   }
 
   return workingQuery;
+}
+
+function migrateMetricsToResourceURI(query: AzureMonitorQuery): AzureMonitorQuery {
+  const { subscription } = query;
+  const { resource, resourceGroup, metricDefinition, resourceName } = query.azureMonitor ?? {};
+
+  // Don't migrate if we already have a resource URI OR if we don't have all the old components
+  // to create the resource URI.
+  // Seperate if-statements for clarity, and to help typescript narrow the types
+
+  if (resource) {
+    return query;
+  }
+
+  if (!subscription || !resourceGroup || !metricDefinition || !resourceName) {
+    return query;
+  }
+
+  const resourceURI = createResourceURI({
+    subscriptionID: subscription,
+    resourceGroup,
+    resourceType: metricDefinition,
+    resource: resourceName,
+  });
+
+  return {
+    ...query,
+    azureMonitor: {
+      ...query.azureMonitor,
+      resource: resourceURI,
+    },
+  };
 }
 
 // datasource.ts also contains some migrations, which have been moved to here. Unsure whether

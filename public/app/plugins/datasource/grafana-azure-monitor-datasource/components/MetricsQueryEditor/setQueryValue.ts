@@ -1,20 +1,5 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
-export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: string): AzureMonitorQuery {
-  if (query.subscription === subscriptionID) {
-    return query;
-  }
-
-  return {
-    ...query,
-    subscription: subscriptionID,
-    azureMonitor: {
-      ...query.azureMonitor,
-      resourceGroup: undefined,
-    },
-  };
-}
-
 export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
   if (query.azureMonitor?.resource === resourceURI) {
     return query;
@@ -25,55 +10,6 @@ export function setResource(query: AzureMonitorQuery, resourceURI: string | unde
     azureMonitor: {
       ...query.azureMonitor,
       resource: resourceURI,
-    },
-  };
-}
-
-export function setResourceGroup(query: AzureMonitorQuery, resourceGroup: string | undefined): AzureMonitorQuery {
-  if (query.azureMonitor?.resourceGroup === resourceGroup) {
-    return query;
-  }
-
-  return {
-    ...query,
-    azureMonitor: {
-      ...query.azureMonitor,
-      resourceGroup: resourceGroup,
-      resourceName: undefined,
-    },
-  };
-}
-
-// In the query as "metricDefinition" for some reason
-export function setResourceType(query: AzureMonitorQuery, resourceType: string | undefined): AzureMonitorQuery {
-  if (query.azureMonitor?.metricDefinition === resourceType) {
-    return query;
-  }
-
-  const newQuery = {
-    ...query,
-    azureMonitor: {
-      ...query.azureMonitor,
-      metricDefinition: resourceType,
-      resourceName: undefined,
-      metricNamespace: undefined,
-      metricName: undefined,
-    },
-  };
-
-  return newQuery;
-}
-
-export function setResourceName(query: AzureMonitorQuery, resourceName: string | undefined): AzureMonitorQuery {
-  if (query.azureMonitor?.resourceName === resourceName) {
-    return query;
-  }
-
-  return {
-    ...query,
-    azureMonitor: {
-      ...query.azureMonitor,
-      resourceName: resourceName,
     },
   };
 }

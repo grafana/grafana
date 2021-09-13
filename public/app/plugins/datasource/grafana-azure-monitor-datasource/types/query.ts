@@ -15,7 +15,7 @@ export enum AzureQueryType {
 export interface AzureMonitorQuery extends DataQuery {
   queryType?: AzureQueryType;
 
-  /** @deprecated In favor of resource URI */
+  /** @deprecated Replaced with resource URI, kept around for old queries + migrations */
   subscription?: string;
 
   /** ARG uses multiple subscriptions */
@@ -38,16 +38,6 @@ export interface AzureMonitorQuery extends DataQuery {
 export interface AzureMetricQuery {
   resource?: string;
 
-  /** @deprecated In favor of resource URI */
-  resourceGroup?: string;
-
-  /** Resource type */
-  /** @deprecated In favor of resource URI */
-  metricDefinition?: string;
-
-  /** @deprecated In favor of resource URI */
-  resourceName?: string;
-
   metricNamespace?: string;
   metricName?: string;
   timeGrain?: string;
@@ -55,6 +45,16 @@ export interface AzureMetricQuery {
   dimensionFilters?: AzureMetricDimension[];
   alias?: string;
   top?: string;
+
+  /** @deprecated Replaced with resource URI, kept around for old queries + migrations */
+  resourceGroup?: string;
+
+  /** Resource type */
+  /** @deprecated Replaced with resource URI, kept around for old queries + migrations */
+  metricDefinition?: string;
+
+  /** @deprecated Replaced with resource URI, kept around for old queries + migrations */
+  resourceName?: string;
 
   /** @deprecated */
   timeGrainUnit?: string;

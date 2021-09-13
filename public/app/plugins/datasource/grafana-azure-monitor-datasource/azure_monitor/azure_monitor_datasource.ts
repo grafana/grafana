@@ -39,7 +39,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
     const cloud = getAzureCloud(instanceSettings);
-    this.resourcePath = `${routeNames.azureMonitor}/subscriptions`;
+    this.resourcePath = routeNames.azureMonitor;
     this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
     this.azurePortalUrl = getAzurePortalUrl(cloud);
   }
@@ -50,22 +50,24 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    return !!(
+    // If it doesnt have a resource URI, check to see if it has the old individual resource fields
+    var hasResource =
+      item.azureMonitor?.resource ||
+      (hasValue(item.azureMonitor?.resourceGroup) &&
+        hasValue(item.azureMonitor?.resourceName) &&
+        hasValue(item.azureMonitor?.metricDefinition));
+
+    const result = !!(
       item.hide !== true &&
       item.azureMonitor &&
-      // If it doesnt have a resource URI, check to see if it has the old individual resource fields
-      (item.azureMonitor.resource ||
-        (item.azureMonitor.resourceGroup &&
-          item.azureMonitor.resourceGroup !== defaultDropdownValue &&
-          item.azureMonitor.resourceName &&
-          item.azureMonitor.resourceName !== defaultDropdownValue &&
-          item.azureMonitor.metricDefinition &&
-          item.azureMonitor.metricDefinition !== defaultDropdownValue)) &&
-      item.azureMonitor.metricName &&
-      item.azureMonitor.metricName !== defaultDropdownValue &&
-      item.azureMonitor.aggregation &&
-      item.azureMonitor.aggregation !== defaultDropdownValue
+      hasResource &&
+      hasValue(item.azureMonitor.metricName) &&
+      hasValue(item.azureMonitor.aggregation)
     );
+
+    console.log('filterQuery', item, { result, hasResource });
+
+    return result;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
@@ -266,14 +268,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return [];
     }
 
-    return this.getResource(`${this.resourcePath}?api-version=2019-03-01`).then((result: any) => {
+    return this.getResource(`${this.resourcePath}/subscriptions?api-version=2019-03-01`).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
 
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`
     ).then((result: AzureMonitorResourceGroupsResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
@@ -281,7 +283,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
     )
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
@@ -332,10 +334,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  /** @deprecated - Use resource picker now? */
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
     ).then((result: any) => {
       if (!startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
         return ResponseParser.parseResourceNames(result, metricDefinition);
@@ -352,10 +353,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getMetricNamespaces(resourceURI: string) {
-    const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricNamespaces?api-version=${this.apiPreviewVersion}`.replace(
-      'subscriptions/subscriptions',
-      'subscriptions'
-    ); // TODO: hack for now because resourcePath already includes /subscriptions/
+    const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricNamespaces?api-version=${this.apiPreviewVersion}`;
 
     console.log('getMetricNamespaces', url);
     return this.getResource(url).then((result: any) => {
@@ -366,7 +364,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   getMetricNames(resourceURI: string, metricNamespace: string) {
     const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricDefinitions?api-version=${
       this.apiPreviewVersion
-    }&metricnamespace=${encodeURIComponent(metricNamespace)}`.replace('subscriptions/subscriptions', 'subscriptions'); // TODO: hack for now because resourcePath already includes /subscriptions/
+    }&metricnamespace=${encodeURIComponent(metricNamespace)}`;
 
     return this.getResource(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
@@ -376,7 +374,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   getMetricMetadata(resourceURI: string, metricNamespace: string, metricName: string) {
     const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricDefinitions?api-version=${
       this.apiPreviewVersion
-    }&metricnamespace=${encodeURIComponent(metricNamespace)}`.replace('subscriptions/subscriptions', 'subscriptions'); // TODO: hack for now because resourcePath already includes /subscriptions/
+    }&metricnamespace=${encodeURIComponent(metricNamespace)}`;
 
     return this.getResource(url).then((result: any) => {
       return ResponseParser.parseMetadata(result, metricName);
@@ -390,7 +388,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     try {
-      const url = `${this.resourcePath}?api-version=2019-03-01`;
+      const url = `${this.resourcePath}/subscriptions?api-version=2019-03-01`;
 
       return await this.getResource(url).then<DatasourceValidationResult>((response: any) => {
         return {
@@ -445,3 +443,22 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return typeof field === 'string' && field.length > 0;
   }
 }
+
+function hasValue(value: string | undefined): boolean {
+  return !!value && value !== defaultDropdownValue;
+}
+
+function stringifyAzurePortalUrlParam(value: string | object): string {
+  const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+  return encodeURIComponent(stringValue);
+}
+
+// Used to convert our aggregation value to the Azure enum for deep linking
+const aggregationTypeMap: Record<string, number> = {
+  None: 0,
+  Total: 1,
+  Minimum: 2,
+  Maximum: 3,
+  Average: 4,
+  Count: 7,
+};
