@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction, createSlice, PayloadAction, Reducer } from '@reduxjs/toolkit';
 import { PluginMeta, PanelPlugin, PluginError } from '@grafana/data';
 import { PluginsState } from 'app/types';
 import { config } from 'app/core/config';
@@ -52,8 +52,8 @@ export const {
   panelPluginLoaded,
 } = pluginsSlice.actions;
 
-export const pluginsReducer: typeof pluginsSlice.reducer = config.pluginAdminEnabled
-  ? pluginCatalogReducer
+export const pluginsReducer: Reducer<PluginsState, AnyAction> = config.pluginAdminEnabled
+  ? ((pluginCatalogReducer as unknown) as Reducer<PluginsState, AnyAction>)
   : pluginsSlice.reducer;
 
 export default {
