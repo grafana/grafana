@@ -74,4 +74,25 @@ describe('Graphite query model', () => {
       expect(ctx.queryModel.functions[1].params[0]).toBe('$limit');
     });
   });
+
+  describe('skips "select metric" when target is rendered', () => {
+    beforeEach(() => {
+      ctx.target = { refId: 'A', target: '' };
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+    });
+
+    it('at the beginning of the metric name', () => {
+      ctx.queryModel.segments = [{ value: 'select metric' }];
+      ctx.queryModel.updateModelTarget(ctx.targets);
+
+      expect(ctx.queryModel.target.target).toBe('');
+    });
+
+    it('in the middle of the metric name', () => {
+      ctx.queryModel.segments = [{ value: 'foo' }, { value: 'select metric' }];
+      ctx.queryModel.updateModelTarget(ctx.targets);
+
+      expect(ctx.queryModel.target.target).toBe('foo');
+    });
+  });
 });
