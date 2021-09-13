@@ -55,7 +55,7 @@ You can also specify the SSL/TLS configuration used by the client.
 
 Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 
-### E-mail address
+### Email address
 
 Grafana determines a user's e-mail address by querying the OAuth provider until it finds an e-mail address:
 
