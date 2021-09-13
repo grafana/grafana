@@ -292,11 +292,6 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 
 		queryType := Range
 
-		//This is currently not used, but we will use it in next iteration
-		if model.InstantQuery {
-			queryType = Instant
-		}
-
 		// Align query range to step. It rounds start and end down to a multiple of step.
 		start := int64(math.Floor((float64(query.TimeRange.From.Unix()) / interval.Seconds())) * interval.Seconds())
 		end := int64(math.Floor((float64(query.TimeRange.To.Unix()) / interval.Seconds())) * interval.Seconds())
