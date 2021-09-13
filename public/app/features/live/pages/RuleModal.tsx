@@ -15,7 +15,8 @@ const tabs = [
 ];
 const height = 600;
 
-export const RuleModal: React.FC<Props> = ({ rule, isOpen, onClose }) => {
+export const RuleModal: React.FC<Props> = (props) => {
+  const { rule, isOpen, onClose } = props;
   const [activeTab, setActiveTab] = useState<string>('converter');
 
   return (
@@ -35,37 +36,64 @@ export const RuleModal: React.FC<Props> = ({ rule, isOpen, onClose }) => {
         })}
       </TabsBar>
       <TabContent>
-        {activeTab === 'converter' && (
-          <CodeEditor
-            height={height}
-            value={JSON.stringify(rule.settings.converter, null, '\t')}
-            showLineNumbers={true}
-            readOnly={true}
-            language="json"
-            showMiniMap={false}
-          />
-        )}
-        {activeTab === 'processor' && (
-          <CodeEditor
-            height={height}
-            value={JSON.stringify(rule.settings.processor, null, '\t')}
-            showLineNumbers={true}
-            readOnly={true}
-            language="json"
-            showMiniMap={false}
-          />
-        )}
-        {activeTab === 'output' && (
-          <CodeEditor
-            height={height}
-            value={JSON.stringify(rule.settings.output, null, '\t')}
-            showLineNumbers={true}
-            readOnly={true}
-            language="json"
-            showMiniMap={false}
-          />
-        )}
+        {activeTab === 'converter' && <ConverterEditor {...props} />}
+        {activeTab === 'processor' && <ProcessorEditor {...props} />}
+        {activeTab === 'output' && <OutputEditor {...props} />}
       </TabContent>
     </Modal>
+  );
+};
+
+export const ConverterEditor: React.FC<Props> = ({ rule }) => {
+  const { converter } = rule.settings;
+  if (!converter) {
+    return <div>No converter defined</div>;
+  }
+
+  return (
+    <CodeEditor
+      height={height}
+      value={JSON.stringify(converter, null, '\t')}
+      showLineNumbers={true}
+      readOnly={true}
+      language="json"
+      showMiniMap={false}
+    />
+  );
+};
+
+export const ProcessorEditor: React.FC<Props> = ({ rule }) => {
+  const { processor } = rule.settings;
+  if (!processor) {
+    return <div>No processor defined</div>;
+  }
+
+  return (
+    <CodeEditor
+      height={height}
+      value={JSON.stringify(processor, null, '\t')}
+      showLineNumbers={true}
+      readOnly={true}
+      language="json"
+      showMiniMap={false}
+    />
+  );
+};
+
+export const OutputEditor: React.FC<Props> = ({ rule }) => {
+  const { output } = rule.settings;
+  if (!output) {
+    return <div>No output defined</div>;
+  }
+
+  return (
+    <CodeEditor
+      height={height}
+      value={JSON.stringify(output, null, '\t')}
+      showLineNumbers={true}
+      readOnly={true}
+      language="json"
+      showMiniMap={false}
+    />
   );
 };

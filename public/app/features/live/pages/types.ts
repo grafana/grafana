@@ -30,3 +30,8 @@ export interface Rule {
 export interface Pipeline {
   rules: Rule[];
 }
+
+export interface GrafanaCloudBackend {
+  uid: string;
+  settings: any;
+}
