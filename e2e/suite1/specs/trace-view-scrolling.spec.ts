@@ -32,6 +32,6 @@ describe('Trace view', () => {
     e2e.pages.Explore.General.scrollBar().scrollTo('center');
 
     // After scrolling we should load more spans
-    e2e.components.TraceViewer.spanBar().should('have.length', 140);
+    e2e.components.TraceViewer.spanBar().should('have.length', 139);
   });
 });
