@@ -34,7 +34,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	// its database migrations run and the relative database tables are created
 	cfg.FeatureToggles = map[string]bool{"ngalert": true}
 
-	m := metrics.NewMetrics(prometheus.NewRegistry())
+	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil, nil, m)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
