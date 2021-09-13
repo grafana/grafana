@@ -14,6 +14,9 @@ interface ResourcePickerProps {
   resourceURI: string | undefined;
   templateVariables: string[];
 
+  /** Disable the selection of Subscriptions and Resource Groups */
+  onlyResources?: boolean;
+
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
 }
@@ -22,6 +25,7 @@ const ResourcePicker = ({
   resourcePickerData,
   resourceURI,
   templateVariables,
+  onlyResources,
   onApply,
   onCancel,
 }: ResourcePickerProps) => {
@@ -126,6 +130,7 @@ const ResourcePicker = ({
             requestNestedRows={requestNestedRows}
             onRowSelectedChange={handleSelectionChanged}
             selectedRows={selectedResourceRows}
+            onlyResources={!!onlyResources}
           />
 
           <div className={styles.selectionFooter}>
@@ -138,6 +143,7 @@ const ResourcePicker = ({
                   requestNestedRows={requestNestedRows}
                   onRowSelectedChange={handleSelectionChanged}
                   selectedRows={selectedResourceRows}
+                  onlyResources={!!onlyResources}
                   noHeader={true}
                 />
               </>

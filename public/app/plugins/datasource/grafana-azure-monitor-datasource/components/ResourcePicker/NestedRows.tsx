@@ -10,14 +10,16 @@ interface NestedRowsProps {
   rows: ResourceRowGroup;
   level: number;
   selectedRows: ResourceRowGroup;
+  onlyResources: boolean;
   requestNestedRows: (row: ResourceRow) => Promise<void>;
   onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
 const NestedRows: React.FC<NestedRowsProps> = ({
   rows,
-  selectedRows,
   level,
+  selectedRows,
+  onlyResources,
   requestNestedRows,
   onRowSelectedChange,
 }) => (
@@ -28,6 +30,7 @@ const NestedRows: React.FC<NestedRowsProps> = ({
         row={row}
         selectedRows={selectedRows}
         level={level}
+        onlyResources={onlyResources}
         requestNestedRows={requestNestedRows}
         onRowSelectedChange={onRowSelectedChange}
       />
@@ -39,11 +42,19 @@ interface NestedRowProps {
   row: ResourceRow;
   level: number;
   selectedRows: ResourceRowGroup;
+  onlyResources: boolean;
   requestNestedRows: (row: ResourceRow) => Promise<void>;
   onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
-const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, requestNestedRows, onRowSelectedChange }) => {
+const NestedRow: React.FC<NestedRowProps> = ({
+  row,
+  selectedRows,
+  level,
+  onlyResources,
+  requestNestedRows,
+  onRowSelectedChange,
+}) => {
   const styles = useStyles2(getStyles);
   const initialOpenStatus = row.type === ResourceRowType.Subscription ? 'open' : 'closed';
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
@@ -83,6 +94,7 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
             isSelected={isSelected}
             isDisabled={isDisabled}
             isOpen={isOpen}
+            onlyResources={onlyResources}
             entry={row}
             onToggleCollapse={onRowToggleCollapse}
             onSelectedChange={onRowSelectedChange}
@@ -99,6 +111,7 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
           rows={row.children}
           selectedRows={selectedRows}
           level={level + 1}
+          onlyResources={onlyResources}
           requestNestedRows={requestNestedRows}
           onRowSelectedChange={onRowSelectedChange}
         />
@@ -148,12 +161,23 @@ interface NestedEntryProps {
   isSelected: boolean;
   isOpen: boolean;
   isDisabled: boolean;
+  onlyResources: boolean;
   onToggleCollapse: (row: ResourceRow) => void;
   onSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
+const SELECTABLE_TYPES = [
+  ResourceRowType.Subscription,
+  ResourceRowType.ResourceGroup,
+  ResourceRowType.Resource,
+  ResourceRowType.Variable,
+];
+
+const ONLY_RESOURCES_SELECTABLE_TYPES = [ResourceRowType.Resource, ResourceRowType.Variable];
+
 const NestedEntry: React.FC<NestedEntryProps> = ({
   entry,
+  onlyResources,
   isSelected,
   isDisabled,
   isOpen,
@@ -166,7 +190,9 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   const hasChildren = !!entry.children;
   // Subscriptions, resource groups, resources, and variables are all selectable, so
   // the top-level variable group is the only thing that cannot be selected.
-  const isSelectable = entry.type !== ResourceRowType.VariableGroup;
+  const isSelectable = onlyResources
+    ? ONLY_RESOURCES_SELECTABLE_TYPES.includes(entry.type)
+    : SELECTABLE_TYPES.includes(entry.type);
 
   const handleToggleCollapse = useCallback(() => {
     onToggleCollapse(entry);

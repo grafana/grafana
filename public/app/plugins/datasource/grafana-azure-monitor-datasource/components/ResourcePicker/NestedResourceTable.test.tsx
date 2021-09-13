@@ -12,7 +12,15 @@ describe('AzureMonitor NestedResourceTable', () => {
   it('renders subscriptions', () => {
     const rows = createMockResourcePickerRows();
 
-    render(<NestedResourceTable rows={rows} selectedRows={[]} requestNestedRows={noop} onRowSelectedChange={noop} />);
+    render(
+      <NestedResourceTable
+        rows={rows}
+        selectedRows={[]}
+        onlyResources={false}
+        requestNestedRows={noop}
+        onRowSelectedChange={noop}
+      />
+    );
 
     expect(screen.getByText('Primary Subscription')).toBeInTheDocument();
     expect(screen.getByText('Dev Subscription')).toBeInTheDocument();
@@ -30,7 +38,13 @@ describe('AzureMonitor NestedResourceTable', () => {
     }
 
     render(
-      <NestedResourceTable rows={rows} selectedRows={[selected]} requestNestedRows={noop} onRowSelectedChange={noop} />
+      <NestedResourceTable
+        rows={rows}
+        selectedRows={[selected]}
+        onlyResources={false}
+        requestNestedRows={noop}
+        onRowSelectedChange={noop}
+      />
     );
 
     expect(screen.getByText('web-server_DataDisk')).toBeInTheDocument();
@@ -44,6 +58,7 @@ describe('AzureMonitor NestedResourceTable', () => {
       <NestedResourceTable
         rows={rows}
         selectedRows={[]}
+        onlyResources={false}
         requestNestedRows={requestNestedRows}
         onRowSelectedChange={noop}
       />
@@ -74,6 +89,7 @@ describe('AzureMonitor NestedResourceTable', () => {
       <NestedResourceTable
         rows={rows}
         selectedRows={[]}
+        onlyResources={false}
         requestNestedRows={requestNestedRows}
         onRowSelectedChange={onRowSelectedChange}
       />

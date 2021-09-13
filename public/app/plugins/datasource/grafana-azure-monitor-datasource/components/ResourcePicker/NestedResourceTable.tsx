@@ -11,6 +11,7 @@ interface NestedResourceTableProps {
   rows: ResourceRowGroup;
   selectedRows: ResourceRowGroup;
   noHeader?: boolean;
+  onlyResources: boolean;
   requestNestedRows: (row: ResourceRow) => Promise<void>;
   onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
@@ -19,6 +20,7 @@ const NestedResourceTable: React.FC<NestedResourceTableProps> = ({
   rows,
   selectedRows,
   noHeader,
+  onlyResources,
   requestNestedRows,
   onRowSelectedChange,
 }) => {
@@ -43,6 +45,7 @@ const NestedResourceTable: React.FC<NestedResourceTableProps> = ({
           <tbody>
             <NestedRows
               rows={rows}
+              onlyResources={onlyResources}
               selectedRows={selectedRows}
               level={0}
               requestNestedRows={requestNestedRows}

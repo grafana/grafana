@@ -2,14 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
-import {
-  setMetricName,
-  setMetricNamespace,
-  setResourceGroup,
-  setResourceName,
-  setResourceType,
-  setSubscriptionID,
-} from './setQueryValue';
+import { setMetricName, setMetricNamespace } from './setQueryValue';
 
 export interface MetricMetadata {
   aggOptions: AzureMonitorOption[];
@@ -54,107 +47,6 @@ export function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, 
 
   return finalValue;
 }
-
-export const useSubscriptions: DataHook = (query, datasource, onChange, setError) => {
-  const { subscription } = query;
-  const defaultSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
-
-  const subscriptionOptions = useAsyncState(
-    async () => {
-      const results = await datasource.azureMonitorDatasource.getSubscriptions();
-      return results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-    },
-    setError,
-    []
-  );
-
-  useEffect(() => {
-    // Return early if subscriptions havent loaded, or if the query already has a subscription
-    if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
-      return;
-    }
-
-    const defaultSub = defaultSubscription || subscriptionOptions[0].value;
-
-    if (!subscription && defaultSub && hasOption(subscriptionOptions, defaultSub)) {
-      onChange(setSubscriptionID(query, defaultSub));
-    }
-  }, [subscriptionOptions, query, subscription, defaultSubscription, onChange]);
-
-  return subscriptionOptions;
-};
-
-export const useResourceGroups: DataHook = (query, datasource, onChange, setError) => {
-  const { subscription } = query;
-  const { resourceGroup } = query.azureMonitor ?? {};
-
-  return useAsyncState(
-    async () => {
-      if (!subscription) {
-        return;
-      }
-
-      const results = await datasource.getResourceGroups(subscription);
-      const options = results.map(toOption);
-
-      if (isInvalidOption(resourceGroup, options, datasource.getVariables())) {
-        onChange(setResourceGroup(query, undefined));
-      }
-
-      return options;
-    },
-    setError,
-    [subscription]
-  );
-};
-
-export const useResourceTypes: DataHook = (query, datasource, onChange, setError) => {
-  const { subscription } = query;
-  const { resourceGroup, metricDefinition } = query.azureMonitor ?? {};
-
-  return useAsyncState(
-    async () => {
-      if (!(subscription && resourceGroup)) {
-        return;
-      }
-
-      const results = await datasource.getMetricDefinitions(subscription, resourceGroup);
-      const options = results.map(toOption);
-
-      if (isInvalidOption(metricDefinition, options, datasource.getVariables())) {
-        onChange(setResourceType(query, undefined));
-      }
-
-      return options;
-    },
-    setError,
-    [subscription, resourceGroup]
-  );
-};
-
-export const useResourceNames: DataHook = (query, datasource, onChange, setError) => {
-  const { subscription } = query;
-  const { resourceGroup, metricDefinition, resourceName } = query.azureMonitor ?? {};
-
-  return useAsyncState(
-    async () => {
-      if (!(subscription && resourceGroup && metricDefinition)) {
-        return;
-      }
-
-      const results = await datasource.getResourceNames(subscription, resourceGroup, metricDefinition);
-      const options = results.map(toOption);
-
-      if (isInvalidOption(resourceName, options, datasource.getVariables())) {
-        onChange(setResourceName(query, undefined));
-      }
-
-      return options;
-    },
-    setError,
-    [subscription, resourceGroup, metricDefinition]
-  );
-};
 
 export const useMetricNamespaces: DataHook = (query, datasource, onChange, setError) => {
   const { resource, metricNamespace } = query.azureMonitor ?? {};
