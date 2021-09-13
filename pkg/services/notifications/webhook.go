@@ -64,7 +64,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	request.Header.Set("Content-Type", webhook.ContentType)
 	request.Header.Set("User-Agent", "Grafana")
 
-	if webhook.User != "" && webhook.Password != "" {
+	if webhook.User != "" || webhook.Password != "" {
 		request.Header.Set("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
 	}
 
