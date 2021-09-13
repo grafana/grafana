@@ -162,13 +162,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+		var results model.Value
 
-		if err != nil {
-			return &result, err
+		switch query.QueryType {
+		case Range:
+			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
+			if err != nil {
+				return &result, fmt.Errorf("error: %v, for query: %s", err, query.Expr)
+			}
+
+		default:
+			return &result, fmt.Errorf("unknown Query type detected %#v", query.QueryType)
 		}
 
-		frame, err := parseResponse(value, query)
+		frame, err := parseResponse(results, query)
 		if err != nil {
 			return &result, err
 		}
@@ -283,6 +290,13 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
 		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
+		queryType := Range
+
+		//This is currently not used, but we will use it in next iteration
+		if model.InstantQuery {
+			queryType = Instant
+		}
+
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
 			Step:         interval,
@@ -290,6 +304,7 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 			Start:        query.TimeRange.From,
 			End:          query.TimeRange.To,
 			RefId:        query.RefID,
+			QueryType:    queryType,
 		})
 	}
 
