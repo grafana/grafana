@@ -64,7 +64,7 @@ Grafana determines a user's e-mail address by querying the OAuth provider until 
    **Note**: Only available in Grafana v6.4+.
 1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
 1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
-1. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
+1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
 
 ### Roles
 
