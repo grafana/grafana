@@ -19,6 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
+import config from 'app/core/config';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 
 export interface Props {
@@ -27,6 +28,7 @@ export interface Props {
 
 export interface State {
   homeDashboardId: number;
+  navPosition: 'left' | 'right' | 'top' | 'bottom';
   theme: string;
   timezone: string;
   dashboards: DashboardSearchHit[];
@@ -38,6 +40,13 @@ const themes: SelectableValue[] = [
   { value: 'light', label: 'Light' },
 ];
 
+const navPositions: Array<SelectableValue<string>> = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'top', label: 'Top' },
+  { value: 'bottom', label: 'Bottom' },
+];
+
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
 
@@ -47,6 +56,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.service = new PreferencesService(props.resourceUri);
     this.state = {
       homeDashboardId: 0,
+      navPosition: 'left',
       theme: '',
       timezone: '',
       dashboards: [],
@@ -82,6 +92,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     this.setState({
       homeDashboardId: prefs.homeDashboardId,
+      navPosition: prefs.navPosition,
       theme: prefs.theme,
       timezone: prefs.timezone,
       dashboards: [defaultDashboardHit, ...dashboards],
@@ -89,9 +100,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardId, theme, timezone } = this.state;
-    await this.service.update({ homeDashboardId, theme, timezone });
+    const { homeDashboardId, navPosition, theme, timezone } = this.state;
+    await this.service.update({ homeDashboardId, navPosition, theme, timezone });
     window.location.reload();
+  };
+
+  onNavPositionChanged = (value: 'left' | 'right' | 'top' | 'bottom') => {
+    this.setState({ navPosition: value });
   };
 
   onThemeChanged = (value: string) => {
@@ -117,7 +132,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   render() {
-    const { theme, timezone, homeDashboardId, dashboards } = this.state;
+    const { theme, navPosition, timezone, homeDashboardId, dashboards } = this.state;
     const styles = getStyles();
 
     return (
@@ -132,6 +147,16 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   onChange={this.onThemeChanged}
                 />
               </Field>
+
+              {config.featureToggles.newNavigation && (
+                <Field label="Navigation position">
+                  <RadioButtonGroup
+                    options={navPositions}
+                    value={navPositions.find((item) => item.value === navPosition)?.value}
+                    onChange={this.onNavPositionChanged}
+                  />
+                </Field>
+              )}
 
               <Field
                 label={
