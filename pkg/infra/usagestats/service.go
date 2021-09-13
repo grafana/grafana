@@ -114,6 +114,7 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 				nextSendInterval = sendInterval
 				sendReportTicker.Reset(nextSendInterval)
 			}
+
 			// always reset live stats every report tick
 			uss.resetLiveStats()
 		case <-updateStatsTicker.C:
