@@ -57,7 +57,7 @@ Set `empty_scopes` to true to use an empty scope during authentication. By defau
 
 ### Email address
 
-Grafana determines a user's e-mail address by querying the OAuth provider until it finds an e-mail address:
+Grafana determines a user's email address by querying the OAuth provider until it finds an e-mail address:
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
 1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
