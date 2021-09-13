@@ -197,7 +197,7 @@ Grafana supported only the `many` format before. For example:
 | 2021-05-08T09:31:45Z | 55       |
 | 2021-05-08T11:31:45Z | 55       |
 
-> Data delivered as an array of data frames (time field needs to be repeated).
+> Data is delivered as an array of data frames where the `time` field is repeated.
 
 That made it possible to detect time series data by inspecting the data frame. If it had two fields (time + value) it most likley was time series data. This is no longer possible since the same data can be delivered in the following `wide` format.
 
