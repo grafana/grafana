@@ -8,21 +8,21 @@ weight = 205
 
 # AWS authentication
 
-You can use one of three authentication methods:
+You can use one of the following authentication methods:
 
-> **Note:** There are four different authentication methods available, but only three of the options (discussed here) are enabled by default for Grafana open source software.
+- `AWS SDK Default` performs no custom configuration and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. It requires you to configure your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html), or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
-`AWS SDK Default` performs no custom configuration at all and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. This requires you to configure your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html) or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+- `Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider) provider in the Go SDK. It reads the AWS shared credentials file to find a given profile. While `AWS SDK Default` will also find the shared credentials file, this option allows you to specify which profile to use without using environment variables. This option doesn't have any implicit fallbacks to other credential providers, and it fails if the credentials provided from the file aren't correct.
 
-`Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider) provider in the Go SDK. In short, it reads the AWS shared credentials file to find the given profile. While `AWS SDK Default` will also find the shared credentials file, this option allows you to specify which profile to use without using environment variables. This option doesn't have any implicit fallbacks to other credential providers, and it will fail if the credentials provided from the file aren't correct.
+- `Access and secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
 
-`Access and secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
+> **Note:** Although there are four different authentication methods available, only three of them (that are discussed here) are enabled by default for Grafana OSS.
 
 ## IAM roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. Providing you have chosen the _AWS SDK Default_ authentication method, and your Grafana server is running on AWS, you can use IAM Roles to handle authentication automatically.
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you are using the _AWS SDK Default_ authentication method, and your Grafana server is running on AWS, use IAM Roles to handle authentication automatically.
 
-See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
+For more information, refer to the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html).
 
 ## IAM policies
 
@@ -80,7 +80,9 @@ Here is a minimal policy example:
 
 ## Assuming a role
 
-The `Assume Role ARN` field allows you to specify which IAM role to assume, if any. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
+The `Assume Role ARN` field allows you to specify which IAM role to assume. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
+
+If you set this field to `false` then AWS authentication no longer uses an assumed role. For more information, refer to [assume_role_enabled]({{< relref "../../administration/configuration.md#assume_role_enabled" >}}) documentation.
 
 ## Endpoint
 

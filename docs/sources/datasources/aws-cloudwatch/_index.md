@@ -10,9 +10,9 @@ weight = 200
 
 Grafana ships with built-in support for CloudWatch. Add it as a data source, then you are ready to build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
-This topic describes queries, templates, variables, and other configuration specific to this data source. For instructions on how to add a data source to Grafan, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
+This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source. For instructions on how to add a data source to Grafana, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
-> **Note:** If you have issues setting up the data source and Grafana is returning undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
+> **Note:** If you are having issues setting up the data source and Grafana is returning undescriptive errors, then check the log file located in /var/log/grafana/grafana.log).
 
 ## Cloudwatch settings
 
