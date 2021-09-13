@@ -19,6 +19,7 @@ import {
   DataQuery,
   DataFrame,
   GrafanaTheme2,
+  LoadingState,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -35,7 +36,7 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
+import { ExploreGraph } from './ExploreGraph';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -54,6 +55,7 @@ interface Props extends Themeable2 {
   theme: GrafanaTheme2;
   highlighterExpressions?: string[];
   loading: boolean;
+  loadingState: LoadingState;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
@@ -254,6 +256,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       visibleRange,
       highlighterExpressions,
       loading = false,
+      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -297,14 +300,14 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
         </div>
         {logsSeries && logsSeries.length ? (
-          <ExploreGraphNGPanel
+          <ExploreGraph
             data={logsSeries}
             height={150}
             width={width}
             tooltipDisplayMode={TooltipDisplayMode.Multi}
             absoluteRange={visibleRange || absoluteRange}
             timeZone={timeZone}
-            onUpdateTimeRange={onChangeTime}
+            loadingState={loadingState}
             onHiddenSeriesChanged={this.onToggleLogLevel}
           />
         ) : undefined}

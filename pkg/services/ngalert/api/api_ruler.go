@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -218,26 +219,12 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return toNamespaceErrorResponse(err)
 	}
 
-	// quotas are checked in advanced
-	// that is acceptable under the assumption that there will be only one alert rule under the rule group
-	// alternatively we should check the quotas after the rule group update
-	// and rollback the transaction in case of violation
-	limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get quota")
-	}
-	if limitReached {
-		return ErrResp(http.StatusForbidden, errors.New("quota reached"), "")
-	}
-
-	// TODO validate UID uniqueness in the payload
-
 	//TODO: Should this belong in alerting-api?
 	if ruleGroupConfig.Name == "" {
 		return ErrResp(http.StatusBadRequest, errors.New("rule group name is not valid"), "")
 	}
 
-	var alertRuleUIDs []string
+	alertRuleUIDs := make(map[string]struct{})
 	for _, r := range ruleGroupConfig.Rules {
 		cond := ngmodels.Condition{
 			Condition: r.GrafanaManagedAlert.Condition,
@@ -245,9 +232,30 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			Data:      r.GrafanaManagedAlert.Data,
 		}
 		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %s", r.GrafanaManagedAlert.Title)
+			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
 		}
-		alertRuleUIDs = append(alertRuleUIDs, r.GrafanaManagedAlert.UID)
+		if r.GrafanaManagedAlert.UID != "" {
+			_, ok := alertRuleUIDs[r.GrafanaManagedAlert.UID]
+			if ok {
+				return ErrResp(http.StatusBadRequest, fmt.Errorf("conflicting UID %q found", r.GrafanaManagedAlert.UID), "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
+			}
+			alertRuleUIDs[r.GrafanaManagedAlert.UID] = struct{}{}
+		}
+	}
+
+	numOfNewRules := len(ruleGroupConfig.Rules) - len(alertRuleUIDs)
+	if numOfNewRules > 0 {
+		// quotas are checked in advanced
+		// that is acceptable under the assumption that there will be only one alert rule under the rule group
+		// alternatively we should check the quotas after the rule group update
+		// and rollback the transaction in case of violation
+		limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get quota")
+		}
+		if limitReached {
+			return ErrResp(http.StatusForbidden, errors.New("quota reached"), "")
+		}
 	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
@@ -263,7 +271,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, uid := range alertRuleUIDs {
+	for uid := range alertRuleUIDs {
 		srv.manager.RemoveByRuleUID(c.OrgId, uid)
 	}
 

@@ -564,7 +564,7 @@ export const fetchAlertGroupsAction = createAsyncThunk(
   }
 );
 
-export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
+export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk<boolean, string>(
   'unifiedalerting/checkIfLotexRuleEditingSupported',
   async (rulesSourceName: string): Promise<boolean> =>
     withAppEvents(

@@ -6,10 +6,10 @@ import { useStyles2 } from '@grafana/ui';
 import { Version } from '../types';
 
 interface Props {
-  versions: Version[];
+  versions?: Version[];
 }
 
-export const VersionList = ({ versions }: Props) => {
+export const VersionList = ({ versions = [] }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (versions.length === 0) {

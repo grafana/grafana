@@ -85,10 +85,10 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	// Inject ReqContext into a request context and replace the request instance in the macaron context
-	mContext.Req.Request = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
-	mContext.Map(mContext.Req.Request)
+	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Map(mContext.Req)
 
-	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
+	traceID, exists := cw.ExtractTraceID(mContext.Req.Context())
 	if exists {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
@@ -121,7 +121,6 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
-	reqContext.Data["ctx"] = reqContext
 
 	span.LogFields(
 		ol.String("uname", reqContext.Login),
@@ -299,7 +298,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
-		reqContext.Data["lookupTokenErr"] = err
+		reqContext.LookupTokenErr = err
 		return false
 	}
 

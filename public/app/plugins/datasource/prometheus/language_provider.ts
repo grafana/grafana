@@ -494,7 +494,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
-    const params = { ...range, match };
+    const params = { ...range, 'match[]': match };
     return await this.request(url, {}, params);
   };
 

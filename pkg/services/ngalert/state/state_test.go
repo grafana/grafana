@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -114,87 +113,79 @@ func TestSetEndsAt(t *testing.T) {
 	testCases := []struct {
 		name       string
 		expected   time.Time
-		testState  *State
 		testRule   *ngmodels.AlertRule
 		testResult eval.Result
 	}{
 		{
-			name:      "For: unset Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
-			expected:  evaluationTime.Add(20 * time.Second),
-			testState: &State{},
+			name:     "less than resend delay: for=unset,interval=10s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
 			testRule: &ngmodels.AlertRule{
 				IntervalSeconds: 10,
 			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
-			},
 		},
 		{
-			name:      "For: 0s Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
-			expected:  evaluationTime.Add(20 * time.Second),
-			testState: &State{},
+			name:     "less than resend delay: for=0s,interval=10s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
 			testRule: &ngmodels.AlertRule{
 				For:             0 * time.Second,
 				IntervalSeconds: 10,
 			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
-			},
 		},
 		{
-			name:      "For: 1s Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
-			expected:  evaluationTime.Add(20 * time.Second),
-			testState: &State{},
-			testRule: &ngmodels.AlertRule{
-				For:             0 * time.Second,
-				IntervalSeconds: 10,
-			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
-			},
-		},
-		{
-			name:      "For: 10s Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
-			expected:  evaluationTime.Add(20 * time.Second),
-			testState: &State{},
+			name:     "less than resend delay: for=10s,interval=10s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
 			testRule: &ngmodels.AlertRule{
 				For:             10 * time.Second,
 				IntervalSeconds: 10,
 			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
+		},
+		{
+			name:     "less than resend delay: for=10s,interval=20s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             10 * time.Second,
+				IntervalSeconds: 20,
 			},
 		},
 		{
-			name:      "For: 11s Interval: 10s EndsAt should be evaluation time + For duration",
-			expected:  evaluationTime.Add(11 * time.Second),
-			testState: &State{},
+			name:     "more than resend delay: for=unset,interval=1m - endsAt = interval * 3",
+			expected: evaluationTime.Add(60 * 3),
 			testRule: &ngmodels.AlertRule{
-				For:             11 * time.Second,
-				IntervalSeconds: 10,
-			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
+				IntervalSeconds: 60,
 			},
 		},
 		{
-			name:      "For: 20s Interval: 10s EndsAt should be evaluation time + For duration",
-			expected:  evaluationTime.Add(20 * time.Second),
-			testState: &State{},
+			name:     "more than resend delay: for=0s,interval=1m - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(60 * 3),
 			testRule: &ngmodels.AlertRule{
-				For:             20 * time.Second,
-				IntervalSeconds: 10,
+				For:             0 * time.Second,
+				IntervalSeconds: 60,
 			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
+		},
+		{
+			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
+			expected: evaluationTime.Add(300 * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             60 * time.Second,
+				IntervalSeconds: 300,
+			},
+		},
+		{
+			name:     "more than resend delay: for=5m,interval=1m - endsAt = interval * 3",
+			expected: evaluationTime.Add(60 * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             300 * time.Second,
+				IntervalSeconds: 60,
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.testState.setEndsAt(tc.testRule, tc.testResult)
-			assert.Equal(t, tc.expected, tc.testState.EndsAt)
+			s := &State{}
+			r := eval.Result{EvaluatedAt: evaluationTime}
+			s.setEndsAt(tc.testRule, r)
+			assert.Equal(t, tc.expected, s.EndsAt)
 		})
 	}
 }
