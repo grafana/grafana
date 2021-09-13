@@ -75,24 +75,24 @@ describe('Graphite query model', () => {
     });
   });
 
-  describe('skips "select metric" when target is rendered', () => {
+  describe('when query is generated from segments', () => {
     beforeEach(() => {
       ctx.target = { refId: 'A', target: '' };
       ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
     });
 
-    it('at the beginning of the metric name', () => {
+    it('and no segments are selected then the query is empty', () => {
       ctx.queryModel.segments = [{ value: 'select metric' }];
       ctx.queryModel.updateModelTarget(ctx.targets);
 
       expect(ctx.queryModel.target.target).toBe('');
     });
 
-    it('in the middle of the metric name', () => {
-      ctx.queryModel.segments = [{ value: 'foo' }, { value: 'select metric' }];
+    it('and some segments are selected then segments without selected value are omitted', () => {
+      ctx.queryModel.segments = [{ value: 'foo' }, { value: 'bar' }, { value: 'select metric' }];
       ctx.queryModel.updateModelTarget(ctx.targets);
 
-      expect(ctx.queryModel.target.target).toBe('foo');
+      expect(ctx.queryModel.target.target).toBe('foo.bar');
     });
   });
 });
