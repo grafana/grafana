@@ -46,6 +46,7 @@ interface Props {
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode?: TooltipDisplayMode;
   splitOpenFn?: SplitOpen;
+  onChangeTime: (timeRange: AbsoluteTimeRange) => void;
 }
 
 export function ExploreGraph({
@@ -54,6 +55,7 @@ export function ExploreGraph({
   width,
   timeZone,
   absoluteRange,
+  onChangeTime,
   loadingState,
   annotations,
   onHiddenSeriesChanged,
@@ -154,6 +156,7 @@ export function ExploreGraph({
         title=""
         width={width}
         height={height}
+        onChangeTimeRange={onChangeTime}
         options={
           {
             tooltip: { mode: tooltipDisplayMode },
