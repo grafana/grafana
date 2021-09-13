@@ -41,8 +41,10 @@ export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolu
       .map((target) => {
         // TODO: add level to configuration and use:
         // sum by (level) (count_over_time(${target.expr}[$__interval])
-        target.expr = `count_over_time(${target.expr}[$__interval])`;
-        return target;
+        return {
+          ...target,
+          expr: `count_over_time(${target.expr}[$__interval])`,
+        };
       });
 
     return new Observable((observer) => {
