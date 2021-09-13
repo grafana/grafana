@@ -68,7 +68,7 @@ Grafana determines a user's e-mail address by querying the OAuth provider until 
 
 ### Roles
 
-Grafana will check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath will be applied to the `id_token` first. If there is no match, the UserInfo endpoint specified via the `api_url` configuration option will be tried next. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
 
 For more information, refer to the [JMESPath examples](#jmespath-examples).
 
