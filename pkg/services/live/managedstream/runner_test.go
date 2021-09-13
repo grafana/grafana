@@ -18,13 +18,13 @@ func (p *testPublisher) publish(_ int64, _ string, _ []byte) error {
 
 func TestNewManagedStream(t *testing.T) {
 	publisher := &testPublisher{t: t}
-	c := NewManagedStream("a", 1, publisher.publish, NewMemoryFrameCache())
+	c := NewNamespaceStream(1, "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
 	require.NotNil(t, c)
 }
 
 func TestManagedStreamMinuteRate(t *testing.T) {
 	publisher := &testPublisher{t: t}
-	c := NewManagedStream("a", 1, publisher.publish, NewMemoryFrameCache())
+	c := NewNamespaceStream(1, "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
 	require.NotNil(t, c)
 
 	c.incRate("test1", time.Now().Unix())
@@ -47,10 +47,10 @@ func TestManagedStreamMinuteRate(t *testing.T) {
 func TestGetManagedStreams(t *testing.T) {
 	publisher := &testPublisher{t: t}
 	frameCache := NewMemoryFrameCache()
-	runner := NewRunner(publisher.publish, frameCache)
-	s1, err := runner.GetOrCreateStream(1, "test1")
+	runner := NewRunner(publisher.publish, nil, frameCache)
+	s1, err := runner.GetOrCreateStream(1, "stream", "test1")
 	require.NoError(t, err)
-	s2, err := runner.GetOrCreateStream(1, "test2")
+	s2, err := runner.GetOrCreateStream(1, "stream", "test2")
 	require.NoError(t, err)
 
 	managedChannels, err := runner.GetManagedChannels(1)
@@ -74,7 +74,7 @@ func TestGetManagedStreams(t *testing.T) {
 	require.Equal(t, "stream/test2/cpu1", managedChannels[5].Channel)
 
 	// Different org.
-	s3, err := runner.GetOrCreateStream(2, "test1")
+	s3, err := runner.GetOrCreateStream(2, "stream", "test1")
 	require.NoError(t, err)
 	err = s3.Push("cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
