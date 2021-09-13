@@ -181,7 +181,9 @@ You will still be able to run and develop your plugin during development by runn
 
 ### Time series data can now be structured in a wide or many format.
 
-Starting in Grafana 8 time series data can either be structured in either `wide` or `many` format. Prior to this version time series data was delivered in the following format (which is the `many` format).
+In Grafana 8.x, you can structure time series data in either `wide` or `many` formats. If your plugin supports time series data, we recommend that you support both formats.
+
+Grafana supported only the `many` format before. For example:
 
 | time                 | temperature |
 | -------------------- | ----------- |
