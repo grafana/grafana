@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +25,7 @@ func TestPluginProxy(t *testing.T) {
 		setting.SecretKey = "password"
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
-			key, err := util.Encrypt([]byte("123"), "password")
+			key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
 			if err != nil {
 				return err
 			}

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -86,7 +85,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
-		key, err := util.Encrypt([]byte("123"), "password")
+		key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -229,7 +228,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
-		key, err := util.Encrypt([]byte("123"), "password")
+		key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
 		require.NoError(t, err)
 
 		ds := &models.DataSource{

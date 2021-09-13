@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -27,19 +26,19 @@ var (
 )
 
 type AlertNotification struct {
-	Id                    int64                         `json:"id"`
-	Uid                   string                        `json:"-"`
-	OrgId                 int64                         `json:"-"`
-	Name                  string                        `json:"name"`
-	Type                  string                        `json:"type"`
-	SendReminder          bool                          `json:"sendReminder"`
-	DisableResolveMessage bool                          `json:"disableResolveMessage"`
-	Frequency             time.Duration                 `json:"frequency"`
-	IsDefault             bool                          `json:"isDefault"`
-	Settings              *simplejson.Json              `json:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
-	Created               time.Time                     `json:"created"`
-	Updated               time.Time                     `json:"updated"`
+	Id                    int64             `json:"id"`
+	Uid                   string            `json:"-"`
+	OrgId                 int64             `json:"-"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	SendReminder          bool              `json:"sendReminder"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Frequency             time.Duration     `json:"frequency"`
+	IsDefault             bool              `json:"isDefault"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string][]byte `json:"secureSettings"`
+	Created               time.Time         `json:"created"`
+	Updated               time.Time         `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {

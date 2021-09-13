@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -56,12 +55,12 @@ func getAlertStatusColor(status model.AlertStatus) string {
 }
 
 type NotificationChannelConfig struct {
-	UID                   string                        `json:"uid"`
-	Name                  string                        `json:"name"`
-	Type                  string                        `json:"type"`
-	DisableResolveMessage bool                          `json:"disableResolveMessage"`
-	Settings              *simplejson.Json              `json:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `json:"secureSettings"`
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string][]byte `json:"secureSettings"`
 }
 
 type httpCfg struct {

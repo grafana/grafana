@@ -3,8 +3,6 @@ package models
 import (
 	"errors"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 )
 
 var (
@@ -18,7 +16,7 @@ type PluginSetting struct {
 	Enabled        bool
 	Pinned         bool
 	JsonData       map[string]interface{}
-	SecureJsonData securejsondata.SecureJsonData
+	SecureJsonData map[string][]byte
 	PluginVersion  string
 
 	Created time.Time

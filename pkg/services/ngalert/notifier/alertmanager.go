@@ -14,7 +14,6 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -470,7 +469,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 
 func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
 	// secure settings are already encrypted at this point
-	secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
 	for k, v := range r.SecureSettings {
 		d, err := base64.StdEncoding.DecodeString(v)

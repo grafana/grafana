@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -38,22 +37,22 @@ type DataSource struct {
 	OrgId   int64 `json:"orgId"`
 	Version int   `json:"version"`
 
-	Name              string                        `json:"name"`
-	Type              string                        `json:"type"`
-	Access            DsAccess                      `json:"access"`
-	Url               string                        `json:"url"`
-	Password          string                        `json:"password"`
-	User              string                        `json:"user"`
-	Database          string                        `json:"database"`
-	BasicAuth         bool                          `json:"basicAuth"`
-	BasicAuthUser     string                        `json:"basicAuthUser"`
-	BasicAuthPassword string                        `json:"basicAuthPassword"`
-	WithCredentials   bool                          `json:"withCredentials"`
-	IsDefault         bool                          `json:"isDefault"`
-	JsonData          *simplejson.Json              `json:"jsonData"`
-	SecureJsonData    securejsondata.SecureJsonData `json:"secureJsonData"`
-	ReadOnly          bool                          `json:"readOnly"`
-	Uid               string                        `json:"uid"`
+	Name              string            `json:"name"`
+	Type              string            `json:"type"`
+	Access            DsAccess          `json:"access"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password"`
+	User              string            `json:"user"`
+	Database          string            `json:"database"`
+	BasicAuth         bool              `json:"basicAuth"`
+	BasicAuthUser     string            `json:"basicAuthUser"`
+	BasicAuthPassword string            `json:"basicAuthPassword"`
+	WithCredentials   bool              `json:"withCredentials"`
+	IsDefault         bool              `json:"isDefault"`
+	JsonData          *simplejson.Json  `json:"jsonData"`
+	SecureJsonData    map[string][]byte `json:"secureJsonData"`
+	ReadOnly          bool              `json:"readOnly"`
+	Uid               string            `json:"uid"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
