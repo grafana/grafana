@@ -242,7 +242,7 @@ abstract class DataSourceApi<
   /**
    * For a given query return a set of related data providers - object that can return data related to the
    * given query, for example: logs volume for logs query.
-   * @param request
+   * @internal
    */
   getQueryRelatedDataProviders?(request?: DataQueryRequest<TQuery>): QueryRelatedDataProviders;
 
