@@ -285,6 +285,13 @@ export class TimeSrv {
       const urlRange = this.timeRangeForUrl();
       const urlParams = locationService.getSearch();
 
+      const from = urlParams.get('from');
+      const to = urlParams.get('to');
+
+      if (from && to && from === urlRange.from.toString() && to === urlRange.to.toString()) {
+        return;
+      }
+
       urlParams.set('from', urlRange.from.toString());
       urlParams.set('to', urlRange.to.toString());
 

@@ -9,7 +9,6 @@ import {
   MenuGroup,
   MenuItem,
   UPlotConfigBuilder,
-  usePlotContext,
 } from '@grafana/ui';
 import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import { useClickAway } from 'react-use';
@@ -40,7 +39,6 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   replaceVariables,
   ...otherProps
 }) => {
-  const plotCtx = usePlotContext();
   const plotCanvas = useRef<HTMLDivElement>();
   const [coords, setCoords] = useState<ContextMenuSelectionCoords | null>(null);
   const [point, setPoint] = useState<ContextMenuSelectionPoint | null>(null);
@@ -61,8 +59,9 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
+    let bbox: DOMRect | undefined = undefined;
+
     const onMouseCapture = (e: MouseEvent) => {
-      const bbox = plotCtx.getCanvasBoundingBox();
       let update = {
         viewport: {
           x: e.clientX,
@@ -84,6 +83,11 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
       }
       setCoords(update);
     };
+
+    // cache uPlot plotting area bounding box
+    config.addHook('syncRect', (u, rect) => {
+      bbox = rect;
+    });
 
     config.addHook('init', (u) => {
       const canvas = u.over;
@@ -137,7 +141,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
         });
       }
     });
-  }, [config, openMenu, setCoords, setPoint, plotCtx]);
+  }, [config, openMenu, setCoords, setPoint]);
 
   const defaultItems = useMemo(() => {
     return otherProps.defaultItems

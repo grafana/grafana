@@ -17,14 +17,6 @@ var (
 	day                      = time.Hour * 24
 )
 
-type IntervalMode string
-
-const (
-	Min   IntervalMode = "min"
-	Max   IntervalMode = "max"
-	Exact IntervalMode = "exact"
-)
-
 type Interval struct {
 	Text  string
 	Value time.Duration
@@ -35,7 +27,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode IntervalMode) (Interval, error)
+	Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) Interval
 	CalculateSafeInterval(timerange backend.TimeRange, resolution int64) Interval
 }
 
@@ -61,29 +53,23 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time.Duration, intervalMode IntervalMode) (Interval, error) {
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) Interval {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
-	calculatedIntrvl := time.Duration((to - from) / defaultRes)
-
-	switch intervalMode {
-	case Min:
-		if calculatedIntrvl < intrvl {
-			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
-		}
-	case Max:
-		if calculatedIntrvl > intrvl {
-			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
-		}
-	case Exact:
-		return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
-
-	default:
-		return Interval{}, fmt.Errorf("unrecognized intervalMode: %v", intervalMode)
+	resolution := maxDataPoints
+	if resolution == 0 {
+		resolution = defaultRes
 	}
 
-	rounded := roundInterval(calculatedIntrvl)
-	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}, nil
+	calculatedInterval := time.Duration((to - from) / resolution)
+
+	if calculatedInterval < minInterval {
+		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
+	}
+
+	rounded := roundInterval(calculatedInterval)
+
+	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {
@@ -101,31 +87,40 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 // queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
 func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
 	// Apparently we are setting default value of queryInterval to 0s now
-	if queryInterval == "0s" {
-		queryInterval = ""
+	interval := queryInterval
+	if interval == "0s" {
+		interval = ""
 	}
-
-	if queryInterval == "" {
+	if interval == "" {
 		if queryIntervalMS != 0 {
 			return time.Duration(queryIntervalMS) * time.Millisecond, nil
 		}
 	}
-	interval := queryInterval
-	if queryInterval == "" && dsInterval != "" {
+	if interval == "" && dsInterval != "" {
 		interval = dsInterval
 	}
 	if interval == "" {
 		return defaultInterval, nil
 	}
-	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
-	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
+
+	parsedInterval, err := ParseIntervalStringToTimeDuration(interval)
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	return parsedInterval, nil
+}
+
+func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
+	formattedInterval := strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
+	isPureNum, err := regexp.MatchString(`^\d+$`, formattedInterval)
 	if err != nil {
 		return time.Duration(0), err
 	}
 	if isPureNum {
-		interval += "s"
+		formattedInterval += "s"
 	}
-	parsedInterval, err := time.ParseDuration(interval)
+	parsedInterval, err := time.ParseDuration(formattedInterval)
 	if err != nil {
 		return time.Duration(0), err
 	}

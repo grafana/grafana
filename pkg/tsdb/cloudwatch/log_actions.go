@@ -35,36 +35,12 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 				return err
 			}
 
-			// When a query of the form "stats ... by ..." is made, we want to return
-			// one series per group defined in the query, but due to the format
-			// the query response is in, there does not seem to be a way to tell
-			// by the response alone if/how the results should be grouped.
-			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-			// the "statsGroups" parameter is sent along with the query to the backend so that we
-			// can correctly group the CloudWatch logs response.
-			statsGroups := model.Get("statsGroups").MustStringArray()
-			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
-				groupedFrames, err := groupResults(dataframe, statsGroups)
-				if err != nil {
-					return err
-				}
-
-				resultChan <- backend.Responses{
-					query.RefID: backend.DataResponse{Frames: groupedFrames},
-				}
-				return nil
+			groupedFrames, err := groupResponseFrame(dataframe, model.Get("statsGroups").MustStringArray())
+			if err != nil {
+				return err
 			}
-
-			if dataframe.Meta != nil {
-				dataframe.Meta.PreferredVisualization = "logs"
-			} else {
-				dataframe.Meta = &data.FrameMeta{
-					PreferredVisualization: "logs",
-				}
-			}
-
 			resultChan <- backend.Responses{
-				query.RefID: backend.DataResponse{Frames: data.Frames{dataframe}},
+				query.RefID: backend.DataResponse{Frames: groupedFrames},
 			}
 			return nil
 		})
