@@ -218,11 +218,21 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	//Use service account linked to API key as the signed in user
+
+	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := bus.Dispatch(&query); err != nil {
+		reqContext.Logger.Error(
+			"Failed at user signed in",
+			"id", query.UserId,
+			"org", query.OrgId,
+		)
+		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
+		return true
+	}
+
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = &models.SignedInUser{}
-	reqContext.OrgRole = apikey.Role
-	reqContext.ApiKeyId = apikey.Id
-	reqContext.OrgId = apikey.OrgId
+	reqContext.SignedInUser = query.Result
 	return true
 }
 

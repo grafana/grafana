@@ -73,8 +73,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 	cmd.OrgId = c.OrgId
 	serviceAccountId, _ := strconv.Atoi(cmd.ServiceAccountId)
-	if cmd.CreateNewServiceAccount == "on" { //FIXME
-		//FIXME Create service account here
+	if cmd.CreateNewServiceAccount == "on" { //FIXME use proper bool
 
 		cmd := models.CreateUserCommand{
 			Login:          "Service-Account-" + uuid.New().String(),
@@ -90,6 +89,8 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 			panic("Could not create service account")
 		}
 		serviceAccountId = int(user.Id)
+
+		//FIXME Clone user permissions onto service account
 	}
 
 	cmd.ServiceAccountId = fmt.Sprintf("%v", serviceAccountId)
