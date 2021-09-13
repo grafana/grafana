@@ -26,10 +26,10 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select _read_api_as the_Scope_and submit the form. Note that if you're
+Finally, select _read_api as the _Scope_ and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select_read_user_ instead of _read_api_as
-the_Scope_, thus giving a more restricted access to your GitLab API.
+`allowed_groups`, see below), you can select _read_user_ instead of _read_api as
+the _Scope_, thus giving a more restricted access to your GitLab API.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
