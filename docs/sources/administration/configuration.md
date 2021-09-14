@@ -1115,25 +1115,21 @@ For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{<
 
 Specify the frequency of polling for admin config changes. The default value is `60`.
 
-### copy_legacy_options
-
-If it's true, it will ignore the following options and will use the respective option values of the legacy [alerting]({{< relref "#alerting">}}) (used so thatt for the migrated dashboard alerts). Disable it for the following options to become effective. Default is `true`.
-
 ### execute_alerts
 
-Turns off alert rule execution, but Grafana 8 Alerts are still visible in the Grafana UI. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default is `true`.
+Turns off alert rule execution, but Grafana 8 Alerts are still visible in the Grafana UI. Default is `true`. If it's true (the default) then the [respective legacy option]({{< relref "#execute_alerts-1">}}) is applied.
 
 ### evaluation_timeout_seconds
 
-Sets the alert calculation timeout. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default value is `30`.
+Sets the alert calculation timeout. Default value is `30`. If it's `30` (the default) then the [respective legacy option]({{< relref "#evaluation_timeout_seconds-1">}}) is applied.
 
 ### max_attempts
 
-Sets a maximum limit on attempts to sending alert notifications. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default value is `3`.
+Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3 (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
 
 ### min_interval_seconds
 
-Sets the minimum interval between rule evaluations. [copy_legacy_options]({{< relref "#copy_legacy_options" >}}) should be disabled for this being used. Default value is `10` which equals the scheduler interval. This value should be multiple of `10`, otherwise it fallbacks to `10`.
+Sets the minimum interval between rule evaluations. Default value is `10` which equals the scheduler interval. This value should be multiple of `10`, otherwise it fallbacks to `10`. If it's `10` (the default) then the [respective legacy option]({{< relref "#min_interval_seconds-1">}}) is applied
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 

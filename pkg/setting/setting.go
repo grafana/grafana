@@ -47,6 +47,15 @@ const (
 	ApplicationName  = "Grafana"
 )
 
+const (
+	defaultAdminConfigPollIntervalSec   int64 = 60
+	defaultAlertingMaxAttempts          int64 = 3
+	defaultAlertingMinInterval          int64 = 1
+	defaultUnifiedAlertingMinInterval   int64 = 10
+	defaultAlertingEvaluationTimeoutSec int64 = 30
+	defaultAlertingExecuteAlerts        bool  = true
+)
+
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
 // it is used for comparison and has to be kept in sync
 const (
@@ -419,7 +428,6 @@ type Cfg struct {
 
 	// Unified Alerting
 	AdminConfigPollInterval          time.Duration
-	UnifiedAerttingCopyLegacyOptions bool
 	UnifiedAlertingMaxAttempts       int64
 	UnifiedAlertingMinInterval       int64
 	UnifiedAlertingEvaluationTimeout time.Duration
@@ -1377,32 +1385,36 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
-	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt64(defaultAdminConfigPollIntervalSec)
 	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 
-	cfg.UnifiedAerttingCopyLegacyOptions = ua.Key("copy_legacy_options").MustBool(true)
+	alerting := iniFile.Section("alerting")
 
-	if cfg.UnifiedAerttingCopyLegacyOptions {
-		// copy options from the legacy alerting section
-		alerting := iniFile.Section("alerting")
-		cfg.UnifiedAlertingExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-
-		evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
-		cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-		cfg.UnifiedAlertingMaxAttempts = alerting.Key("max_attempts").MustInt64(3)
-		cfg.UnifiedAlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(10)
-	} else {
-		cfg.UnifiedAlertingExecuteAlerts = ua.Key("execute_alerts").MustBool(true)
-
-		evaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(30)
-		cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
-
-		cfg.UnifiedAlertingMaxAttempts = ua.Key("max_attempts").MustInt64(3)
-		cfg.UnifiedAlertingMinInterval = ua.Key("min_interval_seconds").MustInt64(int64(10))
+	unifiedAlertingExecuteAlerts := ua.Key("execute_alerts").MustBool(defaultAlertingExecuteAlerts)
+	if unifiedAlertingExecuteAlerts { // true by default
+		unifiedAlertingExecuteAlerts = alerting.Key("execute_alerts").MustBool(defaultAlertingExecuteAlerts)
 	}
-	if cfg.UnifiedAlertingMinInterval < 10 {
-		cfg.UnifiedAlertingMinInterval = 10
+	cfg.UnifiedAlertingExecuteAlerts = unifiedAlertingExecuteAlerts
+
+	// if the unified alerting options equal the defaults, apply the respective legacy one
+	unifiedEvaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(defaultAlertingEvaluationTimeoutSec)
+	if unifiedEvaluationTimeoutSeconds == defaultAlertingEvaluationTimeoutSec {
+		unifiedEvaluationTimeoutSeconds = alerting.Key("evaluation_timeout_seconds").MustInt64(defaultAlertingEvaluationTimeoutSec)
 	}
+	cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(unifiedEvaluationTimeoutSeconds)
+
+	unifiedAlertingMaxAttempts := ua.Key("max_attempts").MustInt64(defaultAlertingMaxAttempts)
+	if unifiedAlertingMaxAttempts == defaultAlertingMaxAttempts {
+		unifiedAlertingMaxAttempts = alerting.Key("max_attempts").MustInt64(defaultAlertingMaxAttempts)
+	}
+	cfg.UnifiedAlertingMaxAttempts = unifiedAlertingMaxAttempts
+
+	unifiedAlertingMinInterval := ua.Key("min_interval_seconds").MustInt64(defaultUnifiedAlertingMinInterval)
+	if unifiedAlertingMinInterval == defaultUnifiedAlertingMinInterval {
+		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
+		unifiedAlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(defaultUnifiedAlertingMinInterval)
+	}
+	cfg.UnifiedAlertingMinInterval = unifiedAlertingMinInterval
 
 	return nil
 }
