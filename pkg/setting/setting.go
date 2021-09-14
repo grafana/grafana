@@ -421,6 +421,12 @@ type Cfg struct {
 
 	// Unified Alerting
 	AdminConfigPollInterval time.Duration
+	HAListenAddr            string
+	HAAdvertiseAddr         string
+	HAPeers                 []string
+	HAPeerTimeout           time.Duration
+	HAGossipInterval        time.Duration
+	HAPushPullInterval      time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -916,7 +922,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
-
 	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
@@ -1376,8 +1381,36 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
-	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
-	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
+	var err error
+	cfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (60 * time.Second).String()))
+	if err != nil {
+		return err
+	}
+	cfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (15 * time.Second).String()))
+	if err != nil {
+		return err
+	}
+	cfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (200 * time.Millisecond).String()))
+	if err != nil {
+		return err
+	}
+	cfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (60 * time.Second).String()))
+	if err != nil {
+		return err
+	}
+	cfg.HAListenAddr = ua.Key("ha_listen_address").MustString("0.0.0.0:9094")
+	cfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
+	peers := ua.Key("ha_peers").MustString("")
+	cfg.HAPeers = make([]string, 0, 0)
+
+	if peers != "" {
+		for _, peer := range strings.Split(peers, ",") {
+			peer = strings.TrimSpace(peer)
+			cfg.HAPeers = append(cfg.HAPeers, peer)
+		}
+
+	}
+
 	return nil
 }
 
