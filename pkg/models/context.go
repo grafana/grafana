@@ -21,22 +21,27 @@ type ReqContext struct {
 	Logger         log.Logger
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
 	RequestNonce string
+
+	PerfmonTimer   prometheus.Summary
+	LookupTokenErr error
 }
 
 // Handle handles and logs error by given status.
 func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
+	data := struct {
+		Title     string
+		AppSubUrl string
+		Theme     string
+		ErrorMsg  error
+	}{title, cfg.AppSubURL, "dark", nil}
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.Prod {
-			ctx.Data["ErrorMsg"] = err
+			data.ErrorMsg = err
 		}
 	}
 
-	ctx.Data["Title"] = title
-	ctx.Data["AppSubUrl"] = cfg.AppSubURL
-	ctx.Data["Theme"] = "dark"
-
-	ctx.HTML(status, cfg.ErrTemplateName, ctx.Data)
+	ctx.HTML(status, cfg.ErrTemplateName, data)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {
@@ -76,7 +81,7 @@ func (ctx *ReqContext) HasHelpFlag(flag HelpFlags1) bool {
 }
 
 func (ctx *ReqContext) TimeRequest(timer prometheus.Summary) {
-	ctx.Data["perfmon.timer"] = timer
+	ctx.PerfmonTimer = timer
 }
 
 // QueryBoolWithDefault extracts a value from the request query params and applies a bool default if not present.

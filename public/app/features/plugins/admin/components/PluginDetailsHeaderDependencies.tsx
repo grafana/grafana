@@ -2,20 +2,11 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, IconName } from '../types';
 
 type Props = {
   plugin: CatalogPlugin;
   className?: string;
-};
-
-const PluginIconClassName: Record<string, string> = {
-  datasource: 'gicon gicon-datasources',
-  panel: 'icon-gf icon-gf-panel',
-  app: 'icon-gf icon-gf-apps',
-  page: 'icon-gf icon-gf-endpoint-tiny',
-  dashboard: 'gicon gicon-dashboard',
-  default: 'icon-gf icon-gf-apps',
 };
 
 export function PluginDetailsHeaderDependencies({ plugin, className }: Props): React.ReactElement | null {
@@ -30,12 +21,12 @@ export function PluginDetailsHeaderDependencies({ plugin, className }: Props): R
 
   return (
     <div className={className}>
-      <div className={styles.textBold}>Dependencies:</div>
+      <div className={styles.dependencyTitle}>Dependencies:</div>
 
       {/* Grafana dependency */}
       {Boolean(grafanaDependency) && (
         <div>
-          <Icon name="grafana" />
+          <Icon name="grafana" className={styles.icon} />
           Grafana {grafanaDependency}
         </div>
       )}
@@ -46,7 +37,7 @@ export function PluginDetailsHeaderDependencies({ plugin, className }: Props): R
           {pluginDependencies.map((p) => {
             return (
               <span key={p.name}>
-                <i className={PluginIconClassName[p.type] || PluginIconClassName.default} />
+                <Icon name={IconName[p.type]} className={styles.icon} />
                 {p.name} {p.version}
               </span>
             );
@@ -59,8 +50,18 @@ export function PluginDetailsHeaderDependencies({ plugin, className }: Props): R
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    textBold: css`
+    dependencyTitle: css`
       font-weight: ${theme.typography.fontWeightBold};
+      margin-right: ${theme.spacing(0.5)};
+
+      &::after {
+        content: '';
+        padding: 0;
+      }
+    `,
+    icon: css`
+      color: ${theme.colors.text.secondary};
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 };

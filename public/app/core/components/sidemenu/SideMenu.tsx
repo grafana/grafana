@@ -77,8 +77,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
     min-height: ${theme.components.sidemenu.width}px;
 
+    &:focus-visible,
     &:hover {
       background-color: ${theme.colors.action.hover};
+    }
+
+    &:focus-visible {
+      box-shadow: none;
+      color: ${theme.colors.text.primary};
+      outline: 2px solid ${theme.colors.primary.main};
+      outline-offset: -2px;
+      transition: none;
     }
 
     img {

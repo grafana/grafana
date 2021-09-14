@@ -5,6 +5,7 @@ import { Link, styleMixins, useTheme2 } from '@grafana/ui';
 import SideMenuDropDown from './SideMenuDropDown';
 
 export interface Props {
+  isActive?: boolean;
   children: ReactNode;
   label: string;
   menuItems?: NavModelItem[];
@@ -16,6 +17,7 @@ export interface Props {
 }
 
 const SideMenuItem = ({
+  isActive = false,
   children,
   label,
   menuItems = [],
@@ -26,7 +28,7 @@ const SideMenuItem = ({
   url,
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, isActive);
   let element = (
     <button className={styles.element} onClick={onClick} aria-label={label}>
       <span className={styles.icon}>{children}</span>
@@ -71,7 +73,7 @@ const SideMenuItem = ({
 
 export default SideMenuItem;
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   container: css`
     position: relative;
 
@@ -85,20 +87,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
 
     @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
-      // needs to be in here to work on safari...
-      &:not(:hover) {
-        border-left: 2px solid transparent;
-      }
+      color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
 
       &:hover {
         background-color: ${theme.colors.action.hover};
-        border-image: ${theme.colors.gradients.brandVertical};
-        border-image-slice: 1;
-        border-style: solid;
-        border-top: 0;
-        border-right: 0;
-        border-bottom: 0;
-        border-left-width: 2px;
+        color: ${theme.colors.text.primary};
 
         .dropdown-menu {
           animation: dropdown-anim 150ms ease-in-out 100ms forwards;
@@ -106,7 +99,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
           display: flex;
           // important to overlap it otherwise it can be hidden
           // again by the mouse getting outside the hover space
-          left: ${theme.components.sidemenu.width - 3}px;
+          left: ${theme.components.sidemenu.width - 1}px;
           margin: 0;
           opacity: 0;
           top: 0;
@@ -121,12 +114,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   element: css`
     background-color: transparent;
-    border: 1px solid transparent;
-    color: ${theme.colors.text.secondary};
+    border: none;
+    color: inherit;
     display: block;
     line-height: 42px;
     text-align: center;
-    width: ${theme.components.sidemenu.width - 2}px;
+    width: ${theme.components.sidemenu.width - 1}px;
+
+    &::before {
+      display: ${isActive ? 'block' : 'none'};
+      content: ' ';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 2px;
+      background-image: ${theme.colors.gradients.brandVertical};
+    }
+
+    &:focus-visible {
+      background-color: ${theme.colors.action.hover};
+      box-shadow: none;
+      color: ${theme.colors.text.primary};
+      outline: 2px solid ${theme.colors.primary.main};
+      outline-offset: -2px;
+      transition: none;
+    }
 
     .sidemenu-open--xs & {
       display: none;

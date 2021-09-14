@@ -9,6 +9,8 @@ import BottomSection from './BottomSection';
 
 jest.mock('./utils', () => ({
   getForcedLoginUrl: () => '/mockForcedLoginUrl',
+  isLinkActive: () => false,
+  isSearchActive: () => false,
 }));
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),

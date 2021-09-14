@@ -1,191 +1,141 @@
 package ldap
 
 import (
+	"fmt"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/ldap.v3"
 )
 
-func TestLDAPHelpers(t *testing.T) {
-	Convey("isMemberOf()", t, func() {
-		Convey("Wildcard", func() {
-			result := isMemberOf([]string{}, "*")
-			So(result, ShouldBeTrue)
-		})
+func TestIsMemberOf(t *testing.T) {
+	tests := []struct {
+		memberOf []string
+		group    string
+		expected bool
+	}{
+		{memberOf: []string{}, group: "*", expected: true},
+		{memberOf: []string{"one", "Two", "three"}, group: "two", expected: true},
+		{memberOf: []string{"one", "Two", "three"}, group: "twos", expected: false},
+	}
 
-		Convey("Should find one", func() {
-			result := isMemberOf([]string{"one", "Two", "three"}, "two")
-			So(result, ShouldBeTrue)
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("isMemberOf(%v, \"%s\") = %v", tc.memberOf, tc.group, tc.expected), func(t *testing.T) {
+			assert.Equal(t, tc.expected, isMemberOf(tc.memberOf, tc.group))
 		})
+	}
+}
 
-		Convey("Should not find one", func() {
-			result := isMemberOf([]string{"one", "Two", "three"}, "twos")
-			So(result, ShouldBeFalse)
-		})
-	})
+func TestGetUsersIteration(t *testing.T) {
+	const pageSize = UsersMaxRequest
+	iterations := map[int]int{
+		0:    0,
+		400:  1,
+		600:  2,
+		1500: 3,
+	}
 
-	Convey("getUsersIteration()", t, func() {
-		Convey("it should execute twice for 600 users", func() {
-			logins := make([]string, 600)
+	for userCount, expectedIterations := range iterations {
+		t.Run(fmt.Sprintf("getUserIteration iterates %d times for %d users", expectedIterations, userCount), func(t *testing.T) {
+			logins := make([]string, userCount)
+
 			i := 0
+			_ = getUsersIteration(logins, func(first int, last int) error {
+				assert.Equal(t, pageSize*i, first)
 
-			result := getUsersIteration(logins, func(previous, current int) error {
-				i++
-
-				if i == 1 {
-					So(previous, ShouldEqual, 0)
-					So(current, ShouldEqual, 500)
-				} else {
-					So(previous, ShouldEqual, 500)
-					So(current, ShouldEqual, 600)
+				expectedLast := pageSize*i + pageSize
+				if expectedLast > userCount {
+					expectedLast = userCount
 				}
 
-				return nil
-			})
+				assert.Equal(t, expectedLast, last)
 
-			So(i, ShouldEqual, 2)
-			So(result, ShouldBeNil)
-		})
-
-		Convey("it should execute three times for 1500 users", func() {
-			logins := make([]string, 1500)
-			i := 0
-
-			result := getUsersIteration(logins, func(previous, current int) error {
-				i++
-				switch i {
-				case 1:
-					So(previous, ShouldEqual, 0)
-					So(current, ShouldEqual, 500)
-				case 2:
-					So(previous, ShouldEqual, 500)
-					So(current, ShouldEqual, 1000)
-				default:
-					So(previous, ShouldEqual, 1000)
-					So(current, ShouldEqual, 1500)
-				}
-
-				return nil
-			})
-
-			So(i, ShouldEqual, 3)
-			So(result, ShouldBeNil)
-		})
-
-		Convey("it should execute once for 400 users", func() {
-			logins := make([]string, 400)
-			i := 0
-
-			result := getUsersIteration(logins, func(previous, current int) error {
-				i++
-				if i == 1 {
-					So(previous, ShouldEqual, 0)
-					So(current, ShouldEqual, 400)
-				}
-
-				return nil
-			})
-
-			So(i, ShouldEqual, 1)
-			So(result, ShouldBeNil)
-		})
-
-		Convey("it should not execute for 0 users", func() {
-			logins := make([]string, 0)
-			i := 0
-
-			result := getUsersIteration(logins, func(previous, current int) error {
 				i++
 				return nil
 			})
 
-			So(i, ShouldEqual, 0)
-			So(result, ShouldBeNil)
+			assert.Equal(t, expectedIterations, i)
 		})
+	}
+}
+
+func TestGetAttribute(t *testing.T) {
+	t.Run("DN", func(t *testing.T) {
+		entry := &ldap.Entry{
+			DN: "test",
+		}
+
+		result := getAttribute("dn", entry)
+		assert.Equal(t, "test", result)
 	})
 
-	Convey("getAttribute()", t, func() {
-		Convey("Should get DN", func() {
-			entry := &ldap.Entry{
-				DN: "test",
-			}
-
-			result := getAttribute("dn", entry)
-
-			So(result, ShouldEqual, "test")
-		})
-
-		Convey("Should get username", func() {
-			value := []string{"roelgerrits"}
-			entry := &ldap.Entry{
-				Attributes: []*ldap.EntryAttribute{
-					{
-						Name: "username", Values: value,
-					},
+	t.Run("username", func(t *testing.T) {
+		value := "roelgerrits"
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "username", Values: []string{value},
 				},
-			}
+			},
+		}
 
-			result := getAttribute("username", entry)
-
-			So(result, ShouldEqual, value[0])
-		})
-
-		Convey("Should not get anything", func() {
-			value := []string{"roelgerrits"}
-			entry := &ldap.Entry{
-				Attributes: []*ldap.EntryAttribute{
-					{
-						Name: "killa", Values: value,
-					},
-				},
-			}
-
-			result := getAttribute("username", entry)
-
-			So(result, ShouldEqual, "")
-		})
+		result := getAttribute("username", entry)
+		assert.Equal(t, value, result)
 	})
 
-	Convey("getArrayAttribute()", t, func() {
-		Convey("Should get DN", func() {
-			entry := &ldap.Entry{
-				DN: "test",
-			}
-
-			result := getArrayAttribute("dn", entry)
-
-			So(result, ShouldResemble, []string{"test"})
-		})
-
-		Convey("Should get username", func() {
-			value := []string{"roelgerrits"}
-			entry := &ldap.Entry{
-				Attributes: []*ldap.EntryAttribute{
-					{
-						Name: "username", Values: value,
-					},
+	t.Run("no result", func(t *testing.T) {
+		value := []string{"roelgerrits"}
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "killa", Values: value,
 				},
-			}
+			},
+		}
 
-			result := getArrayAttribute("username", entry)
+		result := getAttribute("username", entry)
+		assert.Empty(t, result)
+	})
+}
 
-			So(result, ShouldResemble, value)
-		})
+func TestGetArrayAttribute(t *testing.T) {
+	t.Run("DN", func(t *testing.T) {
+		entry := &ldap.Entry{
+			DN: "test",
+		}
 
-		Convey("Should not get anything", func() {
-			value := []string{"roelgerrits"}
-			entry := &ldap.Entry{
-				Attributes: []*ldap.EntryAttribute{
-					{
-						Name: "username", Values: value,
-					},
+		result := getArrayAttribute("dn", entry)
+
+		assert.EqualValues(t, []string{"test"}, result)
+	})
+
+	t.Run("username", func(t *testing.T) {
+		value := []string{"roelgerrits"}
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "username", Values: value,
 				},
-			}
+			},
+		}
 
-			result := getArrayAttribute("something", entry)
+		result := getArrayAttribute("username", entry)
 
-			So(result, ShouldResemble, []string{})
-		})
+		assert.EqualValues(t, value, result)
+	})
+
+	t.Run("no result", func(t *testing.T) {
+		value := []string{"roelgerrits"}
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "username", Values: value,
+				},
+			},
+		}
+
+		result := getArrayAttribute("something", entry)
+
+		assert.Empty(t, result)
 	})
 }

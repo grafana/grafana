@@ -56,7 +56,14 @@ const MonacoQueryField = (props: Props) => {
 
           const getAllMetricNames = () => {
             const { metricsMetadata } = lpRef.current;
-            const result = metricsMetadata == null ? [] : Object.keys(metricsMetadata);
+            const result =
+              metricsMetadata == null
+                ? []
+                : Object.entries(metricsMetadata).map(([k, v]) => ({
+                    name: k,
+                    help: v[0].help,
+                    type: v[0].type,
+                  }));
             return Promise.resolve(result);
           };
 
