@@ -84,7 +84,7 @@ func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response 
 		http.MethodDelete,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf(amSilencePath, macaron.Vars(ctx.Req)[":SilenceId"]),
+			fmt.Sprintf(amSilencePath, macaron.Params(ctx.Req)[":SilenceId"]),
 		),
 		nil,
 		messageExtractor,
@@ -140,7 +140,7 @@ func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
 		http.MethodGet,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf(amSilencePath, macaron.Vars(ctx.Req)[":SilenceId"]),
+			fmt.Sprintf(amSilencePath, macaron.Params(ctx.Req)[":SilenceId"]),
 		),
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),

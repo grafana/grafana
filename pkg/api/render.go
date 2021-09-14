@@ -59,7 +59,7 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		OrgID:             c.OrgId,
 		UserID:            c.UserId,
 		OrgRole:           c.OrgRole,
-		Path:              macaron.Vars(c.Req)["*"] + queryParams,
+		Path:              macaron.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,

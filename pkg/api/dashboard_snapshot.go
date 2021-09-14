@@ -146,7 +146,7 @@ func CreateDashboardSnapshot(c *models.ReqContext, cmd models.CreateDashboardSna
 
 // GET /api/snapshots/:key
 func GetDashboardSnapshot(c *models.ReqContext) response.Response {
-	key := macaron.Vars(c.Req)[":key"]
+	key := macaron.Params(c.Req)[":key"]
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
 	err := bus.Dispatch(query)
@@ -210,7 +210,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 
 // GET /api/snapshots-delete/:deleteKey
 func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
-	key := macaron.Vars(c.Req)[":deleteKey"]
+	key := macaron.Params(c.Req)[":deleteKey"]
 
 	query := &models.GetDashboardSnapshotQuery{DeleteKey: key}
 
@@ -240,7 +240,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 
 // DELETE /api/snapshots/:key
 func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
-	key := macaron.Vars(c.Req)[":key"]
+	key := macaron.Params(c.Req)[":key"]
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 

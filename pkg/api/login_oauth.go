@@ -42,7 +42,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	loginInfo := models.LoginInfo{
 		AuthModule: "oauth",
 	}
-	name := macaron.Vars(ctx.Req)[":name"]
+	name := macaron.Params(ctx.Req)[":name"]
 	loginInfo.AuthModule = name
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
 	if provider == nil {

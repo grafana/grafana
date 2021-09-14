@@ -25,7 +25,7 @@ func GetOrgByID(c *models.ReqContext) response.Response {
 
 // Get /api/orgs/name/:name
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
-	org, err := hs.SQLStore.GetOrgByName(macaron.Vars(c.Req)[":name"])
+	org, err := hs.SQLStore.GetOrgByName(macaron.Params(c.Req)[":name"])
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)

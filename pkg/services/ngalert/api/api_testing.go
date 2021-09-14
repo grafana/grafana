@@ -27,7 +27,7 @@ type TestingApiSrv struct {
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	recipient := macaron.Vars(c.Req)[":Recipient"]
+	recipient := macaron.Params(c.Req)[":Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
 			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")

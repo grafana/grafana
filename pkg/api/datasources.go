@@ -118,7 +118,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 
 // GET /api/datasources/uid/:uid
 func GetDataSourceByUID(c *models.ReqContext) response.Response {
-	ds, err := getRawDataSourceByUID(macaron.Vars(c.Req)[":uid"], c.OrgId)
+	ds, err := getRawDataSourceByUID(macaron.Params(c.Req)[":uid"], c.OrgId)
 
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -133,7 +133,7 @@ func GetDataSourceByUID(c *models.ReqContext) response.Response {
 
 // DELETE /api/datasources/uid/:uid
 func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Response {
-	uid := macaron.Vars(c.Req)[":uid"]
+	uid := macaron.Params(c.Req)[":uid"]
 
 	if uid == "" {
 		return response.Error(400, "Missing datasource uid", nil)
@@ -164,7 +164,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 }
 
 func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
-	name := macaron.Vars(c.Req)[":name"]
+	name := macaron.Params(c.Req)[":name"]
 
 	if name == "" {
 		return response.Error(400, "Missing valid datasource name", nil)
@@ -329,7 +329,7 @@ func getRawDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) 
 
 // Get /api/datasources/name/:name
 func GetDataSourceByName(c *models.ReqContext) response.Response {
-	query := models.GetDataSourceQuery{Name: macaron.Vars(c.Req)[":name"], OrgId: c.OrgId}
+	query := models.GetDataSourceQuery{Name: macaron.Params(c.Req)[":name"], OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -344,7 +344,7 @@ func GetDataSourceByName(c *models.ReqContext) response.Response {
 
 // Get /api/datasources/id/:name
 func GetDataSourceIdByName(c *models.ReqContext) response.Response {
-	query := models.GetDataSourceQuery{Name: macaron.Vars(c.Req)[":name"], OrgId: c.OrgId}
+	query := models.GetDataSourceQuery{Name: macaron.Params(c.Req)[":name"], OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -392,7 +392,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,
 	}
-	hs.BackendPluginManager.CallResource(pCtx, c, macaron.Vars(c.Req)["*"])
+	hs.BackendPluginManager.CallResource(pCtx, c, macaron.Params(c.Req)["*"])
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {

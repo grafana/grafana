@@ -46,7 +46,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 }
 
 func (g *Gateway) Handle(ctx *models.ReqContext) {
-	streamID := macaron.Vars(ctx.Req)[":streamId"]
+	streamID := macaron.Params(ctx.Req)[":streamId"]
 
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
 	if err != nil {
@@ -97,8 +97,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 }
 
 func (g *Gateway) HandlePath(ctx *models.ReqContext) {
-	streamID := macaron.Vars(ctx.Req)[":streamId"]
-	path := macaron.Vars(ctx.Req)[":path"]
+	streamID := macaron.Params(ctx.Req)[":streamId"]
+	path := macaron.Params(ctx.Req)[":path"]
 
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {

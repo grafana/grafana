@@ -46,7 +46,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
-	shortURLUID := macaron.Vars(c.Req)[":uid"]
+	shortURLUID := macaron.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {
 		return

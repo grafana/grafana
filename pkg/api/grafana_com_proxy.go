@@ -42,7 +42,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 }
 
 func ProxyGnetRequest(c *models.ReqContext) {
-	proxyPath := macaron.Vars(c.Req)["*"]
+	proxyPath := macaron.Params(c.Req)["*"]
 	proxy := ReverseProxyGnetReq(proxyPath)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)

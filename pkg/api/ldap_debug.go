@@ -239,7 +239,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 
 	ldap := newLDAP(ldapConfig.Servers)
 
-	username := macaron.Vars(c.Req)[":username"]
+	username := macaron.Params(c.Req)[":username"]
 
 	if len(username) == 0 {
 		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
