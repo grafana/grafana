@@ -24,6 +24,7 @@ export default function PipelineAdminPage() {
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live-pipeline');
+  const [error, setError] = useState<string>();
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -33,7 +34,11 @@ export default function PipelineAdminPage() {
         setRules(data.rules);
         setDefaultRules(data.rules);
       })
-      .catch((e) => console.error(e));
+      .catch((e) => {
+        if (e.data) {
+          setError(JSON.stringify(e.data, null, 2));
+        }
+      });
   }, []);
 
   const onRowClick = (event: any) => {
@@ -57,6 +62,7 @@ export default function PipelineAdminPage() {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        {error && <pre>{error}</pre>}
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <Input placeholder="Search pattern..." onChange={onSearchQueryChange} />
