@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	dashboardifaces "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -360,7 +362,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 					updateDashboardACL = origUpdateDashboardACL
 				})
 				var gotItems []*models.DashboardAcl
-				updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+				updateDashboardACL = func(_ dashboardifaces.Store, _ context.Context, _ int64, items []*models.DashboardAcl) error {
 					gotItems = items
 					return nil
 				}
@@ -385,7 +387,7 @@ func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 	t.Cleanup(func() {
 		updateDashboardACL = origUpdateDashboardACL
 	})
-	updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+	updateDashboardACL = func(_ dashboardifaces.Store, _ context.Context, dashID int64, items []*models.DashboardAcl) error {
 		return nil
 	}
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -22,7 +23,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
@@ -69,7 +70,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -112,7 +113,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := updateDashboardACL(hs, folder.Id, items); err != nil {
+	if err := updateDashboardACL(hs.SQLStore, context.Background(), folder.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
 			err = models.ErrFolderAclInfoMissing
 		}

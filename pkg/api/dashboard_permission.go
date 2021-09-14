@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -18,7 +19,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return rsp
 	}
 
-	g := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
@@ -62,7 +63,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return rsp
 	}
 
-	g := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
@@ -99,7 +100,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := updateDashboardACL(hs, dashID, items); err != nil {
+	if err := updateDashboardACL(hs.SQLStore, context.Background(), dashID, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)

@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -32,7 +33,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading folder acl should include default acl", func() {
 					query := models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -48,7 +49,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -69,7 +70,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should return no acl items", func() {
 					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 0)
@@ -88,7 +89,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -107,7 +108,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
 						query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
 
-						err := GetDashboardAclInfoList(&query)
+						err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 						So(err, ShouldBeNil)
 
 						So(len(query.Result), ShouldEqual, 2)
@@ -131,7 +132,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include default acl for parent folder and the child acl", func() {
 					query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
 
-					err := GetDashboardAclInfoList(&query)
+					err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					defaultPermissionsId := -1
@@ -157,7 +158,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-				err = GetDashboardAclInfoList(q1)
+				err = sqlStore.GetDashboardAclInfoList(context.Background(), q1)
 				So(err, ShouldBeNil)
 
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -172,7 +173,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q3)
+					err = sqlStore.GetDashboardAclInfoList(context.Background(), q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 0)
 				})
@@ -192,7 +193,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q1)
+					err = sqlStore.GetDashboardAclInfoList(context.Background(), q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 					So(q1.Result[0].Permission, ShouldEqual, models.PERMISSION_EDIT)
@@ -209,7 +210,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q3)
+					err = sqlStore.GetDashboardAclInfoList(context.Background(), q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -225,7 +226,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			Convey("When reading dashboard acl should return default permissions", func() {
 				query := models.GetDashboardAclInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
 
-				err := GetDashboardAclInfoList(&query)
+				err := sqlStore.GetDashboardAclInfoList(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)
