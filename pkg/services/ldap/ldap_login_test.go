@@ -4,231 +4,227 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func TestLDAPLogin(t *testing.T) {
-	defaultLogin := &models.LoginUserQuery{
-		Username:  "user",
-		Password:  "pwd",
-		IpAddress: "192.168.1.1:56433",
+var defaultLogin = &models.LoginUserQuery{
+	Username:  "user",
+	Password:  "pwd",
+	IpAddress: "192.168.1.1:56433",
+}
+
+func TestServer_Login_UserBind_Fail(t *testing.T) {
+	connection := &MockConnection{}
+	entry := ldap.Entry{}
+	result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+	connection.setSearchResult(&result)
+
+	connection.BindProvider = func(username, password string) error {
+		return &ldap.Error{
+			ResultCode: 49,
+		}
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
 	}
 
-	Convey("Login()", t, func() {
-		Convey("Should get invalid credentials when userBind fails", func() {
-			connection := &MockConnection{}
-			entry := ldap.Entry{}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			connection.setSearchResult(&result)
+	_, err := server.Login(defaultLogin)
 
-			connection.BindProvider = func(username, password string) error {
-				return &ldap.Error{
-					ResultCode: 49,
-				}
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
+	assert.ErrorIs(t, err, ErrInvalidCredentials)
+}
 
-			_, err := server.Login(defaultLogin)
+func TestServer_Login_Search_NoResult(t *testing.T) {
+	connection := &MockConnection{}
+	result := ldap.SearchResult{Entries: []*ldap.Entry{}}
+	connection.setSearchResult(&result)
 
-			So(err, ShouldEqual, ErrInvalidCredentials)
-		})
+	connection.BindProvider = func(username, password string) error {
+		return nil
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
+	}
 
-		Convey("Returns an error when search didn't find anything", func() {
-			connection := &MockConnection{}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
-			connection.setSearchResult(&result)
+	_, err := server.Login(defaultLogin)
+	assert.ErrorIs(t, err, ErrCouldNotFindUser)
+}
 
-			connection.BindProvider = func(username, password string) error {
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
+func TestServer_Login_Search_Error(t *testing.T) {
+	connection := &MockConnection{}
+	expected := errors.New("Killa-gorilla")
+	connection.setSearchError(expected)
 
-			_, err := server.Login(defaultLogin)
+	connection.BindProvider = func(username, password string) error {
+		return nil
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
+	}
 
-			So(err, ShouldEqual, ErrCouldNotFindUser)
-		})
+	_, err := server.Login(defaultLogin)
+	assert.ErrorIs(t, err, expected)
+}
 
-		Convey("When search returns an error", func() {
-			connection := &MockConnection{}
-			expected := errors.New("Killa-gorilla")
-			connection.setSearchError(expected)
+func TestServer_Login_ValidCredentials(t *testing.T) {
+	connection := &MockConnection{}
+	entry := ldap.Entry{
+		DN: "dn", Attributes: []*ldap.EntryAttribute{
+			{Name: "username", Values: []string{"markelog"}},
+			{Name: "surname", Values: []string{"Gaidarenko"}},
+			{Name: "email", Values: []string{"markelog@gmail.com"}},
+			{Name: "name", Values: []string{"Oleg"}},
+			{Name: "memberof", Values: []string{"admins"}},
+		},
+	}
+	result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+	connection.setSearchResult(&result)
 
-			connection.BindProvider = func(username, password string) error {
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
+	connection.BindProvider = func(username, password string) error {
+		return nil
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			Attr: AttributeMap{
+				Username: "username",
+				Name:     "name",
+				MemberOf: "memberof",
+			},
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
+	}
 
-			_, err := server.Login(defaultLogin)
+	resp, err := server.Login(defaultLogin)
+	require.NoError(t, err)
+	assert.Equal(t, "markelog", resp.Login)
+}
 
-			So(err, ShouldEqual, expected)
-		})
+// TestServer_Login_UnauthenticatedBind tests that unauthenticated bind
+// is called when there is no admin password or user wildcard in the
+// bind_dn.
+func TestServer_Login_UnauthenticatedBind(t *testing.T) {
+	connection := &MockConnection{}
+	entry := ldap.Entry{
+		DN: "test",
+	}
+	result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+	connection.setSearchResult(&result)
 
-		Convey("When login with valid credentials", func() {
-			connection := &MockConnection{}
-			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"markelog"}},
-					{Name: "surname", Values: []string{"Gaidarenko"}},
-					{Name: "email", Values: []string{"markelog@gmail.com"}},
-					{Name: "name", Values: []string{"Oleg"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				},
-			}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			connection.setSearchResult(&result)
+	connection.UnauthenticatedBindProvider = func() error {
+		return nil
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
+	}
 
-			connection.BindProvider = func(username, password string) error {
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
+	user, err := server.Login(defaultLogin)
+	require.NoError(t, err)
+	assert.Equal(t, "test", user.AuthId)
+	assert.True(t, connection.UnauthenticatedBindCalled)
+}
 
-			resp, err := server.Login(defaultLogin)
+func TestServer_Login_AuthenticatedBind(t *testing.T) {
+	connection := &MockConnection{}
+	entry := ldap.Entry{
+		DN: "test",
+	}
+	result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+	connection.setSearchResult(&result)
 
-			So(err, ShouldBeNil)
-			So(resp.Login, ShouldEqual, "markelog")
-		})
+	adminUsername := ""
+	adminPassword := ""
+	username := ""
+	password := ""
 
-		Convey("Should perform unauthenticated bind without admin", func() {
-			connection := &MockConnection{}
-			entry := ldap.Entry{
-				DN: "test",
-			}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			connection.setSearchResult(&result)
+	i := 0
+	connection.BindProvider = func(name, pass string) error {
+		i++
+		if i == 1 {
+			adminUsername = name
+			adminPassword = pass
+		}
 
-			connection.UnauthenticatedBindProvider = func() error {
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
+		if i == 2 {
+			username = name
+			password = pass
+		}
 
-			user, err := server.Login(defaultLogin)
+		return nil
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			BindDN:        "killa",
+			BindPassword:  "gorilla",
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
+	}
 
-			So(err, ShouldBeNil)
-			So(user.AuthId, ShouldEqual, "test")
-			So(connection.UnauthenticatedBindCalled, ShouldBeTrue)
-		})
+	user, err := server.Login(defaultLogin)
+	require.NoError(t, err)
 
-		Convey("Should perform authenticated binds", func() {
-			connection := &MockConnection{}
-			entry := ldap.Entry{
-				DN: "test",
-			}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			connection.setSearchResult(&result)
+	assert.Equal(t, "test", user.AuthId)
+	assert.True(t, connection.BindCalled)
 
-			adminUsername := ""
-			adminPassword := ""
-			username := ""
-			password := ""
+	assert.Equal(t, "killa", adminUsername)
+	assert.Equal(t, "gorilla", adminPassword)
 
-			i := 0
-			connection.BindProvider = func(name, pass string) error {
-				i++
-				if i == 1 {
-					adminUsername = name
-					adminPassword = pass
-				}
+	assert.Equal(t, "test", username)
+	assert.Equal(t, "pwd", password)
+}
 
-				if i == 2 {
-					username = name
-					password = pass
-				}
+func TestServer_Login_UserWildcardBind(t *testing.T) {
+	connection := &MockConnection{}
+	entry := ldap.Entry{
+		DN: "test",
+	}
+	connection.setSearchResult(&ldap.SearchResult{Entries: []*ldap.Entry{&entry}})
 
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					BindDN:        "killa",
-					BindPassword:  "gorilla",
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
+	authBindUser := ""
+	authBindPassword := ""
 
-			user, err := server.Login(defaultLogin)
+	connection.BindProvider = func(name, pass string) error {
+		authBindUser = name
+		authBindPassword = pass
+		return nil
+	}
+	server := &Server{
+		Config: &ServerConfig{
+			BindDN:        "cn=%s,ou=users,dc=grafana,dc=org",
+			SearchBaseDNs: []string{"BaseDNHere"},
+		},
+		Connection: connection,
+		log:        log.New("test-logger"),
+	}
 
-			So(err, ShouldBeNil)
+	_, err := server.Login(defaultLogin)
+	require.NoError(t, err)
 
-			So(user.AuthId, ShouldEqual, "test")
-			So(connection.BindCalled, ShouldBeTrue)
-
-			So(adminUsername, ShouldEqual, "killa")
-			So(adminPassword, ShouldEqual, "gorilla")
-
-			So(username, ShouldEqual, "test")
-			So(password, ShouldEqual, "pwd")
-		})
-		Convey("Should bind with user if %s exists in the bind_dn", func() {
-			connection := &MockConnection{}
-			entry := ldap.Entry{
-				DN: "test",
-			}
-			connection.setSearchResult(&ldap.SearchResult{Entries: []*ldap.Entry{&entry}})
-
-			authBindUser := ""
-			authBindPassword := ""
-
-			connection.BindProvider = func(name, pass string) error {
-				authBindUser = name
-				authBindPassword = pass
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					BindDN:        "cn=%s,ou=users,dc=grafana,dc=org",
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
-
-			_, err := server.Login(defaultLogin)
-
-			So(err, ShouldBeNil)
-
-			So(authBindUser, ShouldEqual, "cn=user,ou=users,dc=grafana,dc=org")
-			So(authBindPassword, ShouldEqual, "pwd")
-			So(connection.BindCalled, ShouldBeTrue)
-		})
-	})
+	assert.Equal(t, "cn=user,ou=users,dc=grafana,dc=org", authBindUser)
+	assert.Equal(t, "pwd", authBindPassword)
+	assert.True(t, connection.BindCalled)
 }

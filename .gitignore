@@ -123,6 +123,10 @@ compilation-stats.json
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
 
+# a11y tests
+/pa11y-ci-results.json
+/pa11y-ci-report
+
 # report dumping the whole system env
 /report.*.json
 
