@@ -19,6 +19,7 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   showValue: BarValueVisibility;
   barWidth: number;
   groupWidth: number;
+  rawValue: (seriesIdx: number, valueIdx: number) => number;
 }
 
 /**
