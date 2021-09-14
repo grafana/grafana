@@ -11,7 +11,9 @@ export function PluginErrorBadge({ error }: Props): React.ReactElement {
 function errorCodeToTooltip(error: PluginErrorCode): string | undefined {
   switch (error) {
     case PluginErrorCode.modifiedSignature:
-      return 'This plugin might have been tampered with and we recommend to remove and re-install before using it.';
+      return 'This plugin might have been tampered with and we recommend you to remove and reinstall before using it.';
+    case PluginErrorCode.invalidSignature:
+      return 'This plugin seems to have an invalid signature. Try to remove and reinstall before using it.';
     default:
       return;
   }
