@@ -36,6 +36,7 @@ export interface CatalogPlugin {
   isCore: boolean;
   isEnterprise: boolean;
   isInstalled: boolean;
+  isDisabled: boolean;
   name: string;
   orgName: string;
   signature: PluginSignatureStatus;
@@ -192,6 +193,7 @@ export enum PluginStatus {
   INSTALL = 'INSTALL',
   UNINSTALL = 'UNINSTALL',
   UPDATE = 'UPDATE',
+  REINSTALL = 'REINSTALL',
 }
 
 export enum PluginTabLabels {

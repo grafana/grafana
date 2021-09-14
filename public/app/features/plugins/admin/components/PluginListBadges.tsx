@@ -1,7 +1,7 @@
 import React from 'react';
 import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
 import { CatalogPlugin } from '../types';
-import { PluginEnterpriseBadge, PluginErrorBadge, PluginInstalledBadge } from './Badges';
+import { PluginEnterpriseBadge, PluginDisabledBadge, PluginInstalledBadge } from './Badges';
 
 type PluginBadgeType = {
   plugin: CatalogPlugin;
@@ -12,7 +12,7 @@ export function PluginListBadges({ plugin }: PluginBadgeType) {
     return (
       <HorizontalGroup>
         <PluginEnterpriseBadge plugin={plugin} />
-        {plugin.error && <PluginErrorBadge error={plugin.error} />}
+        {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
       </HorizontalGroup>
     );
   }
@@ -20,8 +20,8 @@ export function PluginListBadges({ plugin }: PluginBadgeType) {
   return (
     <HorizontalGroup>
       <PluginSignatureBadge status={plugin.signature} />
+      {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
       {plugin.isInstalled && <PluginInstalledBadge />}
-      {plugin.error && <PluginErrorBadge error={plugin.error} />}
     </HorizontalGroup>
   );
 }

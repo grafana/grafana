@@ -3,7 +3,7 @@ import { GrafanaTheme2, PluginSignatureStatus } from '@grafana/data';
 import { PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { PluginSignatureDetailsBadge } from './PluginSignatureDetailsBadge';
 import { CatalogPlugin } from '../types';
-import { PluginErrorBadge } from './Badges';
+import { PluginDisabledBadge } from './Badges';
 import { css } from '@emotion/css';
 
 type Props = {
@@ -14,7 +14,6 @@ type Props = {
 export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
   const isSignatureValid = plugin.signature === PluginSignatureStatus.valid;
-  const isBroken = !!plugin.error;
 
   return (
     <div>
@@ -26,9 +25,9 @@ export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElem
         <PluginSignatureDetailsBadge signatureType={plugin.signatureType} signatureOrg={plugin.signatureOrg} />
       )}
 
-      {isBroken && (
+      {plugin.isDisabled && (
         <div className={styles.error}>
-          <PluginErrorBadge error={plugin.error!} />
+          <PluginDisabledBadge error={plugin.error!} />
         </div>
       )}
     </div>

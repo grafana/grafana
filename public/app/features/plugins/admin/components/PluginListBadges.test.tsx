@@ -28,6 +28,7 @@ describe('PluginBadges', () => {
     isCore: false,
     isDev: false,
     isEnterprise: false,
+    isDisabled: false,
   };
 
   afterEach(() => {
@@ -63,7 +64,7 @@ describe('PluginBadges', () => {
   });
 
   it('renders a error badge (when plugin has an error', () => {
-    render(<PluginListBadges plugin={{ ...plugin, error: PluginErrorCode.modifiedSignature }} />);
-    expect(screen.getByText(/broken/i)).toBeVisible();
+    render(<PluginListBadges plugin={{ ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature }} />);
+    expect(screen.getByText(/disabled/i)).toBeVisible();
   });
 });
