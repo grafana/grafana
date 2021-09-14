@@ -120,6 +120,7 @@ func FromContext(c context.Context) *Context {
 
 type paramsKey struct{}
 
+// Params returns the named route parameters for the current request, if any.
 func Params(r *http.Request) map[string]string {
 	if rv := r.Context().Value(paramsKey{}); rv != nil {
 		return rv.(map[string]string)
@@ -127,6 +128,7 @@ func Params(r *http.Request) map[string]string {
 	return map[string]string{}
 }
 
+// SetURLParams sets the named URL parameters for the given request. This should only be used for testing purposes.
 func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), paramsKey{}, vars))
 }
