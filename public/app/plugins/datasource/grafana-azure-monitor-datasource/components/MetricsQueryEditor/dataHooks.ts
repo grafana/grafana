@@ -174,9 +174,14 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       const options = results.map(toOption);
 
       // Do some cleanup of the query state if need be
-      if ((!metricNamespace && options.length) || options.length === 1) {
+      if (!metricNamespace && options.length) {
         onChange(setMetricNamespace(query, options[0].value));
-      } else if (options[0] && metricNamespace && !hasOption(options, metricNamespace)) {
+      } else if (
+        options[0] &&
+        metricNamespace &&
+        !datasource.isTemplateVariable(metricNamespace) &&
+        !hasOption(options, metricNamespace)
+      ) {
         onChange(setMetricNamespace(query, options[0].value));
       }
 
