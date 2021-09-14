@@ -32,7 +32,7 @@ func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
 	ruleBytes, err := ioutil.ReadFile("./data/live-channel-rules.json")
 	if err != nil {
-		return nil, fmt.Errorf("can't read ./data/live-channel-rules.json file")
+		return nil, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
 	}
 	var channelRules ChannelRules
 	err = json.Unmarshal(ruleBytes, &channelRules)
