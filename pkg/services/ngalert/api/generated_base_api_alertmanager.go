@@ -34,7 +34,7 @@ type AlertmanagerApiService interface {
 	RoutePostTestReceivers(*models.ReqContext, apimodels.TestReceiversConfigParams) response.Response
 }
 
-func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *metrics.Metrics) {
+func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
