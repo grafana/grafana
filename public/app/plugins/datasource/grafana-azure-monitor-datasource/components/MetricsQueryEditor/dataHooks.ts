@@ -97,7 +97,7 @@ export const useResourceGroups: DataHook = (query, datasource, onChange, setErro
       const results = await datasource.getResourceGroups(subscription);
       const options = results.map(toOption);
 
-      if (resourceGroup && !hasOption(options, resourceGroup)) {
+      if (resourceGroup && !datasource.isTemplateVariable(resourceGroup) && !hasOption(options, resourceGroup)) {
         onChange(setResourceGroup(query, undefined));
       }
 
@@ -121,7 +121,11 @@ export const useResourceTypes: DataHook = (query, datasource, onChange, setError
       const results = await datasource.getMetricDefinitions(subscription, resourceGroup);
       const options = results.map(toOption);
 
-      if (metricDefinition && !hasOption(options, metricDefinition)) {
+      if (
+        metricDefinition &&
+        !datasource.isTemplateVariable(metricDefinition) &&
+        !hasOption(options, metricDefinition)
+      ) {
         onChange(setResourceType(query, undefined));
       }
 
@@ -145,7 +149,7 @@ export const useResourceNames: DataHook = (query, datasource, onChange, setError
       const results = await datasource.getResourceNames(subscription, resourceGroup, metricDefinition);
       const options = results.map(toOption);
 
-      if (resourceName && !hasOption(options, resourceName)) {
+      if (resourceName && !datasource.isTemplateVariable(resourceName) && !hasOption(options, resourceName)) {
         onChange(setResourceName(query, undefined));
       }
 
@@ -205,7 +209,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
 
       const options = results.map(toOption);
 
-      if (metricName && !hasOption(options, metricName)) {
+      if (metricName && !datasource.isTemplateVariable(metricName) && !hasOption(options, metricName)) {
         onChange(setMetricName(query, undefined));
       }
 
