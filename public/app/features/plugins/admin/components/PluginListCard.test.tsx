@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { PluginListCard } from './PluginListCard';
 import { CatalogPlugin } from '../types';
 
@@ -63,5 +63,12 @@ describe('PluginCard', () => {
     render(<PluginListCard plugin={appPlugin} pathName="" />);
 
     expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
+  });
+
+  it('renders a broken plugin with a badge to indicate its error', () => {
+    const pluginWithError = { ...plugin, error: PluginErrorCode.modifiedSignature };
+    render(<PluginListCard plugin={pluginWithError} pathName="" />);
+
+    expect(screen.getByText(/broken/i)).toBeVisible();
   });
 });
