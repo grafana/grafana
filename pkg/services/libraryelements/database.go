@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -274,7 +275,7 @@ func (l *LibraryElementService) getLibraryElements(c *models.ReqContext, params 
 
 // getLibraryElementByUid gets a Library Element by uid.
 func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext) (LibraryElementDTO, error) {
-	libraryElements, err := l.getLibraryElements(c, []Pair{{key: "org_id", value: c.SignedInUser.OrgId}, {key: "uid", value: c.Params(":uid")}})
+	libraryElements, err := l.getLibraryElements(c, []Pair{{key: "org_id", value: c.SignedInUser.OrgId}, {key: "uid", value: macaron.Params(c.Req)[":uid"]}})
 	if err != nil {
 		return LibraryElementDTO{}, err
 	}
@@ -287,7 +288,7 @@ func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext) (Li
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c *models.ReqContext) ([]LibraryElementDTO, error) {
-	return l.getLibraryElements(c, []Pair{{"org_id", c.SignedInUser.OrgId}, {"name", c.Params(":name")}})
+	return l.getLibraryElements(c, []Pair{{"org_id", c.SignedInUser.OrgId}, {"name", macaron.Params(c.Req)[":name"]}})
 }
 
 // getAllLibraryElements gets all Library Elements.

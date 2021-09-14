@@ -263,7 +263,7 @@ func Instrument(
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string
-		recipient := c.Params("Recipient")
+		recipient := macaron.Params(c.Req)[":Recipient"]
 		if recipient == apimodels.GrafanaBackend.String() || recipient == "" {
 			backend = GrafanaBackend
 		} else {
