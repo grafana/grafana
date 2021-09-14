@@ -25,7 +25,7 @@ interface Props {
 }
 
 const getDashboards = (query = '') => {
-  return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
+  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
     return result.map((item: DashboardSearchHit) => ({
       id: item.id,
       uid: item.uid,

@@ -12,7 +12,7 @@ export interface DashboardPickerOptions {
 }
 
 const getDashboards = (query = '') => {
-  return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
+  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
     return result.map((item: DashboardSearchHit) => ({
       value: item.uid,
       label: `${item?.folderTitle ?? 'General'}/${item.title}`,
