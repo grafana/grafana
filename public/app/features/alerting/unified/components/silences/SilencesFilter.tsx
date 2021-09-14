@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { css } from '@emotion/css';
 import { Label, Icon, Input, Tooltip, RadioButtonGroup, useStyles2, Button, Field } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -6,6 +6,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { parseMatchers } from '../../utils/alertmanager';
+import { debounce } from 'lodash';
 
 const stateOptions: SelectableValue[] = Object.entries(SilenceState).map(([key, value]) => ({
   label: key,
@@ -13,14 +14,15 @@ const stateOptions: SelectableValue[] = Object.entries(SilenceState).map(([key, 
 }));
 
 export const SilencesFilter = () => {
+  const [queryStringKey, setQueryStringKey] = useState(`queryString-${Math.random() * 100}`);
   const [queryParams, setQueryParams] = useQueryParams();
   const { queryString, silenceState } = getFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
 
-  const handleQueryStringChange = (e: FormEvent<HTMLInputElement>) => {
+  const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     setQueryParams({ queryString: target.value || null });
-  };
+  }, 400);
 
   const handleSilenceStateChange = (state: string) => {
     setQueryParams({ silenceState: state });
@@ -31,6 +33,7 @@ export const SilencesFilter = () => {
       queryString: null,
       silenceState: null,
     });
+    setTimeout(() => setQueryStringKey(''));
   };
 
   const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
@@ -58,10 +61,11 @@ export const SilencesFilter = () => {
         error={inputInvalid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
+          key={queryStringKey}
           className={styles.searchInput}
           prefix={<Icon name="search" />}
           onChange={handleQueryStringChange}
-          value={queryString ?? ''}
+          defaultValue={queryString ?? ''}
           placeholder="Search"
           data-testid="search-query-input"
         />

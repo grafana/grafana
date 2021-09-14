@@ -105,7 +105,11 @@ describe('Silences', () => {
     await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
     expect(ui.silencesTable.query()).not.toBeNull();
-    expect(ui.silenceRow.queryAll()).toHaveLength(2);
+
+    const silences = ui.silenceRow.queryAll();
+    expect(silences).toHaveLength(2);
+    expect(silences[0]).toHaveTextContent('foo=bar');
+    expect(silences[1]).toHaveTextContent('foo!=bar');
   });
 
   it('shows the correct number of silenced alerts', async () => {
