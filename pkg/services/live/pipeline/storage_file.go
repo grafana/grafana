@@ -3,19 +3,22 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"os"
 )
 
 // FileStorage can load channel rules from a file on disk.
 type FileStorage struct{}
 
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
-	backendBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_REMOTE_WRITE_BACKENDS_FILE"))
-	var remoteWriteBackends RemoteWriteBackends
-	err := json.Unmarshal(backendBytes, &remoteWriteBackends)
+	backendBytes, err := ioutil.ReadFile("./data/remote-write-backends.json")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't read ./data/remote-write-backends.json file: %w", err)
+	}
+	var remoteWriteBackends RemoteWriteBackends
+	err = json.Unmarshal(backendBytes, &remoteWriteBackends)
+	if err != nil {
+		return nil, fmt.Errorf("can't unmarshal remote-write-backends.json data: %w", err)
 	}
 	var backends []RemoteWriteBackend
 	for _, b := range remoteWriteBackends.Backends {
@@ -27,11 +30,14 @@ func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([
 }
 
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
-	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
-	var channelRules ChannelRules
-	err := json.Unmarshal(ruleBytes, &channelRules)
+	ruleBytes, err := ioutil.ReadFile("./data/live-channel-rules.json")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't read ./data/live-channel-rules.json file")
+	}
+	var channelRules ChannelRules
+	err = json.Unmarshal(ruleBytes, &channelRules)
+	if err != nil {
+		return nil, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
 	}
 	var rules []ChannelRule
 	for _, r := range channelRules.Rules {
