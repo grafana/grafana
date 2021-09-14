@@ -172,7 +172,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
                       >
                         Grafana authentication docs
                       </a>
-                      .
+                      &nbsp;for details.
                     </div>
                   }
                 >
