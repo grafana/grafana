@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -13,35 +14,28 @@ export interface Props {
 
 const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: Props) => {
   const theme = useTheme2();
-  const iconClassName = css`
-    margin-right: ${theme.spacing(1)};
-  `;
-  const resetButtonStyles = css`
-    background-color: transparent;
-    border: none;
-    width: 100%;
-  `;
+  const styles = getStyles(theme);
 
   const linkContent = (
     <>
-      {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={iconClassName} />}
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
       {text}
     </>
   );
 
   let element = (
-    <button className={resetButtonStyles} onClick={onClick}>
+    <button className={styles.element} onClick={onClick}>
       {linkContent}
     </button>
   );
   if (url) {
     element =
       !target && url.startsWith('/') ? (
-        <Link onClick={onClick} href={url}>
+        <Link className={styles.element} onClick={onClick} href={url}>
           {linkContent}
         </Link>
       ) : (
-        <a href={url} target={target} rel="noopener" onClick={onClick}>
+        <a className={styles.element} href={url} target={target} rel="noopener" onClick={onClick}>
           {linkContent}
         </a>
       );
@@ -51,3 +45,15 @@ const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
 };
 
 export default DropDownChild;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  element: css`
+    background-color: transparent;
+    border: none;
+    display: flex;
+    width: 100%;
+  `,
+  icon: css`
+    margin-right: ${theme.spacing(1)};
+  `,
+});

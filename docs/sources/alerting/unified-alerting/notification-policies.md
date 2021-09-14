@@ -35,7 +35,7 @@ To edit a specific policy, find it in the specific routing table and click **Edi
 ### Root policy fields
 
 - **Default contact point -** The [contact point]({{< relref "./contact-points.md" >}}) to send notifications to that did not match any specific policy.
-- **Group by -** Labels to group alerts by. If multiple alerts are matched for this policy, they will be grouped based on these labels and a notification will be sent per group. Mandatory for root policy, optional for nested specific policies. If a specific policy does not specify own grouping, root policy grouping will be used.
+- **Group by -** Labels to group alerts by. If multiple alerts are matched for this policy, they will be grouped based on these labels and a notification will be sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels, which effectively disables grouping.
 
 Group timing options
 
@@ -43,7 +43,7 @@ Group timing options
 - **Group interval -** - How long to wait before sending an notification when an alert has been added to a group for which there has already been a notification. Default is 5 minutes.
 - **Repeat interval -** - How long to wait before re-sending a notification after one has already been sent and no new alerts were added to the group. Default is 4 hours.
 
-### Specific policy fields
+### Specific routing policy fields
 
 - **Contact point -** The [contact point]({{< relref "./contact-points.md" >}}) to send notification to if alert matched this specific policy but did not match any of it's nested policies, or there were no nested specific policies.
 - **Matching labels -** Rules for matching alert labels. See ["How label matching works"](#how-label-matching-works) below for details.

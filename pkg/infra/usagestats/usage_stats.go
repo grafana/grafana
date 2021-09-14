@@ -52,6 +52,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
 	metrics["stats.users.count"] = statsQuery.Result.Users
+	metrics["stats.admins.count"] = statsQuery.Result.Admins
+	metrics["stats.editors.count"] = statsQuery.Result.Editors
+	metrics["stats.viewers.count"] = statsQuery.Result.Viewers
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
 	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
@@ -59,6 +62,15 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
+	metrics["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
+	metrics["stats.active_editors.count"] = statsQuery.Result.ActiveEditors
+	metrics["stats.active_viewers.count"] = statsQuery.Result.ActiveViewers
+	metrics["stats.active_sessions.count"] = statsQuery.Result.ActiveSessions
+	metrics["stats.daily_active_users.count"] = statsQuery.Result.DailyActiveUsers
+	metrics["stats.daily_active_admins.count"] = statsQuery.Result.DailyActiveAdmins
+	metrics["stats.daily_active_editors.count"] = statsQuery.Result.DailyActiveEditors
+	metrics["stats.daily_active_viewers.count"] = statsQuery.Result.DailyActiveViewers
+	metrics["stats.daily_active_sessions.count"] = statsQuery.Result.DailyActiveSessions
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 	metrics["stats.stars.count"] = statsQuery.Result.Stars
 	metrics["stats.folders.count"] = statsQuery.Result.Folders
@@ -77,6 +89,20 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+
+	liveUsersAvg := 0
+	liveClientsAvg := 0
+	if uss.liveStats.sampleCount > 0 {
+		liveUsersAvg = uss.liveStats.numUsersSum / uss.liveStats.sampleCount
+		liveClientsAvg = uss.liveStats.numClientsSum / uss.liveStats.sampleCount
+	}
+	metrics["stats.live_samples.count"] = uss.liveStats.sampleCount
+	metrics["stats.live_users_max.count"] = uss.liveStats.numUsersMax
+	metrics["stats.live_users_min.count"] = uss.liveStats.numUsersMin
+	metrics["stats.live_users_avg.count"] = liveUsersAvg
+	metrics["stats.live_clients_max.count"] = uss.liveStats.numClientsMax
+	metrics["stats.live_clients_min.count"] = uss.liveStats.numClientsMin
+	metrics["stats.live_clients_avg.count"] = liveClientsAvg
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -279,9 +305,9 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	data := bytes.NewBuffer(out)
 	sendUsageStats(data)
-
 	return nil
 }
 
@@ -300,6 +326,34 @@ var sendUsageStats = func(data *bytes.Buffer) {
 			metricsLogger.Warn("Failed to close response body", "err", err)
 		}
 	}()
+}
+
+func (uss *UsageStatsService) sampleLiveStats() {
+	current := uss.grafanaLive.UsageStats()
+
+	uss.liveStats.sampleCount++
+	uss.liveStats.numClientsSum += current.NumClients
+	uss.liveStats.numUsersSum += current.NumUsers
+
+	if current.NumClients > uss.liveStats.numClientsMax {
+		uss.liveStats.numClientsMax = current.NumClients
+	}
+
+	if current.NumClients < uss.liveStats.numClientsMin {
+		uss.liveStats.numClientsMin = current.NumClients
+	}
+
+	if current.NumUsers > uss.liveStats.numUsersMax {
+		uss.liveStats.numUsersMax = current.NumUsers
+	}
+
+	if current.NumUsers < uss.liveStats.numUsersMin {
+		uss.liveStats.numUsersMin = current.NumUsers
+	}
+}
+
+func (uss *UsageStatsService) resetLiveStats() {
+	uss.liveStats = liveUsageStats{}
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
