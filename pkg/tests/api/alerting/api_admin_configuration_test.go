@@ -22,6 +22,7 @@ import (
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	const disableOrgID int64 = 3
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting:             true,
 		EnableUnifiedAlerting:             true,
 		DisableAnonymous:                  true,
 		NGAlertAdminConfigIntervalSeconds: 2,

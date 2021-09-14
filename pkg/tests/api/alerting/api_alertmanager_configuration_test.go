@@ -27,6 +27,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		notifier.SyncOrgsPollInterval = p
 	})
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
@@ -135,6 +136,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 
 func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})

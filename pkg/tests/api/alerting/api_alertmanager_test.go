@@ -29,6 +29,7 @@ import (
 
 func TestAMConfigAccess(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
@@ -387,6 +388,7 @@ func TestAMConfigAccess(t *testing.T) {
 
 func TestAlertAndGroupsQuery(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
@@ -552,6 +554,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 func TestRulerAccess(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
@@ -678,6 +681,7 @@ func TestRulerAccess(t *testing.T) {
 func TestDeleteFolderWithRules(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
@@ -837,6 +841,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 func TestAlertRuleCRUD(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
@@ -1905,6 +1910,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 func TestAlertmanagerStatus(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 	})
 
@@ -1965,6 +1971,7 @@ func TestAlertmanagerStatus(t *testing.T) {
 func TestQuota(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
@@ -2207,6 +2214,7 @@ func TestQuota(t *testing.T) {
 func TestEval(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
