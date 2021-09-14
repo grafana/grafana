@@ -9,7 +9,6 @@ import {
   DataSourceInstanceSettings,
   DatasourceRef,
   isValidLiveChannelAddress,
-  MutableDataFrame,
   parseLiveChannelAddress,
   StreamingFrameOptions,
   toDataFrame,
@@ -138,10 +137,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       ],
     } as any).pipe(
       map((v) => {
-        let frame = v.data[0];
-        if (!frame) {
-          frame = new MutableDataFrame();
-        }
+        const frame = v.data[0] ?? toDataFrame({});
         return new DataFrameView<FileElement>(frame);
       })
     );
