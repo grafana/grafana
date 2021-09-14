@@ -192,55 +192,6 @@ steps:
   depends_on:
   - copy-packages-for-docker
 
-- name: postgres-integration-tests
-  image: grafana/build-container:1.4.2
-  commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-
-- name: mysql-integration-tests
-  image: grafana/build-container:1.4.2
-  commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  depends_on:
-  - test-backend
-  - test-frontend
-
-services:
-- name: postgres
-  image: postgres:12.3-alpine
-  environment:
-    POSTGRES_DB: grafanatest
-    POSTGRES_PASSWORD: grafanatest
-    POSTGRES_USER: grafanatest
-
-- name: mysql
-  image: mysql:5.6.48
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-
 node:
   type: no-parallel
 
@@ -3491,6 +3442,6 @@ get:
 
 ---
 kind: signature
-hmac: 974d6cc07d690099a1e1ac4581c6ccafc6c6c2998289c09655c70932088dce40
+hmac: df381b63f84ad8bfe1db90e55a4beeb66845a126a2639d79c88c3a3272728126
 
 ...
