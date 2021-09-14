@@ -133,7 +133,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLVars(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.UID = cmd.UID
@@ -154,7 +154,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLVars(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -167,7 +167,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLVars(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -184,7 +184,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLVars(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
