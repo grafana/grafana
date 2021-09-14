@@ -4,6 +4,7 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  ExternalAlertmanagersResponse,
   Receiver,
   Silence,
   SilenceCreatePayload,
@@ -29,6 +30,7 @@ import {
   deleteAlertManagerConfig,
   testReceivers,
   addAlertManagers,
+  fetchExternalAlertmanagers,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -88,6 +90,13 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
         return result;
       })
     )
+);
+
+export const fetchExternalAlertmanagersAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternalAlertmanagers',
+  (): Promise<ExternalAlertmanagersResponse> => {
+    return withSerializedError(fetchExternalAlertmanagers());
+  }
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(

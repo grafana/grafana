@@ -43,7 +43,7 @@ export const AddAlertManagerModal: FC<Props> = ({ onClose }) => {
         {({ register, control }) => (
           <div>
             <FieldArray control={control} name="alertmanagers">
-              {({ fields, append }) => (
+              {({ fields, append, remove }) => (
                 <div className={styles.fieldArray}>
                   <div className={styles.bold}>Source url</div>
                   <div className={styles.muted}>Auth can be done via URL, eg. user:password@url</div>
@@ -55,12 +55,17 @@ export const AddAlertManagerModal: FC<Props> = ({ onClose }) => {
                         {...register(`alertmanagers.${index}`)}
                         placeholder="admin:admin@some.url.dev"
                       />
-                      <Button variant="destructive" className={styles.destroyInputRow}>
+                      <Button
+                        type="button"
+                        onClick={() => remove(index)}
+                        variant="destructive"
+                        className={styles.destroyInputRow}
+                      >
                         <Icon name="trash-alt" />
                       </Button>
                     </div>
                   ))}
-                  <Button variant="secondary" onClick={() => append({ url: '' })}>
+                  <Button type="button" variant="secondary" onClick={() => append({ url: '' })}>
                     Add URL
                   </Button>
                 </div>

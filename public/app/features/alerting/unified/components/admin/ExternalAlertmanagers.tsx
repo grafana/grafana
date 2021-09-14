@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Alert, Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
-
-const alertmanagers = [
-  { alertmanager: 'test1', url: 'some/url' },
-  { alertmanager: 'test2', url: 'some/other/url' },
-];
+import { fetchExternalAlertmanagersAction } from '../../state/actions';
+import { StoreState } from 'app/types';
+import { initialAsyncRequestState } from '../../utils/redux';
 
 export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
   const [modalOpen, setModalState] = useState<boolean>(false);
+  const externalAlertManagers = useSelector((state: StoreState) => state.unifiedAlerting.externalAlertManagers);
+
+  const { result: alertmanagers, loading: isLoadingAlertmanagers, error: loadingError } =
+    externalAlertManagers || initialAsyncRequestState;
+
+  useEffect(() => {
+    dispatch(fetchExternalAlertmanagersAction());
+  }, [dispatch]);
 
   return (
     <div>
@@ -25,31 +33,36 @@ export const ExternalAlertmanagers = () => {
           Add Alertmanager
         </Button>
       </div>
-      <table className="filter-table form-inline filter-table--hover">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Url</th>
-            <th style={{ width: '2%' }} />
-          </tr>
-        </thead>
-        <tbody>
-          {alertmanagers.map((am, index) => {
-            return (
-              <tr key={index}>
-                <td>{am.alertmanager}</td>
-                <td className="link-td">{am.url}</td>
-                <td>
-                  <HorizontalGroup>
-                    <Icon name="pen" />
-                    <Icon name="trash-alt" />
-                  </HorizontalGroup>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {loadingError && (
+        <Alert severity="error" title="Error loading external Alertmanagers">
+          {loadingError.message || 'Unknown error.'}
+        </Alert>
+      )}
+      {alertmanagers && (
+        <table className="filter-table form-inline filter-table--hover">
+          <thead>
+            <tr>
+              <th>Url</th>
+              <th style={{ width: '2%' }} />
+            </tr>
+          </thead>
+          <tbody>
+            {alertmanagers.data.activeAlertManagers.map((am, index) => {
+              return (
+                <tr key={index}>
+                  <td className="link-td">{am.url}</td>
+                  <td>
+                    <HorizontalGroup>
+                      <Icon name="pen" />
+                      <Icon name="trash-alt" />
+                    </HorizontalGroup>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
       {modalOpen && <AddAlertManagerModal onClose={() => setModalState(false)} />}
     </div>
   );

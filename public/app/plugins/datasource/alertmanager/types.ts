@@ -246,3 +246,21 @@ export interface TestReceiversResult {
   notified_at: string;
   receivers: TestReceiversResultReceiver[];
 }
+
+export interface ExternalAlertmanagers {
+  activeAlertManagers: [
+    {
+      url: 'string';
+    }
+  ];
+  droppedAlertManagers: [
+    {
+      url: 'string';
+    }
+  ];
+}
+
+export interface ExternalAlertmanagersResponse {
+  data: ExternalAlertmanagers;
+  status: 'string';
+}
