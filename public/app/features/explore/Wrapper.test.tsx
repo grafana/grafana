@@ -62,13 +62,13 @@ describe('Wrapper', () => {
     // At this point url should be initialised to some defaults
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
+      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
     });
     expect(datasources.loki.query).not.toBeCalled();
   });
 
   it('runs query when url contains query and renders results', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
     const { datasources, store } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -90,7 +90,7 @@ describe('Wrapper', () => {
     expect(store.getState().explore.richHistory[0]).toMatchObject({
       datasourceId: '1',
       datasourceName: 'loki',
-      queries: [{ expr: '{ label="value"}' }],
+      queries: [{ expr: '{ label="value"}', refId: 'A' }],
     });
 
     // We called the data source query method once
@@ -140,7 +140,7 @@ describe('Wrapper', () => {
   });
 
   it('handles changing the datasource manually', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
     const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the editor
@@ -151,7 +151,7 @@ describe('Wrapper', () => {
     expect(datasources.elastic.query).not.toBeCalled();
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
+      left: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     });
   });
 
@@ -168,8 +168,8 @@ describe('Wrapper', () => {
 
   it('inits with two panes if specified in url', async () => {
     const query = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]),
+      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error', refId: 'A' }]),
     };
 
     const { datasources } = setup({ query });
@@ -210,8 +210,8 @@ describe('Wrapper', () => {
 
   it('can close a pane from a split', async () => {
     const query = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
+      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
+      right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     };
     setup({ query });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
