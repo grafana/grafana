@@ -3,11 +3,13 @@ import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv
 import {
   AnnotationQuery,
   AnnotationQueryRequest,
+  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   DatasourceRef,
   isValidLiveChannelAddress,
+  MutableDataFrame,
   parseLiveChannelAddress,
   StreamingFrameOptions,
   toDataFrame,
@@ -17,6 +19,7 @@ import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQue
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 import { isString } from 'lodash';
+import { map } from 'rxjs/operators';
 
 let counter = 100;
 
@@ -124,6 +127,26 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return of(); // nothing
   }
 
+  listFiles(path: string): Observable<DataFrameView<FileElement>> {
+    return this.query({
+      targets: [
+        {
+          refId: 'A',
+          queryType: GrafanaQueryType.List,
+          path,
+        },
+      ],
+    } as any).pipe(
+      map((v) => {
+        let frame = v.data[0];
+        if (!frame) {
+          frame = new MutableDataFrame();
+        }
+        return new DataFrameView<FileElement>(frame);
+      })
+    );
+  }
+
   metricFindQuery(options: any) {
     return Promise.resolve([]);
   }
@@ -182,4 +205,9 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   testDatasource() {
     return Promise.resolve();
   }
+}
+
+export interface FileElement {
+  name: string;
+  ['media-type']: string;
 }

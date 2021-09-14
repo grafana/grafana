@@ -12,11 +12,12 @@ import {
   stylesFactory,
 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { ResourceCards } from './ResourceCards';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 import { getPublicOrAbsoluteUrl } from '../resource';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
@@ -43,21 +44,23 @@ export function ResourcePicker(props: Props) {
 
   useEffect(() => {
     // we don't want to load everything before picking a folder
-    if (currentFolder) {
-      getBackendSrv()
-        .get(`public/${currentFolder?.value}/index.json`)
-        .then((data) => {
-          const cards = data.files.map((v: string) => ({
-            value: v,
-            label: v,
-            imgUrl: `public/${currentFolder?.value}/${v}`,
-          }));
-          setDirectoryIndex(cards);
-          setDefaultList(cards);
-        })
-        .catch((e) => console.error(e));
-    } else {
-      return;
+    const folder = currentFolder?.value;
+    if (folder) {
+      getDatasourceSrv()
+        .get('-- Grafana --')
+        .then((ds) => {
+          (ds as GrafanaDatasource).listFiles(folder).subscribe({
+            next: (frame) => {
+              const cards = frame.map((item) => ({
+                value: item.name,
+                label: item.name,
+                imgUrl: `public/${folder}/${item.name}`,
+              }));
+              setDirectoryIndex(cards);
+              setDefaultList(cards);
+            },
+          });
+        });
     }
   }, [currentFolder]);
 
