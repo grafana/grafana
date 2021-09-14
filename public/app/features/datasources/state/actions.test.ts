@@ -4,6 +4,7 @@ import {
   InitDataSourceSettingDependencies,
   testDataSource,
   TestDataSourceDependencies,
+  getDataSourceUsingUidOrId,
 } from './actions';
 import { getMockPlugin, getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
 import { thunkTester } from 'test/core/thunk/thunkTester';
@@ -17,6 +18,15 @@ import {
 import { initDataSourceSettings } from '../state/actions';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { of } from 'rxjs';
+
+jest.mock('app/core/services/backend_srv');
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  getBackendSrv: jest.fn(),
+}));
 
 const getBackendSrvMock = () =>
   ({
@@ -53,6 +63,79 @@ const failDataSourceTest = async (error: object) => {
 
   return dispatchedActions;
 };
+
+describe('getDataSourceUsingUidOrId', () => {
+  const uidResponse = {
+    ok: true,
+    data: {
+      id: 111,
+      uid: 'abcdefg',
+    },
+  };
+
+  const idResponse = {
+    ok: true,
+    data: {
+      id: 222,
+      uid: 'xyz',
+    },
+  };
+
+  it('should return UID response data', async () => {
+    (getBackendSrv as jest.Mock).mockReturnValueOnce({
+      fetch: (options: BackendSrvRequest) => {
+        return of(uidResponse as FetchResponse);
+      },
+    });
+
+    expect(await getDataSourceUsingUidOrId('abcdefg')).toBe(uidResponse.data);
+  });
+
+  it('should return ID response data', async () => {
+    const uidResponse = {
+      ok: false,
+    };
+
+    (getBackendSrv as jest.Mock)
+      .mockReturnValueOnce({
+        fetch: (options: BackendSrvRequest) => {
+          return of(uidResponse as FetchResponse);
+        },
+      })
+      .mockReturnValueOnce({
+        fetch: (options: BackendSrvRequest) => {
+          return of(idResponse as FetchResponse);
+        },
+      });
+
+    expect(await getDataSourceUsingUidOrId(222)).toBe(idResponse.data);
+  });
+
+  it('should return empty response data', async () => {
+    // @ts-ignore
+    delete window.location;
+    window.location = {} as any;
+
+    const uidResponse = {
+      ok: false,
+    };
+
+    (getBackendSrv as jest.Mock)
+      .mockReturnValueOnce({
+        fetch: (options: BackendSrvRequest) => {
+          return of(uidResponse as FetchResponse);
+        },
+      })
+      .mockReturnValueOnce({
+        fetch: (options: BackendSrvRequest) => {
+          return of(idResponse as FetchResponse);
+        },
+      });
+
+    expect(await getDataSourceUsingUidOrId('222')).toStrictEqual({});
+    expect(window.location.href).toBe('/datasources/edit/xyz');
+  });
+});
 
 describe('Name exists', () => {
   const plugins = getMockPlugins(5);

@@ -30,10 +30,10 @@ type MultiOrgAlertmanager struct {
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
-	orgRegistry *metrics.OrgRegistries
+	metrics *metrics.MultiOrgAlertmanager
 }
 
-func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore, kvStore kvstore.KVStore) *MultiOrgAlertmanager {
+func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore, kvStore kvstore.KVStore, m *metrics.MultiOrgAlertmanager) *MultiOrgAlertmanager {
 	return &MultiOrgAlertmanager{
 		settings:      cfg,
 		logger:        log.New("multiorg.alertmanager"),
@@ -41,7 +41,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		configStore:   configStore,
 		orgStore:      orgStore,
 		kvStore:       kvStore,
-		orgRegistry:   metrics.NewOrgRegistries(),
+		metrics:       m,
 	}
 }
 
@@ -70,6 +70,7 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	}
 
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
+	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(orgIDs)
 
 	moa.logger.Debug("done synchronizing Alertmanagers for orgs")
@@ -85,8 +86,11 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 
 		existing, found := moa.alertmanagers[orgID]
 		if !found {
-			reg := moa.orgRegistry.GetOrCreateOrgRegistry(orgID)
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, metrics.NewMetrics(reg))
+			// These metrics are not exported by Grafana and are mostly a placeholder.
+			// To export them, we need to translate the metrics from each individual registry and,
+			// then aggregate them on the main registry.
+			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, m)
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}
@@ -105,9 +109,10 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 		if _, exists := orgsFound[orgId]; !exists {
 			amsToStop[orgId] = am
 			delete(moa.alertmanagers, orgId)
-			moa.orgRegistry.RemoveOrgRegistry(orgId)
+			moa.metrics.RemoveOrgRegistry(orgId)
 		}
 	}
+	moa.metrics.ActiveConfigurations.Set(float64(len(moa.alertmanagers)))
 	moa.alertmanagersMtx.Unlock()
 
 	// Now, we can stop the Alertmanagers without having to hold a lock.
