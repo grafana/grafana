@@ -27,8 +27,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
 
-  const propsRef = useRef(props);
-  propsRef.current = props;
+  const frame0Ref = useRef<DataFrame>();
+  frame0Ref.current = props.frames[0];
 
   const renderLegend = (config: UPlotConfigBuilder) => {
     if (!config || props.legend.displayMode === LegendDisplayMode.Hidden) {
@@ -38,8 +38,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
   };
 
-  const rawValue = (seriesIdx: number, valueIdx: number) =>
-    propsRef.current.frames[0].fields[seriesIdx].values.get(valueIdx);
+  const rawValue = (seriesIdx: number, valueIdx: number) => frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
