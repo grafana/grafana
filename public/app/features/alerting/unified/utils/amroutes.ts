@@ -3,27 +3,26 @@ import { Validate } from 'react-hook-form';
 import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
-import { matcherToMatcherField, matcherFieldToMatcher, parseMatcher, stringifyMatcher } from './alertmanager';
 import { isUndefined, omitBy } from 'lodash';
 import { MatcherFieldValue } from '../types/silence-form';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-const matchersToArrayFieldMatchers = (
-  matchers: Record<string, string> | undefined,
-  isRegex: boolean
-): MatcherFieldValue[] =>
-  Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
-    (acc, [name, value]) => [
-      ...acc,
-      {
-        name,
-        value,
-        operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
-      },
-    ],
-    [] as MatcherFieldValue[]
-  );
+// const matchersToArrayFieldMatchers = (
+//   matchers: Record<string, string> | undefined,
+//   isRegex: boolean
+// ): MatcherFieldValue[] =>
+//   Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
+//     (acc, [name, value]) => [
+//       ...acc,
+//       {
+//         name,
+//         value,
+//         operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
+//       },
+//     ],
+//     [] as MatcherFieldValue[]
+//   );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
   if (!strValue) {
@@ -55,7 +54,7 @@ export const emptyArrayFieldMatcher: MatcherFieldValue = {
 export const emptyRoute: FormAmRoute = {
   id: '',
   groupBy: [],
-  matchers: [],
+  object_matchers: [],
   routes: [],
   continue: false,
   receiver: '',
@@ -91,10 +90,14 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
   return [
     {
       id,
-      matchers: [
-        ...(route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []),
-        ...matchersToArrayFieldMatchers(route.match, false),
-        ...matchersToArrayFieldMatchers(route.match_re, true),
+      object_matchers: [
+        //...(route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []),
+        ...(route.object_matchers?.map(
+          (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
+        ) ?? []),
+
+        // ...matchersToArrayFieldMatchers(route.match, false),
+        // ...matchersToArrayFieldMatchers(route.match_re, true),
       ],
       continue: route.continue ?? false,
       receiver: route.receiver ?? '',
@@ -117,8 +120,8 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute:
     ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: formAmRoute.groupBy,
-    matchers: formAmRoute.matchers.length
-      ? formAmRoute.matchers.map((matcher) => stringifyMatcher(matcherFieldToMatcher(matcher)))
+    object_matchers: formAmRoute.object_matchers.length
+      ? formAmRoute.object_matchers.map((matcher) => [matcher.name, matcher.operator, matcher.value])
       : undefined,
     match: undefined,
     match_re: undefined,

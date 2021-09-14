@@ -91,7 +91,7 @@ export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
-  matchers?: string[];
+  object_matchers?: string[][];
   match?: Record<string, string>;
   match_re?: Record<string, string>;
   group_wait?: string;
