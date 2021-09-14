@@ -1,6 +1,6 @@
 import { DataQueryResponse, dateMath } from '@grafana/data';
 import { addDataLinksToLogsResponse } from './datalinks';
-import {setDataSourceSrv} from "@grafana/runtime";
+import { setDataSourceSrv } from '@grafana/runtime';
 
 describe('addDataLinksToLogsResponse', () => {
   it('should add data links to response', async () => {
