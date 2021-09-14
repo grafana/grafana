@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -23,7 +24,7 @@ type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
-	MakeUserAdmin(orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
+	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 }
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.

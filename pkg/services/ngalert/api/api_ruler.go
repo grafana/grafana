@@ -31,7 +31,7 @@ type RulerSrv struct {
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -50,7 +50,7 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 
 func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -73,7 +73,7 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -114,7 +114,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -147,7 +147,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 }
 
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
-	namespaceMap, err := srv.store.GetNamespaces(c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
@@ -214,7 +214,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
 	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
