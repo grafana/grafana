@@ -7,10 +7,14 @@ import {
   ImportDashboardState,
   initialImportDashboardState,
   InputType,
+  LibraryPanelInput,
+  LibraryPanelInputState,
   setGcomDashboard,
   setInputs,
   setJsonDashboard,
+  setLibraryPanelInputs,
 } from './reducers';
+import { LibraryElementDTO } from '../../library-panels/types';
 
 describe('importDashboardReducer', () => {
   describe('when setGcomDashboard action is dispatched', () => {
@@ -75,13 +79,54 @@ describe('importDashboardReducer', () => {
       reducerTester<ImportDashboardState>()
         .givenReducer(importDashboardReducer, { ...initialImportDashboardState })
         .whenActionIsDispatched(
-          setInputs([{ type: InputType.DataSource }, { type: InputType.Constant }, { type: 'temp' }])
+          setInputs([
+            { type: InputType.DataSource },
+            { type: InputType.Constant },
+            { type: InputType.LibraryPanel },
+            { type: 'temp' },
+          ])
         )
         .thenStateShouldEqual({
           ...initialImportDashboardState,
           inputs: {
             dataSources: [{ type: InputType.DataSource }] as DataSourceInput[],
             constants: [{ type: InputType.Constant }] as DataSourceInput[],
+            libraryPanels: [],
+          },
+        });
+    });
+  });
+
+  describe('when setLibraryPanelInputs action is dispatched', () => {
+    it('then resulting state should be correct', () => {
+      reducerTester<ImportDashboardState>()
+        .givenReducer(importDashboardReducer, {
+          ...initialImportDashboardState,
+          inputs: {
+            dataSources: [{ type: InputType.DataSource }] as DataSourceInput[],
+            constants: [{ type: InputType.Constant }] as DataSourceInput[],
+            libraryPanels: [{ model: { uid: 'asasAHSJ' } }] as LibraryPanelInput[],
+          },
+        })
+        .whenActionIsDispatched(
+          setLibraryPanelInputs([
+            {
+              model: { uid: 'sadjahsdk', name: 'A name', type: 'text' } as LibraryElementDTO,
+              state: LibraryPanelInputState.Exits,
+            },
+          ])
+        )
+        .thenStateShouldEqual({
+          ...initialImportDashboardState,
+          inputs: {
+            dataSources: [{ type: InputType.DataSource }] as DataSourceInput[],
+            constants: [{ type: InputType.Constant }] as DataSourceInput[],
+            libraryPanels: [
+              {
+                model: { uid: 'sadjahsdk', name: 'A name', type: 'text' } as LibraryElementDTO,
+                state: LibraryPanelInputState.Exits,
+              },
+            ],
           },
         });
     });

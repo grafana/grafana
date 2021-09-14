@@ -1,5 +1,6 @@
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { LibraryElementDTO } from '../../library-panels/types';
 
 export enum DashboardSource {
   Gcom = 0,
@@ -12,12 +13,20 @@ export interface ImportDashboardDTO {
   gnetId: string;
   constants: string[];
   dataSources: DataSourceInstanceSettings[];
+  elements: LibraryElementDTO[];
   folder: { id: number; title?: string };
 }
 
 export enum InputType {
   DataSource = 'datasource',
   Constant = 'constant',
+  LibraryPanel = 'libraryPanel',
+}
+
+export enum LibraryPanelInputState {
+  Missing = 'missing',
+  Exits = 'exists',
+  Different = 'different',
 }
 
 export interface DashboardInput {
@@ -32,9 +41,15 @@ export interface DataSourceInput extends DashboardInput {
   pluginId: string;
 }
 
+export interface LibraryPanelInput {
+  model: LibraryElementDTO;
+  state: LibraryPanelInputState;
+}
+
 export interface DashboardInputs {
   dataSources: DataSourceInput[];
   constants: DashboardInput[];
+  libraryPanels: LibraryPanelInput[];
 }
 
 export interface ImportDashboardState {
@@ -83,12 +98,22 @@ const importDashboardSlice = createSlice({
       state.inputs = {
         dataSources: action.payload.filter((p) => p.type === InputType.DataSource),
         constants: action.payload.filter((p) => p.type === InputType.Constant),
+        libraryPanels: [],
       };
+    },
+    setLibraryPanelInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<LibraryPanelInput[]>) => {
+      state.inputs.libraryPanels = action.payload;
     },
   },
 });
 
-export const { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard } = importDashboardSlice.actions;
+export const {
+  clearDashboard,
+  setInputs,
+  setGcomDashboard,
+  setJsonDashboard,
+  setLibraryPanelInputs,
+} = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;
 

@@ -4,15 +4,22 @@ import {
   clearDashboard,
   ImportDashboardDTO,
   InputType,
+  LibraryPanelInput,
+  LibraryPanelInputState,
   setGcomDashboard,
   setInputs,
   setJsonDashboard,
+  setLibraryPanelInputs,
 } from './reducers';
 import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DashboardSearchHit } from '../../search/types';
+import { getLibraryPanel } from '../../library-panels/state/api';
+import { isEqual } from 'lodash';
+import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
+import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -20,6 +27,7 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       dispatch(setGcomDashboard(dashboard));
       dispatch(processInputs(dashboard.json));
+      dispatch(processElements(dashboard.json));
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [error.data.message || error]);
     }
@@ -30,6 +38,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
+    dispatch(processElements(dashboard));
   };
 }
 
@@ -58,6 +67,128 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
       });
       dispatch(setInputs(inputs));
     }
+  };
+}
+
+function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }): ThunkResult<void> {
+  return async function (dispatch) {
+    if (!dashboardJson || !dashboardJson.__elements) {
+      return;
+    }
+
+    const libraryPanelInputs: LibraryPanelInput[] = [];
+
+    for (const element of dashboardJson.__elements) {
+      if (element.kind !== LibraryElementKind.Panel) {
+        continue;
+      }
+
+      const model = element.model;
+      const { type, description } = model;
+      const { uid, name } = element;
+      const input: LibraryPanelInput = {
+        model: {
+          model,
+          uid,
+          name,
+          version: 0,
+          meta: {},
+          id: 0,
+          type,
+          kind: LibraryElementKind.Panel,
+          description,
+        } as LibraryElementDTO,
+        state: LibraryPanelInputState.Missing,
+      };
+
+      try {
+        const panelInDb = await getLibraryPanel(uid, true);
+        if (!libraryPanelsAreEqual(panelInDb, element)) {
+          input.state = LibraryPanelInputState.Different;
+        } else {
+          input.state = LibraryPanelInputState.Exits;
+        }
+      } catch (e: any) {
+        if (e.status !== 404) {
+          throw e;
+        }
+
+        input.state = LibraryPanelInputState.Missing;
+      }
+
+      libraryPanelInputs.push(input);
+    }
+
+    dispatch(setLibraryPanelInputs(libraryPanelInputs));
+  };
+}
+
+function libraryPanelsAreEqual(elementA: LibraryElementDTO, elementB: LibraryElementExport) {
+  if (!elementA && !elementB) {
+    return true;
+  }
+
+  if (!elementA && elementB) {
+    return false;
+  }
+
+  if (elementA && !elementB) {
+    return false;
+  }
+
+  if (elementA.name === elementB.name && elementA.kind === elementB.kind) {
+    // naive compare function, will not catch diffs within same panel type
+    const panelA = getComparablePanelModel(elementA.model);
+    const panelB = getComparablePanelModel(elementB.model);
+    return isEqual(panelA, panelB);
+  }
+
+  return false;
+}
+
+function getComparablePanelModel(panel: any) {
+  const {
+    title,
+    description,
+    type,
+    targets,
+    datasource,
+    transformations,
+    fieldConfig,
+    timeFrom,
+    timeShift,
+    minSpan,
+    repeat,
+    repeatPanelId,
+    repeatDirection,
+    repeatedByRow,
+    hideTimeOverride,
+    cacheTimeout,
+    transparent,
+    maxDataPoints,
+    interval,
+  } = panel;
+
+  return {
+    title,
+    description,
+    type,
+    targets,
+    datasource,
+    transformations,
+    fieldConfig,
+    timeFrom,
+    timeShift,
+    minSpan,
+    repeat,
+    repeatPanelId,
+    repeatDirection,
+    repeatedByRow,
+    hideTimeOverride,
+    cacheTimeout,
+    transparent,
+    maxDataPoints,
+    interval,
   };
 }
 

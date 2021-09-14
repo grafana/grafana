@@ -1,6 +1,6 @@
 import { find } from 'lodash';
 import config from 'app/core/config';
-import { DashboardExporter, LibraryElement } from './DashboardExporter';
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelPluginMeta } from '@grafana/data';
 import { variableAdapters } from '../../../variables/adapters';
@@ -257,7 +257,9 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add library panels as elements', () => {
-    const element: LibraryElement = exported.__elements.find((element: LibraryElement) => element.uid === 'ah8NqyDPs');
+    const element: LibraryElementExport = exported.__elements.find(
+      (element: LibraryElementExport) => element.uid === 'ah8NqyDPs'
+    );
     expect(element.name).toBe('Library Panel 2');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
@@ -272,7 +274,9 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add library panels in collapsed rows as elements', () => {
-    const element: LibraryElement = exported.__elements.find((element: LibraryElement) => element.uid === 'jL6MrxCMz');
+    const element: LibraryElementExport = exported.__elements.find(
+      (element: LibraryElementExport) => element.uid === 'jL6MrxCMz'
+    );
     expect(element.name).toBe('Library Panel');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({

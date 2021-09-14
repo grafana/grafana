@@ -38,7 +38,7 @@ interface DataSources {
   };
 }
 
-export interface LibraryElement {
+export interface LibraryElementExport {
   name: string;
   uid: string;
   model: any;
@@ -64,7 +64,7 @@ export class DashboardExporter {
     const datasources: DataSources = {};
     const promises: Array<Promise<void>> = [];
     const variableLookup: { [key: string]: any } = {};
-    const libraryPanels: Map<string, LibraryElement> = new Map<string, LibraryElement>();
+    const libraryPanels: Map<string, LibraryElementExport> = new Map<string, LibraryElementExport>();
 
     for (const variable of saveModel.getVariables()) {
       variableLookup[variable.name] = variable;
