@@ -33,8 +33,10 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 - **Span start time shift -** A shift in the start time for the Loki query based on the start time for the span. To extend the time to the past, use a negative value. You can use time units, for example, 5s, 1m, 3h. The default is 0.
 - **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
+- **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
+- **Filter by Span ID -** Toggle to append the span ID to the Loki query.
 
-![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8.png 'Screenshot of the trace to logs settings')
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 

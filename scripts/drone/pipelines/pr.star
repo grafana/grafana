@@ -23,6 +23,7 @@ load(
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
     'validate_scuemata_step',
+    'test_a11y_frontend_step_pr',
 )
 
 load(
@@ -40,7 +41,7 @@ ver_mode = 'pr'
 
 def pr_pipelines(edition):
     services = integration_test_services(edition)
-    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64',]
+    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
         codespell_step(),
@@ -72,6 +73,7 @@ def pr_pipelines(edition):
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
+        test_a11y_frontend_step_pr(edition=edition),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),

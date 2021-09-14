@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -91,6 +92,7 @@ type DataPluginConfiguration struct {
 	ConnectionString  string
 	TimeColumnNames   []string
 	MetricColumnTypes []string
+	RowLimit          int64
 }
 type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
@@ -100,6 +102,7 @@ type DataSourceHandler struct {
 	metricColumnTypes      []string
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
+	rowLimit               int64
 }
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
@@ -132,6 +135,7 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		timeColumnNames:        []string{"time"},
 		log:                    log,
 		dsInfo:                 config.DSInfo,
+		rowLimit:               config.RowLimit,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -166,8 +170,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	queryDataHandler.engine = engine
 	return &queryDataHandler, nil
 }
-
-const rowLimit = 1000000
 
 type DBDataResponse struct {
 	dataResponse backend.DataResponse
@@ -283,15 +285,17 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
-	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
+	frame, err := sqlutil.FrameFromRows(rows.Rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return
 	}
 
-	frame.SetMeta(&data.FrameMeta{
-		ExecutedQueryString: interpolatedQuery,
-	})
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.ExecutedQueryString = interpolatedQuery
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
@@ -300,11 +304,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	if qm.timeIndex != -1 {
-		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			errAppendDebug("db convert time column failed", err, interpolatedQuery)
-			return
-		}
+	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
+		errAppendDebug("converting time columns failed", err, interpolatedQuery)
+		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
@@ -378,10 +380,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	if err != nil {
 		return "", err
 	}
-	interval, err := sqlIntervalCalculator.Calculate(timeRange, minInterval, "min")
-	if err != nil {
-		return "", err
-	}
+	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, query.MaxDataPoints)
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
@@ -408,6 +407,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 		columnNames:  columnNames,
 		rows:         rows,
 		timeIndex:    -1,
+		timeEndIndex: -1,
 		metricIndex:  -1,
 		metricPrefix: false,
 		queryContext: queryContext,
@@ -454,6 +454,12 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 				break
 			}
 		}
+
+		if qm.Format == dataQueryFormatTable && col == "timeend" {
+			qm.timeEndIndex = i
+			continue
+		}
+
 		switch col {
 		case "metric":
 			qm.metricIndex = i
@@ -492,6 +498,7 @@ type dataQueryModel struct {
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
 	timeIndex         int
+	timeEndIndex      int
 	metricIndex       int
 	rows              *core.Rows
 	metricPrefix      bool
@@ -819,6 +826,22 @@ func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 			newField.Append(&value)
 		}
 	}
+}
+
+func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
+	if qm.timeIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
+			return errutil.Wrap("failed to convert time column", err)
+		}
+	}
+
+	if qm.timeEndIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
+			return errutil.Wrap("failed to convert timeend column", err)
+		}
+	}
+
+	return nil
 }
 
 // convertSQLTimeColumnToEpochMS converts column named time to unix timestamp in milliseconds
