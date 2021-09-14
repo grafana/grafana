@@ -113,7 +113,6 @@ You can also use these enviroment variables to configure **client_id** and **cli
 GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
-
 **Note:** Ensure that the [root_url]({{< relref "../administration/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (**App** -> **Settings** -> **Reply URLs**)
 
 ### Configure allowed groups
