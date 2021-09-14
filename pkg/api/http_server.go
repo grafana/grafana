@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/updatechecker"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -27,8 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -85,13 +85,12 @@ type HTTPServer struct {
 	Login                     login.Service
 	License                   models.Licensing
 	AccessControl             accesscontrol.AccessControl
-	BackendPluginManager      backendplugin.Manager
 	DataProxy                 *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator    models.PluginRequestValidator
-	PluginManagerV2           plugins.Client
-	PluginStore               plugins.Store
-	PluginDashboardManager    plugins.PluginDashboardManager
-	PluginStaticRouteResolver plugins.StaticRouteResolver
+	pluginClient              plugins.Client
+	pluginStore               plugins.Store
+	pluginDashboardManager    plugins.PluginDashboardManager
+	pluginStaticRouteResolver plugins.StaticRouteResolver
 	SearchService             *search.SearchService
 	ShortURLService           shorturls.Service
 	Live                      *live.GrafanaLive
@@ -112,6 +111,7 @@ type HTTPServer struct {
 	cleanUpService            *cleanup.CleanUpService
 	tracingService            *tracing.TracingService
 	internalMetricsSvc        *metrics.InternalMetricsService
+	updateChecker             *updatechecker.Service
 }
 
 type ServerOptions struct {
@@ -121,9 +121,10 @@ type ServerOptions struct {
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
-	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
-	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
-	pluginManager plugins.Manager, pluginManagerV2 plugins.Client, backendPM backendplugin.Manager, settingsProvider setting.Provider,
+	dataService *tsdb.Service, alertEngine *alerting.AlertEngine, usageStatsService *usagestats.UsageStatsService,
+	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
+	pluginDashboardManager plugins.PluginDashboardManager,
+	pluginStore plugins.Store, pluginManager plugins.Client, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -136,54 +137,57 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service) (*HTTPServer, error) {
+	encryptionService encryption.Service, updateChecker *updatechecker.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 
 	hs := &HTTPServer{
-		Cfg:                    cfg,
-		RouteRegister:          routeRegister,
-		Bus:                    bus,
-		RenderService:          renderService,
-		License:                licensing,
-		HooksService:           hooksService,
-		CacheService:           cacheService,
-		SQLStore:               sqlStore,
-		DataService:            dataService,
-		AlertEngine:            alertEngine,
-		UsageStatsService:      usageStatsService,
-		PluginRequestValidator: pluginRequestValidator,
-		PluginManagerV2:        pluginManagerV2,
-		BackendPluginManager:   backendPM,
-		SettingsProvider:       settingsProvider,
-		DataSourceCache:        dataSourceCache,
-		AuthTokenService:       userTokenService,
-		cleanUpService:         cleanUpService,
-		ShortURLService:        shortURLService,
-		RemoteCacheService:     remoteCache,
-		ProvisioningService:    provisioningService,
-		Login:                  loginService,
-		AccessControl:          accessControl,
-		DataProxy:              dataSourceProxy,
-		SearchService:          searchService,
-		Live:                   live,
-		LivePushGateway:        livePushGateway,
-		PluginContextProvider:  plugCtxProvider,
-		ContextHandler:         contextHandler,
-		LoadSchemaService:      schemaService,
-		AlertNG:                alertNG,
-		LibraryPanelService:    libraryPanelService,
-		LibraryElementService:  libraryElementService,
-		QuotaService:           quotaService,
-		notificationService:    notificationService,
-		tracingService:         tracingService,
-		internalMetricsSvc:     internalMetricsSvc,
-		log:                    log.New("http.server"),
-		macaron:                m,
-		Listener:               opts.Listener,
-		SocialService:          socialService,
-		OAuthTokenService:      oauthTokenService,
-		EncryptionService:      encryptionService,
+		Cfg:                       cfg,
+		RouteRegister:             routeRegister,
+		Bus:                       bus,
+		RenderService:             renderService,
+		License:                   licensing,
+		HooksService:              hooksService,
+		CacheService:              cacheService,
+		SQLStore:                  sqlStore,
+		DataService:               dataService,
+		AlertEngine:               alertEngine,
+		UsageStatsService:         usageStatsService,
+		PluginRequestValidator:    pluginRequestValidator,
+		pluginClient:              pluginManager,
+		pluginStore:               pluginStore,
+		pluginStaticRouteResolver: pluginStaticRouteResolver,
+		pluginDashboardManager:    pluginDashboardManager,
+		updateChecker:             updateChecker,
+		SettingsProvider:          settingsProvider,
+		DataSourceCache:           dataSourceCache,
+		AuthTokenService:          userTokenService,
+		cleanUpService:            cleanUpService,
+		ShortURLService:           shortURLService,
+		RemoteCacheService:        remoteCache,
+		ProvisioningService:       provisioningService,
+		Login:                     loginService,
+		AccessControl:             accessControl,
+		DataProxy:                 dataSourceProxy,
+		SearchService:             searchService,
+		Live:                      live,
+		LivePushGateway:           livePushGateway,
+		PluginContextProvider:     plugCtxProvider,
+		ContextHandler:            contextHandler,
+		LoadSchemaService:         schemaService,
+		AlertNG:                   alertNG,
+		LibraryPanelService:       libraryPanelService,
+		LibraryElementService:     libraryElementService,
+		QuotaService:              quotaService,
+		notificationService:       notificationService,
+		tracingService:            tracingService,
+		internalMetricsSvc:        internalMetricsSvc,
+		log:                       log.New("http.server"),
+		macaron:                   m,
+		Listener:                  opts.Listener,
+		SocialService:             socialService,
+		OAuthTokenService:         oauthTokenService,
+		EncryptionService:         encryptionService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

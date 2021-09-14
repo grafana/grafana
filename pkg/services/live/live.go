@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -333,7 +335,7 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	RouteRegister         routing.RouteRegister
 	LogsService           *cloudwatch.LogsService
-	PluginManager         *manager.PluginManager
+	PluginManager         plugins.Store
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
@@ -367,15 +369,14 @@ type UsageStats struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin, ok := g.PluginManager.BackendPluginManager.Get(pluginID)
-	if !ok {
+	plugin := g.PluginManager.Plugin(pluginID)
+	if plugin == nil {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	streamHandler, ok := plugin.(backend.StreamHandler)
-	if !ok {
-		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
+	if plugin.SupportsStreaming() {
+		return plugin, nil
 	}
-	return streamHandler, nil
+	return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {

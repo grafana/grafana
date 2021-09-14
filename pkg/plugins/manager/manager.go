@@ -94,24 +94,6 @@ func (m *PluginManager) init() error {
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
-	//go func() {
-	//	m.checkForUpdates()
-	//
-	//	ticker := time.NewTicker(time.Minute * 10)
-	//	run := true
-	//
-	//	for run {
-	//		select {
-	//		case <-ticker.C:
-	//			m.checkForUpdates()
-	//		case <-ctx.Done():
-	//			run = false
-	//		}
-	//	}
-	//
-	//	return ctx.Err()
-	//}()
-
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
@@ -642,7 +624,6 @@ func (m *PluginManager) corePluginDirs() []string {
 		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
 		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
 		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/grafana"),
 		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
 		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/mixed"),
 		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/zipkin"),

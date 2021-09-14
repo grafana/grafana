@@ -27,12 +27,12 @@ type jwtAccessTokenProvider struct {
 	datasourceId      int64
 	datasourceVersion int
 	ctx               context.Context
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	route             *plugins.Route
+	authParams        *plugins.JWTTokenAuth
 }
 
-func newJwtAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *jwtAccessTokenProvider {
+func newJwtAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.Route,
+	authParams *plugins.JWTTokenAuth) *jwtAccessTokenProvider {
 	return &jwtAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,

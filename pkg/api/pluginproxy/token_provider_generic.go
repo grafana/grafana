@@ -28,8 +28,8 @@ type tokenCacheType struct {
 type genericAccessTokenProvider struct {
 	datasourceId      int64
 	datasourceVersion int
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	route             *plugins.Route
+	authParams        *plugins.JWTTokenAuth
 }
 
 type jwtToken struct {
@@ -68,8 +68,8 @@ func (token *jwtToken) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func newGenericAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *genericAccessTokenProvider {
+func newGenericAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.Route,
+	authParams *plugins.JWTTokenAuth) *genericAccessTokenProvider {
 	return &genericAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,

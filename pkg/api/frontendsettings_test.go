@@ -53,7 +53,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 		License:       &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: r,
 		SQLStore:      sqlStore,
-		PluginStore:   pm,
+		pluginStore:   pm,
 	}
 
 	m := macaron.New()

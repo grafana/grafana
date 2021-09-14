@@ -33,12 +33,12 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 	t.Run("Plugin with routes", func(t *testing.T) {
 		plugin := &plugins.DataSourcePlugin{
-			Routes: []*plugins.AppPluginRoute{
+			Routes: []*plugins.Route{
 				{
 					Path:    "api/v4/",
 					URL:     "https://www.google.com",
 					ReqRole: models.ROLE_EDITOR,
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []plugins.Header{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
@@ -46,24 +46,24 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					Path:    "api/admin",
 					URL:     "https://www.google.com",
 					ReqRole: models.ROLE_ADMIN,
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []plugins.Header{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
 				{
 					Path: "api/anon",
 					URL:  "https://www.google.com",
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []plugins.Header{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
 				{
 					Path: "api/common",
 					URL:  "{{.JsonData.dynamicUrl}}",
-					URLParams: []plugins.AppPluginRouteURLParam{
+					URLParams: []plugins.URLParam{
 						{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
 					},
-					Headers: []plugins.AppPluginRouteHeader{
+					Headers: []plugins.Header{
 						{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 					},
 				},
@@ -185,11 +185,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 	t.Run("Plugin with multiple routes for token auth", func(t *testing.T) {
 		plugin := &plugins.DataSourcePlugin{
-			Routes: []*plugins.AppPluginRoute{
+			Routes: []*plugins.Route{
 				{
 					Path: "pathwithtoken1",
 					URL:  "https://api.nr1.io/some/path",
-					TokenAuth: &plugins.JwtTokenAuth{
+					TokenAuth: &plugins.JWTTokenAuth{
 						Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 						Params: map[string]string{
 							"grant_type":    "client_credentials",
@@ -202,7 +202,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				{
 					Path: "pathwithtoken2",
 					URL:  "https://api.nr2.io/some/path",
-					TokenAuth: &plugins.JwtTokenAuth{
+					TokenAuth: &plugins.JWTTokenAuth{
 						Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
 						Params: map[string]string{
 							"grant_type":    "client_credentials",
@@ -866,7 +866,7 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 func Test_PathCheck(t *testing.T) {
 	// Ensure that we test routes appropriately. This test reproduces a historical bug where two routes were defined with different role requirements but the same method and the more privileged route was tested first. Here we ensure auth checks are applied based on the correct route, not just the method.
 	plugin := &plugins.DataSourcePlugin{
-		Routes: []*plugins.AppPluginRoute{
+		Routes: []*plugins.Route{
 			{
 				Path:    "a",
 				URL:     "https://www.google.com",

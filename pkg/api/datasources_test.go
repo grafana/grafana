@@ -44,7 +44,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		hs := &HTTPServer{
 			Bus:         bus.GetBus(),
 			Cfg:         setting.NewCfg(),
-			PluginStore: &fakePluginStore{},
+			pluginStore: &fakePluginStore{},
 		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
@@ -65,7 +65,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			hs := &HTTPServer{
 				Bus:         bus.GetBus(),
 				Cfg:         setting.NewCfg(),
-				PluginStore: &fakePluginStore{},
+				pluginStore: &fakePluginStore{},
 			}
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()

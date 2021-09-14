@@ -18,10 +18,10 @@ type configReader interface {
 
 type configReaderImpl struct {
 	log           log.Logger
-	pluginManager plugins.Manager
+	pluginManager plugins.Store
 }
 
-func newConfigReader(logger log.Logger, pluginManager plugins.Manager) configReader {
+func newConfigReader(logger log.Logger, pluginManager plugins.Store) configReader {
 	return &configReaderImpl{log: logger, pluginManager: pluginManager}
 }
 
@@ -113,8 +113,8 @@ func (cr *configReaderImpl) validatePluginsConfig(apps []*pluginsAsConfig) error
 		}
 
 		for _, app := range apps[i].Apps {
-			if !cr.pluginManager.IsAppInstalled(app.PluginID) {
-				return fmt.Errorf("app plugin not installed: %q", app.PluginID)
+			if p := cr.pluginManager.Plugin(app.PluginID); p != nil {
+				return fmt.Errorf("plugin not installed: %q", app.PluginID)
 			}
 		}
 	}

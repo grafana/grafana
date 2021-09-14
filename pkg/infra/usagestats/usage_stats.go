@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -54,9 +56,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = uss.pluginManager.AppCount()
-	metrics["stats.plugins.panels.count"] = uss.pluginManager.PanelCount()
-	metrics["stats.plugins.datasources.count"] = uss.pluginManager.DataSourceCount()
+	metrics["stats.plugins.apps.count"] = uss.appCount()
+	metrics["stats.plugins.panels.count"] = uss.panelCount()
+	metrics["stats.plugins.datasources.count"] = uss.dataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
@@ -385,10 +387,22 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginManager.GetDataSource(dsType)
+	ds := uss.pluginManager.Plugin(dsType)
 	if ds == nil {
 		return false
 	}
 
 	return ds.Signature.IsValid() || ds.Signature.IsInternal()
+}
+
+func (uss *UsageStatsService) appCount() int {
+	return len(uss.pluginManager.Plugins(plugins.App))
+}
+
+func (uss *UsageStatsService) panelCount() int {
+	return len(uss.pluginManager.Plugins(plugins.Panel))
+}
+
+func (uss *UsageStatsService) dataSourceCount() int {
+	return len(uss.pluginManager.Plugins(plugins.DataSource))
 }

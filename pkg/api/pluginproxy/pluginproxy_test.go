@@ -17,8 +17,8 @@ import (
 
 func TestPluginProxy(t *testing.T) {
 	t.Run("When getting proxy headers", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
-			Headers: []plugins.AppPluginRouteHeader{
+		route := &plugins.Route{
+			Headers: []plugins.Header{
 				{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 			},
 		}
@@ -99,7 +99,7 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When getting templated url", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
+		route := &plugins.Route{
 			URL:    "{{.JsonData.dynamicUrl}}",
 			Method: "GET",
 		}
@@ -128,7 +128,7 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When getting complex templated url", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
+		route := &plugins.Route{
 			URL:    "{{if .JsonData.apiHost}}{{.JsonData.apiHost}}{{else}}https://example.com{{end}}",
 			Method: "GET",
 		}
@@ -152,7 +152,7 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When getting templated body", func(t *testing.T) {
-		route := &plugins.AppPluginRoute{
+		route := &plugins.Route{
 			Path: "api/body",
 			URL:  "http://www.test.com",
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
@@ -185,10 +185,10 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
+func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
-		route = &plugins.AppPluginRoute{
+		route = &plugins.Route{
 			Path:    "api/v4/",
 			URL:     "https://www.google.com",
 			ReqRole: models.ROLE_EDITOR,

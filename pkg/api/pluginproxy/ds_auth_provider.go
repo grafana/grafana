@@ -14,7 +14,7 @@ import (
 )
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
-func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute,
+func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
 	ds *models.DataSource, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
@@ -69,7 +69,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 }
 
-func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.Route,
 	data templateData) (accessTokenProvider, error) {
 	authType := pluginRoute.AuthType
 
@@ -127,7 +127,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 	}
 }
 
-func interpolateAuthParams(tokenAuth *plugins.JwtTokenAuth, data templateData) (*plugins.JwtTokenAuth, error) {
+func interpolateAuthParams(tokenAuth *plugins.JWTTokenAuth, data templateData) (*plugins.JWTTokenAuth, error) {
 	if tokenAuth == nil {
 		// Nothing to interpolate
 		return nil, nil
@@ -147,7 +147,7 @@ func interpolateAuthParams(tokenAuth *plugins.JwtTokenAuth, data templateData) (
 		interpolatedParams[key] = interpolatedParam
 	}
 
-	return &plugins.JwtTokenAuth{
+	return &plugins.JWTTokenAuth{
 		Url:    interpolatedUrl,
 		Scopes: tokenAuth.Scopes,
 		Params: interpolatedParams,

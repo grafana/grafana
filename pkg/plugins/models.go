@@ -1,12 +1,10 @@
 package plugins
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 const (
@@ -59,12 +57,6 @@ func (e PluginSignatureError) Error() string {
 	}
 
 	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)
-}
-
-// PluginLoader can load a plugin.
-type PluginLoader interface {
-	// Load loads a plugin and returns it.
-	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (interface{}, error)
 }
 
 // PluginBase is the base plugin type.
@@ -186,10 +178,4 @@ type PluginScreenshots struct {
 type PluginStaticRoute struct {
 	Directory string
 	PluginId  string
-}
-
-type EnabledPlugins struct {
-	Panels      []*PanelPlugin
-	DataSources map[string]*DataSourcePlugin
-	Apps        []*AppPlugin
 }

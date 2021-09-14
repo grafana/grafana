@@ -12,12 +12,12 @@ type gceAccessTokenProvider struct {
 	datasourceId      int64
 	datasourceVersion int
 	ctx               context.Context
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	route             *plugins.Route
+	authParams        *plugins.JWTTokenAuth
 }
 
-func newGceAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *gceAccessTokenProvider {
+func newGceAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.Route,
+	authParams *plugins.JWTTokenAuth) *gceAccessTokenProvider {
 	return &gceAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,

@@ -169,7 +169,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 
 		hs := HTTPServer{
 			Cfg:         setting.NewCfg(),
-			PluginStore: pluginManager,
+			pluginStore: pluginManager,
 			log:         logger,
 		}
 

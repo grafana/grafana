@@ -36,8 +36,8 @@ type DataSourceProxy struct {
 	ctx               *models.ReqContext
 	targetUrl         *url.URL
 	proxyPath         string
-	route             *plugins.AppPluginRoute
-	pluginRoutes      []*plugins.AppPluginRoute
+	route             *plugins.Route
+	pluginRoutes      []*plugins.Route
 	cfg               *setting.Cfg
 	clientProvider    httpclient.Provider
 	oAuthTokenService oauthtoken.OAuthTokenService
@@ -48,11 +48,11 @@ type DataSourceProxy struct {
 //	Method    string                   `json:"method"`
 //	ReqRole   models.RoleType          `json:"reqRole"`
 //	URL       string                   `json:"url"`
-//	URLParams []AppPluginRouteURLParam `json:"urlParams"`
-//	Headers   []AppPluginRouteHeader   `json:"headers"`
+//	URLParams []URLParam `json:"urlParams"`
+//	Headers   []Header   `json:"headers"`
 //	//AuthType     string                   `json:"authType"`
-//	//TokenAuth    *JwtTokenAuth            `json:"tokenAuth"`
-//	//JwtTokenAuth *JwtTokenAuth            `json:"jwtTokenAuth"`
+//	//TokenAuth    *JWTTokenAuth            `json:"tokenAuth"`
+//	//JWTTokenAuth *JWTTokenAuth            `json:"jwtTokenAuth"`
 //	Body json.RawMessage `json:"body"`
 //}
 
@@ -85,7 +85,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.AppPluginRoute, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthTokenService oauthtoken.OAuthTokenService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {

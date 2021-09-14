@@ -21,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
@@ -50,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -87,6 +86,7 @@ var wireBasicSet = wire.NewSet(
 	kvstore.ProvideService,
 	localcache.ProvideService,
 	usagestats.ProvideService,
+	updatechecker.ProvideService,
 	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
@@ -94,8 +94,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.CoreBackendRegistrar), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
-	backendmanager.ProvideService,
-	wire.Bind(new(backendplugin.Manager), new(*backendmanager.Manager)),
 	cloudwatch.ProvideService,
 	cloudwatch.ProvideLogsService,
 	cloudmonitoring.ProvideService,

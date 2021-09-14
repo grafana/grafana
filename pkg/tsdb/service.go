@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -16,10 +14,10 @@ import (
 
 // NewService returns a new Service.
 func NewService(
-	cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
-	oauthTokenService *oauthtoken.Service, httpClientProvider httpclient.Provider, cloudMonitoringService *cloudmonitoring.Service,
+	cfg *setting.Cfg, pluginsClient plugins.Client,
+	oauthTokenService *oauthtoken.Service, cloudMonitoringService *cloudmonitoring.Service,
 ) *Service {
-	s := newService(cfg, backendPluginManager, oauthTokenService)
+	s := newService(cfg, pluginsClient, oauthTokenService)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
@@ -28,11 +26,11 @@ func NewService(
 	return s
 }
 
-func newService(cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
+func newService(cfg *setting.Cfg, pluginsClient plugins.Client,
 	oauthTokenService oauthtoken.OAuthTokenService) *Service {
 	return &Service{
-		Cfg:                  cfg,
-		BackendPluginManager: backendPluginManager,
+		Cfg:           cfg,
+		pluginsClient: pluginsClient,
 		// nolint:staticcheck // plugins.DataPlugin deprecated
 		registry:          map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 		OAuthTokenService: oauthTokenService,
@@ -41,9 +39,9 @@ func newService(cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg                  *setting.Cfg
-	BackendPluginManager backendplugin.Manager
-	OAuthTokenService    oauthtoken.OAuthTokenService
+	Cfg               *setting.Cfg
+	pluginsClient     plugins.Client
+	OAuthTokenService oauthtoken.OAuthTokenService
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
@@ -61,7 +59,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 		return plugin.DataQuery(ctx, ds, query)
 	}
-	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager, s.OAuthTokenService).DataQuery(ctx, ds, query)
+	return dataPluginQueryAdapter(ds.Type, s.pluginsClient, s.OAuthTokenService).DataQuery(ctx, ds, query)
 }
 
 // RegisterQueryHandler registers a query handler factory.

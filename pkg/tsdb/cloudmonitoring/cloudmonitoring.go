@@ -540,7 +540,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 
-	var cloudMonitoringRoute *plugins.AppPluginRoute
+	var cloudMonitoringRoute *plugins.Route
 	for _, route := range plugin.Routes {
 		if route.Path == "cloudmonitoring" {
 			cloudMonitoringRoute = route

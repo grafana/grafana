@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -112,12 +111,12 @@ func (e *fakeExecutor) HandleQuery(refId string, fn resultsFn) {
 	e.resultsFn[refId] = fn
 }
 
-type fakeBackendPM struct {
-	backendplugin.Manager
+type fakePluginsClient struct {
+	plugins.Client
 	backend.QueryDataHandlerFunc
 }
 
-func (m *fakeBackendPM) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (m *fakePluginsClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if m.QueryDataHandlerFunc != nil {
 		return m.QueryDataHandlerFunc.QueryData(ctx, req)
 	}
@@ -136,9 +135,9 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 	return false
 }
 
-func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
-	fakeBackendPM := &fakeBackendPM{}
-	s := newService(setting.NewCfg(), fakeBackendPM, &fakeOAuthTokenService{})
+func createService() (*Service, *fakeExecutor, *fakePluginsClient) {
+	fakePluginsClient := &fakePluginsClient{}
+	s := newService(setting.NewCfg(), fakePluginsClient, &fakeOAuthTokenService{})
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
@@ -149,5 +148,5 @@ func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 		return e, nil
 	}
 
-	return s, e, fakeBackendPM
+	return s, e, fakePluginsClient
 }

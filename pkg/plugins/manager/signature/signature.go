@@ -22,10 +22,10 @@ func NewValidator(cfg *setting.Cfg, unsignedCond UnsignedPluginConditionFunc) *v
 	}
 }
 
-func (s *validator) Validate(plugin *plugins.PluginV2) plugins.PluginSignatureError {
+func (s *validator) Validate(plugin *plugins.PluginV2) *plugins.PluginSignatureError {
 	if plugin.Signature == plugins.SignatureValid {
 		logger.Debug("Plugin has valid signature", "id", plugin.ID)
-		return plugins.PluginSignatureError{}
+		return nil
 	}
 
 	if plugin.Parent != nil {
@@ -41,42 +41,42 @@ func (s *validator) Validate(plugin *plugins.PluginV2) plugins.PluginSignatureEr
 			plugin.SignatureOrg = plugin.Parent.SignatureOrg
 			if plugin.Signature == plugins.SignatureValid {
 				logger.Debug("Plugin has valid signature (inherited from root)", "id", plugin.ID)
-				return plugins.PluginSignatureError{}
+				return nil
 			}
 		}
 	}
 
 	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
-		return plugins.PluginSignatureError{}
+		return nil
 	}
 
 	switch plugin.Signature {
 	case plugins.SignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			logger.Debug("Plugin is unsigned", "pluginID", plugin.ID)
-			return plugins.PluginSignatureError{
+			return &plugins.PluginSignatureError{
 				PluginID:        plugin.ID,
 				SignatureStatus: plugins.SignatureUnsigned,
 			}
 		}
 		logger.Warn("Running an unsigned plugin", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir)
-		return plugins.PluginSignatureError{}
+		return nil
 	case plugins.SignatureInvalid:
 		logger.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
-		return plugins.PluginSignatureError{
+		return &plugins.PluginSignatureError{
 			PluginID:        plugin.ID,
 			SignatureStatus: plugins.SignatureInvalid,
 		}
 	case plugins.SignatureModified:
 		logger.Debug("Plugin has a modified signature", "pluginID", plugin.ID)
-		return plugins.PluginSignatureError{
+		return &plugins.PluginSignatureError{
 			PluginID:        plugin.ID,
 			SignatureStatus: plugins.SignatureModified,
 		}
 	default:
 		logger.Debug("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
 			plugin.Signature)
-		return plugins.PluginSignatureError{
+		return &plugins.PluginSignatureError{
 			PluginID: plugin.ID,
 		}
 	}

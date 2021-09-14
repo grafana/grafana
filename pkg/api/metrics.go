@@ -85,13 +85,13 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	if !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
+	if !hs.pluginClient.(registry.CanBeDisabled).IsDisabled() {
 		req, err := createRequest(ds, request)
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "Request formation error", err)
 		}
 
-		resp, err := hs.PluginManagerV2.QueryData(c.Req.Context(), req)
+		resp, err := hs.pluginClient.QueryData(c.Req.Context(), req)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Metric request error", err)
 		}

@@ -140,6 +140,33 @@ func TestInitializer_getPluginEnvVars(t *testing.T) {
 	})
 }
 
+func TestInitializer_setPathsBasedOnApp(t *testing.T) {
+	t.Run("When setting paths based on App on Windows", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.StaticRootPath = "c:\\grafana\\public"
+		i := &Initializer{
+			cfg: cfg,
+		}
+
+		child := &plugins.PluginV2{
+			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasources\\datasource",
+		}
+		parent := &plugins.PluginV2{
+			JSONData: plugins.JSONData{
+				ID: "testdata",
+			},
+			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata",
+			BaseURL:   "public/app/plugins/app/testdata",
+		}
+
+		i.setPathsBasedOnApp(parent, child)
+
+		assert.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", child.Module)
+		assert.Equal(t, "testdata", child.IncludedInAppID)
+		assert.Equal(t, "public/app/plugins/app/testdata", child.BaseURL)
+	})
+}
+
 func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {
 
 }
@@ -149,10 +176,6 @@ func TestInitializer_getAzureEnvironmentVariables(t *testing.T) {
 }
 
 func TestInitializer_handleModuleDefaults(t *testing.T) {
-
-}
-
-func TestInitializer_setPathsBasedOnApp(t *testing.T) {
 
 }
 

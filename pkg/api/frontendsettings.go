@@ -111,7 +111,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range hs.PluginStore.Plugins(plugins.DataSource) {
+	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if ds.BuiltIn {
 			info := map[string]interface{}{
 				"type": ds.Type,
@@ -155,7 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			defaultDS = n
 		}
 
-		meta := dsM["meta"].(*plugins.DataSourcePlugin)
+		meta := dsM["meta"].(*plugins.PluginV2)
 		if meta.Preload {
 			pluginsToPreload = append(pluginsToPreload, meta.Module)
 		}
@@ -230,15 +230,15 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
-			"hideVersion": hideVersion,
-			"version":     version,
-			"commit":      commit,
-			"buildstamp":  buildstamp,
-			"edition":     hs.License.Edition(),
-			//"latestVersion": hs.pluginManager.GrafanaLatestVersion(),
-			//"hasUpdate":     hs.pluginManager.GrafanaHasUpdate(),
-			"env":          setting.Env,
-			"isEnterprise": hs.License.HasValidLicense(),
+			"hideVersion":   hideVersion,
+			"version":       version,
+			"commit":        commit,
+			"buildstamp":    buildstamp,
+			"edition":       hs.License.Edition(),
+			"latestVersion": hs.updateChecker.LatestVersion,
+			"hasUpdate":     hs.updateChecker.HasUpdate,
+			"env":           setting.Env,
+			"isEnterprise":  hs.License.HasValidLicense(),
 		},
 		"licenseInfo": map[string]interface{}{
 			"hasLicense":      hs.License.HasLicense(),
@@ -343,7 +343,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 		return ep, err
 	}
 
-	for _, app := range hs.PluginStore.Plugins(plugins.App) {
+	for _, app := range hs.pluginStore.Plugins(plugins.App) {
 		if b, ok := pluginSettingMap[app.ID]; ok {
 			app.Pinned = b.Pinned
 			ep[plugins.App] = map[string]*plugins.PluginV2{
@@ -352,7 +352,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 		}
 	}
 
-	for _, ds := range hs.PluginStore.Plugins(plugins.DataSource) {
+	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if _, exists := pluginSettingMap[ds.ID]; exists {
 			ep[plugins.DataSource] = map[string]*plugins.PluginV2{
 				ds.ID: ds,
@@ -360,7 +360,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 		}
 	}
 
-	for _, p := range hs.PluginStore.Plugins(plugins.Panel) {
+	for _, p := range hs.pluginStore.Plugins(plugins.Panel) {
 		if _, exists := pluginSettingMap[p.ID]; exists {
 			ep[plugins.Panel] = map[string]*plugins.PluginV2{
 				p.ID: p,
@@ -382,7 +382,7 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 		pluginMap[plug.PluginId] = plug
 	}
 
-	for _, pluginDef := range hs.PluginStore.Plugins() {
+	for _, pluginDef := range hs.pluginStore.Plugins() {
 		// ignore entries that exists
 		if _, ok := pluginMap[pluginDef.ID]; ok {
 			continue
@@ -396,7 +396,7 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 		}
 
 		// apps are disabled by default unless autoEnabled: true
-		if app := hs.PluginStore.Plugin(pluginDef.ID); app != nil {
+		if app := hs.pluginStore.Plugin(pluginDef.ID); app != nil {
 			opt.Enabled = app.AutoEnabled
 			opt.Pinned = app.AutoEnabled
 		}

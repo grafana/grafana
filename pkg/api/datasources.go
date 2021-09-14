@@ -47,7 +47,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin := hs.PluginStore.Plugin(ds.Type); plugin != nil {
+		if plugin := hs.pluginStore.Plugin(ds.Type); plugin != nil {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 		} else {
@@ -373,8 +373,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	// find plugin
-	plugin := hs.PluginStore.Plugin(ds.Type)
+	plugin := hs.pluginStore.Plugin(ds.Type)
 	if plugin == nil {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
@@ -391,7 +390,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		PluginID:                   plugin.ID,
 		DataSourceInstanceSettings: dsInstanceSettings,
 	}
-	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
+	hs.pluginClient.CallResource(pCtx, c, c.Params("*"))
 }
 
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
@@ -439,7 +438,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to load datasource metadata", err)
 	}
 
-	plugin := hs.PluginStore.Plugin(ds.Type)
+	plugin := hs.pluginStore.Plugin(ds.Type)
 	if plugin == nil {
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
@@ -455,7 +454,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		DataSourceInstanceSettings: dsInstanceSettings,
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
+	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}

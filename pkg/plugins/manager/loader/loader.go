@@ -87,6 +87,7 @@ func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactor
 	return p, err
 }
 
+// test one bad doesn't break all loading
 func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.PluginV2, error) {
 	var foundPlugins = foundPlugins{}
 
@@ -150,15 +151,17 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		}
 	}
 
+	l.errs = make(map[string]error)
+
 	// validate signatures
 	for _, plugin := range loadedPlugins {
 		signingError := signature.NewValidator(l.cfg, l.AllowUnsignedPluginsCondition).Validate(plugin) // covert to field
-		if signingError.Error() != "" {
+		if signingError != nil {
 			logger.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
-			plugin.SignatureError = signingError
+			plugin.SignatureError = *signingError
 			l.errs[plugin.ID] = signingError
-			continue
+			continue // verify skip plugins
 		}
 
 		// verify module.js exists for SystemJS to load
@@ -222,6 +225,10 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 
 	if err := validatePluginJSON(plugin); err != nil {
 		return plugins.JSONData{}, err
+	}
+
+	if plugin.ID == "grafana-piechart-panel" {
+		plugin.Name = "Pie Chart (old)"
 	}
 
 	return plugin, nil
