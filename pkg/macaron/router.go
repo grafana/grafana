@@ -149,7 +149,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	handlers = validateAndWrapHandlers(handlers)
 
 	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params map[string]string) {
-		c := r.m.createContext(resp, SetURLVars(req, params))
+		c := r.m.createContext(resp, SetURLParams(req, params))
 		c.handlers = make([]Handler, 0, len(r.m.handlers)+len(handlers))
 		c.handlers = append(c.handlers, r.m.handlers...)
 		c.handlers = append(c.handlers, handlers...)
