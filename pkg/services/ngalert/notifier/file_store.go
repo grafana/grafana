@@ -93,6 +93,12 @@ func (fs *FileStore) IsExists(fn string) bool {
 
 // WriteFileToDisk writes a file with the provided name and contents to the Alertmanager working directory with the default grafana permission.
 func (fs *FileStore) WriteFileToDisk(fn string, content []byte) error {
+	// Ensure the working directory is created
+	err := os.MkdirAll(fs.workingDirPath, 0750)
+	if err != nil {
+		return fmt.Errorf("unable to create the working directory %q: %s", fs.workingDirPath, err)
+	}
+
 	return os.WriteFile(fs.pathFor(fn), content, 0644)
 }
 
