@@ -228,7 +228,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
-	if err := uss.Bus.Dispatch(&anStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &anStats); err != nil {
 		uss.log.Error("Failed to get alert notification stats", "error", err)
 		return report, err
 	}
