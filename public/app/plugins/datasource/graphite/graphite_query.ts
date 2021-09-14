@@ -180,7 +180,7 @@ export default class GraphiteQuery {
     };
 
     if (!this.target.textEditor) {
-      const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
+      const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.?select metric$/, '');
       this.target.target = reduce(this.functions, wrapFunction, metricPath);
     }
 
