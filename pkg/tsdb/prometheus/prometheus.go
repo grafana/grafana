@@ -51,6 +51,7 @@ type QueryModel struct {
 	RangeQuery     bool   `json:"range"`
 	InstantQuery   bool   `json:"instant"`
 	IntervalFactor int64  `json:"intervalFactor"`
+	OffsetSec      int64  `json:"offsetSec"`
 }
 
 type Service struct {
@@ -293,8 +294,8 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		queryType := Range
 
 		// Align query range to step. It rounds start and end down to a multiple of step.
-		start := int64(math.Floor((float64(query.TimeRange.From.Unix()) / interval.Seconds())) * interval.Seconds())
-		end := int64(math.Floor((float64(query.TimeRange.To.Unix()) / interval.Seconds())) * interval.Seconds())
+		start := int64(math.Floor((float64(query.TimeRange.From.Unix()+model.OffsetSec)/interval.Seconds()))*interval.Seconds() - float64(model.OffsetSec))
+		end := int64(math.Floor((float64(query.TimeRange.To.Unix()+model.OffsetSec)/interval.Seconds()))*interval.Seconds() - float64(model.OffsetSec))
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,

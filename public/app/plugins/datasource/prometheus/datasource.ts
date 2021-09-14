@@ -292,7 +292,13 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
     const targets = options.targets.map((target) => {
       // We want to format Explore + range queries as time_series
-      return { ...target, instant: false, range: true, format: 'time_series' };
+      return {
+        ...target,
+        instant: false,
+        range: true,
+        format: 'time_series',
+        offsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      };
     });
 
     return { ...options, targets };
