@@ -57,14 +57,14 @@ Pull requests that create new UI components or modify existing ones must adhere 
 
 Pull requests that introduce accessibility(a11y) errors:
 
-We use [pa11y-ci](https://github.com/pa11y/pa11y-ci) to collect accessibility errors on [some URLs on the project](https://github.com/grafana/grafana/issues/36555), each URL has a threshold error set, as soon as a new error is introduced our continuous integration breaks, preventing you to merge on the main branch.
+We use [pa11y-ci](https://github.com/pa11y/pa11y-ci) to collect accessibility errors on [some URLs on the project](https://github.com/grafana/grafana/issues/36555), threshold errors are specified per URL.
 
-If the contribution introduces new a11y errors, there are two alternatives for moving forward:
+If the contribution introduces new a11y errors, our continuous integration will fail, preventing you to merge on the main branch. In those cases there are two alternatives for moving forward:
 
-- Check the error log on the pipeline step `test-a11y-frontend-pr`, identify the where was the error and fix it.
-- Locally run the command `yarn test:accessibility-report` to generate an HTML accessibility report, go the url that has your change, identify the error, and fix it. Keep in mind you should have running your local Grafana instance.
+- Check the error log on the pipeline step `test-a11y-frontend-pr`, identify what was the error, and fix it.
+- Locally run the command `yarn test:accessibility-report` that generates an HTML accessibility report, then go to the URL that contains your change, identify the error, and fix it. Keep in mind, a local Grafana instance needs to be running on `http://localhost:3000`.
 
-You can also prevent the former scenario by installing a plugin in your browser that checks for a11y errors.
+You can also prevent introducing a11y errors by installing an a11y plugin in your browser, for example, axe DevTools, Accessibility Insights for Web among others.
 
 ### Backend-specific guidelines
 
