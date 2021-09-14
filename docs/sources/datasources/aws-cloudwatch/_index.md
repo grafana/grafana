@@ -31,7 +31,7 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 
 ## Authentication
 
-For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic. 
+For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic.
 
 ## IAM policies
 
@@ -104,7 +104,7 @@ You can monitor a dynamic list of metrics by using the asterisk (\*) wildcard fo
 
 {{< figure src="/static/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
-In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances are created as part of an auto scaling event, they will automatically appear in the graph without needing to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. 
+In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances are created as part of an auto scaling event, they will automatically appear in the graph without needing to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics.
 
 Click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html). By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
