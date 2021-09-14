@@ -1,6 +1,7 @@
 package libraryelements
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -123,8 +124,8 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 		return LibraryElementDTO{}, err
 	}
 
-	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		if err := l.requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
+	err := l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
+		if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&element); err != nil {
@@ -169,12 +170,12 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 
 // deleteLibraryElement deletes a library element.
 func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid string) error {
-	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	return l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
 		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
-		if err := l.requirePermissionsOnFolder(c.SignedInUser, element.FolderID); err != nil {
+		if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, element.FolderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {
@@ -408,7 +409,7 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 	return result, err
 }
 
-func (l *LibraryElementService) handleFolderIDPatches(elementToPatch *LibraryElement, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
+func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *LibraryElement, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -416,13 +417,13 @@ func (l *LibraryElementService) handleFolderIDPatches(elementToPatch *LibraryEle
 
 	// FolderID was provided in the PATCH request
 	if toFolderID != -1 && toFolderID != fromFolderID {
-		if err := l.requirePermissionsOnFolder(user, toFolderID); err != nil {
+		if err := l.requirePermissionsOnFolder(ctx, user, toFolderID); err != nil {
 			return err
 		}
 	}
 
 	// Always check permissions for the folder where library element resides
-	if err := l.requirePermissionsOnFolder(user, fromFolderID); err != nil {
+	if err := l.requirePermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 		return err
 	}
 
@@ -437,7 +438,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
-	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
 		elementInDB, err := getLibraryElement(l.SQLStore.Dialect, session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
@@ -484,7 +485,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 		if cmd.Model == nil {
 			libraryElement.Model = elementInDB.Model
 		}
-		if err := l.handleFolderIDPatches(&libraryElement, elementInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
+		if err := l.handleFolderIDPatches(c.Req.Context(), &libraryElement, elementInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
 			return err
 		}
 		if err := syncFieldsWithModel(&libraryElement); err != nil {
@@ -633,7 +634,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
-	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -643,7 +644,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContex
 			if err != nil {
 				return err
 			}
-			if err := l.requirePermissionsOnFolder(c.SignedInUser, element.FolderID); err != nil {
+			if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, element.FolderID); err != nil {
 				return err
 			}
 
@@ -680,7 +681,7 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c *models.ReqC
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqContext, folderUID string) error {
-	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	return l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`
 		}
@@ -693,7 +694,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 		}
 		folderID := folderUIDs[0].ID
 
-		if err := l.requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
+		if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, folderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {
