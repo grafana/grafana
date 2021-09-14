@@ -33,5 +33,13 @@ export const plugin = new PanelPlugin<DebugPanelOptions>(DebugPanel).useFieldCon
       name: 'Schema Changed Count',
       defaultValue: true,
       showIf: ({ mode }) => mode === DebugMode.Render,
+    })
+    .addDashboardPicker({
+      path: 'dashboardUID',
+      name: 'Dashboard',
+      settings: {
+        placeholder: 'Select dashboard',
+        isClearable: true,
+      },
     });
 });

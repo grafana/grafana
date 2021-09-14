@@ -423,6 +423,24 @@ def test_a11y_frontend_step(edition, port=3001):
         ],
     }
 
+def test_a11y_frontend_step_pr(edition, port=3001):
+    return {
+        'name': 'test-a11y-frontend-pr' + enterprise2_suffix(edition),
+        'image': 'buildkite/puppeteer',
+        'depends_on': [
+          'end-to-end-tests-server' + enterprise2_suffix(edition),
+        ],
+         'environment': {
+            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
+            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'PORT': port,
+        },
+        'commands': [
+            'yarn wait-on http://$HOST:$PORT',
+            'yarn -s test:accessibility-pr',
+        ],
+    }
+
 def frontend_metrics_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None

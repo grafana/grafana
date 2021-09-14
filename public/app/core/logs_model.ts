@@ -10,6 +10,7 @@ import {
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
+  FieldColorModeId,
   FieldType,
   FieldWithIndex,
   findCommonLabels,
@@ -143,6 +144,10 @@ export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: num
 
     data.fields[valueField.index].config.min = 0;
     data.fields[valueField.index].config.decimals = 0;
+    data.fields[valueField.index].config.color = {
+      mode: FieldColorModeId.Fixed,
+      fixedColor: series.color,
+    };
 
     data.fields[valueField.index].config.custom = {
       drawStyle: GraphDrawStyle.Bars,

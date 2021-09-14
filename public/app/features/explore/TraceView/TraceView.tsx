@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
+import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
 import { colors, useTheme } from '@grafana/ui';
 import {
   ThemeOptions,
@@ -17,7 +17,7 @@ import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
-import { ExploreId, SplitOpen } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { createSpanLinkFactory } from './createSpanLink';

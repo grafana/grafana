@@ -170,7 +170,7 @@ export class GeomapPanel extends Component<Props, State> {
     });
   };
 
-  pointerMoveListener = (evt: MapBrowserEvent) => {
+  pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
     if (!this.map) {
       return;
     }
