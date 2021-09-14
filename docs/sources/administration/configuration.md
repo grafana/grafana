@@ -1105,11 +1105,11 @@ For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{<
 
 ### enabled
 
-Set to `false` to disable Grafana 8 alerts. Default is `true`.
+Set to `true` to enable Grafana 8 alerts. Default is `false`.
 
 ### disabled_orgs
 
-Specify the ID of the organization where you want to disable Grafana 8 alerting. For multiple organizations, specify the IDs separated by commas. 
+Specify the ID of the organization where you want to disable Grafana 8 alerting. For multiple organizations, specify the IDs separated by commas.
 
 ### admin_config_poll_interval_seconds
 
@@ -1123,7 +1123,7 @@ For more information about the Alerting feature in Grafana, refer to [Alerts ove
 
 ### enabled
 
-Set to `true` to [disable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to enable legacy alerting engine. Default is `false`.
+Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
 
 ### execute_alerts
 
