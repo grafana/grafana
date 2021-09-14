@@ -5,6 +5,9 @@ import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 
+/**
+ * @deprecated prefer using dashboard uid rather than id
+ */
 export interface DashboardPickerItem extends SelectableValue<number> {
   id: number;
   uid: string;
