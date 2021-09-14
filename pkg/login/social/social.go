@@ -126,9 +126,10 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:        newSocialBase(name, &config, info),
+				apiUrl:            info.ApiUrl,
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath: info.RoleAttributePath,
 			}
 		}
 
