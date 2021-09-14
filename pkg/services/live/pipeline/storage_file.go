@@ -5,15 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 )
 
 // FileStorage can load channel rules from a file on disk.
-type FileStorage struct{}
+type FileStorage struct {
+	DataPath string
+}
 
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
-	backendBytes, err := ioutil.ReadFile("./data/remote-write-backends.json")
+	backendBytes, err := ioutil.ReadFile(filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json"))
 	if err != nil {
-		return nil, fmt.Errorf("can't read ./data/remote-write-backends.json file: %w", err)
+		return nil, fmt.Errorf("can't read ./pipeline/remote-write-backends.json file: %w", err)
 	}
 	var remoteWriteBackends RemoteWriteBackends
 	err = json.Unmarshal(backendBytes, &remoteWriteBackends)
@@ -30,7 +33,7 @@ func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([
 }
 
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
-	ruleBytes, err := ioutil.ReadFile("./data/live-channel-rules.json")
+	ruleBytes, err := ioutil.ReadFile(filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json"))
 	if err != nil {
 		return nil, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
 	}
