@@ -8,7 +8,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
 
   const addById = useCallback(
     (dashboard: DashboardPickerItem) => {
-      if (items.find((item) => item.id === dashboard.id)) {
+      if (!dashboard || items.find((item) => item.id === dashboard.id)) {
         return;
       }
 

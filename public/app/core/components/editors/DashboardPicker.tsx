@@ -1,9 +1,10 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import debounce from 'debounce-promise';
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AsyncSelect } from '@grafana/ui';
+import { useAsync } from 'react-use';
 
 export interface DashboardPickerOptions {
   placeholder?: string;
@@ -20,21 +21,23 @@ const getDashboards = (query = '') => {
   });
 };
 
+/** This will return the item UID */
 export const DashboardPicker: FC<StandardEditorProps<string, any, any>> = ({ value, onChange, item }) => {
   const [current, setCurrent] = useState<SelectableValue<string>>();
 
-  useEffect(() => {
+  // This is required because the async select does not match the raw uid value
+  // We can not use a simple Select because the dashboard search should not return *everything*
+  useAsync(async () => {
     if (!value) {
       setCurrent(undefined);
       return;
     }
-    (async function loadDashboard() {
-      const res = await backendSrv.getDashboardByUid(value);
-      setCurrent({
-        value: res.dashboard.uid,
-        label: `${res.meta?.folderTitle ?? 'General'}/${res.dashboard.title}`,
-      });
-    })();
+    const res = await backendSrv.getDashboardByUid(value);
+    setCurrent({
+      value: res.dashboard.uid,
+      label: `${res.meta?.folderTitle ?? 'General'}/${res.dashboard.title}`,
+    });
+    return undefined;
   }, [value]);
 
   const onPicked = useCallback(
