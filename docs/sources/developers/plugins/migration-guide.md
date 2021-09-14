@@ -207,7 +207,7 @@ That made it possible to detect time series data by inspecting the data frame. I
 | 2021-05-08T09:31:45Z | 25          | 55       |
 | 2021-05-08T11:31:45Z | 27          | 55       |
 
-> Data delivered as one single data frame (the values share the same time field).
+> Data is delivered as a single data frame where multiple values share the same `time` field.
 
 If your plugin should support time series data we recommend you to make sure to support both.
 
