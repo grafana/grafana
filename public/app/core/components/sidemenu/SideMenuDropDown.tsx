@@ -79,6 +79,7 @@ const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirecti
     color: ${theme.colors.text.primary};
     font-size: ${theme.typography.h4.fontSize};
     font-weight: ${theme.typography.h4.fontWeight};
+    height: ${theme.components.sidemenu.width}px;
     padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)} !important;
     white-space: nowrap;
     width: 100%;
@@ -109,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirecti
     }
   `,
   subtitle: css`
-    border-bottom: 1px solid ${theme.colors.border.weak};
+    border-${!isHorizontal(position) && reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
     color: ${theme.colors.text.secondary};
     font-size: ${theme.typography.bodySmall.fontSize};
     font-weight: ${theme.typography.bodySmall.fontWeight};

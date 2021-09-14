@@ -112,16 +112,16 @@ const getStyles = (
           // important to overlap it otherwise it can be hidden
           // again by the mouse getting outside the hover space
           left: ${position === 'left'
-            ? `${theme.components.sidemenu.width - 1}px`
+            ? `${theme.components.sidemenu.width}px`
             : `${isHorizontal(position) && !reverseMenuDirection ? 0 : 'unset'}`};
           right: ${position === 'right'
-            ? `${theme.components.sidemenu.width - 1}px`
+            ? `${theme.components.sidemenu.width}px`
             : `${isHorizontal(position) && reverseMenuDirection ? 0 : 'unset'}`};
           top: ${position === 'top'
-            ? `${theme.components.sidemenu.width - 1}px`
+            ? `${theme.components.sidemenu.width}px`
             : `${!isHorizontal(position) && !reverseMenuDirection ? 0 : 'unset'}`};
           bottom: ${position === 'bottom'
-            ? `${theme.components.sidemenu.width - 1}px`
+            ? `${theme.components.sidemenu.width}px`
             : `${!isHorizontal(position) && reverseMenuDirection ? 0 : 'unset'}`};
           margin: 0;
           opacity: 0;
@@ -135,10 +135,10 @@ const getStyles = (
     border: none;
     color: inherit;
     display: block;
-    height: ${theme.components.sidemenu.width - 1}px;
-    line-height: ${theme.components.sidemenu.width - 1}px;
+    height: ${theme.components.sidemenu.width}px;
+    line-height: ${theme.components.sidemenu.width}px;
     text-align: center;
-    width: ${theme.components.sidemenu.width - 1}px;
+    width: ${theme.components.sidemenu.width}px;
 
     &::before {
       display: ${isActive ? 'block' : 'none'};

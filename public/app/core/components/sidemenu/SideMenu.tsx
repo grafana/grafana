@@ -40,7 +40,7 @@ interface Props {
   position: 'left' | 'right' | 'top' | 'bottom';
 }
 
-export const SideMenu = ({ position }: Props) => {
+export const SideMenu = ({ position = 'left' }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, position);
   const location = useLocation();
