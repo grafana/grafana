@@ -47,7 +47,19 @@ func TestMetrics(t *testing.T) {
 				Dashboards:                1,
 				Datasources:               2,
 				Users:                     3,
+				Admins:                    31,
+				Editors:                   32,
+				Viewers:                   33,
 				ActiveUsers:               4,
+				ActiveAdmins:              21,
+				ActiveEditors:             22,
+				ActiveViewers:             23,
+				ActiveSessions:            24,
+				DailyActiveUsers:          25,
+				DailyActiveAdmins:         26,
+				DailyActiveEditors:        27,
+				DailyActiveViewers:        28,
+				DailyActiveSessions:       29,
 				Orgs:                      5,
 				Playlists:                 6,
 				Alerts:                    7,
@@ -298,6 +310,9 @@ func TestMetrics(t *testing.T) {
 			metrics := j.Get("metrics")
 			assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Admins, metrics.Get("stats.admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Editors, metrics.Get("stats.editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Viewers, metrics.Get("stats.viewers.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
 			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
@@ -305,6 +320,15 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveAdmins, metrics.Get("stats.active_admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveEditors, metrics.Get("stats.active_editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveViewers, metrics.Get("stats.active_viewers.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveSessions, metrics.Get("stats.active_sessions.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveUsers, metrics.Get("stats.daily_active_users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveAdmins, metrics.Get("stats.daily_active_admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveEditors, metrics.Get("stats.daily_active_editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveViewers, metrics.Get("stats.daily_active_viewers.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveSessions, metrics.Get("stats.daily_active_sessions.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Stars, metrics.Get("stats.stars.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Folders, metrics.Get("stats.folders.count").MustInt64())

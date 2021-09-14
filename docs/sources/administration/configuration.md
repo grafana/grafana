@@ -435,6 +435,14 @@ The length of time that Grafana maintains idle connections before closing them. 
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
 
+### response_limit
+
+Limits the amount of bytes that will be read/accepted from responses of outgoing HTTP requests. Default is `0` which means disabled.
+
+### row_limit
+
+Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
+
 <hr />
 
 ## [analytics]
@@ -1448,7 +1456,7 @@ Optional extra path inside bucket.
 
 ### enable_signed_urls
 
-If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls] for
+If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) for
 the image uploaded to Google Cloud Storage.
 
 ### signed_url_expiration

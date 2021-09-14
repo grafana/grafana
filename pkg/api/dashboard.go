@@ -276,12 +276,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	ctx := c.Req.Context()
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 	if cmd.FolderUid != "" {
 		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-		folder, err := folders.GetFolderByUID(cmd.FolderUid)
+		folder, err := folders.GetFolderByUID(ctx, cmd.FolderUid)
 		if err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
@@ -361,7 +362,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := dashSvc.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}

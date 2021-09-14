@@ -122,7 +122,8 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 		OrgId: ctx.OrgID,
 		Headers: map[string]string{
 			// Some data sources check this in query method as sometimes alerting needs special considerations.
-			"FromAlert": "true",
+			"FromAlert":    "true",
+			"X-Cache-Skip": "true",
 		},
 	}
 

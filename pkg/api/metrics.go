@@ -1,18 +1,17 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // QueryMetricsV2 returns query metrics.
@@ -31,31 +30,42 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	}
 
 	// Loop to see if we have an expression.
+	prevType := ""
+	var ds *models.DataSource
 	for _, query := range reqDTO.Queries {
-		if query.Get("datasource").MustString("") == expr.DatasourceName {
+		dsType := query.Get("datasource").MustString("")
+		if dsType == expr.DatasourceName {
 			return hs.handleExpressions(c, reqDTO)
 		}
-	}
-
-	var ds *models.DataSource
-	for i, query := range reqDTO.Queries {
-		hs.log.Debug("Processing metrics query", "query", query)
-
-		datasourceID, err := query.Get("datasourceId").Int64()
-		if err != nil {
+		if prevType != "" && prevType != dsType {
+			// For mixed datasource case, each data source is sent in a single request.
+			// So only the datasource from the first query is needed. As all requests
+			// should be the same data source.
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
+			return response.Error(http.StatusBadRequest, "All queries must use the same datasource", nil)
 		}
 
-		// For mixed datasource case, each data source is sent in a single request.
-		// So only the datasource from the first query is needed. As all requests
-		// should be the same data source.
-		if i == 0 {
-			ds, err = hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+		if ds == nil {
+			// require ID for everything
+			dsID, err := query.Get("datasourceId").Int64()
 			if err != nil {
-				return hs.handleGetDataSourceError(err, datasourceID)
+				hs.log.Debug("Can't process query since it's missing data source ID")
+				return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
+			}
+			if dsID == grafanads.DatasourceID {
+				ds = grafanads.DataSourceModel(c.OrgId)
+			} else {
+				ds, err = hs.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+				if err != nil {
+					return hs.handleGetDataSourceError(err, dsID)
+				}
 			}
 		}
+		prevType = dsType
+	}
+
+	for _, query := range reqDTO.Queries {
+		hs.log.Debug("Processing metrics query", "query", query)
 
 		request.Queries = append(request.Queries, plugins.DataSubQuery{
 			RefID:         query.Get("refId").MustString("A"),
@@ -211,38 +221,4 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	}
 
 	return response.JSON(statusCode, &resp)
-}
-
-// GET /api/tsdb/testdata/random-walk
-func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Response {
-	from := c.Query("from")
-	to := c.Query("to")
-	intervalMS := c.QueryInt64("intervalMs")
-
-	timeRange := plugins.NewDataTimeRange(from, to)
-	request := plugins.DataQuery{TimeRange: &timeRange}
-
-	dsInfo := &models.DataSource{
-		Type:     "testdata",
-		JsonData: simplejson.New(),
-	}
-	request.Queries = append(request.Queries, plugins.DataSubQuery{
-		RefID:      "A",
-		IntervalMS: intervalMS,
-		Model: simplejson.NewFromAny(&util.DynMap{
-			"scenario": "random_walk",
-		}),
-		DataSource: dsInfo,
-	})
-
-	resp, err := hs.DataService.HandleRequest(context.Background(), dsInfo, request)
-	if err != nil {
-		return response.Error(500, "Metric request error", err)
-	}
-
-	qdr, err := resp.ToBackendDataResponse()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error converting results", err)
-	}
-	return toMacronResponse(qdr)
 }
