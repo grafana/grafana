@@ -83,7 +83,7 @@ For more information, refer to [Deprecating Application Insights and Insights An
 - You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../administration/configuration.md#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../administration/configuration.md#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access && secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
 - You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
 
-  [AWS Cloudwatch data source]({{< relref "../datasources/cloudwatch.md#endpoint" >}}) was updated as a result of this change.
+  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch/_index.md" >}}) was updated as a result of this change.
 
 ### Increased API limit for CloudMonitoring Services
 

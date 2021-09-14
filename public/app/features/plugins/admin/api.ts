@@ -16,13 +16,22 @@ export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
 }
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
-  const localPlugins = await getLocalPlugins(); // /api/plugins/<id>/settings
+  const localPlugins = await getLocalPlugins();
   const local = localPlugins.find((p) => p.id === id);
   const isInstalled = Boolean(local);
   const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
+  const dependencies = remote?.json?.dependencies;
+  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
+  // otherwise plugins cannot be installed.
+  const grafanaDependency = dependencies?.grafanaDependency
+    ? dependencies?.grafanaDependency
+    : dependencies?.grafanaVersion
+    ? `>=${dependencies?.grafanaVersion}`
+    : '';
 
   return {
-    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
+    grafanaDependency,
+    pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
     readme: remote?.readme,
     versions,

@@ -12,7 +12,7 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 import SideMenuItem from './SideMenuItem';
-import { getForcedLoginUrl } from './utils';
+import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
 
 export default function BottomSection() {
   const theme = useTheme2();
@@ -21,6 +21,7 @@ export default function BottomSection() {
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
   const location = useLocation();
+  const activeItemId = bottomNav.find((item) => isLinkActive(location.pathname, item))?.id;
   const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
   const user = contextSrv.user;
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -76,6 +77,7 @@ export default function BottomSection() {
         return (
           <SideMenuItem
             key={`${link.url}-${index}`}
+            isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={menuItems}
             menuSubTitle={link.subTitle}
