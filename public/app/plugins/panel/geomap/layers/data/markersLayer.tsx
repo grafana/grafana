@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
+import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 
@@ -97,7 +98,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ignore empty
         }
 
-        const features: Feature[] = [];
+        const features: Feature<Point>[] = [];
 
         for (const frame of data.series) {
           const info = dataFrameToPoints(frame, matchers);

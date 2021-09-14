@@ -72,8 +72,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
-
 	r.Get("/styleguide", reqSignedIn, hs.Index)
+
+	r.Get("/live", reqGrafanaAdmin, hs.Index)
+	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
+	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/plugins", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
@@ -133,7 +136,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/login/ping", quota("session"), routing.Wrap(hs.LoginAPIPing))
 
 	// expose plugin file system assets
-	r.Get("/public/plugins/:pluginId/*", hs.GetPluginAssets)
+	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -266,7 +269,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll)), routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), bind(models.AddDataSourceCommand{}), routing.Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesWrite, ScopeDatasourceID)), bind(models.UpdateDataSourceCommand{}), routing.Wrap(hs.UpdateDataSource))
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
@@ -370,8 +373,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetrics))
-		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, routing.Wrap(GenerateSQLTestData))
-		apiRoute.Get("/tsdb/testdata/random-walk", routing.Wrap(hs.GetTestDataRandomWalk))
 
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetricsV2))
@@ -423,7 +424,7 @@ func (hs *HTTPServer) registerRoutes() {
 			// the channel path is in the name
 			liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
-			// POST influx line protocol
+			// POST influx line protocol.
 			liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
 			// List available streams and fields
@@ -431,6 +432,13 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
+
+			if hs.Cfg.FeatureToggles["live-pipeline"] {
+				// POST Live data to be processed according to channel rules.
+				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
+				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
+			}
 		})
 
 		// short urls

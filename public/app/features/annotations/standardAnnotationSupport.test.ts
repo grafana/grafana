@@ -111,6 +111,7 @@ describe('DataFrame to annotations', () => {
         { name: 'newState', values: ['alerting'] },
         { name: 'data', values: [{ text: 'a', value: 'A' }] },
         { name: 'panelId', values: [4] },
+        { name: 'alertId', values: [0] },
       ],
     });
 
@@ -134,6 +135,7 @@ describe('DataFrame to annotations', () => {
           title: 'title',
           type: 'default',
           userId: 'Admin',
+          alertId: 0,
         },
       ],
     ]);

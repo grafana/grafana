@@ -8,7 +8,9 @@ import { AccessControlAction } from 'app/types';
 export const NoDataSourceCallToAction = () => {
   const theme = useTheme2();
 
-  const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  const canCreateDataSource =
+    contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
+    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const message =
     'Explore requires at least one data source. Once you have added a data source, you can query it here.';

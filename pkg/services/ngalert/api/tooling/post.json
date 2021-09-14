@@ -86,6 +86,14 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
+  "AlertManagerNotFound": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertManagerNotReady": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "AlertManagersResult": {
    "properties": {
     "activeAlertManagers": {
@@ -1095,6 +1103,10 @@
    },
    "type": "array"
   },
+  "MultiStatus": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "NamespaceConfigResponse": {
    "additionalProperties": {
     "items": {
@@ -1339,6 +1351,10 @@
    },
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
+  "PermissionDenied": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Point": {
    "properties": {
@@ -2286,19 +2302,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "TestReceiversConfig": {
-   "properties": {
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/PostableApiReceiver"
-     },
-     "type": "array",
-     "x-go-name": "Receivers"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-  },
   "TestReceiversResult": {
    "properties": {
     "notified_at": {
@@ -2344,7 +2347,6 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2377,9 +2379,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -2546,6 +2548,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2567,17 +2570,14 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -2697,7 +2697,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -2756,7 +2755,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
    "items": {
@@ -2767,7 +2768,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2819,7 +2819,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "items": {
@@ -2956,6 +2958,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2995,12 +2998,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3011,7 +3011,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -3599,13 +3601,22 @@
     "operationId": "RoutePostTestReceivers",
     "parameters": [
      {
-      "in": "query",
-      "items": {
-       "$ref": "#/definitions/PostableApiReceiver"
-      },
+      "in": "body",
       "name": "receivers",
-      "type": "array",
+      "schema": {
+       "items": {
+        "$ref": "#/definitions/PostableApiReceiver"
+       },
+       "type": "array"
+      },
       "x-go-name": "Receivers"
+     },
+     {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
@@ -3616,7 +3627,10 @@
       }
      },
      "207": {
-      "$ref": "#/responses/MultiStatus"
+      "description": "MultiStatus",
+      "schema": {
+       "$ref": "#/definitions/MultiStatus"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -3624,10 +3638,28 @@
        "$ref": "#/definitions/ValidationError"
       }
      },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
+     "404": {
+      "description": "AlertManagerNotFound",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotFound"
+      }
+     },
      "408": {
       "description": "Failure",
       "schema": {
        "$ref": "#/definitions/Failure"
+      }
+     },
+     "409": {
+      "description": "AlertManagerNotReady",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotReady"
       }
      }
     },
@@ -4039,57 +4071,6 @@
     "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
     "tags": [
      "configuration"
-    ]
-   }
-  },
-  "/api/v1/receiver/test/{Recipient}": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "description": "Test receiver",
-    "operationId": "RouteTestReceiverConfig",
-    "parameters": [
-     {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
-      "in": "path",
-      "name": "Recipient",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/ExtendedReceiver"
-      }
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "Success",
-      "schema": {
-       "$ref": "#/definitions/Success"
-      }
-     },
-     "412": {
-      "description": "SmtpNotEnabled",
-      "schema": {
-       "$ref": "#/definitions/SmtpNotEnabled"
-      }
-     },
-     "500": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     }
-    },
-    "tags": [
-     "testing"
     ]
    }
   },

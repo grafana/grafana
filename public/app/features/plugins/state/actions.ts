@@ -1,6 +1,12 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
 import { ThunkResult } from 'app/types';
+import { config } from 'app/core/config';
+import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
+import {
+  loadPanelPlugin as loadPanelPluginNew,
+  loadPluginDashboards as loadPluginDashboardsNew,
+} from '../admin/state/actions';
 import {
   pluginDashboardsLoad,
   pluginDashboardsLoaded,
@@ -8,7 +14,6 @@ import {
   panelPluginLoaded,
   pluginsErrorsLoaded,
 } from './reducers';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 export function loadPlugins(): ThunkResult<void> {
   return async (dispatch) => {
@@ -24,7 +29,7 @@ export function loadPluginsErrors(): ThunkResult<void> {
   };
 }
 
-export function loadPluginDashboards(): ThunkResult<void> {
+function loadPluginDashboardsOriginal(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     dispatch(pluginDashboardsLoad());
     const dataSourceType = getStore().dataSources.dataSource.type;
@@ -33,7 +38,7 @@ export function loadPluginDashboards(): ThunkResult<void> {
   };
 }
 
-export function loadPanelPlugin(pluginId: string): ThunkResult<Promise<PanelPlugin>> {
+function loadPanelPluginOriginal(pluginId: string): ThunkResult<Promise<PanelPlugin>> {
   return async (dispatch, getStore) => {
     let plugin = getStore().plugins.panels[pluginId];
 
@@ -49,3 +54,6 @@ export function loadPanelPlugin(pluginId: string): ThunkResult<Promise<PanelPlug
     return plugin;
   };
 }
+
+export const loadPluginDashboards = config.pluginAdminEnabled ? loadPluginDashboardsNew : loadPluginDashboardsOriginal;
+export const loadPanelPlugin = config.pluginAdminEnabled ? loadPanelPluginNew : loadPanelPluginOriginal;
