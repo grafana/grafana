@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus, dateTimeParse } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
 import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -12,15 +12,20 @@ export function isOrgAdmin() {
   return contextSrv.hasRole('Admin');
 }
 
-export function mergeLocalsAndRemotes(local: LocalPlugin[] = [], remote: RemotePlugin[] = []): CatalogPlugin[] {
+export function mergeLocalsAndRemotes(
+  local: LocalPlugin[] = [],
+  remote: RemotePlugin[] = [],
+  errors: PluginError[]
+): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
+  const withError = appendErrorToPlugin(errors);
 
   // add locals
   local.forEach((l) => {
     const remotePlugin = remote.find((r) => r.slug === l.id);
 
     if (!remotePlugin) {
-      catalogPlugins.push(mergeLocalAndRemote(l));
+      catalogPlugins.push(withError(mergeLocalAndRemote(l)));
     }
   });
 
@@ -28,7 +33,7 @@ export function mergeLocalsAndRemotes(local: LocalPlugin[] = [], remote: RemoteP
   remote.forEach((r) => {
     const localPlugin = local.find((l) => l.id === r.slug);
 
-    catalogPlugins.push(mergeLocalAndRemote(localPlugin, r));
+    catalogPlugins.push(withError(mergeLocalAndRemote(localPlugin, r)));
   });
 
   return catalogPlugins;
@@ -91,7 +96,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin): CatalogPlugin {
   return catalogPlugin;
 }
 
-export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
+export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): CatalogPlugin {
   const {
     name,
     info: { description, version, logos, updated, author },
@@ -198,3 +203,17 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
 
   return plugins;
 };
+
+function appendErrorToPlugin(errors: PluginError[]): (plugin: CatalogPlugin) => CatalogPlugin {
+  const errorByPluginId = errors.reduce((byId, error) => {
+    byId[error.pluginId] = error;
+    return byId;
+  }, {} as Record<string, PluginError | undefined>);
+
+  return (plugin) => {
+    const error = errorByPluginId[plugin.id];
+    plugin.error = error?.errorCode;
+
+    return plugin;
+  };
+}

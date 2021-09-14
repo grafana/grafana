@@ -1,5 +1,11 @@
 import { EntityState } from '@reduxjs/toolkit';
-import { PluginType, PluginSignatureStatus, PluginSignatureType, PluginDependencies } from '@grafana/data';
+import {
+  PluginType,
+  PluginSignatureStatus,
+  PluginSignatureType,
+  PluginDependencies,
+  PluginErrorCode,
+} from '@grafana/data';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
@@ -41,6 +47,7 @@ export interface CatalogPlugin {
   updatedAt: string;
   version: string;
   details?: CatalogPluginDetails;
+  error?: PluginErrorCode;
 }
 
 export interface CatalogPluginDetails {
