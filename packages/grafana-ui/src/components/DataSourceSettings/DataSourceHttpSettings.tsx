@@ -128,6 +128,21 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     />
   );
 
+  const azureAuthEnabled: boolean =
+    (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
+
+  // TODO: Azure stuff, use state if needed
+  // TODO: Input we rely on
+  // TODO: azureAuthSettings?.azureAuthEnabled
+  // TODO: azureAuthSettings?.azureAuthEnabled &&
+  //           azureAuthSettings?.azureSettingsUI &&
+  //           dataSourceConfig.jsonData.azureAuth &&
+  // TODO:
+  // TODO:
+  // TODO:
+  // TODO:
+  // TODO:
+
   return (
     <div className="gf-form-group">
       <>
@@ -216,16 +231,16 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             />
           </div>
 
-          {azureAuthSettings?.azureAuthEnabled && (
+          {azureAuthSettings?.azureAuthSupported && (
             <div className="gf-form-inline">
               <Switch
                 label="Azure Authentication"
                 labelClass="width-13"
-                checked={dataSourceConfig.jsonData.azureAuth || false}
+                checked={azureAuthEnabled}
                 onChange={(event) => {
-                  onSettingsChange({
-                    jsonData: { ...dataSourceConfig.jsonData, azureAuth: event!.currentTarget.checked },
-                  });
+                  onSettingsChange(
+                    azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
+                  );
                 }}
                 tooltip="Use Azure authentication for Azure endpoint."
               />
@@ -264,11 +279,9 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           </>
         )}
 
-        {azureAuthSettings?.azureAuthEnabled &&
-          azureAuthSettings?.azureSettingsUI &&
-          dataSourceConfig.jsonData.azureAuth && (
-            <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
-          )}
+        {azureAuthSettings?.azureAuthSupported && azureAuthEnabled && azureAuthSettings.azureSettingsUI && (
+          <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
+        )}
 
         {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && <SigV4AuthSettings {...props} />}
 

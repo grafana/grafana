@@ -18,6 +18,10 @@ function getSecret(options: DataSourceSettings<any, any>): undefined | string | 
   }
 }
 
+export function hasCredentials(options: DataSourceSettings<any, any>): boolean {
+  return !!options.jsonData.azureCredentials;
+}
+
 export function getCredentials(options: DataSourceSettings<any, any>): AzureCredentials {
   const credentials = options.jsonData.azureCredentials as AzureCredentials | undefined;
 

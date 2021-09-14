@@ -127,14 +127,13 @@ func (ds *DataSource) HTTPClientOptions() (*sdkhttpclient.Options, error) {
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("azureAuth").MustBool() {
+	if ds.JsonData != nil {
 		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), ds.DecryptedValues())
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
 			return nil, err
 		}
 
-		opts.CustomOptions["_azureAuth"] = true
 		if credentials != nil {
 			opts.CustomOptions["_azureCredentials"] = credentials
 		}
