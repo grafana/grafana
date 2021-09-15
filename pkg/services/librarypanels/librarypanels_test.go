@@ -25,7 +25,7 @@ const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
 func TestLoadLibraryPanelsForDashboard(t *testing.T) {
-	scenarioWithLibraryPanel(t, "When an admin tries to load a dashboard with a library panel, it should copy JSON properties from library panel",
+	scenarioWithLibraryPanel(t, "When an admin tries to load a dashboard with a library panel, it should copy JSON properties from library panel.",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]interface{}{
 				"panels": []interface{}{
