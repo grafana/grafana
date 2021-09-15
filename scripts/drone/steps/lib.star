@@ -410,6 +410,7 @@ def restore_cache_step():
         'name': 'restore-cache',
         'pull': 'always',
         'environment': {
+            'YARN_CACHE_FOLDER': '/opt/drone/yarncache/test',
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
@@ -424,8 +425,8 @@ def rebuild_cache_step():
         'name': 'rebuild-cache',
         'pull': 'always',
         'environment': {
+            'YARN_CACHE_FOLDER': '/opt/drone/yarncache/test',
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
-            'YARN_CACHE_FOLDER': '/opt/drone/yarncache',
          },
          'settings': {
             'bucket': 'test-julien',

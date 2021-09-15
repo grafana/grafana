@@ -36,6 +36,7 @@ steps:
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
+    YARN_CACHE_FOLDER: /opt/drone/yarncache/test
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -104,7 +105,7 @@ steps:
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
-    YARN_CACHE_FOLDER: /opt/drone/yarncache
+    YARN_CACHE_FOLDER: /opt/drone/yarncache/test
   when:
     event:
     - pull_request
@@ -3526,6 +3527,6 @@ get:
 
 ---
 kind: signature
-hmac: 080c6e131d0b142ff825dd42fc6cb082d54a15bc53093cfe0f16f006b09eb8fb
+hmac: 14f1f7ed688dfebaa64e30094e487c09387077a27ad74c5b19072be042695e72
 
 ...
