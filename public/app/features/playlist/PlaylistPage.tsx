@@ -9,7 +9,6 @@ import { useAsync } from 'react-use';
 import { PlaylistDTO } from './types';
 import { Button, Card, ConfirmModal, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 import { deletePlaylist, getAllPlaylist } from './api';
 import { StartModal } from './StartModal';
@@ -21,13 +20,12 @@ interface ConnectedProps {
 export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponentProps {}
 
 export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
-    return getAllPlaylist(searchQuery) as Promise<PlaylistDTO[]>;
+    return getAllPlaylist() as Promise<PlaylistDTO[]>;
   }, [forcePlaylistsFetch]);
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
@@ -40,7 +38,6 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
       setPlaylistToDelete(undefined);
     });
   };
-
   let content = (
     <EmptyListCTA
       title="There are no playlists created yet"
@@ -87,13 +84,6 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        {hasPlaylists && (
-          <PageActionBar
-            searchQuery={searchQuery}
-            linkButton={{ title: 'New playlist', href: '/playlists/new' }}
-            setSearchQuery={setSearchQuery}
-          />
-        )}
         {content}
         {playlistToDelete && (
           <ConfirmModal
