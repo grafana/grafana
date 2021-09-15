@@ -18,7 +18,6 @@ This guide helps you identify the steps you need to take based on the Grafana ve
     - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
     - [3. Update the plugin package](#3-update-the-plugin-package)
   - [Unsigned backend plugins will not be loaded](#unsigned-backend-plugins-will-not-be-loaded)
-  - [Time series data can now be in wide or many format](#time-series-data-can-now-be-in-wide-or-many-format)
   - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
   - [Update the plugin.json](#update-the-pluginjson)
   - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
@@ -178,38 +177,6 @@ Before you can run a backend plugin on Grafana installations, you must sign the 
 For instructions on plugin signing, refer to the [Plugin signatures](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) topic.
 
 You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode).
-
-### Time series data can now be structured in a wide or many format.
-
-In Grafana 8.x, you can structure time series data in either `wide` or `many` formats. If your plugin supports time series data, we recommend that you support both formats.
-
-Grafana supported only the `many` format before. For example:
-
-| time                 | temperature |
-| -------------------- | ----------- |
-| 2021-05-08T07:31:45Z | 23          |
-| 2021-05-08T09:31:45Z | 25          |
-| 2021-05-08T11:31:45Z | 27          |
-
-| time                 | humidity |
-| -------------------- | -------- |
-| 2021-05-08T07:31:45Z | 60       |
-| 2021-05-08T09:31:45Z | 55       |
-| 2021-05-08T11:31:45Z | 55       |
-
-> Data is delivered as an array of data frames where the `time` field is repeated.
-
-That made it possible to detect time series data by inspecting the data frame. If it had two fields (time + value) it most likley was time series data. This is no longer possible since the same data can be delivered in the following `wide` format.
-
-| time                 | temperature | humidity |
-| -------------------- | ----------- | -------- |
-| 2021-05-08T07:31:45Z | 23          | 60       |
-| 2021-05-08T09:31:45Z | 25          | 55       |
-| 2021-05-08T11:31:45Z | 27          | 55       |
-
-> Data is delivered as a single data frame where multiple values share the same `time` field.
-
-If your plugin should support time series data we recommend you to make sure to support both.
 
 ### Update react-hook-form from v6 to v7
 
