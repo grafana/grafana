@@ -6,7 +6,16 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
 import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2, Button } from '@grafana/ui';
-import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  LoadingState,
+  RawTimeRange,
+  DataFrame,
+  GrafanaTheme2,
+  QueryRelatedDataType,
+  LogsVolume,
+} from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
@@ -16,7 +25,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadLogsVolume } from './state/query';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadDataProvider } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -205,22 +214,24 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  getLogsVolumeContent(width: number) {
-    const {
-      exploreId,
-      loadLogsVolume,
-      logsVolume,
-      absoluteRange,
-      timeZone,
-      splitOpen,
-      queryResponse,
-      theme,
-    } = this.props;
+  getLogsVolumeContent(width: number, logsVolume?: LogsVolume) {
+    const { exploreId, loadDataProvider, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
 
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
 
     if (!logsVolume) {
-      return undefined;
+      return (
+        <LogsVolumeContentWrapper>
+          <Button
+            size="lg"
+            onClick={() => {
+              loadDataProvider(exploreId, QueryRelatedDataType.LogsVolume);
+            }}
+          >
+            Load logs volume
+          </Button>
+        </LogsVolumeContentWrapper>
+      );
     }
 
     if (logsVolume.error) {
@@ -255,26 +266,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       }
     }
 
-    return (
-      <LogsVolumeContentWrapper>
-        <Button
-          size="lg"
-          onClick={() => {
-            loadLogsVolume(exploreId);
-          }}
-        >
-          Load logs volume
-        </Button>
-      </LogsVolumeContentWrapper>
-    );
+    return undefined;
   }
 
   renderLogsVolume(width: number) {
-    const { logsVolume } = this.props;
+    const { queryRelatedData } = this.props;
+    const logsVolume = queryRelatedData[QueryRelatedDataType.LogsVolume];
 
     return (
       <Collapse label="Logs volume" isOpen={true} loading={logsVolume?.isLoading}>
-        {this.getLogsVolumeContent(width)}
+        {this.getLogsVolumeContent(width, logsVolume)}
       </Collapse>
     );
   }
@@ -351,14 +352,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      logsVolumeProvider,
+      queryRelatedDataProviders,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showLogsVolume = !!logsVolumeProvider;
+    const showLogsVolume = !!queryRelatedDataProviders[QueryRelatedDataType.LogsVolume];
 
     return (
       <CustomScrollbar autoHeightMin={'100%'}>
@@ -443,8 +444,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolume,
-    logsVolumeProvider,
+    queryRelatedData,
+    queryRelatedDataProviders,
     logsResult,
     showLogs,
     showMetrics,
@@ -462,8 +463,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolume,
-    logsVolumeProvider,
+    queryRelatedDataProviders,
+    queryRelatedData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
@@ -485,7 +486,7 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  loadLogsVolume,
+  loadDataProvider,
   addQueryRow,
   splitOpen,
 };

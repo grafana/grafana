@@ -60,7 +60,8 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: (null as unknown) as EventBusExtended,
   cache: [],
   autoLoadLogsVolume: false,
-  logsVolume: {},
+  queryRelatedDataProviders: {},
+  queryRelatedData: {},
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({

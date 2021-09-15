@@ -5,11 +5,11 @@ import {
   DataQueryErrorType,
   DataSourceApi,
   LoadingState,
-  LogsVolume,
   PanelData,
   PanelEvents,
   QueryFixAction,
-  QueryRelatedDataProvider,
+  QueryRelatedDataProviders,
+  QueryRelatedDataType,
   toLegacyResponseData,
 } from '@grafana/data';
 
@@ -116,20 +116,17 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-export interface UpdateLogsVolumeProviderPayload {
+export interface StoreDataProvidersPayload {
   exploreId: ExploreId;
-  logsVolumeProvider?: QueryRelatedDataProvider<LogsVolume>;
+  queryRelatedDataProviders: QueryRelatedDataProviders;
 }
 
-export interface UpdateLogsVolumePayload {
+export const storeDataProvidersAction = createAction<StoreDataProvidersPayload>('explore/storeDataProvidersAction');
+export const updateDataProviderResultAction = createAction<{
   exploreId: ExploreId;
-  logsVolume: LogsVolume;
-}
-
-export const updateLogsVolumeProviderAction = createAction<UpdateLogsVolumeProviderPayload>(
-  'explore/updateLogsVolumeProviderAction'
-);
-export const updateLogsVolumeAction = createAction<UpdateLogsVolumePayload>('explore/updateLogsVolumeAction');
+  type: QueryRelatedDataType;
+  data: any;
+}>('explore/updateDataProviderResultAction');
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -464,20 +461,21 @@ export const runQueries = (
           }
         );
 
-      const dataProviders = datasourceInstance.getQueryRelatedDataProviders
+      const queryRelatedDataProviders = datasourceInstance.getQueryRelatedDataProviders
         ? datasourceInstance.getQueryRelatedDataProviders(transaction.request)
         : {};
-      let logsVolumeProvider = dataProviders.logsVolume as QueryRelatedDataProvider<LogsVolume>;
 
       dispatch(
-        updateLogsVolumeProviderAction({
+        storeDataProvidersAction({
           exploreId,
-          logsVolumeProvider,
+          queryRelatedDataProviders,
         })
       );
 
+      const logsVolumeProvider = queryRelatedDataProviders[QueryRelatedDataType.LogsVolume];
+
       if (autoLoadLogsVolume && logsVolumeProvider) {
-        dispatch(loadLogsVolume(exploreId));
+        dispatch(loadDataProvider(exploreId, QueryRelatedDataType.LogsVolume));
       }
     }
 
@@ -541,20 +539,20 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
     const state = getState().explore[exploreId]!;
 
     // load logs volume automatically after switching
-    const { logsVolume } = state;
-    if (logsVolume && !logsVolume.data && autoLoadLogsVolume) {
-      dispatch(loadLogsVolume(exploreId));
+    const logsVolume = state.queryRelatedData[QueryRelatedDataType.LogsVolume];
+    if (!logsVolume?.data && autoLoadLogsVolume) {
+      dispatch(loadDataProvider(exploreId, QueryRelatedDataType.LogsVolume));
     }
   };
 }
 
-export function loadLogsVolume(exploreId: ExploreId): ThunkResult<void> {
+export function loadDataProvider(exploreId: ExploreId, type: QueryRelatedDataType): ThunkResult<void> {
   return (dispatch, getState) => {
     const state = getState().explore[exploreId]!;
-
-    state.logsVolumeProvider?.getData().subscribe({
-      next: (logsVolume: LogsVolume) => {
-        dispatch(updateLogsVolumeAction({ exploreId, logsVolume }));
+    const dataProvider = state.queryRelatedDataProviders[type];
+    dataProvider?.getData().subscribe({
+      next: (data: any) => {
+        dispatch(updateDataProviderResultAction({ exploreId, type, data }));
       },
     });
   };
@@ -705,21 +703,24 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (updateLogsVolumeProviderAction.match(action)) {
-    let { logsVolumeProvider } = action.payload;
+  if (storeDataProvidersAction.match(action)) {
+    let { queryRelatedDataProviders } = action.payload;
     return {
       ...state,
-      logsVolumeProvider,
-      logsVolume: {},
+      queryRelatedDataProviders,
+      queryRelatedData: {},
     };
   }
 
-  if (updateLogsVolumeAction.match(action)) {
-    let { logsVolume } = action.payload;
+  if (updateDataProviderResultAction.match(action)) {
+    let { data, type } = action.payload;
 
     return {
       ...state,
-      logsVolume,
+      queryRelatedData: {
+        ...state.queryRelatedData,
+        [type]: data,
+      },
     };
   }
 

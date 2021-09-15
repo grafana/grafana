@@ -19,12 +19,13 @@ import {
   dateMath,
   DateTime,
   FieldCache,
-  QueryRelatedDataProviders,
   LoadingState,
   LogRowModel,
   QueryResultMeta,
   ScopedVars,
   TimeRange,
+  QueryRelatedDataType,
+  QueryRelatedDataProviders,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -111,7 +112,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     } else {
       const logsVolumeProvider = new LokiLogsVolumeProvider(this, request);
       return {
-        logsVolume: logsVolumeProvider,
+        [QueryRelatedDataType.LogsVolume]: logsVolumeProvider,
       };
     }
   }
