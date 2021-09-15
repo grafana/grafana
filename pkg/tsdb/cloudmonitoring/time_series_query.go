@@ -35,11 +35,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	}
 
 	intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
-	interval, err := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, intervalv2.Min)
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
+	interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
 
 	from := req.Queries[0].TimeRange.From
 	to := req.Queries[0].TimeRange.To
