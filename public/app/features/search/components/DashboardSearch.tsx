@@ -1,7 +1,8 @@
 import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
-import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { styleMixins, useTheme2, CustomScrollbar, IconButton } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
@@ -13,10 +14,11 @@ export interface Props {
 }
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
+  const navPosition = contextSrv.user.navPosition;
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const theme = useTheme2();
+  const styles = getStyles(theme, navPosition);
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -56,46 +58,47 @@ DashboardSearch.displayName = 'DashboardSearch';
 
 export default DashboardSearch;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    overlay: css`
-      left: 0;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      z-index: ${theme.zIndex.sidemenu};
-      position: fixed;
-      background: ${theme.colors.dashboardBg};
+const getStyles = (theme: GrafanaTheme2, navPosition: typeof contextSrv.user.navPosition) => ({
+  overlay: css`
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: ${theme.zIndex.sidemenu};
+    position: fixed;
+    background: ${theme.colors.background.canvas};
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        left: 60px;
-        z-index: ${theme.zIndex.navbarFixed + 1};
-      }
-    `,
-    container: css`
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: ${theme.spacing.md};
+    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+      bottom: ${navPosition === 'bottom' ? `${theme.components.sidemenu.width}px` : 0};
+      left: ${navPosition === 'left' ? `${theme.components.sidemenu.width}px` : 0};
+      right: ${navPosition === 'right' ? `${theme.components.sidemenu.width}px` : 0};
+      top: ${navPosition === 'top' ? `${theme.components.sidemenu.width}px` : 0};
+      z-index: ${theme.zIndex.navbarFixed + 1};
+    }
+  `,
+  container: css`
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: ${theme.spacing(4)};
 
-      height: 100%;
+    height: 100%;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        padding: 32px;
-      }
-    `,
-    closeBtn: css`
-      right: -5px;
-      top: 2px;
-      z-index: 1;
-      position: absolute;
-    `,
-    searchField: css`
-      position: relative;
-    `,
-    search: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    `,
-  };
+    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+      padding: 32px;
+    }
+  `,
+  closeBtn: css`
+    right: -5px;
+    top: 2px;
+    z-index: 1;
+    position: absolute;
+  `,
+  searchField: css`
+    position: relative;
+  `,
+  search: css`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  `,
 });

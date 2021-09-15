@@ -77,13 +77,14 @@ const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPos
   sidemenu: css`
     border-${getOpposite(position)}: 1px solid ${theme.components.panel.borderColor};
     display: flex;
-    flex-direction: ${isHorizontal(position) ? 'row' : 'column'};
+    flex-direction: column;
     min-width: ${theme.components.sidemenu.width}px;
     position: fixed;
     z-index: ${theme.zIndex.sidemenu};
 
     @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
       background-color: ${theme.colors.background.primary};
+      flex-direction: ${isHorizontal(position) ? 'row' : 'column'};
       position: relative;
     }
 
