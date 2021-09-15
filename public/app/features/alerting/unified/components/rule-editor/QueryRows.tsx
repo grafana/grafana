@@ -74,8 +74,9 @@ export class QueryRows extends PureComponent<Props, State> {
             ...query,
             model: {
               ...query.model,
-              conditions: query.model.conditions.map((condition) => {
-                if (condition.query.params[0] === referencedRefId) {
+              conditions: query.model.conditions.map((condition, conditionIndex) => {
+                // Only update the first condition for a given refId.
+                if (condition.query.params[0] === referencedRefId && conditionIndex === 0) {
                   return {
                     ...condition,
                     evaluator: {
@@ -186,12 +187,15 @@ export class QueryRows extends PureComponent<Props, State> {
         continue;
       }
 
-      for (const condition of query.model.conditions) {
+      query.model.conditions.forEach((condition, index) => {
+        if (index > 0) {
+          return;
+        }
         const threshold = condition.evaluator.params[0];
         const refId = condition.query.params[0];
 
         if (condition.evaluator.type === 'outside_range' || condition.evaluator.type === 'within_range') {
-          continue;
+          return;
         }
         if (!record[refId]) {
           record[refId] = {
@@ -209,7 +213,7 @@ export class QueryRows extends PureComponent<Props, State> {
           value: threshold,
           color: 'red',
         });
-      }
+      });
     }
 
     return record;
