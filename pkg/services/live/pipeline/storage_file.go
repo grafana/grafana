@@ -64,25 +64,96 @@ func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule Cha
 	if err != nil {
 		return rule, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
 	}
-
 	for _, existingRule := range channelRules.Rules {
+		if rule.Uid == existingRule.Uid {
+			return rule, fmt.Errorf("uid already exists: %s", rule.Uid)
+		}
 		if rule.Pattern == existingRule.Pattern {
-			return rule, fmt.Errorf("rule exists: %s", rule.Pattern)
+			return rule, fmt.Errorf("pattern already exists: %s", rule.Pattern)
 		}
 	}
-
 	channelRules.Rules = append(channelRules.Rules, rule)
+	err = f.saveChannelRules(channelRules)
+	return rule, err
+}
 
-	file, err := os.OpenFile(ruleFile, os.O_RDWR|os.O_CREATE, 0600)
+func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+
+	ruleBytes, err := ioutil.ReadFile(ruleFile)
 	if err != nil {
-		return rule, fmt.Errorf("can't open channel rule file: %w", err)
+		return rule, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
+	}
+	var channelRules ChannelRules
+	err = json.Unmarshal(ruleBytes, &channelRules)
+	if err != nil {
+		return rule, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+	}
+
+	index := -1
+
+	for i, existingRule := range channelRules.Rules {
+		if rule.Uid == existingRule.Uid {
+			index = i
+			break
+		}
+	}
+	if index > 0 {
+		channelRules.Rules[index] = rule
+	} else {
+		return rule, fmt.Errorf("rule not found")
+	}
+
+	err = f.saveChannelRules(channelRules)
+	return rule, err
+}
+
+func removeChannelRuleByIndex(s []ChannelRule, index int) []ChannelRule {
+	return append(s[:index], s[index+1:]...)
+}
+
+func (f *FileStorage) saveChannelRules(rules ChannelRules) error {
+	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+	file, err := os.OpenFile(ruleFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("can't open channel rule file: %w", err)
 	}
 	defer func() { _ = file.Close() }()
 	enc := json.NewEncoder(file)
 	enc.SetIndent("", "  ")
-	err = enc.Encode(channelRules)
+	err = enc.Encode(rules)
 	if err != nil {
-		return rule, fmt.Errorf("can't save rules to file: %w", err)
+		return fmt.Errorf("can't save rules to file: %w", err)
 	}
-	return rule, nil
+	return nil
+}
+
+func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, uid string) error {
+	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+
+	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	if err != nil {
+		return fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
+	}
+	var channelRules ChannelRules
+	err = json.Unmarshal(ruleBytes, &channelRules)
+	if err != nil {
+		return fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+	}
+
+	index := -1
+	for i, existingRule := range channelRules.Rules {
+		if uid == existingRule.Uid {
+			index = i
+			break
+		}
+	}
+
+	if index > -1 {
+		channelRules.Rules = removeChannelRuleByIndex(channelRules.Rules, index)
+	} else {
+		return fmt.Errorf("rule not found")
+	}
+
+	return f.saveChannelRules(channelRules)
 }
