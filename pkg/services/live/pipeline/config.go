@@ -102,6 +102,7 @@ type ConditionCheckerConfig struct {
 type RuleStorage interface {
 	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
+	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
 }
 
 type StorageRuleBuilder struct {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -49,4 +50,39 @@ func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]Channe
 		}
 	}
 	return rules, nil
+}
+
+func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+
+	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	if err != nil {
+		return rule, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
+	}
+	var channelRules ChannelRules
+	err = json.Unmarshal(ruleBytes, &channelRules)
+	if err != nil {
+		return rule, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+	}
+
+	for _, existingRule := range channelRules.Rules {
+		if rule.Pattern == existingRule.Pattern {
+			return rule, fmt.Errorf("rule exists: %s", rule.Pattern)
+		}
+	}
+
+	channelRules.Rules = append(channelRules.Rules, rule)
+
+	file, err := os.OpenFile(ruleFile, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		return rule, fmt.Errorf("can't open channel rule file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+	enc := json.NewEncoder(file)
+	enc.SetIndent("", "  ")
+	err = enc.Encode(channelRules)
+	if err != nil {
+		return rule, fmt.Errorf("can't save rules to file: %w", err)
+	}
+	return rule, nil
 }

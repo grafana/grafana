@@ -2,8 +2,10 @@ package live
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -838,6 +840,26 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
 		"rules": result,
+	})
+}
+
+// HandleChannelRulesPostHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	result, err := g.channelRuleStorage.CreateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": result,
 	})
 }
 
