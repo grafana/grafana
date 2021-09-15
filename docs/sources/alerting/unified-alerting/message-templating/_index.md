@@ -8,7 +8,7 @@ weight = 400
 
 # Message templating
 
-Notifications sent via [contact points]({{< relref "../contact-points.md" >}}) are built using templates. Grafana comes with default templates which you can customize. Grafana's notification templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML which can affect escaping. Since most of the contact point fields can be templated, you can create reusable templates and them in multiple contact points. See [template data reference]({{< relref "./template-data.md" >}}) to check what variables are available in the templates.
+Notifications sent via [contact points]({{< relref "../contact-points.md" >}}) are built using templates. Grafana comes with default templates which you can customize. Grafana's notification templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML which can affect escaping. Since most of the contact point fields can be templated, you can create reusable templates and them in multiple contact points. See [template data reference]({{< relref "./template-data.md" >}}) to check what variables are available in the templates. The default template is defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go) which can serve as a useful reference or starting point for custom templates.
 
 ## Using templating in contact point fields
 

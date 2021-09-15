@@ -130,7 +130,7 @@ func (inj *injector) fastInvoke(f FastInvoker, t reflect.Type, numIn int) ([]ref
 			argType = t.In(i)
 			val = inj.GetVal(argType)
 			if !val.IsValid() {
-				return nil, fmt.Errorf("Value not found for type %v", argType)
+				return nil, fmt.Errorf("value not found for type %v", argType)
 			}
 
 			in[i] = val.Interface()
@@ -150,7 +150,7 @@ func (inj *injector) callInvoke(f interface{}, t reflect.Type, numIn int) ([]ref
 			argType = t.In(i)
 			val = inj.GetVal(argType)
 			if !val.IsValid() {
-				return nil, fmt.Errorf("Value not found for type %v", argType)
+				return nil, fmt.Errorf("value not found for type %v", argType)
 			}
 
 			in[i] = val

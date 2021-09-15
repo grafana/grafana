@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -100,7 +101,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
-	pluginID := c.Params(":pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	def := hs.PluginManager.GetPlugin(pluginID)
 	if def == nil {
@@ -145,7 +146,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
-	pluginID := c.Params(":pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	if app := hs.PluginManager.GetApp(pluginID); app == nil {
 		return response.Error(404, "Plugin not installed", nil)
@@ -161,7 +162,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.Updat
 }
 
 func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
-	pluginID := c.Params(":pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	list, err := hs.PluginManager.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
@@ -177,8 +178,8 @@ func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
-	pluginID := c.Params(":pluginId")
-	name := c.Params(":name")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
+	name := macaron.Params(c.Req)[":name"]
 
 	content, err := hs.PluginManager.GetPluginMarkdown(pluginID, name)
 	if err != nil {
@@ -235,7 +236,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 //
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
 		return response.Error(404, "Plugin not found", nil)
@@ -256,14 +257,14 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 //
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
-	pluginID := c.Params("pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
 
-	requestedFile := filepath.Clean(c.Params("*"))
+	requestedFile := filepath.Clean(macaron.Params(c.Req)["*"])
 	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
 
 	if !plugin.IncludedInSignature(requestedFile) {
@@ -307,7 +308,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 // CheckHealth returns the health of a plugin.
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
 	if err != nil {
@@ -349,7 +350,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 //
 // /api/plugins/:pluginId/resources/*
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
-	pluginID := c.Params("pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
 	if err != nil {
@@ -360,7 +361,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
-	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
+	hs.BackendPluginManager.CallResource(pCtx, c, macaron.Params(c.Req)["*"])
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
@@ -368,7 +369,7 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	err := hs.PluginManager.Install(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
@@ -399,7 +400,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 }
 
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
-	pluginID := c.Params("pluginId")
+	pluginID := macaron.Params(c.Req)[":pluginId"]
 
 	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)
 	if err != nil {

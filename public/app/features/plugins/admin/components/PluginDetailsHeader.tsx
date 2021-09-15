@@ -1,27 +1,22 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
 import { InstallControls } from './InstallControls';
-import { usePluginDetails } from '../hooks/usePluginDetails';
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
+import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependencies';
 import { PluginLogo } from './PluginLogo';
+import { CatalogPlugin } from '../types';
 
 type Props = {
-  parentUrl: string;
   currentUrl: string;
-  pluginId?: string;
+  parentUrl: string;
+  plugin: CatalogPlugin;
 };
 
-export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props): React.ReactElement | null {
+export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const { state, dispatch } = usePluginDetails(pluginId!);
-  const { plugin, pluginConfig, isInflight, hasUpdate, isInstalled, hasInstalledPanel } = state;
-
-  if (!plugin) {
-    return null;
-  }
 
   return (
     <div className={styles.headerContainer}>
@@ -53,12 +48,12 @@ export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props):
           </ol>
         </nav>
 
-        <div className={styles.headerInformation}>
+        <div className={styles.headerInformationRow}>
           {/* Org name */}
           <span>{plugin.orgName}</span>
 
           {/* Links */}
-          {plugin.links.map((link: any) => (
+          {plugin.details?.links.map((link: any) => (
             <a key={link.name} href={link.url}>
               {link.name}
             </a>
@@ -76,19 +71,17 @@ export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props):
           {plugin.version && <span>{plugin.version}</span>}
 
           {/* Signature information */}
-          <PluginDetailsHeaderSignature installedPlugin={pluginConfig} />
+          <PluginDetailsHeaderSignature plugin={plugin} />
         </div>
+
+        <PluginDetailsHeaderDependencies
+          plugin={plugin}
+          className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
+        />
 
         <p>{plugin.description}</p>
 
-        <InstallControls
-          plugin={plugin}
-          isInflight={isInflight}
-          hasUpdate={hasUpdate}
-          isInstalled={isInstalled}
-          hasInstalledPanel={hasInstalledPanel}
-          dispatch={dispatch}
-        />
+        <InstallControls plugin={plugin} />
       </div>
     </div>
   );
@@ -119,11 +112,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    headerInformation: css`
+    headerInformationRow: css`
       display: flex;
       align-items: center;
       margin-top: ${theme.spacing()};
-      margin-bottom: ${theme.spacing(3)};
+      margin-bottom: ${theme.spacing()};
 
       & > * {
         &::after {
@@ -136,6 +129,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
       font-size: ${theme.typography.h4.fontSize};
+    `,
+    headerInformationRowSecondary: css`
+      font-size: ${theme.typography.body.fontSize};
     `,
     headerOrgName: css`
       font-size: ${theme.typography.h4.fontSize};

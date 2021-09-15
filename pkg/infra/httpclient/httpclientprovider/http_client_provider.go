@@ -25,6 +25,7 @@ func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
+		ResponseLimitMiddleware(cfg.ResponseLimit),
 	}
 
 	if cfg.SigV4AuthEnabled {

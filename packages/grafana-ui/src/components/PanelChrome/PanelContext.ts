@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus, DashboardCursorSync, AnnotationEventUIModel } from '@grafana/data';
+import { AnnotationEventUIModel, DashboardCursorSync, EventBus, EventBusSrv, SplitOpen } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
@@ -22,6 +22,11 @@ export interface PanelContext {
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
+  /**
+   * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
+   * For example TimeSeries panel.
+   */
+  onSplitOpen?: SplitOpen;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
