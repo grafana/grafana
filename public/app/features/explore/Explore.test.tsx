@@ -85,7 +85,7 @@ const dummyProps: Props = {
   splitOpen: (() => {}) as any,
   relatedData: {},
   relatedDataProviders: {},
-  loadDataProvider: () => {},
+  loadRelatedData: () => {},
 };
 
 describe('Explore', () => {
