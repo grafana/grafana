@@ -21,7 +21,6 @@ import (
 )
 
 var (
-	SyncOrgsPollInterval    = 1 * time.Minute
 	ErrNoAlertmanagerForOrg = fmt.Errorf("Alertmanager does not exist for this organization")
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
@@ -96,7 +95,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			moa.StopAndWait()
 			return nil
-		case <-time.After(SyncOrgsPollInterval):
+		case <-time.After(moa.settings.AlertmanagerConfigPollInterval):
 			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
 				moa.logger.Error("error while synchronizing Alertmanager orgs", "err", err)
 			}

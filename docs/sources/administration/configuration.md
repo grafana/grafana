@@ -1125,6 +1125,12 @@ Specify the frequency of polling for admin config changes. The default value is 
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### alertmanager_config_poll_interval
+
+Specify the frequency of polling for Alertmanager config changes.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
 ### ha_listen_address
 
 TODO - what does this really mean?: Listen address and port to receive messages for other Grafana instances.

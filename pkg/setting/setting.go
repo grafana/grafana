@@ -420,13 +420,14 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	AdminConfigPollInterval time.Duration
-	HAListenAddr            string
-	HAAdvertiseAddr         string
-	HAPeers                 []string
-	HAPeerTimeout           time.Duration
-	HAGossipInterval        time.Duration
-	HAPushPullInterval      time.Duration
+	AdminConfigPollInterval        time.Duration
+	AlertmanagerConfigPollInterval time.Duration
+	HAListenAddr                   string
+	HAAdvertiseAddr                string
+	HAPeers                        []string
+	HAPeerTimeout                  time.Duration
+	HAGossipInterval               time.Duration
+	HAPushPullInterval             time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -1383,6 +1384,10 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	var err error
 	cfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (60 * time.Second).String()))
+	if err != nil {
+		return err
+	}
+	cfg.AlertmanagerConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "alertmanager_config_poll_interval", (60 * time.Second).String()))
 	if err != nil {
 		return err
 	}

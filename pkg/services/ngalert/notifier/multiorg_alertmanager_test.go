@@ -30,11 +30,14 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
 
-	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	kvStore := newFakeKVStore(t)
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	cfg := &setting.Cfg{
+		DataPath:                       tmpDir,
+		AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests
+	}
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -90,16 +93,16 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
-
-	t.TempDir()
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
-
-	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
+	cfg := &setting.Cfg{
+		DataPath:                       tmpDir,
+		AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests
+	}
 	kvStore := newFakeKVStore(t)
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 
