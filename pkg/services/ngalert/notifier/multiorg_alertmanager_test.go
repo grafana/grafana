@@ -22,9 +22,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	}
 
 	tmpDir, err := ioutil.TempDir("", "test")
-	if err != nil {
-		t.Fatalf("ioutil.TempDir() err = %v", err)
-	}
+	require.NoError(t, err)
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	kvStore := newFakeKVStore(t)
@@ -61,9 +59,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	}
 
 	tmpDir, err := ioutil.TempDir("", "test")
-	if err != nil {
-		t.Fatalf("ioutil.TempDir() err = %v", err)
-	}
+	require.NoError(t, err)
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	kvStore := newFakeKVStore(t)
@@ -112,8 +108,6 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 func cleanOrgDirectories(path string, t *testing.T) func() {
 	return func() {
-		if err := os.RemoveAll(path); err != nil {
-			t.Fatalf("os.RemoveAll() err = %v", err)
-		}
+		require.NoError(t, os.RemoveAll(path))
 	}
 }
