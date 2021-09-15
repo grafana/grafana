@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"time"
 
@@ -16,16 +17,13 @@ import (
 // and labels template.
 type templateCaptureValue struct {
 	Labels map[string]string
-	Value  *float64
+	Value  float64
 }
 
 // String implements the Stringer interface to print the value of each RefID
 // in the template via {{ $values.A }} rather than {{ $values.A.Value }}.
 func (v templateCaptureValue) String() string {
-	if v.Value != nil {
-		return strconv.FormatFloat(*v.Value, 'f', -1, 64)
-	}
-	return "null"
+	return strconv.FormatFloat(v.Value, 'f', -1, 64)
 }
 
 func expandTemplate(name, text string, labels map[string]string, alertInstance eval.Result) (result string, resultErr error) {
@@ -37,7 +35,7 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 		Value  string
 	}{
 		Labels: labels,
-		Values: newTemplateCaptureValueMap(alertInstance.Values),
+		Values: newTemplateCaptureValues(alertInstance.Values),
 		Value:  alertInstance.EvaluationString,
 	}
 
@@ -57,12 +55,18 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	return expander.Expand()
 }
 
-func newTemplateCaptureValueMap(values map[string]eval.NumberValueCapture) map[string]templateCaptureValue {
+func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[string]templateCaptureValue {
 	m := make(map[string]templateCaptureValue)
 	for k, v := range values {
+		var f float64
+		if v.Value != nil {
+			f = *v.Value
+		} else {
+			f = math.NaN()
+		}
 		m[k] = templateCaptureValue{
 			Labels: v.Labels,
-			Value:  v.Value,
+			Value:  f,
 		}
 	}
 	return m
