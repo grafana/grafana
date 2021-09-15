@@ -2,7 +2,7 @@ import { includes, isDate } from 'lodash';
 import { DateTime, dateTime, dateTimeForTimeZone, ISO_8601, isDateTime, DurationUnit } from './moment_wrapper';
 import { TimeZone } from '../types/index';
 
-const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'];
 
 export function isMathString(text: string | DateTime | Date): boolean {
   if (!text) {
@@ -189,7 +189,7 @@ export function roundToFiscal(FYStartMonth: number, dateTime: any, unit: string,
         }
       }
       return dateTime;
-    case 'q':
+    case 'Q':
       if (roundUp) {
         roundToFiscal(FYStartMonth, dateTime, unit, false).add(2, 'M').endOf('M');
       } else {
