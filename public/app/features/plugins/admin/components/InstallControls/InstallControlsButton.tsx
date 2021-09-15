@@ -18,7 +18,9 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
   const uninstall = useUninstall();
-  const [hasRequestedUninstall, setHasRequestedUninstall] = useState(false);
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const showConfirmModal = () => setIsConfirmModalVisible(true);
+  const hideConfirmModal = () => setIsConfirmModalVisible(false);
   const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
   const styles = useStyles2(getStyles);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
@@ -35,6 +37,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   };
 
   const onUninstall = async () => {
+    hideConfirmModal();
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
@@ -52,16 +55,16 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
     return (
       <>
         <ConfirmModal
-          isOpen={hasRequestedUninstall}
+          isOpen={isConfirmModalVisible}
           title={`Uninstall ${plugin.name}`}
           body="Are you sure you want to uninstall this plugin?"
           confirmText="Confirm"
           icon="exclamation-triangle"
           onConfirm={onUninstall}
-          onDismiss={() => setHasRequestedUninstall(false)}
+          onDismiss={hideConfirmModal}
         />
         <HorizontalGroup height="auto">
-          <Button variant="destructive" disabled={isUninstalling} onClick={() => setHasRequestedUninstall(true)}>
+          <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
           {hasInstalledPanel && (
