@@ -172,9 +172,9 @@ func (d *SampleDatasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 
 ### Sign and load backend plugins
 
-Before you can run a backend plugin on Grafana installations, you must sign the plugin. Grafana Labs strongly recommends you upload signed plugins since we cannot guarantee the integrity of unsigned plugins.
+We strongly recommend that you not allow unsigned plugins in your Grafana installation. By allowing unsigned plugins, we cannot guarantee the authenticity of the plugin, which could compromise the security of your Grafana installation.
 
-For instructions on plugin signing, refer to the [Plugin signatures](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) topic.
+To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
 You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use [this configuration setting.]({{< relref "../administration/#allow_loading_unsigned_plugins" >}})
 
