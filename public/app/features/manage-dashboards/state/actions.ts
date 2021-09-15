@@ -17,7 +17,6 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DashboardSearchHit } from '../../search/types';
 import { getLibraryPanel } from '../../library-panels/state/api';
-import { isEqual } from 'lodash';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 
@@ -98,97 +97,23 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
           kind: LibraryElementKind.Panel,
           description,
         } as LibraryElementDTO,
-        state: LibraryPanelInputState.Missing,
+        state: LibraryPanelInputState.New,
       };
 
       try {
         const panelInDb = await getLibraryPanel(uid, true);
-        if (!libraryPanelsAreEqual(panelInDb, element)) {
-          input.state = LibraryPanelInputState.Different;
-        } else {
-          input.state = LibraryPanelInputState.Exits;
-        }
+        input.state = LibraryPanelInputState.Exits;
+        input.model = panelInDb;
       } catch (e: any) {
         if (e.status !== 404) {
           throw e;
         }
-
-        input.state = LibraryPanelInputState.Missing;
       }
 
       libraryPanelInputs.push(input);
     }
 
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
-  };
-}
-
-function libraryPanelsAreEqual(elementA: LibraryElementDTO, elementB: LibraryElementExport) {
-  if (!elementA && !elementB) {
-    return true;
-  }
-
-  if (!elementA && elementB) {
-    return false;
-  }
-
-  if (elementA && !elementB) {
-    return false;
-  }
-
-  if (elementA.name === elementB.name && elementA.kind === elementB.kind) {
-    // naive compare function, will not catch diffs within same panel type
-    const panelA = getComparablePanelModel(elementA.model);
-    const panelB = getComparablePanelModel(elementB.model);
-    return isEqual(panelA, panelB);
-  }
-
-  return false;
-}
-
-function getComparablePanelModel(panel: any) {
-  const {
-    title,
-    description,
-    type,
-    targets,
-    datasource,
-    transformations,
-    fieldConfig,
-    timeFrom,
-    timeShift,
-    minSpan,
-    repeat,
-    repeatPanelId,
-    repeatDirection,
-    repeatedByRow,
-    hideTimeOverride,
-    cacheTimeout,
-    transparent,
-    maxDataPoints,
-    interval,
-  } = panel;
-
-  return {
-    title,
-    description,
-    type,
-    targets,
-    datasource,
-    transformations,
-    fieldConfig,
-    timeFrom,
-    timeShift,
-    minSpan,
-    repeat,
-    repeatPanelId,
-    repeatDirection,
-    repeatedByRow,
-    hideTimeOverride,
-    cacheTimeout,
-    transparent,
-    maxDataPoints,
-    interval,
   };
 }
 

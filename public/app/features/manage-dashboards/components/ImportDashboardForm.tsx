@@ -14,7 +14,13 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
+import {
+  DashboardInput,
+  DashboardInputs,
+  DataSourceInput,
+  ImportDashboardDTO,
+  LibraryPanelInputState,
+} from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
 
@@ -54,6 +60,8 @@ export const ImportDashboardForm: FC<Props> = ({
       onSubmit(getValues(), {} as any);
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
+  const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
+  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exits) ?? [];
 
   return (
     <>
@@ -139,7 +147,18 @@ export const ImportDashboardForm: FC<Props> = ({
             </Field>
           );
         })}
-      <ImportDashboardLibraryPanelsList inputs={inputs.libraryPanels} folderName={watchFolder.title} />
+      <ImportDashboardLibraryPanelsList
+        inputs={newLibraryPanels}
+        label="New library panels"
+        description="Lists all new library panels. These library panels will be imported."
+        folderName={watchFolder.title}
+      />
+      <ImportDashboardLibraryPanelsList
+        inputs={existingLibraryPanels}
+        label="Existing library panels"
+        description="Lists all library panels that already exist. These library panels won't be re-imported."
+        folderName={watchFolder.title}
+      />
       <HorizontalGroup>
         <Button
           type="submit"
