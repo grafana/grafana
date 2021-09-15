@@ -30,7 +30,7 @@ type UsageStatsService struct {
 	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	AlertingUsageStats alerting.UsageStatsQuerier
-	pluginManager      plugins.Store
+	pluginStore        plugins.Store
 	SocialService      social.Service
 	grafanaLive        *live.GrafanaLive
 
@@ -53,7 +53,7 @@ type liveUsageStats struct {
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
-	alertingStats alerting.UsageStatsQuerier, pluginManager plugins.Store,
+	alertingStats alerting.UsageStatsQuerier, pluginStore plugins.Store,
 	socialService social.Service, grafanaLive *live.GrafanaLive) *UsageStatsService {
 	s := &UsageStatsService{
 		Cfg:                cfg,
@@ -61,7 +61,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		SQLStore:           sqlStore,
 		AlertingUsageStats: alertingStats,
 		oauthProviders:     socialService.GetOAuthProviders(),
-		pluginManager:      pluginManager,
+		pluginStore:        pluginStore,
 		grafanaLive:        grafanaLive,
 		log:                log.New("infra.usagestats"),
 	}

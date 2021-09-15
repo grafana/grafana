@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/rendering"
 
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -40,11 +39,11 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	pm := &manager.PluginManager{Cfg: cfg}
+	ps := &fakePluginStore{}
 
 	r := &rendering.RenderingService{
-		Cfg:           cfg,
-		PluginManager: pm,
+		Cfg:         cfg,
+		PluginStore: ps,
 	}
 
 	hs := &HTTPServer{
@@ -53,7 +52,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 		License:       &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: r,
 		SQLStore:      sqlStore,
-		pluginStore:   pm,
+		pluginStore:   ps,
 	}
 
 	m := macaron.New()

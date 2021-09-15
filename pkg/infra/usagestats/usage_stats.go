@@ -386,7 +386,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
-	ds := uss.pluginManager.Plugin(dsType)
+	ds := uss.pluginStore.Plugin(dsType)
 	if ds == nil {
 		return false
 	}
@@ -395,13 +395,13 @@ func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
 }
 
 func (uss *UsageStatsService) appCount() int {
-	return len(uss.pluginManager.Plugins(plugins.App))
+	return len(uss.pluginStore.Plugins(plugins.App))
 }
 
 func (uss *UsageStatsService) panelCount() int {
-	return len(uss.pluginManager.Plugins(plugins.Panel))
+	return len(uss.pluginStore.Plugins(plugins.Panel))
 }
 
 func (uss *UsageStatsService) dataSourceCount() int {
-	return len(uss.pluginManager.Plugins(plugins.DataSource))
+	return len(uss.pluginStore.Plugins(plugins.DataSource))
 }

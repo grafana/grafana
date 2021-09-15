@@ -8,11 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(pluginManager plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
+func ProvideService(pluginStore plugins.Store, pluginDashboardManager plugins.PluginDashboardManager,
 	sqlStore *sqlstore.SQLStore) *Service {
 	s := &Service{
 		sqlStore:               sqlStore,
-		pluginManager:          pluginManager,
+		pluginStore:            pluginStore,
 		pluginDashboardManager: pluginDashboardManager,
 		logger:                 log.New("plugindashboards"),
 	}
@@ -23,7 +23,7 @@ func ProvideService(pluginManager plugins.Store, pluginDashboardManager plugins.
 
 type Service struct {
 	sqlStore               *sqlstore.SQLStore
-	pluginManager          plugins.Store
+	pluginStore            plugins.Store
 	pluginDashboardManager plugins.PluginDashboardManager
 
 	logger log.Logger
@@ -44,7 +44,7 @@ func (s *Service) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef := s.pluginManager.Plugin(pluginSetting.PluginId); pluginDef != nil {
+		if pluginDef := s.pluginStore.Plugin(pluginSetting.PluginId); pluginDef != nil {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
 				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
 			}
@@ -109,7 +109,7 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		s.syncPluginDashboards(s.pluginManager.Plugin(event.PluginId), event.OrgId)
+		s.syncPluginDashboards(s.pluginStore.Plugin(event.PluginId), event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
 		if err := bus.Dispatch(&query); err != nil {

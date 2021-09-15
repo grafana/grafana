@@ -50,7 +50,7 @@ type RenderingService struct {
 
 	Cfg                *setting.Cfg
 	RemoteCacheService *remotecache.RemoteCache
-	PluginManager      plugins.Store
+	PluginStore        plugins.Store
 }
 
 type RendererPluginManager interface {
@@ -91,7 +91,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 	s := &RenderingService{
 		Cfg:                cfg,
 		RemoteCacheService: remoteCache,
-		PluginManager:      pm,
+		PluginStore:        pm,
 		log:                log.New("rendering"),
 		domain:             domain,
 	}
@@ -101,7 +101,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 func (rs *RenderingService) Run(ctx context.Context) error {
 	<-ctx.Done()
 
-	p := rs.PluginManager.Renderer()
+	p := rs.PluginStore.Renderer()
 	if p != nil {
 		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
 		debugFilePath := path.Join(p.PluginDir, "chrome-win/debug.log")
@@ -118,7 +118,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return rs.PluginManager.Renderer() != nil
+	return rs.PluginStore.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -211,7 +211,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 			return nil, err
 		}
 
-		rs.version = rs.PluginManager.Renderer().Info.Version
+		rs.version = rs.PluginStore.Renderer().Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 	}
@@ -344,7 +344,7 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 }
 
 func (rs *RenderingService) StartRenderer(ctx context.Context) error {
-	return rs.PluginManager.Renderer().Start(ctx)
+	return rs.PluginStore.Renderer().Start(ctx)
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {

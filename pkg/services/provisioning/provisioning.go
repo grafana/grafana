@@ -22,7 +22,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		SQLStore:                sqlStore,
-		PluginManager:           pluginStore,
+		pluginStore:             pluginStore,
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: dashboards.New,
 		provisionNotifiers:      notifiers.Provision,
@@ -73,7 +73,7 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
-	PluginManager           plugifaces.Store
+	pluginStore             plugifaces.Store
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
@@ -140,7 +140,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources() error {
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath, ps.PluginManager)
+	err := ps.provisionPlugins(appPath, ps.pluginStore)
 	return errutil.Wrap("app provisioning error", err)
 }
 

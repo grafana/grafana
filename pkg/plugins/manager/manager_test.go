@@ -40,9 +40,9 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = ""
-			pm.Cfg.BundledPluginsPath = bundledPluginsPath
-			pm.Cfg.StaticRootPath = staticRootPath
+			pm.cfg.PluginsPath = ""
+			pm.cfg.BundledPluginsPath = bundledPluginsPath
+			pm.cfg.StaticRootPath = staticRootPath
 		})
 		err = pm.init()
 		require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("Base case with single external plugin", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginSettings = setting.PluginSettings{
+			pm.cfg.PluginSettings = setting.PluginSettings{
 				"nginx-app": map[string]string{
 					"path": "testdata/test-app",
 				},
@@ -74,8 +74,8 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With external back-end plugin lacking signature (production)", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
-			pm.Cfg.Env = setting.Prod
+			pm.cfg.PluginsPath = "testdata/unsigned-datasource"
+			pm.cfg.Env = setting.Prod
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -88,8 +88,8 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With external back-end plugin lacking signature (development)", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
-			pm.Cfg.Env = setting.Dev
+			pm.cfg.PluginsPath = "testdata/unsigned-datasource"
+			pm.cfg.Env = setting.Dev
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -105,8 +105,8 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With external panel plugin lacking signature (production)", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned-panel"
-			pm.Cfg.Env = setting.Prod
+			pm.cfg.PluginsPath = "testdata/unsigned-panel"
+			pm.cfg.Env = setting.Prod
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -119,8 +119,8 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With external panel plugin lacking signature (development)", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned-panel"
-			pm.Cfg.Env = setting.Dev
+			pm.cfg.PluginsPath = "testdata/unsigned-panel"
+			pm.cfg.Env = setting.Dev
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -136,8 +136,8 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With external unsigned back-end plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
-			pm.Cfg.PluginsAllowUnsigned = []string{"test"}
+			pm.cfg.PluginsPath = "testdata/unsigned-datasource"
+			pm.cfg.PluginsAllowUnsigned = []string{"test"}
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With external back-end plugin with invalid v1 signature", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/invalid-v1-signature"
+			pm.cfg.PluginsPath = "testdata/invalid-v1-signature"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -161,7 +161,7 @@ func TestPluginManager_Init(t *testing.T) {
 	t.Run("With external back-end plugin lacking files listed in manifest", func(t *testing.T) {
 		fm := &fakeBackendPluginManager{}
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/lacking-files"
+			pm.cfg.PluginsPath = "testdata/lacking-files"
 			pm.BackendPluginManager = fm
 		})
 		err := pm.init()
@@ -172,7 +172,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With nested plugin duplicating parent", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/duplicate-plugins"
+			pm.cfg.PluginsPath = "testdata/duplicate-plugins"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -185,7 +185,7 @@ func TestPluginManager_Init(t *testing.T) {
 		const pluginsDir = "testdata/valid-v2-signature"
 		const pluginFolder = pluginsDir + "/plugin"
 		pm := createManager(t, func(manager *PluginManager) {
-			manager.Cfg.PluginsPath = pluginsDir
+			manager.cfg.PluginsPath = pluginsDir
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -272,7 +272,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppUrl = "http://localhost:1234"
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
+			pm.cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -292,7 +292,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppSubUrl = "/grafana"
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
+			pm.cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -318,7 +318,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
+			pm.cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -344,7 +344,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature"
+			pm.cfg.PluginsPath = "testdata/invalid-v2-signature"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -360,7 +360,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature-2"
+			pm.cfg.PluginsPath = "testdata/invalid-v2-signature-2"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -376,7 +376,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/includes-symlinks"
+			pm.cfg.PluginsPath = "testdata/includes-symlinks"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -405,7 +405,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
+			pm.cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
 		})
 		err := pm.init()
 		require.NoError(t, err)
@@ -452,10 +452,10 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		// Set plugin location (we do this after manager Init() so that
 		// it doesn't install the plugin automatically)
-		pm.Cfg.PluginsPath = "testdata/installer"
+		pm.cfg.PluginsPath = "testdata/installer"
 
 		pluginID := "test"
-		pluginFolder := pm.Cfg.PluginsPath + "/plugin"
+		pluginFolder := pm.cfg.PluginsPath + "/plugin"
 
 		err = pm.Install(context.Background(), pluginID, "1.0.0")
 		require.NoError(t, err)
@@ -616,7 +616,7 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 		assert.NotNil(t, pm.plugins[pluginID])
 		for _, route := range pm.staticRoutes {
 			if pluginID == route.PluginId {
-				assert.True(t, strings.HasPrefix(route.Directory, pm.Cfg.BundledPluginsPath+"/"+pluginDir))
+				assert.True(t, strings.HasPrefix(route.Directory, pm.cfg.BundledPluginsPath+"/"+pluginDir))
 			}
 		}
 	}
@@ -1042,7 +1042,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 		cfg:     cfg,
 		license: license,
 		manager: &PluginManager{
-			Cfg:              cfg,
+			cfg:              cfg,
 			license:          license,
 			requestValidator: validator,
 			log:              log.New("test"),

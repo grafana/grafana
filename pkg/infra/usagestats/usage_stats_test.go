@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -540,62 +539,28 @@ func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
 	}, nil
 }
 
-type fakePluginManager struct {
-	manager.PluginManager
+type fakePluginStore struct {
+	plugins.Store
 
-	dataSources map[string]*plugins.DataSourcePlugin
-	panels      map[string]*plugins.PanelPlugin
-	apps        map[string]*plugins.AppPlugin
-}
-
-func (pm *fakePluginManager) dataSourceCount() int {
-	return len(pm.dataSources)
-}
-
-func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	return pm.dataSources[id]
-}
-
-func (pm *fakePluginManager) panelCount() int {
-	return len(pm.panels)
-}
-
-func (pm *fakePluginManager) appCount() int {
-	return len(pm.apps)
+	dataSources map[string]*plugins.Plugin
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStatsService) {
 	t.Helper()
 
-	uss.pluginManager = &fakePluginManager{
-		dataSources: map[string]*plugins.DataSourcePlugin{
+	uss.pluginStore = &fakePluginStore{
+		dataSources: map[string]*plugins.Plugin{
 			models.DS_ES: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_PROMETHEUS: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_GRAPHITE: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_MYSQL: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 		},
 	}
@@ -616,7 +581,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		SQLStore:           sqlstore.InitTestDB(t),
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
-		pluginManager:      &fakePluginManager{},
+		pluginStore:        &fakePluginStore{},
 		grafanaLive:        newTestLive(t),
 	}
 }

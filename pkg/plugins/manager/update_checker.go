@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/go-version"
 )
 
@@ -22,14 +21,14 @@ type gcomPlugin struct {
 }
 
 func (m *PluginManager) checkForUpdates() {
-	if !m.Cfg.CheckForUpdates {
+	if !m.cfg.CheckForUpdates {
 		return
 	}
 
 	m.log.Debug("Checking for updates")
 
 	pluginSlugs := m.externalPluginIDsAsCSV()
-	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
+	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + m.cfg.BuildVersion)
 	if err != nil {
 		log.Tracef("Failed to get plugins repo from grafana.com, %v", err.Error())
 		return

@@ -39,7 +39,7 @@ const (
 var _ plugins.Client = (*PluginManager)(nil)
 
 type PluginManager struct {
-	Cfg              *setting.Cfg
+	cfg              *setting.Cfg
 	license          models.Licensing
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
@@ -63,7 +63,7 @@ func ProvideService(cfg *setting.Cfg, license models.Licensing, requestValidator
 func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator,
 	sqlStore *sqlstore.SQLStore) *PluginManager {
 	return &PluginManager{
-		Cfg:              cfg,
+		cfg:              cfg,
 		license:          license,
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
@@ -76,11 +76,11 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 
 func (m *PluginManager) init() error {
 	// create external plugins path if not exists
-	if exists, err := fs.Exists(m.Cfg.PluginsPath); !exists {
-		if err = os.MkdirAll(m.Cfg.PluginsPath, os.ModePerm); err != nil {
-			m.log.Error("Failed to create external plugins directory", "dir", m.Cfg.PluginsPath, "error", err)
+	if exists, err := fs.Exists(m.cfg.PluginsPath); !exists {
+		if err = os.MkdirAll(m.cfg.PluginsPath, os.ModePerm); err != nil {
+			m.log.Error("Failed to create external plugins directory", "dir", m.cfg.PluginsPath, "error", err)
 		} else {
-			m.log.Debug("External plugins directory created", "dir", m.Cfg.PluginsPath)
+			m.log.Debug("External plugins directory created", "dir", m.cfg.PluginsPath)
 		}
 		return err
 	}
@@ -92,13 +92,13 @@ func (m *PluginManager) init() error {
 	}
 
 	// install Bundled plugins
-	err = m.loadPlugins(m.Cfg.BundledPluginsPath)
+	err = m.loadPlugins(m.cfg.BundledPluginsPath)
 	if err != nil {
 		return err
 	}
 
 	// install External plugins
-	err = m.loadPlugins(m.Cfg.PluginsPath)
+	err = m.loadPlugins(m.cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
@@ -483,7 +483,7 @@ func (m *PluginManager) Install(ctx context.Context, pluginID, version string, o
 	}
 
 	if opts.InstallDir == "" {
-		opts.InstallDir = m.Cfg.PluginsPath
+		opts.InstallDir = m.cfg.PluginsPath
 	}
 
 	if opts.PluginZipURL == "" {
@@ -514,7 +514,7 @@ func (m *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 	}
 
 	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
-	path, err := filepath.Rel(m.Cfg.PluginsPath, plugin.PluginDir)
+	path, err := filepath.Rel(m.cfg.PluginsPath, plugin.PluginDir)
 	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
 		return plugins.ErrUninstallOutsideOfPluginDir
 	}
@@ -534,7 +534,7 @@ func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.P
 		return fmt.Errorf("backend plugin %s already registered", pluginID)
 	}
 
-	path := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
+	path := filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource", pluginID)
 
 	p, err := m.pluginLoader.LoadWithFactory(path, factory)
 	if err != nil {
@@ -679,15 +679,15 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 // corePluginDirs provides a list of the Core plugins which need to be read
 func (m *PluginManager) corePluginDirs() []string {
 	datasourcePaths := []string{
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/mixed"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/mixed"),
+		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
 	}
 
-	panelsPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/panel")
+	panelsPath := filepath.Join(m.cfg.StaticRootPath, "app/plugins/panel")
 
 	return append(datasourcePaths, panelsPath)
 }

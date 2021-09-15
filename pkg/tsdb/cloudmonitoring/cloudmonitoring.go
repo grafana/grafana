@@ -66,26 +66,26 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, pluginManager plugins.Store, httpClientProvider httpclient.Provider) *Service {
+func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		PluginManager:      pluginManager,
+		pluginStore:        pluginStore,
 		HTTPClientProvider: httpClientProvider,
 		Cfg:                cfg,
 	}
 }
 
 type Service struct {
-	PluginManager      plugins.Store
 	HTTPClientProvider httpclient.Provider
 	Cfg                *setting.Cfg
+	pluginStore        plugins.Store
 }
 
 // Executor executes queries for the CloudMonitoring datasource.
 type Executor struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
-	pluginManager plugins.Store
-	cfg           *setting.Cfg
+	httpClient  *http.Client
+	dsInfo      *models.DataSource
+	pluginStore plugins.Store
+	cfg         *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
@@ -97,10 +97,10 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 	}
 
 	return &Executor{
-		httpClient:    httpClient,
-		dsInfo:        dsInfo,
-		pluginManager: s.PluginManager,
-		cfg:           s.Cfg,
+		httpClient:  httpClient,
+		dsInfo:      dsInfo,
+		pluginStore: s.pluginStore,
+		cfg:         s.Cfg,
 	}, nil
 }
 
@@ -535,7 +535,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 	req.Header.Set("Content-Type", "application/json")
 
 	// find plugin
-	plugin := e.pluginManager.Plugin(dsInfo.Type)
+	plugin := e.pluginStore.Plugin(dsInfo.Type)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
