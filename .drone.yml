@@ -33,11 +33,16 @@ steps:
   pull: always
   image: meltwater/drone-cache
   settings:
-    backend: gcs
+    access_key:
+      from_secret: access_key
+    backend: s3
     bucket: test-julien
+    endpoint: https://storage.googleapis.com
     json_key:
       from_secret: tf_google_credentials
     restore: true
+    secret_key:
+      from_secret: secret
   depends_on:
   - initialize
 
@@ -103,14 +108,17 @@ steps:
   pull: always
   image: meltwater/drone-cache
   settings:
-    backend: gcs
+    access_key:
+      from_secret: access_key
+    backend: s3
     bucket: test-julien
-    json_key:
-      from_secret: tf_google_credentials
+    endpoint: https://storage.googleapis.com
     mount:
     - /opt/drone/gocache
     - /opt/drone/gomodcache
     rebuild: true
+    secret_key:
+      from_secret: secret
   when:
     event:
     - pull_request
@@ -3553,7 +3561,23 @@ get:
   name: credentials.json
 
 ---
+kind: secret
+name: access_key
+
+get:
+  path: infra/data/ci/test-drone-caching
+  name: access-key
+
+---
+kind: secret
+name: secret
+
+get:
+  path: infra/data/ci/test-drone-caching
+  name: secret
+
+---
 kind: signature
-hmac: de1bd65cadd6643da6c3f3bac39dffcfb3fb2ab4ef5813cbe6ff105cfa783332
+hmac: 180800318a8c84a81b2f7c6ddb0918a55965673eb0ffeabceac84626b1618a39
 
 ...
