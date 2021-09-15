@@ -102,11 +102,14 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
   let i = 0;
   const len = strippedMathString.length;
 
+  const fy_start_month = 3;
+
   while (i < len) {
     const c = strippedMathString.charAt(i++);
     let type;
     let num;
     let unit;
+    let isFiscal = false;
 
     if (c === '/') {
       type = 0;
@@ -143,6 +146,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
 
     if (unit === 'f') {
       unit = strippedMathString.charAt(i++);
+      isFiscal = true;
     }
 
     if (!includes(units, unit)) {
@@ -150,9 +154,17 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     } else {
       if (type === 0) {
         if (roundUp) {
-          dateTime.endOf(unit);
+          if (isFiscal) {
+            roundToFiscal(fy_start_month, dateTime, unit, roundUp);
+          } else {
+            dateTime.endOf(unit);
+          }
         } else {
-          dateTime.startOf(unit);
+          if (isFiscal) {
+            roundToFiscal(fy_start_month, dateTime, unit, roundUp);
+          } else {
+            dateTime.startOf(unit);
+          }
         }
       } else if (type === 1) {
         dateTime.add(num, unit);
@@ -162,4 +174,33 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     }
   }
   return dateTime;
+}
+
+export function roundToFiscal(FYStartMonth: number, dateTime: any, unit: string, roundUp: boolean | undefined) {
+  switch (unit) {
+    case 'y':
+      if (roundUp) {
+        roundToFiscal(FYStartMonth, dateTime, unit, false).add(11, 'M').endOf('M');
+      } else {
+        if (FYStartMonth > dateTime.month()) {
+          dateTime.subtract(1, 'y').month(FYStartMonth).startOf('M');
+        } else {
+          dateTime.month(FYStartMonth).startOf('M');
+        }
+      }
+      return dateTime;
+    case 'q':
+      if (roundUp) {
+        roundToFiscal(FYStartMonth, dateTime, unit, false).add(2, 'M').endOf('M');
+      } else {
+        if (FYStartMonth > dateTime.month()) {
+          dateTime.subtract((dateTime.month() - FYStartMonth + 3) % 3, 'M').startOf('M');
+        } else {
+          dateTime.subtract((dateTime.month() - FYStartMonth) % 3, 'M').startOf('M');
+        }
+      }
+      return dateTime;
+    default:
+      return undefined;
+  }
 }
