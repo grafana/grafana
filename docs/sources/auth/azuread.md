@@ -108,7 +108,7 @@ allowed_domains =
 allowed_groups =
 ```
 
-You can also use these environment variables to configure **client_id** and **client_secret**:
+You can also use these enviroment variables to configure **client_id** and **client_secret**:
 ```
 GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
