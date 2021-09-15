@@ -150,7 +150,7 @@ function setupForLogs() {
 
   const { datasource, fetchMock } = setup();
 
-  const startQueryFrame = new MutableDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] })
+  const startQueryFrame = new MutableDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
   fetchMock.mockReturnValueOnce(of(envelope(startQueryFrame)));
 
   const logsFrame = new MutableDataFrame({
