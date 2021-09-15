@@ -34,14 +34,9 @@ func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([
 }
 
 func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error) {
-	ruleBytes, err := ioutil.ReadFile(filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json"))
+	channelRules, err := f.readRules()
 	if err != nil {
-		return nil, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
-	}
-	var channelRules ChannelRules
-	err = json.Unmarshal(ruleBytes, &channelRules)
-	if err != nil {
-		return nil, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+		return nil, fmt.Errorf("can't read channel rules: %w", err)
 	}
 	var rules []ChannelRule
 	for _, r := range channelRules.Rules {
@@ -53,17 +48,9 @@ func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]Channe
 }
 
 func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
-	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
-	// Safe to ignore gosec warning G304.
-	// nolint:gosec
-	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	channelRules, err := f.readRules()
 	if err != nil {
-		return rule, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
-	}
-	var channelRules ChannelRules
-	err = json.Unmarshal(ruleBytes, &channelRules)
-	if err != nil {
-		return rule, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+		return rule, fmt.Errorf("can't read channel rules: %w", err)
 	}
 	for _, existingRule := range channelRules.Rules {
 		if rule.Uid == existingRule.Uid {
@@ -79,17 +66,9 @@ func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule Cha
 }
 
 func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
-	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
-	// Safe to ignore gosec warning G304.
-	// nolint:gosec
-	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	channelRules, err := f.readRules()
 	if err != nil {
-		return rule, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
-	}
-	var channelRules ChannelRules
-	err = json.Unmarshal(ruleBytes, &channelRules)
-	if err != nil {
-		return rule, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+		return rule, fmt.Errorf("can't read channel rules: %w", err)
 	}
 
 	index := -1
@@ -114,8 +93,28 @@ func removeChannelRuleByIndex(s []ChannelRule, index int) []ChannelRule {
 	return append(s[:index], s[index+1:]...)
 }
 
+func (f *FileStorage) ruleFilePath() string {
+	return filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+}
+
+func (f *FileStorage) readRules() (ChannelRules, error) {
+	ruleFile := f.ruleFilePath()
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
+	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	if err != nil {
+		return ChannelRules{}, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
+	}
+	var channelRules ChannelRules
+	err = json.Unmarshal(ruleBytes, &channelRules)
+	if err != nil {
+		return ChannelRules{}, fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+	}
+	return channelRules, nil
+}
+
 func (f *FileStorage) saveChannelRules(rules ChannelRules) error {
-	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+	ruleFile := f.ruleFilePath()
 	// Safe to ignore gosec warning G304.
 	// nolint:gosec
 	file, err := os.OpenFile(ruleFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
@@ -133,16 +132,9 @@ func (f *FileStorage) saveChannelRules(rules ChannelRules) error {
 }
 
 func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, uid string) error {
-	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
-
-	ruleBytes, err := ioutil.ReadFile(ruleFile)
+	channelRules, err := f.readRules()
 	if err != nil {
-		return fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
-	}
-	var channelRules ChannelRules
-	err = json.Unmarshal(ruleBytes, &channelRules)
-	if err != nil {
-		return fmt.Errorf("can't unmarshal live-channel-rules.json data: %w", err)
+		return fmt.Errorf("can't read channel rules: %w", err)
 	}
 
 	index := -1
