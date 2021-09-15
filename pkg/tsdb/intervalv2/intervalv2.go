@@ -27,7 +27,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval
+	Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) Interval
 	CalculateSafeInterval(timerange backend.TimeRange, resolution int64) Interval
 }
 
@@ -53,16 +53,21 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) Interval {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
-	calculatedIntrvl := time.Duration((to - from) / defaultRes)
+	resolution := maxDataPoints
+	if resolution == 0 {
+		resolution = defaultRes
+	}
 
-	if calculatedIntrvl < minInterval {
+	calculatedInterval := time.Duration((to - from) / resolution)
+
+	if calculatedInterval < minInterval {
 		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
 	}
 
-	rounded := roundInterval(calculatedIntrvl)
+	rounded := roundInterval(calculatedInterval)
 
 	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }

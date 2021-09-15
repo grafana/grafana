@@ -12,6 +12,7 @@ import (
 	"net/url"
 
 	"golang.org/x/oauth2"
+	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,7 +42,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	loginInfo := models.LoginInfo{
 		AuthModule: "oauth",
 	}
-	name := ctx.Params(":name")
+	name := macaron.Params(ctx.Req)[":name"]
 	loginInfo.AuthModule = name
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
 	if provider == nil {
