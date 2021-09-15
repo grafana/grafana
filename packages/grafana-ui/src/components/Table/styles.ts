@@ -148,7 +148,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       right: -4px;
       border-radius: 3px;
       top: 0;
-      z-index: ${theme.zIndex.dropdown};
       touch-action: none;
 
       &:hover {

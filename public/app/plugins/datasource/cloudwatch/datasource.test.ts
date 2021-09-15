@@ -1,10 +1,11 @@
-import { from, lastValueFrom, of } from 'rxjs';
-import { setBackendSrv, setDataSourceSrv, setGrafanaLiveSrv } from '@grafana/runtime';
-import { ArrayVector, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
+import { lastValueFrom, of } from 'rxjs';
+import { setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { CloudWatchDatasource } from './datasource';
 import { toArray } from 'rxjs/operators';
+import { CloudWatchLogsQueryStatus } from './types';
 
 describe('datasource', () => {
   describe('query', () => {
@@ -143,16 +144,15 @@ function setup({ data = [] }: { data?: any } = {}) {
 }
 
 function setupForLogs() {
-  const { datasource, fetchMock } = setup({
-    data: {
-      results: {
-        a: {
-          refId: 'a',
-          frames: [dataFrameToJSON(new MutableDataFrame({ fields: [], meta: { custom: { channelName: 'test' } } }))],
-        },
-      },
-    },
-  });
+  function envelope(frame: DataFrame) {
+    return { data: { results: { a: { refId: 'a', frames: [dataFrameToJSON(frame)] } } } };
+  }
+
+  const { datasource, fetchMock } = setup();
+
+  const startQueryFrame = new MutableDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
+  fetchMock.mockReturnValueOnce(of(envelope(startQueryFrame)));
+
   const logsFrame = new MutableDataFrame({
     fields: [
       {
@@ -168,23 +168,10 @@ function setupForLogs() {
         values: new ArrayVector(['1-613f0d6b-3e7cb34375b60662359611bd']),
       },
     ],
+    meta: { custom: { Status: CloudWatchLogsQueryStatus.Complete } },
   });
-  setGrafanaLiveSrv({
-    getStream() {
-      return from([
-        {
-          type: 'message',
-          message: {
-            results: {
-              a: {
-                frames: [dataFrameToJSON(logsFrame)],
-              },
-            },
-          },
-        },
-      ]);
-    },
-  } as any);
+
+  fetchMock.mockReturnValueOnce(of(envelope(logsFrame)));
 
   setDataSourceSrv({
     async get() {
