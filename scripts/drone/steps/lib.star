@@ -418,6 +418,28 @@ def restore_cache_step():
          },
     }
 
+def rebuild_cache_step():
+    return {
+        'image': 'homerovalle/drone-gcs-cache',
+        'name': 'rebuild-cache',
+        'pull': 'always',
+        'environment': {
+            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
+            'YARN_CACHE_FOLDER': '/opt/drone/yarncache',
+         },
+         'settings': {
+            'bucket': 'test-julien',
+            'rebuild': 'true',
+            'mount': '/opt/drone/yarncache',
+         },
+         'depends_on': [
+            'build-frontend',
+         ],
+         'when': {
+            'event': 'pull_request',
+         },
+    }
+
 def test_a11y_frontend_step(edition, port=3001):
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
