@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
 // QueryMetricsV2 returns query metrics.
@@ -85,42 +84,27 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	if !hs.pluginClient.(registry.CanBeDisabled).IsDisabled() {
-		req, err := createRequest(ds, request)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "Request formation error", err)
-		}
-
-		resp, err := hs.pluginClient.QueryData(c.Req.Context(), req)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Metric request error", err)
-		}
-
-		// frame post-processing to prevent breaking change
-		for refID, r := range resp.Responses {
-			for _, f := range r.Frames {
-				if f.RefID == "" {
-					f.RefID = refID
-				}
-			}
-		}
-
-		return response.JSONStreaming(http.StatusOK, resp)
+	// TODO cloud-monitoring currently skipped
+	req, err := createRequest(ds, request)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Request formation error", err)
 	}
 
-	resp, err := hs.DataService.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := hs.pluginClient.QueryData(c.Req.Context(), req)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
-	// This is insanity... but ¯\_(ツ)_/¯, the current query path looks like:
-	//  encodeJson( decodeBase64( encodeBase64( decodeArrow( encodeArrow(frame)) ) )
-	// this will soon change to a more direct route
-	qdr, err := resp.ToBackendDataResponse()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error converting results", err)
+	// frame post-processing to prevent breaking change
+	for refID, r := range resp.Responses {
+		for _, f := range r.Frames {
+			if f.RefID == "" {
+				f.RefID = refID
+			}
+		}
 	}
-	return toMacronResponse(qdr)
+
+	return toMacronResponse(resp)
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {

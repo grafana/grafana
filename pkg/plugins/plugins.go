@@ -4,15 +4,14 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
-type PluginV2 struct {
+type Plugin struct {
 	JSONData
 
 	PluginDir string
@@ -27,8 +26,8 @@ type PluginV2 struct {
 	Signature      SignatureStatus
 	SignatureType  SignatureType
 	SignatureOrg   string
-	Parent         *PluginV2
-	Children       []*PluginV2
+	Parent         *Plugin
+	Children       []*Plugin
 	SignedFiles    PluginFiles
 	SignatureError PluginSignatureError
 
@@ -122,19 +121,19 @@ type JWTTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (p *PluginV2) PluginID() string {
+func (p *Plugin) PluginID() string {
 	return p.ID
 }
 
-func (p *PluginV2) Logger() log.Logger {
+func (p *Plugin) Logger() log.Logger {
 	return p.log
 }
 
-func (p *PluginV2) SetLogger(l log.Logger) {
+func (p *Plugin) SetLogger(l log.Logger) {
 	p.log = l
 }
 
-func (p *PluginV2) Start(ctx context.Context) error {
+func (p *Plugin) Start(ctx context.Context) error {
 	err := p.client.Start(ctx)
 	if err != nil {
 		return err
@@ -143,7 +142,7 @@ func (p *PluginV2) Start(ctx context.Context) error {
 	return nil
 }
 
-func (p *PluginV2) Stop(ctx context.Context) error {
+func (p *Plugin) Stop(ctx context.Context) error {
 	if p.client == nil {
 		return nil
 	}
@@ -155,35 +154,35 @@ func (p *PluginV2) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (p *PluginV2) IsManaged() bool {
+func (p *Plugin) IsManaged() bool {
 	if p.client != nil {
 		return p.client.IsManaged()
 	}
 	return false
 }
 
-func (p *PluginV2) Decommission() error {
+func (p *Plugin) Decommission() error {
 	if p.client != nil {
 		return p.client.Decommission()
 	}
 	return nil
 }
 
-func (p *PluginV2) IsDecommissioned() bool {
+func (p *Plugin) IsDecommissioned() bool {
 	if p.client != nil {
 		return p.client.IsDecommissioned()
 	}
 	return false
 }
 
-func (p *PluginV2) Exited() bool {
+func (p *Plugin) Exited() bool {
 	if p.client != nil {
 		return p.client.Exited()
 	}
 	return false
 }
 
-func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
@@ -191,7 +190,7 @@ func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	return pluginClient.QueryData(ctx, req)
 }
 
-func (p *PluginV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
@@ -199,7 +198,7 @@ func (p *PluginV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 	return pluginClient.CallResource(ctx, req, sender)
 }
 
-func (p *PluginV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
@@ -207,7 +206,7 @@ func (p *PluginV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *PluginV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *Plugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
@@ -215,7 +214,7 @@ func (p *PluginV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsR
 	return pluginClient.CollectMetrics(ctx)
 }
 
-func (p *PluginV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
@@ -223,7 +222,7 @@ func (p *PluginV2) SubscribeStream(ctx context.Context, req *backend.SubscribeSt
 	return pluginClient.SubscribeStream(ctx, req)
 }
 
-func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (p *Plugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
@@ -231,7 +230,7 @@ func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStream
 	return pluginClient.PublishStream(ctx, req)
 }
 
-func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
@@ -239,50 +238,50 @@ func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
-func (p *PluginV2) RegisterClient(c backendplugin.Plugin) {
+func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
 	p.client = c
 }
 
-func (p *PluginV2) Client() (PluginClient, bool) {
+func (p *Plugin) Client() (PluginClient, bool) {
 	if p.client != nil {
 		return p.client, true
 	}
 	return nil, false
 }
 
-func (p *PluginV2) StaticRoute() *PluginStaticRoute {
+func (p *Plugin) StaticRoute() *PluginStaticRoute {
 	return &PluginStaticRoute{Directory: p.PluginDir, PluginId: p.ID}
 }
 
-func (p *PluginV2) IsRenderer() bool {
+func (p *Plugin) IsRenderer() bool {
 	return p.Type == "renderer"
 }
 
-func (p *PluginV2) IsDataSource() bool {
+func (p *Plugin) IsDataSource() bool {
 	return p.Type == "datasource"
 }
 
-func (p *PluginV2) IsPanel() bool {
+func (p *Plugin) IsPanel() bool {
 	return p.Type == "panel"
 }
 
-func (p *PluginV2) IsApp() bool {
+func (p *Plugin) IsApp() bool {
 	return p.Type == "app"
 }
 
-func (p *PluginV2) IsCorePlugin() bool {
+func (p *Plugin) IsCorePlugin() bool {
 	return p.Class == Core
 }
 
-func (p *PluginV2) IsBundledPlugin() bool {
+func (p *Plugin) IsBundledPlugin() bool {
 	return p.Class == Bundled
 }
 
-func (p *PluginV2) IsExternalPlugin() bool {
+func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
 }
 
-func (p *PluginV2) SupportsStreaming() bool {
+func (p *Plugin) SupportsStreaming() bool {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return false
@@ -292,7 +291,7 @@ func (p *PluginV2) SupportsStreaming() bool {
 	return ok
 }
 
-func (p *PluginV2) IncludedInSignature(file string) bool {
+func (p *Plugin) IncludedInSignature(file string) bool {
 	// permit Core plugin files
 	if p.IsCorePlugin() {
 		return true

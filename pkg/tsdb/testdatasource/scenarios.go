@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -56,24 +54,24 @@ type Scenario struct {
 	handler     backend.QueryDataHandlerFunc
 }
 
-func (s *Service) registerScenarios(mux *datasource.QueryTypeMux) {
+func (s *Service) registerScenarios() {
 	s.registerScenario(&Scenario{
 		ID:      string(exponentialHeatmapBucketDataQuery),
 		Name:    "Exponential heatmap bucket data",
 		handler: s.handleExponentialHeatmapBucketDataScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(linearHeatmapBucketDataQuery),
 		Name:    "Linear heatmap bucket data",
 		handler: s.handleLinearHeatmapBucketDataScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(randomWalkQuery),
 		Name:    "Random Walk",
 		handler: s.handleRandomWalkScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(predictablePulseQuery),
@@ -83,135 +81,135 @@ func (s *Service) registerScenarios(mux *datasource.QueryTypeMux) {
 The wave cycles at timeStepSeconds*(onCount+offCount).
 The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
 Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(predictableCSVWaveQuery),
 		Name:    "Predictable CSV Wave",
 		handler: s.handlePredictableCSVWaveScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(randomWalkTableQuery),
 		Name:    "Random Walk Table",
 		handler: s.handleRandomWalkTableScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:          string(randomWalkSlowQuery),
 		Name:        "Slow Query",
 		StringInput: "5s",
 		handler:     s.handleRandomWalkSlowScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(noDataPointsQuery),
 		Name:    "No Data Points",
 		handler: s.handleClientSideScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(datapointsOutsideRangeQuery),
 		Name:    "Datapoints Outside Range",
 		handler: s.handleDatapointsOutsideRangeScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:          string(csvMetricValuesQuery),
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
 		handler:     s.handleCSVMetricValuesScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(streamingClientQuery),
 		Name:    "Streaming Client",
 		handler: s.handleClientSideScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(liveQuery),
 		Name:    "Grafana Live",
 		handler: s.handleClientSideScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(flightPath),
 		Name:    "Flight path",
 		handler: s.handleFlightPathScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(usaQueryKey),
 		Name:    "USA generated data",
 		handler: s.handleUSAScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(grafanaAPIQuery),
 		Name:    "Grafana API",
 		handler: s.handleClientSideScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(arrowQuery),
 		Name:    "Load Apache Arrow Data",
 		handler: s.handleArrowScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(annotationsQuery),
 		Name:    "Annotations",
 		handler: s.handleClientSideScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(tableStaticQuery),
 		Name:    "Table Static",
 		handler: s.handleTableStaticScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(randomWalkWithErrorQuery),
 		Name:    "Random Walk (with error)",
 		handler: s.handleRandomWalkWithErrorScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(serverError500Query),
 		Name:    "Server Error (500)",
 		handler: s.handleServerError500Scenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(logsQuery),
 		Name:    "Logs",
 		handler: s.handleLogsScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:   string(nodeGraphQuery),
 		Name: "Node Graph",
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(csvFileQueryType),
 		Name:    "CSV File",
 		handler: s.handleCsvFileScenario,
-	}, mux)
+	})
 
 	s.registerScenario(&Scenario{
 		ID:      string(csvContentQueryType),
 		Name:    "CSV Content",
 		handler: s.handleCsvContentScenario,
-	}, mux)
+	})
 
-	mux.HandleFunc("", s.handleFallbackScenario)
+	s.queryMux.HandleFunc("", s.handleFallbackScenario)
 }
 
-func (s *Service) registerScenario(scenario *Scenario, mux *datasource.QueryTypeMux) {
+func (s *Service) registerScenario(scenario *Scenario) {
 	s.scenarios[scenario.ID] = scenario
-	mux.HandleFunc(scenario.ID, scenario.handler)
+	s.queryMux.HandleFunc(scenario.ID, scenario.handler)
 }
 
 // handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.

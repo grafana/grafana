@@ -5,15 +5,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,18 +28,17 @@ func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) (*
 		cfg:    cfg,
 	}
 
-	qMux := datasource.NewQueryTypeMux()
-	s.registerScenarios(qMux)
+	s.registerScenarios()
 
 	rMux := http.NewServeMux()
 	s.RegisterRoutes(rMux)
 
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    qMux,
+		QueryDataHandler:    s.queryMux,
 		CallResourceHandler: httpadapter.New(rMux),
 		StreamHandler:       s,
 	})
-	err := registrar.Register("testdata", factory)
+	err := registrar.LoadAndRegister("testdata", factory)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +52,4 @@ type Service struct {
 	scenarios map[string]*Scenario
 	frame     *data.Frame
 	queryMux  *datasource.QueryTypeMux
-}
-
-func (s *Service) NewMux() *datasource.QueryTypeMux {
-	mux := datasource.NewQueryTypeMux()
-	s.registerScenarios(mux)
-
-	resourceMux := http.NewServeMux()
-	s.RegisterRoutes(resourceMux)
-	return mux
 }

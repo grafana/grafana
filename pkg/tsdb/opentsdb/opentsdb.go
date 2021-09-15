@@ -2,6 +2,7 @@ package opentsdb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,12 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins"
-
-	"encoding/json"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -24,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -43,7 +40,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	err := registrar.Register("opentsdb", factory)
+	err := registrar.LoadAndRegister("opentsdb", factory)
 	if err != nil {
 		return nil, err
 	}

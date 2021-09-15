@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -26,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 )
@@ -45,7 +44,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.Register("graphite", factory); err != nil {
+	if err := registrar.LoadAndRegister("graphite", factory); err != nil {
 		s.logger.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

@@ -10,14 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/loki/pkg/logcli/client"
@@ -47,7 +46,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.Register("loki", factory); err != nil {
+	if err := registrar.LoadAndRegister("loki", factory); err != nil {
 		s.plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

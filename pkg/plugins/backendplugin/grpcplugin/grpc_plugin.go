@@ -143,6 +143,7 @@ func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataReques
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
+
 	return pluginClient.QueryData(ctx, req)
 }
 

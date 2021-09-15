@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -21,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/opentracing/opentracing-go"
@@ -73,7 +72,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	if err := registrar.Register("prometheus", factory); err != nil {
+	if err := registrar.LoadAndRegister("prometheus", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

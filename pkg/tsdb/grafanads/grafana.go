@@ -8,18 +8,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -61,7 +58,7 @@ func newService(staticRootPath string, registrar plugins.CoreBackendRegistrar) *
 		},
 	}
 
-	if err := registrar.Register("grafana", coreplugin.New(backend.ServeOpts{
+	if err := registrar.LoadAndRegister("grafana", coreplugin.New(backend.ServeOpts{
 		CheckHealthHandler: s,
 		QueryDataHandler:   s,
 	})); err != nil {

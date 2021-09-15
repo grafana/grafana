@@ -17,7 +17,7 @@ func TestInitializer_Initialize(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("core backend datasource", func(t *testing.T) {
-		p := &plugins.PluginV2{
+		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
 				Type: plugins.DataSource,
@@ -54,7 +54,7 @@ func TestInitializer_Initialize(t *testing.T) {
 	})
 
 	t.Run("external app", func(t *testing.T) {
-		p := &plugins.PluginV2{
+		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "parent-plugin",
 				Type: plugins.App,
@@ -68,7 +68,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			},
 			PluginDir: absCurPath,
 			Class:     plugins.External,
-			Children: []*plugins.PluginV2{
+			Children: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "child-plugin",
@@ -113,7 +113,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 
 func TestInitializer_getPluginEnvVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
-		p := &plugins.PluginV2{
+		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID: "test",
 			},
@@ -148,10 +148,10 @@ func TestInitializer_setPathsBasedOnApp(t *testing.T) {
 			cfg: cfg,
 		}
 
-		child := &plugins.PluginV2{
+		child := &plugins.Plugin{
 			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasources\\datasource",
 		}
-		parent := &plugins.PluginV2{
+		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID: "testdata",
 			},

@@ -10,13 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -40,7 +39,7 @@ func ProvideService(registrar plugins.CoreBackendRegistrar) (*Service, error) {
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.Register("mssql", factory); err != nil {
+	if err := registrar.LoadAndRegister("mssql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil

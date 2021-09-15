@@ -37,7 +37,7 @@ func New(cfg *setting.Cfg, license models.Licensing) Initializer {
 	}
 }
 
-func (i *Initializer) Initialize(p *plugins.PluginV2) error {
+func (i *Initializer) Initialize(p *plugins.Plugin) error {
 	if len(p.Dependencies.Plugins) == 0 {
 		p.Dependencies.Plugins = []plugins.PluginDependencyItem{}
 	}
@@ -112,7 +112,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 	return nil
 }
 
-func (i *Initializer) InitializeWithFactory(p *plugins.PluginV2, factory backendplugin.PluginFactoryFunc) error {
+func (i *Initializer) InitializeWithFactory(p *plugins.Plugin, factory backendplugin.PluginFactoryFunc) error {
 	err := i.Initialize(p)
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (i *Initializer) InitializeWithFactory(p *plugins.PluginV2, factory backend
 	return nil
 }
 
-func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
+func (i *Initializer) handleModuleDefaults(p *plugins.Plugin) {
 	if p.IsExternalPlugin() {
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
@@ -152,7 +152,7 @@ func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 	p.BaseURL = path.Join("public/app/plugins", string(p.Type), baseDir)
 }
 
-func (i *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugins.PluginV2) {
+func (i *Initializer) setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.Plugin) {
 	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
@@ -194,7 +194,7 @@ func evalRelativePluginURLPath(pathStr, baseUrl string, pluginType plugins.Plugi
 	return path.Join(baseUrl, pathStr)
 }
 
-func (i *Initializer) envVars(plugin *plugins.PluginV2) []string {
+func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}

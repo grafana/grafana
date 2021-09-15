@@ -243,9 +243,9 @@ func TestPluginManager_Init(t *testing.T) {
 			assert.Equal(t, pluginID, ds.Id)
 			assert.Equal(t, pm.plugins[pluginID], &ds.FrontendPluginBase.PluginBase)
 
-			assert.Len(t, pm.StaticRoutes(), 1)
-			assert.Equal(t, pluginID, pm.StaticRoutes()[0].PluginId)
-			assert.Equal(t, pluginFolder, pm.StaticRoutes()[0].Directory)
+			assert.Len(t, pm.Routes(), 1)
+			assert.Equal(t, pluginID, pm.Routes()[0].PluginId)
+			assert.Equal(t, pluginFolder, pm.Routes()[0].Directory)
 		}
 
 		verifyPluginManagerState()
@@ -509,9 +509,9 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Equal(t, pluginID, ds.Id)
 		assert.Equal(t, pm.plugins[pluginID], &ds.FrontendPluginBase.PluginBase)
 
-		assert.Len(t, pm.StaticRoutes(), 1)
-		assert.Equal(t, pluginID, pm.StaticRoutes()[0].PluginId)
-		assert.Equal(t, pluginFolder, pm.StaticRoutes()[0].Directory)
+		assert.Len(t, pm.Routes(), 1)
+		assert.Equal(t, pluginID, pm.Routes()[0].PluginId)
+		assert.Equal(t, pluginFolder, pm.Routes()[0].Directory)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
 			err := pm.Install(context.Background(), pluginID, "1.0.0")
@@ -530,7 +530,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 			assert.Nil(t, pm.GetDataSource(pluginID))
 			assert.Nil(t, pm.GetPlugin(pluginID))
-			assert.Len(t, pm.StaticRoutes(), 0)
+			assert.Len(t, pm.Routes(), 0)
 
 			t.Run("Won't uninstall if not installed", func(t *testing.T) {
 				err := pm.Uninstall(context.Background(), pluginID)
@@ -628,7 +628,7 @@ type fakeBackendPluginManager struct {
 	registeredPlugins []string
 }
 
-func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (f *fakeBackendPluginManager) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
 }
@@ -1046,7 +1046,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 			license:          license,
 			requestValidator: validator,
 			log:              log.New("test"),
-			plugins:          map[string]*plugins.PluginV2{},
+			plugins:          map[string]*plugins.Plugin{},
 		},
 	}
 
@@ -1229,23 +1229,23 @@ func (f *fakePluginManager) IsEnabled() bool {
 	return false
 }
 
-func (f *fakePluginManager) Plugin(pluginID string) *plugins.PluginV2 {
+func (f *fakePluginManager) Plugin(pluginID string) *plugins.Plugin {
 	return nil
 }
 
-func (f *fakePluginManager) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.PluginV2 {
+func (f *fakePluginManager) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.Plugin {
 	return nil
 }
 
-func (f *fakePluginManager) Plugins(pluginType ...plugins.PluginType) []*plugins.PluginV2 {
+func (f *fakePluginManager) Plugins(pluginType ...plugins.PluginType) []*plugins.Plugin {
 	return nil
 }
 
-func (f *fakePluginManager) Renderer() *plugins.PluginV2 {
+func (f *fakePluginManager) Renderer() *plugins.Plugin {
 	return nil
 }
 
-func (f *fakePluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
+func (f *fakePluginManager) Routes() []*plugins.PluginStaticRoute {
 	return nil
 }
 

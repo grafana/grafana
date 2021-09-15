@@ -9,10 +9,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/infra/fs"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -41,7 +44,7 @@ type PluginManager struct {
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
 
-	plugins         map[string]*plugins.PluginV2
+	plugins         map[string]*plugins.Plugin
 	pluginInstaller installer.Installer
 	pluginLoader    loader.Loader
 	pluginsMu       sync.RWMutex
@@ -64,7 +67,7 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 		license:          license,
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
-		plugins:          map[string]*plugins.PluginV2{},
+		plugins:          map[string]*plugins.Plugin{},
 		log:              log.New("plugin.manager.v2"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		pluginLoader:     loader.New(nil, nil, cfg),
@@ -72,6 +75,16 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 }
 
 func (m *PluginManager) init() error {
+	// create external plugins path if not exists
+	if exists, err := fs.Exists(m.Cfg.PluginsPath); !exists {
+		if err = os.MkdirAll(m.Cfg.PluginsPath, os.ModePerm); err != nil {
+			m.log.Error("Failed to create external plugins directory", "dir", m.Cfg.PluginsPath, "error", err)
+		} else {
+			m.log.Debug("External plugins directory created", "dir", m.Cfg.PluginsPath)
+		}
+		return err
+	}
+
 	// install Core plugins
 	err := m.loadPlugins(m.corePluginDirs()...) // wording
 	if err != nil {
@@ -127,7 +140,7 @@ func (m *PluginManager) registeredPlugins() map[string]struct{} {
 	return pluginsByID
 }
 
-func (m *PluginManager) Plugin(pluginID string) *plugins.PluginV2 {
+func (m *PluginManager) Plugin(pluginID string) *plugins.Plugin {
 	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -139,7 +152,7 @@ func (m *PluginManager) Plugin(pluginID string) *plugins.PluginV2 {
 	return p
 }
 
-func (m *PluginManager) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.PluginV2 {
+func (m *PluginManager) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.Plugin {
 	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -151,7 +164,7 @@ func (m *PluginManager) PluginByType(pluginID string, pluginType plugins.PluginT
 	return p
 }
 
-func (m *PluginManager) Plugins(pluginTypes ...plugins.PluginType) []*plugins.PluginV2 {
+func (m *PluginManager) Plugins(pluginTypes ...plugins.PluginType) []*plugins.Plugin {
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
@@ -163,7 +176,7 @@ func (m *PluginManager) Plugins(pluginTypes ...plugins.PluginType) []*plugins.Pl
 	}
 
 	m.pluginsMu.RLock()
-	var pluginsList []*plugins.PluginV2
+	var pluginsList []*plugins.Plugin
 	for _, p := range m.plugins {
 		if _, exists := requestedTypes[p.Type]; exists {
 			pluginsList = append(pluginsList, p)
@@ -173,7 +186,7 @@ func (m *PluginManager) Plugins(pluginTypes ...plugins.PluginType) []*plugins.Pl
 	return pluginsList
 }
 
-func (m *PluginManager) Renderer() *plugins.PluginV2 {
+func (m *PluginManager) Renderer() *plugins.Plugin {
 	for _, p := range m.plugins {
 		if p.IsRenderer() {
 			return p
@@ -434,51 +447,6 @@ func (m *PluginManager) isRegistered(pluginID string) bool {
 	return !p.IsDecommissioned()
 }
 
-func (m *PluginManager) register(p *plugins.PluginV2) error {
-	m.pluginsMu.Lock()
-	defer m.pluginsMu.Unlock()
-
-	pluginID := p.ID
-	if _, exists := m.plugins[pluginID]; exists {
-		return fmt.Errorf("plugin %s already registered", pluginID)
-	}
-
-	m.plugins[pluginID] = p
-	m.log.Debug("Plugin registered", "pluginId", pluginID)
-	return nil
-}
-
-func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.PluginV2) error {
-	err := m.register(plugin)
-	if err != nil {
-		return err
-	}
-
-	if !m.isRegistered(plugin.ID) {
-		return fmt.Errorf("plugin %s is not registered", plugin.ID)
-	}
-
-	m.start(ctx, plugin)
-
-	return nil
-}
-
-func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.PluginV2) error {
-	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
-	if err := p.Decommission(); err != nil {
-		return err
-	}
-
-	if err := p.Stop(ctx); err != nil {
-		return err
-	}
-
-	delete(m.plugins, p.ID)
-
-	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
-	return nil
-}
-
 func (m *PluginManager) Install(ctx context.Context, pluginID, version string, opts plugins.InstallOpts) error {
 	var pluginZipURL string
 
@@ -561,8 +529,82 @@ func (m *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
 }
 
-// start starts all managed backend plugins
-func (m *PluginManager) start(ctx context.Context, p *plugins.PluginV2) {
+func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	if m.isRegistered(pluginID) {
+		return fmt.Errorf("backend plugin %s already registered", pluginID)
+	}
+
+	path := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
+
+	p, err := m.pluginLoader.LoadWithFactory(path, factory)
+	if err != nil {
+		return err
+	}
+
+	err = m.register(p)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PluginManager) Routes() []*plugins.PluginStaticRoute {
+	var staticRoutes []*plugins.PluginStaticRoute
+
+	for _, p := range m.Plugins() {
+		staticRoutes = append(staticRoutes, p.StaticRoute())
+	}
+	return staticRoutes
+}
+
+func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Plugin) error {
+	err := m.register(plugin)
+	if err != nil {
+		return err
+	}
+
+	if !m.isRegistered(plugin.ID) {
+		return fmt.Errorf("plugin %s is not registered", plugin.ID)
+	}
+
+	m.start(ctx, plugin)
+
+	return nil
+}
+
+func (m *PluginManager) register(p *plugins.Plugin) error {
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	pluginID := p.ID
+	if _, exists := m.plugins[pluginID]; exists {
+		return fmt.Errorf("plugin %s already registered", pluginID)
+	}
+
+	m.plugins[pluginID] = p
+	m.log.Debug("Plugin registered", "pluginId", pluginID)
+	return nil
+}
+
+func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
+	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	if err := p.Decommission(); err != nil {
+		return err
+	}
+
+	if err := p.Stop(ctx); err != nil {
+		return err
+	}
+
+	delete(m.plugins, p.ID)
+
+	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	return nil
+}
+
+// start starts all a backend plugin
+func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) {
 	if !p.IsManaged() || !p.Backend {
 		return
 	}
@@ -590,56 +632,12 @@ func (m *PluginManager) stop(ctx context.Context) {
 	wg.Wait()
 }
 
-func (m *PluginManager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	if m.isRegistered(pluginID) {
-		return fmt.Errorf("backend plugin %s already registered", pluginID)
-	}
-
-	path := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
-
-	p, err := m.pluginLoader.LoadWithFactory(path, factory)
-	if err != nil {
-		return err
-	}
-
-	err = m.register(p)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
-	var staticRoutes []*plugins.PluginStaticRoute
-
-	for _, p := range m.Plugins() {
-		staticRoutes = append(staticRoutes, p.StaticRoute())
-	}
-	return staticRoutes
-}
-
-func (m *PluginManager) corePluginDirs() []string {
-	datasourcePaths := []string{
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/mixed"),
-		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
-	}
-
-	panelsPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/panel")
-
-	return append(datasourcePaths, panelsPath)
-}
-
-func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.PluginV2) error {
+func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
 	if err := p.Start(ctx); err != nil {
 		return err
 	}
 
-	go func(ctx context.Context, p *plugins.PluginV2) {
+	go func(ctx context.Context, p *plugins.Plugin) {
 		if err := restartKilledProcess(ctx, p); err != nil {
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
@@ -648,7 +646,7 @@ func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin
 	return nil
 }
 
-func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
+func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 	ticker := time.NewTicker(time.Second * 1)
 
 	for {
@@ -676,6 +674,22 @@ func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
 			p.Logger().Debug("Plugin restarted")
 		}
 	}
+}
+
+// corePluginDirs provides a list of the Core plugins which need to be read
+func (m *PluginManager) corePluginDirs() []string {
+	datasourcePaths := []string{
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/mixed"),
+		filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
+	}
+
+	panelsPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/panel")
+
+	return append(datasourcePaths, panelsPath)
 }
 
 // callResourceClientResponseStream is used for receiving resource call responses.

@@ -7,10 +7,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -29,6 +25,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -65,7 +63,7 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService, registrar plugin
 		QueryDataHandler: executor,
 	})
 
-	if err := registrar.Register("cloudwatch", factory); err != nil {
+	if err := registrar.LoadAndRegister("cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

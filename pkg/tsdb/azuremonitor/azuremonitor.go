@@ -7,17 +7,15 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
@@ -57,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, r
 		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 
-	if err := registrar.Register(dsName, factory); err != nil {
+	if err := registrar.LoadAndRegister(dsName, factory); err != nil {
 		azlog.Error("Failed to register plugin", "error", err)
 	}
 

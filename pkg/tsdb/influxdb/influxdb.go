@@ -10,15 +10,13 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -47,7 +45,7 @@ func ProvideService(httpClient httpclient.Provider, registrar plugins.CoreBacken
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.Register("influxdb", factory); err != nil {
+	if err := registrar.LoadAndRegister("influxdb", factory); err != nil {
 		s.glog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

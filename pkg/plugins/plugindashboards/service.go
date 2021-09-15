@@ -52,7 +52,7 @@ func (s *Service) updateAppDashboards() {
 	}
 }
 
-func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginV2, orgID int64) {
+func (s *Service) syncPluginDashboards(pluginDef *plugins.Plugin, orgID int64) {
 	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.ID)
 
 	// Get plugin dashboards

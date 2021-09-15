@@ -13,12 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -42,19 +41,6 @@ type DataSourceProxy struct {
 	clientProvider    httpclient.Provider
 	oAuthTokenService oauthtoken.OAuthTokenService
 }
-
-//type PluginRoute struct {
-//	Path      string                   `json:"path"`
-//	Method    string                   `json:"method"`
-//	ReqRole   models.RoleType          `json:"reqRole"`
-//	URL       string                   `json:"url"`
-//	URLParams []URLParam `json:"urlParams"`
-//	Headers   []Header   `json:"headers"`
-//	//AuthType     string                   `json:"authType"`
-//	//TokenAuth    *JWTTokenAuth            `json:"tokenAuth"`
-//	//JWTTokenAuth *JWTTokenAuth            `json:"jwtTokenAuth"`
-//	Body json.RawMessage `json:"body"`
-//}
 
 type handleResponseTransport struct {
 	transport http.RoundTripper

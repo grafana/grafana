@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var compareOpts = cmpopts.IgnoreFields(plugins.PluginV2{}, "client", "log")
+var compareOpts = cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log")
 
 func TestLoader_LoadAll(t *testing.T) {
 	corePluginDir, err := filepath.Abs("./../../../../public")
@@ -36,7 +36,7 @@ func TestLoader_LoadAll(t *testing.T) {
 		log             log.Logger
 		pluginPaths     []string
 		existingPlugins map[string]struct{}
-		want            []*plugins.PluginV2
+		want            []*plugins.Plugin
 		wantErr         bool
 	}{
 		{
@@ -45,7 +45,7 @@ func TestLoader_LoadAll(t *testing.T) {
 				StaticRootPath: corePluginDir,
 			},
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
-			want: []*plugins.PluginV2{
+			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID:   "cloudwatch",
@@ -95,7 +95,7 @@ func TestLoader_LoadAll(t *testing.T) {
 				BundledPluginsPath: filepath.Join(parentDir, "testdata"),
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
-			want: []*plugins.PluginV2{
+			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID:   "test",
@@ -133,7 +133,7 @@ func TestLoader_LoadAll(t *testing.T) {
 				PluginsPath: filepath.Join(parentDir),
 			},
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
-			want: []*plugins.PluginV2{
+			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
@@ -227,7 +227,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		t.Errorf("could not construct absolute path of root dir")
 		return
 	}
-	parent := &plugins.PluginV2{
+	parent := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:   "test-ds",
 			Type: "datasource",
@@ -260,7 +260,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		Class:         "external",
 	}
 
-	child := &plugins.PluginV2{
+	child := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:   "test-panel",
 			Type: "panel",
@@ -292,11 +292,11 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		Class:         "external",
 	}
 
-	parent.Children = []*plugins.PluginV2{child}
+	parent.Children = []*plugins.Plugin{child}
 	child.Parent = parent
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
-		expected := []*plugins.PluginV2{parent, child}
+		expected := []*plugins.Plugin{parent, child}
 		cfg := &setting.Cfg{
 			PluginsPath: parentDir,
 		}
@@ -319,7 +319,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 	t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
 		// parent/child links will not be created when either plugins are provided in the existingPlugins map
 		parent.Children = nil
-		expected := []*plugins.PluginV2{parent}
+		expected := []*plugins.Plugin{parent}
 
 		cfg := &setting.Cfg{
 			PluginsPath: parentDir,

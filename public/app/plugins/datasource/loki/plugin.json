@@ -3,6 +3,7 @@
   "name": "Loki",
   "id": "loki",
   "category": "logging",
+
   "logs": true,
   "metrics": true,
   "alerting": true,

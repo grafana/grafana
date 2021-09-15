@@ -6,14 +6,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -37,7 +36,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: newService(im, s.HTTPClientProvider),
 	})
 
-	if err := registrar.Register("elasticsearch", factory); err != nil {
+	if err := registrar.LoadAndRegister("elasticsearch", factory); err != nil {
 		eslog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

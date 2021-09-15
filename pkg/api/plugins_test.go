@@ -34,7 +34,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
-		p := &plugins.PluginV2{
+		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID: pluginID,
 			},
@@ -44,7 +44,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 		}
 		service := &pluginStore{
-			plugins: map[string]*plugins.PluginV2{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: p,
 			},
 		}
@@ -62,14 +62,14 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := &plugins.PluginV2{
+		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID: pluginID,
 			},
 			PluginDir: pluginDir,
 		}
 		service := &pluginStore{
-			plugins: map[string]*plugins.PluginV2{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: p,
 			},
 		}
@@ -87,14 +87,14 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := &plugins.PluginV2{
+		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID: pluginID,
 			},
 			PluginDir: pluginDir,
 		}
 		service := &pluginStore{
-			plugins: map[string]*plugins.PluginV2{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: p,
 			},
 		}
@@ -117,7 +117,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
 		service := &pluginStore{
-			plugins: map[string]*plugins.PluginV2{},
+			plugins: map[string]*plugins.Plugin{},
 		}
 		l := &logger{}
 
@@ -138,7 +138,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
 		service := &pluginStore{
-			plugins: map[string]*plugins.PluginV2{
+			plugins: map[string]*plugins.Plugin{
 				pluginID: {
 					Class: plugins.Core,
 				},
@@ -188,10 +188,10 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 type pluginStore struct {
 	plugins.Store
 
-	plugins map[string]*plugins.PluginV2
+	plugins map[string]*plugins.Plugin
 }
 
-func (pm *pluginStore) Plugin(id string) *plugins.PluginV2 {
+func (pm *pluginStore) Plugin(id string) *plugins.Plugin {
 	return pm.plugins[id]
 }
 

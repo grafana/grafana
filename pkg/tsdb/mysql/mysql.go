@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/VividCortex/mysqlerr"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -20,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -54,7 +53,7 @@ func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar, ht
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.Register("mysql", factory); err != nil {
+	if err := registrar.LoadAndRegister("mysql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil

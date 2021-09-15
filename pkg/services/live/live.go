@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -20,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
@@ -59,14 +57,14 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
+	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		LogsService:           logsService,
-		PluginManager:         pluginManager,
+		pluginStore:           pluginStore,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
@@ -335,10 +333,10 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	RouteRegister         routing.RouteRegister
 	LogsService           *cloudwatch.LogsService
-	PluginManager         plugins.Store
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
+	pluginStore           plugins.Store
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -369,7 +367,7 @@ type UsageStats struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin := g.PluginManager.Plugin(pluginID)
+	plugin := g.pluginStore.Plugin(pluginID)
 	if plugin == nil {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}

@@ -27,9 +27,7 @@ func TestIndexView(t *testing.T) {
 	})
 
 	t.Run("CSP disabled", func(t *testing.T) {
-		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"pluginManagerV2"},
-		})
+		grafDir, cfgPath := testinfra.CreateGrafDir(t)
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose

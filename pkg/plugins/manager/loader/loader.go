@@ -47,7 +47,7 @@ func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, li
 	}
 }
 
-func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.PluginV2, error) {
+func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
 	if err != nil {
 		logger.Error("failed to find plugin", "err", err)
@@ -66,7 +66,7 @@ func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.PluginV
 	return loadedPlugins[0], nil
 }
 
-func (l *Loader) LoadAll(path []string, ignore map[string]struct{}) ([]*plugins.PluginV2, error) {
+func (l *Loader) LoadAll(path []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(path)
 	if err != nil {
 		logger.Error("plugin finder encountered an error", "err", err)
@@ -75,7 +75,7 @@ func (l *Loader) LoadAll(path []string, ignore map[string]struct{}) ([]*plugins.
 	return l.loadPlugins(pluginJSONPaths, ignore)
 }
 
-func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.PluginV2, error) {
+func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
 	p, err := l.Load(path, map[string]struct{}{})
 	if err != nil {
 		logger.Error("failed to load core plugin", "err", err)
@@ -88,7 +88,7 @@ func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactor
 }
 
 // test one bad doesn't break all loading
-func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.PluginV2, error) {
+func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 
 	// load plugin.json files and map directory to JSON data
@@ -111,9 +111,9 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 	foundPlugins.stripDuplicates(existingPlugins)
 
 	// calculate initial signature state
-	loadedPlugins := make(map[string]*plugins.PluginV2)
+	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := &plugins.PluginV2{
+		plugin := &plugins.Plugin{
 			JSONData:  pluginJSON,
 			PluginDir: pluginDir,
 			Class:     l.pluginClass(pluginDir),
@@ -186,7 +186,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		logger.Warn("Some plugin loading errors occurred", "errors", strings.Join(errStr, ", "))
 	}
 
-	res := make([]*plugins.PluginV2, 0, len(loadedPlugins))
+	res := make([]*plugins.Plugin, 0, len(loadedPlugins))
 	for _, p := range loadedPlugins {
 		err := l.pluginInitializer.Initialize(p)
 		if err != nil {

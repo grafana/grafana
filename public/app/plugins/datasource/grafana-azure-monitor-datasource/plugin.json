@@ -11,6 +11,7 @@
     { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" },
     { "type": "dashboard", "name": "Azure Resource Overview", "path": "dashboards/arg.json" }
   ],
+
   "info": {
     "description": "Data source for Microsoft Azure Monitor & Application Insights",
     "author": {

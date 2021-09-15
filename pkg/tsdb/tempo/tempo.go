@@ -7,16 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"go.opentelemetry.io/collector/model/otlp"
 )
 
@@ -37,7 +35,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.Register("tempo", factory); err != nil {
+	if err := registrar.LoadAndRegister("tempo", factory); err != nil {
 		s.tlog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

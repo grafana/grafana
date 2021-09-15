@@ -3,13 +3,10 @@ package plugins
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 // DataRequestHandler is a data request handler interface.
@@ -20,11 +17,11 @@ type DataRequestHandler interface {
 
 type Store interface {
 	// Plugin finds a plugin by its ID.
-	Plugin(pluginID string) *PluginV2
+	Plugin(pluginID string) *Plugin
 	// Plugins returns plugins by their requested type.
-	Plugins(pluginType ...PluginType) []*PluginV2
+	Plugins(pluginType ...PluginType) []*Plugin
 	// Renderer returns a renderer plugin.
-	Renderer() *PluginV2
+	Renderer() *Plugin
 
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string, opts InstallOpts) error
@@ -48,12 +45,12 @@ type Client interface {
 }
 
 type CoreBackendRegistrar interface {
-	//Register registers a backend plugin
-	Register(pluginID string, factory backendplugin.PluginFactoryFunc) error
+	//LoadAndRegister loads and registers a Core backend plugin
+	LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error
 }
 
 type StaticRouteResolver interface {
-	StaticRoutes() []*PluginStaticRoute
+	Routes() []*PluginStaticRoute
 }
 
 type PluginDashboardManager interface {

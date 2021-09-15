@@ -29,9 +29,7 @@ import (
 )
 
 func TestQueryCloudWatchMetrics(t *testing.T) {
-	grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"pluginManagerV2"},
-	})
+	grafDir, cfgPath := testinfra.CreateGrafDir(t)
 	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
 	setUpDatabase(t, sqlStore)
 
@@ -95,9 +93,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 }
 
 func TestQueryCloudWatchLogs(t *testing.T) {
-	grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"pluginManagerV2"},
-	})
+	grafDir, cfgPath := testinfra.CreateGrafDir(t)
 	addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
 	setUpDatabase(t, store)
 

@@ -155,7 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			defaultDS = n
 		}
 
-		meta := dsM["meta"].(*plugins.PluginV2)
+		meta := dsM["meta"].(*plugins.Plugin)
 		if meta.Preload {
 			pluginsToPreload = append(pluginsToPreload, meta.Module)
 		}
@@ -329,9 +329,10 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 	c.JSON(200, settings)
 }
 
-type EnabledPlugins map[plugins.PluginType]map[string]*plugins.PluginV2
+// EnabledPlugins represents a mapping of plugin types to plugin IDs to plugins
+type EnabledPlugins map[plugins.PluginType]map[string]*plugins.Plugin
 
-func (ep EnabledPlugins) Get(pluginType plugins.PluginType, pluginID string) *plugins.PluginV2 {
+func (ep EnabledPlugins) Get(pluginType plugins.PluginType, pluginID string) *plugins.Plugin {
 	return ep[pluginType][pluginID]
 }
 
@@ -346,7 +347,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 	for _, app := range hs.pluginStore.Plugins(plugins.App) {
 		if b, ok := pluginSettingMap[app.ID]; ok {
 			app.Pinned = b.Pinned
-			ep[plugins.App] = map[string]*plugins.PluginV2{
+			ep[plugins.App] = map[string]*plugins.Plugin{
 				app.ID: app,
 			}
 		}
@@ -354,7 +355,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 
 	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if _, exists := pluginSettingMap[ds.ID]; exists {
-			ep[plugins.DataSource] = map[string]*plugins.PluginV2{
+			ep[plugins.DataSource] = map[string]*plugins.Plugin{
 				ds.ID: ds,
 			}
 		}
@@ -362,7 +363,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 
 	for _, p := range hs.pluginStore.Plugins(plugins.Panel) {
 		if _, exists := pluginSettingMap[p.ID]; exists {
-			ep[plugins.Panel] = map[string]*plugins.PluginV2{
+			ep[plugins.Panel] = map[string]*plugins.Plugin{
 				p.ID: p,
 			}
 		}
@@ -388,7 +389,7 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 			continue
 		}
 
-		// default to enabled true
+		// enabled by default
 		opt := &models.PluginSettingInfoDTO{
 			PluginId: pluginDef.ID,
 			OrgId:    orgID,

@@ -13,7 +13,7 @@ type validator struct {
 	allowUnsignedPluginsCondition UnsignedPluginConditionFunc
 }
 
-type UnsignedPluginConditionFunc = func(plugin *plugins.PluginV2) bool
+type UnsignedPluginConditionFunc = func(plugin *plugins.Plugin) bool
 
 func NewValidator(cfg *setting.Cfg, unsignedCond UnsignedPluginConditionFunc) *validator {
 	return &validator{
@@ -22,14 +22,14 @@ func NewValidator(cfg *setting.Cfg, unsignedCond UnsignedPluginConditionFunc) *v
 	}
 }
 
-func (s *validator) Validate(plugin *plugins.PluginV2) *plugins.PluginSignatureError {
+func (s *validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureError {
 	if plugin.Signature == plugins.SignatureValid {
 		logger.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
 	}
 
+	// If a plugin is nested within another, create links to each other to inherit signature details
 	if plugin.Parent != nil {
-		// If a descendant plugin with invalid signature, set signature to that of root
 		if plugin.IsCorePlugin() || plugin.Signature == plugins.SignatureInternal {
 			logger.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
 				"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
@@ -82,7 +82,7 @@ func (s *validator) Validate(plugin *plugins.PluginV2) *plugins.PluginSignatureE
 	}
 }
 
-func (s *validator) allowUnsigned(plugin *plugins.PluginV2) bool {
+func (s *validator) allowUnsigned(plugin *plugins.Plugin) bool {
 	if s.allowUnsignedPluginsCondition != nil {
 		return s.allowUnsignedPluginsCondition(plugin)
 	}
