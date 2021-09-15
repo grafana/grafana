@@ -54,7 +54,7 @@ func TestLoader_LoadAll(t *testing.T) {
 						Info: plugins.PluginInfo{
 							Author: plugins.PluginInfoLink{
 								Name: "Grafana Labs",
-								Url:  "https://grafana.com",
+								URL:  "https://grafana.com",
 							},
 							Description: "Data source for Amazon AWS monitoring service",
 							Logos: plugins.PluginLogos{
@@ -104,7 +104,7 @@ func TestLoader_LoadAll(t *testing.T) {
 						Info: plugins.PluginInfo{
 							Author: plugins.PluginInfoLink{
 								Name: "Grafana Labs",
-								Url:  "https://grafana.com",
+								URL:  "https://grafana.com",
 							},
 							Logos: plugins.PluginLogos{
 								Small: "public/img/icn-datasource.svg",
@@ -142,15 +142,15 @@ func TestLoader_LoadAll(t *testing.T) {
 						Info: plugins.PluginInfo{
 							Author: plugins.PluginInfoLink{
 								Name: "Test Inc.",
-								Url:  "http://test.com",
+								URL:  "http://test.com",
 							},
 							Logos: plugins.PluginLogos{
 								Small: "public/plugins/test-app/img/logo_small.png",
 								Large: "public/plugins/test-app/img/logo_large.png",
 							},
 							Links: []plugins.PluginInfoLink{
-								{Name: "Project site", Url: "http://project.com"},
-								{Name: "License & Terms", Url: "http://license.com"},
+								{Name: "Project site", URL: "http://project.com"},
+								{Name: "License & Terms", URL: "http://license.com"},
 							},
 							Description: "Official Grafana Test App & Dashboard bundle",
 							Screenshots: []plugins.PluginScreenshots{
@@ -163,8 +163,8 @@ func TestLoader_LoadAll(t *testing.T) {
 						Dependencies: plugins.PluginDependencies{
 							GrafanaVersion: "3.x.x",
 							Plugins: []plugins.PluginDependencyItem{
-								{Type: "datasource", Id: "graphite", Name: "Graphite", Version: "1.0.0"},
-								{Type: "panel", Id: "graph", Name: "Graph", Version: "1.0.0"},
+								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
+								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 							},
 						},
 						Includes: []*plugins.PluginInclude{
@@ -235,7 +235,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			Info: plugins.PluginInfo{
 				Author: plugins.PluginInfoLink{
 					Name: "Grafana Labs",
-					Url:  "http://grafana.com",
+					URL:  "http://grafana.com",
 				},
 				Logos: plugins.PluginLogos{
 					Small: "public/img/icn-datasource.svg",
@@ -268,7 +268,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			Info: plugins.PluginInfo{
 				Author: plugins.PluginInfoLink{
 					Name: "Grafana Labs",
-					Url:  "http://grafana.com",
+					URL:  "http://grafana.com",
 				},
 				Logos: plugins.PluginLogos{
 					Small: "public/img/icn-panel.svg",
@@ -360,13 +360,13 @@ func TestLoader_readPluginJSON(t *testing.T) {
 				Info: plugins.PluginInfo{
 					Author: plugins.PluginInfoLink{
 						Name: "Test Inc.",
-						Url:  "http://test.com",
+						URL:  "http://test.com",
 					},
 					Description: "Official Grafana Test App & Dashboard bundle",
 					Version:     "1.0.0",
 					Links: []plugins.PluginInfoLink{
-						{Name: "Project site", Url: "http://project.com"},
-						{Name: "License & Terms", Url: "http://license.com"},
+						{Name: "Project site", URL: "http://project.com"},
+						{Name: "License & Terms", URL: "http://license.com"},
 					},
 					Logos: plugins.PluginLogos{
 						Small: "img/logo_small.png",
@@ -381,8 +381,8 @@ func TestLoader_readPluginJSON(t *testing.T) {
 				Dependencies: plugins.PluginDependencies{
 					GrafanaVersion: "3.x.x",
 					Plugins: []plugins.PluginDependencyItem{
-						{Type: "datasource", Id: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", Id: "graph", Name: "Graph", Version: "1.0.0"},
+						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
+						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 					},
 				},
 				Includes: []*plugins.PluginInclude{

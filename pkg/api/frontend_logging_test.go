@@ -75,7 +75,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 			routes: []*plugins.PluginStaticRoute{
 				{
 					Directory: "/usr/local/telepathic-panel",
-					PluginId:  "telepathic",
+					PluginID:  "telepathic",
 				},
 			},
 		}

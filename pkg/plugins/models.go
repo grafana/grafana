@@ -124,7 +124,7 @@ type PluginInclude struct {
 	Icon       string          `json:"icon"`
 	UID        string          `json:"uid"`
 
-	Id string `json:"-"`
+	ID string `json:"-"`
 }
 
 func (e PluginInclude) GetSlugOrUIDLink() string {
@@ -136,8 +136,8 @@ func (e PluginInclude) GetSlugOrUIDLink() string {
 }
 
 type PluginDependencyItem struct {
+	ID      string `json:"id"`
 	Type    string `json:"type"`
-	Id      string `json:"id"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
@@ -162,7 +162,7 @@ type PluginInfo struct {
 
 type PluginInfoLink struct {
 	Name string `json:"name"`
-	Url  string `json:"url"`
+	URL  string `json:"url"`
 }
 
 type PluginLogos struct {
@@ -171,11 +171,11 @@ type PluginLogos struct {
 }
 
 type PluginScreenshots struct {
-	Path string `json:"path"`
 	Name string `json:"name"`
+	Path string `json:"path"`
 }
 
 type PluginStaticRoute struct {
+	PluginID  string
 	Directory string
-	PluginId  string
 }

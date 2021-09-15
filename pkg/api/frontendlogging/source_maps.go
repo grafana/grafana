@@ -84,12 +84,12 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
 		for _, route := range store.routeResolver.Routes() {
-			pluginPrefix := filepath.Join("/public/plugins/", route.PluginId)
+			pluginPrefix := filepath.Join("/public/plugins/", route.PluginID)
 			if strings.HasPrefix(u.Path, pluginPrefix) {
 				return &sourceMapLocation{
 					dir:      route.Directory,
 					path:     u.Path[len(pluginPrefix):] + ".map",
-					pluginID: route.PluginId,
+					pluginID: route.PluginID,
 				}, nil
 			}
 		}

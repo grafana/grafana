@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,7 +30,7 @@ type Plugin struct {
 	Parent         *Plugin
 	Children       []*Plugin
 	SignedFiles    PluginFiles
-	SignatureError PluginSignatureError
+	SignatureError *PluginSignatureError
 
 	// GCOM update checker fields
 	GrafanaComVersion   string
@@ -134,6 +135,10 @@ func (p *Plugin) SetLogger(l log.Logger) {
 }
 
 func (p *Plugin) Start(ctx context.Context) error {
+	if p.client == nil {
+		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
+	}
+
 	err := p.client.Start(ctx)
 	if err != nil {
 		return err
@@ -250,7 +255,7 @@ func (p *Plugin) Client() (PluginClient, bool) {
 }
 
 func (p *Plugin) StaticRoute() *PluginStaticRoute {
-	return &PluginStaticRoute{Directory: p.PluginDir, PluginId: p.ID}
+	return &PluginStaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -47,7 +48,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err = pm.init()
 		require.NoError(t, err)
 
-		assert.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 		verifyCorePluginCatalogue(t, pm)
 		verifyBundledPlugins(t, pm)
 	})
@@ -63,13 +64,13 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.init()
 		require.NoError(t, err)
 
-		assert.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 		verifyCorePluginCatalogue(t, pm)
 
-		assert.NotEmpty(t, pm.apps)
-		assert.Equal(t, "app/plugins/datasource/graphite/module", pm.dataSources["graphite"].Module)
-		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", pm.apps["test-app"].Info.Logos.Large)
-		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", pm.apps["test-app"].Info.Screenshots[1].Path)
+		assert.NotEmpty(t, pm.Plugins())
+		assert.Equal(t, "app/plugins/datasource/graphite/module", pm.Plugin("graphite").Module)
+		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", pm.Plugin("test-app").Info.Logos.Large)
+		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", pm.Plugin("test-app").Info.Screenshots[1].Path)
 	})
 
 	t.Run("With external back-end plugin lacking signature (production)", func(t *testing.T) {
@@ -81,9 +82,8 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		const pluginID = "test"
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.scanningErrors)
-		assert.Nil(t, pm.GetDataSource(pluginID))
-		assert.Nil(t, pm.GetPlugin(pluginID))
+		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.Plugin(pluginID).SignatureError)
+		assert.Nil(t, pm.Plugin(pluginID))
 	})
 
 	t.Run("With external back-end plugin lacking signature (development)", func(t *testing.T) {
@@ -95,10 +95,9 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		const pluginID = "test"
 
-		assert.Empty(t, pm.scanningErrors)
-		assert.NotNil(t, pm.GetDataSource(pluginID))
+		verifyNoPluginErrors(t, pm)
 
-		plugin := pm.GetPlugin(pluginID)
+		plugin := pm.Plugin(pluginID)
 		assert.NotNil(t, plugin)
 		assert.Equal(t, plugins.SignatureUnsigned, plugin.Signature)
 	})
@@ -112,9 +111,8 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		const pluginID = "test-panel"
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.scanningErrors)
-		assert.Nil(t, pm.panels[pluginID])
-		assert.Nil(t, pm.GetPlugin(pluginID))
+		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.Plugin(pluginID).SignatureError)
+		assert.Nil(t, pm.Plugin(pluginID))
 	})
 
 	t.Run("With external panel plugin lacking signature (development)", func(t *testing.T) {
@@ -126,10 +124,9 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		pluginID := "test-panel"
 
-		assert.Empty(t, pm.scanningErrors)
-		assert.NotNil(t, pm.panels[pluginID])
+		verifyNoPluginErrors(t, pm)
 
-		plugin := pm.GetPlugin(pluginID)
+		plugin := pm.Plugin(pluginID)
 		assert.NotNil(t, plugin)
 		assert.Equal(t, plugins.SignatureUnsigned, plugin.Signature)
 	})
@@ -142,7 +139,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.init()
 		require.NoError(t, err)
 
-		assert.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 	})
 
 	t.Run("With external back-end plugin with invalid v1 signature", func(t *testing.T) {
@@ -153,21 +150,19 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		const pluginID = "test"
-		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' has an invalid signature`, pluginID)}, pm.scanningErrors)
-		assert.Nil(t, pm.GetDataSource(pluginID))
-		assert.Nil(t, pm.GetPlugin(pluginID))
+		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' has an invalid signature`, pluginID)}, pm.Plugin(pluginID).SignatureError)
+		assert.Nil(t, pm.Plugin(pluginID))
 	})
 
 	t.Run("With external back-end plugin lacking files listed in manifest", func(t *testing.T) {
-		fm := &fakeBackendPluginManager{}
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.cfg.PluginsPath = "testdata/lacking-files"
-			pm.BackendPluginManager = fm
 		})
 		err := pm.init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
+		const pluginID = "test"
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.Plugin(pluginID).SignatureError)
 	})
 
 	t.Run("With nested plugin duplicating parent", func(t *testing.T) {
@@ -189,15 +184,13 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.init()
 		require.NoError(t, err)
-		require.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 
 		// capture manager plugin state
-		datasources := pm.dataSources
-		panels := pm.panels
-		apps := pm.apps
+		pluginsPre := pm.Plugins()
 
 		verifyPluginManagerState := func() {
-			assert.Empty(t, pm.scanningErrors)
+			verifyNoPluginErrors(t, pm)
 			verifyCorePluginCatalogue(t, pm)
 
 			// verify plugin has been loaded successfully
@@ -211,7 +204,7 @@ func TestPluginManager_Init(t *testing.T) {
 				Info: plugins.PluginInfo{
 					Author: plugins.PluginInfoLink{
 						Name: "Will Browne",
-						Url:  "https://willbrowne.com",
+						URL:  "https://willbrowne.com",
 					},
 					Description: "Test",
 					Logos: plugins.PluginLogos{
@@ -238,29 +231,29 @@ func TestPluginManager_Init(t *testing.T) {
 				t.Errorf("result mismatch (-want +got) %s\n", diff)
 			}
 
-			ds := pm.GetDataSource(pluginID)
+			ds := pm.Plugin(pluginID)
 			assert.NotNil(t, ds)
-			assert.Equal(t, pluginID, ds.Id)
-			assert.Equal(t, pm.plugins[pluginID], &ds.FrontendPluginBase.PluginBase)
+			assert.Equal(t, pluginID, ds.ID)
+			assert.Equal(t, pm.plugins[pluginID], &ds)
 
 			assert.Len(t, pm.Routes(), 1)
-			assert.Equal(t, pluginID, pm.Routes()[0].PluginId)
+			assert.Equal(t, pluginID, pm.Routes()[0].PluginID)
 			assert.Equal(t, pluginFolder, pm.Routes()[0].Directory)
 		}
 
 		verifyPluginManagerState()
 
 		t.Run("Re-initializing external plugins is idempotent", func(t *testing.T) {
-			err = pm.initExternalPlugins()
+			err = pm.init() //pm.loadPlugins(pm.cfg.PluginsPath)
 			require.NoError(t, err)
 
 			// verify plugin state remains the same as previous
 			verifyPluginManagerState()
+			verifyNoPluginErrors(t, pm)
 
-			assert.Empty(t, pm.scanningErrors)
-			assert.True(t, reflect.DeepEqual(datasources, pm.dataSources))
-			assert.True(t, reflect.DeepEqual(panels, pm.panels))
-			assert.True(t, reflect.DeepEqual(apps, pm.apps))
+			pluginsPost := pm.Plugins()
+
+			assert.True(t, reflect.DeepEqual(pluginsPre, pluginsPost))
 		})
 	})
 
@@ -277,7 +270,8 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has an invalid signature`)}, pm.scanningErrors)
+		const pluginID = "test"
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has an invalid signature`)}, pm.Plugin(pluginID).SignatureError)
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
@@ -296,18 +290,18 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.init()
 		require.NoError(t, err)
-		require.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 
 		const pluginID = "test"
 		assert.NotNil(t, pm.plugins[pluginID])
 		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
 		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
-		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].ID)
 		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
 		assert.Equal(t, plugins.SignatureValid, pm.plugins[pluginID].Signature)
 		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
 		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
-		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+		assert.False(t, pm.Plugin(pluginID).IsCorePlugin())
 	})
 
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
@@ -322,18 +316,18 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.init()
 		require.NoError(t, err)
-		require.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 
 		const pluginID = "test"
 		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, pluginID, pm.plugins[pluginID].ID)
 		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
 		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
-		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
 		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
 		assert.Equal(t, plugins.SignatureValid, pm.plugins[pluginID].Signature)
 		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
 		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
-		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+		assert.False(t, pm.Plugin(pluginID).IsCorePlugin())
 	})
 
 	t.Run("With back-end plugin with modified v2 signature (missing file from plugin dir)", func(t *testing.T) {
@@ -348,7 +342,9 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.init()
 		require.NoError(t, err)
-		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
+
+		const pluginID = "test"
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.Plugin(pluginID).SignatureError)
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
@@ -364,7 +360,9 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.init()
 		require.NoError(t, err)
-		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
+
+		const pluginID = "test"
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.Plugin(pluginID).SignatureError)
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
@@ -380,21 +378,20 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.init()
 		require.NoError(t, err)
-		require.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 
 		const pluginID = "test-app"
-		p := pm.GetPlugin(pluginID)
+		p := pm.Plugin(pluginID)
 
 		assert.NotNil(t, p)
-		assert.NotNil(t, pm.GetApp(pluginID))
-		assert.Equal(t, pluginID, p.Id)
+		assert.Equal(t, pluginID, p.ID)
 		assert.Equal(t, "app", p.Type)
 		assert.Equal(t, "Test App", p.Name)
 		assert.Equal(t, "1.0.0", p.Info.Version)
 		assert.Equal(t, plugins.SignatureValid, p.Signature)
 		assert.Equal(t, plugins.GrafanaType, p.SignatureType)
 		assert.Equal(t, "Grafana Labs", p.SignatureOrg)
-		assert.False(t, p.IsCorePlugin)
+		assert.False(t, p.IsCorePlugin())
 	})
 
 	t.Run("With back-end plugin that is symlinked to plugins dir", func(t *testing.T) {
@@ -410,45 +407,23 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.init()
 		require.NoError(t, err)
 		// This plugin should be properly registered, even though it is symlinked to plugins dir
-		require.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 		const pluginID = "test-app"
 		assert.NotNil(t, pm.plugins[pluginID])
 	})
 }
 
-func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
-	pluginScanner := &PluginScanner{}
-
-	type testCase struct {
-		name          string
-		isBackendOnly bool
-	}
-
-	for _, c := range []testCase{
-		{name: "renderer", isBackendOnly: true},
-		{name: "app", isBackendOnly: false},
-	} {
-		t.Run(fmt.Sprintf("Plugin %s", c.name), func(t *testing.T) {
-			result := pluginScanner.isBackendOnlyPlugin(c.name)
-
-			assert.Equal(t, c.isBackendOnly, result)
-		})
-	}
-}
-
 func TestPluginManager_Installer(t *testing.T) {
 	t.Run("Install plugin after manager init", func(t *testing.T) {
-		fm := &fakeBackendPluginManager{}
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.BackendPluginManager = fm
 		})
 
 		err := pm.init()
 		require.NoError(t, err)
 
 		// mock installer
-		installer := &fakePluginInstaller{}
-		pm.pluginInstaller = installer
+		i := &fakePluginInstaller{}
+		pm.pluginInstaller = i
 
 		// Set plugin location (we do this after manager Init() so that
 		// it doesn't install the plugin automatically)
@@ -464,11 +439,11 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Equal(t, 0, installer.uninstallCount)
 
 		// verify plugin manager has loaded core plugins successfully
-		assert.Empty(t, pm.scanningErrors)
+		verifyNoPluginErrors(t, pm)
 		verifyCorePluginCatalogue(t, pm)
 
 		// verify plugin has been loaded successfully
-		assert.NotNil(t, pm.plugins[pluginID])
+		assert.NotNil(t, pm.Plugin(pluginID))
 		if diff := cmp.Diff(&plugins.PluginBase{
 			Type:  "datasource",
 			Name:  "Test",
@@ -477,7 +452,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			Info: plugins.PluginInfo{
 				Author: plugins.PluginInfoLink{
 					Name: "Will Browne",
-					Url:  "https://willbrowne.com",
+					URL:  "https://willbrowne.com",
 				},
 				Description: "Test",
 				Logos: plugins.PluginLogos{
@@ -500,21 +475,16 @@ func TestPluginManager_Installer(t *testing.T) {
 			},
 			Module:  "plugins/test/module",
 			BaseUrl: "public/plugins/test",
-		}, pm.plugins[pluginID]); diff != "" {
+		}, pm.Plugin(pluginID)); diff != "" {
 			t.Errorf("result mismatch (-want +got) %s\n", diff)
 		}
 
-		ds := pm.GetDataSource(pluginID)
-		assert.NotNil(t, ds)
-		assert.Equal(t, pluginID, ds.Id)
-		assert.Equal(t, pm.plugins[pluginID], &ds.FrontendPluginBase.PluginBase)
-
 		assert.Len(t, pm.Routes(), 1)
-		assert.Equal(t, pluginID, pm.Routes()[0].PluginId)
+		assert.Equal(t, pluginID, pm.Routes()[0].PluginID)
 		assert.Equal(t, pluginFolder, pm.Routes()[0].Directory)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Install(context.Background(), pluginID, "1.0.0")
+			err := pm.Install(context.Background(), pluginID, "1.0.0", plugins.InstallOpts{})
 			require.Equal(t, plugins.DuplicatePluginError{
 				PluginID:          pluginID,
 				ExistingPluginDir: pluginFolder,
@@ -528,8 +498,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.Equal(t, 1, installer.installCount)
 			assert.Equal(t, 1, installer.uninstallCount)
 
-			assert.Nil(t, pm.GetDataSource(pluginID))
-			assert.Nil(t, pm.GetPlugin(pluginID))
+			assert.Nil(t, pm.Plugin(pluginID))
 			assert.Len(t, pm.Routes(), 0)
 
 			t.Run("Won't uninstall if not installed", func(t *testing.T) {
@@ -595,13 +564,13 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	}
 
 	for _, p := range panels {
-		assert.NotNil(t, pm.plugins[p])
-		assert.NotNil(t, pm.panels[p])
+		assert.NotNil(t, pm.Plugin(p))
+		assert.Equal(t, plugins.Panel, pm.Plugin(p).Type)
 	}
 
 	for _, ds := range datasources {
-		assert.NotNil(t, pm.plugins[ds])
-		assert.NotNil(t, pm.dataSources[ds])
+		assert.NotNil(t, pm.Plugin(ds))
+		assert.Equal(t, plugins.DataSource, pm.Plugin(ds).Type)
 	}
 }
 
@@ -614,83 +583,24 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 
 	for pluginID, pluginDir := range bundledPlugins {
 		assert.NotNil(t, pm.plugins[pluginID])
-		for _, route := range pm.staticRoutes {
-			if pluginID == route.PluginId {
+		for _, route := range pm.Routes() {
+			if pluginID == route.PluginID {
 				assert.True(t, strings.HasPrefix(route.Directory, pm.cfg.BundledPluginsPath+"/"+pluginDir))
 			}
 		}
 	}
 
-	assert.NotNil(t, pm.dataSources["input"])
+	assert.NotNil(t, pm.Plugin("input"))
 }
-
-type fakeBackendPluginManager struct {
-	registeredPlugins []string
-}
-
-func (f *fakeBackendPluginManager) LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	f.registeredPlugins = append(f.registeredPlugins, pluginID)
-	return nil
-}
-
-func (f *fakeBackendPluginManager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	f.registeredPlugins = append(f.registeredPlugins, pluginID)
-	return nil
-}
-
-func (f *fakeBackendPluginManager) Get(pluginID string) (backendplugin.Plugin, bool) {
-	return nil, false
-}
-
-func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, pluginID string) error {
-	var result []string
-
-	for _, existingPlugin := range f.registeredPlugins {
-		if pluginID != existingPlugin {
-			result = append(result, pluginID)
-		}
-	}
-
-	f.registeredPlugins = result
-	return nil
-}
-
-func (f *fakeBackendPluginManager) IsRegistered(pluginID string) bool {
-	for _, existingPlugin := range f.registeredPlugins {
-		if pluginID == existingPlugin {
-			return true
-		}
-	}
-	return false
-}
-
-func (f *fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
-	return nil
-}
-
-func (f *fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	return nil, nil
-}
-
-func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error) {
-	return nil, nil
-}
-
-func (f *fakeBackendPluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, nil
-}
-
-func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
-}
-
-var _ backendplugin.Manager = &fakeBackendPluginManager{}
 
 type fakePluginInstaller struct {
+	installer.Installer
+
 	installCount   int
 	uninstallCount int
 }
 
-func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error {
+func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	f.installCount++
 	return nil
 }
@@ -700,11 +610,9 @@ func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginPath string) 
 	return nil
 }
 
-func (f *fakePluginInstaller) GetUpdateInfo(pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
-	return plugins.UpdateInfo{}, nil
+func (f *fakePluginInstaller) GetUpdateInfo(pluginID, version, pluginRepoURL string) (installer.UpdateInfo, error) {
+	return installer.UpdateInfo{}, nil
 }
-
-var _ plugins.PluginInstaller = &fakePluginInstaller{}
 
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
@@ -717,7 +625,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		Env:            setting.Prod,
 		StaticRootPath: staticRootPath,
 	}
-	pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+	pm := newManager(cfg, nil, nil, &sqlstore.SQLStore{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -731,24 +639,12 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 const testPluginID = "test-plugin"
 
 func TestManager(t *testing.T) {
-	newManagerScenario(t, false, func(t *testing.T, ctx *managerScenarioCtx) {
-		t.Run("Unregistered plugin scenario", func(t *testing.T) {
-			err := ctx.manager.StartPlugin(context.Background(), testPluginID)
-			require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
 
-			_, err = ctx.manager.CollectMetrics(context.Background(), testPluginID)
-			require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
-
-			_, err = ctx.manager.CheckHealth(context.Background(), backend.PluginContext{PluginID: testPluginID})
-			require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
-
-			req, err := http.NewRequest(http.MethodGet, "/test", nil)
-			require.NoError(t, err)
-			w := httptest.NewRecorder()
-			err = ctx.manager.callResourceInternal(w, req, backend.PluginContext{PluginID: testPluginID})
-			require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
-		})
-	})
+	p := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: testPluginID,
+		},
+	}
 
 	newManagerScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Managed plugin scenario", func(t *testing.T) {
@@ -757,7 +653,7 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
+				err := ctx.manager.registerAndStart(context.Background(), testPluginID, ctx.factory)
 				require.NoError(t, err)
 				require.NotNil(t, ctx.plugin)
 				require.Equal(t, testPluginID, ctx.plugin.pluginID)
@@ -837,7 +733,7 @@ func TestManager(t *testing.T) {
 				})
 
 				t.Run("Shouldn't be able to start managed plugin", func(t *testing.T) {
-					err := ctx.manager.StartPlugin(context.Background(), testPluginID)
+					err := ctx.manager.start(context.Background(), testPluginID)
 					require.NotNil(t, err)
 				})
 
@@ -1064,6 +960,12 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	fn(t, ctx)
 }
 
+func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
+	for _, plugin := range pm.plugins {
+		assert.Nil(t, plugin.SignatureError)
+	}
+}
+
 type testPlugin struct {
 	pluginID       string
 	logger         log.Logger
@@ -1221,67 +1123,3 @@ type testPluginRequestValidator struct{}
 func (t *testPluginRequestValidator) Validate(string, *http.Request) error {
 	return nil
 }
-
-type fakePluginManager struct {
-}
-
-func (f *fakePluginManager) IsEnabled() bool {
-	return false
-}
-
-func (f *fakePluginManager) Plugin(pluginID string) *plugins.Plugin {
-	return nil
-}
-
-func (f *fakePluginManager) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.Plugin {
-	return nil
-}
-
-func (f *fakePluginManager) Plugins(pluginType ...plugins.PluginType) []*plugins.Plugin {
-	return nil
-}
-
-func (f *fakePluginManager) Renderer() *plugins.Plugin {
-	return nil
-}
-
-func (f *fakePluginManager) Routes() []*plugins.PluginStaticRoute {
-	return nil
-}
-
-func (f *fakePluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, nil
-}
-
-func (f *fakePluginManager) CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string) {
-}
-
-func (f *fakePluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	return nil, nil
-}
-
-func (f *fakePluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error) {
-	return nil, nil
-}
-
-func (f *fakePluginManager) IsSupported(pluginID string) bool {
-	return false
-}
-
-func (f *fakePluginManager) IsRegistered(pluginID string) bool {
-	return false
-}
-
-func (f *fakePluginManager) InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	return nil
-}
-
-func (f *fakePluginManager) Install(ctx context.Context, pluginID, version string) error {
-	return nil
-}
-
-func (f *fakePluginManager) Uninstall(ctx context.Context, pluginID string) error {
-	return nil
-}
-
-var _ plugins.Client = &fakePluginManager{}

@@ -36,19 +36,23 @@ const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
+// Yep...
 var _ plugins.Client = (*PluginManager)(nil)
+var _ plugins.Store = (*PluginManager)(nil)
+var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
+var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
+var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg              *setting.Cfg
 	license          models.Licensing
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
-
-	plugins         map[string]*plugins.Plugin
-	pluginInstaller installer.Installer
-	pluginLoader    loader.Loader
-	pluginsMu       sync.RWMutex
-	log             log.Logger
+	plugins          map[string]*plugins.Plugin
+	pluginInstaller  installer.Installer
+	pluginLoader     loader.Loader
+	pluginsMu        sync.RWMutex
+	log              log.Logger
 }
 
 func ProvideService(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator,
@@ -86,7 +90,7 @@ func (m *PluginManager) init() error {
 	}
 
 	// install Core plugins
-	err := m.loadPlugins(m.corePluginDirs()...) // wording
+	err := m.loadPlugins(m.corePluginDirs()...)
 	if err != nil {
 		return err
 	}
@@ -146,18 +150,6 @@ func (m *PluginManager) Plugin(pluginID string) *plugins.Plugin {
 	m.pluginsMu.RUnlock()
 
 	if ok && (p.IsDecommissioned()) {
-		return nil
-	}
-
-	return p
-}
-
-func (m *PluginManager) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.Plugin {
-	m.pluginsMu.RLock()
-	p, ok := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
-
-	if ok && (p.IsDecommissioned() || p.Type != pluginType) {
 		return nil
 	}
 
@@ -603,7 +595,7 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 	return nil
 }
 
-// start starts all a backend plugin
+// start starts a backend plugin process
 func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) {
 	if !p.IsManaged() || !p.Backend {
 		return
@@ -612,24 +604,6 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) {
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		p.Logger().Error("Failed to start plugin", "error", err)
 	}
-}
-
-func (m *PluginManager) stop(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	var wg sync.WaitGroup
-	for _, p := range m.plugins {
-		wg.Add(1)
-		go func(p backendplugin.Plugin, ctx context.Context) {
-			defer wg.Done()
-			p.Logger().Debug("Stopping plugin")
-			if err := p.Stop(ctx); err != nil {
-				p.Logger().Error("Failed to stop plugin", "error", err)
-			}
-			p.Logger().Debug("Plugin stopped")
-		}(p, ctx)
-	}
-	wg.Wait()
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
@@ -674,6 +648,25 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 			p.Logger().Debug("Plugin restarted")
 		}
 	}
+}
+
+// stop stops a backend plugin process
+func (m *PluginManager) stop(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	var wg sync.WaitGroup
+	for _, p := range m.plugins {
+		wg.Add(1)
+		go func(p backendplugin.Plugin, ctx context.Context) {
+			defer wg.Done()
+			p.Logger().Debug("Stopping plugin")
+			if err := p.Stop(ctx); err != nil {
+				p.Logger().Error("Failed to stop plugin", "error", err)
+			}
+			p.Logger().Debug("Plugin stopped")
+		}(p, ctx)
+	}
+	wg.Wait()
 }
 
 // corePluginDirs provides a list of the Core plugins which need to be read
