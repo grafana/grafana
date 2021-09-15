@@ -63,7 +63,7 @@ class GraphElement {
   data: any[] = [];
   panelWidth: number;
   eventManager: EventManager;
-  thresholdManager?: ThresholdManager;
+  thresholdManager: ThresholdManager;
   timeRegionManager: TimeRegionManager;
   declare legendElem: HTMLElement;
 
@@ -76,10 +76,7 @@ class GraphElement {
 
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
-    // unified alerting does not support threshold for graphs, at least for now
-    if (!config.featureToggles.ngalert) {
-      this.thresholdManager = new ThresholdManager(this.ctrl);
-    }
+    this.thresholdManager = new ThresholdManager(this.ctrl);
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
     // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
@@ -382,9 +379,7 @@ class GraphElement {
       }
       msg.appendTo(this.elem);
     }
-    if (this.thresholdManager) {
-      this.thresholdManager.draw(plot);
-    }
+    this.thresholdManager.draw(plot);
     this.timeRegionManager.draw(plot);
   }
 
@@ -455,9 +450,7 @@ class GraphElement {
     }
 
     // give space to alert editing
-    if (this.thresholdManager) {
-      this.thresholdManager.prepare(this.elem, this.data);
-    }
+    this.thresholdManager.prepare(this.elem, this.data);
 
     // un-check dashes if lines are unchecked
     this.panel.dashes = this.panel.lines ? this.panel.dashes : false;
@@ -466,9 +459,7 @@ class GraphElement {
     const options: any = this.buildFlotOptions(this.panel);
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
-    if (this.thresholdManager) {
-      this.thresholdManager.addFlotOptions(options, this.panel);
-    }
+    this.thresholdManager.addFlotOptions(options, this.panel);
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
     this.sortedSeries = this.sortSeries(this.data, this.panel);
