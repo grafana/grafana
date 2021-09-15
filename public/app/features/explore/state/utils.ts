@@ -1,19 +1,14 @@
 import {
   AbsoluteTimeRange,
-  DataFrame,
   DataSourceApi,
   EventBusExtended,
   ExploreUrlState,
-  FieldCache,
-  FieldConfig,
-  FieldType,
   getDefaultTimeRange,
   getLogLevelFromKey,
   HistoryItem,
   Labels,
   LoadingState,
   LogLevel,
-  MutableDataFrame,
   PanelData,
 } from '@grafana/data';
 
@@ -142,41 +137,4 @@ export function getLogLevelFromLabels(labels: Labels): LogLevel {
     }
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
-}
-
-/**
- * Create a new data frame with a single field and values creating by adding field values
- * from all provided data frames
- */
-export function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFrame {
-  const aggregatedDataFrame = new MutableDataFrame();
-  if (!dataFrames.length) {
-    return aggregatedDataFrame;
-  }
-
-  const totalLength = dataFrames[0].length;
-  const timeField = new FieldCache(dataFrames[0]).getFirstFieldOfType(FieldType.time);
-
-  if (!timeField) {
-    return aggregatedDataFrame;
-  }
-
-  aggregatedDataFrame.addField({ name: 'Time', type: FieldType.time }, totalLength);
-  aggregatedDataFrame.addField({ name: 'Value', type: FieldType.number, config }, totalLength);
-
-  dataFrames.forEach((dataFrame) => {
-    dataFrame.fields.forEach((field) => {
-      if (field.type === FieldType.number) {
-        for (let pointIndex = 0; pointIndex < totalLength; pointIndex++) {
-          const currentValue = aggregatedDataFrame.get(pointIndex).Value;
-          const valueToAdd = field.values.get(pointIndex);
-          const totalValue =
-            currentValue === null && valueToAdd === null ? null : (currentValue || 0) + (valueToAdd || 0);
-          aggregatedDataFrame.set(pointIndex, { Value: totalValue, Time: timeField.values.get(pointIndex) });
-        }
-      }
-    });
-  });
-
-  return aggregatedDataFrame;
 }
