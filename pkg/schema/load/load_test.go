@@ -194,8 +194,6 @@ func TestAllPluginsInDist(t *testing.T) {
 	inst, err := rt.Build(load.Instances(nil, cfg)[0])
 	require.NoError(t, err)
 
-	// path := cue.MakePath(cue.Str("Family"), cue.Str("compose"), cue.Hid("_panelTypes", "dashboard"))
-	// dinst, err := rt.Compile("str", "typs: [for typ, _ in Family.compose.Panel {typ}]")
 	dinst, err := rt.Compile("str", `
 	Family: compose: Panel: {}
 	typs: [for typ, _ in Family.compose.Panel {typ}]
