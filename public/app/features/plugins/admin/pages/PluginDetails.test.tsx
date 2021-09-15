@@ -241,5 +241,8 @@ describe('Plugin details page', () => {
     userEvent.click(getByRole('button', { name: /confirm/i }));
     expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
     expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
+
+    // Check if the modal disappeared
+    expect(queryByText('Uninstall Akumuli')).not.toBeInTheDocument();
   });
 });
