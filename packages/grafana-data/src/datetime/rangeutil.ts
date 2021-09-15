@@ -40,7 +40,9 @@ const rangeOptions: TimeOption[] = [
   },
   { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
   { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
+  { from: 'now-1Q/fQ', to: 'now-1Q/fQ', display: 'Previous fiscal quarter' },
   { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
+  { from: 'now-1y/fy', to: 'now-1y/fy', display: 'Previous fiscal year' },
 
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
   { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
@@ -58,6 +60,10 @@ const rangeOptions: TimeOption[] = [
   { from: 'now-1y', to: 'now', display: 'Last 1 year' },
   { from: 'now-2y', to: 'now', display: 'Last 2 years' },
   { from: 'now-5y', to: 'now', display: 'Last 5 years' },
+  { from: 'now/fQ', to: 'now', display: 'This fiscal quarter so far' },
+  { from: 'now/fQ', to: 'now/fQ', display: 'This fiscal quarter' },
+  { from: 'now/fy', to: 'now', display: 'This fiscal year so far' },
+  { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
 ];
 
 const hiddenRangeOptions: TimeOption[] = [

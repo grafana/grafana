@@ -102,7 +102,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
   let i = 0;
   const len = strippedMathString.length;
 
-  const fy_start_month = 3;
+  const fy_start_month = 2;
 
   while (i < len) {
     const c = strippedMathString.charAt(i++);
