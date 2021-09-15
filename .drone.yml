@@ -28,12 +28,12 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: restore-cache
   pull: always
   image: meltwater/drone-cache
   settings:
+    backend: gcs
     bucket: test-julien
     restore: true
   environment:
@@ -104,6 +104,7 @@ steps:
   pull: always
   image: meltwater/drone-cache
   settings:
+    backend: gcs
     bucket: test-julien
     mount:
     - /opt/drone/gocache
@@ -313,7 +314,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -703,7 +703,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -799,7 +798,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -1638,7 +1636,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1753,7 +1750,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -2575,7 +2571,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2689,7 +2684,6 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GOCACHE: /opt/test/gocache
     GOMODCACHE: /opt/test/gomodcache
-    PLUGIN_BACKEND: gcs
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -3562,6 +3556,6 @@ get:
 
 ---
 kind: signature
-hmac: 4fa1fe9c555d75a2b4cacd8735134e5e039b6fc34f1ea36006d67ab6b96392f3
+hmac: 40e61dbde96aeccb7846d03b43df51df8aba2acb9ef075b9c2e0b9693c1e7e59
 
 ...

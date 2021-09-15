@@ -121,7 +121,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'name': 'initialize',
             'image': build_image,
             'environment': {
-                'PLUGIN_BACKEND': 'gcs',
                 'DOCKERIZE_VERSION': dockerize_version,
                 'GOCACHE': '/opt/test/gocache',
                 'GOMODCACHE': '/opt/test/gomodcache',
@@ -417,6 +416,7 @@ def restore_cache_step():
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
+            'backend': 'gcs',
             'bucket': 'test-julien',
             'restore': 'true',
          },
@@ -434,6 +434,7 @@ def rebuild_cache_step():
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
+            'backend': 'gcs',
             'bucket': 'test-julien',
             'rebuild': 'true',
             'mount': [
