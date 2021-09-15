@@ -157,6 +157,50 @@ describe('Format value', () => {
     expect(result.text).toEqual('elva');
   });
 
+  it('should replace a matching regex', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.RegexToText, options: { pattern: '([^.]*).example.com', result: { text: '$1' } } },
+    ];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('hostname.example.com');
+
+    expect(result.text).toEqual('hostname');
+  });
+
+  it('should not replace a non-matching regex', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.RegexToText, options: { pattern: '([^.]*).example.com', result: { text: '$1' } } },
+    ];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('hostname.acme.com');
+
+    expect(result.text).toEqual('hostname.acme.com');
+  });
+
+  it('should empty a matching regex without replacement', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.RegexToText, options: { pattern: '([^.]*).example.com', result: { text: '' } } },
+    ];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('hostname.example.com');
+
+    expect(result.text).toEqual('');
+  });
+
+  it('should not empty a non-matching regex', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.RegexToText, options: { pattern: '([^.]*).example.com', result: { text: '' } } },
+    ];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('hostname.acme.com');
+
+    expect(result.text).toEqual('hostname.acme.com');
+  });
+
   it('should return value with color if mapping has color', () => {
     const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { Low: { color: 'red' } } }];
 

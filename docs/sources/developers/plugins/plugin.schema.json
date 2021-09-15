@@ -340,7 +340,7 @@
           },
           "method": {
             "type": "string",
-            "description": "For data source plugins. Route method matches the HTTP verb like GET or POST."
+            "description": "For data source plugins. Route method matches the HTTP verb like GET or POST. Multiple methods can be provided as a comma-separated list."
           },
           "url": {
             "type": "string",

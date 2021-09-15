@@ -246,4 +246,14 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       editor: standardEditorsRegistry.get('field-name').editor as any,
     });
   }
+
+  addDashboardPicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('dashboard-uid').editor as any, // added at runtime
+    });
+  }
 }

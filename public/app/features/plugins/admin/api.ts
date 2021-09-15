@@ -1,8 +1,17 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin, CatalogPluginDetails } from './types';
 import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
 import { PluginError } from '@grafana/data';
+import {
+  PluginDetails,
+  Org,
+  LocalPlugin,
+  RemotePlugin,
+  CatalogPlugin,
+  CatalogPluginDetails,
+  Version,
+  PluginVersion,
+} from './types';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
   const [localPlugins, remotePlugins, pluginErrors] = await Promise.all([
@@ -82,10 +91,13 @@ async function getRemotePlugin(id: string, isInstalled: boolean): Promise<Remote
   }
 }
 
-async function getPluginVersions(id: string): Promise<any[]> {
+async function getPluginVersions(id: string): Promise<Version[]> {
   try {
-    const versions = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}/versions`);
-    return versions.items;
+    const versions: { items: PluginVersion[] } = await getBackendSrv().get(
+      `${GRAFANA_API_ROOT}/plugins/${id}/versions`
+    );
+
+    return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
   } catch (error) {
     return [];
   }

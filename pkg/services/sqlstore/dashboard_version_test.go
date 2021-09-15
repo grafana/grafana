@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -51,7 +52,7 @@ func TestGetDashboardVersion(t *testing.T) {
 				Uid:   savedDash.Uid,
 			}
 
-			err = GetDashboard(&dashCmd)
+			err = GetDashboardCtx(context.Background(), &dashCmd)
 			So(err, ShouldBeNil)
 			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 			So(eq, ShouldEqual, true)
