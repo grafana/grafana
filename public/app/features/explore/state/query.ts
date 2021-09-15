@@ -37,7 +37,7 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
-import { mapKeys } from 'lodash';
+import { mapValues } from 'lodash';
 
 //
 // Actions and Payloads
@@ -640,7 +640,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       relatedDataProviders: { ...state.relatedDataProviders, ...relatedDataProviders },
-      relatedData: mapKeys(state.relatedData, (value, key) => {
+      relatedData: mapValues(state.relatedData, (value, key) => {
         return key in relatedDataProviders ? undefined : value;
       }),
     };
