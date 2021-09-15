@@ -92,6 +92,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
+
+	customFrameMeta := map[string]interface{}{}
+	customFrameMeta["alignmentPeriod"] = timeSeriesFilter.Params.Get("aggregation.alignmentPeriod")
+	customFrameMeta["perSeriesAligner"] = timeSeriesFilter.Params.Get("aggregation.perSeriesAligner")
 	for _, series := range response.TimeSeries {
 		seriesLabels := data.Labels{}
 		defaultMetricName := series.Metric.Type
@@ -102,10 +106,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		frame.RefID = timeSeriesFilter.RefID
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
-			Custom: map[string]interface{}{
-				"alignmentPeriod":  timeSeriesFilter.Params.Get("aggregation.alignmentPeriod"),
-				"perSeriesAligner": timeSeriesFilter.Params.Get("aggregation.perSeriesAligner"),
-			},
 		}
 
 		for key, value := range series.Metric.Labels {
@@ -157,13 +157,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 						seriesLabels[key] = strVal
 					}
 				}
-			}
-		}
-
-		labelsByKey := make(map[string][]string)
-		for key, values := range labels {
-			for value := range values {
-				labelsByKey[key] = append(labelsByKey[key], value)
 			}
 		}
 
@@ -234,12 +227,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 							timeField,
 							valueField,
 						},
-						Meta: &data.FrameMeta{
-							Custom: map[string]interface{}{
-								"groupBys": timeSeriesFilter.GroupBys,
-								"labels":   labelsByKey,
-							},
-						},
 					}
 				}
 			}
@@ -252,6 +239,24 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		dl := timeSeriesFilter.buildDeepLink()
 		frames = addConfigData(frames, dl, response.Unit)
 	}
+
+	labelsByKey := make(map[string][]string)
+	for key, values := range labels {
+		for value := range values {
+			labelsByKey[key] = append(labelsByKey[key], value)
+		}
+	}
+	customFrameMeta["labels"] = labelsByKey
+	customFrameMeta["groupBys"] = timeSeriesFilter.GroupBys
+
+	for _, frame := range frames {
+		if frame.Meta != nil {
+			frame.Meta.Custom = customFrameMeta
+		} else {
+			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
+		}
+	}
+
 	queryRes.Frames = frames
 
 	return nil

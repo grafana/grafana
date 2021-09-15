@@ -92,6 +92,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
+
+	customFrameMeta := map[string]interface{}{}
 	for _, series := range response.TimeSeriesData {
 		seriesLabels := make(map[string]string)
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -165,24 +167,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 
 				frames = append(frames, frame)
 				continue
-			}
-
-			labelsByKey := make(map[string][]string)
-			for key, values := range labels {
-				for value := range values {
-					labelsByKey[key] = append(labelsByKey[key], value)
-				}
-			}
-
-			if frame.Meta != nil {
-				// this will overwrite existing custom field
-				frame.Meta.Custom = map[string]interface{}{
-					"labels": labelsByKey,
-				}
-			} else {
-				frame.SetMeta(&data.FrameMeta{Custom: map[string]interface{}{
-					"labels": labelsByKey,
-				}})
 			}
 
 			// process distribution series
@@ -260,6 +244,22 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
 		frames = addConfigData(frames, dl, response.Unit)
+	}
+
+	labelsByKey := make(map[string][]string)
+	for key, values := range labels {
+		for value := range values {
+			labelsByKey[key] = append(labelsByKey[key], value)
+		}
+	}
+	customFrameMeta["labels"] = labelsByKey
+
+	for _, frame := range frames {
+		if frame.Meta != nil {
+			frame.Meta.Custom = customFrameMeta
+		} else {
+			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
+		}
 	}
 
 	queryRes.Frames = frames
