@@ -717,6 +717,7 @@
         },
         "id": 18,
         "options": {
+          "orientation": "auto",
           "reduceOptions": {
             "calcs": [
               "lastNotNull"
@@ -911,12 +912,7 @@
           "y": 61
         },
         "id": 2,
-        "links": [
-          {
-            "title": "This is a panel link",
-            "url": "/"
-          }
-        ],
+        "links": [],
         "options": {
           "legend": {
             "calcs": [],
