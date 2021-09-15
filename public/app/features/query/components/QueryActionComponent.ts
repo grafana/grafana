@@ -1,9 +1,9 @@
 import { DataQuery, TimeRange } from '@grafana/data';
 
 interface ActionComponentProps {
-  query?: Partial<DataQuery>;
+  query?: DataQuery;
   queries?: Array<Partial<DataQuery>>;
-  onAddQuery?: (q: Partial<DataQuery>) => void;
+  onAddQuery?: (q: DataQuery) => void;
   timeRange?: TimeRange;
 }
 
