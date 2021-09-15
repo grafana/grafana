@@ -27,6 +27,15 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
+- name: restore-cache
+  pull: always
+  image: homerovalle/drone-gcs-cache
+  settings:
+    bucket: test-julien
+    restore: true
+  environment:
+    GCS_CACHE_JSON_KEY: tf_google_credentials
+
 - name: codespell
   image: grafana/build-container:1.4.2
   commands:
@@ -3491,7 +3500,15 @@ get:
   name: machine-user-token
 
 ---
+kind: secret
+name: tf_google_credentials
+
+get:
+  path: infra/data/ci/terraform/google
+  name: credentials.json
+
+---
 kind: signature
-hmac: 9211e316cd24660667ba57b860129d2f06b0a4a669aa4d5c1f13156667ae027f
+hmac: 67745e00a6e20090d9fec4b57b7e8738b48c24d808abe469a2ad17a93c3dff57
 
 ...
