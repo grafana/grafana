@@ -400,6 +400,7 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
+            'yarn cache list',
             'yarn run ci:test-frontend',
         ],
     }

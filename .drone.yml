@@ -75,6 +75,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -355,6 +356,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -822,6 +824,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -1193,6 +1196,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -1768,6 +1772,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -2128,6 +2133,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -2696,6 +2702,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -3027,6 +3034,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
+  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -3528,6 +3536,6 @@ get:
 
 ---
 kind: signature
-hmac: 14f1f7ed688dfebaa64e30094e487c09387077a27ad74c5b19072be042695e72
+hmac: 627a6ce39c9f2a7e9aa6980abbefb322194643d734efe6491a3e173022d59876
 
 ...
