@@ -910,10 +910,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
-		return err
-	}
-
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
@@ -933,12 +929,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
-	// Read and populate feature toggles list
-	featureTogglesSection := iniFile.Section("feature_toggles")
-	cfg.FeatureToggles = make(map[string]bool)
-	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
-	for _, feature := range util.SplitString(featuresTogglesStr) {
-		cfg.FeatureToggles[feature] = true
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
+		return err
 	}
 
 	// check old location for this option
@@ -1369,12 +1365,15 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
-	cfg.UnifiedAlertingEnabled = ua.Key("enabled").MustBool(true)
+	cfg.UnifiedAlertingEnabled = ua.Key("enabled").MustBool(false)
 
-	alerting := iniFile.Section("alerting")
-	alertingEnabled := alerting.Key("enabled").MustBool(false)
+	// if the old feature toggle ngalert is set, enable Grafana 8 alerts anyway
+	if !cfg.UnifiedAlertingEnabled && cfg.FeatureToggles["ngalert"] {
+		cfg.UnifiedAlertingEnabled = true
+		AlertingEnabled = false
+	}
 
-	if cfg.UnifiedAlertingEnabled && alertingEnabled {
+	if cfg.UnifiedAlertingEnabled && AlertingEnabled {
 		return errors.New("both legacy and Grafana 8 Alerts are enabled")
 	}
 
@@ -1393,9 +1392,20 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	return nil
 }
 
+func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("feature_toggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
+	return nil
+}
+
 func readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
-	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
