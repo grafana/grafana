@@ -35,10 +35,9 @@ steps:
   settings:
     backend: gcs
     bucket: test-julien
-    restore: true
-  environment:
-    GCS_CACHE_JSON_KEY:
+    json_key:
       from_secret: tf_google_credentials
+    restore: true
   depends_on:
   - initialize
 
@@ -106,13 +105,12 @@ steps:
   settings:
     backend: gcs
     bucket: test-julien
+    json_key:
+      from_secret: tf_google_credentials
     mount:
     - /opt/drone/gocache
     - /opt/drone/gomodcache
     rebuild: true
-  environment:
-    GCS_CACHE_JSON_KEY:
-      from_secret: tf_google_credentials
   when:
     event:
     - pull_request
@@ -3555,6 +3553,6 @@ get:
 
 ---
 kind: signature
-hmac: 40e61dbde96aeccb7846d03b43df51df8aba2acb9ef075b9c2e0b9693c1e7e59
+hmac: de1bd65cadd6643da6c3f3bac39dffcfb3fb2ab4ef5813cbe6ff105cfa783332
 
 ...
