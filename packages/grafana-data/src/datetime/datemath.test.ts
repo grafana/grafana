@@ -179,30 +179,26 @@ describe('DateMath', () => {
     //fq5 = 2021-11-01 - 2022-01-31
 
     it('Should round to start of q2 when one month into q2', () => {
-      let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'q', false);
+      let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'Q', false);
       let expected = dateTime([2021, 4, 1]);
-      console.log(date, expected);
       expect(date!.valueOf()).toEqual(expected.valueOf());
     });
 
     it('Should round to start of q4 when datetime is in next year from fiscal year start', () => {
-      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'q', false);
+      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'Q', false);
       let expected = dateTime([2021, 10, 1]);
-      console.log(date, expected);
       expect(date!.valueOf()).toEqual(expected.valueOf());
     });
 
     it('Should round to end of q2 when one month into q2', () => {
-      let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'q', true);
+      let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'Q', true);
       let expected = dateTime([2021, 6, 1]).endOf('M');
-      console.log(date, expected);
       expect(date!.valueOf()).toEqual(expected.valueOf());
     });
 
     it('Should round to end of q4 when datetime is in next year from fiscal year start', () => {
-      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'q', true);
+      let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'Q', true);
       let expected = dateTime([2022, 0, 31]).endOf('M');
-      console.log(date, expected);
       expect(date!.valueOf()).toEqual(expected.valueOf());
     });
   });
