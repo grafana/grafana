@@ -131,29 +131,33 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Min Duration" labelWidth={14} grow>
-          <Input
-            value={query.minDuration || ''}
+          <QueryField
+            query={query.minDuration || ''}
             placeholder={durationPlaceholder}
-            onChange={(v) =>
+            onChange={(value) =>
               onChange({
                 ...query,
-                minDuration: v.currentTarget.value,
+                minDuration: value,
               })
             }
+            onRunQuery={onRunQuery}
+            portalOrigin="tempo"
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Max Duration" labelWidth={14} grow>
-          <Input
-            value={query.maxDuration || ''}
+          <QueryField
+            query={query.maxDuration || ''}
             placeholder={durationPlaceholder}
-            onChange={(v) =>
+            onChange={(value) =>
               onChange({
                 ...query,
-                maxDuration: v.currentTarget.value,
+                maxDuration: value,
               })
             }
+            onRunQuery={onRunQuery}
+            portalOrigin="tempo"
           />
         </InlineField>
       </InlineFieldRow>
