@@ -215,7 +215,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   getLogsVolumeContent(width: number, logsVolume?: LogsVolume) {
-    const { exploreId, loadDataProvider, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
+    const { exploreId, loadRelatedData, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
 
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
 
@@ -225,7 +225,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           <Button
             size="lg"
             onClick={() => {
-              loadDataProvider(exploreId, RelatedDataType.LogsVolume);
+              loadRelatedData(exploreId, RelatedDataType.LogsVolume);
             }}
           >
             Load logs volume
@@ -485,7 +485,7 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  loadDataProvider: loadRelatedData,
+  loadRelatedData,
   addQueryRow,
   splitOpen,
 };
