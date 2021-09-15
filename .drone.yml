@@ -36,7 +36,8 @@ steps:
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
-    YARN_CACHE_FOLDER: /opt/drone/yarncache/test
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -101,17 +102,20 @@ steps:
   image: homerovalle/drone-gcs-cache
   settings:
     bucket: test-julien
-    mount: /opt/drone/yarncache
+    mount:
+    - /opt/drone/gocache
+    - /opt/drone/gomodcache
     rebuild: true
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
-    YARN_CACHE_FOLDER: /opt/drone/yarncache/test
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
   when:
     event:
     - pull_request
   depends_on:
-  - build-frontend
+  - build-backend
 
 - name: build-plugins
   image: grafana/build-container:1.4.2
@@ -3536,6 +3540,6 @@ get:
 
 ---
 kind: signature
-hmac: 627a6ce39c9f2a7e9aa6980abbefb322194643d734efe6491a3e173022d59876
+hmac: 812ae50ab8b281d12dfdfb9142155e1f81e7b63c4b50e65417a9f13f66ea6905
 
 ...
