@@ -100,9 +100,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   rowChild: css`
     margin-right: ${theme.spacing(1)};
     margin-bottom: 0;
+    max-height: 52px;
   `,
   fieldLabel: css`
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 500;
   `,
 });
