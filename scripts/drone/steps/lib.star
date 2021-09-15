@@ -123,8 +123,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'environment': {
                 'PLUGIN_BACKEND': 'gcs',
                 'DOCKERIZE_VERSION': dockerize_version,
-                'GOCACHE': '/opt/drone/gocache',
-                'GOMODCACHE': '/opt/drone/gomodcache',
+                'GOCACHE': '/opt/test/gocache',
+                'GOMODCACHE': '/opt/test/gomodcache',
             },
             'commands': download_grabpl_cmds + common_cmds,
         },

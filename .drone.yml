@@ -26,8 +26,8 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: restore-cache
@@ -310,8 +310,8 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: trigger-enterprise-downstream
@@ -700,8 +700,8 @@ steps:
   - ./bin/grabpl verify-drone
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
@@ -796,8 +796,8 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: codespell
@@ -1635,8 +1635,8 @@ steps:
   - ./bin/grabpl verify-version ${DRONE_TAG}
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
@@ -1750,8 +1750,8 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: codespell
@@ -2572,8 +2572,8 @@ steps:
   - ./bin/grabpl verify-version v7.3.0-test
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
@@ -2686,8 +2686,8 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+    GOCACHE: /opt/test/gocache
+    GOMODCACHE: /opt/test/gomodcache
     PLUGIN_BACKEND: gcs
 
 - name: codespell
@@ -3558,9 +3558,5 @@ name: tf_google_credentials
 get:
   path: infra/data/ci/terraform/google
   name: credentials.json
-
----
-kind: signature
-hmac: 5468434bc8654eda1cc2ba6bd14503d82628f31002452bd796fda0b658e3d7fc
 
 ...
