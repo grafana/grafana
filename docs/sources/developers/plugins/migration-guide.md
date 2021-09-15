@@ -176,7 +176,7 @@ Before you can run a backend plugin on Grafana installations, you must sign the 
 
 For instructions on plugin signing, refer to the [Plugin signatures](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin) topic.
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode).
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use [this configuration setting.]({{< relref "../administration/#allow_loading_unsigned_plugins" >}})
 
 ### Update react-hook-form from v6 to v7
 
