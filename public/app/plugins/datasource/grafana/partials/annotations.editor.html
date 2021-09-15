@@ -1,0 +1,54 @@
+
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-9">
+				Filter by
+				<info-popover mode="right-normal">
+					<ul>
+						<li>Dashboard: This will fetch annotation and alert state changes for whole dashboard and show them only on the event's originating panel.</li>
+						<li>Tags: This will fetch any annotation events that match the tags filter.</li>
+					</ul>
+				</info-popover>
+			</span>
+			<div class="gf-form-select-wrapper width-8">
+				<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in ctrl.types">
+				</select>
+			</div>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label">Max limit</span>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input" ng-model="ctrl.annotation.limit" ng-options="f for f in [10,50,100,200,300,500,1000,2000]">
+				</select>
+			</div>
+		</div>
+	</div>
+	<div class="gf-form-inline">
+		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
+			<gf-form-switch
+				class="gf-form"
+				label="Match any"
+				label-class="width-9"
+				checked="ctrl.annotation.matchAny"
+				on-change="ctrl.refresh()"
+				tooltip="By default Grafana only shows annotations that match all tags in the query. Enabling this returns annotations that match any of the tags in the query."></gf-form-switch>
+		</div>
+		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
+			<span class="gf-form-label">
+				Tags
+				<info-popover mode="right-normal">
+					A tag entered here as 'foo' will match
+					<ul>
+						<li>annotation tags 'foo'</li>
+						<li>annotation key-value tags formatted as 'foo:bar'</li>
+					</ul>
+				</info-popover>
+			</span>
+			<bootstrap-tagsinput ng-model="ctrl.annotation.tags" tagclass="label label-tag" placeholder="add tags">
+			</bootstrap-tagsinput>
+		</div>
+	</div>
+</div>
+
+

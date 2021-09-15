@@ -1,0 +1,11 @@
+.panel-alert-list {
+  overflow-y: auto;
+}
+
+.panel-alert-list__no-alerts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(100% - 30px);
+}

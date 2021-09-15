@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`QueryRowActions should render component 1`] = `
+<div
+  className="gf-form-inline flex-shrink-0"
+>
+  <div
+    className="gf-form"
+  >
+    <button
+      aria-label="Edit mode button"
+      className="gf-form-label gf-form-label--btn"
+      onClick={[Function]}
+    >
+      <Icon
+        name="pen"
+      />
+    </button>
+  </div>
+  <div
+    className="gf-form"
+  >
+    <button
+      className="gf-form-label"
+      disabled={true}
+      title="Query row latency"
+    >
+      0.0s
+    </button>
+  </div>
+  <div
+    className="gf-form"
+  >
+    <button
+      className="gf-form-label gf-form-label--btn"
+      disabled={true}
+      onClick={[Function]}
+      title="Disable query"
+    >
+      <Icon
+        name="eye"
+      />
+    </button>
+  </div>
+  <div
+    className="gf-form"
+  >
+    <button
+      className="gf-form-label gf-form-label--btn"
+      onClick={[Function]}
+      title="Remove query"
+    >
+      <Icon
+        name="minus"
+      />
+    </button>
+  </div>
+</div>
+`;

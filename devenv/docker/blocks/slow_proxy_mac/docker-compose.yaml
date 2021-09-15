@@ -1,0 +1,6 @@
+  slow_proxy_mac:
+    build: docker/blocks/slow_proxy_mac
+    ports:
+      - '3011:3011'
+    environment:
+      ORIGIN_SERVER: 'http://host.docker.internal:9090/'
