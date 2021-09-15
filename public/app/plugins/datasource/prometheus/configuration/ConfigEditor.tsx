@@ -5,45 +5,17 @@ import { config } from 'app/core/config';
 import { PromOptions } from '../types';
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { PromSettings } from './PromSettings';
-import { hasCredentials } from './AzureCredentialsConfig';
+import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 
-  function getAzureAuthEnabled(config: DataSourceSettings<any, any>): boolean {
-    return hasCredentials(config);
-  }
-
-  function setAzureAuthEnabled(
-    config: DataSourceSettings<any, any>,
-    enabled: boolean
-  ): Partial<DataSourceSettings<any, any>> {
-    if (enabled) {
-      return {
-        jsonData: {
-          ...config.jsonData,
-          // TODO: Set default credentials, not MSI
-          azureCredentials: {
-            authType: 'msi',
-          },
-        },
-      };
-    } else {
-      return {
-        jsonData: {
-          ...config.jsonData,
-          azureAuth: undefined,
-          azureCredentials: undefined,
-        },
-      };
-    }
-  }
-
   const azureAuthSettings = {
     azureAuthSupported: config.featureToggles['prometheus_azure_auth'] ?? false,
-    getAzureAuthEnabled: getAzureAuthEnabled,
-    setAzureAuthEnabled: setAzureAuthEnabled,
+    getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
+    setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
+      enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };
 
