@@ -1,7 +1,7 @@
 import React, { memo, FC, useEffect } from 'react';
 
 // Types
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -9,7 +9,7 @@ import { PromQuery, PromOptions } from '../types';
 import PromQueryField from './PromQueryField';
 import { PromExploreExtraField } from './PromExploreExtraField';
 
-export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
+export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   const { range, query, data, datasource, history, onChange, onRunQuery } = props;

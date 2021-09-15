@@ -173,7 +173,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 				FrameStorage:  pipeline.NewFrameStorage(),
 			}
 		} else {
-			storage := &pipeline.FileStorage{}
+			storage := &pipeline.FileStorage{
+				DataPath: cfg.DataPath,
+			}
 			g.channelRuleStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
 				Node:          node,
