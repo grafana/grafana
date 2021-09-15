@@ -13,6 +13,11 @@ type AlertConfiguration struct {
 	OrgID                     int64 `xorm:"org_id"`
 }
 
+type GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery struct {
+	MinOrgId int64
+	MaxOrgId int64
+}
+
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
 type GetLatestAlertmanagerConfigurationQuery struct {
 	OrgID  int64

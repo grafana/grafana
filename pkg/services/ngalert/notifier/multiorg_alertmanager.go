@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -127,7 +128,8 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 
 //getLatestConfigs retrieves the latest Alertmanager configuration for every organization and returns them as a map where the key is ID of an organization
 func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int64]*models.AlertConfiguration, error) {
-	configs, err := moa.configStore.GetAllLatestAlertmanagerConfiguration(ctx)
+	query := &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: math.MinInt64, MaxOrgId: math.MaxInt}
+	configs, err := moa.configStore.GetAllLatestAlertmanagerConfiguration(ctx, query)
 	if err != nil {
 		return nil, err
 	}

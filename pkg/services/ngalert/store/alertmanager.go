@@ -36,10 +36,12 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAle
 }
 
 // GetAllLatestAlertmanagerConfiguration returns the latest configuration of every organization
-func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error) {
+func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery) ([]*models.AlertConfiguration, error) {
 	var result []*models.AlertConfiguration
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		condition := builder.In("id", builder.Select("MAX(id)").From("alert_configuration").GroupBy("org_id"))
+		condition := builder.In("id",
+			builder.Select("MAX(id)").From("alert_configuration").Where(
+				builder.Between{ Col: "org_id", LessVal: query.MinOrgId, MoreVal: query.MaxOrgId }).GroupBy("org_id"))
 		if err := sess.Table("alert_configuration").Where(condition).Find(&result); err != nil {
 			return err
 		}

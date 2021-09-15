@@ -13,10 +13,13 @@ type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
 }
 
-func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
+func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery) ([]*models.AlertConfiguration, error) {
+	f.opsRecording = append(f.opsRecording, query)
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
-	for _, configuration := range f.configs {
-		result = append(result, configuration)
+	for orgId, configuration := range f.configs {
+		if query.MinOrgId <= orgId && orgId <= query.MaxOrgId {
+			result = append(result, configuration)
+		}
 	}
 	return result, nil
 }

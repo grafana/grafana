@@ -18,7 +18,7 @@ const AlertDefinitionMaxTitleLength = 190
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
-	GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error)
+	GetAllLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery) ([]*models.AlertConfiguration, error)
 	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
 	SaveAlertmanagerConfigurationWithCallback(*models.SaveAlertmanagerConfigurationCmd, SaveCallback) error
 }
