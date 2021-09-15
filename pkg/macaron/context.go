@@ -45,7 +45,6 @@ type Context struct {
 	Resp     ResponseWriter
 	params   Params
 	template *template.Template
-	Data     map[string]interface{}
 }
 
 func (ctx *Context) handler() Handler {
