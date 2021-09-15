@@ -1,5 +1,6 @@
 import { NavModelItem } from '@grafana/data';
 import { getConfig } from 'app/core/config';
+import { UserPreferencesDTO } from 'app/types';
 import { Location } from 'history';
 
 export const getForcedLoginUrl = (url: string) => {
@@ -7,6 +8,30 @@ export const getForcedLoginUrl = (url: string) => {
   queryParams.append('forceLogin', 'true');
 
   return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
+};
+
+export const getOppositePosition = (position: Exclude<UserPreferencesDTO['navPosition'], ''>) => {
+  switch (position) {
+    case 'left': {
+      return 'right';
+    }
+    case 'right': {
+      return 'left';
+    }
+    case 'top': {
+      return 'bottom';
+    }
+    case 'bottom': {
+      return 'top';
+    }
+    default: {
+      return 'right';
+    }
+  }
+};
+
+export const isHorizontal = (navPosition: Exclude<UserPreferencesDTO['navPosition'], ''>) => {
+  return navPosition === 'top' || navPosition === 'bottom';
 };
 
 export const isLinkActive = (pathname: string, link: NavModelItem) => {

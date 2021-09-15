@@ -3,10 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Link, styleMixins, useTheme2 } from '@grafana/ui';
 import SideMenuDropDown from './SideMenuDropDown';
-
-const isHorizontal = (position: Props['position']) => {
-  return position === 'top' || position === 'bottom';
-};
+import { isHorizontal } from './utils';
 
 export interface Props {
   isActive?: boolean;
@@ -83,7 +80,7 @@ export default SideMenuItem;
 const getStyles = (
   theme: GrafanaTheme2,
   isActive: Props['isActive'],
-  position: Props['position'],
+  position: Exclude<Props['position'], undefined>,
   reverseMenuDirection: Props['reverseMenuDirection']
 ) => ({
   container: css`
@@ -148,8 +145,8 @@ const getStyles = (
       top: ${position === 'bottom' ? 'unset' : 0};
       bottom: ${position === 'top' ? 'unset' : 0};
       right: ${position === 'left' ? 'unset' : 0};
-      width: ${position === 'left' || position === 'right' ? '4px' : 'auto'};
-      height: ${position === 'top' || position === 'bottom' ? '4px' : 'auto'};
+      width: ${!isHorizontal(position) ? '4px' : 'auto'};
+      height: ${isHorizontal(position) ? '4px' : 'auto'};
       border-radius: 2px;
       background-image: ${isHorizontal(position)
         ? theme.colors.gradients.brandHorizontal

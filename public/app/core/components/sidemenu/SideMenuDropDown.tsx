@@ -3,17 +3,15 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconName, Link, useTheme2 } from '@grafana/ui';
 import DropDownChild from './DropDownChild';
+import { isHorizontal } from './utils';
 
-const isHorizontal = (position: Props['position']) => {
-  return position === 'top' || position === 'bottom';
-};
 interface Props {
   headerTarget?: HTMLAnchorElement['target'];
   headerText: string;
   headerUrl?: string;
   items?: NavModelItem[];
   onHeaderClick?: () => void;
-  position: 'left' | 'right' | 'top' | 'bottom';
+  position?: 'left' | 'right' | 'top' | 'bottom';
   reverseDirection?: boolean;
   subtitleText?: string;
 }
@@ -72,7 +70,11 @@ const SideMenuDropDown = ({
 
 export default SideMenuDropDown;
 
-const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirection'], position: Props['position']) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  reverseDirection: Props['reverseDirection'],
+  position: Exclude<Props['position'], undefined>
+) => ({
   header: css`
     background-color: ${theme.colors.background.secondary};
     border: none;
@@ -110,7 +112,9 @@ const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirecti
     }
   `,
   subtitle: css`
-    border-${!isHorizontal(position) && reverseDirection ? 'bottom' : 'top'}: 1px solid ${theme.colors.border.weak};
+    border-${position === 'bottom' || (!isHorizontal(position) && reverseDirection) ? 'bottom' : 'top'}: 1px solid ${
+    theme.colors.border.weak
+  };
     color: ${theme.colors.text.secondary};
     font-size: ${theme.typography.bodySmall.fontSize};
     font-weight: ${theme.typography.bodySmall.fontWeight};

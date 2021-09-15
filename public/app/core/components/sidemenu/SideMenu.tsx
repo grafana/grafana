@@ -10,32 +10,9 @@ import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
+import { getOppositePosition, isHorizontal } from './utils';
 
 const homeUrl = config.appSubUrl || '/';
-
-const getOpposite = (position: typeof contextSrv.user.navPosition) => {
-  switch (position) {
-    case 'left': {
-      return 'right';
-    }
-    case 'right': {
-      return 'left';
-    }
-    case 'top': {
-      return 'bottom';
-    }
-    case 'bottom': {
-      return 'top';
-    }
-    default: {
-      return 'left';
-    }
-  }
-};
-
-const isHorizontal = (position: typeof contextSrv.user.navPosition) => {
-  return position === 'top' || position === 'bottom';
-};
 
 export const SideMenu = () => {
   const navPosition = contextSrv.user.navPosition;
@@ -65,8 +42,8 @@ export const SideMenu = () => {
           Close
         </span>
       </div>
-      <TopSection position={navPosition} />
-      <BottomSection position={navPosition} />
+      <TopSection />
+      <BottomSection />
     </nav>
   );
 };
@@ -75,7 +52,7 @@ SideMenu.displayName = 'SideMenu';
 
 const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPosition) => ({
   sidemenu: css`
-    border-${getOpposite(position)}: 1px solid ${theme.components.panel.borderColor};
+    border-${getOppositePosition(position)}: 1px solid ${theme.components.panel.borderColor};
     display: flex;
     flex-direction: column;
     min-width: ${theme.components.sidemenu.width}px;

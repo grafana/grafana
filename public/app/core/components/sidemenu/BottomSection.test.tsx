@@ -9,6 +9,8 @@ import BottomSection from './BottomSection';
 
 jest.mock('./utils', () => ({
   getForcedLoginUrl: () => '/mockForcedLoginUrl',
+  getOppositePosition: () => 'right',
+  isHorizontal: () => false,
   isLinkActive: () => false,
   isSearchActive: () => false,
 }));

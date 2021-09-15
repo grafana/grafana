@@ -18,6 +18,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import { UserPreferencesDTO } from 'app/types/preferences';
 import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 import { PreferencesService } from 'app/core/services/PreferencesService';
@@ -28,7 +29,7 @@ export interface Props {
 
 export interface State {
   homeDashboardId: number;
-  navPosition: 'left' | 'right' | 'top' | 'bottom';
+  navPosition: UserPreferencesDTO['navPosition'];
   theme: string;
   timezone: string;
   dashboards: DashboardSearchHit[];
@@ -41,6 +42,7 @@ const themes: SelectableValue[] = [
 ];
 
 const navPositions: Array<SelectableValue<string>> = [
+  { value: '', label: 'Default' },
   { value: 'left', label: 'Left' },
   { value: 'right', label: 'Right' },
   { value: 'top', label: 'Top' },
@@ -56,7 +58,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.service = new PreferencesService(props.resourceUri);
     this.state = {
       homeDashboardId: 0,
-      navPosition: 'left',
+      navPosition: '',
       theme: '',
       timezone: '',
       dashboards: [],
@@ -105,7 +107,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     window.location.reload();
   };
 
-  onNavPositionChanged = (value: 'left' | 'right' | 'top' | 'bottom') => {
+  onNavPositionChanged = (value: UserPreferencesDTO['navPosition']) => {
     this.setState({ navPosition: value });
   };
 

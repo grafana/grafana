@@ -3,6 +3,7 @@ import { extend } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
 import { AccessControlAction, UserPermission } from 'app/types';
+import { UserPreferencesDTO } from 'app/types/preferences';
 
 export class User {
   id: number;
@@ -16,7 +17,7 @@ export class User {
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
-  navPosition: 'left' | 'right' | 'top' | 'bottom';
+  navPosition: Exclude<UserPreferencesDTO['navPosition'], ''>;
   hasEditPermissionInFolders: boolean;
   email?: string;
   permissions?: UserPermission;

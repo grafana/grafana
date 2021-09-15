@@ -5,22 +5,16 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
-import { isLinkActive, isSearchActive } from './utils';
+import { isHorizontal, isLinkActive, isSearchActive } from './utils';
 import SideMenuItem from './SideMenuItem';
 
-const isHorizontal = (position: Props['position']) => {
-  return position === 'top' || position === 'bottom';
-};
-
-interface Props {
-  position?: 'left' | 'right' | 'top' | 'bottom';
-}
-
-const TopSection = ({ position }: Props) => {
+const TopSection = () => {
+  const navPosition = contextSrv.user.navPosition;
   const location = useLocation();
   const theme = useTheme2();
-  const styles = getStyles(theme, position);
+  const styles = getStyles(theme, navPosition);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const mainLinks = navTree.filter((item) => !item.hideFromMenu);
   const activeItemId = mainLinks.find((item) => isLinkActive(location.pathname, item))?.id;
@@ -31,7 +25,12 @@ const TopSection = ({ position }: Props) => {
 
   return (
     <div data-testid="top-section-items" className={styles.container}>
-      <SideMenuItem position={position} isActive={isSearchActive(location)} label="Search dashboards" onClick={onOpenSearch}>
+      <SideMenuItem
+        isActive={isSearchActive(location)}
+        label="Search dashboards"
+        onClick={onOpenSearch}
+        position={navPosition}
+      >
         <Icon name="search" size="xl" />
       </SideMenuItem>
       {mainLinks.map((link, index) => {
@@ -41,7 +40,7 @@ const TopSection = ({ position }: Props) => {
             isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={link.children}
-            position={position}
+            position={navPosition}
             target={link.target}
             url={link.url}
           >
@@ -56,7 +55,7 @@ const TopSection = ({ position }: Props) => {
 
 export default TopSection;
 
-const getStyles = (theme: GrafanaTheme2, position: Props['position']) => ({
+const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPosition) => ({
   container: css`
     display: none;
     flex-grow: 1;

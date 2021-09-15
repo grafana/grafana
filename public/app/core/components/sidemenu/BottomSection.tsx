@@ -12,19 +12,12 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 import SideMenuItem from './SideMenuItem';
-import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
+import { getForcedLoginUrl, isHorizontal, isLinkActive, isSearchActive } from './utils';
 
-const isHorizontal = (position: Props['position']) => {
-  return position === 'top' || position === 'bottom';
-};
-
-interface Props {
-  position?: 'left' | 'right' | 'top' | 'bottom';
-}
-
-export default function BottomSection({ position }: Props) {
+export default function BottomSection() {
+  const navPosition = contextSrv.user.navPosition;
   const theme = useTheme2();
-  const styles = getStyles(theme, position);
+  const styles = getStyles(theme, navPosition);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
@@ -53,7 +46,7 @@ export default function BottomSection({ position }: Props) {
   return (
     <div data-testid="bottom-section-items" className={styles.container}>
       {!isSignedIn && (
-        <SideMenuItem position={position} label="Sign In" target="_self" url={forcedLoginUrl}>
+        <SideMenuItem position={navPosition} label="Sign In" target="_self" url={forcedLoginUrl}>
           <Icon name="signout" size="xl" />
         </SideMenuItem>
       )}
@@ -90,7 +83,7 @@ export default function BottomSection({ position }: Props) {
             menuItems={menuItems}
             menuSubTitle={link.subTitle}
             onClick={link.onClick}
-            position={position}
+            position={navPosition}
             reverseMenuDirection
             target={link.target}
             url={link.url}
@@ -105,7 +98,7 @@ export default function BottomSection({ position }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, position: Props['position']) => ({
+const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPosition) => ({
   container: css`
     display: none;
 
