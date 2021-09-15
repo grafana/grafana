@@ -410,7 +410,7 @@ def restore_cache_step():
         'name': 'restore-cache',
         'pull': 'always',
         'environment': {
-            'GCS_CACHE_JSON_KEY': 'tf_google_credentials',
+            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
             'bucket': 'test-julien',
