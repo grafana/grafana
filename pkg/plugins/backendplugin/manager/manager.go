@@ -71,7 +71,7 @@ func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
 	}
 
-	if m.Cfg.IsPluginAPIServerEnabled() {
+	if m.Cfg.IsGRPCServerEnabled() {
 		grpcAddress := m.Cfg.PluginGRPCAddress
 		if m.Cfg.PluginGRPCNetwork == "unix" {
 			grpcAddress = fmt.Sprintf("unix://%s", m.Cfg.PluginGRPCAddress)

@@ -109,7 +109,7 @@ func (s *GRPCAPIServer) Run(ctx context.Context) error {
 
 // IsEnabled returns true if feature flag is on.
 func (s *GRPCAPIServer) IsEnabled() bool {
-	return s.Cfg.IsPluginAPIServerEnabled()
+	return s.Cfg.IsGRPCServerEnabled()
 }
 
 func (s *GRPCAPIServer) GetOrgToken(ctx context.Context, req *server.GetOrgTokenRequest) (*server.GetOrgTokenResponse, error) {

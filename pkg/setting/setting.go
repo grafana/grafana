@@ -438,8 +438,8 @@ func (cfg Cfg) IsLiveConfigEnabled() bool {
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
-func (cfg Cfg) IsPluginAPIServerEnabled() bool {
-	return cfg.FeatureToggles["plugin_api_server"]
+func (cfg Cfg) IsGRPCServerEnabled() bool {
+	return cfg.FeatureToggles["grpc_server"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
@@ -878,7 +878,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-	if err := cfg.readGRPCAPIServerSettings(iniFile); err != nil {
+	if err := cfg.readGRPCServerSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1431,9 +1431,9 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	return nil
 }
 
-func (cfg *Cfg) readGRPCAPIServerSettings(iniFile *ini.File) error {
-	server := iniFile.Section("plugin_grpc_api")
-	errPrefix := "plugin_grpc_api:"
+func (cfg *Cfg) readGRPCServerSettings(iniFile *ini.File) error {
+	server := iniFile.Section("grpc_server")
+	errPrefix := "grpc_server:"
 	cfg.PluginGRPCUseTLS = server.Key("use_tls").MustBool(false)
 	cfg.PluginGRPCCertFile = server.Key("cert_file").String()
 	cfg.PluginGRPCKeyFile = server.Key("cert_key").String()
