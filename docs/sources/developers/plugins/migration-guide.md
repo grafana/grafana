@@ -321,7 +321,7 @@ export default withTheme2(Component);
 
 **Gradually migrating components**
 
-If you end up in a situation where you need to use both the v1 and v2 theme due to using migrated and non-migrated components in the same context you can handle that by using the `v1` property on the `v2` theme as described below.
+If you need to use both the v1 and v2 themes due to using migrated and non-migrated components in the same context, use the `v1` property on the `v2` theme as described in the following example.
 
 ```ts
 function Component(): ReactElement | null {
