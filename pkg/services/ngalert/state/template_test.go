@@ -110,33 +110,12 @@ func TestExpandTemplate(t *testing.T) {
 		},
 		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize $value>: error calling humanize: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}, {
-		name: "humanize1024 float64",
-		text: "{{ range $key, $val := $values }}{{ humanize1024 .Value }}:{{ end }}",
+		name: "humanize1024 float",
+		text: "{{ humanize1024 $value }}",
 		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(0.0),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(1.0),
-				},
-				"C": {
-					Var:    "C",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(1048576.0),
-				},
-				"D": {
-					Var:    "D",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(.12),
-				},
-			},
+			EvaluationString: "1048576.0",
 		},
-		expected: "0:1:1Mi:0.12:",
+		expected: "1Mi",
 	}, {
 		name: "humanize1024 string with error",
 		text: "{{ humanize1024 $value }}",
@@ -145,112 +124,28 @@ func TestExpandTemplate(t *testing.T) {
 		},
 		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize1024 $value>: error calling humanize1024: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}, {
-		name: "humanizeDuration - seconds - float64",
-		text: "{{ range $key, $val := $values }}{{ humanizeDuration .Value }}:{{ end }}",
-		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(0),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(1),
-				},
-				"C": {
-					Var:    "C",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(60),
-				},
-				"D": {
-					Var:    "D",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(3600),
-				},
-				"E": {
-					Var:    "E",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(86400),
-				},
-				"F": {
-					Var:    "F",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(86400 + 3600),
-				},
-				"G": {
-					Var:    "G",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(-(86400*2 + 3600*3 + 60*4 + 5)),
-				},
-				"H": {
-					Var:    "H",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(899.99),
-				},
-			},
-		},
-		expected: "0s:1s:1m 0s:1h 0m 0s:1d 0h 0m 0s:1d 1h 0m 0s:-2d 3h 4m 5s:14m 59s:",
-	}, {
-		name: "humanizeDuration - string",
+		name: "humanizeDuration - int",
 		text: "{{ humanizeDuration $value }}",
 		alertInstance: eval.Result{
 			EvaluationString: "86400",
 		},
 		expected: "1d 0h 0m 0s",
 	}, {
-		name: "humanizeDuration - subsecond and fractional seconds - float64",
-		text: "{{ range $key, $val := $values }}{{ humanizeDuration .Value }}:{{ end }}",
+		name: "humanizeDuration - fractional subsecond",
+		text: "{{ humanizeDuration $value }}",
 		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(.1),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(.0001),
-				},
-				"C": {
-					Var:    "C",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(.12345),
-				},
-				"D": {
-					Var:    "D",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(60.1),
-				},
-				"E": {
-					Var:    "E",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(60.5),
-				},
-				"F": {
-					Var:    "F",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(1.2345),
-				},
-				"G": {
-					Var:    "G",
-					Labels: data.Labels{},
-					Value:  ptr.Float64(12.345),
-				},
-			},
+			EvaluationString: ".12345",
 		},
-		expected: "100ms:100us:123.5ms:1m 0s:1m 0s:1.234s:12.35s:",
+		expected: "123.5ms",
 	}, {
-		name: "humanizeDuration - subsecond - string",
+		name: "humanizeDuration - subsecond",
 		text: "{{ humanizeDuration $value }}",
 		alertInstance: eval.Result{
 			EvaluationString: ".0001",
 		},
 		expected: "100us",
 	}, {
-		name: "humanizeDuration - fractional seconds - string",
+		name: "humanizeDuration - fractional seconds",
 		text: "{{ humanizeDuration $value }}",
 		alertInstance: eval.Result{
 			EvaluationString: "1.2345",
@@ -313,7 +208,12 @@ func TestExpandTemplate(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			v, err := expandTemplate("test", c.text, c.labels, c.alertInstance)
-			require.Equal(t, c.expectedError, err)
+			if c.expectedError != nil {
+				require.NotNil(t, err)
+				require.EqualError(t, c.expectedError, err.Error())
+			} else {
+				require.Nil(t, c.expectedError)
+			}
 			require.Equal(t, c.expected, v)
 		})
 	}
