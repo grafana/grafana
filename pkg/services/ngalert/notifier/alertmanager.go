@@ -285,6 +285,17 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	return nil
 }
 
+//ApplyConfig applies the configuration to the Alertmanager
+func (am *Alertmanager) ApplyConfig(cfg *apimodels.PostableUserConfig) error {
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	if err := am.applyConfig(cfg, nil); err != nil {
+		return fmt.Errorf("unable to apply configuration: %w", err)
+	}
+	return nil
+}
+
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
 // the components with the new config.
 func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
