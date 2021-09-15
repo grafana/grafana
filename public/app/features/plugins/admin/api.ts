@@ -66,8 +66,7 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
 
 async function getPluginErrors(): Promise<PluginError[]> {
   try {
-    const pluginErrors = await getBackendSrv().get(`${API_ROOT}/errors`);
-    return pluginErrors;
+    return await getBackendSrv().get(`${API_ROOT}/errors`);
   } catch (error) {
     return [];
   }

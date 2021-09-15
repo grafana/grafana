@@ -18,7 +18,7 @@ export function mergeLocalsAndRemotes(
   errors: PluginError[]
 ): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
-  const errorByPluginId = groupByPluginId(errors);
+  const errorByPluginId = groupErrorsByPluginId(errors);
 
   // add locals
   local.forEach((l) => {
@@ -215,7 +215,7 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   return plugins;
 };
 
-function groupByPluginId(errors: PluginError[]): Record<string, PluginError | undefined> {
+function groupErrorsByPluginId(errors: PluginError[]): Record<string, PluginError | undefined> {
   return errors.reduce((byId, error) => {
     byId[error.pluginId] = error;
     return byId;

@@ -1,10 +1,8 @@
 import React from 'react';
-import { GrafanaTheme2, PluginSignatureStatus } from '@grafana/data';
-import { PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureBadge } from '@grafana/ui';
 import { PluginSignatureDetailsBadge } from './PluginSignatureDetailsBadge';
 import { CatalogPlugin } from '../types';
-import { PluginDisabledBadge } from './Badges';
-import { css } from '@emotion/css';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -12,7 +10,6 @@ type Props = {
 
 // Designed to show plugin signature information in the header on the plugin's details page
 export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElement {
-  const styles = useStyles2(getStyles);
   const isSignatureValid = plugin.signature === PluginSignatureStatus.valid;
 
   return (
@@ -24,19 +21,6 @@ export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElem
       {isSignatureValid && (
         <PluginSignatureDetailsBadge signatureType={plugin.signatureType} signatureOrg={plugin.signatureOrg} />
       )}
-
-      {plugin.isDisabled && (
-        <div className={styles.error}>
-          <PluginDisabledBadge error={plugin.error!} />
-        </div>
-      )}
     </div>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  error: css`
-    display: inline-block;
-    margin-left: ${theme.spacing()};
-  `,
-});
