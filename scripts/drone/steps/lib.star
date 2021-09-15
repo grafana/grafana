@@ -121,7 +121,10 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'name': 'initialize',
             'image': build_image,
             'environment': {
+                'PLUGIN_BACKEND': 'gcs',
                 'DOCKERIZE_VERSION': dockerize_version,
+                'GOCACHE': '/opt/drone/gocache',
+                'GOMODCACHE': '/opt/drone/gomodcache',
             },
             'commands': download_grabpl_cmds + common_cmds,
         },
@@ -407,28 +410,27 @@ def test_frontend_step():
 
 def restore_cache_step():
     return {
-        'image': 'homerovalle/drone-gcs-cache',
+        'image': 'meltwater/drone-cache',
         'name': 'restore-cache',
         'pull': 'always',
         'environment': {
-            'GOCACHE': '/opt/drone/gocache',
-            'GOMODCACHE': '/opt/drone/gomodcache',
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
             'bucket': 'test-julien',
             'restore': 'true',
          },
+         'depends_on': [
+            'initialize',
+         ],
     }
 
 def rebuild_cache_step():
     return {
-        'image': 'homerovalle/drone-gcs-cache',
+        'image': 'meltwater/drone-cache',
         'name': 'rebuild-cache',
         'pull': 'always',
         'environment': {
-            'GOCACHE': '/opt/drone/gocache',
-            'GOMODCACHE': '/opt/drone/gomodcache',
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
