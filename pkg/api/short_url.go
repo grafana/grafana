@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 // createShortURL handles requests to create short URLs.
@@ -45,7 +46,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
-	shortURLUID := c.Params(":uid")
+	shortURLUID := macaron.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {
 		return

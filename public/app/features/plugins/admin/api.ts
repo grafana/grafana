@@ -1,7 +1,16 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin, CatalogPluginDetails } from './types';
 import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
+import {
+  PluginDetails,
+  Org,
+  LocalPlugin,
+  RemotePlugin,
+  CatalogPlugin,
+  CatalogPluginDetails,
+  Version,
+  PluginVersion,
+} from './types';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
   const [localPlugins, remotePlugins] = await Promise.all([getLocalPlugins(), getRemotePlugins()]);
@@ -16,13 +25,22 @@ export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
 }
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
-  const localPlugins = await getLocalPlugins(); // /api/plugins/<id>/settings
+  const localPlugins = await getLocalPlugins();
   const local = localPlugins.find((p) => p.id === id);
   const isInstalled = Boolean(local);
   const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
+  const dependencies = remote?.json?.dependencies;
+  // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
+  // otherwise plugins cannot be installed.
+  const grafanaDependency = dependencies?.grafanaDependency
+    ? dependencies?.grafanaDependency
+    : dependencies?.grafanaVersion
+    ? `>=${dependencies?.grafanaVersion}`
+    : '';
 
   return {
-    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
+    grafanaDependency,
+    pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
     readme: remote?.readme,
     versions,
@@ -60,10 +78,13 @@ async function getRemotePlugin(id: string, isInstalled: boolean): Promise<Remote
   }
 }
 
-async function getPluginVersions(id: string): Promise<any[]> {
+async function getPluginVersions(id: string): Promise<Version[]> {
   try {
-    const versions = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}/versions`);
-    return versions.items;
+    const versions: { items: PluginVersion[] } = await getBackendSrv().get(
+      `${GRAFANA_API_ROOT}/plugins/${id}/versions`
+    );
+
+    return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
   } catch (error) {
     return [];
   }

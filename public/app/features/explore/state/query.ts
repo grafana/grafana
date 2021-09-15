@@ -51,25 +51,14 @@ export interface AddQueryRowPayload {
 export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
 
 /**
- * Remove query row of the given index, as well as associated query results.
- */
-export interface RemoveQueryRowPayload {
-  exploreId: ExploreId;
-  index: number;
-}
-export const removeQueryRowAction = createAction<RemoveQueryRowPayload>('explore/removeQueryRow');
-
-/**
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
  */
-export interface ChangeQueryPayload {
+export interface ChangeQueriesPayload {
   exploreId: ExploreId;
-  query: DataQuery;
-  index: number;
-  override: boolean;
+  queries: DataQuery[];
 }
-export const changeQueryAction = createAction<ChangeQueryPayload>('explore/changeQuery');
+export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
 /**
  * Clear all queries and results.
@@ -190,31 +179,6 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
     const query = generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
-  };
-}
-
-/**
- * Query change handler for the query row with the given index.
- * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
- */
-export function changeQuery(
-  exploreId: ExploreId,
-  query: DataQuery,
-  index: number,
-  override = false
-): ThunkResult<void> {
-  return (dispatch, getState) => {
-    // Null query means reset
-    if (query === null) {
-      const queries = getState().explore[exploreId]!.queries;
-      const { refId, key } = queries[index];
-      query = generateNewKeyAndAddRefIdIfMissing({ refId, key }, queries, index);
-    }
-
-    dispatch(changeQueryAction({ exploreId, query, index, override }));
-    if (override) {
-      dispatch(runQueries(exploreId));
-    }
   };
 }
 
@@ -352,7 +316,6 @@ export const runQueries = (
       // If we don't have results saved in cache, run new queries
     } else {
       if (!hasNonEmptyQuery(queries)) {
-        dispatch(clearQueriesAction({ exploreId }));
         dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
         return;
       }
@@ -515,23 +478,16 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      logsHighlighterExpressions: undefined,
       queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
-  if (changeQueryAction.match(action)) {
-    const { queries } = state;
-    const { query, index } = action.payload;
-
-    // Override path: queries are completely reset
-    const nextQuery: DataQuery = generateNewKeyAndAddRefIdIfMissing(query, queries, index);
-    const nextQueries = [...queries];
-    nextQueries[index] = nextQuery;
+  if (changeQueriesAction.match(action)) {
+    const { queries } = action.payload;
 
     return {
       ...state,
-      queries: nextQueries,
+      queries,
     };
   }
 
@@ -583,33 +539,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
-    };
-  }
-
-  if (removeQueryRowAction.match(action)) {
-    const { queries } = state;
-    const { index } = action.payload;
-
-    if (queries.length <= 1) {
-      return state;
-    }
-
-    // removes a query under a given index and reassigns query keys and refIds to keep everything in order
-    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map((query) => {
-      return { ...query, refId: '' };
-    });
-
-    const nextQueries: DataQuery[] = [];
-
-    queriesAfterRemoval.forEach((query, i) => {
-      nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
-    });
-
-    return {
-      ...state,
-      queries: nextQueries,
-      logsHighlighterExpressions: undefined,
       queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
@@ -752,8 +681,6 @@ export const processQueryResponse = (
     return { ...state };
   }
 
-  const latency = request.endTime ? request.endTime - request.startTime : 0;
-
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
@@ -762,7 +689,6 @@ export const processQueryResponse = (
 
   return {
     ...state,
-    latency,
     queryResponse: response,
     graphResult,
     tableResult,

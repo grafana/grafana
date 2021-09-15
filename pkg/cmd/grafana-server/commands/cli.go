@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -150,6 +151,14 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 	setting.Packaging = validPackaging(packaging)
 
 	metrics.SetBuildInformation(opt.Version, opt.Commit, opt.BuildBranch)
+
+	elevated, err := process.IsRunningWithElevatedPrivileges()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error checking server process execution privilege. error: %s\n", err.Error())
+	}
+	if elevated {
+		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")
+	}
 
 	s, err := server.Initialize(setting.CommandLineArgs{
 		Config: configFile, HomePath: homePath, Args: flag.Args(),

@@ -219,7 +219,7 @@ func URL(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 		obj := reflect.New(reflect.TypeOf(obj))
 
 		val := obj.Elem()
-		for k, v := range ctx.AllParams() {
+		for k, v := range macaron.Params(ctx.Req) {
 			field := val.FieldByName(k[1:])
 			if field.IsValid() {
 				errors = setWithProperType(field.Kind(), v, field, k, errors)

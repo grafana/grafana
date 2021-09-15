@@ -138,7 +138,7 @@ export function loadDataSource(uid: string): ThunkResult<void> {
 /**
  * Get data source by uid or id, if old id detected handles redirect
  */
-async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSettings> {
+export async function getDataSourceUsingUidOrId(uid: string | number): Promise<DataSourceSettings> {
   // Try first with uid api
   try {
     const byUid = await lastValueFrom(
@@ -157,7 +157,7 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
   }
 
   // try lookup by old db id
-  const id = parseInt(uid, 10);
+  const id = typeof uid === 'string' ? parseInt(uid, 10) : uid;
   if (!Number.isNaN(id)) {
     const response = await lastValueFrom(
       getBackendSrv().fetch<DataSourceSettings>({
@@ -166,6 +166,12 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
         showErrorAlert: false,
       })
     );
+
+    // If the uid is a number, then this is a refresh on one of the settings tabs
+    // and we can return the response data
+    if (response.ok && typeof uid === 'number' && response.data.id === uid) {
+      return response.data;
+    }
 
     // Not ideal to do a full page reload here but so tricky to handle this
     // otherwise We can update the location using react router, but need to

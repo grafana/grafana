@@ -1,5 +1,5 @@
 import { EntityState } from '@reduxjs/toolkit';
-import { PluginType, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { PluginType, PluginSignatureStatus, PluginSignatureType, PluginDependencies } from '@grafana/data';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
@@ -11,6 +11,13 @@ export enum PluginAdminRoutes {
   HomeAdmin = 'plugins-home-admin',
   BrowseAdmin = 'plugins-browse-admin',
   DetailsAdmin = 'plugins-details-admin',
+}
+
+export enum IconName {
+  app = 'apps',
+  datasource = 'database',
+  panel = 'credit-card',
+  renderer = 'pen',
 }
 
 export interface CatalogPlugin {
@@ -44,6 +51,7 @@ export interface CatalogPluginDetails {
     url: string;
   }>;
   grafanaDependency?: string;
+  pluginDependencies?: PluginDependencies['plugins'];
 }
 
 export interface CatalogPluginInfo {
@@ -62,10 +70,7 @@ export type RemotePlugin = {
   id: number;
   internal: boolean;
   json?: {
-    dependencies: {
-      grafanaDependency: string;
-      grafanaVersion: string;
-    };
+    dependencies: PluginDependencies;
     info: {
       links: Array<{
         name: string;
@@ -215,3 +220,21 @@ export type ReducerState = PluginsState & {
 
 // TODO<remove when the "plugin_admin_enabled" feature flag is removed>
 export type PluginCatalogStoreState = StoreState & { plugins: ReducerState };
+
+// The data that we receive when fetching "/api/gnet/plugins/<plugin>/versions"
+export type PluginVersion = {
+  id: number;
+  pluginId: number;
+  pluginSlug: string;
+  version: string;
+  url: string;
+  commit: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+  downloads: number;
+  verified: boolean;
+  status: string;
+  downloadSlug: string;
+  links: Array<{ rel: string; href: string }>;
+};

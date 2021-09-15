@@ -1,4 +1,5 @@
 import Datasource from '../datasource';
+import { mocked } from 'ts-jest/utils';
 
 type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
@@ -43,5 +44,5 @@ export default function createMockDatasource() {
 
   const mockDatasource = _mockDatasource as Datasource;
 
-  return mockDatasource;
+  return mocked(mockDatasource, true);
 }

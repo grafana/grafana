@@ -379,6 +379,48 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedEmail:     "john.doe@example.com",
 				ExpectedRole:      "FromResponse",
 			},
+			{
+				Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com",
+					//   "info": { "roles": [ "dev", "engineering" ] }}
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+				},
+				RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Editor",
+			},
+			{
+				Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct role using the userinfo API response (JMESPath warning on id_token)",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				},
+				ResponseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"roles": []string{"engineering", "SRE"},
+					},
+				},
+				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
+			},
+			{
+				Name: "Given a valid id_token, a valid advanced JMESPath role path, a valid API response, prefer ID token",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com",
+					//   "info": { "roles": [ "dev", "engineering" ] }}
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+				},
+				ResponseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"roles": []string{"engineering", "SRE"},
+					},
+				},
+				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Editor",
+			},
 		}
 
 		for _, test := range tests {
