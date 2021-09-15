@@ -182,11 +182,7 @@ export function roundToFiscal(FYStartMonth: number, dateTime: any, unit: string,
       if (roundUp) {
         roundToFiscal(FYStartMonth, dateTime, unit, false).add(11, 'M').endOf('M');
       } else {
-        if (FYStartMonth > dateTime.month()) {
-          dateTime.subtract(1, 'y').month(FYStartMonth).startOf('M');
-        } else {
-          dateTime.month(FYStartMonth).startOf('M');
-        }
+        dateTime.subtract((dateTime.month() - FYStartMonth + 12) % 12, 'M').startOf('M');
       }
       return dateTime;
     case 'Q':
