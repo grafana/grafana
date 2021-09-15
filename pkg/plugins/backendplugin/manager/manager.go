@@ -72,9 +72,9 @@ func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	}
 
 	if m.Cfg.IsGRPCServerEnabled() {
-		grpcAddress := m.Cfg.PluginGRPCAddress
-		if m.Cfg.PluginGRPCNetwork == "unix" {
-			grpcAddress = fmt.Sprintf("unix://%s", m.Cfg.PluginGRPCAddress)
+		grpcAddress := m.Cfg.GRPCServerAddress
+		if m.Cfg.GRPCServerNetwork == "unix" {
+			grpcAddress = fmt.Sprintf("unix://%s", m.Cfg.GRPCServerAddress)
 		}
 		hostEnv = append(hostEnv, fmt.Sprintf("GF_GRPC_API_ADDRESS=%s", grpcAddress))
 
@@ -84,7 +84,7 @@ func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 		}
 		m.logger.Warn("plugin token", "token", token)
 		hostEnv = append(hostEnv, fmt.Sprintf("GF_GRPC_API_TOKEN=%s", token))
-		if !m.Cfg.PluginGRPCUseTLS {
+		if !m.Cfg.GRPCServerUseTLS {
 			hostEnv = append(hostEnv, "GF_GRPC_API_INSECURE=1")
 		}
 	}

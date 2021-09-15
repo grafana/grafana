@@ -45,7 +45,7 @@ type GRPCAPIServer struct {
 }
 
 func (s *GRPCAPIServer) loadTLSCredentials() (credentials.TransportCredentials, error) {
-	serverCert, err := tls.LoadX509KeyPair(s.Cfg.PluginGRPCCertFile, s.Cfg.PluginGRPCKeyFile)
+	serverCert, err := tls.LoadX509KeyPair(s.Cfg.GRPCServerCertFile, s.Cfg.GRPCServerKeyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -58,14 +58,14 @@ func (s *GRPCAPIServer) loadTLSCredentials() (credentials.TransportCredentials, 
 
 // Init Receiver.
 func (s *GRPCAPIServer) Init() error {
-	logger.Info("Plugin GRPC API server initialization", "address", s.Cfg.PluginGRPCAddress, "network", s.Cfg.PluginGRPCNetwork, "tls", s.Cfg.PluginGRPCUseTLS)
+	logger.Info("Plugin GRPC API server initialization", "address", s.Cfg.GRPCServerAddress, "network", s.Cfg.GRPCServerNetwork, "tls", s.Cfg.GRPCServerUseTLS)
 
 	if !s.IsEnabled() {
 		logger.Debug("GRPCAPIServer not enabled, skipping initialization")
 		return nil
 	}
 
-	listener, err := net.Listen(s.Cfg.PluginGRPCNetwork, s.Cfg.PluginGRPCAddress)
+	listener, err := net.Listen(s.Cfg.GRPCServerNetwork, s.Cfg.GRPCServerAddress)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
@@ -76,7 +76,7 @@ func (s *GRPCAPIServer) Init() error {
 		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
 		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
 	}
-	if s.Cfg.PluginGRPCUseTLS {
+	if s.Cfg.GRPCServerUseTLS {
 		cred, err := s.loadTLSCredentials()
 		if err != nil {
 			return fmt.Errorf("error loading GRPC TLS Credentials: %w", err)

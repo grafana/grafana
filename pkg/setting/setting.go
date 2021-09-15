@@ -265,12 +265,12 @@ type Cfg struct {
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
-	// Plugin GRPC API.
-	PluginGRPCNetwork  string
-	PluginGRPCAddress  string
-	PluginGRPCUseTLS   bool
-	PluginGRPCCertFile string
-	PluginGRPCKeyFile  string
+	// GRPC API Server
+	GRPCServerNetwork  string
+	GRPCServerAddress  string
+	GRPCServerUseTLS   bool
+	GRPCServerCertFile string
+	GRPCServerKeyFile  string
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -1434,32 +1434,32 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 func (cfg *Cfg) readGRPCServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("grpc_server")
 	errPrefix := "grpc_server:"
-	cfg.PluginGRPCUseTLS = server.Key("use_tls").MustBool(false)
-	cfg.PluginGRPCCertFile = server.Key("cert_file").String()
-	cfg.PluginGRPCKeyFile = server.Key("cert_key").String()
-	cfg.PluginGRPCNetwork = valueAsString(server, "network", "unix")
-	cfg.PluginGRPCAddress = valueAsString(server, "address", "")
-	switch cfg.PluginGRPCNetwork {
+	cfg.GRPCServerUseTLS = server.Key("use_tls").MustBool(false)
+	cfg.GRPCServerCertFile = server.Key("cert_file").String()
+	cfg.GRPCServerKeyFile = server.Key("cert_key").String()
+	cfg.GRPCServerNetwork = valueAsString(server, "network", "unix")
+	cfg.GRPCServerAddress = valueAsString(server, "address", "")
+	switch cfg.GRPCServerNetwork {
 	case "unix":
-		if cfg.PluginGRPCAddress != "" {
+		if cfg.GRPCServerAddress != "" {
 			// Explicitly provided path for unix domain socket.
-			if stat, err := os.Stat(cfg.PluginGRPCAddress); os.IsNotExist(err) {
+			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
 				// File does not exist - nice, nothing to do.
 			} else if err != nil {
-				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.PluginGRPCAddress)
+				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
 			} else {
 				if stat.Mode()&fs.ModeSocket == 0 {
-					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.PluginGRPCAddress)
+					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
 				}
 				// Unix domain socket file, should be safe to remove.
-				err := os.Remove(cfg.PluginGRPCAddress)
+				err := os.Remove(cfg.GRPCServerAddress)
 				if err != nil {
-					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.PluginGRPCAddress)
+					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
 				}
 			}
 		} else {
 			// Use temporary file path for a unix domain socket.
-			tf, err := ioutil.TempFile("", "gf_plugin_grpc_api")
+			tf, err := ioutil.TempFile("", "gf_grpc_server_api")
 			if err != nil {
 				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
 			}
@@ -1470,14 +1470,14 @@ func (cfg *Cfg) readGRPCServerSettings(iniFile *ini.File) error {
 			if err := os.Remove(unixPath); err != nil {
 				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
 			}
-			cfg.PluginGRPCAddress = unixPath
+			cfg.GRPCServerAddress = unixPath
 		}
 	case "tcp":
-		if cfg.PluginGRPCAddress == "" {
-			cfg.PluginGRPCAddress = "127.0.0.1:10000"
+		if cfg.GRPCServerAddress == "" {
+			cfg.GRPCServerAddress = "127.0.0.1:10000"
 		}
 	default:
-		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.PluginGRPCNetwork)
+		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
 	}
 	return nil
 }
