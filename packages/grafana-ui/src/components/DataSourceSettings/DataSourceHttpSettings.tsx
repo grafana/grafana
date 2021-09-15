@@ -131,18 +131,6 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
 
-  // TODO: Azure stuff, use state if needed
-  // TODO: Input we rely on
-  // TODO: azureAuthSettings?.azureAuthEnabled
-  // TODO: azureAuthSettings?.azureAuthEnabled &&
-  //           azureAuthSettings?.azureSettingsUI &&
-  //           dataSourceConfig.jsonData.azureAuth &&
-  // TODO:
-  // TODO:
-  // TODO:
-  // TODO:
-  // TODO:
-
   return (
     <div className="gf-form-group">
       <>
