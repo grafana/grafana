@@ -439,6 +439,10 @@ If enabled and user is not anonymous, data proxy will add X-Grafana-User header 
 
 Limits the amount of bytes that will be read/accepted from responses of outgoing HTTP requests. Default is `0` which means disabled.
 
+### row_limit
+
+Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
+
 <hr />
 
 ## [analytics]
@@ -463,6 +467,14 @@ Analytics ID here. By default this feature is disabled.
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
+
+### application_insights_connection_string
+
+If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
+
+### application_insights_endpoint_url
+
+    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details,  refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -1430,7 +1442,7 @@ Optional extra path inside bucket.
 
 ### enable_signed_urls
 
-If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls] for
+If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) for
 the image uploaded to Google Cloud Storage.
 
 ### signed_url_expiration

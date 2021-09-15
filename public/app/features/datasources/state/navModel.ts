@@ -69,9 +69,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       active: false,
       icon: 'database',
-      id: `datasource-cache-${dataSource.id}`,
+      id: `datasource-cache-${dataSource.uid}`,
       text: 'Cache',
-      url: `datasources/edit/${dataSource.id}/cache`,
+      url: `datasources/edit/${dataSource.uid}/cache`,
       hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
     });
   }

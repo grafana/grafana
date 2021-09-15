@@ -94,6 +94,7 @@ describe('BarChart utils', () => {
       text: {
         valueSize: 10,
       },
+      rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {

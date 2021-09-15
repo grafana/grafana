@@ -173,41 +173,15 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 
 	// Verify the manifest contents
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
-	for p, hash := range manifest.Files {
-		// Open the file
-		fp := filepath.Join(plugin.PluginDir, p)
-
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fp` is based
-		// on the manifest file for a plugin and not user input.
-		f, err := os.Open(fp)
+	for fp, hash := range manifest.Files {
+		err = verifyHash(plugin.Id, filepath.Join(plugin.PluginDir, fp), hash)
 		if err != nil {
-			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.Id, "filename", p, "dir", plugin.PluginDir)
 			return plugins.PluginSignatureState{
 				Status: plugins.PluginSignatureModified,
 			}, nil
 		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Warn("Failed to close plugin file", "path", fp, "err", err)
-			}
-		}()
 
-		h := sha256.New()
-		if _, err := io.Copy(h, f); err != nil {
-			log.Warn("Couldn't read plugin file", "plugin", plugin.Id, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		sum := hex.EncodeToString(h.Sum(nil))
-		if sum != hash {
-			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		manifestFiles[p] = struct{}{}
+		manifestFiles[fp] = struct{}{}
 	}
 
 	if manifest.isV2() {
@@ -243,6 +217,34 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		SigningOrg: manifest.SignedByOrgName,
 		Files:      manifestFiles,
 	}, nil
+}
+
+func verifyHash(pluginID string, path string, hash string) error {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` is based
+	// on the path provided in a manifest file for a plugin and not user input.
+	f, err := os.Open(path)
+	if err != nil {
+		log.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
+		return fmt.Errorf("plugin file listed in the manifest was not found")
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warn("Failed to close plugin file", "path", path, "err", err)
+		}
+	}()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("could not calculate plugin file checksum")
+	}
+	sum := hex.EncodeToString(h.Sum(nil))
+	if sum != hash {
+		log.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
+		return fmt.Errorf("plugin file checksum does not match signature checksum")
+	}
+
+	return nil
 }
 
 // gets plugin filenames that require verification for plugin signing

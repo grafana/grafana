@@ -77,7 +77,7 @@ type schedule struct {
 	appURL string
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
-	metrics          *metrics.Metrics
+	metrics          *metrics.Scheduler
 
 	// Senders help us send alerts to external Alertmanagers.
 	sendersMtx              sync.RWMutex
@@ -100,7 +100,7 @@ type SchedulerCfg struct {
 	InstanceStore           store.InstanceStore
 	AdminConfigStore        store.AdminConfigurationStore
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
-	Metrics                 *metrics.Metrics
+	Metrics                 *metrics.Scheduler
 	AdminConfigPollInterval time.Duration
 }
 

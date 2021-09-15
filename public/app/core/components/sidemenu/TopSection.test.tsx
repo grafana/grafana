@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import TopSection from './TopSection';
 
 jest.mock('../../config', () => ({
@@ -16,13 +17,21 @@ jest.mock('../../config', () => ({
 
 describe('Render', () => {
   it('should render search when empty', () => {
-    render(<TopSection />);
+    render(
+      <BrowserRouter>
+        <TopSection />
+      </BrowserRouter>
+    );
 
     expect(screen.getByText('Search dashboards')).toBeInTheDocument();
   });
 
   it('should render items and search item', () => {
-    render(<TopSection />);
+    render(
+      <BrowserRouter>
+        <TopSection />
+      </BrowserRouter>
+    );
 
     expect(screen.getByTestId('top-section-items').children.length).toBe(3);
   });

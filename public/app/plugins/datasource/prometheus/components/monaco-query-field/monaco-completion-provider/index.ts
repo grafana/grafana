@@ -1,8 +1,27 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import { getIntent } from './intent';
-import { getCompletions, DataProvider } from './completions';
+import { getCompletions, DataProvider, CompletionType } from './completions';
+import { NeverCaseError } from './util';
 
+function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): monacoTypes.languages.CompletionItemKind {
+  switch (type) {
+    case 'DURATION':
+      return monaco.languages.CompletionItemKind.Unit;
+    case 'FUNCTION':
+      return monaco.languages.CompletionItemKind.Variable;
+    case 'HISTORY':
+      return monaco.languages.CompletionItemKind.Snippet;
+    case 'LABEL_NAME':
+      return monaco.languages.CompletionItemKind.Enum;
+    case 'LABEL_VALUE':
+      return monaco.languages.CompletionItemKind.EnumMember;
+    case 'METRIC_NAME':
+      return monaco.languages.CompletionItemKind.Constructor;
+    default:
+      throw new NeverCaseError(type);
+  }
+}
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider
@@ -35,10 +54,12 @@ export function getCompletionProvider(
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
-      const suggestions = items.map((item, index) => ({
-        kind: monaco.languages.CompletionItemKind.Text,
+      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
+        kind: getMonacoCompletionItemKind(item.type, monaco),
         label: item.label,
         insertText: item.insertText,
+        detail: item.detail,
+        documentation: item.documentation,
         sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
         range,
         command: item.triggerOnInsert
