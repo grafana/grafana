@@ -235,7 +235,7 @@ func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotific
 func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64("notificationId"),
+		Id:    c.ParamsInt64(":notificationId"),
 	}
 
 	if query.Id == 0 {
@@ -393,7 +393,7 @@ func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidC
 func DeleteAlertNotification(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64("notificationId"),
+		Id:    c.ParamsInt64(":notificationId"),
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -453,7 +453,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) re
 
 // POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) response.Response {
-	alertID := c.ParamsInt64("alertId")
+	alertID := c.ParamsInt64(":alertId")
 	result := make(map[string]interface{})
 	result["alertId"] = alertID
 
