@@ -25,11 +25,11 @@ const ViewOptions: SelectableValue[] = [
 
 const RuleTypeOptions: SelectableValue[] = [
   {
-    label: 'Alert rule',
+    label: 'Alert ',
     value: PromRuleType.Alerting,
   },
   {
-    label: 'Recording rule',
+    label: 'Recording ',
     value: PromRuleType.Recording,
   },
 ];

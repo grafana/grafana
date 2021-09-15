@@ -108,7 +108,12 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 <div className={cx(styles.container, styles.timingContainer)}>
                   <InputControl
                     render={({ field, fieldState: { invalid } }) => (
-                      <Input {...field} className={styles.smallInput} invalid={invalid} placeholder={'Time'} />
+                      <Input
+                        {...field}
+                        className={styles.smallInput}
+                        invalid={invalid}
+                        placeholder={'Default 30 seconds'}
+                      />
                     )}
                     control={control}
                     name="groupWaitValue"
@@ -143,7 +148,12 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 <div className={cx(styles.container, styles.timingContainer)}>
                   <InputControl
                     render={({ field, fieldState: { invalid } }) => (
-                      <Input {...field} className={styles.smallInput} invalid={invalid} placeholder={'Time'} />
+                      <Input
+                        {...field}
+                        className={styles.smallInput}
+                        invalid={invalid}
+                        placeholder={'Default 5 minutes'}
+                      />
                     )}
                     control={control}
                     name="groupIntervalValue"
@@ -178,7 +188,12 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 <div className={cx(styles.container, styles.timingContainer)}>
                   <InputControl
                     render={({ field, fieldState: { invalid } }) => (
-                      <Input {...field} className={styles.smallInput} invalid={invalid} placeholder={'Time'} />
+                      <Input
+                        {...field}
+                        className={styles.smallInput}
+                        invalid={invalid}
+                        placeholder={'Default 4 hours'}
+                      />
                     )}
                     control={control}
                     name="repeatIntervalValue"

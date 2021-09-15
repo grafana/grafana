@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useCallback } from 'react';
+import React, { FC, useMemo } from 'react';
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -40,16 +40,12 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   const showExpiredSilencesBanner =
     !!filteredSilences.length && (silenceState === undefined || silenceState === SilenceState.Expired);
 
-  const findSilencedAlerts = useCallback(
-    (id: string) => {
-      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
-    },
-    [alertManagerAlerts]
-  );
-
   const columns = useColumns(alertManagerSourceName);
 
   const items = useMemo((): SilenceTableItemProps[] => {
+    const findSilencedAlerts = (id: string) => {
+      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
+    };
     return filteredSilences.map((silence) => {
       const silencedAlerts = findSilencedAlerts(silence.id);
       return {
@@ -57,7 +53,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
         data: { ...silence, silencedAlerts },
       };
     });
-  }, [filteredSilences, findSilencedAlerts]);
+  }, [filteredSilences, alertManagerAlerts]);
 
   return (
     <div data-testid="silences-table">
@@ -238,7 +234,7 @@ function useColumns(alertManagerSourceName: string) {
             </>
           );
         },
-        size: 2,
+        size: '140px',
       });
     }
     return columns;

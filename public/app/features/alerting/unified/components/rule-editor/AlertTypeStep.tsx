@@ -74,7 +74,6 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
           })}
           autoFocus={true}
-          placeholder="Rule name"
         />
       </Field>
       <div className={styles.flexRow}>

@@ -69,7 +69,6 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
               }}
               options={namespaceOptions}
               width={42}
-              placeholder={'Namespace'}
             />
           )}
           name="namespace"
@@ -82,14 +81,7 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
       <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <SelectWithAdd
-              {...field}
-              options={groupOptions}
-              width={42}
-              custom={customGroup}
-              className={style.input}
-              placeholder="Group name"
-            />
+            <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={style.input} />
           )}
           name="group"
           control={control}
