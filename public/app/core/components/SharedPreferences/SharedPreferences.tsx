@@ -41,7 +41,7 @@ const themes: SelectableValue[] = [
   { value: 'light', label: 'Light' },
 ];
 
-const navPositions: Array<SelectableValue<string>> = [
+const navPositions: Array<SelectableValue<UserPreferencesDTO['navPosition']>> = [
   { value: '', label: 'Default' },
   { value: 'left', label: 'Left' },
   { value: 'right', label: 'Right' },
