@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -16,6 +17,31 @@ type SocialGitlab struct {
 	allowedGroups     []string
 	apiUrl            string
 	roleAttributePath string
+}
+
+type Group struct {
+	ID                             int         `json:"id"`
+	WebURL                         string      `json:"web_url"`
+	Name                           string      `json:"name"`
+	Path                           string      `json:"path"`
+	Description                    string      `json:"description"`
+	Visibility                     string      `json:"visibility"`
+	ShareWithGroupLock             bool        `json:"share_with_group_lock"`
+	RequireTwoFactorAuthentication bool        `json:"require_two_factor_authentication"`
+	TwoFactorGracePeriod           int         `json:"two_factor_grace_period"`
+	ProjectCreationLevel           string      `json:"project_creation_level"`
+	AutoDevopsEnabled              interface{} `json:"auto_devops_enabled"`
+	SubgroupCreationLevel          string      `json:"subgroup_creation_level"`
+	EmailsDisabled                 interface{} `json:"emails_disabled"`
+	MentionsDisabled               interface{} `json:"mentions_disabled"`
+	LfsEnabled                     bool        `json:"lfs_enabled"`
+	DefaultBranchProtection        int         `json:"default_branch_protection"`
+	AvatarURL                      string      `json:"avatar_url"`
+	RequestAccessEnabled           bool        `json:"request_access_enabled"`
+	FullName                       string      `json:"full_name"`
+	FullPath                       string      `json:"full_path"`
+	CreatedAt                      time.Time   `json:"created_at"`
+	ParentID                       interface{} `json:"parent_id"`
 }
 
 func (s *SocialGitlab) Type() int {
@@ -38,40 +64,37 @@ func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGitlab) GetGroups(client *http.Client) []string {
-	groups := make([]string, 0)
-
-	for page, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(client, url) {
-		groups = append(groups, page...)
+func (s *SocialGitlab) GetGroups(client *http.Client) ([]string, []Group) {
+	groupFullNames := make([]string, 0)
+	groups := make([]Group, 0)
+	for page, url, groupsJson := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url, groupsJson = s.GetGroupsPage(client, url) {
+		groupFullNames = append(groupFullNames, page...)
+		groups = append(groups, groupsJson...)
 	}
 
-	return groups
+	return groupFullNames, groups
 }
 
 // GetGroupsPage returns groups and link to the next page if response is paginated
-func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string, string) {
-	type Group struct {
-		FullPath string `json:"full_path"`
-	}
-
+func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string, string, []Group) {
 	var (
 		groups []Group
 		next   string
 	)
 
 	if url == "" {
-		return nil, next
+		return nil, next, nil
 	}
 
 	response, err := s.httpGet(client, url)
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
-		return nil, next
+		return nil, next, nil
 	}
 
 	if err := json.Unmarshal(response.Body, &groups); err != nil {
 		s.log.Error("Error parsing JSON from GitLab API", "err", err)
-		return nil, next
+		return nil, next, nil
 	}
 
 	fullPaths := make([]string, len(groups))
@@ -87,7 +110,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 		}
 	}
 
-	return fullPaths, next
+	return fullPaths, next, groups
 }
 
 func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -113,11 +136,25 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("user %s is inactive", data.Username)
 	}
 
-	groups := s.GetGroups(client)
+	groupFullNames, groups := s.GetGroups(client)
 
 	role, err := s.extractRole(response.Body)
 	if err != nil {
 		s.log.Error("Failed to extract role", "error", err)
+	}
+
+	// only evaluate groupqueries if userqueries haven't matched anything
+	if role == "Viewer" || role == "" {
+		println("userquery didn't evaluate")
+		jsonGroups, err := json.Marshal(groups)
+		if err != nil {
+			s.log.Error("Failed To Remarshal Groups", "error", err)
+		}
+
+		role, err = s.extractRole(jsonGroups)
+		if err != nil {
+			s.log.Error("Failed to extract role", "error", err)
+		}
 	}
 
 	userInfo := &BasicUserInfo{
@@ -125,11 +162,11 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Name:   data.Name,
 		Login:  data.Username,
 		Email:  data.Email,
-		Groups: groups,
+		Groups: groupFullNames,
 		Role:   role,
 	}
 
-	if !s.IsGroupMember(groups) {
+	if !s.IsGroupMember(groupFullNames) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -142,9 +179,9 @@ func (s *SocialGitlab) extractRole(rawJSON []byte) (string, error) {
 	}
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
-
 	if err != nil {
 		return "", err
 	}
+	println(role)
 	return role, nil
 }
