@@ -14,13 +14,13 @@ import (
 
 func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
+		entities.Post("/", middleware.ReqSignedIn, binding.BindMiddleware(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
 		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
+		entities.Patch("/:uid", middleware.ReqSignedIn, binding.BindMiddleware(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
 	})
 }
 

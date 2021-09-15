@@ -28,7 +28,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.AP
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
-			binding.Bind(apimodels.EvalQueriesPayload{}),
+			binding.BindMiddleware(apimodels.EvalQueriesPayload{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/eval",
@@ -38,7 +38,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.AP
 		)
 		group.Post(
 			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			binding.Bind(apimodels.TestRulePayload{}),
+			binding.BindMiddleware(apimodels.TestRulePayload{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/{Recipient}",

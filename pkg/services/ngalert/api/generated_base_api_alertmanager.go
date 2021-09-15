@@ -38,7 +38,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
-			binding.Bind(apimodels.PostableSilence{}),
+			binding.BindMiddleware(apimodels.PostableSilence{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/silences",
@@ -120,7 +120,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"),
-			binding.Bind(apimodels.PostableAlerts{}),
+			binding.BindMiddleware(apimodels.PostableAlerts{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
@@ -130,7 +130,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
-			binding.Bind(apimodels.PostableUserConfig{}),
+			binding.BindMiddleware(apimodels.PostableUserConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
@@ -140,7 +140,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/receivers/test"),
-			binding.Bind(apimodels.TestReceiversConfigParams{}),
+			binding.BindMiddleware(apimodels.TestReceiversConfigParams{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/receivers/test",

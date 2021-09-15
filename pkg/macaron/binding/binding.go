@@ -90,15 +90,15 @@ func errorHandler(errs Errors, rw http.ResponseWriter) {
 // CustomErrorHandler will be invoked if errors occured.
 var CustomErrorHandler func(*macaron.Context, Errors)
 
-// Bind wraps up the functionality of the Form and Json middleware
+// BindMiddleware wraps up the functionality of the Form and Json middleware
 // according to the Content-Type and verb of the request.
 // A Content-Type is required for POST and PUT requests.
-// Bind invokes the ErrorHandler middleware to bail out if errors
+// BindMiddleware invokes the ErrorHandler middleware to bail out if errors
 // occurred. If you want to perform your own error handling, use
 // Form or Json middleware directly. An interface pointer can
 // be added as a second argument in order to map the struct to
 // a specific interface.
-func Bind(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
+func BindMiddleware(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		bind(ctx, obj, ifacePtr...)
 		if handler, ok := obj.(ErrorHandler); ok {
