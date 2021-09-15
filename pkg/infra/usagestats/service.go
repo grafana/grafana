@@ -104,11 +104,13 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 		select {
 		case <-sendReportTicker.C:
 			if err := uss.sendUsageStats(ctx); err != nil {
-				uss.log.Warn("Failed to send usage stats", "err", err)
+				uss.log.Warn("Failed to send usage stats", "error", err)
 			}
 
 			lastSent = time.Now()
-			uss.kvStore.Set(ctx, "last_sent", lastSent.Format(time.RFC3339))
+			if err := uss.kvStore.Set(ctx, "last_sent", lastSent.Format(time.RFC3339)); err != nil {
+				uss.log.Warn("Failed to update last sent time", "error", err)
+			}
 
 			if nextSendInterval != sendInterval {
 				nextSendInterval = sendInterval
