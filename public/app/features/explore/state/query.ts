@@ -640,6 +640,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       relatedDataProviders: { ...state.relatedDataProviders, ...relatedDataProviders },
+      // clear previous data for newly loaded providers
       relatedData: mapValues(state.relatedData, (value, key) => {
         return key in relatedDataProviders ? undefined : value;
       }),
