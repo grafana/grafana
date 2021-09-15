@@ -45,17 +45,6 @@ export interface ChangeSizePayload {
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 /**
- * Highlight expressions in the log results
- */
-export interface HighlightLogsExpressionPayload {
-  exploreId: ExploreId;
-  expressions: string[];
-}
-export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(
-  'explore/highlightLogsExpression'
-);
-
-/**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
@@ -222,17 +211,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, containerWidth };
   }
 
-  if (highlightLogsExpressionAction.match(action)) {
-    const { expressions: newExpressions } = action.payload;
-    const { logsHighlighterExpressions: currentExpressions } = state;
-
-    return {
-      ...state,
-      // Prevents re-renders. As logsHighlighterExpressions [] comes from datasource, we cannot control if it returns new array or not.
-      logsHighlighterExpressions: isEqual(newExpressions, currentExpressions) ? currentExpressions : newExpressions,
-    };
-  }
-
   if (initializeExploreAction.match(action)) {
     const {
       containerWidth,
@@ -258,7 +236,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       history,
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
-      logsHighlighterExpressions: undefined,
       cache: [],
       autoLoadLogsVolume,
     };

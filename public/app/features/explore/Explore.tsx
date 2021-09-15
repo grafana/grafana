@@ -18,7 +18,7 @@ import {
 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
-import QueryRows from './QueryRows';
+import { QueryRows } from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -342,7 +342,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       datasourceInstance,
       datasourceMissing,
       exploreId,
-      queryKeys,
       graphResult,
       queryResponse,
       isLive,
@@ -368,7 +367,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceInstance && (
           <div className="explore-container">
             <div className={cx('panel-container', styles.queryContainer)}>
-              <QueryRows exploreId={exploreId} queryKeys={queryKeys} />
+              <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
                 // We cannot show multiple traces at the same time right now so we do not show add query button.

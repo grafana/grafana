@@ -48,7 +48,6 @@ interface Props extends Themeable2 {
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   theme: GrafanaTheme2;
-  highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -256,7 +255,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logRows,
       logsMeta,
       visibleRange,
-      highlighterExpressions,
       loading = false,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -360,7 +358,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               deduplicatedRows={dedupedRows}
               dedupStrategy={dedupStrategy}
               getRowContext={this.props.getRowContext}
-              highlighterExpressions={highlighterExpressions}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               showContextToggle={showContextToggle}

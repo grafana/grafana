@@ -38,7 +38,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { addParsedLabelToQuery, getHighlighterExpressionsFromQuery, queryHasPipeParser } from './query_utils';
+import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
@@ -441,10 +441,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         break;
     }
     return { ...query, expr: expression };
-  }
-
-  getHighlighterExpression(query: LokiQuery): string[] {
-    return getHighlighterExpressionsFromQuery(query.expr);
   }
 
   getTime(date: string | DateTime, roundUp: boolean) {

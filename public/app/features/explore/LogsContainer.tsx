@@ -62,7 +62,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   render() {
     const {
       loading,
-      logsHighlighterExpressions,
       logRows,
       logsMeta,
       logsQueries,
@@ -124,7 +123,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               logsMeta={logsMeta}
               logsQueries={logsQueries}
               width={width}
-              highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
@@ -159,24 +157,11 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const {
-    logsHighlighterExpressions,
-    logsResult,
-    relatedDataProviders,
-    loading,
-    scanning,
-    datasourceInstance,
-    isLive,
-    isPaused,
-    range,
-    absoluteRange,
-    autoLoadLogsVolume,
-  } = item;
+  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange, autoLoadLogsVolume, relatedDataProviders } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
-    logsHighlighterExpressions,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
     logsQueries: logsResult?.queries,

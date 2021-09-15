@@ -84,11 +84,6 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Log line substrings to be highlighted as you type in a query field.
-   * Currently supports only the first query row.
-   */
-  logsHighlighterExpressions?: string[];
-  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;
@@ -123,8 +118,6 @@ export interface ExploreItemState {
    * How often query should be refreshed
    */
   refreshInterval?: string;
-
-  latency: number;
 
   /**
    * If true, the view is in live tailing mode.
@@ -183,7 +176,6 @@ export interface QueryTransaction {
   done: boolean;
   error?: string | JSX.Element;
   hints?: QueryHint[];
-  latency: number;
   request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
