@@ -1401,14 +1401,12 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	cfg.HAListenAddr = ua.Key("ha_listen_address").MustString("0.0.0.0:9094")
 	cfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
 	peers := ua.Key("ha_peers").MustString("")
-	cfg.HAPeers = make([]string, 0, 0)
-
+	cfg.HAPeers = make([]string, 0)
 	if peers != "" {
 		for _, peer := range strings.Split(peers, ",") {
 			peer = strings.TrimSpace(peer)
 			cfg.HAPeers = append(cfg.HAPeers, peer)
 		}
-
 	}
 
 	return nil
