@@ -180,7 +180,7 @@ You can still run and develop an unsigned plugin by running your Grafana instanc
 
 ### Update react-hook-form from v6 to v7
 
-We have upgraded react-hook-form from version 6 to version 7. We recommend following the [react-hook-form-migration-guide](https://react-hook-form.com/migrate-v6-to-v7/) to make your forms compatible with version 7.
+We have upgraded react-hook-form from version 6 to version 7. To make your forms compatible with version 7, refer to the [react-hook-form-migration-guide](https://react-hook-form.com/migrate-v6-to-v7/).
 
 ### Update the plugin.json
 
