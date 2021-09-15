@@ -116,7 +116,7 @@ The following template variables are available when expanding annotations and la
 
 The following template functions are available when expanding annotations and labels.
 
-| Names              | Arguments        | Returns                | Descriptions                                                                                                                       |
+| Name             | Argument       | Return                | Description                                                                                                                       |
 | ------------------ | ---------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | humanize           | number or string | string                 | Converts a number to a more readable format, using metric prefixes.                                                                |
 | humanize1024       | number or string | string                 | Like humanize, but uses 1024 as the base rather than 1000.                                                                         |
