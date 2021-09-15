@@ -22,10 +22,10 @@ type cache struct {
 	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
 	log       log.Logger
-	metrics   *metrics.Metrics
+	metrics   *metrics.State
 }
 
-func newCache(logger log.Logger, metrics *metrics.Metrics) *cache {
+func newCache(logger log.Logger, metrics *metrics.State) *cache {
 	return &cache{
 		states:  make(map[int64]map[string]map[string]*State),
 		log:     logger,

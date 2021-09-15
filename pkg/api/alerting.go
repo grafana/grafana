@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/smithy/build/go/grafana"
 	"github.com/grafana/grafana/smithy/build/go/grafana/types"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func ValidateOrgAlert(c *models.ReqContext) {
@@ -274,7 +275,7 @@ func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotific
 func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64("notificationId"),
+		Id:    c.ParamsInt64(":notificationId"),
 	}
 
 	if query.Id == 0 {
@@ -295,7 +296,7 @@ func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 func GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsWithUidQuery{
 		OrgId: c.OrgId,
-		Uid:   c.Params("uid"),
+		Uid:   macaron.Params(c.Req)[":uid"],
 	}
 
 	if query.Uid == "" {
@@ -355,7 +356,7 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 
 func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) response.Response {
 	cmd.OrgId = c.OrgId
-	cmd.Uid = c.Params("uid")
+	cmd.Uid = macaron.Params(c.Req)[":uid"]
 
 	err := fillWithSecureSettingsDataByUID(&cmd)
 	if err != nil {
@@ -432,7 +433,7 @@ func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidC
 func DeleteAlertNotification(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64("notificationId"),
+		Id:    c.ParamsInt64(":notificationId"),
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -448,7 +449,7 @@ func DeleteAlertNotification(c *models.ReqContext) response.Response {
 func DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationWithUidCommand{
 		OrgId: c.OrgId,
-		Uid:   c.Params("uid"),
+		Uid:   macaron.Params(c.Req)[":uid"],
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -492,7 +493,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) re
 
 // POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) response.Response {
-	alertID := c.ParamsInt64("alertId")
+	alertID := c.ParamsInt64(":alertId")
 	result := make(map[string]interface{})
 	result["alertId"] = alertID
 

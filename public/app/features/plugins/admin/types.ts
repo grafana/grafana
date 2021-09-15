@@ -220,3 +220,21 @@ export type ReducerState = PluginsState & {
 
 // TODO<remove when the "plugin_admin_enabled" feature flag is removed>
 export type PluginCatalogStoreState = StoreState & { plugins: ReducerState };
+
+// The data that we receive when fetching "/api/gnet/plugins/<plugin>/versions"
+export type PluginVersion = {
+  id: number;
+  pluginId: number;
+  pluginSlug: string;
+  version: string;
+  url: string;
+  commit: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+  downloads: number;
+  verified: boolean;
+  status: string;
+  downloadSlug: string;
+  links: Array<{ rel: string; href: string }>;
+};
