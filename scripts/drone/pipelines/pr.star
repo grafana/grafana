@@ -6,6 +6,7 @@ load(
     'shellcheck_step',
     'build_backend_step',
     'build_frontend_step',
+    'rebuild_cache_step',
     'build_plugins_step',
     'test_backend_step',
     'test_frontend_step',
@@ -53,6 +54,7 @@ def pr_pipelines(edition):
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        rebuild_cache_step(),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
     ]

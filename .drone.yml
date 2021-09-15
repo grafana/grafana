@@ -94,6 +94,23 @@ steps:
   depends_on:
   - test-frontend
 
+- name: rebuild-cache
+  pull: always
+  image: homerovalle/drone-gcs-cache
+  settings:
+    bucket: test-julien
+    mount: /opt/drone/yarncache
+    rebuild: true
+  environment:
+    GCS_CACHE_JSON_KEY:
+      from_secret: tf_google_credentials
+    YARN_CACHE_FOLDER: /opt/drone/yarncache
+  when:
+    event:
+    - pull_request
+  depends_on:
+  - build-frontend
+
 - name: build-plugins
   image: grafana/build-container:1.4.2
   commands:
@@ -3510,6 +3527,6 @@ get:
 
 ---
 kind: signature
-hmac: 9d11eb37481c4b35e5a075a21f8d536fce499f92d978a75308068a318e28a247
+hmac: 080c6e131d0b142ff825dd42fc6cb082d54a15bc53093cfe0f16f006b09eb8fb
 
 ...
