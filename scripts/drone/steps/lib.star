@@ -412,13 +412,11 @@ def restore_cache_step():
         'image': 'meltwater/drone-cache',
         'name': 'restore-cache',
         'pull': 'always',
-        'environment': {
-            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
-         },
          'settings': {
             'backend': 'gcs',
             'bucket': 'test-julien',
             'restore': 'true',
+            'json_key': from_secret('tf_google_credentials'),
          },
          'depends_on': [
             'initialize',
@@ -430,12 +428,10 @@ def rebuild_cache_step():
         'image': 'meltwater/drone-cache',
         'name': 'rebuild-cache',
         'pull': 'always',
-        'environment': {
-            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
-         },
          'settings': {
             'backend': 'gcs',
             'bucket': 'test-julien',
+            'json_key': from_secret('tf_google_credentials'),
             'rebuild': 'true',
             'mount': [
                 '/opt/drone/gocache',
