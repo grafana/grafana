@@ -10,8 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -114,7 +112,6 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		SocialService:     &mockSocialService{},
 		EncryptionService: ossencryption.ProvideService(),
 	}
-	util.SetEncryptionVariables(t)
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		hs.LoginView(c)

@@ -29,7 +29,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange plugins.DataTimeRange, interval time.Duration, intervalMode string) (Interval, error)
+	Calculate(timeRange plugins.DataTimeRange, interval time.Duration) Interval
 	CalculateSafeInterval(timeRange plugins.DataTimeRange, resolution int64) Interval
 }
 
@@ -55,29 +55,17 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interval time.Duration, intervalMode string) (Interval, error) {
+func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
 	calculatedInterval := time.Duration((to - from) / DefaultRes)
 
-	switch intervalMode {
-	case "min":
-		if calculatedInterval < interval {
-			return Interval{Text: FormatDuration(interval), Value: interval}, nil
-		}
-	case "max":
-		if calculatedInterval > interval {
-			return Interval{Text: FormatDuration(interval), Value: interval}, nil
-		}
-	case "exact":
-		return Interval{Text: FormatDuration(interval), Value: interval}, nil
-
-	default:
-		return Interval{}, fmt.Errorf("unrecognized intervalMode: %v", intervalMode)
+	if calculatedInterval < minInterval {
+		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
 	}
 
 	rounded := roundInterval(calculatedInterval)
-	return Interval{Text: FormatDuration(rounded), Value: rounded}, nil
+	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange plugins.DataTimeRange, safeRes int64) Interval {

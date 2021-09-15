@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -82,7 +83,10 @@ import (
 //       200: Ack
 //       207: MultiStatus
 //       400: ValidationError
+//       403: PermissionDenied
+//       404: AlertManagerNotFound
 //       408: Failure
+//       409: AlertManagerNotReady
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
 //
@@ -117,17 +121,25 @@ import (
 //       400: ValidationError
 
 // swagger:model
-type TestReceiversConfig struct {
-	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
+type PermissionDenied struct{}
+
+// swagger:model
+type AlertManagerNotFound struct{}
+
+// swagger:model
+type AlertManagerNotReady struct{}
+
+// swagger:model
+type MultiStatus struct{}
 
 // swagger:parameters RoutePostTestReceivers
 type TestReceiversConfigParams struct {
+	// in:body
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *TestReceiversConfigParams) ProcessConfig() error {
-	return processReceiverConfigs(c.Receivers)
+func (c *TestReceiversConfigParams) ProcessConfig(encrypt EncryptFn) error {
+	return processReceiverConfigs(c.Receivers, encrypt)
 }
 
 // swagger:model
@@ -310,7 +322,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
@@ -389,8 +401,8 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 }
 
 // ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
-func (c *PostableUserConfig) ProcessConfig() error {
-	return processReceiverConfigs(c.AlertmanagerConfig.Receivers)
+func (c *PostableUserConfig) ProcessConfig(encrypt EncryptFn) error {
+	return processReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -734,22 +746,6 @@ type PostableGrafanaReceiver struct {
 	SecureSettings        map[string]string `json:"secureSettings"`
 }
 
-func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error) {
-	storedValue, ok := r.SecureSettings[key]
-	if !ok {
-		return "", nil
-	}
-	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
-	if err != nil {
-		return "", err
-	}
-	decryptedValue, err := util.Decrypt(decodeValue)
-	if err != nil {
-		return "", err
-	}
-	return string(decryptedValue), nil
-}
-
 type ReceiverType int
 
 const (
@@ -925,7 +921,9 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-func processReceiverConfigs(c []*PostableApiReceiver) error {
+type EncryptFn func(payload []byte, secret string) ([]byte, error)
+
+func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
@@ -933,7 +931,7 @@ func processReceiverConfigs(c []*PostableApiReceiver) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := util.Encrypt([]byte(v), util.WithoutScope())
+					encryptedData, err := encrypt([]byte(v), setting.SecretKey)
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

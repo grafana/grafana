@@ -6,18 +6,15 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPluginProxy(t *testing.T) {
-	util.SetEncryptionVariables(t)
-
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.AppPluginRoute{
 			Headers: []plugins.AppPluginRouteHeader{
@@ -28,7 +25,7 @@ func TestPluginProxy(t *testing.T) {
 		setting.SecretKey = "password"
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
-			key, err := util.Encrypt([]byte("123"), util.WithoutScope())
+			key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
 			if err != nil {
 				return err
 			}
@@ -161,11 +158,20 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+			encryptedJsonData, err := ossencryption.ProvideService().EncryptJsonData(
+				map[string]string{"key": "123"},
+				setting.SecretKey,
+			)
+
+			if err != nil {
+				return err
+			}
+
 			query.Result = &models.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",
 				},
-				SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{"key": "123"}),
+				SecureJsonData: encryptedJsonData,
 			}
 			return nil
 		})
@@ -196,7 +202,7 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, ossencryption.ProvideService())
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)

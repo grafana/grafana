@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
@@ -19,20 +21,39 @@ var (
 	logger = log.New("live.managed_stream")
 )
 
-// Runner keeps ManagedStream per streamID.
+// If message comes from a plugin:
+// 	* it's simply sent to local subscribers without any additional steps
+//  * if there is RULE then may be processed in some way
+//  * important to keep a message in the original channel
+// 	* client subscribed to ds/<UID>/xxx
+//
+// What we want to build:
+// 	* Stream scope not hardcoded and determined by the caller
+// 	* So it's possible to use managed stream from plugins
+// 	* The problem is HA – at moment several plugins on different nodes publish same messages
+// 	* Can use in-memory managed stream for plugins with local subscribers publish, use HA-managed stream for HTTP/WS
+// 	* Eventually maintain a single connection with a plugin over a channel leader selection.
+
+// Runner keeps NamespaceStream per namespace.
 type Runner struct {
-	mu         sync.RWMutex
-	streams    map[int64]map[string]*ManagedStream
-	publisher  models.ChannelPublisher
-	frameCache FrameCache
+	mu             sync.RWMutex
+	streams        map[int64]map[string]*NamespaceStream
+	publisher      models.ChannelPublisher
+	localPublisher LocalPublisher
+	frameCache     FrameCache
+}
+
+type LocalPublisher interface {
+	PublishLocal(channel string, data []byte) error
 }
 
 // NewRunner creates new Runner.
-func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache) *Runner {
+func NewRunner(publisher models.ChannelPublisher, localPublisher LocalPublisher, frameCache FrameCache) *Runner {
 	return &Runner{
-		publisher:  publisher,
-		streams:    map[int64]map[string]*ManagedStream{},
-		frameCache: frameCache,
+		publisher:      publisher,
+		localPublisher: localPublisher,
+		streams:        map[int64]map[string]*NamespaceStream{},
+		frameCache:     frameCache,
 	}
 }
 
@@ -49,7 +70,8 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 		}
 		// Enrich with minute rate.
 		channel, _ := live.ParseChannel(managedChannel.Channel)
-		namespaceStream, ok := r.streams[orgID][channel.Namespace]
+		prefix := channel.Scope + "/" + channel.Namespace
+		namespaceStream, ok := r.streams[orgID][prefix]
 		if ok {
 			managedChannel.MinuteRate = namespaceStream.minuteRate(channel.Path)
 		}
@@ -86,63 +108,39 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 	return channels, nil
 }
 
-// Streams returns a map of active managed streams (per streamID).
-func (r *Runner) Streams(orgID int64) map[string]*ManagedStream {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	if _, ok := r.streams[orgID]; !ok {
-		return map[string]*ManagedStream{}
-	}
-	streams := make(map[string]*ManagedStream, len(r.streams[orgID]))
-	for k, v := range r.streams[orgID] {
-		streams[k] = v
-	}
-	return streams
-}
-
 // GetOrCreateStream -- for now this will create new manager for each key.
 // Eventually, the stream behavior will need to be configured explicitly
-func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream, error) {
+func (r *Runner) GetOrCreateStream(orgID int64, scope string, namespace string) (*NamespaceStream, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	_, ok := r.streams[orgID]
 	if !ok {
-		r.streams[orgID] = map[string]*ManagedStream{}
+		r.streams[orgID] = map[string]*NamespaceStream{}
 	}
-	s, ok := r.streams[orgID][streamID]
+	prefix := scope + "/" + namespace
+	s, ok := r.streams[orgID][prefix]
 	if !ok {
-		s = NewManagedStream(streamID, orgID, r.publisher, r.frameCache)
-		r.streams[orgID][streamID] = s
+		s = NewNamespaceStream(orgID, scope, namespace, r.publisher, r.localPublisher, r.frameCache)
+		r.streams[orgID][prefix] = s
 	}
 	return s, nil
 }
 
-// ManagedStream holds the state of a managed stream.
-type ManagedStream struct {
-	id         string
-	orgID      int64
-	start      time.Time
-	publisher  models.ChannelPublisher
-	frameCache FrameCache
-	rateMu     sync.RWMutex
-	rates      map[string][60]rateEntry
+// NamespaceStream holds the state of a managed stream.
+type NamespaceStream struct {
+	orgID          int64
+	scope          string
+	namespace      string
+	publisher      models.ChannelPublisher
+	localPublisher LocalPublisher
+	frameCache     FrameCache
+	rateMu         sync.RWMutex
+	rates          map[string][60]rateEntry
 }
 
 type rateEntry struct {
 	time  uint32
 	count int32
-}
-
-// NewManagedStream creates new ManagedStream.
-func NewManagedStream(id string, orgID int64, publisher models.ChannelPublisher, schemaUpdater FrameCache) *ManagedStream {
-	return &ManagedStream{
-		id:         id,
-		orgID:      orgID,
-		start:      time.Now(),
-		publisher:  publisher,
-		frameCache: schemaUpdater,
-		rates:      map[string][60]rateEntry{},
-	}
 }
 
 // ManagedChannel represents a managed stream.
@@ -152,16 +150,30 @@ type ManagedChannel struct {
 	Data       json.RawMessage `json:"data"`
 }
 
+// NewNamespaceStream creates new NamespaceStream.
+func NewNamespaceStream(orgID int64, scope string, namespace string, publisher models.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *NamespaceStream {
+	return &NamespaceStream{
+		orgID:          orgID,
+		scope:          scope,
+		namespace:      namespace,
+		publisher:      publisher,
+		localPublisher: localPublisher,
+		frameCache:     schemaUpdater,
+		rates:          map[string][60]rateEntry{},
+	}
+}
+
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
-// unstableSchema flag can be set to disable schema caching for a path.
-func (s *ManagedStream) Push(path string, frame *data.Frame) error {
+// * Saves the entire frame to cache.
+// * If schema has been changed sends entire frame to channel, otherwise only data.
+func (s *NamespaceStream) Push(path string, frame *data.Frame) error {
 	jsonFrameCache, err := data.FrameToJSONCache(frame)
 	if err != nil {
 		return err
 	}
 
 	// The channel this will be posted into.
-	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
+	channel := live.Channel{Scope: s.scope, Namespace: s.namespace, Path: path}.String()
 
 	isUpdated, err := s.frameCache.Update(s.orgID, channel, jsonFrameCache)
 	if err != nil {
@@ -179,10 +191,13 @@ func (s *ManagedStream) Push(path string, frame *data.Frame) error {
 
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	s.incRate(path, time.Now().Unix())
+	if s.scope == live.ScopeDatasource || s.scope == live.ScopePlugin {
+		return s.localPublisher.PublishLocal(orgchannel.PrependOrgID(s.orgID, channel), frameJSON)
+	}
 	return s.publisher(s.orgID, channel, frameJSON)
 }
 
-func (s *ManagedStream) incRate(path string, nowUnix int64) {
+func (s *NamespaceStream) incRate(path string, nowUnix int64) {
 	s.rateMu.Lock()
 	pathRate, ok := s.rates[path]
 	if !ok {
@@ -199,7 +214,7 @@ func (s *ManagedStream) incRate(path string, nowUnix int64) {
 	s.rateMu.Unlock()
 }
 
-func (s *ManagedStream) minuteRate(path string) int64 {
+func (s *NamespaceStream) minuteRate(path string) int64 {
 	var total int64
 	s.rateMu.RLock()
 	defer s.rateMu.RUnlock()
@@ -215,11 +230,11 @@ func (s *ManagedStream) minuteRate(path string) int64 {
 	return total
 }
 
-func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
+func (s *NamespaceStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return s, nil
 }
 
-func (s *ManagedStream) OnSubscribe(_ context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *NamespaceStream) OnSubscribe(_ context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
 	frameJSON, ok, err := s.frameCache.GetFrame(u.OrgId, e.Channel)
 	if err != nil {
@@ -231,6 +246,6 @@ func (s *ManagedStream) OnSubscribe(_ context.Context, u *models.SignedInUser, e
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (s *NamespaceStream) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }

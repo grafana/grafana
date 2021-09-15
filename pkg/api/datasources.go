@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -13,9 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var datasourcesLogger = log.New("datasources")
@@ -239,7 +239,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDa
 		return resp
 	}
 
-	err := fillWithSecureJSONData(&cmd)
+	err := hs.fillWithSecureJSONData(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update datasource", err)
 	}
@@ -276,7 +276,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDa
 	})
 }
 
-func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
+func (hs *HTTPServer) fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 	if len(cmd.SecureJsonData) == 0 {
 		return nil
 	}
@@ -290,7 +290,11 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 		return models.ErrDatasourceIsReadOnly
 	}
 
-	secureJSONData := ds.SecureJsonData.Decrypt()
+	secureJSONData, err := hs.EncryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
 	for k, v := range secureJSONData {
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
@@ -380,7 +384,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonData())
 	if err != nil {
 		c.JsonApiErr(500, "Unable to process datasource instance model", err)
 	}
@@ -444,7 +448,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonData())
 	if err != nil {
 		return response.Error(500, "Unable to get datasource model", err)
 	}
@@ -481,4 +485,11 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(200, payload)
+}
+
+func (hs *HTTPServer) decryptSecureJsonData() func(map[string][]byte) map[string]string {
+	return func(m map[string][]byte) map[string]string {
+		decryptedJsonData, _ := hs.EncryptionService.DecryptJsonData(m, setting.SecretKey)
+		return decryptedJsonData
+	}
 }

@@ -6,31 +6,38 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
-	dataSourceCache datasources.CacheService) *Provider {
+	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
+	pluginSettingsService *pluginsettings.Service) *Provider {
 	return &Provider{
-		Bus:             bus,
-		CacheService:    cacheService,
-		PluginManager:   pluginManager,
-		DataSourceCache: dataSourceCache,
+		Bus:                   bus,
+		CacheService:          cacheService,
+		PluginManager:         pluginManager,
+		DataSourceCache:       dataSourceCache,
+		EncryptionService:     encryptionService,
+		PluginSettingsService: pluginSettingsService,
 	}
 }
 
 type Provider struct {
-	Bus             bus.Bus
-	CacheService    *localcache.CacheService
-	PluginManager   plugins.Manager
-	DataSourceCache datasources.CacheService
+	Bus                   bus.Bus
+	CacheService          *localcache.CacheService
+	PluginManager         plugins.Manager
+	DataSourceCache       datasources.CacheService
+	EncryptionService     encryption.Service
+	PluginSettingsService *pluginsettings.Service
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -59,7 +66,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to unmarshal plugin json data", err)
 		}
-		decryptedSecureJSONData = ps.DecryptedValues()
+		decryptedSecureJSONData = p.PluginSettingsService.DecryptedValues(ps)
 		updated = ps.Updated
 	}
 
@@ -79,7 +86,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
-		datasourceSettings, err := adapters.ModelToInstanceSettings(ds)
+		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonData())
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to convert datasource", err)
 		}
@@ -109,4 +116,11 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 
 	p.CacheService.Set(cacheKey, query.Result, pluginSettingsCacheTTL)
 	return query.Result, nil
+}
+
+func (p *Provider) decryptSecureJsonData() func(map[string][]byte) map[string]string {
+	return func(m map[string][]byte) map[string]string {
+		decryptedJsonData, _ := p.EncryptionService.DecryptJsonData(m, setting.SecretKey)
+		return decryptedJsonData
+	}
 }

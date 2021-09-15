@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { cloneDeep } from 'lodash';
-import { NavModelItem } from '@grafana/data';
-import { Icon, IconName } from '@grafana/ui';
-import appEvents from '../../app_events';
-import { SignIn } from './SignIn';
-import SideMenuItem from './SideMenuItem';
-import { ShowModalReactEvent } from '../../../types/events';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import appEvents from '../../app_events';
+import { ShowModalReactEvent } from '../../../types/events';
+import config from '../../config';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
-import config from '../../config';
+import SideMenuItem from './SideMenuItem';
+import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
 
 export default function BottomSection() {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
+  const location = useLocation();
+  const activeItemId = bottomNav.find((item) => isLinkActive(location.pathname, item))?.id;
+  const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
   const user = contextSrv.user;
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
 
@@ -36,8 +43,12 @@ export default function BottomSection() {
   }
 
   return (
-    <div data-testid="bottom-section-items" className="sidemenu__bottom">
-      {!isSignedIn && <SignIn />}
+    <div data-testid="bottom-section-items" className={styles.container}>
+      {!isSignedIn && (
+        <SideMenuItem label="Sign In" target="_self" url={forcedLoginUrl}>
+          <Icon name="signout" size="xl" />
+        </SideMenuItem>
+      )}
       {bottomNav.map((link, index) => {
         let menuItems = link.children || [];
 
@@ -66,6 +77,7 @@ export default function BottomSection() {
         return (
           <SideMenuItem
             key={`${link.url}-${index}`}
+            isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={menuItems}
             menuSubTitle={link.subTitle}
@@ -75,7 +87,7 @@ export default function BottomSection() {
             url={link.url}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link.img && <img src={link.img} />}
+            {link.img && <img src={link.img} alt={`${link.text} logo`} />}
           </SideMenuItem>
         );
       })}
@@ -83,3 +95,18 @@ export default function BottomSection() {
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: none;
+
+    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+      display: block;
+      margin-bottom: ${theme.spacing(2)};
+    }
+
+    .sidemenu-open--xs & {
+      display: block;
+    }
+  `,
+});

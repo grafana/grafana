@@ -9,13 +9,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/prometheus/alertmanager/template"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/types"
 )
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Template) (*AlertmanagerNotifier, error) {
+func NewAlertmanagerNotifier(model *NotificationChannelConfig, fn alerting.GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Reason: "no settings supplied"}
 	}
@@ -41,7 +42,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Templ
 		urls = append(urls, u)
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := model.DecryptedValue("basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
+	basicAuthPassword := fn(model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
 
 	return &AlertmanagerNotifier{
 		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{

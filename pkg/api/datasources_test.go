@@ -234,7 +234,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGet should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodGet,
-				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesRead}},
+				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesRead, Scope: ScopeDatasourcesAll}},
 			},
 		},
 		{

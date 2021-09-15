@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -82,24 +80,6 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 }
 
 func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
-	var secretAccessToken, secretRefreshToken, secretTokenType string
-	var err error
-
-	if cmd.OAuthToken != nil {
-		secretAccessToken, err = encryptAndEncode(cmd.OAuthToken.AccessToken)
-		if err != nil {
-			return err
-		}
-		secretRefreshToken, err = encryptAndEncode(cmd.OAuthToken.RefreshToken)
-		if err != nil {
-			return err
-		}
-		secretTokenType, err = encryptAndEncode(cmd.OAuthToken.TokenType)
-		if err != nil {
-			return err
-		}
-	}
-
 	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		authUser := &models.UserAuth{
 			UserId:     cmd.UserId,
@@ -109,6 +89,19 @@ func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 		}
 
 		if cmd.OAuthToken != nil {
+			secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
+			if err != nil {
+				return err
+			}
+			secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
+			if err != nil {
+				return err
+			}
+			secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
+			if err != nil {
+				return err
+			}
+
 			authUser.OAuthAccessToken = secretAccessToken
 			authUser.OAuthRefreshToken = secretRefreshToken
 			authUser.OAuthTokenType = secretTokenType
@@ -121,24 +114,6 @@ func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 }
 
 func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
-	var secretAccessToken, secretRefreshToken, secretTokenType string
-	var err error
-
-	if cmd.OAuthToken != nil {
-		secretAccessToken, err = encryptAndEncode(cmd.OAuthToken.AccessToken)
-		if err != nil {
-			return err
-		}
-		secretRefreshToken, err = encryptAndEncode(cmd.OAuthToken.RefreshToken)
-		if err != nil {
-			return err
-		}
-		secretTokenType, err = encryptAndEncode(cmd.OAuthToken.TokenType)
-		if err != nil {
-			return err
-		}
-	}
-
 	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		authUser := &models.UserAuth{
 			UserId:     cmd.UserId,
@@ -148,6 +123,19 @@ func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error
 		}
 
 		if cmd.OAuthToken != nil {
+			secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
+			if err != nil {
+				return err
+			}
+			secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
+			if err != nil {
+				return err
+			}
+			secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
+			if err != nil {
+				return err
+			}
+
 			authUser.OAuthAccessToken = secretAccessToken
 			authUser.OAuthRefreshToken = secretRefreshToken
 			authUser.OAuthTokenType = secretTokenType
@@ -190,8 +178,8 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
-func encryptAndEncode(s string) (string, error) {
-	encrypted, err := util.Encrypt([]byte(s), util.WithoutScope())
+func (s *Implementation) encryptAndEncode(str string) (string, error) {
+	encrypted, err := s.EncryptionService.Encrypt([]byte(str), setting.SecretKey)
 	if err != nil {
 		return "", err
 	}

@@ -9,12 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
 )
 
@@ -22,8 +24,6 @@ import (
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, ossencryption.ProvideService())
-
-	util.SetEncryptionVariables(t)
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {

@@ -82,6 +82,45 @@ func (s *Service) Encrypt(payload []byte, secret string) ([]byte, error) {
 	return ciphertext, nil
 }
 
+func (s *Service) EncryptJsonData(kv map[string]string, secret string) (map[string][]byte, error) {
+	encrypted := make(map[string][]byte)
+	for key, value := range kv {
+		encryptedData, err := s.Encrypt([]byte(value), secret)
+		if err != nil {
+			return nil, err
+		}
+
+		encrypted[key] = encryptedData
+	}
+	return encrypted, nil
+}
+
+func (s *Service) DecryptJsonData(sjd map[string][]byte, secret string) (map[string]string, error) {
+	decrypted := make(map[string]string)
+	for key, data := range sjd {
+		decryptedData, err := s.Decrypt(data, secret)
+		if err != nil {
+			return nil, err
+		}
+
+		decrypted[key] = string(decryptedData)
+	}
+	return decrypted, nil
+}
+
+func (s *Service) GetDecryptedValue(sjd map[string][]byte, key, fallback, secret string) string {
+	if value, ok := sjd[key]; ok {
+		decryptedData, err := s.Decrypt(value, secret)
+		if err != nil {
+			return fallback
+		}
+
+		return string(decryptedData)
+	}
+
+	return fallback
+}
+
 // Key needs to be 32bytes
 func encryptionKeyToBytes(secret, salt string) ([]byte, error) {
 	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil

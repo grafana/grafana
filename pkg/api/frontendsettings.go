@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -77,7 +78,10 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(
+					ds.BasicAuthUser,
+					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
+				)
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -85,13 +89,13 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 			if ds.Type == models.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.DecryptedPassword()
+				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == models.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.DecryptedPassword()
+				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
 				dsMap["url"] = url
 			}
 		}
@@ -112,11 +116,16 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 	// the datasource table)
 	for _, ds := range hs.PluginManager.DataSources() {
 		if ds.BuiltIn {
-			dataSources[ds.Name] = map[string]interface{}{
+			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
 				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
+			if ds.Name == grafanads.DatasourceName {
+				info["id"] = grafanads.DatasourceID
+				info["uid"] = grafanads.DatasourceUID
+			}
+			dataSources[ds.Name] = info
 		}
 	}
 
