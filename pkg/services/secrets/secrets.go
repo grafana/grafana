@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/services/encryption"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,6 +26,7 @@ type SecretsStore interface {
 	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error)
 	CreateDataKey(ctx context.Context, dataKey types.DataKey) error
+	CreateDataKeyWithDBSession(ctx context.Context, dataKey types.DataKey, sess *sqlstore.DBSession) error
 	DeleteDataKey(ctx context.Context, name string) error
 }
 
@@ -52,9 +55,6 @@ func ProvideSecretsService(store SecretsStore, bus bus.Bus, enc encryption.Servi
 		providers:       providers,
 		dataKeyCache:    make(map[string]dataKeyCacheItem),
 	}
-
-	util.Encrypt = s.Encrypt
-	util.Decrypt = s.Decrypt
 
 	return s
 }

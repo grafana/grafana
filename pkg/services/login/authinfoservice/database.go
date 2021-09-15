@@ -161,7 +161,7 @@ func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
 func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
-	// Bail out if empty string since it'll cause a segfault in util.Decrypt
+	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if str == "" {
 		return "", nil
 	}
