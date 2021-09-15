@@ -25,16 +25,16 @@ export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQu
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
 export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
-export enum QueryRelatedDataType {
+export enum RelatedDataType {
   LogsVolume = 'LogsVolume',
 }
 
-export type QueryRelatedDataProviders = {
-  [type in keyof typeof QueryRelatedDataType]?: QueryRelatedDataProvider<any>;
+export type RelatedDataProviders = {
+  [type in keyof typeof RelatedDataType]?: QueryRelatedDataProvider<any>;
 };
 
-export type QueryRelatedDataProvidersResults = {
-  [type in keyof typeof QueryRelatedDataType]?: any;
+export type RelatedData = {
+  [type in keyof typeof RelatedDataType]?: any;
 };
 
 export interface QueryRelatedDataProvider<TData> {
@@ -252,7 +252,7 @@ abstract class DataSourceApi<
    * given query, for example: logs volume for logs query.
    * @internal
    */
-  getQueryRelatedDataProviders?(request?: DataQueryRequest<TQuery>): QueryRelatedDataProviders;
+  getQueryRelatedDataProviders?(request?: DataQueryRequest<TQuery>): RelatedDataProviders;
 
   /**
    * Test & verify datasource settings & connection details (returning TestingStatus)

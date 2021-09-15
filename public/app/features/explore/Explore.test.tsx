@@ -83,8 +83,8 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   splitOpen: (() => {}) as any,
-  queryRelatedData: {},
-  queryRelatedDataProviders: {},
+  relatedData: {},
+  relatedDataProviders: {},
   loadDataProvider: () => {},
 };
 

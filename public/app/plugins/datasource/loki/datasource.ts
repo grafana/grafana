@@ -24,8 +24,8 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
-  QueryRelatedDataType,
-  QueryRelatedDataProviders,
+  RelatedDataType,
+  RelatedDataProviders,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -105,14 +105,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return getBackendSrv().fetch<Record<string, any>>(req);
   }
 
-  getQueryRelatedDataProviders(request: DataQueryRequest<LokiQuery>): QueryRelatedDataProviders {
+  getQueryRelatedDataProviders(request: DataQueryRequest<LokiQuery>): RelatedDataProviders {
     const isLogsVolumeAvailable = request.targets.some((target) => !isMetricsQuery(target.expr) && !!target.expr);
     if (!isLogsVolumeAvailable) {
       return {};
     } else {
       const logsVolumeProvider = new LokiLogsVolumeProvider(this, request);
       return {
-        [QueryRelatedDataType.LogsVolume]: logsVolumeProvider,
+        [RelatedDataType.LogsVolume]: logsVolumeProvider,
       };
     }
   }

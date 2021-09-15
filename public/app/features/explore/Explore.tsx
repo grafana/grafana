@@ -13,7 +13,7 @@ import {
   RawTimeRange,
   DataFrame,
   GrafanaTheme2,
-  QueryRelatedDataType,
+  RelatedDataType,
   LogsVolume,
 } from '@grafana/data';
 
@@ -25,7 +25,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadDataProvider } from './state/query';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadRelatedData } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -225,7 +225,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           <Button
             size="lg"
             onClick={() => {
-              loadDataProvider(exploreId, QueryRelatedDataType.LogsVolume);
+              loadDataProvider(exploreId, RelatedDataType.LogsVolume);
             }}
           >
             Load logs volume
@@ -270,8 +270,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const { queryRelatedData } = this.props;
-    const logsVolume = queryRelatedData[QueryRelatedDataType.LogsVolume];
+    const { relatedData } = this.props;
+    const logsVolume = relatedData[RelatedDataType.LogsVolume];
 
     return (
       <Collapse label="Logs volume" isOpen={true} loading={logsVolume?.isLoading}>
@@ -352,14 +352,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      queryRelatedDataProviders,
+      relatedDataProviders,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showLogsVolume = !!queryRelatedDataProviders[QueryRelatedDataType.LogsVolume];
+    const showLogsVolume = !!relatedDataProviders[RelatedDataType.LogsVolume];
 
     return (
       <CustomScrollbar autoHeightMin={'100%'}>
@@ -444,8 +444,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    queryRelatedData,
-    queryRelatedDataProviders,
+    relatedData,
+    relatedDataProviders,
     logsResult,
     showLogs,
     showMetrics,
@@ -463,8 +463,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    queryRelatedDataProviders,
-    queryRelatedData,
+    relatedDataProviders: relatedDataProviders,
+    relatedData: relatedData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
@@ -486,7 +486,7 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  loadDataProvider,
+  loadDataProvider: loadRelatedData,
   addQueryRow,
   splitOpen,
 };

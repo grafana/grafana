@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LogRowModel, QueryRelatedDataType, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LogRowModel, RelatedDataType, RawTimeRange } from '@grafana/data';
 import store from 'app/core/store';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -162,7 +162,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const {
     logsHighlighterExpressions,
     logsResult,
-    queryRelatedDataProviders,
+    relatedDataProviders,
     loading,
     scanning,
     datasourceInstance,
@@ -181,7 +181,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsMeta: logsResult?.meta,
     logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
-    loadingLogsVolumeAvailable: !!queryRelatedDataProviders[QueryRelatedDataType.LogsVolume],
+    loadingLogsVolumeAvailable: !!relatedDataProviders[RelatedDataType.LogsVolume],
     scanning,
     timeZone,
     datasourceInstance,

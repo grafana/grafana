@@ -8,8 +8,8 @@ import {
   PanelData,
   PanelEvents,
   QueryFixAction,
-  QueryRelatedDataProviders,
-  QueryRelatedDataType,
+  RelatedDataProviders,
+  RelatedDataType,
   toLegacyResponseData,
 } from '@grafana/data';
 
@@ -37,6 +37,7 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
+import { mapKeys } from 'lodash';
 
 //
 // Actions and Payloads
@@ -116,17 +117,19 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-export interface StoreDataProvidersPayload {
+export interface StoreRelatedDataProvidersPayload {
   exploreId: ExploreId;
-  queryRelatedDataProviders: QueryRelatedDataProviders;
+  relatedDataProviders: RelatedDataProviders;
 }
 
-export const storeDataProvidersAction = createAction<StoreDataProvidersPayload>('explore/storeDataProvidersAction');
-export const updateDataProviderResultAction = createAction<{
+export const storeRelatedDataProvidersAction = createAction<StoreRelatedDataProvidersPayload>(
+  'explore/storeRelatedDataProvidersAction'
+);
+export const updateRelatedDataAction = createAction<{
   exploreId: ExploreId;
-  type: QueryRelatedDataType;
+  type: RelatedDataType;
   data: any;
-}>('explore/updateDataProviderResultAction');
+}>('explore/updateRelatedDataAction');
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -461,21 +464,21 @@ export const runQueries = (
           }
         );
 
-      const queryRelatedDataProviders = datasourceInstance.getQueryRelatedDataProviders
+      const relatedDataProviders = datasourceInstance.getQueryRelatedDataProviders
         ? datasourceInstance.getQueryRelatedDataProviders(transaction.request)
         : {};
 
       dispatch(
-        storeDataProvidersAction({
+        storeRelatedDataProvidersAction({
           exploreId,
-          queryRelatedDataProviders,
+          relatedDataProviders: relatedDataProviders,
         })
       );
 
-      const logsVolumeProvider = queryRelatedDataProviders[QueryRelatedDataType.LogsVolume];
+      const logsVolumeProvider = relatedDataProviders[RelatedDataType.LogsVolume];
 
       if (autoLoadLogsVolume && logsVolumeProvider) {
-        dispatch(loadDataProvider(exploreId, QueryRelatedDataType.LogsVolume));
+        dispatch(loadRelatedData(exploreId, RelatedDataType.LogsVolume));
       }
     }
 
@@ -539,20 +542,20 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
     const state = getState().explore[exploreId]!;
 
     // load logs volume automatically after switching
-    const logsVolume = state.queryRelatedData[QueryRelatedDataType.LogsVolume];
+    const logsVolume = state.relatedData[RelatedDataType.LogsVolume];
     if (!logsVolume?.data && autoLoadLogsVolume) {
-      dispatch(loadDataProvider(exploreId, QueryRelatedDataType.LogsVolume));
+      dispatch(loadRelatedData(exploreId, RelatedDataType.LogsVolume));
     }
   };
 }
 
-export function loadDataProvider(exploreId: ExploreId, type: QueryRelatedDataType): ThunkResult<void> {
+export function loadRelatedData(exploreId: ExploreId, type: RelatedDataType): ThunkResult<void> {
   return (dispatch, getState) => {
     const state = getState().explore[exploreId]!;
-    const dataProvider = state.queryRelatedDataProviders[type];
+    const dataProvider = state.relatedDataProviders[type];
     dataProvider?.getData().subscribe({
       next: (data: any) => {
-        dispatch(updateDataProviderResultAction({ exploreId, type, data }));
+        dispatch(updateRelatedDataAction({ exploreId, type, data }));
       },
     });
   };
@@ -703,22 +706,24 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (storeDataProvidersAction.match(action)) {
-    let { queryRelatedDataProviders } = action.payload;
+  if (storeRelatedDataProvidersAction.match(action)) {
+    let { relatedDataProviders } = action.payload;
     return {
       ...state,
-      queryRelatedDataProviders,
-      queryRelatedData: {},
+      relatedDataProviders: { ...state.relatedDataProviders, ...relatedDataProviders },
+      relatedData: mapKeys(state.relatedData, (value, key) => {
+        return key in relatedDataProviders ? undefined : value;
+      }),
     };
   }
 
-  if (updateDataProviderResultAction.match(action)) {
+  if (updateRelatedDataAction.match(action)) {
     let { data, type } = action.payload;
 
     return {
       ...state,
-      queryRelatedData: {
-        ...state.queryRelatedData,
+      relatedData: {
+        ...state.relatedData,
         [type]: data,
       },
     };
