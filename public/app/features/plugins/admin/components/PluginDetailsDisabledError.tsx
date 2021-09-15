@@ -59,7 +59,7 @@ function renderDescriptionFromError(error?: PluginErrorCode): React.ReactElement
       return (
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we
-          discovered that there are no signature for this plugin. We can not guarantee the trustworthy of this plugin
+          discovered that there is no signature for this plugin. We can not guarantee the trustworthy of this plugin
           and have therefore disabled it. We recommend you to reinstall the plugin to make sure you are running a
           verified version of this plugin.
         </p>
