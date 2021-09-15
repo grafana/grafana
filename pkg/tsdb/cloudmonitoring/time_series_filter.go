@@ -162,8 +162,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 
 		// reverse the order to be ascending
 		if series.ValueType != "DISTRIBUTION" {
-			timeSeriesFilter.handleNonDistributionSeries(
-				series, defaultMetricName, seriesLabels, queryRes, frame)
+			timeSeriesFilter.handleNonDistributionSeries(series, defaultMetricName, seriesLabels, frame)
 			frames = append(frames, frame)
 			continue
 		}
@@ -263,8 +262,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries,
-	defaultMetricName string, seriesLabels map[string]string, queryRes *backend.DataResponse,
-	frame *data.Frame) {
+	defaultMetricName string, seriesLabels map[string]string, frame *data.Frame) {
 	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
 		value := point.Value.DoubleValue
