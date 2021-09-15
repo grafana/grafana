@@ -1,14 +1,16 @@
 +++
-title = "Enable Grafana 8 Alerts"
+title = "Opt-in to Grafana 8 Alerts"
 description = "Enable Grafana 8 Alerts"
 weight = 128
 +++
 
-# Enable Grafana 8 alerts
+# Opt-in to Grafana 8 alerts
 
 This topic describes how to enable Grafana 8 alerts as well as the rules and restrictions that govern the migration of existing dashboard alerts to this new alerting system. You can also [disable Grafana 8 alerts]({{< relref "./opt-in.md#disable-grafana-8-alerts" >}}) if needed.
 
 Before you begin, we recommend that you backup Grafana's database. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
+
+## Enable Grafana 8 alerts
 
 To enable Grafana 8 alerts:
 
@@ -17,11 +19,11 @@ To enable Grafana 8 alerts:
 1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enable` property to `false`. 
 1. Restart Grafana for the  configuration changes to take effect.
 
-> **Note:**  Before v8.2, users configured the `ngalert` feature toggle to enable or disable Grafana 8 alerts. This option is no longer available.
+> **Note:** Before Grafana v8.2, to enable or disable Grafana 8 alerts, users configured the `ngalert` feature toggle. This toggle option is no longer available.
 
-In Grafana 8.2 and earlier versions, notification logs and silences were stored on a disk. Without the use of persistent disks, any configured silences and logs would get lost on a restart, resulting in unwanted or duplicate notifications. 
+Moreover, before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, any configured silences and logs would get lost on a restart, resulting in unwanted or duplicate notifications.
 
-As of Grafana 8.3, we no longer require the use of a persistent disk. The notification logs and silences are stored in a database. If you used the file-based approach, we'll read those files every fifteen (15) minutes and eventually persist them to the database.
+As of Grafana 8.2, we no longer require the use of a persistent disk. The notification logs and silences are stored in a database. If you used the file-based approach, we'll read those files every fifteen (15) minutes and eventually persist them to the database.
 
 ## Migrating legacy alerts to Grafana 8 alerting system
 
@@ -38,7 +40,7 @@ Notification channels are migrated to an Alertmanager configuration with the app
 Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana 8 alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
 Silences (expiring after one year) are created for all paused dashboard alerts.
 
-## Limitation
+### Limitation
 
 Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time.
 

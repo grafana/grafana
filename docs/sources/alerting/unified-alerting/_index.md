@@ -45,7 +45,7 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 ## Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}}).
 
 | Metric Name                                       | Type      | Description                                                                              |
 | ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
@@ -57,4 +57,6 @@ The alerting engine publishes some internal metrics about itself. You can read m
 | `grafana_alerting_rule_evaluation_duration`       | summary   | The duration for a rule to execute                                                       |
 | `grafana_alerting_rule_group_rules`               | gauge     | The number of rules                                                                      |
 
-- [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
+## Limitation
+
+Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time.
