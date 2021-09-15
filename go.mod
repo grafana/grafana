@@ -48,17 +48,9 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
-<<<<<<< HEAD
-	github.com/grafana/grafana-aws-sdk v0.4.0
-	github.com/grafana/grafana-live-sdk v0.0.6
-	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.97.1-0.20210513132107-6aa48f7c94ed
-	github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426
-=======
 	github.com/grafana/grafana-aws-sdk v0.7.0
 	github.com/grafana/grafana-plugin-sdk-go v0.113.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
->>>>>>> origin/main
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
