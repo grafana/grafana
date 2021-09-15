@@ -246,11 +246,15 @@ export function prepareGraphableFrames(
     };
   }
 
+  let seriesIndex = 0;
+
   for (let frame of series) {
     const fields: Field[] = [];
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        let copy = {
+        field.state!.seriesIndex = seriesIndex++;
+
+        let copy: Field = {
           ...field,
           config: {
             ...field.config,
