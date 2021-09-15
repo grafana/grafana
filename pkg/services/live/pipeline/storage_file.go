@@ -54,7 +54,8 @@ func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]Channe
 
 func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
 	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
-
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
 	ruleBytes, err := ioutil.ReadFile(ruleFile)
 	if err != nil {
 		return rule, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
@@ -79,7 +80,8 @@ func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule Cha
 
 func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
 	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
-
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
 	ruleBytes, err := ioutil.ReadFile(ruleFile)
 	if err != nil {
 		return rule, fmt.Errorf("can't read ./data/live-channel-rules.json file: %w", err)
@@ -114,6 +116,8 @@ func removeChannelRuleByIndex(s []ChannelRule, index int) []ChannelRule {
 
 func (f *FileStorage) saveChannelRules(rules ChannelRules) error {
 	ruleFile := filepath.Join(f.DataPath, "pipeline", "live-channel-rules.json")
+	// Safe to ignore gosec warning G304.
+	// nolint:gosec
 	file, err := os.OpenFile(ruleFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("can't open channel rule file: %w", err)
