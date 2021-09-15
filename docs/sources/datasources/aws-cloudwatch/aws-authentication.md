@@ -8,11 +8,9 @@ weight = 205
 
 ## AWS Authentication
 
+Requests from a Grafana plugin to AWS is made on behalf of an [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) or an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html). The IAM user or IAM role needs to have the permission policies needed in order to perform a certain action. The policies needed are specific to each data source, so please refer to the specific data source documentation for details.
+
 All requests to AWS api:s are done server side by the Grafana backend using the official AWS SDK.
-
-For more information, refer to the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html).
-
-> **Note:** IAM policies are data source specific. Refer to Authentication section of the [Cloudwatch]({{< relref "./_index.md" >}}) topic for more information.
 
 # Authentication methods
 
