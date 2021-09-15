@@ -254,7 +254,7 @@ export function prepareGraphableFrames(
       if (field.type === FieldType.number) {
         field.state!.seriesIndex = seriesIndex++;
 
-        let copy: Field = {
+        let copy = {
           ...field,
           config: {
             ...field.config,
