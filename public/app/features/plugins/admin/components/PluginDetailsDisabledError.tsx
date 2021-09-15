@@ -2,6 +2,7 @@ import React from 'react';
 import { PluginErrorCode } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { CatalogPlugin } from '../types';
+import { selectors } from '@grafana/e2e-selectors';
 
 type Props = {
   className?: string;
@@ -14,7 +15,12 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): React.
   }
 
   return (
-    <Alert severity="error" title="Plugin disabled" className={className}>
+    <Alert
+      severity="error"
+      title="Plugin disabled"
+      className={className}
+      aria-label={selectors.pages.PluginPage.disabledInfo}
+    >
       {renderDescriptionFromError(plugin.error)}
       <p>Please contact your server administrator to get this resolved.</p>
       <a
