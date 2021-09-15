@@ -150,7 +150,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <ImportDashboardLibraryPanelsList
         inputs={newLibraryPanels}
         label="New library panels"
-        description="Lists all new library panels. These library panels will be imported."
+        description="List of new library panels that will get imported."
         folderName={watchFolder.title}
       />
       <ImportDashboardLibraryPanelsList
