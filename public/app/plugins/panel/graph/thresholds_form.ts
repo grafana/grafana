@@ -12,7 +12,7 @@ export class ThresholdFormCtrl {
   $onInit() {
     this.panel = this.panelCtrl.panel;
 
-    if (this.panel.alert) {
+    if (this.panel.alert && !config.featureToggles.ngalert) {
       this.disabled = true;
     }
 
