@@ -157,7 +157,18 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange, autoLoadLogsVolume, relatedDataProviders } = item;
+  const {
+    logsResult,
+    loading,
+    scanning,
+    datasourceInstance,
+    isLive,
+    isPaused,
+    range,
+    absoluteRange,
+    autoLoadLogsVolume,
+    relatedDataProviders,
+  } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
