@@ -150,7 +150,7 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	defer engineCache.Unlock()
 
 	if engine, present := engineCache.cache[config.DSInfo.ID]; present {
-		if updateTime := engineCache.updates[config.DSInfo.ID]; updateTime.Before(config.DSInfo.Updated) {
+		if updateTime := engineCache.updates[config.DSInfo.ID]; updateTime == config.DSInfo.Updated {
 			queryDataHandler.engine = engine
 			return &queryDataHandler, nil
 		}
