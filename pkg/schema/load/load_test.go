@@ -205,7 +205,7 @@ func TestAllPluginsInDist(t *testing.T) {
 	require.NoError(t, err)
 
 	var importedPanelTypes, loadedPanelTypes []string
-	json.Unmarshal([]byte(j), &importedPanelTypes)
+	require.NoError(t, json.Unmarshal([]byte(j), &importedPanelTypes))
 
 	// TODO a more canonical way of getting all the dist plugin types with
 	// models.cue would be nice.
