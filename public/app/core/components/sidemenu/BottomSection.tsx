@@ -12,7 +12,7 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 import SideMenuItem from './SideMenuItem';
-import { getForcedLoginUrl, isHorizontal, isLinkActive, isSearchActive } from './utils';
+import { getForcedLoginUrl, getOppositePosition, isHorizontal, isLinkActive, isSearchActive } from './utils';
 
 export default function BottomSection() {
   const navPosition = contextSrv.user.navPosition;
@@ -46,7 +46,12 @@ export default function BottomSection() {
   return (
     <div data-testid="bottom-section-items" className={styles.container}>
       {!isSignedIn && (
-        <SideMenuItem position={navPosition} label="Sign In" target="_self" url={forcedLoginUrl}>
+        <SideMenuItem
+          label="Sign In"
+          menuPosition={getOppositePosition(navPosition)}
+          target="_self"
+          url={forcedLoginUrl}
+        >
           <Icon name="signout" size="xl" />
         </SideMenuItem>
       )}
@@ -81,9 +86,9 @@ export default function BottomSection() {
             isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={menuItems}
+            menuPosition={getOppositePosition(navPosition)}
             menuSubTitle={link.subTitle}
             onClick={link.onClick}
-            position={navPosition}
             reverseMenuDirection
             target={link.target}
             url={link.url}

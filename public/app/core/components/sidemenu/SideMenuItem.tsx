@@ -10,9 +10,9 @@ export interface Props {
   children: ReactNode;
   label: string;
   menuItems?: NavModelItem[];
+  menuPosition?: 'left' | 'right' | 'top' | 'bottom';
   menuSubTitle?: string;
   onClick?: () => void;
-  position?: 'left' | 'right' | 'top' | 'bottom';
   reverseMenuDirection?: boolean;
   target?: HTMLAnchorElement['target'];
   url?: string;
@@ -23,15 +23,15 @@ const SideMenuItem = ({
   children,
   label,
   menuItems = [],
+  menuPosition = 'right',
   menuSubTitle,
   onClick,
-  position = 'left',
   reverseMenuDirection = false,
   target,
   url,
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, position, reverseMenuDirection);
+  const styles = getStyles(theme, isActive, menuPosition, reverseMenuDirection);
   let element = (
     <button className={styles.element} onClick={onClick} aria-label={label}>
       <span className={styles.icon}>{children}</span>
@@ -67,7 +67,7 @@ const SideMenuItem = ({
         headerUrl={url}
         items={menuItems}
         onHeaderClick={onClick}
-        position={position}
+        position={menuPosition}
         reverseDirection={reverseMenuDirection}
         subtitleText={menuSubTitle}
       />
@@ -80,7 +80,7 @@ export default SideMenuItem;
 const getStyles = (
   theme: GrafanaTheme2,
   isActive: Props['isActive'],
-  position: Exclude<Props['position'], undefined>,
+  menuPosition: Exclude<Props['menuPosition'], undefined>,
   reverseMenuDirection: Props['reverseMenuDirection']
 ) => ({
   container: css`
@@ -108,18 +108,18 @@ const getStyles = (
           display: flex;
           // important to overlap it otherwise it can be hidden
           // again by the mouse getting outside the hover space
-          left: ${position === 'left'
+          left: ${menuPosition === 'right'
             ? `${theme.components.sidemenu.width}px`
-            : `${isHorizontal(position) && !reverseMenuDirection ? 0 : 'unset'}`};
-          right: ${position === 'right'
+            : `${isHorizontal(menuPosition) && !reverseMenuDirection ? 0 : 'unset'}`};
+          right: ${menuPosition === 'left'
             ? `${theme.components.sidemenu.width}px`
-            : `${isHorizontal(position) && reverseMenuDirection ? 0 : 'unset'}`};
-          top: ${position === 'top'
+            : `${isHorizontal(menuPosition) && reverseMenuDirection ? 0 : 'unset'}`};
+          top: ${menuPosition === 'bottom'
             ? `${theme.components.sidemenu.width}px`
-            : `${!isHorizontal(position) && !reverseMenuDirection ? 0 : 'unset'}`};
-          bottom: ${position === 'bottom'
+            : `${!isHorizontal(menuPosition) && !reverseMenuDirection ? 0 : 'unset'}`};
+          bottom: ${menuPosition === 'top'
             ? `${theme.components.sidemenu.width}px`
-            : `${!isHorizontal(position) && reverseMenuDirection ? 0 : 'unset'}`};
+            : `${!isHorizontal(menuPosition) && reverseMenuDirection ? 0 : 'unset'}`};
           margin: 0;
           opacity: 0;
           z-index: ${theme.zIndex.sidemenu};
@@ -141,14 +141,14 @@ const getStyles = (
       display: ${isActive ? 'block' : 'none'};
       content: ' ';
       position: absolute;
-      left: ${position === 'right' ? 'unset' : 0};
-      top: ${position === 'bottom' ? 'unset' : 0};
-      bottom: ${position === 'top' ? 'unset' : 0};
-      right: ${position === 'left' ? 'unset' : 0};
-      width: ${!isHorizontal(position) ? '4px' : 'auto'};
-      height: ${isHorizontal(position) ? '4px' : 'auto'};
+      left: ${menuPosition === 'left' ? 'unset' : 0};
+      top: ${menuPosition === 'top' ? 'unset' : 0};
+      bottom: ${menuPosition === 'bottom' ? 'unset' : 0};
+      right: ${menuPosition === 'right' ? 'unset' : 0};
+      width: ${!isHorizontal(menuPosition) ? '4px' : 'auto'};
+      height: ${isHorizontal(menuPosition) ? '4px' : 'auto'};
       border-radius: 2px;
-      background-image: ${isHorizontal(position)
+      background-image: ${isHorizontal(menuPosition)
         ? theme.colors.gradients.brandHorizontal
         : theme.colors.gradients.brandVertical};
     }

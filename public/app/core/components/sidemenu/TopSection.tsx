@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
-import { isHorizontal, isLinkActive, isSearchActive } from './utils';
+import { getOppositePosition, isHorizontal, isLinkActive, isSearchActive } from './utils';
 import SideMenuItem from './SideMenuItem';
 
 const TopSection = () => {
@@ -28,8 +28,8 @@ const TopSection = () => {
       <SideMenuItem
         isActive={isSearchActive(location)}
         label="Search dashboards"
+        menuPosition={getOppositePosition(navPosition)}
         onClick={onOpenSearch}
-        position={navPosition}
       >
         <Icon name="search" size="xl" />
       </SideMenuItem>
@@ -40,7 +40,7 @@ const TopSection = () => {
             isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={link.children}
-            position={navPosition}
+            menuPosition={getOppositePosition(navPosition)}
             target={link.target}
             url={link.url}
           >

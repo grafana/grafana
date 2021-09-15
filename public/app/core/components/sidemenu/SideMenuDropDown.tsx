@@ -22,7 +22,7 @@ const SideMenuDropDown = ({
   headerUrl,
   items = [],
   onHeaderClick,
-  position = 'left',
+  position = 'right',
   reverseDirection = false,
   subtitleText,
 }: Props) => {
@@ -98,7 +98,7 @@ const getStyles = (
     }
   `,
   menu: css`
-    flex-direction: ${position === 'bottom' || (!isHorizontal(position) && reverseDirection)
+    flex-direction: ${position === 'top' || (!isHorizontal(position) && reverseDirection)
       ? 'column-reverse'
       : 'column'};
 
@@ -112,7 +112,7 @@ const getStyles = (
     }
   `,
   subtitle: css`
-    border-${position === 'bottom' || (!isHorizontal(position) && reverseDirection) ? 'bottom' : 'top'}: 1px solid ${
+    border-${position === 'top' || (!isHorizontal(position) && reverseDirection) ? 'bottom' : 'top'}: 1px solid ${
     theme.colors.border.weak
   };
     color: ${theme.colors.text.secondary};
