@@ -210,7 +210,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
   render() {
     const { width, height, children, timeRange, renderLegend } = this.props;
-    const { config, alignedFrame } = this.state;
+    const { config, alignedFrame, alignedData } = this.state;
 
     if (!config) {
       return null;
@@ -220,8 +220,8 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
       <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
-            config={this.state.config!}
-            data={this.state.alignedData}
+            config={config}
+            data={alignedData}
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}

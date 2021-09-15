@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func GetPendingOrgInvites(c *models.ReqContext) response.Response {
@@ -131,7 +132,7 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 }
 
 func RevokeInvite(c *models.ReqContext) response.Response {
-	if ok, rsp := updateTempUserStatus(c.Params(":code"), models.TmpUserRevoked); !ok {
+	if ok, rsp := updateTempUserStatus(macaron.Params(c.Req)[":code"], models.TmpUserRevoked); !ok {
 		return rsp
 	}
 
@@ -142,7 +143,7 @@ func RevokeInvite(c *models.ReqContext) response.Response {
 // A response containing an InviteInfo object is returned if the invite is found.
 // If a (pending) invite is not found, 404 is returned.
 func GetInviteInfoByCode(c *models.ReqContext) response.Response {
-	query := models.GetTempUserByCodeQuery{Code: c.Params(":code")}
+	query := models.GetTempUserByCodeQuery{Code: macaron.Params(c.Req)[":code"]}
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
 			return response.Error(404, "Invite not found", nil)
