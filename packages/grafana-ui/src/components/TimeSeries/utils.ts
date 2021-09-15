@@ -9,27 +9,28 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphTresholdsStyleMode,
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
-} from '../uPlot/config';
-import { collectStackingGroups } from '../uPlot/utils';
+} from '@grafana/schema';
+import { collectStackingGroups, preparePlotData } from '../uPlot/utils';
+import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 const defaultConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
+  drawStyle: GraphDrawStyle.Line,
   showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
@@ -41,8 +42,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   getTimeRange,
   eventBus,
   sync,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
+
+  builder.setPrepData(preparePlotData);
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
@@ -75,6 +79,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       placement: AxisPlacement.Bottom,
       timeZone,
       theme,
+      grid: { show: xField.config.custom?.axisGridShow },
     });
   } else {
     // Not time!
@@ -92,12 +97,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
       theme,
+      grid: { show: xField.config.custom?.axisGridShow },
     });
   }
 
   const stackingGroups: Map<string, number[]> = new Map();
 
-  let indexByName: Map<string, number> | undefined = undefined;
+  let indexByName: Map<string, number> | undefined;
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -143,18 +149,61 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
         formatValue: (v) => formattedValueToString(fmt(v)),
         theme,
+        grid: { show: customConfig.axisGridShow },
       });
     }
 
-    const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+    const showPoints =
+      customConfig.drawStyle === GraphDrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+
+    let pointsFilter: uPlot.Series.Points.Filter = () => null;
+
+    if (customConfig.spanNulls !== true) {
+      pointsFilter = (u, seriesIdx, show, gaps) => {
+        let filtered = [];
+
+        let series = u.series[seriesIdx];
+
+        if (!show && gaps && gaps.length) {
+          const [firstIdx, lastIdx] = series.idxs!;
+          const xData = u.data[0];
+          const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
+          const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
+
+          if (gaps[0][0] === firstPos) {
+            filtered.push(firstIdx);
+          }
+
+          // show single points between consecutive gaps that share end/start
+          for (let i = 0; i < gaps.length; i++) {
+            let thisGap = gaps[i];
+            let nextGap = gaps[i + 1];
+
+            if (nextGap && thisGap[1] === nextGap[0]) {
+              filtered.push(u.posToIdx(thisGap[1], true));
+            }
+          }
+
+          if (gaps[gaps.length - 1][1] === lastPos) {
+            filtered.push(lastIdx);
+          }
+        }
+
+        return filtered.length ? filtered : null;
+      };
+    }
 
     let { fillOpacity } = customConfig;
 
-    if (customConfig.fillBelowTo) {
+    if (customConfig.fillBelowTo && field.state?.origin) {
       if (!indexByName) {
-        indexByName = getNamesToFieldIndex(frame);
+        indexByName = getNamesToFieldIndex(frame, allFrames);
       }
-      const t = indexByName.get(getFieldDisplayName(field, frame));
+
+      const originFrame = allFrames[field.state.origin.frameIndex];
+      const originField = originFrame.fields[field.state.origin.fieldIndex];
+
+      const t = indexByName.get(getFieldDisplayName(originField, originFrame, allFrames));
       const b = indexByName.get(customConfig.fillBelowTo);
       if (isNumber(b) && isNumber(t)) {
         builder.addBand({
@@ -170,6 +219,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addSeries({
       scaleKey,
       showPoints,
+      pointsFilter,
       colorMode,
       fillOpacity,
       theme,
@@ -179,17 +229,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       lineInterpolation: customConfig.lineInterpolation,
       lineStyle: customConfig.lineStyle,
       barAlignment: customConfig.barAlignment,
+      barWidthFactor: customConfig.barWidthFactor,
+      barMaxWidth: customConfig.barMaxWidth,
       pointSize: customConfig.pointSize,
-      pointColor: customConfig.pointColor ?? seriesColor,
       spanNulls: customConfig.spanNulls || false,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
-
+      hardMin: field.config.min,
+      hardMax: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // Render thresholds in graph
@@ -201,6 +253,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
           thresholds: config.thresholds,
           scaleKey,
           theme,
+          hardMin: field.config.min,
+          hardMax: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
         });
       }
     }
@@ -220,6 +276,58 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
+  // if hovered value is null, how far we may scan left/right to hover nearest non-null
+  const hoverProximityPx = 15;
+
+  let cursor: Partial<uPlot.Cursor> = {
+    // this scans left and right from cursor position to find nearest data index with value != null
+    // TODO: do we want to only scan past undefined values, but halt at explicit null values?
+    dataIdx: (self, seriesIdx, hoveredIdx, cursorXVal) => {
+      let seriesData = self.data[seriesIdx];
+
+      if (seriesData[hoveredIdx] == null) {
+        let nonNullLft = hoveredIdx,
+          nonNullRgt = hoveredIdx,
+          i;
+
+        i = hoveredIdx;
+        while (nonNullLft === hoveredIdx && i-- > 0) {
+          if (seriesData[i] != null) {
+            nonNullLft = i;
+          }
+        }
+
+        i = hoveredIdx;
+        while (nonNullRgt === hoveredIdx && i++ < seriesData.length) {
+          if (seriesData[i] != null) {
+            nonNullRgt = i;
+          }
+        }
+
+        let xVals = self.data[0];
+
+        let curPos = self.valToPos(cursorXVal, 'x');
+        let rgtPos = self.valToPos(xVals[nonNullRgt], 'x');
+        let lftPos = self.valToPos(xVals[nonNullLft], 'x');
+
+        let lftDelta = curPos - lftPos;
+        let rgtDelta = rgtPos - curPos;
+
+        if (lftDelta <= rgtDelta) {
+          if (lftDelta <= hoverProximityPx) {
+            hoveredIdx = nonNullLft;
+          }
+        } else {
+          if (rgtDelta <= hoverProximityPx) {
+            hoveredIdx = nonNullRgt;
+          }
+        }
+      }
+
+      return hoveredIdx;
+    },
+  };
+
   if (sync !== DashboardCursorSync.Off) {
     const payload: DataHoverPayload = {
       point: {
@@ -229,40 +337,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       data: frame,
     };
     const hoverEvent = new DataHoverEvent(payload);
-    builder.setCursor({
-      sync: {
-        key: '__global_',
-        filters: {
-          pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-            payload.columnIndex = dataIdx;
-            if (x < 0 && y < 0) {
-              payload.point[xScaleUnit] = null;
-              payload.point[yScaleKey] = null;
-              eventBus.publish(new DataHoverClearEvent(payload));
-            } else {
-              // convert the points
-              payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-              payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-              eventBus.publish(hoverEvent);
-              hoverEvent.payload.down = undefined;
-            }
-            return true;
-          },
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          payload.rowIndex = dataIdx;
+          if (x < 0 && y < 0) {
+            payload.point[xScaleUnit] = null;
+            payload.point[yScaleKey] = null;
+            eventBus.publish(new DataHoverClearEvent(payload));
+          } else {
+            // convert the points
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+            eventBus.publish(hoverEvent);
+            hoverEvent.payload.down = undefined;
+          }
+          return true;
         },
-        // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-        scales: builder.scaleKeys,
-        match: [() => true, () => true],
       },
-    });
+      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
+      scales: builder.scaleKeys,
+      match: [() => true, () => true],
+    };
   }
+
+  builder.setSync();
+  builder.setCursor(cursor);
 
   return builder;
 };
 
-export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
-  const names = new Map<string, number>();
+export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+  const originNames = new Map<string, number>();
   for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame), i);
+    const origin = frame.fields[i].state?.origin;
+    if (origin) {
+      originNames.set(
+        getFieldDisplayName(
+          allFrames[origin.frameIndex].fields[origin.fieldIndex],
+          allFrames[origin.frameIndex],
+          allFrames
+        ),
+        i
+      );
+    }
   }
-  return names;
+  return originNames;
 }

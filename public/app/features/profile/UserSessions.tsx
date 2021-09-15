@@ -1,20 +1,14 @@
 import React, { PureComponent } from 'react';
-import { UserDTO, UserSession } from 'app/types';
-import { LoadingPlaceholder, Button, Icon } from '@grafana/ui';
+import { UserSession } from 'app/types';
+import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
 
 export interface Props {
-  user: UserDTO;
   sessions: UserSession[];
   isLoading: boolean;
-  loadSessions: () => void;
   revokeUserSession: (tokenId: number) => void;
 }
 
 export class UserSessions extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadSessions();
-  }
-
   render() {
     const { isLoading, sessions, revokeUserSession } = this.props;
 
@@ -28,7 +22,7 @@ export class UserSessions extends PureComponent<Props> {
           <>
             <h3 className="page-sub-heading">Sessions</h3>
             <div className="gf-form-group">
-              <table className="filter-table form-inline">
+              <table className="filter-table form-inline" aria-label="User sessions table">
                 <thead>
                   <tr>
                     <th>Last seen</th>

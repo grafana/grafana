@@ -23,8 +23,6 @@ export interface CloudChannelValues extends ChannelValues {
 
 export interface GrafanaChannelValues extends ChannelValues {
   type: NotifierType;
-  uid?: string;
-  sendReminder: boolean;
   disableResolveMessage: boolean;
 }
 

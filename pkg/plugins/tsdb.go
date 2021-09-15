@@ -236,6 +236,12 @@ type DataPlugin interface {
 	DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
 }
 
+type DataPluginFunc func(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
+
+func (f DataPluginFunc) DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error) {
+	return f(ctx, ds, query)
+}
+
 func NewDataTimeRange(from, to string) DataTimeRange {
 	return DataTimeRange{
 		From: from,

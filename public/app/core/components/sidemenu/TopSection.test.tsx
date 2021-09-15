@@ -1,5 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import TopSection from './TopSection';
 
 jest.mock('../../config', () => ({
@@ -9,33 +10,29 @@ jest.mock('../../config', () => ({
       { id: '2', hideFromMenu: true },
       { id: '3', hideFromMenu: false },
       { id: '4', hideFromMenu: true },
+      { id: '4', hideFromMenu: false },
     ],
   },
 }));
 
-const setup = (propOverrides?: object) => {
-  const props = Object.assign(
-    {
-      mainLinks: [],
-    },
-    propOverrides
-  );
-
-  return shallow(<TopSection {...props} />);
-};
-
 describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
+  it('should render search when empty', () => {
+    render(
+      <BrowserRouter>
+        <TopSection />
+      </BrowserRouter>
+    );
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByText('Search dashboards')).toBeInTheDocument();
   });
 
-  it('should render items', () => {
-    const wrapper = setup({
-      mainLinks: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }],
-    });
+  it('should render items and search item', () => {
+    render(
+      <BrowserRouter>
+        <TopSection />
+      </BrowserRouter>
+    );
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByTestId('top-section-items').children.length).toBe(3);
   });
 });

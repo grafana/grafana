@@ -10,8 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"gopkg.in/macaron.v1"
 
-	coreapi "github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -30,15 +31,15 @@ type RulerSrv struct {
 }
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespaceTitle := macaron.Params(c.Req)[":Namespace"]
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
 	uids, err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to delete namespace alert rules", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
 	}
 
 	for _, uid := range uids {
@@ -49,19 +50,19 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 }
 
 func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespaceTitle := macaron.Params(c.Req)[":Namespace"]
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
-	ruleGroup := c.Params(":Groupname")
+	ruleGroup := macaron.Params(c.Req)[":Groupname"]
 	uids, err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
 
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
-			return response.Error(http.StatusNotFound, "failed to delete rule group", err)
+			return ErrResp(http.StatusNotFound, err, "failed to delete rule group")
 		}
-		return response.Error(http.StatusInternalServerError, "failed to delete rule group", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
 	for _, uid := range uids {
@@ -72,8 +73,8 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 }
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespaceTitle := macaron.Params(c.Req)[":Namespace"]
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
@@ -83,7 +84,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 		NamespaceUID: namespace.Uid,
 	}
 	if err := srv.store.GetNamespaceAlertRules(&q); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
 	result := apimodels.NamespaceConfigResponse{}
@@ -113,20 +114,20 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 }
 
 func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
-	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
+	namespaceTitle := macaron.Params(c.Req)[":Namespace"]
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	ruleGroup := c.Params(":Groupname")
+	ruleGroup := macaron.Params(c.Req)[":Groupname"]
 	q := ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
 		RuleGroup:    ruleGroup,
 	}
 	if err := srv.store.GetRuleGroupAlertRules(&q); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get group alert rules", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
 	var ruleGroupInterval model.Duration
@@ -147,26 +148,34 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 }
 
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
-	q := ngmodels.ListAlertRulesQuery{
-		OrgID: c.SignedInUser.OrgId,
+	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+
+	namespaceUIDs := make([]string, len(namespaceMap))
+	for k := range namespaceMap {
+		namespaceUIDs = append(namespaceUIDs, k)
+	}
+
+	q := ngmodels.ListAlertRulesQuery{
+		OrgID:         c.SignedInUser.OrgId,
+		NamespaceUIDs: namespaceUIDs,
+	}
+
 	if err := srv.store.GetOrgAlertRules(&q); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get alert rules", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
-		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
-		if err != nil {
-			if errors.Is(err, models.ErrFolderAccessDenied) {
-				// do not fail if used does not have access to a specific namespace
-				// just do not include it in the response
-				continue
-			}
-			return toNamespaceErrorResponse(err)
+		folder, ok := namespaceMap[r.NamespaceUID]
+		if !ok {
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", r.NamespaceUID, "rule", r.UID)
+			continue
 		}
 		namespace := folder.Title
-		_, ok := configs[namespace]
+		_, ok = configs[namespace]
 		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 			configs[namespace] = make(map[string]apimodels.GettableRuleGroupConfig)
@@ -205,32 +214,18 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
-	namespaceTitle := c.Params(":Namespace")
-	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
+	namespaceTitle := macaron.Params(c.Req)[":Namespace"]
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	// quotas are checked in advanced
-	// that is acceptable under the assumption that there will be only one alert rule under the rule group
-	// alternatively we should check the quotas after the rule group update
-	// and rollback the transaction in case of violation
-	limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get quota", err)
-	}
-	if limitReached {
-		return response.Error(http.StatusForbidden, "quota reached", nil)
-	}
-
-	// TODO validate UID uniqueness in the payload
-
 	//TODO: Should this belong in alerting-api?
 	if ruleGroupConfig.Name == "" {
-		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
+		return ErrResp(http.StatusBadRequest, errors.New("rule group name is not valid"), "")
 	}
 
-	var alertRuleUIDs []string
+	alertRuleUIDs := make(map[string]struct{})
 	for _, r := range ruleGroupConfig.Rules {
 		cond := ngmodels.Condition{
 			Condition: r.GrafanaManagedAlert.Condition,
@@ -238,9 +233,30 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			Data:      r.GrafanaManagedAlert.Data,
 		}
 		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-			return response.Error(http.StatusBadRequest, fmt.Sprintf("failed to validate alert rule %s", r.GrafanaManagedAlert.Title), err)
+			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
 		}
-		alertRuleUIDs = append(alertRuleUIDs, r.GrafanaManagedAlert.UID)
+		if r.GrafanaManagedAlert.UID != "" {
+			_, ok := alertRuleUIDs[r.GrafanaManagedAlert.UID]
+			if ok {
+				return ErrResp(http.StatusBadRequest, fmt.Errorf("conflicting UID %q found", r.GrafanaManagedAlert.UID), "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
+			}
+			alertRuleUIDs[r.GrafanaManagedAlert.UID] = struct{}{}
+		}
+	}
+
+	numOfNewRules := len(ruleGroupConfig.Rules) - len(alertRuleUIDs)
+	if numOfNewRules > 0 {
+		// quotas are checked in advanced
+		// that is acceptable under the assumption that there will be only one alert rule under the rule group
+		// alternatively we should check the quotas after the rule group update
+		// and rollback the transaction in case of violation
+		limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get quota")
+		}
+		if limitReached {
+			return ErrResp(http.StatusForbidden, errors.New("quota reached"), "")
+		}
 	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
@@ -249,14 +265,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-			return response.Error(http.StatusNotFound, "failed to update rule group", err)
+			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
-			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
+			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		}
-		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, uid := range alertRuleUIDs {
+	for uid := range alertRuleUIDs {
 		srv.manager.RemoveByRuleUID(c.OrgId, uid)
 	}
 
@@ -292,10 +308,10 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 
 func toNamespaceErrorResponse(err error) response.Response {
 	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
-		return response.Error(http.StatusForbidden, err.Error(), err)
+		return ErrResp(http.StatusForbidden, err, err.Error())
 	}
 	if errors.Is(err, models.ErrDashboardIdentifierNotSet) {
-		return response.Error(http.StatusBadRequest, err.Error(), err)
+		return ErrResp(http.StatusBadRequest, err, err.Error())
 	}
-	return coreapi.ToFolderErrorResponse(err)
+	return apierrors.ToFolderErrorResponse(err)
 }

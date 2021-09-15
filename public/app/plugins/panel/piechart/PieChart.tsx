@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-
+import { VizTooltipOptions } from '@grafana/schema';
 import {
   FieldDisplay,
   FALLBACK_COLOR,
@@ -9,7 +9,6 @@ import {
   DataHoverEvent,
 } from '@grafana/data';
 import {
-  VizTooltipOptions,
   useTheme2,
   useStyles2,
   SeriesTableRowProps,
@@ -66,10 +65,6 @@ export const PieChart: FC<PieChartProps> = ({
   const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
     return !dv.field.custom.hideFrom.viz;
   });
-
-  if (filteredFieldDisplayValues.length < 0) {
-    return <div>No data</div>;
-  }
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
   const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
@@ -346,14 +341,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
 function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
-    .spin(8)
+    .spin(4)
     .toRgbString();
 }
 
 function getGradientColorTo(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
-    .spin(-8)
+    .spin(-4)
     .toRgbString();
 }
 

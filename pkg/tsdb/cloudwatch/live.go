@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/sync/errgroup"
@@ -111,7 +110,7 @@ func (r *logQueryRunner) publishResults(orgID int64, channelName string) error {
 //nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan plugins.DataResponse)
+	responseChannel := make(chan *backend.QueryDataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
 		return nil, err
@@ -135,7 +134,7 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backe
 }
 
 //nolint: staticcheck // plugins.DataResponse deprecated
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan plugins.DataResponse) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan *backend.QueryDataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -213,7 +212,7 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCt
 }
 
 //nolint: staticcheck // plugins.DataResponse deprecated
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan plugins.DataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *backend.QueryDataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return err
@@ -242,6 +241,11 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: {Error: err},
+			},
+		}
 		return err
 	}
 
@@ -266,40 +270,15 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		dataFrame.Name = query.RefID
 		dataFrame.RefID = query.RefID
-		var dataFrames data.Frames
-
-		// When a query of the form "stats ... by ..." is made, we want to return
-		// one series per group defined in the query, but due to the format
-		// the query response is in, there does not seem to be a way to tell
-		// by the response alone if/how the results should be grouped.
-		// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-		// the "statsGroups" parameter is sent along with the query to the backend so that we
-		// can correctly group the CloudWatch logs response.
-		statsGroups := model.Get("statsGroups").MustStringArray()
-		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
-			groupedFrames, err := groupResults(dataFrame, statsGroups)
-			if err != nil {
-				return retryer.FuncError, err
-			}
-
-			dataFrames = groupedFrames
-		} else {
-			if dataFrame.Meta != nil {
-				dataFrame.Meta.PreferredVisualization = "logs"
-			} else {
-				dataFrame.Meta = &data.FrameMeta{
-					PreferredVisualization: "logs",
-				}
-			}
-
-			dataFrames = data.Frames{dataFrame}
+		dataFrames, err := groupResponseFrame(dataFrame, model.Get("statsGroups").MustStringArray())
+		if err != nil {
+			return retryer.FuncError, fmt.Errorf("failed to group dataframe response: %v", err)
 		}
 
-		responseChannel <- plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
 				query.RefID: {
-					RefID:      query.RefID,
-					Dataframes: plugins.NewDecodedDataFrames(dataFrames),
+					Frames: dataFrames,
 				},
 			},
 		}
@@ -312,6 +291,54 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		return retryer.FuncSuccess, nil
 	}, maxAttempts, minRetryDelay, maxRetryDelay)
+}
+
+func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, error) {
+	var dataFrames data.Frames
+
+	// When a query of the form "stats ... by ..." is made, we want to return
+	// one series per group defined in the query, but due to the format
+	// the query response is in, there does not seem to be a way to tell
+	// by the response alone if/how the results should be grouped.
+	// Because of this, if the frontend sees that a "stats ... by ..." query is being made
+	// the "statsGroups" parameter is sent along with the query to the backend so that we
+	// can correctly group the CloudWatch logs response.
+	// Check if we have time field though as it makes sense to split only for time series.
+	if hasTimeField(frame) {
+		if len(statsGroups) > 0 && len(frame.Fields) > 0 {
+			groupedFrames, err := groupResults(frame, statsGroups)
+			if err != nil {
+				return nil, err
+			}
+
+			dataFrames = groupedFrames
+		} else {
+			setPreferredVisType(frame, "logs")
+			dataFrames = data.Frames{frame}
+		}
+	} else {
+		dataFrames = data.Frames{frame}
+	}
+	return dataFrames, nil
+}
+
+func hasTimeField(frame *data.Frame) bool {
+	for _, field := range frame.Fields {
+		if field.Type() == data.FieldTypeNullableTime {
+			return true
+		}
+	}
+	return false
+}
+
+func setPreferredVisType(frame *data.Frame, visType data.VisType) {
+	if frame.Meta != nil {
+		frame.Meta.PreferredVisualization = visType
+	} else {
+		frame.Meta = &data.FrameMeta{
+			PreferredVisualization: visType,
+		}
+	}
 }
 
 // Service quotas client factory.

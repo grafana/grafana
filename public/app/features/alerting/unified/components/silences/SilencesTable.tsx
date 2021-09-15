@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -7,6 +7,8 @@ import SilenceTableRow from './SilenceTableRow';
 import { getAlertTableStyles } from '../../styles/table';
 import { NoSilencesSplash } from './NoSilencesCTA';
 import { makeAMLink } from '../../utils/misc';
+import { contextSrv } from 'app/core/services/context_srv';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 interface Props {
   silences: Silence[];
   alertManagerAlerts: AlertmanagerAlert[];
@@ -16,6 +18,15 @@ interface Props {
 const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getAlertTableStyles);
+  const [queryParams] = useQueryParams();
+
+  const filteredSilences = useMemo(() => {
+    const silenceIdsString = queryParams?.silenceIds;
+    if (typeof silenceIdsString === 'string') {
+      return silences.filter((silence) => silenceIdsString.split(',').includes(silence.id));
+    }
+    return silences;
+  }, [queryParams, silences]);
 
   const findSilencedAlerts = (id: string) => {
     return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
@@ -25,13 +36,15 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
     <>
       {!!silences.length && (
         <>
-          <div className={styles.topButtonContainer}>
-            <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
-              <Button className={styles.addNewSilence} icon="plus">
-                New Silence
-              </Button>
-            </Link>
-          </div>
+          {contextSrv.isEditor && (
+            <div className={styles.topButtonContainer}>
+              <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
+                <Button className={styles.addNewSilence} icon="plus">
+                  New Silence
+                </Button>
+              </Link>
+            </div>
+          )}
           <table className={tableStyles.table}>
             <colgroup>
               <col className={tableStyles.colExpand} />
@@ -39,20 +52,20 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
               <col className={styles.colMatchers} />
               <col />
               <col />
-              <col />
+              {contextSrv.isEditor && <col />}
             </colgroup>
             <thead>
               <tr>
                 <th />
                 <th>State</th>
-                <th>Matchers</th>
+                <th>Matching labels</th>
                 <th>Alerts</th>
                 <th>Schedule</th>
-                <th>Action</th>
+                {contextSrv.isEditor && <th>Action</th>}
               </tr>
             </thead>
             <tbody>
-              {silences.map((silence, index) => {
+              {filteredSilences.map((silence, index) => {
                 const silencedAlerts = findSilencedAlerts(silence.id);
                 return (
                   <SilenceTableRow

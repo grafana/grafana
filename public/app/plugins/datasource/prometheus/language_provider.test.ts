@@ -64,6 +64,21 @@ describe('Language completion provider', () => {
     });
   });
 
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {},
+        { end: '1', 'match[]': '{job="grafana"}', start: '0' }
+      );
+    });
+  });
+
   describe('empty query suggestions', () => {
     it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
@@ -124,8 +139,9 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '$__interval', sortValue: '$__interval' }, // TODO: figure out why this row and sortValue is needed
+            { label: '$__interval', sortValue: '$__interval' },
             { label: '$__rate_interval', sortValue: '$__rate_interval' },
+            { label: '$__range', sortValue: '$__range' },
             { label: '1m', sortValue: '00:01:00' },
             { label: '5m', sortValue: '00:05:00' },
             { label: '10m', sortValue: '00:10:00' },

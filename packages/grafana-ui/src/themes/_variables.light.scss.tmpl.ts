@@ -80,9 +80,10 @@ $query-orange: ${theme.v1.palette.orange};
 
 // Status colors
 // -------------------------
-$online: ${theme.v1.palette.online};
-$warn: ${theme.v1.palette.warn};
-$critical: ${theme.v1.palette.critical};
+$online: ${theme.colors.success.text};
+$warn: ${theme.colors.warning.text};
+$critical: ${theme.colors.error.text};
+
 
 // Scaffolding
 // -------------------------
@@ -136,7 +137,7 @@ $divider-border-color: $gray-2;
 
 // Graphite Target Editor
 $tight-form-func-bg: ${theme.v1.colors.bg2};
-$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.v1.colors.bg2, theme.v1)};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.background.secondary, theme)};
 
 $modal-backdrop-bg: ${theme.v1.colors.bg1};
 $code-tag-bg: $gray-6;

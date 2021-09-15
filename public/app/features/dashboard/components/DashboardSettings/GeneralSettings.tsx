@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
-import { TagsInput, Input, Field, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
+import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 import { TimePickerSettings } from './TimePickerSettings';
 
-interface Props {
+import { updateTimeZoneDashboard } from 'app/features/dashboard/state/actions';
+
+interface OwnProps {
   dashboard: DashboardModel;
 }
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const GRAPH_TOOLTIP_OPTIONS = [
   { value: 0, label: 'Default' },
@@ -17,7 +22,7 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
+export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
@@ -48,9 +53,15 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
     setRenderCounter(renderCounter + 1);
   };
 
+  const onLiveNowChange = (v: boolean) => {
+    dashboard.liveNow = v;
+    setRenderCounter(renderCounter + 1);
+  };
+
   const onTimeZoneChange = (timeZone: TimeZone) => {
     dashboard.timezone = timeZone;
     setRenderCounter(renderCounter + 1);
+    updateTimeZone(timeZone);
   };
 
   const onTagsChange = (tags: string[]) => {
@@ -90,6 +101,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
             onChange={onFolderChange}
             enableCreateNew={true}
             dashboardId={dashboard.id}
+            skipInitialLoad={true}
           />
         </Field>
 
@@ -106,10 +118,12 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
         onRefreshIntervalChange={onRefreshIntervalChange}
         onNowDelayChange={onNowDelayChange}
         onHideTimePickerChange={onHideTimePickerChange}
+        onLiveNowChange={onLiveNowChange}
         refreshIntervals={dashboard.timepicker.refresh_intervals}
         timePickerHidden={dashboard.timepicker.hidden}
         nowDelay={dashboard.timepicker.nowDelay}
         timezone={dashboard.timezone}
+        liveNow={dashboard.liveNow}
       />
 
       <CollapsableSection label="Panel options" isOpen={true}>
@@ -126,4 +140,12 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
       </div>
     </div>
   );
+}
+
+const mapDispatchToProps = {
+  updateTimeZone: updateTimeZoneDashboard,
 };
+
+const connector = connect(null, mapDispatchToProps);
+
+export const GeneralSettings = connector(GeneralSettingsUnconnected);

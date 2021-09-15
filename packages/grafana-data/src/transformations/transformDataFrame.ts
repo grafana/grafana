@@ -60,6 +60,11 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
 
   for (let index = 0; index < options.length; index++) {
     const config = options[index];
+
+    if (config.disabled) {
+      continue;
+    }
+
     operators.push(getOperator(config));
   }
 

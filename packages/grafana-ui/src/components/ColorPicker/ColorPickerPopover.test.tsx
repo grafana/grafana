@@ -2,7 +2,7 @@ import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { ColorSwatch } from './ColorSwatch';
-import { createTheme, getColorForTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data';
 
 describe('ColorPickerPopover', () => {
   const theme = createTheme();
@@ -35,7 +35,7 @@ describe('ColorPickerPopover', () => {
       basicBlueSwatch.simulate('click');
 
       expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith(getColorForTheme('green', theme.v1));
+      expect(onChangeSpy).toBeCalledWith(theme.visualization.getColorByName('green'));
     });
 
     it('should pass color name to onChange prop when named colors enabled', () => {

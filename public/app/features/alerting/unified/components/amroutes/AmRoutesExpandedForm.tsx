@@ -3,11 +3,11 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
-  Checkbox,
   Field,
   FieldArray,
   Form,
   HorizontalGroup,
+  IconButton,
   Input,
   InputControl,
   MultiSelect,
@@ -26,6 +26,7 @@ import {
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 import { getFormStyles } from './formStyles';
+import { matcherFieldOptions } from '../../utils/alertmanager';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -48,27 +49,44 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
       {({ control, register, errors, setValue }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
+          <input type="hidden" {...register('id')} />
+          {/* @ts-ignore-check: react-hook-form made me do this */}
           <FieldArray name="matchers" control={control}>
-            {({ fields, append }) => (
+            {({ fields, append, remove }) => (
               <>
-                <div>Matchers</div>
+                <div>Matching labels</div>
                 <div className={styles.matchersContainer}>
                   {fields.map((field, index) => {
                     const localPath = `matchers[${index}]`;
-
                     return (
-                      <HorizontalGroup key={field.id}>
+                      <HorizontalGroup key={field.id} align="flex-start">
                         <Field
                           label="Label"
-                          invalid={!!errors.matchers?.[index]?.label}
-                          error={errors.matchers?.[index]?.label?.message}
+                          invalid={!!errors.matchers?.[index]?.name}
+                          error={errors.matchers?.[index]?.name?.message}
                         >
                           <Input
-                            {...register(`${localPath}.label`, { required: 'Field is required' })}
-                            defaultValue={field.label}
+                            {...register(`${localPath}.name`, { required: 'Field is required' })}
+                            defaultValue={field.name}
+                            placeholder="label"
                           />
                         </Field>
-                        <span>=</span>
+                        <Field label={'Operator'}>
+                          <InputControl
+                            render={({ field: { onChange, ref, ...field } }) => (
+                              <Select
+                                {...field}
+                                className={styles.matchersOperator}
+                                onChange={(value) => onChange(value?.value)}
+                                options={matcherFieldOptions}
+                              />
+                            )}
+                            defaultValue={field.operator}
+                            control={control}
+                            name={`${localPath}.operator` as const}
+                            rules={{ required: { value: true, message: 'Required.' } }}
+                          />
+                        </Field>
                         <Field
                           label="Value"
                           invalid={!!errors.matchers?.[index]?.value}
@@ -77,11 +95,17 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           <Input
                             {...register(`${localPath}.value`, { required: 'Field is required' })}
                             defaultValue={field.value}
+                            placeholder="value"
                           />
                         </Field>
-                        <Field className={styles.matcherRegexField} label="Regex">
-                          <Checkbox {...register(`${localPath}.isRegex`)} defaultChecked={field.isRegex} />
-                        </Field>
+                        <IconButton
+                          className={styles.removeButton}
+                          tooltip="Remove matcher"
+                          name={'trash-alt'}
+                          onClick={() => remove(index)}
+                        >
+                          Remove
+                        </IconButton>
                       </HorizontalGroup>
                     );
                   })}
@@ -103,6 +127,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <Select
+                  menuShouldPortal
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -127,6 +152,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
+                    menuShouldPortal
                     {...field}
                     allowCustomValue
                     className={formStyles.input}
@@ -174,6 +200,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
+                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -207,6 +234,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
+                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -240,6 +268,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
+                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           menuPlacement="top"
@@ -280,11 +309,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 4.6, 1, 1.5)};
       width: fit-content;
     `,
-    matcherRegexField: css`
-      margin-left: ${theme.spacing(6)};
+    matchersOperator: css`
+      min-width: 140px;
     `,
     nestedPolicies: css`
       margin-top: ${commonSpacing};
+    `,
+    removeButton: css`
+      margin-left: ${theme.spacing(1)};
+      margin-top: ${theme.spacing(2.5)};
     `,
     buttonGroup: css`
       margin: ${theme.spacing(6)} 0 ${commonSpacing};

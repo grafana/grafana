@@ -8,20 +8,28 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "external link",
-      "tags": ["gdev", "graph-ng"],
-      "type": "dashboards",
       "asDropdown": true,
-      "title": "Graph Tests"
+      "icon": "external link",
+      "tags": [
+        "gdev",
+        "graph-ng"
+      ],
+      "title": "Graph Tests",
+      "type": "dashboards"
     }
   ],
   "panels": [
@@ -35,13 +43,14 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillGradient": "none",
             "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -50,16 +59,21 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -80,8 +94,8 @@
       "id": 3,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
+          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -120,8 +134,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Show gaps",
       "type": "timeseries"
     },
@@ -136,13 +148,14 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillGradient": "none",
             "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -151,17 +164,22 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "max": 120,
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -182,8 +200,8 @@
       "id": 2,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
+          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -230,8 +248,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Gaps & null between every point for series B",
       "type": "timeseries"
     },
@@ -246,13 +262,14 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillGradient": "none",
             "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -261,17 +278,22 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "max": 120,
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -292,8 +314,8 @@
       "id": 6,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
+          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -360,8 +382,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "No nulls but unaligned series",
       "type": "timeseries"
     },
@@ -375,13 +395,14 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillGradient": "none",
             "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -390,16 +411,21 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -420,8 +446,8 @@
       "id": 4,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
+          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -460,8 +486,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Connected",
       "type": "timeseries"
     },
@@ -476,13 +500,14 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillGradient": "none",
             "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -491,17 +516,22 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "max": 120,
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -522,8 +552,8 @@
       "id": 5,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
+          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -570,8 +600,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Same as above but connected",
       "type": "timeseries"
     },
@@ -586,13 +614,14 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillGradient": "none",
             "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -601,17 +630,22 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "max": 120,
-          "nullValueMode": "null",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -632,8 +666,8 @@
       "id": 7,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
+          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -700,8 +734,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Same as above but connected",
       "type": "timeseries"
     },
@@ -713,56 +745,39 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axis": {
-              "grid": true,
-              "label": "Temperature",
-              "side": 3,
-              "width": 60
-            },
             "axisLabel": "",
             "axisPlacement": "auto",
-            "bars": {
-              "show": false
-            },
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fill": {
-              "alpha": 0
-            },
-            "fillGradient": "none",
             "fillOpacity": 10,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
-            },
-            "line": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "show": true,
-              "width": 1
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "nullValues": "null",
             "pointSize": 5,
-            "points": {
-              "radius": 8,
-              "show": true
-            },
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -813,11 +828,9 @@
       },
       "id": 11,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
+          "calcs": [],
           "displayMode": "list",
           "isVisible": true,
           "placement": "bottom"
@@ -860,8 +873,6 @@
           "stringInput": "1,20,90,30,5,0"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Null values in first series & show gaps ",
       "transformations": [],
       "type": "timeseries"
@@ -874,56 +885,39 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axis": {
-              "grid": true,
-              "label": "Temperature",
-              "side": 3,
-              "width": 60
-            },
             "axisLabel": "",
             "axisPlacement": "auto",
-            "bars": {
-              "show": false
-            },
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fill": {
-              "alpha": 0
-            },
-            "fillGradient": "none",
             "fillOpacity": 10,
+            "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
-            },
-            "line": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "show": true,
-              "width": 1
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "nullValues": "null",
             "pointSize": 5,
-            "points": {
-              "radius": 8,
-              "show": true
-            },
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -974,11 +968,9 @@
       },
       "id": 9,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
+          "calcs": [],
           "displayMode": "list",
           "isVisible": true,
           "placement": "bottom"
@@ -1021,14 +1013,11 @@
           "stringInput": "10,25,null,null,50,10"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Null values in second series show gaps (bugged)",
       "transformations": [],
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1042,9 +1031,9 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -1053,15 +1042,21 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": 3600000
+            "spanNulls": 3600000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1081,7 +1076,6 @@
       },
       "id": 13,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1120,15 +1114,97 @@
           "stringInput": "1,20,90,null,30,5,0"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Span nulls below 1hr",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 0,
+        "y": 22
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "30,null,1,20,90,null,30,null,5,0,null,30"
+        }
+      ],
+      "title": "Always show points between gaps",
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 27,
+  "schemaVersion": 30,
   "style": "dark",
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },
@@ -1140,5 +1216,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gaps and Connected",
   "uid": "8mmCAF1Mz",
-  "version": 1
+  "version": 2
 }

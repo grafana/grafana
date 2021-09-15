@@ -5,8 +5,31 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
+
+type Pair struct {
+	key   string
+	value interface{}
+}
+
+func selectLibraryElementByParam(params []Pair) (string, []interface{}) {
+	conditions := make([]string, 0, len(params))
+	values := make([]interface{}, 0, len(params))
+	for _, p := range params {
+		conditions = append(conditions, "le."+p.key+"=?")
+		values = append(values, p.value)
+	}
+	return ` WHERE ` + strings.Join(conditions, " AND "), values
+}
+
+func writeParamSelectorSQL(builder *sqlstore.SQLBuilder, params ...Pair) {
+	if len(params) > 0 {
+		conditionString, paramValues := selectLibraryElementByParam(params)
+		builder.Write(conditionString, paramValues...)
+	}
+}
 
 func writePerPageSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
 	if query.perPage != 0 {
@@ -16,7 +39,7 @@ func writePerPageSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLSto
 }
 
 func writeKindSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
-	if LibraryElementKind(query.kind) == Panel || LibraryElementKind(query.kind) == Variable {
+	if models.LibraryElementKind(query.kind) == models.PanelElement || models.LibraryElementKind(query.kind) == models.VariableElement {
 		builder.Write(" AND le.kind = ?", query.kind)
 	}
 }

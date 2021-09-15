@@ -1,6 +1,8 @@
 package libraryelements
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -11,18 +13,18 @@ func isGeneralFolder(folderID int64) bool {
 }
 
 func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {
-	kind := LibraryElementKind(kindAsInt)
+	kind := models.LibraryElementKind(kindAsInt)
 	switch kind {
-	case Panel:
+	case models.PanelElement:
 		return nil
-	case Variable:
+	case models.VariableElement:
 		return nil
 	default:
 		return errLibraryElementUnSupportedElementKind
 	}
 }
 
-func (l *LibraryElementService) requirePermissionsOnFolder(user *models.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requirePermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
 		return nil
 	}
@@ -32,7 +34,7 @@ func (l *LibraryElementService) requirePermissionsOnFolder(user *models.SignedIn
 	}
 
 	s := dashboards.NewFolderService(user.OrgId, user, l.SQLStore)
-	folder, err := s.GetFolderByID(folderID)
+	folder, err := s.GetFolderByID(ctx, folderID)
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['onRemove'],
+    },
   },
   argTypes: {
     severity: { control: { type: 'select', options: severities } },

@@ -78,6 +78,9 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     let frame = options.frames[0];
     let frameCopy = frame;
 
+    const joinFieldMatcher = getJoinMatcher(options);
+    let joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
+
     if (options.keepOriginIndices) {
       frameCopy = {
         ...frame,
@@ -95,10 +98,16 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
           return copy;
         }),
       };
-    }
 
-    const joinFieldMatcher = getJoinMatcher(options);
-    const joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
+      // Make sure the join field is first
+      if (joinIndex > 0) {
+        const joinField = frameCopy.fields[joinIndex];
+        const fields = frameCopy.fields.filter((f, idx) => idx !== joinIndex);
+        fields.unshift(joinField);
+        frameCopy.fields = fields;
+        joinIndex = 0;
+      }
+    }
 
     if (options.enforceSort) {
       if (joinIndex >= 0) {
@@ -155,7 +164,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls === true ? NULL_REMOVE : NULL_EXPAND);
+        let spanNulls = field.config.custom?.spanNulls;
+        nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -216,7 +226,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-export type AlignedData = [number[], ...Array<Array<number | null>>];
+export type AlignedData = [number[], ...Array<Array<number | null | undefined>>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
@@ -285,7 +295,7 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
         let yVal = ys[i];
         let alignedIdx = xIdxs.get(xs[i]);
 
-        if (yVal == null) {
+        if (yVal === null) {
           if (nullMode !== NULL_REMOVE) {
             yVals[alignedIdx] = yVal;
 

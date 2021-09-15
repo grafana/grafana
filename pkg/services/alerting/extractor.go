@@ -96,6 +96,26 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, ValidationError{Reason: "A numeric panel id property is missing"}
 		}
 
+		addIdentifiersToValidationError := func(err error) error {
+			if err == nil {
+				return nil
+			}
+
+			var validationErr ValidationError
+			if ok := errors.As(err, &validationErr); ok {
+				ve := ValidationError{
+					Reason:  validationErr.Reason,
+					Err:     validationErr.Err,
+					PanelID: panelID,
+				}
+				if e.Dash != nil {
+					ve.DashboardID = e.Dash.Id
+				}
+				return ve
+			}
+			return err
+		}
+
 		// backward compatibility check, can be removed later
 		enabled, hasEnabled := jsonAlert.CheckGet("enabled")
 		if hasEnabled && !enabled.MustBool() {
@@ -104,14 +124,14 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 
 		frequency, err := getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString())
 		if err != nil {
-			return nil, ValidationError{Reason: err.Error()}
+			return nil, addIdentifiersToValidationError(ValidationError{Reason: err.Error()})
 		}
 
 		rawFor := jsonAlert.Get("for").MustString()
 
 		forValue, err := getForValue(rawFor)
 		if err != nil {
-			return nil, err
+			return nil, addIdentifiersToValidationError(err)
 		}
 
 		alert := &models.Alert{

@@ -19,10 +19,12 @@ const conditionTypes = [{ text: 'Query', value: 'query' }];
 
 const alertStateSortScore = {
   alerting: 1,
+  firing: 1,
   no_data: 2,
   pending: 3,
   ok: 4,
   paused: 5,
+  inactive: 5,
 };
 
 export enum EvalFunction {
@@ -79,7 +81,10 @@ function createReducerPart(model: any) {
 }
 
 function getStateDisplayModel(state: string) {
-  switch (state) {
+  const normalizedState = state.toLowerCase().replace(/_/g, '');
+
+  switch (normalizedState) {
+    case 'normal':
     case 'ok': {
       return {
         text: 'OK',
@@ -94,7 +99,7 @@ function getStateDisplayModel(state: string) {
         stateClass: 'alert-state-critical',
       };
     }
-    case 'no_data': {
+    case 'nodata': {
       return {
         text: 'NO DATA',
         iconClass: 'question-circle',
@@ -111,7 +116,7 @@ function getStateDisplayModel(state: string) {
     case 'pending': {
       return {
         text: 'PENDING',
-        iconClass: 'exclamation-triangle',
+        iconClass: 'hourglass',
         stateClass: 'alert-state-warning',
       };
     }
@@ -119,7 +124,31 @@ function getStateDisplayModel(state: string) {
       return {
         text: 'UNKNOWN',
         iconClass: 'question-circle',
-        stateClass: 'alert-state-paused',
+        stateClass: '.alert-state-paused',
+      };
+    }
+
+    case 'firing': {
+      return {
+        text: 'FIRING',
+        iconClass: 'fire',
+        stateClass: '',
+      };
+    }
+
+    case 'inactive': {
+      return {
+        text: 'INACTIVE',
+        iconClass: 'check',
+        stateClass: '',
+      };
+    }
+
+    case 'error': {
+      return {
+        text: 'ERROR',
+        iconClass: 'heart-break',
+        stateClass: 'alert-state-critical',
       };
     }
   }

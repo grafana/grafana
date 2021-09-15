@@ -3,23 +3,15 @@ import { mount } from 'enzyme';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { act } from 'react-dom/test-utils';
-
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]), search: jest.fn().mockResolvedValue([]) }),
-}));
-
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    user: { orgId: 1 },
-  },
-}));
+import * as api from 'app/features/manage-dashboards/state/actions';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validateNewDashboardName: () => true,
 }));
+
+jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
 
 const prepareDashboardMock = (panel: any) => {
   const json = {
@@ -56,6 +48,7 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
 describe('SaveDashboardAsForm', () => {
   describe('default values', () => {
     it('applies default dashboard properties', async () => {
+      jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
       const spy = jest.fn();
 
       await renderAndSubmitForm(prepareDashboardMock({}), spy);

@@ -13,9 +13,10 @@ weight = 400
 In the search view, you can sort dashboards by using insights data. Doing so helps you find unused or broken dashboards or discover those that are most viewed.
 
 There are several sort options:
+
 - Errors total
 - Errors 30 days
 - Views total
 - Views 30 days
 
-{{< docs-imagebox img="/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}

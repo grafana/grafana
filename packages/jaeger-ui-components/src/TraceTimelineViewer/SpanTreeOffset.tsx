@@ -34,7 +34,6 @@ export const getStyles = createStyle((theme: Theme) => {
     SpanTreeOffsetParent: css`
       label: SpanTreeOffsetParent;
       &:hover {
-        background-color: ${autoColor(theme, '#e8e8e8')};
         cursor: pointer;
       }
     `,

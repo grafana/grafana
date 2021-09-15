@@ -86,6 +86,7 @@ export class TablePanel extends Component<Props> {
         width={width}
         data={frame}
         noHeader={!options.showHeader}
+        showTypeIcons={options.showTypeIcons}
         resizable={true}
         initialSortBy={options.sortBy}
         onSortByChange={this.onSortByChange}
@@ -126,7 +127,12 @@ export class TablePanel extends Component<Props> {
         <div className={tableStyles.wrapper}>
           {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
           <div className={tableStyles.selectWrapper}>
-            <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
+            <Select
+              menuShouldPortal
+              options={names}
+              value={names[currentIndex]}
+              onChange={this.onChangeTableSelection}
+            />
           </div>
         </div>
       );

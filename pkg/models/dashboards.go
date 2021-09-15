@@ -339,6 +339,7 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
+	FolderUid    string           `json:"folderUid"`
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
@@ -362,8 +363,9 @@ type DashboardProvisioning struct {
 }
 
 type DeleteDashboardCommand struct {
-	Id    int64
-	OrgId int64
+	Id                     int64
+	OrgId                  int64
+	ForceDeleteFolderRules bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {

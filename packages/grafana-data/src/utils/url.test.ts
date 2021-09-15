@@ -22,6 +22,14 @@ describe('toUrlParams', () => {
     });
     expect(url).toBe('server=:@');
   });
+
+  it('should keep booleans', () => {
+    const url = urlUtil.toUrlParams({
+      bool1: true,
+      bool2: false,
+    });
+    expect(url).toBe('bool1&bool2=false');
+  });
 });
 
 describe('parseKeyValue', () => {
@@ -53,5 +61,36 @@ describe('parseKeyValue', () => {
   it('should parse number like params as strings', () => {
     const obj = urlUtil.parseKeyValue('custom=&custom1=001&custom2=002&custom3');
     expect(obj).toEqual({ custom: '', custom1: '001', custom2: '002', custom3: true });
+  });
+});
+
+describe('getUrlSearchParams', () => {
+  const { location } = window;
+  // @ts-ignore
+  delete window.location;
+
+  window.location = {
+    ...location,
+    hash: '#hash',
+    host: 'www.domain.com:9877',
+    hostname: 'www.domain.com',
+    href: 'http://www.domain.com:9877/path/b?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z#hash',
+    origin: 'http://www.domain.com:9877',
+    pathname: '/path/b',
+    port: '9877',
+    protocol: 'http:',
+    search: '?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z',
+  };
+
+  let expectedParams = {
+    var1: ['a'],
+    var2: ['b', 'c', 'd'],
+    var3: ['a', 'd'],
+    z: true,
+  };
+
+  it('should take into account multi-value and boolean parameters', () => {
+    const params = urlUtil.getUrlSearchParams();
+    expect(params).toStrictEqual(expectedParams);
   });
 });

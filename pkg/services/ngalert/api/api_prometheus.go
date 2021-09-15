@@ -36,12 +36,16 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	}
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
+		valString := ""
+		if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
+			valString = alertState.Results[0].EvaluationString
+		}
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
 			Annotations: map[string]string{}, //TODO: Once annotations are added to the evaluation result, set them here
 			State:       alertState.State.String(),
 			ActiveAt:    &startsAt,
-			Value:       "", //TODO: once the result of the evaluation is added to the evaluation result, set it here
+			Value:       valString,
 		})
 	}
 	return response.JSON(http.StatusOK, alertResponse)
@@ -57,8 +61,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		},
 	}
 
+	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
+	}
+
+	namespaceUIDs := make([]string, len(namespaceMap))
+	for k := range namespaceMap {
+		namespaceUIDs = append(namespaceUIDs, k)
+	}
+
 	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
-		OrgID: c.SignedInUser.OrgId,
+		OrgID:         c.SignedInUser.OrgId,
+		NamespaceUIDs: namespaceUIDs,
 	}
 	if err := srv.store.GetOrgRuleGroups(&ruleGroupQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
@@ -115,12 +130,16 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 				activeAt := alertState.StartsAt
+				valString := ""
+				if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
+					valString = alertState.Results[0].EvaluationString
+				}
 				alert := &apimodels.Alert{
 					Labels:      map[string]string(alertState.Labels),
 					Annotations: alertState.Annotations,
 					State:       alertState.State.String(),
 					ActiveAt:    &activeAt,
-					Value:       "", // TODO: set this once it is added to the evaluation results
+					Value:       valString, // TODO: set this once it is added to the evaluation results
 				}
 
 				if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
@@ -128,7 +147,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 					newGroup.LastEvaluation = alertState.LastEvaluationTime
 				}
 
-				alertingRule.Duration = alertState.EvaluationDuration.Seconds()
 				newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
 				switch alertState.State {

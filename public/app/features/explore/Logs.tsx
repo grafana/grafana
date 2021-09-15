@@ -2,7 +2,7 @@ import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   rangeUtil,
   RawTimeRange,
@@ -14,11 +14,12 @@ import {
   LogsDedupDescription,
   LogsMetaItem,
   LogsSortOrder,
-  GraphSeriesXY,
   LinkModel,
   Field,
-  GrafanaTheme,
   DataQuery,
+  DataFrame,
+  GrafanaTheme2,
+  LoadingState,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -27,32 +28,33 @@ import {
   InlineField,
   InlineFieldRow,
   InlineSwitch,
-  withTheme,
-  stylesFactory,
+  withTheme2,
+  Themeable2,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
-import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { ExploreGraph } from './ExploreGraph';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
   showTime: 'grafana.explore.logs.showTime',
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
+  prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
 };
 
-interface Props {
+interface Props extends Themeable2 {
+  width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
-  logsSeries?: GraphSeriesXY[];
+  logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
-  width: number;
-  theme: GrafanaTheme;
-  highlighterExpressions?: string[];
+  theme: GrafanaTheme2;
   loading: boolean;
+  loadingState: LoadingState;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
@@ -65,12 +67,15 @@ interface Props {
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 }
 
 interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
@@ -80,14 +85,15 @@ interface State {
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
-  flipOrderTimer: NodeJS.Timeout;
-  cancelFlippingTimer: NodeJS.Timeout;
+  flipOrderTimer?: number;
+  cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
     logsSortOrder: null,
@@ -97,14 +103,19 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    clearTimeout(this.flipOrderTimer);
-    clearTimeout(this.cancelFlippingTimer);
+    if (this.flipOrderTimer) {
+      window.clearTimeout(this.flipOrderTimer);
+    }
+
+    if (this.cancelFlippingTimer) {
+      window.clearTimeout(this.cancelFlippingTimer);
+    }
   }
 
   onChangeLogsSortOrder = () => {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    this.flipOrderTimer = setTimeout(() => {
+    this.flipOrderTimer = window.setTimeout(() => {
       this.setState((prevState) => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
@@ -112,7 +123,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         return { logsSortOrder: LogsSortOrder.Descending };
       });
     }, 0);
-    this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
+    this.cancelFlippingTimer = window.setTimeout(() => this.setState({ isFlipping: false }), 1000);
   };
 
   onEscapeNewlines = () => {
@@ -155,6 +166,17 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         wrapLogMessage,
       });
       store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
+    }
+  };
+
+  onChangePrettifyLogMessage = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      const prettifyLogMessage = target.checked;
+      this.setState({
+        prettifyLogMessage,
+      });
+      store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
     }
   };
 
@@ -226,30 +248,33 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   render() {
     const {
+      width,
       logRows,
       logsMeta,
       logsSeries,
       visibleRange,
-      highlighterExpressions,
       loading = false,
+      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
       scanning,
       scanRange,
       showContextToggle,
-      width,
       absoluteRange,
       onChangeTime,
       getFieldLinks,
       theme,
       logsQueries,
+      clearCache,
+      addResultsToCache,
     } = this.props;
 
     const {
       showLabels,
       showTime,
       wrapLogMessage,
+      prettifyLogMessage,
       dedupStrategy,
       hiddenLogLevels,
       logsSortOrder,
@@ -258,7 +283,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       forceEscape,
     } = this.state;
 
-    const styles = getStyles(theme);
+    const styles = getStyles(theme, wrapLogMessage);
     const hasData = logRows && logRows.length > 0;
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
@@ -269,19 +294,22 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <ExploreGraphPanel
-          series={logsSeries || []}
-          width={width}
-          onHiddenSeriesChanged={this.onToggleLogLevel}
-          loading={loading}
-          absoluteRange={visibleRange || absoluteRange}
-          isStacked={true}
-          showPanel={false}
-          timeZone={timeZone}
-          showBars={true}
-          showLines={false}
-          onUpdateTimeRange={onChangeTime}
-        />
+        <div className={styles.infoText}>
+          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
+        </div>
+        {logsSeries && logsSeries.length ? (
+          <ExploreGraph
+            data={logsSeries}
+            height={150}
+            width={width}
+            tooltipDisplayMode={TooltipDisplayMode.Multi}
+            absoluteRange={visibleRange || absoluteRange}
+            timeZone={timeZone}
+            loadingState={loadingState}
+            onChangeTime={onChangeTime}
+            onHiddenSeriesChanged={this.onToggleLogLevel}
+          />
+        ) : undefined}
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
@@ -293,9 +321,12 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Wrap lines" transparent>
               <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             </InlineField>
+            <InlineField label="Prettify JSON" transparent>
+              <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
+            </InlineField>
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
-                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                   label: capitalize(dedupType),
                   value: dedupType,
                   description: LogsDedupDescription[dedupType],
@@ -335,14 +366,15 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               deduplicatedRows={dedupedRows}
               dedupStrategy={dedupStrategy}
               getRowContext={this.props.getRowContext}
-              highlighterExpressions={highlighterExpressions}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               showContextToggle={showContextToggle}
               showLabels={showLabels}
               showTime={showTime}
+              enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
               timeZone={timeZone}
               getFieldLinks={getFieldLinks}
               logsSortOrder={logsSortOrder}
@@ -360,6 +392,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             loading={loading}
             queries={logsQueries ?? []}
             scrollToTopLogs={this.scrollToTopLogs}
+            addResultsToCache={addResultsToCache}
+            clearCache={clearCache}
           />
         </div>
         {!loading && !hasData && !scanning && (
@@ -384,9 +418,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   }
 }
 
-export const Logs = withTheme(UnthemedLogs);
+export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
   return {
     noData: css`
       > * {
@@ -398,17 +432,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       align-items: baseline;
       flex-wrap: wrap;
-      background-color: ${theme.colors.bg1};
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
-      border-radius: ${theme.border.radius.md};
-      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
-      border: 1px solid ${theme.colors.border2};
+      background-color: ${theme.colors.background.primary};
+      padding: ${theme.spacing(1, 2)};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(2, 0, 1)};
+      border: 1px solid ${theme.colors.border.medium};
     `,
     flipButton: css`
-      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+      margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
     radioButtons: css`
-      margin: 0 ${theme.spacing.sm};
+      margin: 0 ${theme.spacing(1)};
     `,
     logsSection: css`
       display: flex;
@@ -416,7 +450,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
     `,
     logRows: css`
-      overflow-x: scroll;
+      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-y: visible;
+      width: 100%;
+    `,
+    infoText: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.text.secondary};
     `,
   };
-});
+};

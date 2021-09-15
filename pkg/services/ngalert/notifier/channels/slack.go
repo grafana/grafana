@@ -10,20 +10,16 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -50,38 +46,38 @@ type SlackNotifier struct {
 
 var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
 
-const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
+var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*SlackNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if slackURL == "" {
-		slackURL = slackAPIEndpoint
+		slackURL = SlackAPIEndpoint
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
-		return nil, alerting.ValidationError{Reason: fmt.Sprintf("invalid URL %q: %s", slackURL, err)}
+		return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("invalid URL %q", slackURL), Err: err}
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
 	if recipient != "" {
 		if !reRecipient.MatchString(recipient) {
-			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
+			return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
 		}
-	} else if apiURL.String() == slackAPIEndpoint {
-		return nil, alerting.ValidationError{
+	} else if apiURL.String() == SlackAPIEndpoint {
+		return nil, receiverInitError{Cfg: *model,
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
 	}
 
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, alerting.ValidationError{
-			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
+		return nil, receiverInitError{Cfg: *model,
+			Reason: fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel),
 		}
 	}
 
@@ -104,14 +100,20 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 	}
 
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
-	if token == "" && apiURL.String() == slackAPIEndpoint {
-		return nil, alerting.ValidationError{
+	if token == "" && apiURL.String() == SlackAPIEndpoint {
+		return nil, receiverInitError{Cfg: *model,
 			Reason: "token must be specified when using the Slack chat API",
 		}
 	}
 
 	return &SlackNotifier{
-		NotifierBase:   old_notifiers.NewNotifierBase(model),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
 		URL:            apiURL,
 		Recipient:      recipient,
 		MentionUsers:   mentionUsers,
@@ -172,7 +174,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("User-Agent", "Grafana")
 	if sn.Token == "" {
-		if sn.URL.String() == slackAPIEndpoint {
+		if sn.URL.String() == SlackAPIEndpoint {
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
@@ -239,10 +241,11 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 }
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
 	alerts := types.Alerts(as...)
 	var tmplErr error
-	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+
+	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -257,14 +260,14 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
+				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},
 		},
 	}
 	if tmplErr != nil {
-		return nil, fmt.Errorf("failed to template Slack message: %w", tmplErr)
+		sn.log.Debug("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}
@@ -280,13 +283,13 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	if len(sn.MentionGroups) > 0 {
 		appendSpace()
 		for _, g := range sn.MentionGroups {
-			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
+			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", tmpl(g)))
 		}
 	}
 	if len(sn.MentionUsers) > 0 {
 		appendSpace()
 		for _, u := range sn.MentionUsers {
-			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", u))
+			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", tmpl(u)))
 		}
 	}
 

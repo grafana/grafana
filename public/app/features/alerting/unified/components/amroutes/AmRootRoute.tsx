@@ -28,7 +28,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="am-root-route-container">
       <div className={styles.titleContainer}>
         <h5 className={styles.title}>
           Root policy - <i>default for all alerts</i>

@@ -2,6 +2,7 @@ package mathexp
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -46,10 +47,10 @@ func TestFunc(t *testing.T) {
 			vars: Vars{
 				"A": Results{
 					[]Value{
-						makeSeriesNullableTime("", nil, nullTimeTP{
-							unixTimePointer(5, 0), float64Pointer(-2),
-						}, nullTimeTP{
-							unixTimePointer(10, 0), float64Pointer(-1),
+						makeSeries("", nil, tp{
+							time.Unix(5, 0), float64Pointer(-2),
+						}, tp{
+							time.Unix(10, 0), float64Pointer(-1),
 						}),
 					},
 				},
@@ -59,10 +60,10 @@ func TestFunc(t *testing.T) {
 			resultIs:  assert.Equal,
 			results: Results{
 				[]Value{
-					makeSeriesNullableTime("", nil, nullTimeTP{
-						unixTimePointer(5, 0), float64Pointer(2),
-					}, nullTimeTP{
-						unixTimePointer(10, 0), float64Pointer(1),
+					makeSeries("", nil, tp{
+						time.Unix(5, 0), float64Pointer(2),
+					}, tp{
+						time.Unix(10, 0), float64Pointer(1),
 					}),
 				},
 			},

@@ -4,11 +4,17 @@ import { Router } from 'react-router-dom';
 import Receivers from './Receivers';
 import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { updateAlertManagerConfig, fetchAlertManagerConfig } from './api/alertmanager';
-import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someGrafanaAlertManagerConfig } from './mocks';
+import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
+import {
+  mockDataSource,
+  MockDataSourceSrv,
+  someCloudAlertManagerConfig,
+  someCloudAlertManagerStatus,
+  someGrafanaAlertManagerConfig,
+} from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { fetchNotifiers } from './api/grafana';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
@@ -16,6 +22,8 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
+import { contextSrv } from 'app/core/services/context_srv';
+import { selectOptionInTest } from '@grafana/ui';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -26,8 +34,10 @@ const mocks = {
 
   api: {
     fetchConfig: typeAsJestMock(fetchAlertManagerConfig),
+    fetchStatus: typeAsJestMock(fetchStatus),
     updateConfig: typeAsJestMock(updateAlertManagerConfig),
     fetchNotifiers: typeAsJestMock(fetchNotifiers),
+    testReceivers: typeAsJestMock(testReceivers),
   },
 };
 
@@ -59,6 +69,7 @@ const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
+  testContactPointButton: byRole('button', { name: /Test/ }),
 
   receiversTable: byTestId('receivers-table'),
   templatesTable: byTestId('templates-table'),
@@ -69,7 +80,7 @@ const ui = {
   inputs: {
     name: byLabelText('Name'),
     email: {
-      addresses: byLabelText('Addresses'),
+      addresses: byLabelText(/Addresses/),
     },
     hipchat: {
       url: byLabelText('Hip Chat Url'),
@@ -86,7 +97,7 @@ const ui = {
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  userEvent.click(byText(optionText).get(selectElement));
+  await selectOptionInTest(selectElement, optionText);
 };
 
 describe('Receivers', () => {
@@ -95,10 +106,11 @@ describe('Receivers', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   });
 
-  it('Template and receiver tables are rendered, alert manager can be selected', async () => {
+  it('Template and receiver tables are rendered, alertmanager can be selected', async () => {
     mocks.api.fetchConfig.mockImplementation((name) =>
       Promise.resolve(name === GRAFANA_RULES_SOURCE_NAME ? someGrafanaAlertManagerConfig : someCloudAlertManagerConfig)
     );
@@ -139,6 +151,46 @@ describe('Receivers', () => {
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
   });
 
+  it('Grafana receiver can be tested', async () => {
+    mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+
+    await renderReceivers();
+
+    // go to new contact point page
+    userEvent.click(await ui.newContactPointButton.find());
+
+    await byRole('heading', { name: /create contact point/i }).find();
+    expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
+
+    // type in a name for the new receiver
+    await userEvent.type(ui.inputs.name.get(), 'my new receiver');
+
+    // enter some email
+    const email = ui.inputs.email.addresses.get();
+    userEvent.clear(email);
+    await userEvent.type(email, 'tester@grafana.com');
+
+    // try to test the contact point
+    userEvent.click(ui.testContactPointButton.get());
+
+    await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
+
+    expect(mocks.api.testReceivers).toHaveBeenCalledWith('grafana', [
+      {
+        grafana_managed_receiver_configs: [
+          {
+            disableResolveMessage: false,
+            name: 'test',
+            secureSettings: {},
+            settings: { addresses: 'tester@grafana.com', singleEmail: false },
+            type: 'email',
+          },
+        ],
+        name: 'test',
+      },
+    ]);
+  });
+
   it('Grafana receiver can be created', async () => {
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
@@ -154,10 +206,10 @@ describe('Receivers', () => {
     await userEvent.type(byLabelText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
-    await ui.inputs.name.find();
+    await ui.inputs.email.addresses.find();
 
     // select hipchat
-    clickSelectOption(byTestId('items.0.type').get(), 'HipChat');
+    await clickSelectOption(byTestId('items.0.type').get(), 'HipChat');
 
     // check that email options are gone and hipchat options appear
     expect(ui.inputs.email.addresses.query()).not.toBeInTheDocument();
@@ -191,10 +243,8 @@ describe('Receivers', () => {
                 disableResolveMessage: false,
                 name: 'my new receiver',
                 secureSettings: {},
-                sendReminder: true,
                 settings: {
                   apiKey: 'foobarbaz',
-                  roomid: '',
                   url: 'http://hipchat',
                 },
                 type: 'hipchat',
@@ -302,4 +352,25 @@ describe('Receivers', () => {
       },
     });
   }, 10000);
+
+  it('Loads config from status endpoint if there is no user config', async () => {
+    // loading an empty config with make it fetch config from status endpoint
+    mocks.api.fetchConfig.mockResolvedValue({
+      template_files: {},
+      alertmanager_config: {},
+    });
+    mocks.api.fetchStatus.mockResolvedValue(someCloudAlertManagerStatus);
+    await renderReceivers('CloudManager');
+
+    // check that receiver from the default config is represented
+    const receiversTable = await ui.receiversTable.find();
+    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(receiverRows[0]).toHaveTextContent('default-email');
+
+    // check that both config and status endpoints were called
+    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(1);
+    expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+    expect(mocks.api.fetchStatus).toHaveBeenLastCalledWith('CloudManager');
+  });
 });

@@ -20,10 +20,14 @@ export interface OptionsPaneCategoryProps {
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
+    const initialIsExpanded = isOpenDefault !== false;
+
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
-      isExpanded: isOpenDefault !== false,
+      isExpanded: initialIsExpanded,
     });
-    const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
+
+    // `savedState` can be undefined by typescript, so we have to handle that case
+    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
     const styles = useStyles2(getStyles);
 
     useEffect(() => {
@@ -54,7 +58,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     const boxStyles = cx(
       {
         [styles.box]: true,
-        [styles.boxExpanded]: isExpanded,
         [styles.boxNestedExpanded]: isNested && isExpanded,
       },
       className,
@@ -71,7 +74,11 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     });
 
     return (
-      <div className={boxStyles} data-testid="options-category">
+      <div
+        className={boxStyles}
+        data-testid="options-category"
+        aria-label={selectors.components.OptionsGroup.group(id)}
+      >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
@@ -89,13 +96,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      &:last-child {
-        border-bottom: none;
-      }
-    `,
-    boxExpanded: css`
-      border-bottom: 0;
+      border-top: 1px solid ${theme.colors.border.weak};
     `,
     boxNestedExpanded: css`
       margin-bottom: ${theme.spacing(2)};

@@ -40,14 +40,14 @@ docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 graf
 
 The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
 
-Setting               | Default value
-----------------------|---------------------------
-GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
-GF_PATHS_DATA         | /var/lib/grafana
-GF_PATHS_HOME         | /usr/share/grafana
-GF_PATHS_LOGS         | /var/log/grafana
-GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
-GF_PATHS_PROVISIONING | /etc/grafana/provisioning
+| Setting               | Default value             |
+| --------------------- | ------------------------- |
+| GF_PATHS_CONFIG       | /etc/grafana/grafana.ini  |
+| GF_PATHS_DATA         | /var/lib/grafana          |
+| GF_PATHS_HOME         | /usr/share/grafana        |
+| GF_PATHS_LOGS         | /var/log/grafana          |
+| GF_PATHS_PLUGINS      | /var/lib/grafana/plugins  |
+| GF_PATHS_PROVISIONING | /etc/grafana/provisioning |
 
 ## Logging
 
@@ -92,5 +92,5 @@ You may also specify multiple profiles to `GF_AWS_PROFILES` (e.g.
 Supported variables:
 
 - `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
-- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access  key (required).
+- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
 - `GF_AWS_${profile}_REGION`: AWS region (optional).

@@ -1,8 +1,8 @@
 module.exports = function getBabelConfig(options = {}) {
-  return {
+  const babelOptions = {
     cacheDirectory: true,
+    cacheCompression: false,
     babelrc: false,
-    // Note: order is top-to-bottom and/or left-to-right
     // Note: order is bottom-to-top and/or right-to-left
     presets: [
       [
@@ -36,8 +36,6 @@ module.exports = function getBabelConfig(options = {}) {
           allowDeclareFields: true,
         },
       ],
-      ['@babel/plugin-proposal-class-properties', { loose: true }],
-      ['@babel/plugin-proposal-private-methods', { loose: true }],
       ['@babel/plugin-proposal-object-rest-spread', { loose: true }],
       '@babel/plugin-transform-react-constant-elements',
       '@babel/plugin-proposal-nullish-coalescing-operator',
@@ -46,4 +44,10 @@ module.exports = function getBabelConfig(options = {}) {
       'angularjs-annotate',
     ],
   };
+
+  if (options.REACT_REFRESH) {
+    babelOptions.plugins.push('react-refresh/babel');
+  }
+
+  return babelOptions;
 };

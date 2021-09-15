@@ -25,7 +25,7 @@ const LabelsField: FC<Props> = ({ className }) => {
           return (
             <>
               <div className={styles.flexRow}>
-                <InlineLabel width={15}>Labels</InlineLabel>
+                <InlineLabel width={18}>Labels</InlineLabel>
                 <div className={styles.flexColumn}>
                   {fields.map((field, index) => {
                     return (
@@ -41,6 +41,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                                 required: { value: !!labels[index]?.value, message: 'Required.' },
                               })}
                               placeholder="key"
+                              data-testid={`label-key-${index}`}
                               defaultValue={field.key}
                             />
                           </Field>
@@ -55,6 +56,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                                 required: { value: !!labels[index]?.key, message: 'Required.' },
                               })}
                               placeholder="value"
+                              data-testid={`label-value-${index}`}
                               defaultValue={field.value}
                             />
                           </Field>
@@ -128,7 +130,7 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 207px;
+      width: 183px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};

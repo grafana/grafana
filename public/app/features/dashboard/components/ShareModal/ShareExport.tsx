@@ -139,7 +139,7 @@ export class ShareExport extends PureComponent<Props, State> {
           <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
         </Field>
         {config.featureToggles.trimDefaults && (
-          <Field label="Export with trimed dashboard json">
+          <Field label="Export with default values removed">
             <Switch value={trimDefaults} onChange={this.onTrimDefaultsChange} />
           </Field>
         )}

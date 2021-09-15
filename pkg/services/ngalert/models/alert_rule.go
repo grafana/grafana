@@ -17,6 +17,8 @@ var (
 	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
 	// ErrAlertRuleFailedValidation
 	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
+	// ErrAlertRuleUniqueConstraintViolation
+	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 )
 
 type NoDataState string
@@ -26,10 +28,9 @@ func (noDataState NoDataState) String() string {
 }
 
 const (
-	Alerting      NoDataState = "Alerting"
-	NoData        NoDataState = "NoData"
-	KeepLastState NoDataState = "KeepLastState"
-	OK            NoDataState = "OK"
+	Alerting NoDataState = "Alerting"
+	NoData   NoDataState = "NoData"
+	OK       NoDataState = "OK"
 )
 
 type ExecutionErrorState string
@@ -39,12 +40,11 @@ func (executionErrorState ExecutionErrorState) String() string {
 }
 
 const (
-	AlertingErrState      ExecutionErrorState = "Alerting"
-	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+	AlertingErrState ExecutionErrorState = "Alerting"
 )
 
 const (
-	UIDLabel          = "__alert_rule_uid__"
+	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 )
 
@@ -133,7 +133,8 @@ type GetAlertRuleByUIDQuery struct {
 
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
-	OrgID int64
+	OrgID         int64
+	NamespaceUIDs []string
 
 	Result []*AlertRule
 }
@@ -159,7 +160,8 @@ type ListRuleGroupAlertRulesQuery struct {
 
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
 type ListOrgRuleGroupsQuery struct {
-	OrgID int64
+	OrgID         int64
+	NamespaceUIDs []string
 
 	Result [][]string
 }

@@ -19,7 +19,7 @@ var (
 	logger = log.New("expr")
 )
 
-// baseNode includes commmon properties used across DPNodes.
+// baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
 	refID string
@@ -58,7 +58,7 @@ func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 }
 
 // String returns a string representation of the node. In particular for
-// %v formating in error messages.
+// %v formatting in error messages.
 func (b *baseNode) String() string {
 	return b.refID
 }
@@ -142,6 +142,7 @@ type DSNode struct {
 	timeRange  TimeRange
 	intervalMS int64
 	maxDP      int64
+	request    Request
 }
 
 // NodeType returns the data pipeline node type.
@@ -149,7 +150,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -160,12 +161,13 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
-		orgID:      orgID,
+		orgID:      req.OrgId,
 		query:      json.RawMessage(encodedQuery),
 		queryType:  rn.QueryType,
 		intervalMS: defaultIntervalMS,
 		maxDP:      defaultMaxDP,
 		timeRange:  rn.TimeRange,
+		request:    *req,
 	}
 
 	rawDsID, ok := rn.Query["datasourceId"]
@@ -184,7 +186,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 	}
 
 	var floatIntervalMS float64
-	if rawIntervalMS := rn.Query["intervalMs"]; ok {
+	if rawIntervalMS, ok := rn.Query["intervalMs"]; ok {
 		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
 			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
 		}
@@ -192,7 +194,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 	}
 
 	var floatMaxDP float64
-	if rawMaxDP := rn.Query["maxDataPoints"]; ok {
+	if rawMaxDP, ok := rn.Query["maxDataPoints"]; ok {
 		if floatMaxDP, ok = rawMaxDP.(float64); !ok {
 			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got type %T for refId %v", rawMaxDP, rn.RefID)
 		}
@@ -231,6 +233,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
+		Headers:       dn.request.Headers,
 	})
 
 	if err != nil {

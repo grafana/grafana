@@ -3,39 +3,40 @@ package pushhttp
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
+
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
+	"gopkg.in/macaron.v1"
 )
 
 var (
 	logger = log.New("live.push_http")
 )
 
-func init() {
-	registry.RegisterServiceWithPriority(&Gateway{}, registry.Low)
+func ProvideService(cfg *setting.Cfg, live *live.GrafanaLive) *Gateway {
+	logger.Info("Live Push Gateway initialization")
+	g := &Gateway{
+		Cfg:         cfg,
+		GrafanaLive: live,
+		converter:   convert.NewConverter(),
+	}
+	return g
 }
 
 // Gateway receives data and translates it to Grafana Live publications.
 type Gateway struct {
-	Cfg         *setting.Cfg      `inject:""`
-	GrafanaLive *live.GrafanaLive `inject:""`
+	Cfg         *setting.Cfg
+	GrafanaLive *live.GrafanaLive
 
 	converter *convert.Converter
-}
-
-// Init Gateway.
-func (g *Gateway) Init() error {
-	logger.Info("Telemetry Gateway initialization")
-
-	g.converter = convert.NewConverter()
-	return nil
 }
 
 // Run Gateway.
@@ -45,9 +46,9 @@ func (g *Gateway) Run(ctx context.Context) error {
 }
 
 func (g *Gateway) Handle(ctx *models.ReqContext) {
-	streamID := ctx.Params(":streamId")
+	streamID := macaron.Params(ctx.Req)[":streamId"]
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -57,9 +58,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// TODO Grafana 8: decide which formats to use or keep all.
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
-	unstableSchema := pushurl.UnstableSchemaFromValues(urlValues)
 
-	body, err := ctx.Req.Body().Bytes()
+	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -69,7 +69,6 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		"protocol", "http",
 		"streamId", streamID,
 		"bodyLength", len(body),
-		"unstableSchema", unstableSchema,
 		"frameFormat", frameFormat,
 	)
 
@@ -88,10 +87,47 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// interval = "1s" vs flush_interval = "5s"
 
 	for _, mf := range metricFrames {
-		err := stream.Push(ctx.SignedInUser.OrgId, mf.Key(), mf.Frame(), unstableSchema)
+		err := stream.Push(mf.Key(), mf.Frame())
 		if err != nil {
+			logger.Error("Error pushing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func (g *Gateway) HandlePath(ctx *models.ReqContext) {
+	streamID := macaron.Params(ctx.Req)[":streamId"]
+	path := macaron.Params(ctx.Req)[":path"]
+
+	body, err := io.ReadAll(ctx.Req.Body)
+	if err != nil {
+		logger.Error("Error reading body", "error", err)
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	logger.Debug("Live channel push request",
+		"protocol", "http",
+		"streamId", streamID,
+		"path", path,
+		"bodyLength", len(body),
+	)
+
+	channelID := "stream/" + streamID + "/" + path
+
+	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgId, channelID, body)
+	if err != nil {
+		logger.Error("Pipeline input processing error", "error", err, "body", string(body))
+		if errors.Is(err, liveDto.ErrInvalidChannelID) {
+			ctx.Resp.WriteHeader(http.StatusBadRequest)
+		} else {
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+	if !ruleFound {
+		logger.Error("No conversion rule for a channel", "error", err, "channel", channelID)
+		ctx.Resp.WriteHeader(http.StatusNotFound)
+		return
 	}
 }

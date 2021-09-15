@@ -1,14 +1,10 @@
-// Libraries
 import React, { Component } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-// Components
+import { connect, ConnectedProps } from 'react-redux';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
-// Redux
 import { initDashboard } from '../state/initDashboard';
-// Types
 import { StoreState } from 'app/types';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 export interface DashboardPageRouteParams {
@@ -17,10 +13,18 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {
-  initDashboard: typeof initDashboard;
-  dashboard: DashboardModel | null;
-}
+const mapStateToProps = (state: StoreState) => ({
+  dashboard: state.dashboard.getModel(),
+});
+
+const mapDispatchToProps = {
+  initDashboard,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> &
+  ConnectedProps<typeof connector>;
 
 export interface State {
   panel: PanelModel | null;
@@ -58,12 +62,7 @@ export class SoloPanelPage extends Component<Props, State> {
 
     // we just got a new dashboard
     if (!prevProps.dashboard || prevProps.dashboard.uid !== dashboard.uid) {
-      const panelId = this.getPanelId();
-
-      // need to expand parent row if this panel is inside a row
-      dashboard.expandParentRowFor(panelId);
-
-      const panel = dashboard.getPanelById(panelId);
+      const panel = dashboard.getPanelByUrlId(this.props.queryParams.panelId);
 
       if (!panel) {
         this.setState({ notFound: true });
@@ -88,18 +87,27 @@ export class SoloPanelPage extends Component<Props, State> {
 
     return (
       <div className="panel-solo">
-        <DashboardPanel dashboard={dashboard} panel={panel} isEditing={false} isViewing={false} isInView={true} />
+        <AutoSizer>
+          {({ width, height }) => {
+            if (width === 0) {
+              return null;
+            }
+            return (
+              <DashboardPanel
+                width={width}
+                height={height}
+                dashboard={dashboard}
+                panel={panel}
+                isEditing={false}
+                isViewing={false}
+                isInView={true}
+              />
+            );
+          }}
+        </AutoSizer>
       </div>
     );
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  dashboard: state.dashboard.getModel(),
-});
-
-const mapDispatchToProps = {
-  initDashboard,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(SoloPanelPage));
+export default connector(SoloPanelPage);

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -25,7 +23,7 @@ const (
 )
 
 var (
-	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
+	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -44,19 +42,25 @@ type PagerdutyNotifier struct {
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	if key == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		Key:          key,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		Key: key,
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
@@ -93,7 +97,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
-		Url:        pagerdutyEventAPIURL,
+		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -118,9 +122,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
+	tmpl, data := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	details := make(map[string]string, len(pn.CustomDetails))
 	for k, v := range pn.CustomDetails {
@@ -141,8 +144,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
-		Payload: &pagerDutyPayload{
+		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
+		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
 			Severity:      tmpl(pn.Severity),
@@ -163,7 +166,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
+		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil
@@ -174,18 +177,15 @@ func (pn *PagerdutyNotifier) SendResolved() bool {
 }
 
 type pagerDutyMessage struct {
-	RoutingKey  string            `json:"routing_key,omitempty"`
-	ServiceKey  string            `json:"service_key,omitempty"`
-	DedupKey    string            `json:"dedup_key,omitempty"`
-	IncidentKey string            `json:"incident_key,omitempty"`
-	EventType   string            `json:"event_type,omitempty"`
-	Description string            `json:"description,omitempty"`
-	EventAction string            `json:"event_action"`
-	Payload     *pagerDutyPayload `json:"payload"`
-	Client      string            `json:"client,omitempty"`
-	ClientURL   string            `json:"client_url,omitempty"`
-	Details     map[string]string `json:"details,omitempty"`
-	Links       []pagerDutyLink   `json:"links,omitempty"`
+	RoutingKey  string           `json:"routing_key,omitempty"`
+	ServiceKey  string           `json:"service_key,omitempty"`
+	DedupKey    string           `json:"dedup_key,omitempty"`
+	Description string           `json:"description,omitempty"`
+	EventAction string           `json:"event_action"`
+	Payload     pagerDutyPayload `json:"payload"`
+	Client      string           `json:"client,omitempty"`
+	ClientURL   string           `json:"client_url,omitempty"`
+	Links       []pagerDutyLink  `json:"links,omitempty"`
 }
 
 type pagerDutyLink struct {
@@ -197,7 +197,6 @@ type pagerDutyPayload struct {
 	Summary       string            `json:"summary"`
 	Source        string            `json:"source"`
 	Severity      string            `json:"severity"`
-	Timestamp     string            `json:"timestamp,omitempty"`
 	Class         string            `json:"class,omitempty"`
 	Component     string            `json:"component,omitempty"`
 	Group         string            `json:"group,omitempty"`

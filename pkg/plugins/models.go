@@ -71,14 +71,31 @@ type PluginBase struct {
 	PluginDir       string              `json:"-"`
 	DefaultNavUrl   string              `json:"-"`
 	IsCorePlugin    bool                `json:"-"`
-	Files           []string            `json:"-"`
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
+	SignedFiles     PluginFiles         `json:"-"`
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 
 	Root *PluginBase
+}
+
+func (p *PluginBase) IncludedInSignature(file string) bool {
+	// permit Core plugin files
+	if p.IsCorePlugin {
+		return true
+	}
+
+	// permit when no signed files (no MANIFEST)
+	if p.SignedFiles == nil {
+		return true
+	}
+
+	if _, exists := p.SignedFiles[file]; !exists {
+		return false
+	}
+	return true
 }
 
 type PluginDependencies struct {
@@ -96,8 +113,17 @@ type PluginInclude struct {
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
 	Icon       string          `json:"icon"`
+	UID        string          `json:"uid"`
 
 	Id string `json:"-"`
+}
+
+func (e PluginInclude) GetSlugOrUIDLink() string {
+	if len(e.UID) > 0 {
+		return "/d/" + e.UID
+	} else {
+		return "/dashboard/db/" + e.Slug
+	}
 }
 
 type PluginDependencyItem struct {
@@ -149,4 +175,8 @@ type EnabledPlugins struct {
 	Panels      []*PanelPlugin
 	DataSources map[string]*DataSourcePlugin
 	Apps        []*AppPlugin
+}
+
+type UpdateInfo struct {
+	PluginZipURL string
 }

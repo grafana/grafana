@@ -17,12 +17,6 @@ interface Props {
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
   const { expr, maxLines, instant, datasource, onChange } = props;
 
-  // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
-  const absoluteRange = {
-    from: Date.now() - 10000,
-    to: Date.now(),
-  };
-
   const queryWithRefId: LokiQuery = {
     refId: '',
     expr,
@@ -38,11 +32,11 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
         onRunQuery={() => {}}
         onBlur={() => {}}
         history={[]}
-        absoluteRange={absoluteRange}
         ExtraFieldElement={
           <LokiOptionFields
             queryType={queryWithRefId.instant ? 'instant' : 'range'}
             lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
+            resolution={queryWithRefId.resolution || 1}
             query={queryWithRefId}
             onRunQuery={() => {}}
             onChange={onChange}

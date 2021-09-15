@@ -7,6 +7,7 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof ReturnToDashb
   const defaultProps = {
     originPanelId: 1,
     splitted: false,
+    canEdit: true,
     exploreId: ExploreId.left,
     queries: [],
     setDashboardQueriesToUpdateOnLoad: jest.fn(),
@@ -29,6 +30,11 @@ describe('ReturnToDashboardButton', () => {
   it('should not render any button if split view', () => {
     render(<ReturnToDashboardButton {...createProps({ splitted: true })} />);
     expect(screen.queryByTestId(/returnButton/i)).toBeNull();
+  });
+
+  it('should not render return to panel with changes button if user cannot edit panel', () => {
+    render(<ReturnToDashboardButton {...createProps({ canEdit: false })} />);
+    expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(1);
   });
 
   it('should show option to return to dashboard with changes', () => {

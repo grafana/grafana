@@ -12,11 +12,12 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
+        prettifyLogMessage={true}
         timeZone={'utc'}
+        enableLogDetails={true}
       />
     );
 
@@ -33,12 +34,13 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
+        prettifyLogMessage={true}
         timeZone={'utc'}
         previewLimit={1}
+        enableLogDetails={true}
       />
     );
 
@@ -63,11 +65,12 @@ describe('LogRows', () => {
         logRows={rows}
         deduplicatedRows={dedupedRows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
+        prettifyLogMessage={true}
         timeZone={'utc'}
+        enableLogDetails={true}
       />
     );
 
@@ -83,11 +86,12 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
+        prettifyLogMessage={true}
         timeZone={'utc'}
+        enableLogDetails={true}
       />
     );
 
@@ -104,12 +108,13 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
+        prettifyLogMessage={true}
         timeZone={'utc'}
         logsSortOrder={LogsSortOrder.Ascending}
+        enableLogDetails={true}
       />
     );
 
@@ -127,12 +132,13 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
+        prettifyLogMessage={true}
         timeZone={'utc'}
         logsSortOrder={LogsSortOrder.Descending}
+        enableLogDetails={true}
       />
     );
 

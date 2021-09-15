@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
 import { CloudWatchMetricsQuery, SelectableStrings } from '../types';
 import { CloudWatchDatasource } from '../datasource';
-import { Dimensions, QueryInlineField, Stats } from '.';
+import { Dimensions, QueryInlineField } from '.';
 
 export type Props = {
   query: CloudWatchMetricsQuery;
@@ -120,12 +120,25 @@ export function MetricsQueryFieldsEditor({
             />
           </QueryInlineField>
 
-          <QueryInlineField label="Stats">
-            <Stats
-              stats={datasource.standardStatistics.map(toOption)}
-              values={metricsQuery.statistics}
-              onChange={(statistics) => onQueryChange({ ...metricsQuery, statistics })}
-              variableOptionGroup={variableOptionGroup}
+          <QueryInlineField label="Statistic">
+            <Segment
+              allowCustomValue
+              value={query.statistic}
+              options={[
+                ...datasource.standardStatistics.filter((s) => s !== query.statistic).map(toOption),
+                variableOptionGroup,
+              ]}
+              onChange={({ value: statistic }) => {
+                if (
+                  !datasource.standardStatistics.includes(statistic) &&
+                  !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
+                  !statistic.startsWith('$')
+                ) {
+                  return;
+                }
+
+                onQueryChange({ ...metricsQuery, statistic });
+              }}
             />
           </QueryInlineField>
 

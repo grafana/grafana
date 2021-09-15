@@ -12,7 +12,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     queries: [],
     sortOrder: SortOrder.Ascending,
     activeDatasourceOnly: false,
-    datasourceFilters: null,
+    datasourceFilters: [],
     retentionPeriod: 14,
     height: 100,
     exploreId: ExploreId.left,

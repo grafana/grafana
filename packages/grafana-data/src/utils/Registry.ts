@@ -1,3 +1,4 @@
+import { PluginState } from '../types';
 import { SelectableValue } from '../types/select';
 
 export interface RegistryItem {
@@ -11,6 +12,11 @@ export interface RegistryItem {
    *  like: 'all' and 'any' matchers;
    */
   excludeFromPicker?: boolean;
+
+  /**
+   * Optional feature state
+   */
+  state?: PluginState;
 }
 
 export interface RegistryItemWithOptions<TOptions = any> extends RegistryItem {
@@ -104,6 +110,10 @@ export class Registry<T extends RegistryItem> {
         label: ext.name,
         description: ext.description,
       };
+
+      if (ext.state === PluginState.alpha) {
+        option.label += ' (alpha)';
+      }
 
       select.options.push(option);
       if (currentOptions[ext.id]) {

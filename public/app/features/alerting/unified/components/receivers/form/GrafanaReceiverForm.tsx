@@ -7,10 +7,15 @@ import {
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { fetchGrafanaNotifiersAction, updateAlertManagerConfigAction } from '../../../state/actions';
+import {
+  fetchGrafanaNotifiersAction,
+  testReceiversAction,
+  updateAlertManagerConfigAction,
+} from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import {
+  formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
   updateConfigWithReceiver,
@@ -26,7 +31,6 @@ interface Props {
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
-  sendReminder: true,
   secureSettings: {},
   settings: {},
   secureFields: {},
@@ -69,6 +73,22 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     );
   };
 
+  const onTestChannel = (values: GrafanaChannelValues) => {
+    const existing: GrafanaManagedReceiverConfig | undefined = id2original[values.__id];
+    const chan = formChannelValuesToGrafanaChannelConfig(values, defaultChannelValues, 'test', existing);
+    dispatch(
+      testReceiversAction({
+        alertManagerSourceName,
+        receivers: [
+          {
+            name: 'test',
+            grafana_managed_receiver_configs: [chan],
+          },
+        ],
+      })
+    );
+  };
+
   const takenReceiverNames = useMemo(
     () => config.alertmanager_config.receivers?.map(({ name }) => name).filter((name) => name !== existing?.name) ?? [],
     [config, existing]
@@ -80,6 +100,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
         config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}
+        onTestChannel={onTestChannel}
         notifiers={grafanaNotifiers.result}
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}

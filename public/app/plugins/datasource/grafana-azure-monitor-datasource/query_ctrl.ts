@@ -27,14 +27,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.LogAnalytics, label: 'Logs' },
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+    { id: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 
   // Query types that have been migrated to React
   reactQueryEditors = [
     AzureQueryType.AzureMonitor,
     AzureQueryType.LogAnalytics,
-    // AzureQueryType.ApplicationInsights,
-    // AzureQueryType.InsightsAnalytics,
+    AzureQueryType.ApplicationInsights,
+    AzureQueryType.InsightsAnalytics,
+    AzureQueryType.AzureResourceGraph,
   ];
 
   // target: AzureMonitorQuery;
@@ -44,11 +46,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     refId: string;
     queryType: AzureQueryType;
     subscription: string;
+    subscriptions: string[];
     azureMonitor: AzureMetricQuery;
     azureLogAnalytics: {
       query: string;
       resultFormat: string;
       workspace: string;
+    };
+    azureResourceGraph: {
+      query: string;
+      resultFormat: string;
     };
     appInsights: {
       // metric style query when rawQuery == false
@@ -105,6 +112,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace
           : '',
     },
+    azureResourceGraph: {
+      resultFormat: 'table',
+    },
     appInsights: {
       metricName: this.defaultDropdownValue,
       // dimension: [],
@@ -122,7 +132,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   showLastQuery = false;
   lastQuery = '';
   lastQueryError?: string;
-  subscriptions: Array<{ text: string; value: string }>;
+  subscriptions: Array<{ text: string; value: string }> = [];
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
@@ -196,7 +206,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (this.target.azureMonitor.timeGrainUnit) {
       if (this.target.azureMonitor.timeGrain !== 'auto') {
         this.target.azureMonitor.timeGrain = TimegrainConverter.createISO8601Duration(
-          this.target.azureMonitor.timeGrain,
+          this.target.azureMonitor.timeGrain ?? 'auto',
           this.target.azureMonitor.timeGrainUnit
         );
       }
@@ -327,6 +337,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.subscription = this.subscriptions[0].value;
       }
 
+      if (!this.target.subscriptions) {
+        this.target.subscriptions = subscriptions.map((sub) => sub.value);
+      }
+
       return this.subscriptions;
     });
   }
@@ -358,7 +372,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   getAzureMonitorAutoInterval() {
-    return this.generateAutoUnits(this.target.azureMonitor.timeGrain, (this.target.azureMonitor as any).timeGrains);
+    return this.generateAutoUnits(
+      this.target.azureMonitor.timeGrain ?? 'auto',
+      (this.target.azureMonitor as any).timeGrains
+    );
   }
 
   getApplicationInsightAutoInterval() {
@@ -366,6 +383,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   azureMonitorAddDimensionFilter() {
+    this.target.azureMonitor = this.target.azureMonitor ?? {};
+    this.target.azureMonitor.dimensionFilters = this.target.azureMonitor.dimensionFilters ?? [];
+
     this.target.azureMonitor.dimensionFilters.push({
       dimension: '',
       operator: 'eq',
@@ -374,6 +394,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   azureMonitorRemoveDimensionFilter(index: number) {
+    this.target.azureMonitor = this.target.azureMonitor ?? {};
+    this.target.azureMonitor.dimensionFilters = this.target.azureMonitor.dimensionFilters ?? [];
+
     this.target.azureMonitor.dimensionFilters.splice(index, 1);
     this.refresh();
   }

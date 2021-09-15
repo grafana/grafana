@@ -5,30 +5,29 @@ import { AddRemove } from '../../../../AddRemove';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { Filters } from '../../aggregations';
 import { changeBucketAggregationSetting } from '../../state/actions';
-import { BucketAggregationAction } from '../../state/types';
 import { addFilter, changeFilter, removeFilter } from './state/actions';
 import { reducer as filtersReducer } from './state/reducer';
 
 interface Props {
-  value: Filters;
+  bucketAgg: Filters;
 }
 
-export const FiltersSettingsEditor = ({ value }: Props) => {
-  const upperStateDispatch = useDispatch<BucketAggregationAction<Filters>>();
+export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
+  const upperStateDispatch = useDispatch();
 
   const dispatch = useStatelessReducer(
-    (newState) => upperStateDispatch(changeBucketAggregationSetting(value, 'filters', newState)),
-    value.settings?.filters,
+    (newValue) => upperStateDispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'filters', newValue })),
+    bucketAgg.settings?.filters,
     filtersReducer
   );
 
   // The model might not have filters (or an empty array of filters) in it because of the way it was built in previous versions of the datasource.
   // If this is the case we add a default one.
   useEffect(() => {
-    if (!value.settings?.filters?.length) {
+    if (!bucketAgg.settings?.filters?.length) {
       dispatch(addFilter());
     }
-  }, [dispatch, value.settings?.filters?.length]);
+  }, [dispatch, bucketAgg.settings?.filters?.length]);
 
   return (
     <>
@@ -38,7 +37,7 @@ export const FiltersSettingsEditor = ({ value }: Props) => {
           flex-direction: column;
         `}
       >
-        {value.settings?.filters!.map((filter, index) => (
+        {bucketAgg.settings?.filters!.map((filter, index) => (
           <div
             key={index}
             className={css`
@@ -55,7 +54,7 @@ export const FiltersSettingsEditor = ({ value }: Props) => {
                   placeholder="Lucene Query"
                   portalOrigin="elasticsearch"
                   onBlur={() => {}}
-                  onChange={(query) => dispatch(changeFilter(index, { ...filter, query }))}
+                  onChange={(query) => dispatch(changeFilter({ index, filter: { ...filter, query } }))}
                   query={filter.query}
                 />
               </InlineField>
@@ -63,13 +62,13 @@ export const FiltersSettingsEditor = ({ value }: Props) => {
             <InlineField label="Label" labelWidth={10}>
               <Input
                 placeholder="Label"
-                onBlur={(e) => dispatch(changeFilter(index, { ...filter, label: e.target.value }))}
+                onBlur={(e) => dispatch(changeFilter({ index, filter: { ...filter, label: e.target.value } }))}
                 defaultValue={filter.label}
               />
             </InlineField>
             <AddRemove
               index={index}
-              elements={value.settings?.filters || []}
+              elements={bucketAgg.settings?.filters || []}
               onAdd={() => dispatch(addFilter())}
               onRemove={() => dispatch(removeFilter(index))}
             />

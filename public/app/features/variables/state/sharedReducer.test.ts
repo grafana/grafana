@@ -20,9 +20,9 @@ import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
+  initialVariablesState,
   toVariablePayload,
   VariableIdentifier,
-  initialVariablesState,
   VariablesState,
 } from './types';
 import { variableAdapters } from '../adapters';

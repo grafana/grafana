@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
-import { LegendDisplayMode } from './models.gen';
+import { LegendDisplayMode } from '@grafana/schema';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
 import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
@@ -21,6 +21,7 @@ export function VizLegend<T>({
   placement,
   className,
   itemRenderer,
+  readonly,
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility } = usePanelContext();
 
@@ -85,6 +86,7 @@ export function VizLegend<T>({
           onLabelMouseEnter={onMouseEnter}
           onLabelMouseOut={onMouseOut}
           itemRenderer={itemRenderer}
+          readonly={readonly}
         />
       );
     case LegendDisplayMode.List:
@@ -97,6 +99,7 @@ export function VizLegend<T>({
           onLabelMouseOut={onMouseOut}
           onLabelClick={onLegendLabelClick}
           itemRenderer={itemRenderer}
+          readonly={readonly}
         />
       );
     default:

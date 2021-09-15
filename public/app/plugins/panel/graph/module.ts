@@ -184,10 +184,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
-  issueQueries(datasource: any) {
-    return super.issueQueries(datasource);
-  }
-
   zoomOut(evt: any) {
     appEvents.publish(new ZoomOutEvent(2));
   }

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Button, HorizontalGroup, VerticalGroup } from '@grafana/ui';
+import { Button, HorizontalGroup, useStyles, VerticalGroup } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+function getStyles() {
+  return {
+    wrapper: css`
+      label: wrapper;
+      pointer-events: all;
+    `,
+  };
+}
 
 interface Props<Config> {
   config: Config;
@@ -20,9 +30,10 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
   // For debugging the layout, should be removed here and maybe moved to panel config later on
   const allowConfiguration = false;
+  const styles = useStyles(getStyles);
 
   return (
-    <div>
+    <div className={styles.wrapper}>
       <VerticalGroup spacing="sm">
         <HorizontalGroup spacing="xs">
           <Button

@@ -5,13 +5,6 @@ export type AlertManagerCortexConfig = {
   alertmanager_config: AlertmanagerConfig;
 };
 
-// NOTE - This type is incomplete! But currently, we don't need more.
-export type AlertmanagerStatusPayload = {
-  config: {
-    original: string;
-  };
-};
-
 export type TLSConfig = {
   ca_file: string;
   cert_file: string;
@@ -71,9 +64,8 @@ export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage: boolean;
   secureFields?: Record<string, boolean>;
-  secureSettings?: Record<string, unknown>;
-  settings: Record<string, unknown>;
-  sendReminder: boolean;
+  secureSettings?: Record<string, any>;
+  settings: Record<string, any>;
   type: string;
   name: string;
   updated?: string;
@@ -84,21 +76,22 @@ export type Receiver = {
   name: string;
 
   email_configs?: EmailConfig[];
-  pagerduty_configs?: unknown[];
-  pushover_configs?: unknown[];
-  slack_configs?: unknown[];
-  opsgenie_configs?: unknown[];
+  pagerduty_configs?: any[];
+  pushover_configs?: any[];
+  slack_configs?: any[];
+  opsgenie_configs?: any[];
   webhook_configs?: WebhookConfig[];
-  victorops_configs?: unknown[];
-  wechat_configs?: unknown[];
+  victorops_configs?: any[];
+  wechat_configs?: any[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
-  [key: string]: unknown;
+  [key: string]: any;
 };
 
 export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
+  matchers?: string[];
   match?: Record<string, string>;
   match_re?: Record<string, string>;
   group_wait?: string;
@@ -143,10 +136,11 @@ export type AlertmanagerConfig = {
   receivers?: Receiver[];
 };
 
-export type SilenceMatcher = {
+export type Matcher = {
   name: string;
   value: string;
   isRegex: boolean;
+  isEqual: boolean;
 };
 
 export enum SilenceState {
@@ -161,9 +155,16 @@ export enum AlertState {
   Suppressed = 'suppressed',
 }
 
+export enum MatcherOperator {
+  equal = '=',
+  notEqual = '!=',
+  regex = '=~',
+  notRegex = '!~',
+}
+
 export type Silence = {
   id: string;
-  matchers?: SilenceMatcher[];
+  matchers?: Matcher[];
   startsAt: string;
   endsAt: string;
   updatedAt: string;
@@ -176,7 +177,7 @@ export type Silence = {
 
 export type SilenceCreatePayload = {
   id?: string;
-  matchers?: SilenceMatcher[];
+  matchers?: Matcher[];
   startsAt: string;
   endsAt: string;
   createdBy: string;
@@ -207,5 +208,41 @@ export type AlertmanagerGroup = {
   labels: { [key: string]: string };
   receiver: { name: string };
   alerts: AlertmanagerAlert[];
-  id: string;
 };
+
+export interface AlertmanagerStatus {
+  cluster: {
+    peers: unknown;
+    status: string;
+  };
+  config: AlertmanagerConfig;
+  uptime: string;
+  versionInfo: {
+    branch: string;
+    buildDate: string;
+    buildUser: string;
+    goVersion: string;
+    revision: string;
+    version: string;
+  };
+}
+
+export interface TestReceiversPayload {
+  receivers?: Receiver[];
+}
+
+interface TestReceiversResultGrafanaReceiverConfig {
+  name: string;
+  uid?: string;
+  error?: string;
+  status: 'failed';
+}
+
+interface TestReceiversResultReceiver {
+  name: string;
+  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
+}
+export interface TestReceiversResult {
+  notified_at: string;
+  receivers: TestReceiversResultReceiver[];
+}

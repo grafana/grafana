@@ -4,11 +4,11 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { getValueFormat } from '../valueFormats/valueFormats';
+import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { dateTime } from '../datetime';
+import { dateTime, dateTimeParse } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
-import { getScaleCalculator, ScaleCalculator } from './scale';
+import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
 
@@ -45,15 +45,31 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
+  let showMs = false;
 
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+    if (field.values && field.values.length > 1) {
+      let start = field.values.get(0);
+      let end = field.values.get(field.values.length - 1);
+      if (typeof start === 'string') {
+        start = dateTimeParse(start).unix();
+        end = dateTimeParse(end).unix();
+      } else {
+        start /= 1e3;
+        end /= 1e3;
+      }
+      showMs = end - start < 60; //show ms when minute or less
+    }
+  } else if (field.type === FieldType.boolean) {
+    if (!isBooleanUnit(unit)) {
+      unit = 'bool';
+    }
   }
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
-  const defaultColor = getDefaultColorFunc(field, scaleFunc, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
@@ -90,7 +106,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!isNaN(numeric)) {
       if (shouldFormat && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone);
+        const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;
@@ -113,7 +129,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     if (!color) {
-      const scaleResult = defaultColor(value);
+      const scaleResult = scaleFunc(-Infinity);
       color = scaleResult.color;
       percent = scaleResult.percent;
     }
@@ -131,29 +147,4 @@ export function getRawDisplayProcessor(): DisplayProcessor {
     text: `${value}`,
     numeric: (null as unknown) as number,
   });
-}
-
-function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: GrafanaTheme2) {
-  if (field.type === FieldType.string) {
-    return (value: any) => {
-      if (!value) {
-        return { color: theme.colors.background.primary, percent: 0 };
-      }
-
-      const hc = strHashCode(value as string);
-      return {
-        color: theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)],
-        percent: 0,
-      };
-    };
-  }
-  return (value: any) => scaleFunc(-Infinity);
-}
-
-/**
- * Converts a string into a numeric value -- we just need it to be different
- * enough so that it has a reasonable distribution across a color pallet
- */
-function strHashCode(str: string) {
-  return str.split('').reduce((prevHash, currVal) => ((prevHash << 5) - prevHash + currVal.charCodeAt(0)) | 0, 0);
 }

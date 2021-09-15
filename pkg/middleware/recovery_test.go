@@ -65,10 +65,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.m.Use(Recovery(cfg))
 
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
 
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)

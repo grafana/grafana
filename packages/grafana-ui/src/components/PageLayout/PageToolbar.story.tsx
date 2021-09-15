@@ -27,8 +27,8 @@ export const Examples = () => {
           pageIcon="apps"
           title="A very long dashboard name"
           parent="A long folder name"
-          onClickTitle={() => action('Title clicked')}
-          onClickParent={() => action('Parent clicked')}
+          titleHref=""
+          parentHref=""
           leftItems={[
             <IconButton name="share-alt" size="lg" key="share" />,
             <IconButton name="favorite" iconType="mono" size="lg" key="favorite" />,

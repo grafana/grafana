@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Plugin } from 'slate';
 import {
   SlatePrism,
@@ -18,16 +19,10 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { PromQuery, PromOptions } from '../types';
 import { roundMsToMin } from '../language_utils';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import {
-  ExploreQueryFieldProps,
-  QueryHint,
-  isDataFrame,
-  toLegacyResponseData,
-  HistoryItem,
-  TimeRange,
-} from '@grafana/data';
+import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
+import { MonacoQueryFieldLazy } from './monaco-query-field/MonacoQueryFieldLazy';
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -74,9 +69,10 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
-  history: Array<HistoryItem<PromQuery>>;
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
   ExtraFieldElement?: ReactNode;
+  placeholder?: string;
+  'data-testid'?: string;
 }
 
 interface PromQueryFieldState {
@@ -87,7 +83,7 @@ interface PromQueryFieldState {
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: Plugin[];
-  languageProviderInitializationPromise: CancelablePromise<any>;
+  declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
@@ -151,24 +147,21 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshHint = () => {
     const { datasource, query, data } = this.props;
+    const initHints = datasource.getInitHints();
+    const initHint = initHints.length > 0 ? initHints[0] : null;
 
     if (!data || data.series.length === 0) {
-      this.setState({ hint: null });
+      this.setState({
+        hint: initHint,
+      });
       return;
     }
 
     const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    const hints = datasource.getQueryHints(query, result);
-    let hint = hints.length > 0 ? hints[0] : null;
+    const queryHints = datasource.getQueryHints(query, result);
+    let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
-    // Hint for big disabled lookups
-    if (!hint && datasource.lookupsDisabled) {
-      hint = {
-        label: `Labels and metrics lookup was disabled in data source settings.`,
-        type: 'INFO',
-      };
-    }
-    this.setState({ hint });
+    this.setState({ hint: queryHint ?? initHint });
   };
 
   refreshMetrics = async () => {
@@ -271,16 +264,24 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       datasource: { languageProvider },
       query,
       ExtraFieldElement,
+      placeholder = 'Enter a PromQL query (run with Shift+Enter)',
+      history = [],
     } = this.props;
+
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
     const hasMetrics = languageProvider.metrics.length > 0;
     const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, hasMetrics);
     const buttonDisabled = !(syntaxLoaded && hasMetrics);
 
+    const isMonacoEditorEnabled = config.featureToggles.prometheusMonaco;
+
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
           <button
             className="gf-form-label query-keyword pointer"
             onClick={this.onClickChooserButton}
@@ -291,19 +292,29 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           </button>
 
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-            <QueryField
-              additionalPlugins={this.plugins}
-              cleanText={cleanText}
-              query={query.expr}
-              onTypeahead={this.onTypeahead}
-              onWillApplySuggestion={willApplySuggestion}
-              onBlur={this.props.onBlur}
-              onChange={this.onChangeQuery}
-              onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a PromQL query (run with Shift+Enter)"
-              portalOrigin="prometheus"
-              syntaxLoaded={syntaxLoaded}
-            />
+            {isMonacoEditorEnabled ? (
+              <MonacoQueryFieldLazy
+                languageProvider={languageProvider}
+                history={history}
+                onChange={this.onChangeQuery}
+                onRunQuery={this.props.onRunQuery}
+                initialValue={query.expr ?? ''}
+              />
+            ) : (
+              <QueryField
+                additionalPlugins={this.plugins}
+                cleanText={cleanText}
+                query={query.expr}
+                onTypeahead={this.onTypeahead}
+                onWillApplySuggestion={willApplySuggestion}
+                onBlur={this.props.onBlur}
+                onChange={this.onChangeQuery}
+                onRunQuery={this.props.onRunQuery}
+                placeholder={placeholder}
+                portalOrigin="prometheus"
+                syntaxLoaded={syntaxLoaded}
+              />
+            )}
           </div>
         </div>
         {labelBrowserVisible && (

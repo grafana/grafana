@@ -11,9 +11,9 @@
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
 
-# Documentation owner: Diana Payton
-/docs/ @grafana/docs-squad
-/contribute/ @marcusolsson @grafana/docs-squad
+# Documentation owner: Jita Chatterjee
+/docs/ @grafana/docs-squad @pkolyvas
+/contribute/ @marcusolsson @grafana/docs-squad @pkolyvas
 /docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
@@ -21,6 +21,10 @@
 *.go @grafana/backend-platform
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
+
+# Continuous Integration
+.drone.yml @malcolmholmes @dsotirakis @zserge
+/scripts/drone/ @malcolmholmes @dsotirakis @zserge
 
 # Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/cloud-datasources @grafana/observability-squad

@@ -19,12 +19,10 @@ func TestEmailIntegrationTest(t *testing.T) {
 		ns.Bus = bus.New()
 		ns.Cfg = setting.NewCfg()
 		ns.Cfg.Smtp.Enabled = true
-		ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
+		ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
 		ns.Cfg.Smtp.FromAddress = "from@address.com"
 		ns.Cfg.Smtp.FromName = "Grafana Admin"
-
-		err := ns.Init()
-		So(err, ShouldBeNil)
+		ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
 
 		Convey("When sending reset email password", func() {
 			cmd := &models.SendEmailCommand{
@@ -52,7 +50,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 					},
 				},
 				To:       []string{"asdf@asdf.com"},
-				Template: "alert_notification.html",
+				Template: "alert_notification",
 			}
 
 			err := ns.sendEmailCommandHandler(cmd)
@@ -61,7 +59,9 @@ func TestEmailIntegrationTest(t *testing.T) {
 			sentMsg := <-ns.mailQueue
 			So(sentMsg.From, ShouldEqual, "Grafana Admin <from@address.com>")
 			So(sentMsg.To[0], ShouldEqual, "asdf@asdf.com")
-			err = ioutil.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body), 0777)
+			err = ioutil.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body["text/html"]), 0777)
+			So(err, ShouldBeNil)
+			err = ioutil.WriteFile("../../../tmp/test_email.txt", []byte(sentMsg.Body["text/plain"]), 0777)
 			So(err, ShouldBeNil)
 		})
 	})

@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import {
   ArrayDataFrame,
   DataQueryResponse,
@@ -15,7 +15,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { setTimeSrv } from '../dashboard/services/TimeSrv';
 import { from, Observable } from 'rxjs';
 import { LokiDatasource } from '../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../plugins/datasource/loki/types';
@@ -25,8 +24,18 @@ import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
 import { Route, Router } from 'react-router-dom';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { initialUserState } from '../profile/state/reducers';
+import { Echo } from 'app/core/services/echo/Echo';
 
 type Mock = jest.Mock;
+
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -53,13 +62,13 @@ describe('Wrapper', () => {
     // At this point url should be initialised to some defaults
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
+      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
     });
     expect(datasources.loki.query).not.toBeCalled();
   });
 
   it('runs query when url contains query and renders results', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
     const { datasources, store } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -81,7 +90,7 @@ describe('Wrapper', () => {
     expect(store.getState().explore.richHistory[0]).toMatchObject({
       datasourceId: '1',
       datasourceName: 'loki',
-      queries: [{ expr: '{ label="value"}' }],
+      queries: [{ expr: '{ label="value"}', refId: 'A' }],
     });
 
     // We called the data source query method once
@@ -131,7 +140,7 @@ describe('Wrapper', () => {
   });
 
   it('handles changing the datasource manually', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
     const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the editor
@@ -142,7 +151,7 @@ describe('Wrapper', () => {
     expect(datasources.elastic.query).not.toBeCalled();
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
+      left: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     });
   });
 
@@ -159,8 +168,8 @@ describe('Wrapper', () => {
 
   it('inits with two panes if specified in url', async () => {
     const query = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]),
+      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error', refId: 'A' }]),
     };
 
     const { datasources } = setup({ query });
@@ -201,8 +210,8 @@ describe('Wrapper', () => {
 
   it('can close a pane from a split', async () => {
     const query = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
+      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
+      right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     };
     setup({ query });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
@@ -252,6 +261,36 @@ describe('Wrapper', () => {
     await screen.findByText(`elastic Editor input: error`);
     await screen.findByText(`loki Editor input: { label="value"}`);
   });
+
+  it('changes the document title of the explore page to include the datasource in use', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+    };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+    // This is mainly to wait for render so that the left pane state is initialized as that is needed for the title
+    // to include the datasource
+    await screen.findByText(`loki Editor input: { label="value"}`);
+
+    await waitFor(() => expect(document.title).toEqual('Explore - loki - Grafana'));
+  });
+  it('changes the document title to include the two datasources in use in split view mode', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+    };
+    const { datasources, store } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+    (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
+
+    // This is mainly to wait for render so that the left pane state is initialized as that is needed for splitOpen
+    // to work
+    await screen.findByText(`loki Editor input: { label="value"}`);
+
+    store.dispatch(
+      splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any
+    );
+    await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
+  });
 });
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
@@ -259,6 +298,7 @@ type SetupOptions = {
   datasources?: DatasourceSetup[];
   query?: any;
 };
+
 function setup(options?: SetupOptions): { datasources: { [name: string]: DataSourceApi }; store: EnhancedStore } {
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
@@ -284,17 +324,23 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
     },
   } as any);
 
-  setTimeSrv({
-    init() {},
-    getValidIntervals(intervals: string[]): string[] {
-      return intervals;
-    },
-  } as any);
+  setEchoSrv(new Echo());
 
   const store = configureStore();
   store.getState().user = {
+    ...initialUserState,
     orgId: 1,
     timeZone: 'utc',
+  };
+
+  store.getState().navIndex = {
+    explore: {
+      id: 'explore',
+      text: 'Explore',
+      subTitle: 'Explore your data',
+      icon: 'compass',
+      url: '/explore',
+    },
   };
 
   locationService.push({ pathname: '/explore' });
@@ -332,6 +378,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
       type: 'logs',
       name,
       meta,
+      access: 'proxy',
       jsonData: {},
     },
     api: {

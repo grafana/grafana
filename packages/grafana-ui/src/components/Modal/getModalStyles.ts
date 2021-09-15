@@ -22,6 +22,9 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
       margin-left: auto;
       margin-right: auto;
       top: 10%;
+      max-height: 80%;
+      display: flex;
+      flex-direction: column;
     `,
     modalBackdrop: css`
       position: fixed;
@@ -29,7 +32,6 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
       right: 0;
       bottom: 0;
       left: 0;
-      z-index: ${theme.zIndex.modalBackdrop};
       background-color: ${theme.components.overlay.background};
       backdrop-filter: blur(1px);
     `,
@@ -67,6 +69,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
       justify-content: flex-end;
     `,
     modalContent: css`
+      overflow: auto;
       padding: ${theme.spacing(3)};
       width: 100%;
     `,

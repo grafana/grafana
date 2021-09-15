@@ -15,14 +15,17 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1610639791711,
+  "iteration": 1620904436360,
   "links": [
     {
       "asDropdown": true,
       "icon": "external link",
-      "tags": ["gdev", "elasticsearch", "datasource-test"],
+      "tags": [
+        "gdev",
+        "elasticsearch",
+        "datasource-test"
+      ],
       "title": "Dashboards",
       "type": "dashboards"
     }
@@ -30,7 +33,6 @@
   "panels": [
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -45,19 +47,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_one",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 26
+            "y": 1
           },
           "hiddenSeries": false,
           "id": 2,
@@ -79,7 +75,7 @@
           },
           "paceLength": 10,
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -114,9 +110,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Basic (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -125,33 +119,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -160,19 +145,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_two",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 26
+            "y": 1
           },
           "hiddenSeries": false,
           "id": 3,
@@ -194,7 +173,7 @@
           },
           "paceLength": 10,
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -229,9 +208,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Basic (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -240,33 +217,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -275,19 +243,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_one",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 35
+            "y": 10
           },
           "hiddenSeries": false,
           "id": 8,
@@ -309,7 +271,7 @@
           },
           "paceLength": 10,
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -325,8 +287,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "1m",
-                    "min_doc_count": 50,
-                    "trimEdges": null
+                    "min_doc_count": 50
                   },
                   "type": "date_histogram"
                 }
@@ -344,9 +305,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Basic (version one) - interval 1m + min doc count 50",
           "tooltip": {
             "shared": true,
@@ -355,33 +314,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -390,19 +340,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_two",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 35
+            "y": 10
           },
           "hiddenSeries": false,
           "id": 9,
@@ -424,7 +368,7 @@
           },
           "paceLength": 10,
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -440,8 +384,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "1m",
-                    "min_doc_count": 50,
-                    "trimEdges": null
+                    "min_doc_count": 50
                   },
                   "type": "date_histogram"
                 }
@@ -459,9 +402,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Basic (version two) - interval 1m + min doc count 50",
           "tooltip": {
             "shared": true,
@@ -470,33 +411,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -505,19 +437,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_one",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 44
+            "y": 19
           },
           "hiddenSeries": false,
           "id": 6,
@@ -539,7 +465,7 @@
           },
           "paceLength": 10,
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -574,9 +500,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Basic (version one) - interval 5m + trim edges=10",
           "tooltip": {
             "shared": true,
@@ -585,33 +509,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -620,19 +535,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_two",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 44
+            "y": 19
           },
           "hiddenSeries": false,
           "id": 7,
@@ -654,7 +563,7 @@
           },
           "paceLength": 10,
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -689,9 +598,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Basic (version two) - interval 5m + trim edges=10",
           "tooltip": {
             "shared": true,
@@ -700,33 +607,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -735,7 +633,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -750,12 +647,6 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_one",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -783,7 +674,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -800,8 +691,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -812,7 +702,6 @@
                   "id": "1",
                   "meta": {},
                   "settings": {
-                    "missing": null
                   },
                   "type": "avg"
                 }
@@ -823,9 +712,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -834,33 +721,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -869,12 +747,6 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_two",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -902,7 +774,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -919,8 +791,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -931,7 +802,6 @@
                   "id": "1",
                   "meta": {},
                   "settings": {
-                    "missing": null
                   },
                   "type": "avg"
                 }
@@ -942,9 +812,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -953,33 +821,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -988,12 +847,6 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_one",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1021,7 +874,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1038,8 +891,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1050,7 +902,6 @@
                   "id": "1",
                   "meta": {},
                   "settings": {
-                    "missing": null
                   },
                   "type": "sum"
                 }
@@ -1061,9 +912,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1072,33 +921,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1107,12 +947,6 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "$version_two",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1140,7 +974,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1157,8 +991,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1169,7 +1002,6 @@
                   "id": "1",
                   "meta": {},
                   "settings": {
-                    "missing": null
                   },
                   "type": "sum"
                 }
@@ -1180,9 +1012,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1191,33 +1021,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1227,12 +1048,6 @@
           "dashes": false,
           "datasource": "$version_one",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1261,7 +1076,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1278,8 +1093,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1299,9 +1113,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1310,33 +1122,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1346,12 +1149,6 @@
           "dashes": false,
           "datasource": "$version_two",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1380,7 +1177,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1397,8 +1194,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1418,9 +1214,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1429,33 +1223,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1465,12 +1250,6 @@
           "dashes": false,
           "datasource": "$version_one",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1499,7 +1278,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1516,8 +1295,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1537,9 +1315,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1548,33 +1324,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1584,12 +1351,6 @@
           "dashes": false,
           "datasource": "$version_two",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1618,7 +1379,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1635,8 +1396,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1656,9 +1416,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1667,33 +1425,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1703,12 +1452,6 @@
           "dashes": false,
           "datasource": "$version_one",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1740,7 +1483,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1757,8 +1500,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1787,9 +1529,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "extended stats (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1798,33 +1538,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1834,12 +1565,6 @@
           "dashes": false,
           "datasource": "$version_two",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1871,7 +1596,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1888,8 +1613,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -1918,9 +1642,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "extended stats (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -1929,33 +1651,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1965,12 +1678,6 @@
           "dashes": false,
           "datasource": "$version_one",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -2000,7 +1707,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -2017,8 +1724,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -2029,7 +1735,13 @@
                   "id": "1",
                   "meta": {},
                   "settings": {
-                    "percents": [25, 50, 75, 95, 99]
+                    "percents": [
+                      25,
+                      50,
+                      75,
+                      95,
+                      99
+                    ]
                   },
                   "type": "percentiles"
                 }
@@ -2040,9 +1752,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "percentiles (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -2051,33 +1761,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2087,12 +1788,6 @@
           "dashes": false,
           "datasource": "$version_two",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -2122,7 +1817,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -2139,8 +1834,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -2151,8 +1845,13 @@
                   "id": "1",
                   "meta": {},
                   "settings": {
-                    "missing": null,
-                    "percents": [25, 50, 75, 95, 99]
+                    "percents": [
+                      25,
+                      50,
+                      75,
+                      95,
+                      99
+                    ]
                   },
                   "type": "percentiles"
                 }
@@ -2163,9 +1862,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "percentiles (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -2174,33 +1871,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2210,12 +1898,6 @@
           "dashes": false,
           "datasource": "$version_one",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -2245,7 +1927,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -2262,8 +1944,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -2283,9 +1964,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -2294,33 +1973,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2330,12 +2000,6 @@
           "dashes": false,
           "datasource": "$version_two",
           "decimals": 3,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -2365,7 +2029,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -2382,8 +2046,7 @@
                   "id": "2",
                   "settings": {
                     "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": null
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
@@ -2403,9 +2066,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -2414,33 +2075,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -2449,7 +2101,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2549,9 +2200,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -2560,33 +2209,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2680,9 +2320,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -2691,33 +2329,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2811,9 +2440,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -2822,33 +2449,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2942,9 +2560,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -2953,33 +2569,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3073,9 +2680,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -3084,33 +2689,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3204,9 +2800,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -3215,33 +2809,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3335,9 +2920,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -3346,33 +2929,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3466,9 +3040,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -3477,33 +3049,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3597,9 +3160,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -3608,33 +3169,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3728,9 +3280,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -3739,33 +3289,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3859,9 +3400,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -3870,33 +3409,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3990,9 +3520,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -4001,33 +3529,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -4036,7 +3555,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -4131,9 +3649,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -4142,33 +3658,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4257,9 +3764,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -4268,33 +3773,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4383,9 +3879,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -4394,33 +3888,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4509,9 +3994,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -4520,33 +4003,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4635,9 +4109,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -4646,33 +4118,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4761,9 +4224,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -4772,33 +4233,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -4887,9 +4339,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -4898,33 +4348,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5013,9 +4454,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -5024,33 +4463,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5139,9 +4569,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -5150,33 +4578,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5265,9 +4684,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -5276,33 +4693,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5391,9 +4799,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -5402,33 +4808,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5517,9 +4914,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -5528,33 +4923,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -5563,7 +4949,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -5662,9 +5047,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -5673,33 +5056,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5792,9 +5166,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -5803,33 +5175,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -5922,9 +5285,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -5933,33 +5294,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6052,9 +5404,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "avg (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -6063,33 +5413,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6182,9 +5523,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -6193,33 +5532,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6312,9 +5642,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "sum (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -6323,33 +5651,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6442,9 +5761,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -6453,33 +5770,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6572,9 +5880,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "max (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -6583,33 +5889,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6702,9 +5999,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -6713,33 +6008,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6832,9 +6118,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "min (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -6843,33 +6127,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -6962,9 +6237,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version one) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -6973,33 +6246,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -7092,9 +6356,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "unique count (version two) - interval 5m",
           "tooltip": {
             "shared": true,
@@ -7103,33 +6365,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -7138,7 +6391,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -7237,9 +6489,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count * 1000 (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -7248,33 +6498,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -7367,9 +6608,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count * 1000 (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -7378,33 +6617,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -7509,9 +6739,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count * avg (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -7520,33 +6748,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -7651,9 +6870,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count * avg (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -7662,33 +6879,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -7697,7 +6905,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -7830,9 +7037,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count/average with triple terms agg (version one) - interval auto",
           "tooltip": {
             "shared": true,
@@ -7841,33 +7046,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -7994,9 +7190,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "count/average with triple terms agg (version two) - interval auto",
           "tooltip": {
             "shared": true,
@@ -8005,33 +7199,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -8040,7 +7225,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -8131,9 +7315,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by Doc Count",
           "tooltip": {
             "shared": true,
@@ -8142,33 +7324,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8253,9 +7426,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by Doc Count",
           "tooltip": {
             "shared": true,
@@ -8264,33 +7435,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8375,9 +7537,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by Term value",
           "tooltip": {
             "shared": true,
@@ -8386,33 +7546,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8497,9 +7648,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by Term value",
           "tooltip": {
             "shared": true,
@@ -8508,33 +7657,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8620,9 +7760,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by avg",
           "tooltip": {
             "shared": true,
@@ -8631,33 +7769,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8743,9 +7872,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by avg",
           "tooltip": {
             "shared": true,
@@ -8754,33 +7881,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8866,9 +7984,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by unique count",
           "tooltip": {
             "shared": true,
@@ -8877,33 +7993,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -8989,9 +8096,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by unique count",
           "tooltip": {
             "shared": true,
@@ -9000,33 +8105,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -9035,7 +8131,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -9050,19 +8145,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 17
+            "y": 9
           },
           "hiddenSeries": false,
           "id": 86,
@@ -9082,7 +8171,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9137,9 +8226,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (avg)",
           "tooltip": {
             "shared": true,
@@ -9148,33 +8235,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9183,19 +8261,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 17
+            "y": 9
           },
           "hiddenSeries": false,
           "id": 94,
@@ -9215,7 +8287,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9270,9 +8342,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (avg)",
           "tooltip": {
             "shared": true,
@@ -9281,33 +8351,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9316,19 +8377,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 25
+            "y": 17
           },
           "hiddenSeries": false,
           "id": 87,
@@ -9348,7 +8403,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9403,9 +8458,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (min)",
           "tooltip": {
             "shared": true,
@@ -9414,33 +8467,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9449,19 +8493,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 25
+            "y": 17
           },
           "hiddenSeries": false,
           "id": 95,
@@ -9481,7 +8519,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9536,9 +8574,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (min)",
           "tooltip": {
             "shared": true,
@@ -9547,33 +8583,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9582,19 +8609,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 33
+            "y": 25
           },
           "hiddenSeries": false,
           "id": 88,
@@ -9614,7 +8635,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9669,9 +8690,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (max)",
           "tooltip": {
             "shared": true,
@@ -9680,33 +8699,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9715,19 +8725,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 33
+            "y": 25
           },
           "hiddenSeries": false,
           "id": 96,
@@ -9747,7 +8751,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9802,9 +8806,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (max)",
           "tooltip": {
             "shared": true,
@@ -9813,33 +8815,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9848,19 +8841,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 41
+            "y": 33
           },
           "hiddenSeries": false,
           "id": 89,
@@ -9880,7 +8867,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -9935,9 +8922,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (sum)",
           "tooltip": {
             "shared": true,
@@ -9946,33 +8931,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -9981,19 +8957,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 41
+            "y": 33
           },
           "hiddenSeries": false,
           "id": 97,
@@ -10013,7 +8983,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10068,9 +9038,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (sum)",
           "tooltip": {
             "shared": true,
@@ -10079,33 +9047,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10114,19 +9073,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 49
+            "y": 41
           },
           "hiddenSeries": false,
           "id": 90,
@@ -10146,7 +9099,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10201,9 +9154,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (count)",
           "tooltip": {
             "shared": true,
@@ -10212,33 +9163,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10247,19 +9189,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 49
+            "y": 41
           },
           "hiddenSeries": false,
           "id": 98,
@@ -10279,7 +9215,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10334,9 +9270,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (count)",
           "tooltip": {
             "shared": true,
@@ -10345,33 +9279,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10380,19 +9305,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 57
+            "y": 49
           },
           "hiddenSeries": false,
           "id": 91,
@@ -10412,7 +9331,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10467,9 +9386,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (std dev)",
           "tooltip": {
             "shared": true,
@@ -10478,33 +9395,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10513,19 +9421,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 57
+            "y": 49
           },
           "hiddenSeries": false,
           "id": 99,
@@ -10545,7 +9447,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10600,9 +9502,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (std dev)",
           "tooltip": {
             "shared": true,
@@ -10611,33 +9511,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10646,19 +9537,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 65
+            "y": 57
           },
           "hiddenSeries": false,
           "id": 92,
@@ -10678,7 +9563,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10733,9 +9618,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (std dev upper)",
           "tooltip": {
             "shared": true,
@@ -10744,33 +9627,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10779,19 +9653,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 65
+            "y": 57
           },
           "hiddenSeries": false,
           "id": 100,
@@ -10811,7 +9679,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10866,9 +9734,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (std dev upper)",
           "tooltip": {
             "shared": true,
@@ -10877,33 +9743,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -10912,19 +9769,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 73
+            "y": 65
           },
           "hiddenSeries": false,
           "id": 93,
@@ -10944,7 +9795,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -10999,9 +9850,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (std dev lower)",
           "tooltip": {
             "shared": true,
@@ -11010,33 +9859,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -11045,19 +9885,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 73
+            "y": 65
           },
           "hiddenSeries": false,
           "id": 101,
@@ -11077,7 +9911,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -11132,9 +9966,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by extended stats (std dev lower)",
           "tooltip": {
             "shared": true,
@@ -11143,33 +9975,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -11178,7 +10001,6 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -11193,19 +10015,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 1
+            "y": 10
           },
           "hiddenSeries": false,
           "id": 112,
@@ -11225,7 +10041,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -11262,7 +10078,9 @@
                   "field": "@value",
                   "id": "1",
                   "settings": {
-                    "percents": ["25"]
+                    "percents": [
+                      "25"
+                    ]
                   },
                   "type": "percentiles"
                 }
@@ -11273,9 +10091,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by percentile (25)",
           "tooltip": {
             "shared": true,
@@ -11284,33 +10100,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -11319,19 +10126,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 1
+            "y": 10
           },
           "hiddenSeries": false,
           "id": 114,
@@ -11351,7 +10152,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -11388,7 +10189,9 @@
                   "field": "@value",
                   "id": "1",
                   "settings": {
-                    "percents": ["25"]
+                    "percents": [
+                      "25"
+                    ]
                   },
                   "type": "percentiles"
                 }
@@ -11399,9 +10202,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by percentile (25)",
           "tooltip": {
             "shared": true,
@@ -11410,33 +10211,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -11445,19 +10237,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_one}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 9
+            "y": 18
           },
           "hiddenSeries": false,
           "id": 113,
@@ -11477,7 +10263,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -11514,7 +10300,9 @@
                   "field": "@value",
                   "id": "1",
                   "settings": {
-                    "percents": ["99"]
+                    "percents": [
+                      "99"
+                    ]
                   },
                   "type": "percentiles"
                 }
@@ -11525,9 +10313,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by percentile (99)",
           "tooltip": {
             "shared": true,
@@ -11536,33 +10322,24 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -11571,19 +10348,13 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "${version_two}",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 9
+            "y": 18
           },
           "hiddenSeries": false,
           "id": 115,
@@ -11603,7 +10374,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.4.0-pre",
+          "pluginVersion": "7.5.0-pre",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -11640,7 +10411,9 @@
                   "field": "@value",
                   "id": "1",
                   "settings": {
-                    "percents": ["99"]
+                    "percents": [
+                      "99"
+                    ]
                   },
                   "type": "percentiles"
                 }
@@ -11651,9 +10424,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Terms order by percentile (99)",
           "tooltip": {
             "shared": true,
@@ -11662,54 +10433,316 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
       "title": "Terms order by percentile",
       "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 119,
+      "panels": [],
+      "title": "Inline scripts",
+      "type": "row"
+    },
+    {
+      "datasource": "${version_one}",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "viz": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "id": 121,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "alias": "New Script Format",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "settings": {
+                "script": "_value * 2"
+              },
+              "type": "avg"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "@timestamp"
+        },
+        {
+          "alias": "Old Script Format",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "hide": false,
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "settings": {
+                "script": { 
+                  "inline": "_value * 1.5" 
+                }
+              },
+              "type": "avg"
+            }
+          ],
+          "query": "",
+          "refId": "B",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Old & new script format",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "${version_two}",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "viz": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 122,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "alias": "New Script Format",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "settings": {
+                "script": "_value * 2"
+              },
+              "type": "avg"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "@timestamp"
+        },
+        {
+          "alias": "Old Script Format",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "hide": false,
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "settings": {
+                "script": { 
+                  "inline": "_value * 1.5" 
+                }
+              },
+              "type": "avg"
+            }
+          ],
+          "query": "",
+          "refId": "B",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Old & new script format",
+      "type": "timeseries"
     }
   ],
   "refresh": false,
-  "schemaVersion": 27,
+  "schemaVersion": 30,
   "style": "dark",
-  "tags": ["elasticsearch", "gdev", "datasource-test"],
+  "tags": [
+    "elasticsearch",
+    "gdev",
+    "datasource-test"
+  ],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "gdev-elasticsearch-v5-metrics",
           "value": "gdev-elasticsearch-v5-metrics"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Version One",
@@ -11725,12 +10758,10 @@
       },
       {
         "current": {
-          "selected": true,
-          "text": "gdev-elasticsearch-v7-metrics",
-          "value": "gdev-elasticsearch-v7-metrics"
+          "selected": false,
+          "text": "gdev-elasticsearch-v56-metrics",
+          "value": "gdev-elasticsearch-v56-metrics"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Version Two",
@@ -11747,15 +10778,36 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "Datasource tests - Elasticsearch comparison",
   "uid": "fuFWehBmk",
-  "version": 10
+  "version": 4
 }

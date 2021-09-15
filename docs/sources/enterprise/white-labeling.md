@@ -3,7 +3,7 @@ title = "White labeling"
 description = "Change the look of Grafana to match your corporate brand"
 keywords = ["grafana", "white-labeling", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
-weight = 700
+weight = 1300
 +++
 
 # White labeling
@@ -25,10 +25,11 @@ You can change the following elements:
 - Login title (will not appear if a login logo is set, Grafana v7.0+)
 - Login subtitle (will not appear if a login logo is set, Grafana v7.0+)
 - Login box background (Grafana v7.0+)
+- Loading logo
 
 > You will have to host your logo and other images used by the white labeling feature separately. Make sure Grafana can access the URL where the assets are stored.
 
-{{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
+{{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
 The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../administration/configuration.md">}}).
 
@@ -62,7 +63,11 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 
 # Set to complete URL to override apple/ios icon
 ;apple_touch_icon =
+
+# Set to complete URL to override loading logo
+;loading_logo =
 ```
+
 You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.
 An example follows for replacing the default footer and help links with new custom links.
 
@@ -89,6 +94,7 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
 > **Note:** The following two links are always present in the footer:
+
 - Grafana edition
 - Grafana version with build number
 

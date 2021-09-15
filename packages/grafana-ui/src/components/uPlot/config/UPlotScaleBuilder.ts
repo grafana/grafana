@@ -1,7 +1,7 @@
 import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { ScaleOrientation, ScaleDirection } from '../config';
-import { ScaleDistribution } from '../models.gen';
+import { ScaleOrientation, ScaleDirection, ScaleDistribution } from '@grafana/schema';
+import { isBooleanUnit } from '@grafana/data';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -23,18 +23,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
-  getConfig() {
-    const {
-      isTime,
-      scaleKey,
-      min: hardMin,
-      max: hardMax,
-      softMin,
-      softMax,
-      range,
-      direction,
-      orientation,
-    } = this.props;
+  getConfig(): Scale {
+    let { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range, direction, orientation } = this.props;
     const distribution = !isTime
       ? {
           distr:
@@ -48,8 +38,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       : {};
 
     // uPlot's default ranging config for both min & max is {pad: 0.1, hard: null, soft: 0, mode: 3}
-    let softMinMode: Range.SoftMode = softMin == null ? 3 : softMin === 0 ? 1 : 2;
-    let softMaxMode: Range.SoftMode = softMax == null ? 3 : softMax === 0 ? 1 : 2;
+    let softMinMode: Range.SoftMode = softMin == null ? 3 : 1;
+    let softMaxMode: Range.SoftMode = softMax == null ? 3 : 1;
 
     const rangeConfig: Range.Config = {
       min: {
@@ -73,7 +63,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
       const scale = u.scales[scaleKey];
 
-      let minMax = [dataMin, dataMax];
+      let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       if (scale.distr === 1 || scale.distr === 2) {
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
@@ -94,10 +84,16 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       return minMax;
     };
 
+    let auto = !isTime && !(hardMinOnly && hardMaxOnly);
+    if (isBooleanUnit(scaleKey)) {
+      auto = false;
+      range = [0, 1];
+    }
+
     return {
       [scaleKey]: {
         time: isTime,
-        auto: !isTime && !(hardMinOnly && hardMaxOnly),
+        auto,
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,

@@ -1,21 +1,21 @@
-import { concat, find, flattenDeep, forEach, map } from 'lodash';
+import { concat, find, flattenDeep, forEach, get, map } from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
 import { AzureLogsTableData, AzureLogsVariable } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class ResponseParser {
-  columns: string[];
+  declare columns: string[];
   constructor(private results: any) {}
 
   parseQueryResult(): any {
     let data: any[] = [];
     let columns: any[] = [];
     for (let i = 0; i < this.results.length; i++) {
-      if (this.results[i].result.data.tables.length === 0) {
+      if (this.results[i].result.tables.length === 0) {
         continue;
       }
-      columns = this.results[i].result.data.tables[0].columns;
-      const rows = this.results[i].result.data.tables[0].rows;
+      columns = this.results[i].result.tables[0].columns;
+      const rows = this.results[i].result.tables[0].rows;
 
       if (this.results[i].query.resultFormat === 'time_series') {
         data = concat(data, this.parseTimeSeriesResult(this.results[i].query, columns, rows));
@@ -146,6 +146,27 @@ export default class ResponseParser {
 
   static dateTimeToEpoch(dateTimeValue: any) {
     return dateTime(dateTimeValue).valueOf();
+  }
+
+  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
+    const list: Array<{ text: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
+    const valueFieldName = 'subscriptionId';
+    const textFieldName = 'displayName';
+    for (let i = 0; i < result.value.length; i++) {
+      if (!find(list, ['value', get(result.value[i], valueFieldName)])) {
+        list.push({
+          text: `${get(result.value[i], textFieldName)}`,
+          value: get(result.value[i], valueFieldName),
+        });
+      }
+    }
+
+    return list;
   }
 }
 

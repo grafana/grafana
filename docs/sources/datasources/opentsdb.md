@@ -14,15 +14,15 @@ Grafana ships with advanced support for OpenTSDB. This topic explains options, v
 
 To access OpenTSDB settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the OpenTSDB data source.
 
-| Name         | Description                                                                                                                           |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`       | The data source name. This is how you refer to the data source in panels and queries.                                                 |
-| `Default`    | Default data source means that it will be pre-selected for new panels.                                                                |
-| `URL`        | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242)                                                  |
-| `Whitelisted Cookies`     | List the names of cookies to forward to the data source. |
-| `Version`    | Version = opentsdb version, either <=2.1 or 2.2                                                                                       |
-| `Resolution` | Metrics from opentsdb may have datapoints with either second or millisecond resolution.                                               |
-| `Lookup Limit`| Default is 1000.                                                                                                                     |
+| Name              | Description                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `Name`            | The data source name. This is how you refer to the data source in panels and queries.   |
+| `Default`         | Default data source means that it will be pre-selected for new panels.                  |
+| `URL`             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242)  |
+| `Allowed cookies` | List the names of cookies to forward to the data source.                                |
+| `Version`         | Version = opentsdb version, either <=2.1 or 2.2                                         |
+| `Resolution`      | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
+| `Lookup limit`    | Default is 1000.                                                                        |
 
 ## Query editor
 
@@ -30,7 +30,7 @@ Open a graph in edit mode by click the title. Query editor will differ if the da
 In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
 can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
 
-![](/img/docs/v43/opentsdb_query_editor.png)
+![](/static/img/docs/v43/opentsdb_query_editor.png)
 
 > **Note:** While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 

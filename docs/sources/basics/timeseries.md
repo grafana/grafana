@@ -1,9 +1,8 @@
 +++
-title = "Time series"
+title = "Intro to time series"
 description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
-aliases = ["/docs/grafana/latest/guides/timeseries", "/docs/grafana/latest/getting-started/timeseries"]
-weight = 500
+weight = 400
 +++
 
 # Introduction to time series
@@ -16,11 +15,11 @@ Imagine you wanted to know how the temperature outside changes throughout the da
 | 10:00 | 26°C  |
 | 11:00 | 27°C  |
 
-Temperature data like this is one example of what we call a *time series*—a sequence of measurements, ordered in time. Every row in the table represents one individual measurement at a specific time.
+Temperature data like this is one example of what we call a _time series_—a sequence of measurements, ordered in time. Every row in the table represents one individual measurement at a specific time.
 
 Tables are useful when you want to identify individual measurements but make it difficult to see the big picture. A more common visualization for time series is the _graph_, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
 
-{{< docs-imagebox img="/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 Temperature data like the one in the example, is far from the only example of a time series. Other examples of time series are:
 
@@ -92,15 +91,15 @@ Here are some of the TSDBs supported by Grafana:
 - [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
 - [Prometheus](https://prometheus.io/)
 
-    ```
-    weather,location=us-midwest temperature=82 1465839830100400200
-      |    -------------------- --------------  |
-      |             |             |             |
-      |             |             |             |
-    +-----------+--------+-+---------+-+---------+
-    |measurement|,tag_set| |field_set| |timestamp|
-    +-----------+--------+-+---------+-+---------+
-    ```
+  ```
+  weather,location=us-midwest temperature=82 1465839830100400200
+    |    -------------------- --------------  |
+    |             |             |             |
+    |             |             |             |
+  +-----------+--------+-+---------+-+---------+
+  |measurement|,tag_set| |field_set| |timestamp|
+  +-----------+--------+-+---------+-+---------+
+  ```
 
 ### Collecting time series data
 
@@ -115,9 +114,9 @@ Here are some examples of collectors:
 
 A collector either _pushes_ data to a database or lets the database _pull_ the data from it. Both methods come with their own set of pros and cons:
 
-|      | Pros                                                         | Cons                                                         |
-| ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Push | Easier to replicate data to multiple destinations.           | The TSDB has no control over how much data gets sent.        |
+|      | Pros                                                                      | Cons                                                                     |
+| ---- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Push | Easier to replicate data to multiple destinations.                        | The TSDB has no control over how much data gets sent.                    |
 | Pull | Better control of how much data that gets ingested, and its authenticity. | Firewalls, VPNs or load balancers can make it hard to access the agents. |
 
 Since it would be inefficient to write every measurement to the database, collectors pre-aggregate the data and write to the time series database at regular intervals.

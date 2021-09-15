@@ -48,29 +48,33 @@ export async function getLibraryPanel(uid: string): Promise<LibraryElementDTO> {
   return result;
 }
 
+export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(`/api/library-elements/name/${name}`);
+  return result;
+}
+
 export async function addLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
   folderId: number
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().post(`/api/library-elements`, {
     folderId,
-    name: panelSaveModel.title,
+    name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     kind: LibraryElementKind.Panel,
   });
   return result;
 }
 
-export async function updateLibraryPanel(
-  panelSaveModel: PanelModelWithLibraryPanel,
-  folderId: number
-): Promise<LibraryElementDTO> {
-  const { result } = await getBackendSrv().patch(`/api/library-elements/${panelSaveModel.libraryPanel.uid}`, {
-    folderId,
-    name: panelSaveModel.title,
-    model: panelSaveModel,
-    version: panelSaveModel.libraryPanel.version,
-    kind: LibraryElementKind.Panel,
+export async function updateLibraryPanel(panelSaveModel: PanelModelWithLibraryPanel): Promise<LibraryElementDTO> {
+  const { uid, name, version } = panelSaveModel.libraryPanel;
+  const kind = LibraryElementKind.Panel;
+  const model = panelSaveModel;
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    name,
+    model,
+    version,
+    kind,
   });
   return result;
 }

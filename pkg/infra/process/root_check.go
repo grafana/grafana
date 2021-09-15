@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 //go:build !windows
+=======
+>>>>>>> origin/main
 // +build !windows
 
 package process

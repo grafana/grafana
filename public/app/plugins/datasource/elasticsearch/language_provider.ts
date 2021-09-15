@@ -7,7 +7,6 @@ import { PromQuery } from '../prometheus/types';
 
 import Prism, { Token } from 'prismjs';
 import grammar from '../prometheus/promql';
-import { defaultBucketAgg } from './query_def';
 
 function getNameLabelValue(promQuery: string, tokens: any): string {
   let nameLabelValue = '';
@@ -94,8 +93,8 @@ function getElasticsearchQuery(prometheusLabels: string[][]): string {
 }
 
 export default class ElasticsearchLanguageProvider extends LanguageProvider {
-  request: (url: string, params?: any) => Promise<any>;
-  start: () => Promise<any[]>;
+  declare request: (url: string, params?: any) => Promise<any>;
+  declare start: () => Promise<any[]>;
   datasource: ElasticDatasource;
 
   constructor(datasource: ElasticDatasource, initialValues?: any) {
@@ -122,7 +121,6 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
               type: 'logs',
             },
           ],
-          bucketAggs: [{ ...defaultBucketAgg('2'), field: this.datasource.timeField }],
           query: expr,
           refId: query.refId,
         };

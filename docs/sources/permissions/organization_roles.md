@@ -7,6 +7,8 @@ weight = 100
 
 # Organization roles
 
+> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise for managing Organization roles with fine-grained permissions.
+
 Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do in that organization. Grafana supports multiple _organizations_ in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted organizations.
 
 In most cases, Grafana is deployed with a single organization.
@@ -21,20 +23,22 @@ All dashboards are owned by a particular organization.
 
 The table below compares what each role can do. Read the sections below for more detailed explanations.
 
-|    | Admin   | Editor   | Viewer   |
-|:---|:--:|:--:|:--:|
-| View dashboards   |  x  |  x  |  x  |
-| Add, edit, delete dashboards   |  x  |  x  |    |
-| Add, edit, delete folders   |  x  |  x  |    |
-| View playlists   |  x  |  x  |  x  |
-| Create, update, delete playlists   |  x  |  x  |    |
-| Access Explore   |  x  |  x  |    |
-| Add, edit, delete data sources   |  x  |    |    |
-| Add and edit users   |  x  |    |    |
-| Add and edit teams   |  x  |    |    |
-| Change organizations settings   |  x  |    |    |
-| Change team settings   |  x  |    |    |
-| Configure app plugins   |  x  |    |    |
+|                                  | Admin | Editor | Viewer |
+| :------------------------------- | :---: | :----: | :----: |
+| View dashboards                  |   x   |   x    |   x    |
+| Add, edit, delete dashboards     |   x   |   x    |        |
+| Add, edit, delete folders        |   x   |   x    |        |
+| View playlists                   |   x   |   x    |   x    |
+| Create, update, delete playlists |   x   |   x    |        |
+| Access Explore                   |   x   |   x    |        |
+| Add, edit, delete data sources   |   x   |        |        |
+| Add and edit users               |   x   |        |        |
+| Add and edit teams               |   x   |        |        |
+| Change organizations settings    |   x   |        |        |
+| Change team settings             |   x   |        |        |
+| Configure app plugins            |   x   |        |        |
+
+If you are running Grafana Enterprise, you can grant and revoke access by using fine-grained roles and permissions, refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) for more information.
 
 ## Organization admin role
 
@@ -69,6 +73,7 @@ This role can be changed with the Grafana server setting [editors_can_admin]({{<
 - Cannot manage other organizations, users, and teams.
 
 This role can be changed with the Grafana server setting [viewers_can_edit]({{< relref "../administration/configuration.md#viewers-can-edit" >}}). If you set this to `true`, then users with the Viewer role can:
+
 - Make transient dashboard edits, meaning they can modify panels and queries but not save the changes or create new dashboards.
 - Access and use [Explore]({{< relref "../explore/_index.md" >}}).
 

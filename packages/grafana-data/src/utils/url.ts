@@ -48,7 +48,8 @@ function toUrlParams(a: any) {
     if (typeof v !== 'boolean') {
       s[s.length] = encodeURIComponentAsAngularJS(k, true) + '=' + encodeURIComponentAsAngularJS(v, true);
     } else {
-      s[s.length] = encodeURIComponentAsAngularJS(k, true);
+      const valueQueryPart = v ? '' : '=' + encodeURIComponentAsAngularJS('false', true);
+      s[s.length] = encodeURIComponentAsAngularJS(k, true) + valueQueryPart;
     }
   };
 
@@ -105,17 +106,21 @@ function appendQueryToUrl(url: string, stringToAppend: string) {
 /**
  * Return search part (as object) of current url
  */
-function getUrlSearchParams() {
+function getUrlSearchParams(): UrlQueryMap {
   const search = window.location.search.substring(1);
   const searchParamsSegments = search.split('&');
-  const params: any = {};
+  const params: UrlQueryMap = {};
   for (const p of searchParamsSegments) {
     const keyValuePair = p.split('=');
     if (keyValuePair.length > 1) {
       // key-value param
       const key = decodeURIComponent(keyValuePair[0]);
       const value = decodeURIComponent(keyValuePair[1]);
-      params[key] = value;
+      if (key in params) {
+        params[key] = [...(params[key] as any[]), value];
+      } else {
+        params[key] = [value];
+      }
     } else if (keyValuePair.length === 1) {
       // boolean param
       const key = decodeURIComponent(keyValuePair[0]);

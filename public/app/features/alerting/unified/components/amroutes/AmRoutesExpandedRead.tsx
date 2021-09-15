@@ -38,30 +38,34 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
       <div className={gridStyles.valueCell}>{repeatInterval}</div>
       <div className={gridStyles.titleCell}>Nested policies</div>
       <div className={gridStyles.valueCell}>
-        <AmRoutesTable
-          isAddMode={isAddMode}
-          onCancelAdd={() => {
-            setIsAddMode(false);
-            setSubroutes((subroutes) => {
-              const newSubroutes = [...subroutes];
-              newSubroutes.pop();
-
-              return newSubroutes;
-            });
-          }}
-          onChange={(newRoutes) => {
-            onChange({
-              ...routes,
-              routes: newRoutes,
-            });
-
-            if (isAddMode) {
+        {!!subroutes.length ? (
+          <AmRoutesTable
+            isAddMode={isAddMode}
+            onCancelAdd={() => {
               setIsAddMode(false);
-            }
-          }}
-          receivers={receivers}
-          routes={subroutes}
-        />
+              setSubroutes((subroutes) => {
+                const newSubroutes = [...subroutes];
+                newSubroutes.pop();
+
+                return newSubroutes;
+              });
+            }}
+            onChange={(newRoutes) => {
+              onChange({
+                ...routes,
+                routes: newRoutes,
+              });
+
+              if (isAddMode) {
+                setIsAddMode(false);
+              }
+            }}
+            receivers={receivers}
+            routes={subroutes}
+          />
+        ) : (
+          <p>No nested policies configured.</p>
+        )}
         {!isAddMode && (
           <Button
             className={styles.addNestedRoutingBtn}

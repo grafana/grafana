@@ -100,12 +100,18 @@ export enum GrafanaAlertStateDecision {
   KeepLastState = 'KeepLastState',
   OK = 'OK',
 }
-export interface GrafanaQuery {
+
+interface AlertDataQuery extends DataQuery {
+  maxDataPoints?: number;
+  intervalMs?: number;
+}
+
+export interface AlertQuery {
   refId: string;
   queryType: string;
   relativeTimeRange?: RelativeTimeRange;
   datasourceUid: string;
-  model: DataQuery;
+  model: AlertDataQuery;
 }
 
 export interface PostableGrafanaRuleDefinition {
@@ -114,11 +120,12 @@ export interface PostableGrafanaRuleDefinition {
   condition: string;
   no_data_state: GrafanaAlertStateDecision;
   exec_err_state: GrafanaAlertStateDecision;
-  data: GrafanaQuery[];
+  data: AlertQuery[];
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;
   namespace_uid: string;
+  namespace_id: number;
 }
 
 export interface RulerGrafanaRuleDTO {

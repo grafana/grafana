@@ -5,7 +5,7 @@ import Prism from 'prismjs';
 import tokenizer from '../syntax';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 import { css, cx } from '@emotion/css';
-import { CloudWatchLogsQuery } from '../types';
+import { CloudWatchQuery } from '../types';
 
 interface QueryExample {
   category: string;
@@ -214,8 +214,11 @@ const exampleCategory = css`
   margin-top: 5px;
 `;
 
-export default class LogsCheatSheet extends PureComponent<QueryEditorHelpProps, { userExamples: string[] }> {
-  onClickExample(query: CloudWatchLogsQuery) {
+export default class LogsCheatSheet extends PureComponent<
+  QueryEditorHelpProps<CloudWatchQuery>,
+  { userExamples: string[] }
+> {
+  onClickExample(query: CloudWatchQuery) {
     this.props.onClickExample(query);
   }
 
@@ -255,7 +258,7 @@ export default class LogsCheatSheet extends PureComponent<QueryEditorHelpProps, 
   render() {
     return (
       <div>
-        <h2>CloudWatch Logs Cheat Sheet</h2>
+        <h3>CloudWatch Logs cheat sheet</h3>
         {CLIQ_EXAMPLES.map((cat, i) => (
           <div key={`cat-${i}`}>
             <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>

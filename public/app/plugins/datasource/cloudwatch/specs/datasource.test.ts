@@ -1,9 +1,7 @@
-import { interval, of, throwError } from 'rxjs';
+import { interval, lastValueFrom, of, throwError } from 'rxjs';
 import {
   DataFrame,
   DataQueryErrorType,
-  DataQueryRequest,
-  DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
   getFrameDisplayName,
@@ -17,7 +15,6 @@ import {
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
-  CloudWatchQuery,
   LogAction,
 } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -28,12 +25,6 @@ import { CustomVariableModel, initialVariableModelState, VariableHide } from '..
 
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-
-jest.mock('rxjs/operators', () => {
-  const operators = jest.requireActual('rxjs/operators');
-  operators.delay = jest.fn(() => (s: any) => s);
-  return operators;
-});
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -184,58 +175,6 @@ describe('CloudWatchDatasource', () => {
       jest.spyOn(rxjsUtils, 'increasingInterval').mockImplementation(() => interval(100));
     });
 
-    it('should add data links to response', () => {
-      const { ds } = getTestContext();
-      const mockResponse: DataQueryResponse = {
-        data: [
-          {
-            fields: [
-              {
-                config: {
-                  links: [],
-                },
-              },
-            ],
-            refId: 'A',
-          },
-        ],
-      };
-
-      const mockOptions: any = {
-        targets: [
-          {
-            refId: 'A',
-            expression: 'stats count(@message) by bin(1h)',
-            logGroupNames: ['fake-log-group-one', 'fake-log-group-two'],
-            region: 'default',
-          },
-        ],
-      };
-
-      const saturatedResponse = ds['addDataLinksToLogsResponse'](mockResponse, mockOptions);
-      expect(saturatedResponse).toMatchObject({
-        data: [
-          {
-            fields: [
-              {
-                config: {
-                  links: [
-                    {
-                      url:
-                        "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'stats*20count*28*40message*29*20by*20bin*281h*29~isLiveTail~false~source~(~'fake-log-group-one~'fake-log-group-two))",
-                      title: 'View in CloudWatch console',
-                      targetBlank: true,
-                    },
-                  ],
-                },
-              },
-            ],
-            refId: 'A',
-          },
-        ],
-      });
-    });
-
     it('should stop querying when no more data received a number of times in a row', async () => {
       const { ds } = getTestContext();
       const fakeFrames = genMockFrames(20);
@@ -272,7 +211,9 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+      );
 
       const expectedData = [
         {
@@ -313,7 +254,9 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+      );
       expect(myResponse).toEqual({
         data: [fakeFrames[fakeFrames.length - 1]],
         key: 'test-key',
@@ -336,7 +279,9 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+      );
 
       expect(myResponse).toEqual({
         data: [fakeFrames[2]],
@@ -378,7 +323,7 @@ describe('CloudWatchDatasource', () => {
           dimensions: {
             InstanceId: 'i-12345678',
           },
-          statistics: ['Average'],
+          statistic: 'Average',
           period: '300',
         },
       ],
@@ -419,7 +364,7 @@ describe('CloudWatchDatasource', () => {
               namespace: query.targets[0].namespace,
               metricName: query.targets[0].metricName,
               dimensions: { InstanceId: ['i-12345678'] },
-              statistics: query.targets[0].statistics,
+              statistic: query.targets[0].statistic,
               period: query.targets[0].period,
             }),
           ])
@@ -457,7 +402,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '[[period]]',
           },
         ],
@@ -468,30 +413,6 @@ describe('CloudWatchDatasource', () => {
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(fetchMock.mock.calls[0][0].data.queries[0].period).toEqual('600');
       });
-    });
-
-    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', (stat) => {
-      const { ds } = getTestContext({ response });
-      const query: DataQueryRequest<CloudWatchQuery> = ({
-        range: defaultTimeRange,
-        rangeRaw: { from: 1483228800, to: 1483232400 },
-        targets: [
-          {
-            type: 'Metrics',
-            refId: 'A',
-            region: 'us-east-1',
-            namespace: 'AWS/EC2',
-            metricName: 'CPUUtilization',
-            dimensions: {
-              InstanceId: 'i-12345678',
-            },
-            statistics: [stat],
-            period: '60s',
-          },
-        ],
-      } as unknown) as DataQueryRequest<CloudWatchQuery>;
-
-      expect(ds.query.bind(ds, query)).toThrow(/Invalid extended statistics/);
     });
 
     it('should return series list', async () => {
@@ -512,7 +433,7 @@ describe('CloudWatchDatasource', () => {
         dimensions: {
           InstanceId: 'i-12345678',
         },
-        statistics: ['Average'],
+        statistic: 'Average',
         period: '300',
         expression: '',
       };
@@ -645,7 +566,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -704,7 +625,7 @@ describe('CloudWatchDatasource', () => {
           [`$${variableName}`]: `$${variableName}`,
         },
         matchExact: false,
-        statistics: [],
+        statistic: '',
       };
 
       ds.interpolateVariablesInQueries([logQuery], {});
@@ -715,7 +636,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describe('When performing CloudWatch query for extended statistics', () => {
+  describe('When performing CloudWatch query for extended statistic', () => {
     const query: any = {
       range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -730,7 +651,7 @@ describe('CloudWatchDatasource', () => {
             LoadBalancer: 'lb',
             TargetGroup: 'tg',
           },
-          statistics: ['p90.00'],
+          statistic: 'p90.00',
           period: '300s',
         },
       ],
@@ -856,7 +777,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               dim2: '[[var2]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -884,7 +805,7 @@ describe('CloudWatchDatasource', () => {
               dim2: '[[var2]]',
               dim3: '[[var3]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -918,7 +839,7 @@ describe('CloudWatchDatasource', () => {
               dim3: '[[var3]]',
               dim4: '[[var4]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300s',
           },
         ],
@@ -948,7 +869,7 @@ describe('CloudWatchDatasource', () => {
               dim2: '[[var2]]',
               dim3: '[[var3]]',
             },
-            statistics: ['Average'],
+            statistic: 'Average',
             period: '300',
           },
         ],

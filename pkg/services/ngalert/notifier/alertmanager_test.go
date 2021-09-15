@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -19,40 +21,46 @@ import (
 	"github.com/stretchr/testify/require"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := &Alertmanager{}
+func setupAMTest(t *testing.T) *Alertmanager {
 	dir, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, os.RemoveAll(dir))
 	})
-	am.Settings = &setting.Cfg{
+	cfg := &setting.Cfg{
 		DataPath: dir,
 	}
-	am.SQLStore = sqlstore.InitTestDB(t)
-	require.NoError(t, am.InitWithMetrics(metrics.NewMetrics(prometheus.NewRegistry())))
+
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
+	sqlStore := sqlstore.InitTestDB(t)
+	s := &store.DBstore{
+		BaseInterval:           10 * time.Second,
+		DefaultIntervalSeconds: 60,
+		SQLStore:               sqlStore,
+		Logger:                 log.New("alertmanager-test"),
+	}
+
+	kvStore := newFakeKVStore(t)
+	am, err := newAlertmanager(1, cfg, s, kvStore, m)
+	require.NoError(t, err)
+	return am
+}
+
+func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
+	am := setupAMTest(t)
 	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
 	require.NotNil(t, am.config)
 }
 
 func TestPutAlert(t *testing.T) {
-	am := &Alertmanager{}
-	dir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(dir))
-	})
-
-	am.Settings = &setting.Cfg{
-		DataPath: dir,
-	}
-
-	require.NoError(t, am.InitWithMetrics(metrics.NewMetrics(prometheus.NewRegistry())))
+	am := setupAMTest(t)
 
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
@@ -176,6 +184,36 @@ func TestPutAlert(t *testing.T) {
 				}
 			},
 		}, {
+			title: "Allow spaces in label and annotation name",
+			postableAlerts: apimodels.PostableAlerts{
+				PostableAlerts: []models.PostableAlert{
+					{
+						Annotations: models.LabelSet{"Dashboard URL": "http://localhost:3000"},
+						Alert: models.Alert{
+							Labels:       models.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							GeneratorURL: "http://localhost/url1",
+						},
+						StartsAt: strfmt.DateTime{},
+						EndsAt:   strfmt.DateTime{},
+					},
+				},
+			},
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
+					{
+						Alert: model.Alert{
+							Annotations:  model.LabelSet{"Dashboard URL": "http://localhost:3000"},
+							Labels:       model.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "http://localhost/url1",
+						},
+						UpdatedAt: now,
+						Timeout:   true,
+					},
+				}
+			},
+		}, {
 			title: "Invalid labels",
 			postableAlerts: apimodels.PostableAlerts{
 				PostableAlerts: []models.PostableAlert{
@@ -269,10 +307,11 @@ func TestPutAlert(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		var err error
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, gokit_log.NewNopLogger())
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}

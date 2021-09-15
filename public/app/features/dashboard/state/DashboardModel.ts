@@ -34,6 +34,7 @@ import {
   TimeRange,
   TimeZone,
   UrlQueryValue,
+  PanelModel as IPanelModel,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -41,7 +42,9 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -77,6 +80,7 @@ export class DashboardModel {
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
+  liveNow: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
@@ -92,6 +96,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
   // not persisted
@@ -114,6 +119,7 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
+    hasChangesThatAffectsAllPanels: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -135,6 +141,7 @@ export class DashboardModel {
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
+    this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
@@ -154,6 +161,7 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
+    this.hasChangesThatAffectsAllPanels = false;
   }
 
   addBuiltInAnnotationQuery() {
@@ -235,6 +243,26 @@ export class DashboardModel {
     return copy;
   }
 
+  /**
+   * This will load a new dashboard, but keep existing panels unchanged
+   *
+   * This function can be used to implement:
+   * 1. potentially faster loading dashboard loading
+   * 2. dynamic dashboard behavior
+   * 3. "live" dashboard editing
+   *
+   * @internal and experimental
+   */
+  updatePanels(panels: IPanelModel[]): PanelMergeInfo {
+    const info = mergePanels(this.panels, panels ?? []);
+    if (info.changed) {
+      this.panels = info.panels ?? [];
+      this.sortPanelsByGridPos();
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
+    return info;
+  }
+
   private getPanelSaveModels() {
     return this.panels
       .filter((panel: PanelModel) => {
@@ -314,7 +342,7 @@ export class DashboardModel {
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
-    this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
+    this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
@@ -353,6 +381,7 @@ export class DashboardModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
+    getTimeSrv().pauseAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
     return this.panelInEdit;
   }
@@ -365,11 +394,29 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
+    this.refreshIfChangeAffectsAllPanels();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
+    this.refreshIfChangeAffectsAllPanels();
+    getTimeSrv().resumeAutoRefresh();
+  }
+
+  setChangeAffectsAllPanels() {
+    if (this.panelInEdit || this.panelInView) {
+      this.hasChangesThatAffectsAllPanels = true;
+    }
+  }
+
+  private refreshIfChangeAffectsAllPanels() {
+    if (!this.hasChangesThatAffectsAllPanels) {
+      return;
+    }
+
+    this.hasChangesThatAffectsAllPanels = false;
+    this.startRefresh();
   }
 
   private ensureListExist(data: any) {
@@ -537,9 +584,9 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    const clone = new PanelModel(sourcePanel.getSaveModel());
-
-    clone.id = this.getNextPanelId();
+    const m = sourcePanel.getSaveModel();
+    m.id = this.getNextPanelId();
+    const clone = new PanelModel(m);
 
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
@@ -691,9 +738,11 @@ export class DashboardModel {
         panelBelowIndex = insertPos + rowPanels.length;
       }
 
-      // Update gridPos for panels below
-      for (let i = panelBelowIndex; i < this.panels.length; i++) {
-        this.panels[i].gridPos.y += yPos;
+      // Update gridPos for panels below if we inserted more than 1 repeated row panel
+      if (selectedOptions.length > 1) {
+        for (let i = panelBelowIndex; i < this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
+        }
       }
     }
   }
@@ -701,6 +750,7 @@ export class DashboardModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
+    panel.key = `${panel.id}`;
     panel.repeatIteration = this.iteration;
     if (repeatedByRow) {
       panel.repeatedByRow = true;
@@ -729,7 +779,7 @@ export class DashboardModel {
     const maxPos = maxBy(positions, (pos: GridPos) => {
       return pos.y + pos.h;
     });
-    return maxPos.y + maxPos.h - rowYPos;
+    return maxPos!.y + maxPos!.h - rowYPos;
   }
 
   removePanel(panel: PanelModel) {
@@ -968,6 +1018,7 @@ export class DashboardModel {
   private updateSchema(old: any) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
+    migrator.migrateCloudWatchQueries();
   }
 
   resetOriginalTime() {
@@ -1028,17 +1079,22 @@ export class DashboardModel {
     this.events.emit(CoreEvents.templateVariableValueUpdated);
   }
 
-  expandParentRowFor(panelId: number) {
+  getPanelByUrlId(panelUrlId: string) {
+    const panelId = parseInt(panelUrlId ?? '0', 10);
+
+    // First try to find it in a collapsed row and exand it
     for (const panel of this.panels) {
       if (panel.collapsed) {
         for (const rowPanel of panel.panels) {
           if (rowPanel.id === panelId) {
             this.toggleRow(panel);
-            return;
+            break;
           }
         }
       }
     }
+
+    return this.getPanelById(panelId);
   }
 
   toggleLegendsForAll() {
@@ -1063,6 +1119,13 @@ export class DashboardModel {
 
   canAddAnnotations() {
     return this.meta.canEdit || this.meta.canMakeEditable;
+  }
+
+  shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {
+    const shouldUpdateGridPositionLayout = !isEqual(updatedPanel?.gridPos, panel?.gridPos);
+    if (shouldUpdateGridPositionLayout) {
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {

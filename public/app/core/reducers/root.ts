@@ -46,7 +46,7 @@ export const createRootReducer = () => {
     ...addedReducers,
   });
 
-  return (state: any, action: AnyAction): any => {
+  return (state: any, action: AnyAction) => {
     if (action.type !== cleanUpAction.type) {
       return appReducer(state, action);
     }

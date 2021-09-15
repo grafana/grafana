@@ -22,6 +22,14 @@ POST http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/alert
 content-type: application/json
 
 ###
+# get AM alerts
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/alerts
+
+###
+# get AM status
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/status
+
+###
 # get silences - no silences
 GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
 

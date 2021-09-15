@@ -14,16 +14,19 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
+  showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
 }
 
 export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
+  showTypeIcons: false,
 };
 
 export interface PanelFieldConfig {
   width?: number;
+  minWidth?: number;
   align?: string;
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
@@ -31,4 +34,5 @@ export interface PanelFieldConfig {
 
 export const defaultPanelFieldConfig: PanelFieldConfig = {
   displayMode: TableCellDisplayMode.Auto,
+  align: 'auto',
 };

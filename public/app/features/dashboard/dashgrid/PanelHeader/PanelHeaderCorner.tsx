@@ -84,10 +84,10 @@ export class PanelHeaderCorner extends Component<Props> {
 
     return (
       <Tooltip content={content} placement="top-start" theme={theme}>
-        <div className={className} onClick={onClick} aria-label={ariaLabel}>
-          <i className="fa" />
+        <section className={className} onClick={onClick} aria-label={ariaLabel}>
+          <i aria-hidden className="fa" />
           <span className="panel-info-corner-inner" />
-        </div>
+        </section>
       </Tooltip>
     );
   }

@@ -3,6 +3,7 @@ package plugins
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,33 +27,34 @@ const (
 
 func TestPluginInstallAccess(t *testing.T) {
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		MarketplaceAppEnabled: true,
+		PluginAdminEnabled: true,
 	})
-	store := testinfra.SetUpDatabase(t, dir)
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
 	store.Bus = bus.GetBus() // in order to allow successful user auth
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, cfgPath, store)
 
 	createUser(t, store, usernameNonAdmin, defaultPassword, false)
 	createUser(t, store, usernameAdmin, defaultPassword, true)
 
 	t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
-		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
-		assert.Equal(t, 403, statusCode)
-		assert.JSONEq(t, "{\"message\": \"Permission denied\"}", body)
+		status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
+		assert.Equal(t, 403, status)
+		assert.Equal(t, "Permission denied", body["message"])
 
-		statusCode, body = makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/uninstall"))
-		assert.Equal(t, 403, statusCode)
-		assert.JSONEq(t, "{\"message\": \"Permission denied\"}", body)
+		status, body = makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/uninstall"))
+		assert.Equal(t, 403, status)
+		assert.Equal(t, "Permission denied", body["message"])
 	})
 
 	t.Run("Request is not forbidden if from an admin", func(t *testing.T) {
 		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
+
 		assert.Equal(t, 404, statusCode)
-		assert.JSONEq(t, "{\"error\":\"plugin not found\", \"message\":\"Plugin not found\"}", body)
+		assert.Equal(t, "Plugin not found", body["message"])
 
 		statusCode, body = makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/uninstall"))
 		assert.Equal(t, 404, statusCode)
-		assert.JSONEq(t, "{\"error\":\"plugin is not installed\", \"message\":\"Plugin not installed\"}", body)
+		assert.Equal(t, "Plugin not installed", body["message"])
 	})
 }
 
@@ -68,7 +70,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, username, password strin
 	require.NoError(t, err)
 }
 
-func makePostRequest(t *testing.T, URL string) (int, string) {
+func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	t.Helper()
 
 	// nolint:gosec
@@ -81,7 +83,11 @@ func makePostRequest(t *testing.T, URL string) (int, string) {
 	b, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	return resp.StatusCode, string(b)
+	var body = make(map[string]interface{})
+	err = json.Unmarshal(b, &body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, body
 }
 
 func grafanaAPIURL(username string, grafanaListedAddr string, path string) string {

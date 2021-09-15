@@ -1,5 +1,7 @@
 import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
@@ -46,13 +48,15 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (config.licenseInfo.hasLicense) {
-    navModel.children!.push({
-      active: false,
-      icon: 'lock',
-      id: `datasource-permissions-${dataSource.id}`,
-      text: 'Permissions',
-      url: `datasources/edit/${dataSource.id}/permissions`,
-    });
+    if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
+      navModel.children!.push({
+        active: false,
+        icon: 'lock',
+        id: `datasource-permissions-${dataSource.id}`,
+        text: 'Permissions',
+        url: `datasources/edit/${dataSource.id}/permissions`,
+      });
+    }
 
     navModel.children!.push({
       active: false,
@@ -65,15 +69,33 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       active: false,
       icon: 'database',
-      id: `datasource-cache-${dataSource.id}`,
+      id: `datasource-cache-${dataSource.uid}`,
       text: 'Cache',
-      url: `datasources/edit/${dataSource.id}/cache`,
+      url: `datasources/edit/${dataSource.uid}/cache`,
+      hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
     });
   }
 
   return navModel;
 }
 
+export function getDataSourceNav(main: NavModelItem, pageName: string): NavModel {
+  let node: NavModelItem;
+
+  // find active page
+  for (const child of main.children!) {
+    if (child.id!.indexOf(pageName) > 0) {
+      child.active = true;
+      node = child;
+      break;
+    }
+  }
+
+  return {
+    main: main,
+    node: node!,
+  };
+}
 export function getDataSourceLoadingNav(pageName: string): NavModel {
   const main = buildNavModel(
     {
@@ -125,21 +147,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
     } as any
   );
 
-  let node: NavModelItem;
-
-  // find active page
-  for (const child of main.children!) {
-    if (child.id!.indexOf(pageName) > 0) {
-      child.active = true;
-      node = child;
-      break;
-    }
-  }
-
-  return {
-    main: main,
-    node: node!,
-  };
+  return getDataSourceNav(main, pageName);
 }
 
 function hasDashboards(includes: PluginInclude[]): boolean {

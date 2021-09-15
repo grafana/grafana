@@ -9,7 +9,7 @@ import { DataFrame } from '../types/dataFrame';
  * compareArrayValues(a, b, framesHaveSameStructure);
  * ```
  * NOTE: this does a shallow check on the FieldConfig properties, when using the query
- * editor, this should be sufficient, however if applicaitons are mutating properties
+ * editor, this should be sufficient, however if applications are mutating properties
  * deep in the FieldConfig this will not recognize a change
  *
  * @beta

@@ -5,15 +5,11 @@ import (
 	"io/fs"
 )
 
-// CoreSchema embeds all CUE files within the cue/ subdirectory.
+// CoreSchema embeds all core CUE files, which live in packages/grafana-schema/src
 //
-// TODO good rule about where to search
-//
-//go:embed cue/*/*.cue
+//go:embed cue.mod cue packages/grafana-schema/src/schema/*.cue packages/grafana-schema/src/scuemata/*/*.cue
 var CoreSchema embed.FS
 
-// TODO good rule about where to search
-//
 //go:embed public/app/plugins/*/*/*.cue public/app/plugins/*/*/plugin.json
 var base embed.FS
 

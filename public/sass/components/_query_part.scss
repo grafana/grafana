@@ -1,10 +1,6 @@
 .query-part {
   background-color: $tight-form-func-bg;
 
-  &.unknown-function {
-    border: 1px solid $error-text-color;
-  }
-
   &.show-function-controls {
     padding-top: 5px;
     min-width: 100px;

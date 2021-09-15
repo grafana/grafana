@@ -8,11 +8,17 @@ import { Input } from '../Input/Input';
 
 export interface Props {
   placeholder?: string;
+  /** Array of selected tags */
   tags?: string[];
   onChange: (tags: string[]) => void;
   width?: number;
   className?: string;
+  /** Toggle disabled state */
   disabled?: boolean;
+  /** Enable adding new tags when input loses focus */
+  addOnBlur?: boolean;
+  /** Toggle invalid state */
+  invalid?: boolean;
 }
 
 export const TagsInput: FC<Props> = ({
@@ -22,6 +28,8 @@ export const TagsInput: FC<Props> = ({
   width,
   className,
   disabled,
+  addOnBlur,
+  invalid,
 }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
@@ -32,15 +40,24 @@ export const TagsInput: FC<Props> = ({
   };
 
   const onRemove = (tagToRemove: string) => {
+    if (disabled) {
+      return;
+    }
     onChange(tags?.filter((x) => x !== tagToRemove));
   };
 
-  const onAdd = (event: React.MouseEvent) => {
-    event.preventDefault();
+  const onAdd = (event?: React.MouseEvent) => {
+    event?.preventDefault();
     if (!tags.includes(newTagName)) {
       onChange(tags.concat(newTagName));
     }
     setNewName('');
+  };
+
+  const onBlur = () => {
+    if (addOnBlur && newTagName) {
+      onAdd();
+    }
   };
 
   const onKeyboardAdd = (event: KeyboardEvent) => {
@@ -65,6 +82,8 @@ export const TagsInput: FC<Props> = ({
           onChange={onNameChange}
           value={newTagName}
           onKeyUp={onKeyboardAdd}
+          onBlur={onBlur}
+          invalid={invalid}
           suffix={
             newTagName.length > 0 && (
               <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">

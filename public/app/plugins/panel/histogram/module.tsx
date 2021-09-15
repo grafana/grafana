@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { HistogramPanel } from './HistogramPanel';
-import { graphFieldOptions } from '@grafana/ui';
+import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 import { originalDataHasHistogram } from './utils';
 
@@ -44,12 +44,15 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
         defaultValue: defaultPanelOptions.combine,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       });
+
+    // commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
   })
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
@@ -88,5 +91,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
             options: graphFieldOptions.fillGradient,
           },
         });
+
+      commonOptionsBuilder.addHideFrom(builder);
     },
   });

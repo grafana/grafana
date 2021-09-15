@@ -2,9 +2,9 @@ import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem } from './types';
-import { useStyles } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { styleMixins } from '../../themes';
-import { GrafanaTheme, formattedValueToString } from '@grafana/data';
+import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
   key?: React.Key;
@@ -13,6 +13,7 @@ export interface Props {
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  readonly?: boolean;
 }
 
 /**
@@ -24,8 +25,9 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   onLabelMouseEnter,
   onLabelMouseOut,
   className,
+  readonly,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const onMouseEnter = useCallback(
     (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -58,12 +60,12 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon color={item.color} seriesName={item.label} />
+          <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
           <div
             onMouseEnter={onMouseEnter}
             onMouseOut={onMouseOut}
-            onClick={onClick}
-            className={cx(styles.label, item.disabled && styles.labelDisabled)}
+            onClick={!readonly ? onClick : undefined}
+            className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
           >
             {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
           </div>
@@ -83,16 +85,16 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
 
 LegendTableItem.displayName = 'LegendTableItem';
 
-const getStyles = (theme: GrafanaTheme) => {
-  const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
+const getStyles = (theme: GrafanaTheme2) => {
+  const rowHoverBg = styleMixins.hoverColor(theme.colors.background.primary, theme);
 
   return {
     row: css`
       label: LegendRow;
-      font-size: ${theme.typography.size.sm};
-      border-bottom: 1px solid ${theme.colors.border1};
+      font-size: ${theme.v1.typography.size.sm};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       td {
-        padding: ${theme.spacing.xxs} ${theme.spacing.sm};
+        padding: ${theme.spacing(0.25, 1)};
         white-space: nowrap;
       }
 
@@ -102,12 +104,15 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     label: css`
       label: LegendLabel;
-      cursor: pointer;
       white-space: nowrap;
     `,
     labelDisabled: css`
       label: LegendLabelDisabled;
-      color: ${theme.colors.linkDisabled};
+      color: ${theme.colors.text.disabled};
+    `,
+    clickable: css`
+      label: LegendClickable;
+      cursor: pointer;
     `,
     itemWrapper: css`
       display: flex;
@@ -118,7 +123,7 @@ const getStyles = (theme: GrafanaTheme) => {
       text-align: right;
     `,
     yAxisLabel: css`
-      color: ${theme.palette.gray2};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };

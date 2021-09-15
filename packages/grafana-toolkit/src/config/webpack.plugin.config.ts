@@ -185,13 +185,12 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       'react-redux',
       'redux',
       'rxjs',
+      'react-router-dom',
       'd3',
       'angular',
       '@grafana/ui',
       '@grafana/runtime',
       '@grafana/data',
-      'monaco-editor',
-      'react-monaco-editor',
       // @ts-ignore
       (context, request, callback) => {
         const prefix = 'grafana/';

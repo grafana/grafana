@@ -40,7 +40,7 @@ These issues are not something we want to address all at once but something we w
 
 ### Global state
 
-Global state makes testing and debugging software harder and it's something we want to avoid when possible. Unfortunately, there is quite a lot of global state in Grafana. 
+Global state makes testing and debugging software harder and it's something we want to avoid when possible. Unfortunately, there is quite a lot of global state in Grafana.
 
 We want to migrate away from this by using the `inject` package to wire up all dependencies either in `pkg/cmd/grafana-server/main.go` or self-registering using `registry.RegisterService` ex https://github.com/grafana/grafana/blob/main/pkg/services/cleanup/cleanup.go#L25.
 
@@ -84,3 +84,16 @@ All new features that require state should be possible to configure using config
 - [Dashboards](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/dashboards)
 
 Today its only possible to provision data sources and dashboards but this is something we want to support all over Grafana.
+
+### Use context.Context "everywhere"
+
+The package [context](https://golang.org/pkg/context/) should be used and propagated through all the layers of the code. For example the `context.Context` of an incoming API request should be propagated to any other layers being used such as the bus, service and database layers. Utility functions/methods normally doesn't need `context.Context` To follow best practices, any function/method that receives a context.Context argument should receive it as its first argument.
+
+To be able to solve certain problems and/or implement and support certain features making sure that `context.Context` is passed down through all layers of the code is vital. Being able to provide contextual information for the full life-cycle of an API request allows us to use contextual logging, provide contextual information about the authenticated user, create multiple spans for a distributed trace of service calls and database queries etc.
+
+Code should use `context.TODO` when it's unclear which Context to use or it is not yet available (because the surrounding function has not yet been extended to accept a `context.Context` argument).
+
+
+More details in [Services](/contribute/architecture/backend/services.md), [Communication](/contribute/architecture/backend/communication.md) and [Database](/contribute/architecture/backend/database.md).
+
+[Original design doc](https://docs.google.com/document/d/1ebUhUVXU8FlShezsN-C64T0dOoo-DaC9_r-c8gB2XEU/edit#).

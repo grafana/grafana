@@ -44,10 +44,20 @@ export const VerifyEmail: FC = () => {
           <Field
             label="Email"
             description="Enter your email address to get a verification link sent to you"
-            invalid={!!(errors as any).email}
-            error={(errors as any).email?.message}
+            invalid={!!errors.email}
+            error={errors.email?.message}
           >
-            <Input {...register('email', { required: true })} placeholder="Email" />
+            <Input
+              id="email"
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^\S+@\S+$/,
+                  message: 'Email is invalid',
+                },
+              })}
+              placeholder="Email"
+            />
           </Field>
           <HorizontalGroup>
             <Button>Send verification email</Button>

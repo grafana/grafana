@@ -48,7 +48,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.waitForPollChanges()
 		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
-		serviceTest.mock.ProvisionFunc = func() error {
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return errors.New("Test error")
 		}
 		err = serviceTest.service.ProvisionDashboards()
@@ -76,7 +76,7 @@ type serviceTestStruct struct {
 	cancel       func()
 
 	mock    *dashboards.ProvisionerMock
-	service *provisioningServiceImpl
+	service *ProvisioningServiceImpl
 }
 
 func setup() *serviceTestStruct {

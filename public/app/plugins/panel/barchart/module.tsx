@@ -7,7 +7,8 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { StackingMode, BarValueVisibility, graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { StackingMode, BarValueVisibility } from '@grafana/schema';
+import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 
@@ -16,7 +17,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
@@ -86,6 +87,14 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
         defaultValue: BarValueVisibility.Auto,
       })
+      .addRadio({
+        path: 'stacking',
+        name: 'Stacking',
+        settings: {
+          options: graphFieldOptions.stacking,
+        },
+        defaultValue: StackingMode.None,
+      })
       .addSliderInput({
         path: 'groupWidth',
         name: 'Group width',
@@ -115,6 +124,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, false);
   });
 
 function countNumberFields(data?: DataFrame[]): number {

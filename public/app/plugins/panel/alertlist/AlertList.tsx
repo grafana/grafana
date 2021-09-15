@@ -128,6 +128,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     props.options.stateFilter.paused,
     props.options.stateFilter.pending,
     props.options.dashboardAlerts,
+    props.options.sortOrder,
   ]);
 
   const styles = useStyles(getStyles);

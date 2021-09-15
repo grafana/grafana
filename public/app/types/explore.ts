@@ -82,11 +82,6 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Log line substrings to be highlighted as you type in a query field.
-   * Currently supports only the first query row.
-   */
-  logsHighlighterExpressions?: string[];
-  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;
@@ -122,8 +117,6 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
-  latency: number;
-
   /**
    * If true, the view is in live tailing mode.
    */
@@ -149,6 +142,13 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+
+  /**
+   * We are using caching to store query responses of queries run from logs navigation.
+   * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
+   * We are currently caching last 5 query responses.
+   */
+  cache: Array<{ key: string; value: PanelData }>;
 }
 
 export interface ExploreUpdateState {
@@ -169,7 +169,6 @@ export interface QueryTransaction {
   done: boolean;
   error?: string | JSX.Element;
   hints?: QueryHint[];
-  latency: number;
   request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
@@ -197,7 +196,3 @@ export interface ExplorePanelData extends PanelData {
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }
-
-export type SplitOpen = <T extends DataQuery = any>(
-  options?: { datasourceUid: string; query: T; range?: TimeRange } | undefined
-) => void;

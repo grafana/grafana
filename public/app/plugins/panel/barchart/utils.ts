@@ -1,25 +1,21 @@
 import {
+  ArrayVector,
   DataFrame,
+  Field,
   FieldType,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
+  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import {
-  AxisPlacement,
-  BarValueVisibility,
-  FIXED_UNIT,
-  ScaleDirection,
-  ScaleDistribution,
-  ScaleOrientation,
-  UPlotConfigBuilder,
-  UPlotConfigPrepFn,
-} from '@grafana/ui';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
+import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
+import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -47,6 +43,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   showValue,
   groupWidth,
   barWidth,
+  stacking,
+  text,
+  rawValue,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -55,7 +54,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
 
-  const formatValue = showValue !== BarValueVisibility.Never ? defaultValueFormatter : undefined;
+  const formatValue = defaultValueFormatter;
 
   // Use bar width when only one field
   if (frame.fields.length === 2) {
@@ -68,14 +67,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     xDir: vizOrientation.xDir,
     groupWidth,
     barWidth,
+    stacking,
+    rawValue,
     formatValue,
+    text,
+    showValue,
   };
 
-  const config = getConfig(opts);
+  const config = getConfig(opts, theme);
+
+  builder.setCursor(config.cursor);
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
+  builder.addHook('draw', config.draw);
+
+  builder.setTooltipInterpolator(config.interpolateTooltip);
+
+  builder.setPrepData(config.prepData);
 
   builder.addScale({
     scaleKey: 'x',
@@ -91,13 +100,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
     values: config.xValues,
-    grid: false,
+    grid: { show: false },
     ticks: false,
     gap: 15,
     theme,
   });
 
   let seriesIndex = 0;
+
+  const stackingGroups: Map<string, number[]> = new Map();
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
@@ -114,26 +125,26 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
     builder.addSeries({
       scaleKey,
-      pxAlign: false,
+      pxAlign: true,
       lineWidth: customConfig.lineWidth,
       lineColor: seriesColor,
-      //lineStyle: customConfig.lineStyle,
       fillOpacity: customConfig.fillOpacity,
       theme,
       colorMode,
-      pathBuilder: config.drawBars,
-      pointsBuilder: config.drawPoints,
+      pathBuilder: config.barsBuilder,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
+      hardMin: field.config.min,
+      hardMax: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: {
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // The builder will manage unique scaleKeys and combine where appropriate
@@ -168,7 +179,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         placement,
         formatValue: (v) => formattedValueToString(field.display!(v)),
         theme,
+        grid: { show: customConfig.axisGridShow },
       });
+    }
+
+    collectStackingGroups(field, stackingGroups, seriesIndex);
+  }
+
+  if (stackingGroups.size !== 0) {
+    builder.setStacking(true);
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      for (let j = seriesIdxs.length - 1; j > 0; j--) {
+        builder.addBand({
+          series: [seriesIdxs[j], seriesIdxs[j - 1]],
+        });
+      }
     }
   }
 
@@ -194,4 +219,81 @@ export function preparePlotFrame(data: DataFrame[]) {
   }
 
   return resultFrame;
+}
+
+/** @internal */
+export function prepareGraphableFrames(
+  series: DataFrame[],
+  theme: GrafanaTheme2,
+  stacking: StackingMode
+): { frames?: DataFrame[]; warn?: string } {
+  if (!series?.length) {
+    return { warn: 'No data in response' };
+  }
+
+  const frames: DataFrame[] = [];
+  const firstFrame = series[0];
+
+  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
+    return {
+      warn: 'Bar charts requires a string field',
+    };
+  }
+
+  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
+    return {
+      warn: 'No numeric fields found',
+    };
+  }
+
+  let seriesIndex = 0;
+
+  for (let frame of series) {
+    const fields: Field[] = [];
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        field.state = field.state ?? {};
+
+        field.state.seriesIndex = seriesIndex++;
+
+        let copy = {
+          ...field,
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              stacking: {
+                group: '_',
+                mode: stacking,
+              },
+            },
+          },
+          values: new ArrayVector(
+            field.values.toArray().map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            })
+          ),
+        };
+
+        if (stacking === StackingMode.Percent) {
+          copy.config.unit = 'percentunit';
+          copy.display = getDisplayProcessor({ field: copy, theme });
+        }
+
+        fields.push(copy);
+      } else {
+        fields.push({ ...field });
+      }
+    }
+
+    frames.push({
+      ...frame,
+      fields,
+    });
+  }
+
+  return { frames };
 }

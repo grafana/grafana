@@ -96,12 +96,8 @@ func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *Conte
 		return nil, nil, err
 	}
 	reqContext := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-		},
-		Logger: log.New("testlogger"),
+		Context: &macaron.Context{Req: req},
+		Logger:  log.New("testlogger"),
 	}
 
 	mw := mockWriter{rr}

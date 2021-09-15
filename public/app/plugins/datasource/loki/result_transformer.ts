@@ -1,5 +1,5 @@
 import { capitalize, groupBy, isEmpty } from 'lodash';
-import md5 from 'md5';
+import { v5 as uuidv5 } from 'uuid';
 import { of } from 'rxjs';
 
 import {
@@ -37,6 +37,8 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
+
+const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
@@ -155,7 +157,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
 function createUid(ts: string, labelsString: string, line: string, usedUids: any, refId?: string): string {
   // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
-  let id = md5(`${ts}_${labelsString}_${line}`);
+  let id = uuidv5(`${ts}_${labelsString}_${line}`, UUID_NAMESPACE);
 
   // Check if generated id is unique
   // If not and we've already used it, append it's count after it
@@ -425,7 +427,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
 
       acc.push({
         // Will be filled out later
-        title: '',
+        title: derivedFieldConfig.urlDisplayLabel || '',
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
@@ -437,7 +439,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
     } else if (derivedFieldConfig.url) {
       acc.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
-        title: '',
+        title: derivedFieldConfig.urlDisplayLabel || '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         url: derivedFieldConfig.url,
       });

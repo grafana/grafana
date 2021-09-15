@@ -1,5 +1,4 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -40,6 +39,7 @@ export const PluginListPage: React.FC<Props> = ({
     loadPlugins();
   }, [loadPlugins]);
 
+  let actionTarget: string | undefined = '_blank';
   const linkButton = {
     href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
     title: 'Find more plugins on Grafana.com',
@@ -54,18 +54,9 @@ export const PluginListPage: React.FC<Props> = ({
             setSearchQuery={(query) => setPluginsSearchQuery(query)}
             linkButton={linkButton}
             placeholder="Search by name, author, description or type"
-            target="_blank"
+            target={actionTarget}
           />
-
-          <PluginsErrorsInfo>
-            <>
-              <br />
-              <p>
-                Note that <strong>unsigned front-end datasource and panel plugins</strong> are still usable, but this is
-                subject to change in the upcoming releases of Grafana
-              </p>
-            </>
-          </PluginsErrorsInfo>
+          <PluginsErrorsInfo />
           {hasFetched && plugins && <PluginList plugins={plugins} />}
         </>
       </Page.Contents>
@@ -73,4 +64,4 @@ export const PluginListPage: React.FC<Props> = ({
   );
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));
+export default connect(mapStateToProps, mapDispatchToProps)(PluginListPage);

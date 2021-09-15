@@ -88,12 +88,14 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
-    const { language, theme, getSuggestions } = this.props;
+    const { language, theme, getSuggestions, onBeforeEditorMount } = this.props;
     defineThemes(monaco, theme);
 
     if (getSuggestions) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
     }
+
+    onBeforeEditorMount?.(monaco);
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
@@ -125,7 +127,6 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       tabSize: 2,
       codeLens: false,
       contextmenu: false,
-
       minimap: {
         enabled: longText && showMiniMap,
         renderCharacters: false,

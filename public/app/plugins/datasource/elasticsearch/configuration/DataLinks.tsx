@@ -1,19 +1,21 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Button, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { DataLinkConfig } from '../types';
 import { DataLink } from './DataLink';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textWeak};
-  `,
-  dataLink: css`
-    margin-bottom: ${theme.spacing.sm};
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    infoText: css`
+      padding-bottom: ${theme.spacing(2)};
+      color: ${theme.colors.text.secondary};
+    `,
+    dataLink: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
+  };
+};
 
 type Props = {
   value?: DataLinkConfig[];
@@ -21,8 +23,7 @@ type Props = {
 };
 export const DataLinks = (props: Props) => {
   const { value, onChange } = props;
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <>

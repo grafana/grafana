@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -30,13 +31,15 @@ var (
 )
 
 type DataSourceProxy struct {
-	ds        *models.DataSource
-	ctx       *models.ReqContext
-	targetUrl *url.URL
-	proxyPath string
-	route     *plugins.AppPluginRoute
-	plugin    *plugins.DataSourcePlugin
-	cfg       *setting.Cfg
+	ds                *models.DataSource
+	ctx               *models.ReqContext
+	targetUrl         *url.URL
+	proxyPath         string
+	route             *plugins.AppPluginRoute
+	plugin            *plugins.DataSourcePlugin
+	cfg               *setting.Cfg
+	clientProvider    httpclient.Provider
+	oAuthTokenService oauthtoken.OAuthTokenService
 }
 
 type handleResponseTransport struct {
@@ -69,19 +72,21 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
-	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthTokenService oauthtoken.OAuthTokenService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DataSourceProxy{
-		ds:        ds,
-		plugin:    plugin,
-		ctx:       ctx,
-		proxyPath: proxyPath,
-		targetUrl: targetURL,
-		cfg:       cfg,
+		ds:                ds,
+		plugin:            plugin,
+		ctx:               ctx,
+		proxyPath:         proxyPath,
+		targetUrl:         targetURL,
+		cfg:               cfg,
+		clientProvider:    clientProvider,
+		oAuthTokenService: oAuthTokenService,
 	}, nil
 }
 
@@ -101,7 +106,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
 
-	transport, err := proxy.ds.GetHttpTransport()
+	transport, err := proxy.ds.GetHTTPTransport(proxy.clientProvider)
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
@@ -142,7 +147,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span, ctx := opentracing.StartSpanFromContext(proxy.ctx.Req.Context(), "datasource reverse proxy")
 	defer span.Finish()
 
-	proxy.ctx.Req.Request = proxy.ctx.Req.WithContext(ctx)
+	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetTag("datasource_name", proxy.ds.Name)
 	span.SetTag("datasource_type", proxy.ds.Type)
@@ -155,11 +160,11 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header)); err != nil {
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Header)); err != nil {
 		logger.Error("Failed to inject span context instance", "err", err)
 	}
 
-	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
+	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
@@ -231,11 +236,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.Header.Del("Referer")
 
 	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
 	}
 
-	if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
-		if token := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
+	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 		}
 	}
@@ -247,13 +252,13 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	if proxy.ds.Type == models.DS_ES {
-		if proxy.ctx.Req.Request.Method == "DELETE" {
+		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "PUT" {
+		if proxy.ctx.Req.Method == "PUT" {
 			return errors.New("puts not allowed on proxied Elasticsearch datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
+		if proxy.ctx.Req.Method == "POST" && proxy.proxyPath != "_msearch" {
 			return errors.New("posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
 	}
@@ -284,13 +289,13 @@ func (proxy *DataSourceProxy) validateRequest() error {
 
 	// Trailing validation below this point for routes that were not matched
 	if proxy.ds.Type == models.DS_PROMETHEUS {
-		if proxy.ctx.Req.Request.Method == "DELETE" {
+		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "PUT" {
+		if proxy.ctx.Req.Method == "PUT" {
 			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" {
+		if proxy.ctx.Req.Method == "POST" {
 			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
 		}
 	}
@@ -299,15 +304,15 @@ func (proxy *DataSourceProxy) validateRequest() error {
 }
 
 func (proxy *DataSourceProxy) logRequest() {
-	if !setting.DataProxyLogging {
+	if !proxy.cfg.DataProxyLogging {
 		return
 	}
 
 	var body string
-	if proxy.ctx.Req.Request.Body != nil {
-		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Request.Body)
+	if proxy.ctx.Req.Body != nil {
+		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Body)
 		if err == nil {
-			proxy.ctx.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			proxy.ctx.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}
@@ -318,7 +323,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,
-		"method", proxy.ctx.Req.Request.Method,
+		"method", proxy.ctx.Req.Method,
 		"body", body)
 }
 

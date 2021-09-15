@@ -10,6 +10,7 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
+	ErrProtectedUser     = errors.New("cannot adopt protected user")
 )
 
 type Password string
@@ -137,12 +138,17 @@ type GetUserProfileQuery struct {
 	Result UserProfileDTO
 }
 
+type SearchUsersFilter string
+
+const ActiveLast30Days SearchUsersFilter = "activeLast30Days"
+
 type SearchUsersQuery struct {
 	OrgId      int64
 	Query      string
 	Page       int
 	Limit      int
 	AuthModule string
+	Filter     SearchUsersFilter
 
 	IsDisabled *bool
 

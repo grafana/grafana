@@ -31,9 +31,10 @@ export class HistoryWrapper implements LocationService {
   constructor(history?: H.History) {
     // If no history passed create an in memory one if being called from test
     this.history =
-      history || process.env.NODE_ENV === 'test'
+      history ||
+      (process.env.NODE_ENV === 'test'
         ? H.createMemoryHistory({ initialEntries: ['/'] })
-        : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' });
+        : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' }));
 
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);

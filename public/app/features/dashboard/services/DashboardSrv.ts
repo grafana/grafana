@@ -3,17 +3,14 @@ import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 import { DashboardMeta } from 'app/types';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { promiseToDigest } from '../../../core/utils/promiseToDigest';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
 
-  /** @ngInject */
-  constructor(private $rootScope: GrafanaRootScope) {
+  constructor() {
     appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
   }
 
@@ -48,20 +45,17 @@ export class DashboardSrv {
   }
 
   starDashboard(dashboardId: string, isStarred: any) {
+    const backendSrv = getBackendSrv();
     let promise;
 
     if (isStarred) {
-      promise = promiseToDigest(this.$rootScope)(
-        backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
-          return false;
-        })
-      );
+      promise = backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return false;
+      });
     } else {
-      promise = promiseToDigest(this.$rootScope)(
-        backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
-          return true;
-        })
-      );
+      promise = backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return true;
+      });
     }
 
     return promise.then((res: boolean) => {

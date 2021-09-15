@@ -26,15 +26,15 @@ The Time series beta panel implements the majority of the functionalities availa
 
 Apart from major performance improvements, the new Time series panel implements new features like line interpolation modes, support for more than two Y-axes, soft min and max axis limits, automatic points display based on data density, and gradient fill modes.
 
-{{< figure src="/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
+{{< figure src="/static/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
 
 The following documentation topics were added for this feature:
 
-- [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}})
-- [Graph time series as lines]({{< relref "../panels/visualizations/time-series/graph-time-series-as-lines.md" >}})
-- [Graph time series as bars]({{< relref "../panels/visualizations/time-series/graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "../panels/visualizations/time-series/graph-time-series-as-points" >}})
-- [Change axis display]({{< relref "../panels/visualizations/time-series/change-axis-display.md" >}})
+- [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display.md" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -44,7 +44,7 @@ All the information and stats shown in the Node graph beta are driven by the dat
 
 For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
-For more information, refer to [Node graph panel]({{< relref "../panels/visualizations/node-graph.md" >}}).
+For more information, refer to [Node graph panel]({{< relref "../visualizations/node-graph.md" >}}).
 
 ### New transformations
 
@@ -68,7 +68,7 @@ For more information, refer to [Filter data by value]({{< relref "../panels/tran
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [Add a field override]({{< relref "../panels/field-options/configure-specific-fields.md#add-a-field-override" >}}).
+For more information, refer to [Field overrides]({{< relref "../panels/field-overrides.md" >}}).
 
 ### Exemplar support
 
@@ -76,7 +76,7 @@ Grafana graphs now support Prometheus _exemplars_. They are displayed as diamond
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+.
 
-{{< figure src="/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
+{{< figure src="/static/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
 For more information, refer to [Exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}).
 
@@ -105,9 +105,9 @@ For more information, refer to [Expressions]({{< relref "../panels/expressions.m
 
 You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
-{{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
+{{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
 
 ### Content security policy support
 
@@ -142,7 +142,7 @@ For more information, refer to the [Elasticsearch docs]({{<relref "../datasource
 
 The Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs to match the service names in Azure and align the concepts with the rest of Grafana.
 
-[Azure Monitor]({{< relref "../datasources/azuremonitor.md" >}}) was updated to reflect this change.
+[Azure Monitor]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated to reflect this change.
 
 ### MQL support added for Google Cloud Monitoring
 
@@ -160,7 +160,7 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
 Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository. In this release, we have expanded the set of pre-configured dashboards.
 
-{{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
 
 If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 

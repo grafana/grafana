@@ -15,13 +15,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         }
       }
       queryType="range"
+      resolution={1}
     />
-  }
-  absoluteRange={
-    Object {
-      "from": 1577836800000,
-      "to": 1577923200000,
-    }
   }
   data={
     Object {
@@ -119,6 +114,16 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "expr": "",
       "maxLines": 0,
       "refId": "A",
+    }
+  }
+  range={
+    Object {
+      "from": "2020-01-01T00:00:00.000Z",
+      "raw": Object {
+        "from": "2020-01-01T00:00:00.000Z",
+        "to": "2020-01-02T00:00:00.000Z",
+      },
+      "to": "2020-01-02T00:00:00.000Z",
     }
   }
 />

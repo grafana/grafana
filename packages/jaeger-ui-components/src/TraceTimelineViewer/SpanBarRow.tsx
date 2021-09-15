@@ -42,16 +42,9 @@ const getStyles = createStyle((theme: Theme) => {
   return {
     nameWrapper: css`
       label: nameWrapper;
-      background: ${autoColor(theme, '#f8f8f8')};
       line-height: 27px;
       overflow: hidden;
       display: flex;
-      &:hover {
-        border-right: 1px solid ${autoColor(theme, '#bbb')};
-        float: left;
-        min-width: calc(100% + 1px);
-        overflow: visible;
-      }
     `,
     nameWrapperMatchingFilter: css`
       label: nameWrapperMatchingFilter;
@@ -285,6 +278,12 @@ type SpanBarRowProps = {
         serviceName: string;
       }
     | TNil;
+  noInstrumentedServer?:
+    | {
+        color: string;
+        serviceName: string;
+      }
+    | TNil;
   showErrorIcon: boolean;
   getViewedBounds: ViewedBoundsFunctionType;
   traceStartTime: number;
@@ -333,6 +332,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isMatchingFilter,
       numTicks,
       rpc,
+      noInstrumentedServer,
       showErrorIcon,
       getViewedBounds,
       traceStartTime,
@@ -401,6 +401,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
+              title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
               style={{ borderColor: color }}
@@ -428,8 +429,16 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     {rpc.serviceName}
                   </span>
                 )}
+                {noInstrumentedServer && (
+                  <span>
+                    <IoArrowRightA />{' '}
+                    <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+                    {noInstrumentedServer.serviceName}
+                  </span>
+                )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
+              <small className={styles.endpointName}> | {label}</small>
             </a>
             {createSpanLink &&
               (() => {

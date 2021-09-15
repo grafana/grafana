@@ -118,6 +118,9 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     // make relative times absolute
     dash.time = getTimeSrv().timeRange();
 
+    // Remove links
+    dash.links = [];
+
     // remove panel queries & links
     dash.panels.forEach((panel) => {
       panel.targets = [];
@@ -223,7 +226,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
         </Field>
         <Field label="Expire">
-          <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+          <Select
+            menuShouldPortal
+            width={30}
+            options={expireOptions}
+            value={selectedExpireOption}
+            onChange={this.onExpireChange}
+          />
         </Field>
         <Field
           label="Timeout (seconds)"

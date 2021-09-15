@@ -74,7 +74,14 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   if (mode === FieldColorModeId.Fixed) {
     return (
       <div className={styles.group}>
-        <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} className={styles.select} />
+        <Select
+          menuShouldPortal
+          minMenuHeight={200}
+          options={options}
+          value={mode}
+          onChange={onModeChange}
+          className={styles.select}
+        />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
       </div>
     );
@@ -90,7 +97,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
-          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} />
+          <Select menuShouldPortal minMenuHeight={200} options={options} value={mode} onChange={onModeChange} />
         </div>
         <Field label="Color series by">
           <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
@@ -99,7 +106,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     );
   }
 
-  return <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} />;
+  return <Select menuShouldPortal minMenuHeight={200} options={options} value={mode} onChange={onModeChange} />;
 };
 
 interface ModeProps {

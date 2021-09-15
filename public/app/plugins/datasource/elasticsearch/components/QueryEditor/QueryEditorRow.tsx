@@ -1,5 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import React, { PropsWithChildren } from 'react';
@@ -18,8 +18,7 @@ export const QueryEditorRow = ({
   onHideClick,
   hidden = false,
 }: PropsWithChildren<Props>) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <InlineFieldRow>
@@ -55,14 +54,14 @@ export const QueryEditorRow = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     iconWrapper: css`
       display: flex;
     `,
     icon: css`
-      color: ${theme.colors.textWeak};
-      margin-left: ${theme.spacing.xxs};
+      color: ${theme.colors.text.secondary};
+      margin-left: ${theme.spacing(0.25)};
     `,
   };
-});
+};

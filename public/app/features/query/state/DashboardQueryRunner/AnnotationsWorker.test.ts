@@ -11,7 +11,7 @@ import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from '.
 import { AnnotationQuery } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
-function getTestContext() {
+function getTestContext(dataSourceSrvRejects = false) {
   jest.clearAllMocks();
   const cancellations = new Subject<AnnotationQuery>();
   setDashboardQueryRunnerFactory(() => ({
@@ -28,6 +28,9 @@ function getTestContext() {
   const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
   const dataSourceSrvMock: any = {
     get: async (name: string) => {
+      if (dataSourceSrvRejects) {
+        return Promise.reject(`Could not find datasource with name: ${name}`);
+      }
       if (name === LEGACY_DS_NAME) {
         return {
           annotationQuery: annotationQueryMock,
@@ -119,7 +122,7 @@ describe('AnnotationsWorker', () => {
                 snapshotData: undefined,
                 datasource: 'Legacy',
               },
-              color: 'pink',
+              color: '#ffc0cb',
               type: 'Test',
               isRegion: false,
             },
@@ -133,7 +136,7 @@ describe('AnnotationsWorker', () => {
                 snapshotData: undefined,
                 datasource: 'NextGen',
               },
-              color: 'pink',
+              color: '#ffc0cb',
               type: 'Test',
               isRegion: false,
             },
@@ -167,7 +170,7 @@ describe('AnnotationsWorker', () => {
                 snapshotData: undefined,
                 datasource: 'NextGen',
               },
-              color: 'pink',
+              color: '#ffc0cb',
               type: 'Test',
               isRegion: false,
             },
@@ -204,7 +207,7 @@ describe('AnnotationsWorker', () => {
                   snapshotData: undefined,
                   datasource: 'Legacy',
                 },
-                color: 'pink',
+                color: '#ffc0cb',
                 type: 'Test',
                 isRegion: false,
               },
@@ -244,7 +247,7 @@ describe('AnnotationsWorker', () => {
                 snapshotData: undefined,
                 datasource: 'Legacy',
               },
-              color: 'pink',
+              color: '#ffc0cb',
               type: 'Test',
               isRegion: false,
             },
@@ -269,6 +272,21 @@ describe('AnnotationsWorker', () => {
         expect(result).toEqual({ alertStates: [], annotations: [] });
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('when run is called with correct props and call to datasourceSrv fails', () => {
+    silenceConsoleOutput();
+    it('then it should return the correct results', async () => {
+      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext(true);
+
+      await expect(worker.work(options)).toEmitValuesWith((received) => {
+        expect(received).toHaveLength(1);
+        const result = received[0];
+        expect(result).toEqual({ alertStates: [], annotations: [] });
+        expect(executeAnnotationQueryMock).not.toHaveBeenCalled();
+        expect(annotationQueryMock).not.toHaveBeenCalled();
       });
     });
   });

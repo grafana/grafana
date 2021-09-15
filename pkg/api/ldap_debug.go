@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 var (
@@ -165,7 +166,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(&query); err != nil { // validate the userId exists
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -238,7 +239,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 
 	ldap := newLDAP(ldapConfig.Servers)
 
-	username := c.Params(":username")
+	username := macaron.Params(c.Req)[":username"]
 
 	if len(username) == 0 {
 		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)

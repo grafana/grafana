@@ -1,6 +1,8 @@
 package mysql
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -10,14 +12,18 @@ import (
 	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -27,57 +33,125 @@ const (
 	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
+var logger = log.New("tsdb.mysql")
+
+type Service struct {
+	Cfg *setting.Cfg
+	im  instancemgmt.InstanceManager
+}
+
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
-	logger := log.New("tsdb.mysql")
-
-	protocol := "tcp"
-	if strings.HasPrefix(datasource.Url, "/") {
-		protocol = "unix"
+func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientProvider httpclient.Provider) (*Service, error) {
+	s := &Service{
+		im: datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
 	}
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
-		characterEscape(datasource.User, ":"),
-		datasource.DecryptedPassword(),
-		protocol,
-		characterEscape(datasource.Url, ")"),
-		characterEscape(datasource.Database, "?"),
-	)
+	if err := manager.Register("mysql", factory); err != nil {
+		logger.Error("Failed to register plugin", "error", err)
+	}
+	return s, nil
+}
 
-	tlsConfig, err := datasource.GetTLSConfig()
+func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData := sqleng.JsonData{
+			MaxOpenConns:    0,
+			MaxIdleConns:    2,
+			ConnMaxLifetime: 14400,
+		}
+
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		dsInfo := sqleng.DataSourceInfo{
+			JsonData:                jsonData,
+			URL:                     settings.URL,
+			User:                    settings.User,
+			Database:                settings.Database,
+			ID:                      settings.ID,
+			Updated:                 settings.Updated,
+			UID:                     settings.UID,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+		}
+
+		protocol := "tcp"
+		if strings.HasPrefix(dsInfo.URL, "/") {
+			protocol = "unix"
+		}
+
+		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
+			characterEscape(dsInfo.User, ":"),
+			dsInfo.DecryptedSecureJSONData["password"],
+			protocol,
+			characterEscape(dsInfo.URL, ")"),
+			characterEscape(dsInfo.Database, "?"),
+		)
+
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig, err := httpClientProvider.GetTLSConfig(opts)
+		if err != nil {
+			return nil, err
+		}
+
+		if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
+			tlsConfigString := fmt.Sprintf("ds%d", settings.ID)
+			if err := mysql.RegisterTLSConfig(tlsConfigString, tlsConfig); err != nil {
+				return nil, err
+			}
+			cnnstr += "&tls=" + tlsConfigString
+		}
+
+		if dsInfo.JsonData.Timezone != "" {
+			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
+		}
+
+		if cfg.Env == setting.Dev {
+			logger.Debug("getEngine", "connection", cnnstr)
+		}
+
+		config := sqleng.DataPluginConfiguration{
+			DriverName:        "mysql",
+			ConnectionString:  cnnstr,
+			DSInfo:            dsInfo,
+			TimeColumnNames:   []string{"time", "time_sec"},
+			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
+			RowLimit:          cfg.DataProxyRowLimit,
+		}
+
+		rowTransformer := mysqlQueryResultTransformer{
+			log: logger,
+		}
+
+		return sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	}
+}
+
+func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
+	instance := i.(*sqleng.DataSourceHandler)
+	return instance, nil
+}
 
-	if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
-		tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
-		if err := mysql.RegisterTLSConfig(tlsConfigString, tlsConfig); err != nil {
-			return nil, err
-		}
-		cnnstr += "&tls=" + tlsConfigString
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	if err != nil {
+		return nil, err
 	}
-
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
-	}
-
-	config := sqleng.DataPluginConfiguration{
-		DriverName:        "mysql",
-		ConnectionString:  cnnstr,
-		Datasource:        datasource,
-		TimeColumnNames:   []string{"time", "time_sec"},
-		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
-	}
-
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
-
-	return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	return dsHandler.QueryData(ctx, req)
 }
 
 type mysqlQueryResultTransformer struct {
@@ -239,6 +313,44 @@ func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			Name:           "handle YEAR",
 			InputScanKind:  reflect.Struct,
 			InputTypeName:  "YEAR",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle TINYINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "TINYINT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle SMALLINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "SMALLINT",
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableInt64,

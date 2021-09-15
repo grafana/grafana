@@ -52,7 +52,7 @@ export const getStyles = createStyle((theme: Theme) => {
         background: ${autoColor(theme, '#f5f5f5')};
       }
       &:not(:hover) .${copyIconClassName} {
-        display: none;
+        visibility: hidden;
       }
     `,
     keyColumn: css`

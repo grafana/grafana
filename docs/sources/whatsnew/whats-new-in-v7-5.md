@@ -20,9 +20,9 @@ These features are included in the Grafana open source edition.
 
 Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
-![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
+For more information, refer to [Pie chart panel]({{< relref "../visualizations/pie-chart-panel.md" >}}).
 
 ### Alerting for Loki
 
@@ -32,7 +32,7 @@ With alerting support for Loki, you can now create alerts on Loki metrics querie
 
 [Alerting]({{< relref "../alerting/_index.md" >}}) was updated as a result of this change.
 
-![Loki alerting](/img/docs/alerting/alerting-for-loki-7-5.png)
+![Loki alerting](/static/img/docs/alerting/alerting-for-loki-7-5.png)
 
 ### Loki label browser
 
@@ -50,7 +50,7 @@ For new Prometheus data sources, we have changed the default HTTP method to POST
 
 When searching for text in Elasticsearch logs, matching words in the log line returned by the query are now highlighted.
 
-![Elastic logs highlighting](/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
+![Elastic logs highlighting](/static/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
 
 ### Better format definition for trace data
 
@@ -74,7 +74,7 @@ In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights-and-insights-analytics" >}}).
 
 ### Cloudwatch data source enhancements
 
@@ -83,7 +83,7 @@ For more information, refer to [Deprecating Application Insights and Insights An
 - You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../administration/configuration.md#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../administration/configuration.md#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access && secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
 - You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
 
-  [AWS Cloudwatch data source]({{< relref "../datasources/cloudwatch.md#endpoint" >}}) was updated as a result of this change.
+  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch/_index.md" >}}) was updated as a result of this change.
 
 ### Increased API limit for CloudMonitoring Services
 
@@ -98,7 +98,7 @@ server:
   http_listen_port: 3101
 ```
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
@@ -109,6 +109,7 @@ These features are included in the Grafana Enterprise edition.
 When caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the same query again, the results return from the cache instead of from the data source (such as Splunk or ServiceNow).
 
 Query caching advantages:
+
 - Faster dashboard load times, especially for popular dashboards.
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.

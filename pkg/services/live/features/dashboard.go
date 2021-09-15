@@ -16,12 +16,12 @@ import (
 type actionType string
 
 const (
-	ACTION_SAVED     actionType = "saved"
-	ACTION_DELETED   actionType = "deleted"
-	EDITING_STARTED  actionType = "editing-started"
-	EDITING_FINISHED actionType = "editing-finished"
+	ActionSaved    actionType = "saved"
+	ActionDeleted  actionType = "deleted"
+	EditingStarted actionType = "editing-started"
+	//EditingFinished actionType = "editing-finished"
 
-	GITOPS_CHANNEL = "grafana/dashboard/gitops"
+	GitopsChannel = "grafana/dashboard/gitops"
 )
 
 // DashboardEvent events related to dashboards
@@ -42,7 +42,7 @@ type DashboardHandler struct {
 }
 
 // GetHandlerForPath called on init
-func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (h *DashboardHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return h, nil // all dashboards share the same handler
 }
 
@@ -62,14 +62,14 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
-			logger.Error("Unknown dashboard", "query", query)
+		if err := bus.DispatchCtx(ctx, &query); err != nil {
+			logger.Error("Error getting dashboard", "query", query, "error", err)
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 		}
 
 		dash := query.Result
-		guardian := guardian.New(dash.Id, user.OrgId, user)
-		if canView, err := guardian.CanView(); err != nil || !canView {
+		guard := guardian.New(dash.Id, user.OrgId, user)
+		if canView, err := guard.CanView(); err != nil || !canView {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
 
@@ -102,27 +102,27 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 		event := dashboardEvent{}
 		err := json.Unmarshal(e.Data, &event)
 		if err != nil || event.UID != parts[1] {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("bad request")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("bad request")
 		}
-		if event.Action != EDITING_STARTED {
+		if event.Action != EditingStarted {
 			// just ignore the event
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("ignore???")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(ctx, &query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
-		guardian := guardian.New(query.Result.Id, user.OrgId, user)
-		canEdit, err := guardian.CanEdit()
+		guard := guardian.New(query.Result.Id, user.OrgId, user)
+		canEdit, err := guard.CanEdit()
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 
 		// Ignore edit events if the user can not edit
 		if !canEdit {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil // NOOP
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
 		}
 
 		// Tell everyone who is editing
@@ -130,12 +130,12 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 
 		msg, err := json.Marshal(event)
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 		return models.PublishReply{Data: msg}, backend.PublishStreamStatusOK, nil
 	}
 
-	return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+	return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream
@@ -154,7 +154,7 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 	}
 
 	// Send everything to the gitops channel
-	return h.Publisher(orgID, GITOPS_CHANNEL, msg)
+	return h.Publisher(orgID, GitopsChannel, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
@@ -165,7 +165,7 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayD
 
 	msg := dashboardEvent{
 		UID:       dashboard.Uid,
-		Action:    ACTION_SAVED,
+		Action:    ActionSaved,
 		User:      user,
 		Message:   message,
 		Dashboard: dashboard,
@@ -182,14 +182,14 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayD
 func (h *DashboardHandler) DashboardDeleted(orgID int64, user *models.UserDisplayDTO, uid string) error {
 	return h.publish(orgID, dashboardEvent{
 		UID:    uid,
-		Action: ACTION_DELETED,
+		Action: ActionDeleted,
 		User:   user,
 	})
 }
 
 // HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
 func (h *DashboardHandler) HasGitOpsObserver(orgID int64) bool {
-	count, err := h.ClientCount(orgID, GITOPS_CHANNEL)
+	count, err := h.ClientCount(orgID, GitopsChannel)
 	if err != nil {
 		logger.Error("error getting client count", "error", err)
 		return false

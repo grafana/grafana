@@ -15,6 +15,7 @@ export interface ValueMappingEditRowModel {
   type: MappingType;
   from?: number;
   to?: number;
+  pattern?: string;
   key?: string;
   isNew?: boolean;
   specialMatch?: SpecialValueMatch;
@@ -26,9 +27,10 @@ interface Props {
   index: number;
   onChange: (index: number, mapping: ValueMappingEditRowModel) => void;
   onRemove: (index: number) => void;
+  onDuplicate: (index: number) => void;
 }
 
-export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Props) {
+export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDupliate }: Props) {
   const { key, result } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -92,6 +94,12 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
     });
   };
 
+  const onChangePattern = (event: React.FormEvent<HTMLInputElement>) => {
+    update((mapping) => {
+      mapping.pattern = event.currentTarget.value;
+    });
+  };
+
   const onChangeSpecialMatch = (sel: SelectableValue<SpecialValueMatch>) => {
     update((mapping) => {
       mapping.specialMatch = sel.value;
@@ -145,8 +153,17 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
                 />
               </div>
             )}
+            {mapping.type === MappingType.RegexToText && (
+              <Input
+                type="text"
+                value={mapping.pattern ?? ''}
+                placeholder="Regular expression"
+                onChange={onChangePattern}
+              />
+            )}
             {mapping.type === MappingType.SpecialValue && (
               <Select
+                menuShouldPortal
                 value={specialMatchOptions.find((v) => v.value === mapping.specialMatch)}
                 options={specialMatchOptions}
                 onChange={onChangeSpecialMatch}
@@ -175,6 +192,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
           </td>
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
+              <IconButton name="copy" onClick={() => onDupliate(index)} data-testid="duplicate-value-mapping" />
               <IconButton name="trash-alt" onClick={() => onRemove(index)} data-testid="remove-value-mapping" />
             </HorizontalGroup>
           </td>
@@ -194,9 +212,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       marginRight: theme.spacing(2),
     },
   }),
+  regexInputWrapper: css({
+    display: 'flex',
+    '> div:first-child': {
+      marginRight: theme.spacing(2),
+    },
+  }),
   typeColumn: css({
     textTransform: 'capitalize',
     textAlign: 'center',
+    width: '1%',
   }),
   textAlignCenter: css({
     textAlign: 'center',

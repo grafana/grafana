@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -225,6 +226,101 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 						Routes: []*config.Route{
 							{
 								Receiver: "unmentioned",
+							},
+						},
+					},
+				},
+				Receivers: []*PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure graf no route",
+			input: PostableApiAlertingConfig{
+				Receivers: []*PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure graf no default receiver",
+			input: PostableApiAlertingConfig{
+				Config: Config{
+					Route: &config.Route{
+						Routes: []*config.Route{
+							{
+								Receiver: "graf",
+							},
+						},
+					},
+				},
+				Receivers: []*PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure graf root route with matchers",
+			input: PostableApiAlertingConfig{
+				Config: Config{
+					Route: &config.Route{
+						Receiver: "graf",
+						Routes: []*config.Route{
+							{
+								Receiver: "graf",
+							},
+						},
+						Match: map[string]string{"foo": "bar"},
+					},
+				},
+				Receivers: []*PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			desc: "failure graf nested route duplicate group by labels",
+			input: PostableApiAlertingConfig{
+				Config: Config{
+					Route: &config.Route{
+						Receiver: "graf",
+						Routes: []*config.Route{
+							{
+								Receiver:   "graf",
+								GroupByStr: []string{"foo", "bar", "foo"},
 							},
 						},
 					},
@@ -562,4 +658,15 @@ func Test_ReceiverMatchesBackend(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_Marshaling_Validation(t *testing.T) {
+	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	require.Nil(t, err)
+
+	var tmp GettableUserConfig
+	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp))
+
+	expected := []model.LabelName{"alertname"}
+	require.Equal(t, expected, tmp.AlertmanagerConfig.Config.Route.GroupBy)
 }

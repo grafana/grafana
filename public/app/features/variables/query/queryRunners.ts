@@ -149,6 +149,8 @@ class CustomQueryRunner implements QueryRunner {
   }
 }
 
+export const variableDummyRefId = 'variable-query';
+
 class DatasourceQueryRunner implements QueryRunner {
   type = VariableSupportType.Datasource;
 
@@ -158,7 +160,7 @@ class DatasourceQueryRunner implements QueryRunner {
 
   getTarget({ datasource, variable }: GetTargetArgs) {
     if (hasDatasourceVariableSupport(datasource)) {
-      return variable.query;
+      return { ...variable.query, refId: variable.query.refId ?? variableDummyRefId };
     }
 
     throw new Error("Couldn't create a target with supplied arguments.");

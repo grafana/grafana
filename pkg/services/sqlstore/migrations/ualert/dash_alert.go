@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type dashAlert struct {
 	Message     string
 	Frequency   int64
 	For         time.Duration
+	State       string
 
 	Settings       json.RawMessage
 	ParsedSettings *dashAlertSettings
@@ -21,15 +23,16 @@ type dashAlert struct {
 }
 
 var slurpDashSQL = `
-SELECT id, 
-	org_id, 
+SELECT id,
+	org_id,
 	dashboard_id,
 	panel_id,
 	org_id,
 	name,
 	message,
 	frequency,
-	for,
+	%s,
+	state,
 	settings
 FROM
 	alert
@@ -41,7 +44,7 @@ FROM
 // ParsedSettings property of the dash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	dashAlerts := []dashAlert{}
-	err := m.sess.SQL(slurpDashSQL).Find(&dashAlerts)
+	err := m.sess.SQL(fmt.Sprintf(slurpDashSQL, m.mg.Dialect.Quote("for"))).Find(&dashAlerts)
 
 	if err != nil {
 		return nil, err
@@ -70,7 +73,8 @@ type dashAlertSettings struct {
 // dashAlertNot is the object that represents the Notifications array in
 // dashAlertSettings
 type dashAlertNot struct {
-	UID string `json:"uid"`
+	UID string `json:"uid,omitempty"`
+	ID  int64  `json:"id,omitempty"`
 }
 
 // dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it

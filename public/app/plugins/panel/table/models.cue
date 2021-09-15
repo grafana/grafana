@@ -15,21 +15,23 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Family: {
+Panel: {
     lineages: [
         [
             {
                 PanelOptions: {
                     frameIndex: number | *0
                     showHeader: bool | *true
+                    showTypeIcons: bool | *false
                     sortBy?: [...ui.TableSortByFieldState]
                 }
                 PanelFieldConfig: {
-                    width?: int 
-                    align?: *null | string
+                    width?: int
+                    minWidth?: int
+                    align?: string | *"auto"
                     displayMode?: string | *"auto" // TODO? TableCellDisplayMode
                     filterable?: bool
                 }

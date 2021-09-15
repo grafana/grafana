@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"os"
 	"testing"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -34,7 +32,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       *pagerDutyMessage
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -44,16 +42,16 @@ func TestPagerdutyNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
 					},
 				},
 			},
 			expMsg: &pagerDutyMessage{
 				RoutingKey:  "abcdefgh0123456789",
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				Description: "[firing:1]  (val1)",
+				Description: "[FIRING:1]  (val1)",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
@@ -61,7 +59,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Component: "Grafana",
 					Group:     "default",
 					CustomDetails: map[string]string{
-						"firing":       "Labels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n",
+						"firing":       "\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 						"num_firing":   "1",
 						"num_resolved": "0",
 						"resolved":     "",
@@ -71,8 +69,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				ClientURL: "http://localhost",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -98,9 +95,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsg: &pagerDutyMessage{
 				RoutingKey:  "abcdefgh0123456789",
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				Description: "[firing:2]  ",
+				Description: "[FIRING:2]  ",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",
 					Source:    hostname,
 					Severity:  "warning",
@@ -108,7 +105,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Component: "My Grafana",
 					Group:     "my_group",
 					CustomDetails: map[string]string{
-						"firing":       "Labels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSource: \n",
+						"firing":       "\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
 						"num_firing":   "2",
 						"num_resolved": "0",
 						"resolved":     "",
@@ -118,19 +115,11 @@ func TestPagerdutyNotifier(t *testing.T) {
 				ClientURL: "http://localhost",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find integration key property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"integrationKey": "abcdefgh0123456789",
-				"class": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("build pagerduty message: failed to template PagerDuty message: template: :1: unexpected \"}\" in operand"),
+			expInitError: `failed to validate receiver "pageduty_testing" of type "pagerduty": could not find integration key property in settings`,
 		},
 	}
 
@@ -139,16 +128,16 @@ func TestPagerdutyNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "pageduty_testing",
 				Type:     "pagerduty",
 				Settings: settingsJSON,
 			}
 
 			pn, err := NewPagerdutyNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,33 +55,31 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "CloudWatchService",
-		InitPriority: registry.Low,
-		Instance:     &CloudWatchService{},
-	})
-}
-
-type CloudWatchService struct {
-	LogsService          *LogsService          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-}
-
-func (s *CloudWatchService) Init() error {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, backendPM backendplugin.Manager) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
 	im := datasource.NewInstanceManager(NewInstanceSettings())
 
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
+		QueryDataHandler: newExecutor(logsService, im, cfg, awsds.NewSessionCache()),
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
+	if err := backendPM.Register("cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
-	return nil
+
+	return &CloudWatchService{
+		LogsService:          logsService,
+		Cfg:                  cfg,
+		BackendPluginManager: backendPM,
+	}, nil
+}
+
+type CloudWatchService struct {
+	LogsService          *LogsService
+	BackendPluginManager backendplugin.Manager
+	Cfg                  *setting.Cfg
 }
 
 type SessionCache interface {
@@ -100,7 +97,15 @@ func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg 
 
 func NewInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]string
+		jsonData := struct {
+			Profile       string `json:"profile"`
+			Region        string `json:"defaultRegion"`
+			AssumeRoleARN string `json:"assumeRoleArn"`
+			ExternalID    string `json:"externalId"`
+			Endpoint      string `json:"endpoint"`
+			Namespace     string `json:"customMetricsNamespaces"`
+			AuthType      string `json:"authType"`
+		}{}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -108,18 +113,17 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		model := datasourceInfo{
-			profile:       jsonData["profile"],
-			region:        jsonData["defaultRegion"],
-			assumeRoleARN: jsonData["assumeRoleArn"],
-			externalID:    jsonData["externalId"],
-			endpoint:      jsonData["endpoint"],
-			namespace:     jsonData["customMetricsNamespaces"],
+			profile:       jsonData.Profile,
+			region:        jsonData.Region,
+			assumeRoleARN: jsonData.AssumeRoleARN,
+			externalID:    jsonData.ExternalID,
+			endpoint:      jsonData.Endpoint,
+			namespace:     jsonData.Namespace,
 			datasourceID:  settings.ID,
 		}
 
-		atStr := jsonData["authType"]
 		at := awsds.AuthTypeDefault
-		switch atStr {
+		switch jsonData.AuthType {
 		case "credentials":
 			at = awsds.AuthTypeSharedCreds
 		case "keys":
@@ -132,7 +136,7 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			at = awsds.AuthTypeDefault
 			plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
 		default:
-			plog.Warn("Unrecognized AWS authentication type", "type", atStr)
+			plog.Warn("Unrecognized AWS authentication type", "type", jsonData.AuthType)
 		}
 
 		model.authType = at
@@ -150,9 +154,6 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	ec2Client  ec2iface.EC2API
-	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-
 	logsService *LogsService
 	im          instancemgmt.InstanceManager
 	cfg         *setting.Cfg
@@ -202,32 +203,22 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string, pluginCtx backend.Pl
 }
 
 func (e *cloudWatchExecutor) getEC2Client(region string, pluginCtx backend.PluginContext) (ec2iface.EC2API, error) {
-	if e.ec2Client != nil {
-		return e.ec2Client, nil
-	}
-
 	sess, err := e.newSession(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	e.ec2Client = newEC2Client(sess)
 
-	return e.ec2Client, nil
+	return newEC2Client(sess), nil
 }
 
 func (e *cloudWatchExecutor) getRGTAClient(region string, pluginCtx backend.PluginContext) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
-	if e.rgtaClient != nil {
-		return e.rgtaClient, nil
-	}
-
 	sess, err := e.newSession(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	e.rgtaClient = newRGTAClient(sess)
 
-	return e.rgtaClient, nil
+	return newRGTAClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,

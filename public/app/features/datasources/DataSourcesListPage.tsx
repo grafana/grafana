@@ -1,16 +1,16 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { connect, ConnectedProps } from 'react-redux';
+// Services & Utils
+import { contextSrv } from 'app/core/core';
 // Components
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
-import { DataSourceSettings, NavModel, LayoutMode } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { StoreState, AccessControlAction } from 'app/types';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -23,17 +23,26 @@ import {
 } from './state/selectors';
 import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
-export interface Props {
-  navModel: NavModel;
-  dataSources: DataSourceSettings[];
-  dataSourcesCount: number;
-  layoutMode: LayoutMode;
-  searchQuery: string;
-  hasFetched: boolean;
-  loadDataSources: typeof loadDataSources;
-  setDataSourcesLayoutMode: typeof setDataSourcesLayoutMode;
-  setDataSourcesSearchQuery: typeof setDataSourcesSearchQuery;
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(state.navIndex, 'datasources'),
+    dataSources: getDataSources(state.dataSources),
+    layoutMode: getDataSourcesLayoutMode(state.dataSources),
+    dataSourcesCount: getDataSourcesCount(state.dataSources),
+    searchQuery: getDataSourcesSearchQuery(state.dataSources),
+    hasFetched: state.dataSources.hasFetched,
+  };
 }
+
+const mapDispatchToProps = {
+  loadDataSources,
+  setDataSourcesSearchQuery,
+  setDataSourcesLayoutMode,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = ConnectedProps<typeof connector>;
 
 const emptyListModel = {
   title: 'No data sources defined',
@@ -62,16 +71,26 @@ export class DataSourcesListPage extends PureComponent<Props> {
       hasFetched,
     } = this.props;
 
+    const canCreateDataSource =
+      contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
+      contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+
     const linkButton = {
       href: 'datasources/new',
       title: 'Add data source',
+      disabled: !canCreateDataSource,
+    };
+
+    const emptyList = {
+      ...emptyListModel,
+      buttonDisabled: !canCreateDataSource,
     };
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyList} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <PageActionBar
@@ -89,21 +108,4 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'datasources'),
-    dataSources: getDataSources(state.dataSources),
-    layoutMode: getDataSourcesLayoutMode(state.dataSources),
-    dataSourcesCount: getDataSourcesCount(state.dataSources),
-    searchQuery: getDataSourcesSearchQuery(state.dataSources),
-    hasFetched: state.dataSources.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadDataSources,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));
+export default connector(DataSourcesListPage);

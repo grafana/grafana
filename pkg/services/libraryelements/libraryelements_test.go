@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -110,6 +109,10 @@ type libraryElementResult struct {
 	Result libraryElement `json:"result"`
 }
 
+type libraryElementArrayResult struct {
+	Result []libraryElement `json:"result"`
+}
+
 type libraryElementsSearch struct {
 	Result libraryElementsSearchResult `json:"result"`
 }
@@ -122,7 +125,7 @@ type libraryElementsSearchResult struct {
 }
 
 func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, Panel, []byte(`
+	command := getCreateCommandWithModel(folderID, name, models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -136,7 +139,7 @@ func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementComm
 }
 
 func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, Variable, []byte(`
+	command := getCreateCommandWithModel(folderID, name, models.VariableElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "name": "query0",
@@ -148,7 +151,7 @@ func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementC
 	return command
 }
 
-func getCreateCommandWithModel(folderID int64, name string, kind LibraryElementKind, model []byte) CreateLibraryElementCommand {
+func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryElementKind, model []byte) CreateLibraryElementCommand {
 	command := CreateLibraryElementCommand{
 		FolderID: folderID,
 		Name:     name,
@@ -204,7 +207,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	s := dashboards.NewFolderService(user.OrgId, &user, sqlStore)
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(title, title)
+	folder, err := s.CreateFolder(context.Background(), title, title)
 	require.NoError(t, err)
 
 	updateFolderACL(t, sqlStore, folder.Id, items)
@@ -248,6 +251,17 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryE
 	return result
 }
 
+func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) libraryElementArrayResult {
+	t.Helper()
+
+	require.Equal(t, 200, resp.Status())
+	var result = libraryElementArrayResult{}
+	err := json.Unmarshal(resp.Body(), &result)
+	require.NoError(t, err)
+
+	return result
+}
+
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
@@ -266,11 +280,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(registry.ClearOverrides)
-
-		ctx := macaron.Context{
-			Req: macaron.Request{Request: &http.Request{}},
-		}
+		ctx := macaron.Context{Req: &http.Request{}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)

@@ -20,6 +20,8 @@ export type MetricAggregationType =
   | 'raw_document'
   | 'raw_data'
   | 'logs'
+  | 'rate'
+  | 'top_metrics'
   | PipelineMetricAggregationType;
 
 interface BaseMetricAggregation {
@@ -153,6 +155,14 @@ export interface Logs extends BaseMetricAggregation {
   };
 }
 
+export interface Rate extends MetricAggregationWithField {
+  type: 'rate';
+  settings?: {
+    unit?: string;
+    mode?: string;
+  };
+}
+
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
   type: PipelineMetricAggregationType;
   pipelineAgg?: string;
@@ -282,6 +292,15 @@ export interface BucketScript extends PipelineMetricAggregationWithMultipleBucke
   };
 }
 
+export interface TopMetrics extends BaseMetricAggregation {
+  type: 'top_metrics';
+  settings?: {
+    order?: string;
+    orderBy?: string;
+    metrics?: string[];
+  };
+}
+
 type PipelineMetricAggregation = MovingAverage | Derivative | CumulativeSum | BucketScript;
 
 export type MetricAggregationWithSettings =
@@ -300,7 +319,9 @@ export type MetricAggregationWithSettings =
   | Average
   | MovingAverage
   | MovingFunction
-  | Logs;
+  | Logs
+  | Rate
+  | TopMetrics;
 
 export type MetricAggregationWithMeta = ExtendedStats;
 
@@ -344,7 +365,7 @@ export const isMetricAggregationWithInlineScript = (
   metric: BaseMetricAggregation | MetricAggregationWithInlineScript
 ): metric is MetricAggregationWithInlineScript => metricAggregationConfig[metric.type].supportsInlineScript;
 
-export const METRIC_AGGREGATION_TYPES = [
+export const METRIC_AGGREGATION_TYPES: MetricAggregationType[] = [
   'count',
   'avg',
   'sum',
@@ -362,7 +383,9 @@ export const METRIC_AGGREGATION_TYPES = [
   'serial_diff',
   'cumulative_sum',
   'bucket_script',
+  'rate',
+  'top_metrics',
 ];
 
 export const isMetricAggregationType = (s: MetricAggregationType | string): s is MetricAggregationType =>
-  METRIC_AGGREGATION_TYPES.includes(s);
+  METRIC_AGGREGATION_TYPES.includes(s as MetricAggregationType);

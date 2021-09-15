@@ -1,7 +1,6 @@
 import React from 'react';
 import { MetricEditor } from './MetricEditor';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
 import { MetricAggregation } from './aggregations';
@@ -14,7 +13,7 @@ interface Props {
 }
 
 export const MetricAggregationsEditor = ({ nextId }: Props) => {
-  const dispatch = useDispatch<MetricAggregationAction>();
+  const dispatch = useDispatch();
   const { metrics } = useQuery();
   const totalMetrics = metrics?.length || 0;
 

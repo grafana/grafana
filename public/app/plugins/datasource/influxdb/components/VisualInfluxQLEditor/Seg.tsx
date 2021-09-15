@@ -58,6 +58,12 @@ type SelReloadProps = {
   allowCustomValue?: boolean;
 };
 
+// when a custom value is written into a select-box,
+// by default the new value is prefixed with "Create:",
+// and that sounds confusing because here we do not create
+// anything. we change this to just be the entered string.
+const formatCreateLabel = (v: string) => v;
+
 const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
   // here we rely on the fact that writing text into the <AsyncSelect/>
   // does not cause a re-render of the current react component.
@@ -70,6 +76,8 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   return (
     <div className={selectClass}>
       <AsyncSelect
+        menuShouldPortal
+        formatCreateLabel={formatCreateLabel}
         defaultOptions
         autoFocus
         isOpen
@@ -93,12 +101,15 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
 
   useEffect(() => {
-    doLoad();
+    doLoad('');
   }, [doLoad, loadOptions]);
 
   return (
     <div className={selectClass}>
       <Select
+        menuShouldPortal
+        isLoading={loadState.loading}
+        formatCreateLabel={formatCreateLabel}
         autoFocus
         isOpen
         onCloseMenu={onClose}
@@ -128,22 +139,23 @@ const Sel = ({ loadOptions, filterByLoadOptions, allowCustomValue, onChange, onC
 type InpProps = {
   initialValue: string;
   onChange: (newVal: string) => void;
+  onClose: () => void;
 };
 
-const Inp = ({ initialValue, onChange }: InpProps): JSX.Element => {
+const Inp = ({ initialValue, onChange, onClose }: InpProps): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(initialValue);
-
-  const onBlur = () => {
-    // we send empty-string as undefined
-    onChange(currentValue);
-  };
 
   return (
     <Input
       autoFocus
       type="text"
       spellCheck={false}
-      onBlur={onBlur}
+      onBlur={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          onChange(currentValue);
+        }
+      }}
       onChange={(e) => {
         setCurrentValue(e.currentTarget.value);
       }}
@@ -168,11 +180,9 @@ export const Seg = ({
   const [isOpen, setOpen] = useState(false);
   if (!isOpen) {
     const className = cx(defaultButtonClass, buttonClassName);
-    // this should not be a label, this should be a button,
-    // but this is what is used inside a Segment, and i just
-    // want the same look
     return (
       <InlineLabel
+        as="button"
         className={className}
         onClick={() => {
           setOpen(true);
@@ -201,6 +211,9 @@ export const Seg = ({
       return (
         <Inp
           initialValue={value}
+          onClose={() => {
+            setOpen(false);
+          }}
           onChange={(v) => {
             setOpen(false);
             onChange({ value: v, label: v });

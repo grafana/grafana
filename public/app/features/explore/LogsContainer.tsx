@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LoadingState, LogRowModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
+import { addResultsToCache, clearCache } from './state/query';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -15,18 +15,19 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
 
-interface LogsContainerProps {
+interface LogsContainerProps extends PropsFromRedux {
+  width: number;
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
-  width: number;
   syncedTimes: boolean;
+  loadingState: LoadingState;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerProps> {
+export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -60,7 +61,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
   render() {
     const {
       loading,
-      logsHighlighterExpressions,
+      loadingState,
       logRows,
       logsMeta,
       logsSeries,
@@ -77,6 +78,8 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       width,
       isLive,
       exploreId,
+      addResultsToCache,
+      clearCache,
     } = this.props;
 
     if (!logRows) {
@@ -118,8 +121,9 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               logsMeta={logsMeta}
               logsSeries={logsSeries}
               logsQueries={logsQueries}
-              highlighterExpressions={logsHighlighterExpressions}
+              width={width}
               loading={loading}
+              loadingState={loadingState}
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -131,9 +135,10 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               scanning={scanning}
               scanRange={range.raw}
               showContextToggle={this.showContextToggle}
-              width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              addResultsToCache={() => addResultsToCache(exploreId)}
+              clearCache={() => clearCache(exploreId)}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -146,22 +151,11 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const {
-    logsHighlighterExpressions,
-    logsResult,
-    loading,
-    scanning,
-    datasourceInstance,
-    isLive,
-    isPaused,
-    range,
-    absoluteRange,
-  } = item;
+  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
-    logsHighlighterExpressions,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
     logsSeries: logsResult?.series,
@@ -180,9 +174,11 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 const mapDispatchToProps = {
   updateTimeRange,
   splitOpen,
+  addResultsToCache,
+  clearCache,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-export default hot(module)(connector(LogsContainer));
+export default connector(LogsContainer);

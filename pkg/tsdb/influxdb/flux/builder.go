@@ -9,25 +9,44 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/api/query"
 )
 
-// Copied from: (Apache 2 license)
-// https://github.com/influxdata/influxdb-client-go/blob/master/query.go#L30
+// based on https://docs.influxdata.com/influxdb/v2.0/reference/syntax/annotated-csv/#data-types
 const (
-	stringDatatype       = "string"
-	doubleDatatype       = "double"
-	boolDatatype         = "bool"
-	longDatatype         = "long"
-	uLongDatatype        = "unsignedLong"
-	durationDatatype     = "duration"
-	base64BinaryDataType = "base64Binary"
-	timeDatatypeRFC      = "dateTime:RFC3339"
-	timeDatatypeRFCNano  = "dateTime:RFC3339Nano"
+	stringDatatype             = "string"
+	doubleDatatype             = "double"
+	booleanDatatype            = "boolean"
+	longDatatype               = "long"
+	unsignedLongDatatype       = "unsignedLong"
+	durationDatatype           = "duration"
+	base64BinaryDataType       = "base64Binary"
+	datetimeRFC339DataType     = "dateTime:RFC3339"
+	datetimeRFC339DataTypeNano = "dateTime:RFC3339Nano"
+	// based on the documentation there should also be "dateTime:number" but i have never seen it yet.
 )
 
+// the general approach to process the influxdb response is:
+// - for columns with data, we convert them to grafana dataframes
+// - for columns with tags, we convert them to labels for the dataframes
+//
+// we also try to detect some often used patterns in the data,
+// and make the data easier to graph in the browser for such cases:
+// - if there is only one timestamp-column and it's named "_time",
+//   we will not add the labels to this data-column, because timestamp
+//   columns usually do not have labels in grafana.
+//   we use the `columnInfo.shouldGetLabels` attribute to handle this.
+// - if there is only one timestamp-column and it's named "_time",
+//   and there is only one non-timestamp-column and it's named "_value",
+//   we rename "_time" to "Time" (using `columnInfo.isTheSimpleTime`),
+//   and we rename "_value" too (using `columnInfo.isTheSimpleValue`):
+//   if there is a tag called "_field" we use it's value as the name
+//   (because that's the usual approach in influxdb), and if there is not,
+//   we name it "Value". with these new names, they are more compatible
+//   with the visualizations in grafana.
 type columnInfo struct {
 	name             string
 	converter        *data.FieldConverter
 	shouldGetLabels  bool
-	isTheSingleValue bool
+	isTheSimpleValue bool
+	isTheSimpleTime  bool
 }
 
 // frameBuilder is an interface to help testing.
@@ -92,19 +111,19 @@ func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
 	case stringDatatype:
 		return &converters.AnyToNullableString, nil
-	case timeDatatypeRFC:
+	case datetimeRFC339DataType:
 		return &timeToOptionalTime, nil
-	case timeDatatypeRFCNano:
+	case datetimeRFC339DataTypeNano:
 		return &timeToOptionalTime, nil
 	case durationDatatype:
 		return &converters.Int64ToNullableInt64, nil
 	case doubleDatatype:
 		return &converters.Float64ToNullableFloat64, nil
-	case boolDatatype:
+	case booleanDatatype:
 		return &converters.BoolToNullableBool, nil
 	case longDatatype:
 		return &converters.Int64ToNullableInt64, nil
-	case uLongDatatype:
+	case unsignedLongDatatype:
 		return &converters.Uint64ToNullableUInt64, nil
 	case base64BinaryDataType:
 		return &converters.AnyToNullableString, nil
@@ -125,7 +144,7 @@ func getGroupColumnNames(cols []*query.FluxColumn) []string {
 }
 
 func isTimestampType(dataType string) bool {
-	return (dataType == timeDatatypeRFC) || (dataType == timeDatatypeRFCNano)
+	return (dataType == datetimeRFC339DataType) || (dataType == datetimeRFC339DataTypeNano)
 }
 
 func hasUsualStartStop(dataCols []*query.FluxColumn) bool {
@@ -167,10 +186,6 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	dataColumns := getDataColumns(columns)
 	fb.hasUsualStartStop = hasUsualStartStop(dataColumns)
 
-	// first we store the column-info structures as pointers,
-	// because we need to modify some items in the list
-	var columnInfos []*columnInfo
-
 	for _, col := range dataColumns {
 		if col.IsGroup() {
 			fb.labels = append(fb.labels, col.Name())
@@ -188,10 +203,9 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 				name:             name,
 				converter:        converter,
 				shouldGetLabels:  true, // we default to get-labels
-				isTheSingleValue: false,
+				isTheSimpleValue: false,
+				isTheSimpleTime:  false,
 			}
-
-			columnInfos = append(columnInfos, info)
 
 			if isTimestamp {
 				timestampCols = append(timestampCols, info)
@@ -213,10 +227,19 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	if hasSimpleTimeCol && (len(nonTimestampCols) == 1) && (nonTimestampCols[0].name == "_value") {
 		// there is a simple timestamp column, and there is a single non-timestamp value column
 		// named "_value". we decide that this is "the" value-column.
-		nonTimestampCols[0].isTheSingleValue = true
+		nonTimestampCols[0].isTheSimpleValue = true
+
+		// now that we know that there is both a single correctly named timestamp column
+		// and a single correctly named value column, we mark the timestamp column as THE timestamp
+		timestampCols[0].isTheSimpleTime = true
 	}
 
-	for _, colInfo := range columnInfos {
+	// grafana wants the timestamp columns first, so we add them first
+	for _, colInfo := range timestampCols {
+		fb.columns = append(fb.columns, *colInfo)
+	}
+	// then we add the non-timestamp-columns
+	for _, colInfo := range nonTimestampCols {
 		fb.columns = append(fb.columns, *colInfo)
 	}
 
@@ -302,13 +325,29 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 			fields[idx] = data.NewFieldFromFieldType(col.converter.OutputFieldType, 0)
 			fields[idx].Name = col.name
 
-			if col.isTheSingleValue {
+			if col.isTheSimpleTime {
+				// the standard name for the timestamp column
+				// in grafana is `Time`. in this simple-case we will
+				// use that name. this should improve
+				// compatibility with the ui-components
+				fields[idx].Name = "Time"
+			}
+
+			if col.isTheSimpleValue {
 				fieldLabel := labels["_field"]
 				if fieldLabel != "" {
 					fields[idx].Name = fieldLabel
 					delete(labels, "_field")
+				} else {
+					// the standard name for the value column
+					// in grafana is `Value`. in this simple-case we will
+					// use that name. this should improve
+					// compatibility with the ui-components
+					fields[idx].Name = "Value"
 				}
+			}
 
+			if col.isTheSimpleTime || col.isTheSimpleValue {
 				// when the data-structure is "simple"
 				// (meaning simple-time and simple-value),
 				// we remove the "_start" and "_stop"

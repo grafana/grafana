@@ -12,6 +12,7 @@ import {
   cancelVariables,
   changeVariableMultiValue,
   cleanUpVariables,
+  fixSelectedInconsistency,
   initDashboardTemplating,
   initVariablesTransaction,
   processVariables,
@@ -683,6 +684,94 @@ describe('shared actions', () => {
           );
 
         expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('fixSelectedInconsistency', () => {
+    describe('when called for a single value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
+      });
+    });
+
+    describe('when called for a multi value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: true },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
       });
     });
   });

@@ -6,12 +6,16 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, TagsInput, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles, InlineSwitch } from '@grafana/ui';
 import React from 'react';
 
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
+  spanStartTimeShift?: string;
+  spanEndTimeShift?: string;
+  filterByTraceID?: boolean;
+  filterBySpanID?: boolean;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -61,6 +65,88 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 datasourceUid: options.jsonData.tracesToLogs?.datasourceUid,
                 tags: tags,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span start time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
+        >
+          <Input
+            type="text"
+            placeholder="1h"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                spanStartTimeShift: v.currentTarget.value,
+              })
+            }
+            value={options.jsonData.tracesToLogs?.spanStartTimeShift || ''}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span end time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
+        >
+          <Input
+            type="text"
+            placeholder="1h"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                spanEndTimeShift: v.currentTarget.value,
+              })
+            }
+            value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Filter by Trace ID"
+          labelWidth={26}
+          grow
+          tooltip="Filters logs by Trace ID. Appends '|=<trace id>' to the query."
+        >
+          <InlineSwitch
+            value={options.jsonData.tracesToLogs?.filterByTraceID}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                filterByTraceID: event.currentTarget.checked,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Filter by Span ID"
+          labelWidth={26}
+          grow
+          tooltip="Filters logs by Span ID. Appends '|=<span id>' to the query."
+        >
+          <InlineSwitch
+            value={options.jsonData.tracesToLogs?.filterBySpanID}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                filterBySpanID: event.currentTarget.checked,
               })
             }
           />

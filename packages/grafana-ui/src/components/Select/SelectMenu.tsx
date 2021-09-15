@@ -4,6 +4,8 @@ import { getSelectStyles } from './getSelectStyles';
 import { cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types';
 
 interface SelectMenuProps {
   maxHeight: number;
@@ -49,6 +51,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
         {...innerProps}
         aria-label="Select option"
       >
+        {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
         {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
         <div className={styles.optionBody}>
           <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>

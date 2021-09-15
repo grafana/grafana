@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2, styleMixins } from '@grafana/ui';
 import { colorManipulator } from '@grafana/data';
 
 export interface BrandComponentProps {
@@ -24,9 +24,17 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
       bottom: 0;
       top: 0;
       background: url(public/img/g8_login_${theme.isDark ? 'dark' : 'light'}.svg);
-      background-size: cover;
+      background-position: top center;
+      background-size: auto;
+      background-repeat: no-repeat;
+
       opacity: 0;
       transition: opacity 3s ease-in-out;
+
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+        background-position: center;
+        background-size: cover;
+      }
     }
   `;
 

@@ -4,33 +4,28 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func init() {
-	registry.RegisterService(&LogsService{})
+func ProvideLogsService() *LogsService {
+	return &LogsService{
+		// nolint:staticcheck // plugins.DataQueryResponse deprecated
+		responseChannels: make(map[string]chan *backend.QueryDataResponse),
+		queues:           make(map[string](chan bool)),
+	}
 }
 
 // LogsService provides methods for querying CloudWatch Logs.
 type LogsService struct {
 	channelMu sync.Mutex
 	// nolint:staticcheck // plugins.DataQueryResult deprecated
-	responseChannels map[string]chan plugins.DataResponse
+	responseChannels map[string]chan *backend.QueryDataResponse
 	queues           map[string](chan bool)
 	queueLock        sync.Mutex
 }
 
-// Init is called by the DI framework to initialize the instance.
-func (s *LogsService) Init() error {
-	// nolint:staticcheck // plugins.DataQueryResult deprecated
-	s.responseChannels = make(map[string]chan plugins.DataResponse)
-	s.queues = make(map[string](chan bool))
-	return nil
-}
-
 // nolint:staticcheck // plugins.DataQueryResult deprecated
-func (s *LogsService) AddResponseChannel(name string, channel chan plugins.DataResponse) error {
+func (s *LogsService) AddResponseChannel(name string, channel chan *backend.QueryDataResponse) error {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()
 
@@ -43,7 +38,7 @@ func (s *LogsService) AddResponseChannel(name string, channel chan plugins.DataR
 }
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
-func (s *LogsService) GetResponseChannel(name string) (chan plugins.DataResponse, error) {
+func (s *LogsService) GetResponseChannel(name string) (chan *backend.QueryDataResponse, error) {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()
 

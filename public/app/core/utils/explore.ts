@@ -29,7 +29,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
-import { QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -116,6 +116,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 }
 
 export function buildQueryTransaction(
+  exploreId: ExploreId,
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
@@ -148,7 +149,7 @@ export function buildQueryTransaction(
     panelId: panelId as any,
     targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
-    requestId: 'explore',
+    requestId: 'explore_' + exploreId,
     rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
@@ -164,11 +165,10 @@ export function buildQueryTransaction(
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
-    latency: 0,
   };
 }
 
-export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
+export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
 const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
   props.some((prop) => segment.hasOwnProperty(prop));
@@ -285,7 +285,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
  * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
  */
 const validKeys = ['refId', 'key', 'context'];
-export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
+export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
     queries.some((query: any) => {
@@ -301,7 +301,7 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory<T extends DataQuery = any>(
+export function updateHistory<T extends DataQuery>(
   history: Array<HistoryItem<T>>,
   datasourceId: string,
   queries: T[]

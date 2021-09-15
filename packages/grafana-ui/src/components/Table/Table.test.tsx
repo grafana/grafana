@@ -91,11 +91,19 @@ function getTestContext(propOverrides: Partial<Props> = {}) {
 }
 
 function getTable(): HTMLElement {
-  return screen.getByRole('table');
+  return screen.getAllByRole('table')[0];
+}
+
+function getFooter(): HTMLElement {
+  return screen.getByTestId('table-footer');
 }
 
 function getColumnHeader(name: string | RegExp): HTMLElement {
   return within(getTable()).getByRole('columnheader', { name });
+}
+
+function getLinks(row: HTMLElement): HTMLElement[] {
+  return within(row).getAllByRole('link');
 }
 
 describe('Table', () => {
@@ -118,20 +126,36 @@ describe('Table', () => {
       expect(getColumnHeader(/img/)).toBeInTheDocument();
 
       const rows = within(getTable()).getAllByRole('row');
+      const rowOneLink = () => getLinks(rows[1])[0];
+      const rowTwoLink = () => getLinks(rows[2])[0];
+      const rowThreeLink = () => getLinks(rows[3])[0];
+
       expect(rows).toHaveLength(4);
-      expect(within(rows[1]).getByRole('cell', { name: '2021-01-01 00:00:00' })).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('cell', { name: '10' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '2021-01-01 01:00:00' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '11' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '2021-01-01 02:00:00' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '12' })).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('cell', { name: '10' }).closest('a')).toHaveAttribute('href', '10');
-      expect(within(rows[2]).getByRole('cell', { name: '11' }).closest('a')).toHaveAttribute('href', '11');
-      expect(within(rows[3]).getByRole('cell', { name: '12' }).closest('a')).toHaveAttribute('href', '12');
+      expect(within(rows[1]).getByText('2021-01-01 00:00:00')).toBeInTheDocument();
+      expect(getLinks(rows[1])).toHaveLength(2);
+      expect(within(rows[2]).getByText('2021-01-01 01:00:00')).toBeInTheDocument();
+      expect(getLinks(rows[2])).toHaveLength(2);
+      expect(within(rows[3]).getByText('2021-01-01 02:00:00')).toBeInTheDocument();
+      expect(getLinks(rows[3])).toHaveLength(2);
+      expect(rowOneLink()).toHaveTextContent('10');
+      expect(rowOneLink()).toHaveAttribute('href', '10');
+      expect(rowTwoLink()).toHaveTextContent('11');
+      expect(rowTwoLink()).toHaveAttribute('href', '11');
+      expect(rowThreeLink()).toHaveTextContent('12');
+      expect(rowThreeLink()).toHaveAttribute('href', '12');
     });
   });
 
-  describe('when sorting with columnheader', () => {
+  describe('when mounted with footer', () => {
+    it('then footer should be displayed', () => {
+      const footerValues = ['a', 'b', 'c'];
+      getTestContext({ footerValues });
+      expect(getTable()).toBeInTheDocument();
+      expect(getFooter()).toBeInTheDocument();
+    });
+  });
+
+  describe('when sorting with column header', () => {
     it('then correct rows should be rendered', () => {
       getTestContext();
 
@@ -140,26 +164,19 @@ describe('Table', () => {
 
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(4);
-      expect(within(rows[1]).getByRole('cell', { name: '2021-01-01 02:00:00' })).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('cell', { name: '12' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '2021-01-01 01:00:00' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '11' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '2021-01-01 00:00:00' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '10' })).toBeInTheDocument();
-    });
+      const rowOneLink = () => getLinks(rows[1])[0];
+      const rowTwoLink = () => getLinks(rows[2])[0];
+      const rowThreeLink = () => getLinks(rows[3])[0];
 
-    describe('and clicking on links', () => {
-      it('then correct row data should be in link', () => {
-        getTestContext();
-
-        userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
-        userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
-
-        const rows = within(getTable()).getAllByRole('row');
-        expect(within(rows[1]).getByRole('cell', { name: '12' }).closest('a')).toHaveAttribute('href', '12');
-        expect(within(rows[2]).getByRole('cell', { name: '11' }).closest('a')).toHaveAttribute('href', '11');
-        expect(within(rows[3]).getByRole('cell', { name: '10' }).closest('a')).toHaveAttribute('href', '10');
-      });
+      expect(within(rows[1]).getByText('2021-01-01 02:00:00')).toBeInTheDocument();
+      expect(rowOneLink()).toHaveTextContent('12');
+      expect(rowOneLink()).toHaveAttribute('href', '12');
+      expect(within(rows[2]).getByText('2021-01-01 01:00:00')).toBeInTheDocument();
+      expect(rowTwoLink()).toHaveTextContent('11');
+      expect(rowTwoLink()).toHaveAttribute('href', '11');
+      expect(within(rows[3]).getByText('2021-01-01 00:00:00')).toBeInTheDocument();
+      expect(rowThreeLink()).toHaveTextContent('10');
+      expect(rowThreeLink()).toHaveAttribute('href', '10');
     });
   });
 });

@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -29,7 +28,7 @@ type RulerApiService interface {
 	RoutePostNameRulesConfig(*models.ReqContext, apimodels.PostableRuleGroupConfig) response.Response
 }
 
-func (api *API) RegisterRulerApiEndpoints(srv RulerApiService, m *metrics.Metrics) {
+func (api *API) RegisterRulerApiEndpoints(srv RulerApiService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),

@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -26,14 +25,16 @@ type AlertmanagerApiService interface {
 	RouteDeleteSilence(*models.ReqContext) response.Response
 	RouteGetAMAlertGroups(*models.ReqContext) response.Response
 	RouteGetAMAlerts(*models.ReqContext) response.Response
+	RouteGetAMStatus(*models.ReqContext) response.Response
 	RouteGetAlertingConfig(*models.ReqContext) response.Response
 	RouteGetSilence(*models.ReqContext) response.Response
 	RouteGetSilences(*models.ReqContext) response.Response
 	RoutePostAMAlerts(*models.ReqContext, apimodels.PostableAlerts) response.Response
 	RoutePostAlertingConfig(*models.ReqContext, apimodels.PostableUserConfig) response.Response
+	RoutePostTestReceivers(*models.ReqContext, apimodels.TestReceiversConfigParams) response.Response
 }
 
-func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *metrics.Metrics) {
+func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
@@ -82,6 +83,15 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 			),
 		)
 		group.Get(
+			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/status"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/{Recipient}/api/v2/status",
+				srv.RouteGetAMStatus,
+				m,
+			),
+		)
+		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -125,6 +135,16 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
 				srv.RoutePostAlertingConfig,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/receivers/test"),
+			binding.Bind(apimodels.TestReceiversConfigParams{}),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/alertmanager/{Recipient}/config/api/v1/receivers/test",
+				srv.RoutePostTestReceivers,
 				m,
 			),
 		)

@@ -2,9 +2,8 @@ import { sortBy as _sortBy } from 'lodash';
 import React, { PureComponent } from 'react';
 import { TimeSeries } from 'app/core/core';
 import { CustomScrollbar, Icon } from '@grafana/ui';
-import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
+import { LegendStat, LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
-type Sort = 'min' | 'max' | 'avg' | 'current' | 'total';
 interface LegendProps {
   seriesList: TimeSeries[];
   optionalClass?: string;
@@ -19,7 +18,7 @@ interface LegendEventHandlers {
 
 interface LegendComponentEventHandlers {
   onToggleSeries?: (series: TimeSeries, event: any) => void;
-  onToggleSort?: (sortBy: Sort | undefined, sortDesc: any) => void;
+  onToggleSort?: (sortBy: LegendStat | undefined, sortDesc: any) => void;
   onToggleAxis?: (series: TimeSeries) => void;
   onColorChange?: (series: TimeSeries, color: string) => void;
 }
@@ -43,7 +42,7 @@ interface LegendValuesProps {
 }
 
 interface LegendSortProps {
-  sort?: Sort;
+  sort?: LegendStat;
   sortDesc?: boolean;
 }
 
@@ -232,7 +231,7 @@ class LegendSeriesList extends PureComponent<LegendComponentProps> {
 }
 
 class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
-  onToggleSort = (stat: Sort) => {
+  onToggleSort = (stat: LegendStat) => {
     if (!this.props.onToggleSort) {
       return;
     }
@@ -306,8 +305,8 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
 }
 
 interface LegendTableHeaderProps {
-  statName: string;
-  onClick?: (statName: string) => void;
+  statName: LegendStat;
+  onClick?: (statName: LegendStat) => void;
 }
 
 class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & LegendSortProps> {

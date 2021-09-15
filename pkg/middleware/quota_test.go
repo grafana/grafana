@@ -89,7 +89,7 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		setUp := func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})

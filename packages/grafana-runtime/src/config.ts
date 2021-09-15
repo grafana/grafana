@@ -8,6 +8,7 @@ import {
   GrafanaTheme,
   GrafanaTheme2,
   LicenseInfo,
+  MapLayerOptions,
   PanelPluginMeta,
   systemDateFormats,
   SystemDateFormatSettings,
@@ -54,18 +55,22 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    meta: false,
     ngalert: false,
-    reportVariables: false,
     accesscontrol: false,
     trimDefaults: false,
+    tempoServiceGraph: false,
+    tempoSearch: false,
+    prometheusMonaco: false,
+    newNavigation: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -74,7 +79,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
-  marketplaceUrl?: string;
+  pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
+  pluginAdminEnabled = false;
+  pluginAdminExternalManageEnabled = false;
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
@@ -82,6 +89,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   azure: AzureSettings = {
     managedIdentityEnabled: false,
   };
+  caching = {
+    enabled: false,
+  };
+  geomapDefaultBaseLayerConfig?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
+  applicationInsightsConnectionString?: string;
+  applicationInsightsEndpointUrl?: string;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

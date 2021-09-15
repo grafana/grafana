@@ -3,6 +3,7 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,11 +11,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/hashicorp/go-plugin"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -68,7 +67,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 
 	if rawData != nil {
 		if dataClient, ok := rawData.(grpcplugin.DataClient); ok {
-			c.DataClient = instrumentDataClient(dataClient)
+			c.DataClient = dataClient
 		}
 	}
 
@@ -84,13 +83,8 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if descriptor.startFns.OnStart != nil {
-		client := &Client{
-			DataPlugin:     c.DataClient,
-			RendererPlugin: c.RendererPlugin,
-			StreamClient:   c.StreamClient,
-		}
-		if err := descriptor.startFns.OnStart(descriptor.pluginID, client, logger); err != nil {
+	if descriptor.startRendererFn != nil {
+		if err := descriptor.startRendererFn(descriptor.pluginID, c.RendererPlugin, logger); err != nil {
 			return nil, err
 		}
 	}
@@ -134,6 +128,25 @@ func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 	}
 
 	return backend.FromProto().CheckHealthResponse(protoResp), nil
+}
+
+func (c *clientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if c.DataClient == nil {
+		return nil, backendplugin.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().QueryDataRequest(req)
+	protoResp, err := c.DataClient.QueryData(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, backendplugin.ErrMethodNotImplemented
+		}
+
+		return nil, errutil.Wrap("Failed to query data", err)
+	}
+
+	return backend.FromProto().QueryDataResponse(protoResp)
 }
 
 func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -193,7 +206,7 @@ func (c *clientV2) PublishStream(ctx context.Context, req *backend.PublishStream
 	return backend.FromProto().PublishStreamResponse(protoResp), nil
 }
 
-func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if c.StreamClient == nil {
 		return backendplugin.ErrMethodNotImplemented
 	}
@@ -208,7 +221,7 @@ func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	}
 
 	for {
-		protoResp, err := protoStream.Recv()
+		p, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
 				return backendplugin.ErrMethodNotImplemented
@@ -216,31 +229,12 @@ func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
-			return errutil.Wrap("failed to receive call resource response", err)
+			return fmt.Errorf("error running stream: %w", err)
 		}
-		if err := sender.Send(backend.FromProto().StreamPacket(protoResp)); err != nil {
+		// From GRPC connection we receive already prepared JSON.
+		err = sender.SendJSON(p.Data)
+		if err != nil {
 			return err
 		}
 	}
-}
-
-type dataClientQueryDataFunc func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error)
-
-func (fn dataClientQueryDataFunc) QueryData(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
-	return fn(ctx, req, opts...)
-}
-
-func instrumentDataClient(plugin grpcplugin.DataClient) grpcplugin.DataClient {
-	if plugin == nil {
-		return nil
-	}
-
-	return dataClientQueryDataFunc(func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
-		var resp *pluginv2.QueryDataResponse
-		err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
-			resp, innerErr = plugin.QueryData(ctx, req)
-			return
-		})
-		return resp, err
-	})
 }

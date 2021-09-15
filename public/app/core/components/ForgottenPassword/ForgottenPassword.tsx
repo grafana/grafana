@@ -51,7 +51,11 @@ export const ForgottenPassword: FC = () => {
             invalid={!!errors.userOrEmail}
             error={errors?.userOrEmail?.message}
           >
-            <Input placeholder="Email or username" {...register('userOrEmail', { required: true })} />
+            <Input
+              id="user-input"
+              placeholder="Email or username"
+              {...register('userOrEmail', { required: 'Email or username is required' })}
+            />
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>

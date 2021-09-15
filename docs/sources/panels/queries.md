@@ -17,11 +17,11 @@ Because of the difference between query languages, data sources may have query e
 
 **InfluxDB query editor**
 
-{{< docs-imagebox img="/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 **Prometheus (PromQL) query editor**
 
-{{< docs-imagebox img="/img/docs/queries/prometheus-query-editor-7-4.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/prometheus-query-editor-7-4.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 ## Query syntax
 
@@ -51,27 +51,27 @@ The Query tab consists of the following elements:
 - Query editor list
 - Expressions
 
-{{< docs-imagebox img="/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 ### Data source selector
 
 The data source selector is a drop-down list. Click it to select a data source you have added. When you create a panel, Grafana automatically selects your default data source. For more information about adding data sources, refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
 
-{{< docs-imagebox img="/img/docs/queries/data-source-selector-7-0.png" class="docs-image--no-shadow" max-width="250px" >}}
+{{< figure src="/static/img/docs/queries/data-source-selector-7-0.png" class="docs-image--no-shadow" max-width="250px" >}}
 
 In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
 
 - **Grafana -** A built-in data source that generates random walk data. Useful for testing visualizations and running experiments.
 - **Mixed -** Select this to query multiple data sources in the same panel. When this data source is selected, Grafana allows you to select a data source for every new query that you add.
-  * The first query will use the data source that was selected before you selected **Mixed**.
-  * You cannot change an existing query to use the Mixed Data Source.
+  - The first query will use the data source that was selected before you selected **Mixed**.
+  - You cannot change an existing query to use the Mixed Data Source.
 - **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
 ### Query options
 
 Click **Query options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made in this panel.
 
-{{< docs-imagebox img="/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 Grafana sets defaults that are shown in dark gray text. Changes are displayed in white text. To return a field to the default setting, delete the white text from the field.
 
@@ -101,6 +101,28 @@ Panel data source query options:
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 
+### Examples:
+
+- **Relative time:**
+
+| Example          | Relative time field |
+| ---------------- | ------------------- |
+| Last 5 minutes   | `now-5m`            |
+| The day so far   | `now/d`             |
+| Last 5 days      | `now-5d/d`          |
+| This week so far | `now/w`             |
+| Last 2 years     | `now-2y/y`          |
+
+- **Time shift:**
+
+| Example              | Time shift field |
+| -------------------- | ---------------- |
+| Last entire week     | `1w/w`           |
+| Two entire weeks ago | `2w/w`           |
+| Last entire month    | `1M/M`           |
+| This entire year     | `1d/y`           |
+| Last entire year     | `1y/y`           |
+
 ### Query inspector button
 
 You can click **Query inspector** to open the Query tab of the panel inspector where you can see the query request sent by the panel and the response.
@@ -117,13 +139,13 @@ In the UI, queries are organized in collapsible query rows. Each query row conta
 
 You can:
 
-| Icon | Description |
-|:--:|:---|
-| {{< docs-imagebox img="/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Toggle query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries. |
-| {{< docs-imagebox img="/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copy a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations. |
-| {{< docs-imagebox img="/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Hide a query. Grafana does not send hidden queries to the data source. |
-| {{< docs-imagebox img="/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel. |
-| {{< docs-imagebox img="/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
+|                                                                    Icon                                                                     | Description                                                                                                                                                                                                                                    |
+| :-----------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Toggle query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
+| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copy a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                     |
+|   {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Hide a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
+|  {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
+|   {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
 
 ### Expressions
 

@@ -377,6 +377,10 @@ func (s *testRenderService) GetRenderUser(key string) (*rendering.RenderUser, bo
 	return nil, false
 }
 
+func (s *testRenderService) Version() string {
+	return ""
+}
+
 var _ rendering.Service = &testRenderService{}
 
 type testImageUploader struct {

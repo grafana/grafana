@@ -54,7 +54,7 @@
       <div class="gf-form" ng-if="threshold.fill && threshold.colorMode === 'custom'">
         <label class="gf-form-label">Fill color</label>
         <span class="gf-form-label">
-          <color-picker color="threshold.fillColor" onChange="ctrl.onFillColorChange($index)"></color-picker>
+          <color-picker color="threshold.fillColor" on-change="ctrl.onFillColorChange($index)"></color-picker>
         </span>
       </div>
 
@@ -69,7 +69,7 @@
       <div class="gf-form" ng-if="threshold.line && threshold.colorMode === 'custom'">
         <label class="gf-form-label">Line color</label>
         <span class="gf-form-label">
-          <color-picker color="threshold.lineColor" onChange="ctrl.onLineColorChange($index)"></color-picker>
+          <color-picker color="threshold.lineColor" on-change="ctrl.onLineColorChange($index)"></color-picker>
         </span>
       </div>
 

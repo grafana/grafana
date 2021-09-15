@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { FieldType, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { TooltipPlugin } from '@grafana/ui';
+import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
+import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import { TooltipPlugin, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
+import { prepareGraphableFrames } from './utils';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
@@ -10,6 +12,13 @@ interface Props extends PanelProps<BarChartOptions> {}
  * @alpha
  */
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
+  const theme = useTheme2();
+
+  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options.stacking), [
+    data,
+    theme,
+    options.stacking,
+  ]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -18,33 +27,25 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.orientation;
   }, [width, height, options.orientation]);
 
-  if (!data || !data.series?.length) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
+  // Force 'multi' tooltip setting or stacking mode
+  const tooltip = useMemo(() => {
+    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
+      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
+    }
+    return options.tooltip;
+  }, [options.tooltip, options.stacking]);
 
-  const firstFrame = data.series[0];
-  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
+  if (!frames || warn) {
     return (
       <div className="panel-empty">
-        <p>Bar charts requires a string field</p>
-      </div>
-    );
-  }
-  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
-    return (
-      <div className="panel-empty">
-        <p>No numeric fields found</p>
+        <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
   }
 
   return (
     <BarChart
-      frames={data.series}
+      frames={frames}
       timeZone={timeZone}
       timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
       structureRev={data.structureRev}
@@ -54,7 +55,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       orientation={orientation}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+        return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
       }}
     </BarChart>
   );

@@ -38,7 +38,6 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
-jest.mock('app/features/dashboard/services/ChangeTracker');
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
@@ -287,10 +286,5 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   it('Should initialize timeSrv and dashboard query runner', () => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
-  });
-
-  it('Should not initialize other services', () => {
-    expect(getDashboardSrv().setCurrent).not.toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).not.toBeCalled();
   });
 });

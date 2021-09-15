@@ -111,9 +111,8 @@ func Auth(options *AuthOptions) macaron.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
 			var revokedErr *models.TokenRevokedError
-			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
+			if errors.As(c.LookupTokenErr, &revokedErr) {
 				tokenRevoked(c, revokedErr)
 				return
 			}
@@ -158,6 +157,12 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 			notAuthorized(c)
 			return
 		}
+	}
+}
+
+func ReqNotSignedIn(c *models.ReqContext) {
+	if c.IsSignedIn {
+		c.Redirect(setting.AppSubUrl + "/")
 	}
 }
 

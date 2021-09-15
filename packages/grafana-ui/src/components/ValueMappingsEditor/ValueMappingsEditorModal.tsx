@@ -49,6 +49,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
   const mappingTypes: Array<SelectableValue<MappingType>> = [
     { label: 'Value', value: MappingType.ValueToText, description: 'Match a specific text value' },
     { label: 'Range', value: MappingType.RangeToText, description: 'Match a numerical range of values' },
+    { label: 'Regex', value: MappingType.RegexToText, description: 'Match a regular expression with replacement' },
     { label: 'Special', value: MappingType.SpecialValue, description: 'Match on null, NaN, boolean and empty values' },
   ];
 
@@ -61,6 +62,18 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         result: {},
       },
     ]);
+  };
+
+  const onDuplicateMapping = (index: number) => {
+    const sourceRow = rows[index];
+    const copy = [...rows];
+    copy.splice(index, 0, { ...sourceRow });
+
+    for (let i = index; i < rows.length; i++) {
+      copy[i].result.index = i;
+    }
+
+    updateRows(copy);
   };
 
   const onUpdate = () => {
@@ -93,6 +106,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                     index={index}
                     onChange={onChangeMapping}
                     onRemove={onRemoveRow}
+                    onDuplicate={onDuplicateMapping}
                   />
                 ))}
                 {provided.placeholder}
@@ -178,6 +192,17 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
           });
         }
         break;
+      case MappingType.RegexToText:
+        if (item.pattern != null) {
+          mappings.push({
+            type: item.type,
+            options: {
+              pattern: item.pattern,
+              result,
+            },
+          });
+        }
+        break;
       case MappingType.SpecialValue:
         mappings.push({
           type: item.type,
@@ -215,6 +240,13 @@ export function buildEditRowModels(value: ValueMapping[]) {
           result: mapping.options.result,
           from: mapping.options.from ?? 0,
           to: mapping.options.to ?? 0,
+        });
+        break;
+      case MappingType.RegexToText:
+        editRows.push({
+          type: mapping.type,
+          result: mapping.options.result,
+          pattern: mapping.options.pattern,
         });
         break;
       case MappingType.SpecialValue:

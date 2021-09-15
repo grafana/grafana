@@ -1,11 +1,8 @@
-export interface ArrayFieldMatcher {
-  label: string;
-  value: string;
-  isRegex: boolean;
-}
+import { MatcherFieldValue } from './silence-form';
 
 export interface FormAmRoute {
-  matchers: ArrayFieldMatcher[];
+  id: string;
+  matchers: MatcherFieldValue[];
   continue: boolean;
   receiver: string;
   groupBy: string[];

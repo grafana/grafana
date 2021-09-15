@@ -1,8 +1,8 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
-import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme } from '@grafana/data';
-import { Button, Icon, Spinner, useTheme, stylesFactory } from '@grafana/ui';
+import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { LogsNavigationPages } from './LogsNavigationPages';
 
 type Props = {
@@ -14,6 +14,8 @@ type Props = {
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 };
 
 export type LogsPage = {
@@ -30,6 +32,8 @@ function LogsNavigation({
   scrollToTopLogs,
   visibleRange,
   queries,
+  clearCache,
+  addResultsToCache,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -44,7 +48,7 @@ function LogsNavigation({
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const onFirstPage = currentPageIndex === 0;
   const onLastPage = currentPageIndex === pages.length - 1;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, oldestLogsFirst, loading);
 
   // Main effect to set pages and index
@@ -53,6 +57,7 @@ function LogsNavigation({
     let newPages: LogsPage[] = [];
     // We want to start new pagination if queries change or if absolute range is different than expected
     if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
+      clearCache();
       setPages([newPage]);
       setCurrentPageIndex(0);
       expectedQueriesRef.current = queries;
@@ -72,7 +77,14 @@ function LogsNavigation({
       const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
       setCurrentPageIndex(index);
     }
-  }, [visibleRange, absoluteRange, logsSortOrder, queries]);
+    addResultsToCache();
+  }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
+
+  useEffect(() => {
+    return () => clearCache();
+    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     expectedRangeRef.current = { from, to };
@@ -164,7 +176,7 @@ function LogsNavigation({
 
 export default memo(LogsNavigation);
 
-const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, loading: boolean) => {
+const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean, loading: boolean) => {
   return {
     navContainer: css`
       max-height: 95vh;
@@ -172,7 +184,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
       position: sticky;
-      top: ${theme.spacing.md};
+      top: ${theme.spacing(2)};
       right: 0;
     `,
     navButton: css`
@@ -200,7 +212,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
     `,
   };
-});
+};

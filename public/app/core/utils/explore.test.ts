@@ -16,6 +16,7 @@ import store from 'app/core/store';
 import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { ExploreId } from '../../types';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
@@ -94,9 +95,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -106,8 +109,8 @@ describe('state functions', () => {
       };
 
       expect(serializeStateToUrlParam(state)).toBe(
-        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
-          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
+        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},' +
+          '{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
 
@@ -118,9 +121,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -129,7 +134,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}]'
       );
     });
   });
@@ -142,9 +147,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -164,9 +171,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -417,21 +426,21 @@ describe('when buildQueryTransaction', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
     const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.intervalMs).toEqual(60000);
   });
   it('it should calculate interval taking minInterval into account', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
     const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.intervalMs).toEqual(15000);
   });
   it('it should calculate interval taking maxDataPoints into account', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
     const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.interval).toEqual('2h');
   });
 });

@@ -46,7 +46,7 @@ allows you to view lines before and after the line of interest.
 This release adds support for searching and visualizing logs stored in Elasticsearch in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-{{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
 Please read [Using Elasticsearch in Grafana]({{< relref "../datasources/elasticsearch/#elasticsearch-version" >}}) for more detailed information on how to get started and use it.
 
@@ -55,7 +55,7 @@ Please read [Using Elasticsearch in Grafana]({{< relref "../datasources/elastics
 This release adds support for searching and visualizing logs stored in InfluxDB in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-{{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
 Please read [Using InfluxDB in Grafana]({{< relref "../datasources/influxdb/#querying-logs-beta" >}}) for more detailed information on how to get started and use it.
 
@@ -69,22 +69,23 @@ the panel and you cannot reference series name or any data field.
 While `Data links` are used by the actual visualization and can reference data fields.
 
 Example:
+
 ```url
 http://my-grafana.com/d/bPCI6VSZz/other-dashboard?var-server=${__series_name}
 ```
 
 You have access to these variables:
 
-Name | Description
------------- | -------------
-*${__series_name}* | The name of the time series (or table)
-*${__value_time}* | The time of the point your clicking on (in millisecond epoch)
-*${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
-*${__all_variables}* | Adds all current variables (and current values) to the URL
+| Name                    | Description                                                                |
+| ----------------------- | -------------------------------------------------------------------------- |
+| _${\_\_series_name}_    | The name of the time series (or table)                                     |
+| _${\_\_value_time}_     | The time of the point your clicking on (in millisecond epoch)              |
+| _${\_\_url_time_range}_ | Interpolates as the full time range (i.e. from=21312323412&to=21312312312) |
+| _${\_\_all_variables}_  | Adds all current variables (and current values) to the URL                 |
 
 You can then click on point in the Graph.
 
-{{< docs-imagebox img="/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
 
 For now only the Graph panel supports `Data links` but we hope to add these to many visualizations.
 
@@ -92,22 +93,22 @@ For now only the Graph panel supports `Data links` but we hope to add these to m
 
 The time picker has been re-designed and with a more basic design that makes accessing quick ranges more easy.
 
-{{< docs-imagebox img="/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
 
 ## Graph Gradients
 
 Want more eye candy in your graphs? Then the fill gradient option might be for you! Works really well for
 graphs with only a single series.
 
-{{< docs-imagebox img="/img/docs/v63/graph_gradient_area.jpeg" max-width="800px" caption="Graph Gradient Area" >}}
+{{< figure src="/static/img/docs/v63/graph_gradient_area.jpeg" max-width="800px" caption="Graph Gradient Area" >}}
 
 Looks really nice in light theme as well.
 
-{{< docs-imagebox img="/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
+{{< figure src="/static/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
 
 ## Grafana Enterprise
 
-Substantial refactoring and improvements to the external auth systems has gone in to this release making the  features
+Substantial refactoring and improvements to the external auth systems has gone in to this release making the features
 listed below possible as well as laying a foundation for future enhancements.
 
 ### LDAP Active Sync

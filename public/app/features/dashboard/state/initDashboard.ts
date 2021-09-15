@@ -23,7 +23,6 @@ import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
-import { ChangeTracker } from '../services/ChangeTracker';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
@@ -33,23 +32,6 @@ export interface InitDashboardArgs {
   urlFolderId?: string | null;
   routeName?: string;
   fixUrl: boolean;
-}
-
-async function redirectToNewUrl(slug: string) {
-  const res = await backendSrv.getDashboardBySlug(slug);
-
-  if (res) {
-    const location = locationService.getLocation();
-    let newUrl = res.meta.url;
-
-    // fix solo route urls
-    if (location.pathname.indexOf('dashboard-solo') !== -1) {
-      newUrl = newUrl.replace('/d/', '/d-solo/');
-    }
-
-    const url = locationUtil.stripBaseFromUrl(newUrl);
-    locationService.replace(url);
-  }
 }
 
 async function fetchDashboard(
@@ -77,12 +59,6 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.Normal: {
-        // for old db routes we redirect
-        if (args.urlType === 'db') {
-          redirectToNewUrl(args.urlSlug!);
-          return null;
-        }
-
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
         if (args.fixUrl && dashDTO.meta.url) {
@@ -174,11 +150,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // init services
     const timeSrv: TimeSrv = getTimeSrv();
     const dashboardSrv: DashboardSrv = getDashboardSrv();
-    const changeTracker = new ChangeTracker();
+
+    // legacy srv state, we need this value updated for built-in annotations
+    dashboardSrv.setCurrent(dashboard);
 
     timeSrv.init(dashboard);
-    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
-    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
@@ -187,6 +163,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // template values service needs to initialize completely before the rest of the dashboard can load
     await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
+
+    // DashboardQueryRunner needs to run after all variables have been resolved so that any annotation query including a variable
+    // will be correctly resolved
+    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
+    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
@@ -208,7 +189,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
-      changeTracker.init(dashboard, 2000);
       keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
@@ -219,9 +199,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
       updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
-
-    // legacy srv state
-    dashboardSrv.setCurrent(dashboard);
 
     // send open dashboard event
     if (args.routeName !== DashboardRoutes.New) {

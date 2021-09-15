@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 // GET /api/org
@@ -24,7 +25,7 @@ func GetOrgByID(c *models.ReqContext) response.Response {
 
 // Get /api/orgs/name/:name
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
-	org, err := hs.SQLStore.GetOrgByName(c.Params(":name"))
+	org, err := hs.SQLStore.GetOrgByName(macaron.Params(c.Req)[":name"])
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)
@@ -152,7 +153,13 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 
 // GET /api/orgs/:orgId
 func DeleteOrgByID(c *models.ReqContext) response.Response {
-	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
+	orgID := c.ParamsInt64(":orgId")
+	// before deleting an org, check if user does not belong to the current org
+	if c.OrgId == orgID {
+		return response.Error(400, "Can not delete org for current user", nil)
+	}
+
+	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Failed to delete organization. ID not found", nil)
 		}

@@ -62,15 +62,18 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
 
 const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
+interface AutocompleteContext {
+  history?: Array<HistoryItem<PromQuery>>;
+}
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   timeRange?: { start: number; end: number };
   metrics: string[];
   metricsMetadata?: PromMetricsMetadata;
-  startTask: Promise<any>;
+  declare startTask: Promise<any>;
   datasource: PrometheusDatasource;
-  labelKeys: string[];
-  labelFetchTs: number;
+  labelKeys: string[] = [];
+  declare labelFetchTs: number;
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -119,7 +122,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     // TODO #33976: make those requests parallel
     await this.fetchLabels();
-    this.metrics = await this.fetchLabelValues('__name__');
+    this.metrics = (await this.fetchLabelValues('__name__')) || [];
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
 
@@ -140,7 +143,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   provideCompletionItems = async (
     { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
-    context: { history: Array<HistoryItem<PromQuery>> } = { history: [] }
+    context: AutocompleteContext = {}
   ): Promise<TypeaheadOutput> => {
     const emptyResult: TypeaheadOutput = { suggestions: [] };
 
@@ -194,13 +197,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return emptyResult;
   };
 
-  getBeginningCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
+  getBeginningCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
     return {
       suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
     };
   };
 
-  getEmptyCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
+  getEmptyCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
     const { history } = context;
     const suggestions: CompletionItemGroup[] = [];
 
@@ -494,7 +497,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
-    const params = { ...range, match };
+    const params = { ...range, 'match[]': match };
     return await this.request(url, {}, params);
   };
 

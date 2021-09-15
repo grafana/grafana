@@ -4,12 +4,12 @@ import (
 	"errors"
 
 	"github.com/go-macaron/binding"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -19,6 +19,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
+		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
 	})
 }
@@ -30,12 +31,12 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, LibraryElementResponse{Result: element})
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
 func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
-	err := l.deleteLibraryElement(c, c.Params(":uid"))
+	err := l.deleteLibraryElement(c, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
@@ -45,12 +46,12 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 
 // getHandler handles GET  /api/library-elements/:uid.
 func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Response {
-	element, err := l.getLibraryElement(c, c.Params(":uid"))
+	element, err := l.getLibraryElementByUid(c)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, LibraryElementResponse{Result: element})
 }
 
 // getAllHandler handles GET /api/library-elements/.
@@ -70,27 +71,37 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(200, util.DynMap{"result": elementsResult})
+	return response.JSON(200, LibraryElementSearchResponse{Result: elementsResult})
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
 func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
-	element, err := l.patchLibraryElement(c, cmd, c.Params(":uid"))
+	element, err := l.patchLibraryElement(c, cmd, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, LibraryElementResponse{Result: element})
 }
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
 func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) response.Response {
-	connections, err := l.getConnections(c, c.Params(":uid"))
+	connections, err := l.getConnections(c, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
 	}
 
-	return response.JSON(200, util.DynMap{"result": connections})
+	return response.JSON(200, LibraryElementConnectionsResponse{Result: connections})
+}
+
+// getByNameHandler handles GET /api/library-elements/name/:name/.
+func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.Response {
+	elements, err := l.getLibraryElementsByName(c)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	return response.JSON(200, LibraryElementArrayResponse{Result: elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {
@@ -114,6 +125,12 @@ func toLibraryElementError(err error, message string) response.Response {
 	}
 	if errors.Is(err, errLibraryElementHasConnections) {
 		return response.Error(403, errLibraryElementHasConnections.Error(), err)
+	}
+	if errors.Is(err, errLibraryElementInvalidUID) {
+		return response.Error(400, errLibraryElementInvalidUID.Error(), err)
+	}
+	if errors.Is(err, errLibraryElementUIDTooLong) {
+		return response.Error(400, errLibraryElementUIDTooLong.Error(), err)
 	}
 	return response.Error(500, message, err)
 }

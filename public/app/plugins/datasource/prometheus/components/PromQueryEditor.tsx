@@ -3,17 +3,15 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { PrometheusDatasource } from '../datasource';
-import { PromOptions, PromQuery } from '../types';
+import { SelectableValue } from '@grafana/data';
+import { PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
 import { PromExemplarField } from './PromExemplarField';
+import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;
-
-export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
@@ -35,14 +33,19 @@ interface State {
   exemplar: boolean;
 }
 
-export class PromQueryEditor extends PureComponent<Props, State> {
+export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> {
   // Query target to be modified and used for queries
   query: PromQuery;
 
-  constructor(props: Props) {
+  constructor(props: PromQueryEditorProps) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
+    const defaultQuery: Partial<PromQuery> = {
+      expr: '',
+      legendFormat: '',
+      interval: '',
+      exemplar: true,
+    };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
@@ -118,6 +121,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
         onChange={this.onFieldChange}
         history={[]}
         data={data}
+        data-testid={testIds.editor}
         ExtraFieldElement={
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -164,6 +168,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
+                menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
                 onChange={this.onIntervalFactorChange}
@@ -174,6 +179,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
+                menuShouldPortal
+                className="select-container"
                 width={16}
                 isSearchable={false}
                 options={FORMAT_OPTIONS}
@@ -190,11 +197,19 @@ export class PromQueryEditor extends PureComponent<Props, State> {
                 />
               </InlineFormLabel>
             </div>
-
-            <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
+            <PromExemplarField
+              refId={query.refId}
+              isEnabled={exemplar}
+              onChange={this.onExemplarChange}
+              datasource={datasource}
+            />
           </div>
         }
       />
     );
   }
 }
+
+export const testIds = {
+  editor: 'prom-editor',
+};
