@@ -404,6 +404,20 @@ def test_frontend_step():
         ],
     }
 
+def restore_cache_step():
+    return {
+        'image': 'homerovalle/drone-gcs-cache',
+        'name': 'restore-cache',
+        'pull': 'always',
+        'environment': {
+            'GCS_CACHE_JSON_KEY': 'tf_google_credentials',
+         },
+         'settings': {
+            'bucket': 'test-julien',
+            'restore': 'true',
+         },
+    }
+
 def test_a11y_frontend_step(edition, port=3001):
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
