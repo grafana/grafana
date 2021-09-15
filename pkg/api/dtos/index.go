@@ -17,6 +17,7 @@ type IndexViewData struct {
 	BuildVersion            string
 	BuildCommit             string
 	Theme                   string
+	NavPosition             string
 	NewGrafanaVersionExists bool
 	NewGrafanaVersion       string
 	AppName                 string

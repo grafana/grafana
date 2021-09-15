@@ -42,6 +42,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 		}
 
 		res := &models.Preferences{
+			NavPosition:     ss.Cfg.NavPosition,
 			Theme:           ss.Cfg.DefaultTheme,
 			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
 			HomeDashboardId: 0,
@@ -56,6 +57,9 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			}
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
+			}
+			if p.NavPosition != "" {
+				res.NavPosition = p.NavPosition
 			}
 		}
 
@@ -95,6 +99,7 @@ func SavePreferences(cmd *models.SavePreferencesCommand) error {
 				OrgId:           cmd.OrgId,
 				TeamId:          cmd.TeamId,
 				HomeDashboardId: cmd.HomeDashboardId,
+				NavPosition:     cmd.NavPosition,
 				Timezone:        cmd.Timezone,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
@@ -103,6 +108,7 @@ func SavePreferences(cmd *models.SavePreferencesCommand) error {
 			_, err = sess.Insert(&prefs)
 			return err
 		}
+		prefs.NavPosition = cmd.NavPosition
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
 		prefs.Theme = cmd.Theme

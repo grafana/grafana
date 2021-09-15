@@ -382,6 +382,7 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	DefaultTheme string
+	NavPosition  string
 	HomePage     string
 
 	AutoAssignOrg     bool
@@ -1319,6 +1320,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
 	cfg.HomePage = valueAsString(users, "home_page", "")
+	cfg.NavPosition = valueAsString(users, "nav_position", "left")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")

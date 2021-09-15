@@ -16,6 +16,7 @@ export class User {
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
+  navPosition: 'left' | 'right' | 'top' | 'bottom';
   hasEditPermissionInFolders: boolean;
   email?: string;
   permissions?: UserPermission;
@@ -32,6 +33,7 @@ export class User {
     this.timezone = '';
     this.helpFlags1 = 0;
     this.lightTheme = false;
+    this.navPosition = 'left';
     this.hasEditPermissionInFolders = false;
     this.email = undefined;
     if (config.bootData.user) {

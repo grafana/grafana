@@ -13,6 +13,7 @@ type Preferences struct {
 	HomeDashboardId int64
 	Timezone        string
 	Theme           string
+	NavPosition     string
 	Created         time.Time
 	Updated         time.Time
 }
@@ -42,6 +43,7 @@ type SavePreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
+	NavPosition     string `json:"navPosition"`
 	HomeDashboardId int64  `json:"homeDashboardId"`
 	Timezone        string `json:"timezone"`
 	Theme           string `json:"theme"`

@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, styleMixins, useTheme2 } from '@grafana/ui';
 import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
+import { contextSrv } from 'app/core/services/context_srv';
 import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
 import TopSection from './TopSection';
@@ -12,7 +13,7 @@ import BottomSection from './BottomSection';
 
 const homeUrl = config.appSubUrl || '/';
 
-const getOpposite = (position: Props['position']) => {
+const getOpposite = (position: typeof contextSrv.user.navPosition) => {
   switch (position) {
     case 'left': {
       return 'right';
@@ -32,17 +33,14 @@ const getOpposite = (position: Props['position']) => {
   }
 };
 
-const isHorizontal = (position: Props['position']) => {
+const isHorizontal = (position: typeof contextSrv.user.navPosition) => {
   return position === 'top' || position === 'bottom';
 };
 
-interface Props {
-  position: 'left' | 'right' | 'top' | 'bottom';
-}
-
-export const SideMenu = ({ position = 'left' }: Props) => {
+export const SideMenu = () => {
+  const navPosition = contextSrv.user.navPosition;
   const theme = useTheme2();
-  const styles = getStyles(theme, position);
+  const styles = getStyles(theme, navPosition);
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
@@ -67,15 +65,15 @@ export const SideMenu = ({ position = 'left' }: Props) => {
           Close
         </span>
       </div>
-      <TopSection position={position} />
-      <BottomSection position={position} />
+      <TopSection position={navPosition} />
+      <BottomSection position={navPosition} />
     </nav>
   );
 };
 
 SideMenu.displayName = 'SideMenu';
 
-const getStyles = (theme: GrafanaTheme2, position: Props['position']) => ({
+const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPosition) => ({
   sidemenu: css`
     border-${getOpposite(position)}: 1px solid ${theme.components.panel.borderColor};
     display: flex;

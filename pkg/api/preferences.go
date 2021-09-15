@@ -38,6 +38,7 @@ func getPreferencesFor(orgID, userID, teamID int64) response.Response {
 	}
 
 	dto := dtos.Prefs{
+		NavPosition:     prefsQuery.Result.NavPosition,
 		Theme:           prefsQuery.Result.Theme,
 		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
 		Timezone:        prefsQuery.Result.Timezone,
@@ -62,6 +63,7 @@ func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsC
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		HomeDashboardId: dtoCmd.HomeDashboardID,
+		NavPosition:     dtoCmd.NavPosition,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {

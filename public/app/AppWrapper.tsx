@@ -1,5 +1,6 @@
 import React, { ComponentType } from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
+import { css } from '@emotion/css';
 import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
@@ -14,6 +15,26 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+
+const getFlexDirection = (navPosition: typeof contextSrv.user.navPosition) => {
+  switch (navPosition) {
+    case 'left': {
+      return 'row';
+    }
+    case 'right': {
+      return 'row-reverse';
+    }
+    case 'top': {
+      return 'column';
+    }
+    case 'bottom': {
+      return 'column-reverse';
+    }
+    default: {
+      return 'row';
+    }
+  }
+};
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -82,6 +103,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   render() {
+    const navPosition = contextSrv.user.navPosition;
+    const styles = getStyles(navPosition);
     navigationLogger('AppWrapper', false, 'rendering');
 
     // @ts-ignore
@@ -94,7 +117,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
             <ThemeProvider>
               <ModalsProvider>
                 <GlobalStyles />
-                <div className="grafana-app">
+                <div className={`grafana-app ${styles.grafanaApp}`}>
                   <Router history={locationService.getHistory()}>
                     <SideMenu />
                     <main className="main-view">
@@ -123,3 +146,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     );
   }
 }
+
+const getStyles = (navPosition: typeof contextSrv.user.navPosition) => ({
+  grafanaApp: css`
+    flex-direction: ${getFlexDirection(navPosition)};
+  `,
+});
