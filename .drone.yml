@@ -3506,4 +3506,8 @@ get:
   path: infra/data/ci/terraform/google
   name: credentials.json
 
+---
+kind: signature
+hmac: 7ce3b0681109d20f04103393f7bf1f93d8e6382003bf65facd86d52a81a587ea
+
 ...
