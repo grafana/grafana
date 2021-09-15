@@ -252,7 +252,9 @@ export function prepareGraphableFrames(
     const fields: Field[] = [];
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        field.state!.seriesIndex = seriesIndex++;
+        field.state = field.state ?? {};
+
+        field.state.seriesIndex = seriesIndex++;
 
         let copy = {
           ...field,
