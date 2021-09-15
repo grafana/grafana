@@ -16,6 +16,7 @@ const options: CodeEditorMonacoOptions = {
   scrollBeyondLastLine: false,
   renderLineHighlight: 'none',
   fontSize: 14,
+  suggestFontSize: 12,
   // we need `fixedOverflowWidgets` because otherwise in grafana-dashboards
   // the popup is clipped by the panel-visualizations.
   fixedOverflowWidgets: true,

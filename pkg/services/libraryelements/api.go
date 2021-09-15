@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-macaron/binding"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -35,7 +36,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
 func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
-	err := l.deleteLibraryElement(c, c.Params(":uid"))
+	err := l.deleteLibraryElement(c, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
@@ -75,7 +76,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 
 // patchHandler handles PATCH /api/library-elements/:uid
 func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
-	element, err := l.patchLibraryElement(c, cmd, c.Params(":uid"))
+	element, err := l.patchLibraryElement(c, cmd, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
 	}
@@ -85,7 +86,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibr
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
 func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) response.Response {
-	connections, err := l.getConnections(c, c.Params(":uid"))
+	connections, err := l.getConnections(c, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
 	}

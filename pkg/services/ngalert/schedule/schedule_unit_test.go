@@ -230,7 +230,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
-	nilMetrics := metrics.NewMetrics(nil)
+	m := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 	decryptFn := ossencryption.ProvideService().GetDecryptedValue
 	schedCfg := SchedulerCfg{
 		C:                       mockedClock,
@@ -242,10 +242,10 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		AdminConfigStore:        acs,
 		MultiOrgNotifier:        notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn),
 		Logger:                  logger,
-		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, nilMetrics, rs, is)
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), rs, is)
 	return NewScheduler(schedCfg, nil, "http://localhost", st), mockedClock
 }
 
