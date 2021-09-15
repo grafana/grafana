@@ -52,7 +52,6 @@ SideMenu.displayName = 'SideMenu';
 
 const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPosition) => ({
   sidemenu: css`
-    border-${getOppositePosition(position)}: 1px solid ${theme.components.panel.borderColor};
     display: flex;
     flex-direction: column;
     min-width: ${theme.components.sidemenu.width}px;
@@ -61,6 +60,7 @@ const getStyles = (theme: GrafanaTheme2, position: typeof contextSrv.user.navPos
 
     @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
       background-color: ${theme.colors.background.primary};
+      border-${getOppositePosition(position)}: 1px solid ${theme.components.panel.borderColor};
       flex-direction: ${isHorizontal(position) ? 'row' : 'column'};
       position: relative;
     }

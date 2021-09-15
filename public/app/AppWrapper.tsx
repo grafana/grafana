@@ -149,6 +149,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
 const getStyles = (navPosition: typeof contextSrv.user.navPosition) => ({
   grafanaApp: css`
-    flex-direction: ${getFlexDirection(navPosition)};
+    @media only screen and (min-width: 769px) {
+      flex-direction: ${getFlexDirection(navPosition)};
+    }
   `,
 });
