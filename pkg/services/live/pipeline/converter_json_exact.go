@@ -197,6 +197,8 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 					return nil, err
 				}
 				labels[label.Name] = v
+			} else {
+				labels[label.Name] = label.Value
 			}
 		}
 		field.Labels = labels
