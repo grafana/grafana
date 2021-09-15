@@ -16,12 +16,8 @@ import (
 type ResponseParser struct{}
 
 var (
-	legendFormat *regexp.Regexp
+	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|(\$*([\@\w-]+?))*`)
 )
-
-func init() {
-	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$\s*([\@\/\w-]+?)*`)
-}
 
 func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
