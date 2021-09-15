@@ -26,18 +26,21 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: restore-cache
   pull: always
-  image: homerovalle/drone-gcs-cache
+  image: meltwater/drone-cache
   settings:
     bucket: test-julien
     restore: true
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
+  depends_on:
+  - initialize
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -99,7 +102,7 @@ steps:
 
 - name: rebuild-cache
   pull: always
-  image: homerovalle/drone-gcs-cache
+  image: meltwater/drone-cache
   settings:
     bucket: test-julien
     mount:
@@ -109,8 +112,6 @@ steps:
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
   when:
     event:
     - pull_request
@@ -310,6 +311,9 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -697,6 +701,9 @@ steps:
   - ./bin/grabpl verify-drone
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -790,6 +797,9 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -1626,6 +1636,9 @@ steps:
   - ./bin/grabpl verify-version ${DRONE_TAG}
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1738,6 +1751,9 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -2557,6 +2573,9 @@ steps:
   - ./bin/grabpl verify-version v7.3.0-test
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2668,6 +2687,9 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    GOCACHE: /opt/drone/gocache
+    GOMODCACHE: /opt/drone/gomodcache
+    PLUGIN_BACKEND: gcs
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -3540,6 +3562,6 @@ get:
 
 ---
 kind: signature
-hmac: 812ae50ab8b281d12dfdfb9142155e1f81e7b63c4b50e65417a9f13f66ea6905
+hmac: 5468434bc8654eda1cc2ba6bd14503d82628f31002452bd796fda0b658e3d7fc
 
 ...
