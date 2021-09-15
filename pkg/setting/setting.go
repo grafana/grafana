@@ -878,26 +878,13 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-<<<<<<< HEAD
 	if err := cfg.readGRPCAPIServerSettings(iniFile); err != nil {
 		return err
 	}
 
-	// read data proxy settings
-	dataproxy := iniFile.Section("dataproxy")
-	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
-	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
-	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
-	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
-	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
-	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
-	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
-	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
-=======
 	if err := readDataProxySettings(iniFile, cfg); err != nil {
 		return err
 	}
->>>>>>> origin/main
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
 		return err

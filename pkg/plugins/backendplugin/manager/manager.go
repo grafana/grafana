@@ -27,29 +27,24 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
-	pluginRequestValidator models.PluginRequestValidator) *Manager {
+	pluginRequestValidator models.PluginRequestValidator,
+	ajwt *authtoken.JWT) *Manager {
 	s := &Manager{
 		Cfg:                    cfg,
 		License:                licensing,
 		PluginRequestValidator: pluginRequestValidator,
+		JWTService:             ajwt,
 		logger:                 log.New("plugins.backend"),
 		plugins:                map[string]backendplugin.Plugin{},
 	}
 	return s
 }
 
-<<<<<<< HEAD
-type manager struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	License                models.Licensing              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator `inject:""`
-	JWTService             *authtoken.JWT                `inject:""`
-=======
 type Manager struct {
 	Cfg                    *setting.Cfg
 	License                models.Licensing
 	PluginRequestValidator models.PluginRequestValidator
->>>>>>> origin/main
+	JWTService             *authtoken.JWT
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
