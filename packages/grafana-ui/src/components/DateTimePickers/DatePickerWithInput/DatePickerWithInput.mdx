@@ -1,0 +1,20 @@
+import { ArgsTable } from '@storybook/addon-docs/blocks';
+import { DatePickerWithInput } from './DatePickerWithInput';
+
+# DatePickerWithInput
+
+An input with a calendar view, used to select a date.
+
+### Usage
+
+```tsx
+import React, { useState } from 'react';
+import { DatePickerWithInput } from '@grafana/ui';
+
+const [date, setDate] = useState<Date | string>(new Date());
+return <DatePickerWithInput width={40} value={date} onChange={(newDate) => setDate(newDate)} />;
+```
+
+### Props
+
+<ArgsTable of={DatePickerWithInput} />
