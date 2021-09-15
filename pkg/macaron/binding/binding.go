@@ -87,9 +87,6 @@ func errorHandler(errs Errors, rw http.ResponseWriter) {
 	}
 }
 
-// customErrorHandler will be invoked if errors occured.
-var customErrorHandler func(*macaron.Context, Errors)
-
 // BindMiddleware wraps up the functionality of the Form and Json middleware
 // according to the Content-Type and verb of the request.
 // A Content-Type is required for POST and PUT requests.
@@ -103,20 +100,9 @@ func BindMiddleware(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 		bind(ctx, obj, ifacePtr...)
 		if handler, ok := obj.(_ErrorHandler); ok {
 			_, _ = ctx.Invoke(handler.Error)
-		} else if customErrorHandler != nil {
-			_, _ = ctx.Invoke(customErrorHandler)
 		} else {
 			_, _ = ctx.Invoke(errorHandler)
 		}
-	}
-}
-
-// bindIgnErr will do the exactly same thing as Bind but without any
-// error handling, which user has freedom to deal with them.
-// This allows user take advantages of validation.
-func bindIgnErr(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
-	return func(ctx *macaron.Context) {
-		bind(ctx, obj, ifacePtr...)
 	}
 }
 
@@ -208,47 +194,6 @@ func bindJson(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 		}
 		validateAndMap(jsonStruct, ctx, errors, ifacePtr...)
 	}
-}
-
-// bindURL is the middleware to parse bindURL parameters into struct fields.
-func bindURL(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
-	return func(ctx *macaron.Context) {
-		var errors Errors
-
-		ensureNotPointer(obj)
-		obj := reflect.New(reflect.TypeOf(obj))
-
-		val := obj.Elem()
-		for k, v := range macaron.Params(ctx.Req) {
-			field := val.FieldByName(k[1:])
-			if field.IsValid() {
-				errors = setWithProperType(field.Kind(), v, field, k, errors)
-			}
-		}
-		validateAndMap(obj, ctx, errors, ifacePtr...)
-	}
-}
-
-// rawValidate is same as Validate but does not require a HTTP context,
-// and can be used independently just for validation.
-// This function does not support Validator interface.
-func rawValidate(obj interface{}) Errors {
-	var errs Errors
-	v := reflect.ValueOf(obj)
-	k := v.Kind()
-	if k == reflect.Interface || k == reflect.Ptr {
-		v = v.Elem()
-		k = v.Kind()
-	}
-	if k == reflect.Slice || k == reflect.Array {
-		for i := 0; i < v.Len(); i++ {
-			e := v.Index(i).Interface()
-			errs = validateStruct(errs, e)
-		}
-	} else {
-		errs = validateStruct(errs, obj)
-	}
-	return errs
 }
 
 // validate is middleware to enforce required fields. If the struct
@@ -347,16 +292,6 @@ type (
 
 var ruleMapper _RuleMapper
 var paramRuleMapper _ParamRuleMapper
-
-// addRule adds new validation rule.
-func addRule(r *rule) {
-	ruleMapper = append(ruleMapper, r)
-}
-
-// addParamRule adds new validation rule.
-func addParamRule(r *paramRule) {
-	paramRuleMapper = append(paramRuleMapper, r)
-}
 
 func in(fieldValue interface{}, arr string) bool {
 	val := fmt.Sprintf("%v", fieldValue)
@@ -590,9 +525,6 @@ VALIDATE_RULES:
 	return errors
 }
 
-// _NameMapper represents a form tag name mapper.
-type _NameMapper func(string) string
-
 var (
 	nameMapper = func(field string) string {
 		newstr := make([]rune, 0, len(field))
@@ -608,11 +540,6 @@ var (
 		return string(newstr)
 	}
 )
-
-// setNameMapper sets name mapper.
-func setNameMapper(nm _NameMapper) {
-	nameMapper = nm
-}
 
 // Takes values from the form data and puts them into a struct
 func mapForm(formStruct reflect.Value, form map[string][]string,
