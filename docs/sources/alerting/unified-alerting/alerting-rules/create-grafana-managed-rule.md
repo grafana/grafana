@@ -112,6 +112,23 @@ The following template variables are available when expanding annotations and la
 | $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. This is unavailable when the rule uses a classic condition. |
 | $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                  |
 
+#### Template functions
+
+The following template functions are available when expanding annotations and labels.
+
+| Name             | Argument       | Return                | Description                                                                                                                       |
+| ------------------ | ---------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| humanize           | number or string | string                 | Converts a number to a more readable format, using metric prefixes.                                                                |
+| humanize1024       | number or string | string                 | Like humanize, but uses 1024 as the base rather than 1000.                                                                         |
+| humanizeDuration   | number or string | string                 | Converts a duration in seconds to a more readable format.                                                                          |
+| humanizePercentage | number or string | string                 | Converts a ratio value to a fraction of 100.                                                                                       |
+| humanizeTimestamp  | number or string | string                 | Converts a Unix timestamp in seconds to a more readable format.                                                                    |
+| title              | string           | string                 | strings.Title, capitalises first character of each word.                                                                           |
+| toUpper            | string           | string                 | strings.ToUpper, converts all characters to upper case.                                                                            |
+| toLower            | string           | string                 | strings.ToLower, converts all characters to lower case.                                                                            |
+| match              | pattern, text    | boolean                | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                           |
+| args               | []interface{}    | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates. |
+
 ## Preview alerts
 
 To evaluate the rule and see what alerts it would produce, click **Preview alerts**. It will display a list of alerts with state and value for each one.
