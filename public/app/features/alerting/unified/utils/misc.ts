@@ -1,6 +1,6 @@
 import { urlUtil, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CombinedRule, FilterState, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import * as ruleId from './rule-id';
@@ -40,6 +40,13 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
   const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
   return { queryString, alertState, dataSource, groupBy, silenceState };
+};
+
+export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
+  const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
+  const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
+
+  return { queryString, silenceState };
 };
 
 export function recordToArray(record: Record<string, string>): Array<{ key: string; value: string }> {

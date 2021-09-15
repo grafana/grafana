@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Label, Icon, Input, Tooltip, RadioButtonGroup, useStyles2, Button, Field } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { getFiltersFromUrlParams } from '../../utils/misc';
+import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { parseMatchers } from '../../utils/alertmanager';
 import { debounce } from 'lodash';
@@ -16,7 +16,7 @@ const stateOptions: SelectableValue[] = Object.entries(SilenceState).map(([key, 
 export const SilencesFilter = () => {
   const [queryStringKey, setQueryStringKey] = useState(`queryString-${Math.random() * 100}`);
   const [queryParams, setQueryParams] = useQueryParams();
-  const { queryString, silenceState } = getFiltersFromUrlParams(queryParams);
+  const { queryString, silenceState } = getSilenceFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
 
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {

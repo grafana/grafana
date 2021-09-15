@@ -135,3 +135,8 @@ export interface FilterState {
   groupBy?: string[];
   silenceState?: string;
 }
+
+export interface SilenceFilterState {
+  queryString?: string;
+  silenceState?: string;
+}
