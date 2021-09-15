@@ -110,9 +110,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (!isLogsVolumeAvailable) {
       return {};
     } else {
-      const logsVolumeProvider = new LokiLogsVolumeProvider(this, request);
       return {
-        [RelatedDataType.LogsVolume]: logsVolumeProvider,
+        [RelatedDataType.LogsVolume]: new LokiLogsVolumeProvider(this, request),
       };
     }
   }

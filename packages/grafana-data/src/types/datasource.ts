@@ -29,15 +29,21 @@ export enum RelatedDataType {
   LogsVolume = 'LogsVolume',
 }
 
+export type LogsVolume = {
+  data?: DataFrame[];
+  error?: DataQueryError;
+  isLoading?: boolean;
+};
+
 export type RelatedDataProviders = {
-  [type in keyof typeof RelatedDataType]?: QueryRelatedDataProvider<any>;
+  [type in keyof typeof RelatedDataType]?: RelatedDataProvider<any>;
 };
 
 export type RelatedData = {
   [type in keyof typeof RelatedDataType]?: any;
 };
 
-export interface QueryRelatedDataProvider<TData> {
+export interface RelatedDataProvider<TData> {
   getData(): Observable<TData>;
 }
 

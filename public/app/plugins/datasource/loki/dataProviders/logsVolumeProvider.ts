@@ -9,7 +9,7 @@ import {
   LogLevel,
   LogsVolume,
   MutableDataFrame,
-  QueryRelatedDataProvider,
+  RelatedDataProvider,
   toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
@@ -20,7 +20,7 @@ import { getLogLevelFromLabels } from '../../../../features/explore/state/utils'
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
-export class LokiLogsVolumeProvider implements QueryRelatedDataProvider<LogsVolume> {
+export class LokiLogsVolumeProvider implements RelatedDataProvider<LogsVolume> {
   private readonly datasource: LokiDatasource;
   private readonly dataQueryRequest: DataQueryRequest<LokiQuery>;
   private rawLogsVolume: DataFrame[] = [];
