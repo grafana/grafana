@@ -150,13 +150,13 @@ export const ImportDashboardForm: FC<Props> = ({
       <ImportDashboardLibraryPanelsList
         inputs={newLibraryPanels}
         label="New library panels"
-        description="Lists all new library panels. These library panels will be imported."
+        description="List of new library panels that will get imported."
         folderName={watchFolder.title}
       />
       <ImportDashboardLibraryPanelsList
         inputs={existingLibraryPanels}
         label="Existing library panels"
-        description="Lists all library panels that already exist. These library panels won't be re-imported."
+        description="List of existing library panels. These panels are not affected by the import."
         folderName={watchFolder.title}
       />
       <HorizontalGroup>
