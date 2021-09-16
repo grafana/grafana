@@ -12,7 +12,7 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 	err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 	require.NoError(t, err)
 
-	// it sets the correct defaults
+	// It sets the correct defaults.
 	{
 		require.Equal(t, 60*time.Second, cfg.AdminConfigPollInterval)
 		require.Equal(t, 60*time.Second, cfg.AlertmanagerConfigPollInterval)
