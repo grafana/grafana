@@ -17,6 +17,7 @@ import { StartModal } from './StartModal';
 interface ConnectedProps {
   navModel: NavModel;
 }
+let content: JSX.Element;
 
 export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponentProps {}
 
@@ -41,7 +42,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     });
   };
 
-  let content = (
+  const emptyListBanner = (
     <EmptyListCTA
       title="There are no playlists created yet"
       buttonIcon="plus"
@@ -53,6 +54,10 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
       proTipTarget="_blank"
     />
   );
+
+  if (!hasPlaylists && searchQuery) {
+    content = <p>No playlist found!</p>;
+  }
 
   if (hasPlaylists) {
     content = (
@@ -87,14 +92,18 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        {hasPlaylists && (
-          <PageActionBar
-            searchQuery={searchQuery}
-            linkButton={{ title: 'New playlist', href: '/playlists/new' }}
-            setSearchQuery={setSearchQuery}
-          />
+        {!hasPlaylists && !searchQuery ? (
+          emptyListBanner
+        ) : (
+          <>
+            <PageActionBar
+              searchQuery={searchQuery}
+              linkButton={{ title: 'New playlist', href: '/playlists/new' }}
+              setSearchQuery={setSearchQuery}
+            />
+            {content}
+          </>
         )}
-        {content}
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
