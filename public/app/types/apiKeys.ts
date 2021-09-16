@@ -13,7 +13,7 @@ export interface NewApiKey {
   role: OrgRole;
   secondsToLive: string;
   serviceAccount: string;
-  createServiceAccount: string;
+  createServiceAccount: boolean;
 }
 
 export interface ApiKeysState {

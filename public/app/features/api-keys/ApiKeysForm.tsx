@@ -41,7 +41,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const [serviceAccount, setServiceAccount] = useState<string>('');
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [secondsToLive, setSecondsToLive] = useState<string>('');
-  const [createServiceAccount, setCreateServiceAccount] = useState<string>('');
+  const [createServiceAccount, setCreateServiceAccount] = useState<boolean>(false);
 
   useEffect(() => {
     setName('');
@@ -64,7 +64,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
     setServiceAccount(event.currentTarget.value);
   };
   const onCreateServiceAccountChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setCreateServiceAccount(event.currentTarget.value);
+    setCreateServiceAccount((prev) => !prev);
   };
   const onRoleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setRole(event.currentTarget.value as OrgRole);
