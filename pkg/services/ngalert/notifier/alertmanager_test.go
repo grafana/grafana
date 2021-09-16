@@ -48,7 +48,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 
 	kvStore := newFakeKVStore(t)
 	decryptFn := ossencryption.ProvideService().GetDecryptedValue
-	am, err := newAlertmanager(1, cfg, s, kvStore, decryptFn, m)
+	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, decryptFn, m)
 	require.NoError(t, err)
 	return am
 }

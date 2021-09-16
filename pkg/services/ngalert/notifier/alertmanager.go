@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -34,6 +35,7 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 )
 
@@ -76,9 +78,16 @@ const (
 `
 )
 
+type ClusterPeer interface {
+	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
+	Position() int
+	WaitReady(context.Context) error
+}
+
 type Alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
+	OrgID       int64
 
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
@@ -89,6 +98,8 @@ type Alertmanager struct {
 	marker          types.Marker
 	alerts          *mem.Alerts
 	route           *dispatch.Route
+	peer            ClusterPeer
+	peerTimeout     time.Duration
 
 	dispatcher *dispatch.Dispatcher
 	inhibitor  *inhibit.Inhibitor
@@ -113,7 +124,7 @@ type Alertmanager struct {
 }
 
 func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
-	decryptFn alerting.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
+	peer ClusterPeer, decryptFn alerting.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
@@ -122,6 +133,8 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		stageMetrics:      notify.NewMetrics(m.Registerer),
 		dispatcherMetrics: dispatch.NewDispatcherMetrics(false, m.Registerer),
 		Store:             store,
+		peer:              peer,
+		peerTimeout:       cfg.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
 		decryptFn:         decryptFn,
@@ -151,6 +164,9 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
+	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
+	am.notificationLog.SetBroadcast(c.Broadcast)
+
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
 		Metrics:      m.Registerer,
@@ -160,6 +176,9 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
+
+	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.OrgID), am.silences, m.Registerer)
+	am.silences.SetBroadcast(c.Broadcast)
 
 	am.wg.Add(1)
 	go func() {
@@ -395,15 +414,16 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.gokitLogger)
 	am.silencer = silence.NewSilencer(am.silences, am.marker, am.gokitLogger)
 
+	meshStage := notify.NewGossipSettleStage(am.peer)
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{silencingStage, inhibitionStage, stage}
+		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{meshStage, silencingStage, inhibitionStage, stage}
 	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
 	go func() {
@@ -704,21 +724,17 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 	return fs
 }
 
-func waitFunc() time.Duration {
-	// When it's a single instance, we don't need additional wait. The routing policies will have their own group wait.
-	// We need >0 wait here in case we have peers to sync the notification state with. 0 wait in that case can result
-	// in duplicate notifications being sent.
-	// TODO: we have setting.AlertingNotificationTimeout in legacy settings. Either use that or separate set of config
-	// for clustering with intuitive name, like "PeerTimeout".
-	return 0
+func (am *Alertmanager) waitFunc() time.Duration {
+	return time.Duration(am.peer.Position()) * am.peerTimeout
 }
 
-func timeoutFunc(d time.Duration) time.Duration {
-	//TODO: What does MinTimeout means here?
+func (am *Alertmanager) timeoutFunc(d time.Duration) time.Duration {
+	// time.Duration d relates to the receiver's group_interval. Even with a group interval of 1s,
+	// we need to make sure (non-position-0) peers in the cluster wait before flushing the notifications.
 	if d < notify.MinTimeout {
 		d = notify.MinTimeout
 	}
-	return d + waitFunc()
+	return d + am.waitFunc()
 }
 
 type nilLimits struct{}

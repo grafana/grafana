@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -18,7 +19,6 @@ import (
 )
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
-	t.Skipf("Skipping multiorg alertmanager tests for now")
 	configStore := &FakeConfigStore{
 		configs: map[int64]*models.AlertConfiguration{},
 	}
@@ -28,13 +28,16 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
-
-	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	kvStore := newFakeKVStore(t)
 	decryptFn := ossencryption.ProvideService().GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics())
+	cfg := &setting.Cfg{
+		DataPath:                       tmpDir,
+		AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests
+	}
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	t.Cleanup(cleanOrgDirectories(tmpDir, t))
@@ -83,23 +86,24 @@ grafana_alerting_discovered_configurations 4
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
-	t.Skipf("Skipping multiorg alertmanager tests for now")
 	configStore := &FakeConfigStore{
 		configs: map[int64]*models.AlertConfiguration{},
 	}
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
-
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
-
-	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
+	cfg := &setting.Cfg{
+		DataPath:                       tmpDir,
+		AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests
+	}
 	kvStore := newFakeKVStore(t)
 	decryptFn := ossencryption.ProvideService().GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{DataPath: tmpDir}, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics())
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	t.Cleanup(cleanOrgDirectories(tmpDir, t))

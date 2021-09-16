@@ -86,6 +86,8 @@ type AlertNG struct {
 }
 
 func (ng *AlertNG) init() error {
+	var err error
+
 	baseInterval := ng.Cfg.AlertingBaseInterval
 	if baseInterval <= 0 {
 		baseInterval = defaultBaseIntervalSeconds
@@ -100,7 +102,11 @@ func (ng *AlertNG) init() error {
 	}
 
 	decryptFn := ng.EncryptionService.GetDecryptedValue
-	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, ng.Metrics.GetMultiOrgAlertmanagerMetrics())
+	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
+	if err != nil {
+		return err
+	}
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
