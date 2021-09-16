@@ -1,136 +1,4 @@
-{
-    "__inputs": [
-      {
-        "name": "DS_GDEV-TESTDATA",
-        "label": "gdev-testdata",
-        "description": "",
-        "type": "datasource",
-        "pluginId": "testdata",
-        "pluginName": "TestData DB"
-      }
-    ],
-    "__requires": [
-      {
-        "type": "panel",
-        "id": "alertlist",
-        "name": "Alert list",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "annolist",
-        "name": "Annotations list",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "barchart",
-        "name": "Bar chart",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "bargauge",
-        "name": "Bar gauge",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "dashlist",
-        "name": "Dashboard list",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "gauge",
-        "name": "Gauge",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "geomap",
-        "name": "Geomap",
-        "version": ""
-      },
-      {
-        "type": "grafana",
-        "id": "grafana",
-        "name": "Grafana",
-        "version": "8.1.0-pre"
-      },
-      {
-        "type": "panel",
-        "id": "heatmap",
-        "name": "Heatmap",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "histogram",
-        "name": "Histogram",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "logs",
-        "name": "Logs",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "news",
-        "name": "News",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "piechart",
-        "name": "Pie chart",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "pluginlist",
-        "name": "Plugin list",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "stat",
-        "name": "Stat",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "state-timeline",
-        "name": "State timeline",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "table",
-        "name": "Table",
-        "version": ""
-      },
-      {
-        "type": "datasource",
-        "id": "testdata",
-        "name": "TestData DB",
-        "version": "1.0.0"
-      },
-      {
-        "type": "panel",
-        "id": "text",
-        "name": "Text",
-        "version": ""
-      },
-      {
-        "type": "panel",
-        "id": "timeseries",
-        "name": "Time series",
-        "version": ""
-      }
-    ],
+{   
     "annotations": {
       "list": [
         {
@@ -150,7 +18,7 @@
         }
       ]
     },
-    "editable": false,
+    "editable": true,
     "graphTooltip": 0,
     "iteration": 1629464729438,
     "links": [
@@ -320,7 +188,7 @@
         "fieldConfig": {
           "defaults": {
             "color": {
-              "mode": "thresholds"
+              "mode": "continuous-GrYlRd"
             },
             "mappings": [],
             "thresholds": {
@@ -339,62 +207,65 @@
           "overrides": []
         },
         "gridPos": {
-          "h": 8,
-          "w": 12,
+          "h": 11,
+          "w": 9,
           "x": 0,
-          "y": 13
+          "y": 0
         },
-        "id": 39,
+        "id": 62,
         "options": {
           "basemap": {
-            "config": {
-              "server": "world-imagery"
-            },
-            "type": "esri-xyz"
+            "config": {},
+            "type": "default"
           },
           "controls": {
             "mouseWheelZoom": true,
             "showAttribution": true,
             "showDebug": false,
-            "showScale": true,
+            "showScale": false,
             "showZoom": true
           },
           "layers": [
             {
               "config": {
                 "color": {
-                  "field": "altitude",
+                  "field": "Price",
                   "fixed": "dark-green"
                 },
                 "fillOpacity": 0.4,
                 "shape": "circle",
                 "showLegend": true,
                 "size": {
+                  "field": "Count",
                   "fixed": 5,
                   "max": 15,
                   "min": 2
                 }
               },
               "location": {
+                "gazetteer": "public/gazetteer/usa-states.json",
+                "lookup": "State",
                 "mode": "auto"
               },
               "type": "markers"
             }
           ],
           "view": {
-            "id": "north-america",
-            "lat": 40,
-            "lon": -100,
-            "zoom": 4
+            "id": "coords",
+            "lat": 38.297683,
+            "lon": -99.228359,
+            "shared": true,
+            "zoom": 3.98
           }
         },
         "targets": [
           {
+            "csvFileName": "flight_info_by_state.csv",
             "refId": "A",
-            "scenarioId": "flight_path"
+            "scenarioId": "csv_file"
           }
         ],
-        "title": "Geomap",
+        "title": "Size, color mapped to different fields + share view",
         "type": "geomap"
       },
       {
@@ -716,8 +587,7 @@
           "y": 45
         },
         "id": 18,
-        "options": {
-          "orientation": "auto",
+        "options": {        
           "reduceOptions": {
             "calcs": [
               "lastNotNull"
@@ -1029,7 +899,7 @@
       "list": [
         {
           "current": {},
-          "datasource": "${DS_GDEV-TESTDATA}",
+          "datasource": "gdev-testdata",
           "definition": "*",
           "hide": 0,
           "includeAll": true,
