@@ -1,4 +1,4 @@
-import { AzureMonitorQuery, AzureResultFormat } from '../../types';
+import { AzureMonitorQuery } from '../../types';
 
 export function setKustoQuery(query: AzureMonitorQuery, kustoQuery: string): AzureMonitorQuery {
   return {
@@ -10,7 +10,7 @@ export function setKustoQuery(query: AzureMonitorQuery, kustoQuery: string): Azu
   };
 }
 
-export function setFormatAs(query: AzureMonitorQuery, formatAs: AzureResultFormat): AzureMonitorQuery {
+export function setFormatAs(query: AzureMonitorQuery, formatAs: string): AzureMonitorQuery {
   return {
     ...query,
     azureLogAnalytics: {

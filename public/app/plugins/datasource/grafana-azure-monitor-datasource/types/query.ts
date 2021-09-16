@@ -1,5 +1,4 @@
 import { DataQuery } from '@grafana/data';
-import { AzureResultFormat } from './types';
 
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
@@ -68,7 +67,7 @@ export interface AzureMetricQuery {
  */
 export interface AzureLogsQuery {
   query?: string;
-  resultFormat?: AzureResultFormat;
+  resultFormat?: string;
   resource?: string;
 
   workspace?: string;
