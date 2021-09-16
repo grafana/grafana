@@ -5,16 +5,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
-import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataQuery,
-  DataQueryResponse,
-  GrafanaTheme2,
-  LoadingState,
-  RawTimeRange,
-} from '@grafana/data';
+import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataFrame, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import { QueryRows } from './QueryRows';
@@ -36,6 +28,7 @@ import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -213,68 +206,20 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  getLogsVolumeContent(width: number, logsVolume?: DataQueryResponse) {
-    const { exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
-
-    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-
-    if (!logsVolume) {
-      return (
-        <LogsVolumeContentWrapper>
-          <Button
-            size="lg"
-            onClick={() => {
-              loadLogsVolumeData(exploreId);
-            }}
-          >
-            Load logs volume
-          </Button>
-        </LogsVolumeContentWrapper>
-      );
-    }
-
-    if (logsVolume.error) {
-      return (
-        <LogsVolumeContentWrapper>
-          Failed to load volume logs for this query: {logsVolume.error.data?.message || logsVolume.error.statusText}
-        </LogsVolumeContentWrapper>
-      );
-    }
-
-    if (logsVolume.state === LoadingState.Loading) {
-      return <LogsVolumeContentWrapper>Logs volume is loading...</LogsVolumeContentWrapper>;
-    }
-
-    if (logsVolume.data) {
-      if (logsVolume.data.length > 0) {
-        return (
-          <ExploreGraph
-            loadingState={LoadingState.Done}
-            data={logsVolume.data}
-            height={150}
-            width={width - spacing}
-            absoluteRange={absoluteRange}
-            onChangeTime={this.onUpdateTimeRange}
-            timeZone={timeZone}
-            annotations={queryResponse.annotations}
-            splitOpenFn={splitOpen}
-          />
-        );
-      } else {
-        return <LogsVolumeContentWrapper>No volume data.</LogsVolumeContentWrapper>;
-      }
-    }
-
-    return undefined;
-  }
-
   renderLogsVolume(width: number) {
-    const { logsVolumeData } = this.props;
+    const { logsVolumeData, exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen } = this.props;
 
     return (
-      <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
-        {this.getLogsVolumeContent(width, logsVolumeData)}
-      </Collapse>
+      <LogsVolumePanel
+        exploreId={exploreId}
+        loadLogsVolumeData={loadLogsVolumeData}
+        absoluteRange={absoluteRange}
+        width={width}
+        logsVolumeData={logsVolumeData}
+        onUpdateTimeRange={this.onUpdateTimeRange}
+        timeZone={timeZone}
+        splitOpen={splitOpen}
+      />
     );
   }
 
@@ -424,10 +369,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       </CustomScrollbar>
     );
   }
-}
-
-function LogsVolumeContentWrapper({ children }: { children: React.ReactNode }) {
-  return <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>{children}</div>;
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
