@@ -90,11 +90,11 @@ func (f *Finder) getPluginJSONPaths(dir string) ([]string, error) {
 		}); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			logger.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", dir, "err", err)
-			return []string{}, err
+			return []string{}, nil
 		}
 		if errors.Is(err, os.ErrPermission) {
 			logger.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", dir, "err", err)
-			return []string{}, err
+			return []string{}, nil
 		}
 
 		return []string{}, err

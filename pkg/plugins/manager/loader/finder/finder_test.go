@@ -65,8 +65,18 @@ func TestFinder_Find(t *testing.T) {
 				"/pkg/plugins/manager/testdata/invalid-v1-signature/plugin/plugin.json"},
 		},
 		{
-			name:       "Empty and non existing plugin dirs",
-			cfg:        setting.NewCfg(),
+			name: "Empty and non existing plugin dirs",
+			cfg: &setting.Cfg{
+				PluginSettings: map[string]map[string]string{
+					"plugin.datasource-id": {
+						"path": "",
+					},
+					"": {},
+					"plugin.test-app": {
+						"path": "./does/not/exist/",
+					},
+				},
+			},
 			pluginDirs: []string{"", "../../testdata/valid-v2-signature", "/does/not/exist", "../../testdata/symbolic-plugin-dirs/plugin/dashboards"},
 			expectedPathSuffix: []string{
 				"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json"},
@@ -74,9 +84,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := &Finder{
-				cfg: tc.cfg,
-			}
+			f := New(tc.cfg)
 			pluginPaths, err := f.Find(tc.pluginDirs)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
