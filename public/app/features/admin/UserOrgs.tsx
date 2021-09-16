@@ -155,33 +155,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         <td className={labelClass}>{org.name}</td>
         {isChangingRole ? (
           <td>
-            <div className={styles.disabledTooltip}>
-              <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} disabled={isExternalUser} />
-              {isExternalUser && (
-                <Tooltip
-                  placement="right-end"
-                  content={
-                    <div>
-                      This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-                      the&nbsp;
-                      <a
-                        className={styles.tooltipItemLink}
-                        href={'https://grafana.com/docs/grafana/latest/auth'}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        Grafana authentication docs
-                      </a>
-                      &nbsp;for details.
-                    </div>
-                  }
-                >
-                  <div className={styles.tooltipItem}>
-                    <Icon name="question-circle" />
-                  </div>
-                </Tooltip>
-              )}
-            </div>
+            <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
           </td>
         ) : (
           <td className="width-25">{org.role}</td>
@@ -189,14 +163,12 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         <td colSpan={1}>
           <div className="pull-right">
             {canChangeRole && (
-              <ConfirmButton
-                confirmText="Save"
-                onClick={this.onChangeRoleClick}
-                onCancel={this.onCancelClick}
-                onConfirm={this.onOrgRoleSave}
-              >
-                Change role
-              </ConfirmButton>
+              <ChangeOrgButton
+                isExternalUser={isExternalUser}
+                onChangeRoleClick={this.onChangeRoleClick}
+                onCancelClick={this.onCancelClick}
+                onOrgRoleSave={this.onOrgRoleSave}
+              />
             )}
           </div>
         </td>
@@ -303,3 +275,68 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     );
   }
 }
+
+interface UnThemedChangeOrgButtonProps extends Themeable {
+  isExternalUser?: boolean;
+  onChangeRoleClick: () => void;
+  onCancelClick: () => void;
+  onOrgRoleSave: () => void;
+}
+
+interface UnThemedChangeOrgButtonState {
+  isChangingRole: boolean;
+}
+
+const getChangeOrgButtonTheme = (theme: GrafanaTheme) => ({
+  disabledTooltip: css`
+    display: flex;
+  `,
+  tooltipItemLink: css`
+    color: ${theme.palette.blue95};
+  `,
+});
+
+export class UnThemedChangeOrgButton extends PureComponent<UnThemedChangeOrgButtonProps, UnThemedChangeOrgButtonState> {
+  render() {
+    const { isExternalUser, theme } = this.props;
+    const styles = getChangeOrgButtonTheme(theme);
+
+    return (
+      <div className={styles.disabledTooltip}>
+        <ConfirmButton
+          confirmText="Save"
+          onClick={this.props.onChangeRoleClick}
+          onCancel={this.props.onCancelClick}
+          onConfirm={this.props.onOrgRoleSave}
+          disabled={isExternalUser}
+        >
+          Change role
+        </ConfirmButton>
+        {isExternalUser && (
+          <Tooltip
+            placement="right-end"
+            content={
+              <div>
+                This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                the&nbsp;
+                <a
+                  className={styles.tooltipItemLink}
+                  href={'https://grafana.com/docs/grafana/latest/auth'}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Grafana authentication docs
+                </a>
+                &nbsp;for details.
+              </div>
+            }
+          >
+            <Icon name="question-circle" />
+          </Tooltip>
+        )}
+      </div>
+    );
+  }
+}
+
+const ChangeOrgButton = withTheme(UnThemedChangeOrgButton);
