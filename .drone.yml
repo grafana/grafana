@@ -47,10 +47,15 @@ steps:
   image: homerovalle/drone-gcs-cache
   settings:
     bucket: test-julien
+    mount:
+    - ./node_modules
     restore: true
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
+  volumes:
+  - name: cache
+    path: /cache
   depends_on:
   - initialize
 
@@ -96,6 +101,11 @@ steps:
     - pull_request
   depends_on:
   - build-frontend
+
+volumes:
+- name: cache
+  host:
+    path: /tmp/drone/cache
 
 trigger:
   event:
@@ -151,6 +161,6 @@ get:
 
 ---
 kind: signature
-hmac: aabd5b8613ffce17a969ff53a95142b2c87f51e2cacb5f9b6fbd3403008fb57c
+hmac: 6ccdbaea4559b6475e17e3f56ad9d80a0ff06e70e721c2d135cb97def03ea048
 
 ...

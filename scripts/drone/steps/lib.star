@@ -415,9 +415,18 @@ def restore_cache_step():
          'settings': {
             'bucket': 'test-julien',
             'restore': 'true',
+            'mount': [
+                './node_modules'
+            ],
          },
          'depends_on': [
             'initialize',
+         ],
+         'volumes': [
+            {
+                'name': 'cache',
+                'path': '/cache',
+            },
          ],
     }
 
