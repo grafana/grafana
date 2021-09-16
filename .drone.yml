@@ -80,6 +80,13 @@ steps:
   depends_on:
   - lint-backend
 
+- name: build-frontend
+  image: grafana/build-container:1.4.2
+  commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - test-frontend
+
 - name: rebuild-cache
   pull: always
   image: homerovalle/drone-gcs-cache
@@ -3539,6 +3546,6 @@ get:
 
 ---
 kind: signature
-hmac: 317dcb605ecd5ae028855fbcf69741a53d55a59b42136b0a687b86c5fa06d91f
+hmac: 9dd9fa580cde2209dc86eeace2948d970204b69ca5840b6e37f9adbc1e8316ee
 
 ...

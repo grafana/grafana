@@ -407,38 +407,33 @@ def test_frontend_step():
 
 def restore_cache_step():
     return {
-        'image': 'meltwater/drone-cache',
+        'image': 'homerovalle/drone-gcs-cache',
         'name': 'restore-cache',
         'pull': 'always',
-         'settings': {
-            'backend': 's3',
-            'region': 'us-east4',
-            'endpoint': 'https://storage.googleapis.com',
-            'bucket': 'test-julien',
-            'secret_key': from_secret('secret'),
-            'access_key': from_secret('access_key'),
-            'restore': 'true',
-            'json_key': from_secret('tf_google_credentials'),
+        'environment': {
+            'GOCACHE': '/opt/drone/gocache',
+            'GOMODCACHE': '/opt/drone/gomodcache',
+            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
-         'depends_on': [
-            'initialize',
-         ],
+         'settings': {
+            'bucket': 'test-julien',
+            'restore': 'true',
+         },
     }
 
 def rebuild_cache_step():
     return {
-        'image': 'meltwater/drone-cache',
+        'image': 'homerovalle/drone-gcs-cache',
         'name': 'rebuild-cache',
         'pull': 'always',
+        'environment': {
+            'GOCACHE': '/opt/drone/gocache',
+            'GOMODCACHE': '/opt/drone/gomodcache',
+            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
+         },
          'settings': {
-            'backend': 's3',
-            'region': 'us-east4',
-            'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
-            'secret_key': from_secret('secret'),
-            'access_key': from_secret('access_key'),
             'rebuild': 'true',
-            'json_key': from_secret('tf_google_credentials'),
             'mount': [
                 '/opt/drone/gocache',
                 '/opt/drone/gomodcache',

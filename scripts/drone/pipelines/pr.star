@@ -52,6 +52,7 @@ def pr_pipelines(edition):
         lint_backend_step(edition=edition),
         test_backend_step(edition=edition),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
+        build_frontend_step(edition=edition, ver_mode=ver_mode),
         rebuild_cache_step(),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
