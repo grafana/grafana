@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -159,6 +161,47 @@ func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) (*scenarioConte
 	return sc, db
 }
 
+func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
+	sc, db := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
+
+	// Create a dashboard folder
+	cmd := models.SaveDashboardCommand{
+		OrgId:    testOrgID,
+		FolderId: 1,
+		IsFolder: true,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": "1 test dash folder",
+			"tags":  "prod",
+		}),
+	}
+	folder, err := db.SaveDashboard(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, folder)
+
+	// Grant our test Viewer with permission to admin the folder
+	acls := []*models.DashboardAcl{
+		{
+			DashboardID: folder.Id,
+			OrgID:       testOrgID,
+			UserID:      testUserID,
+			Permission:  models.PERMISSION_ADMIN,
+			Created:     time.Now(),
+			Updated:     time.Now(),
+		},
+	}
+	err = db.UpdateDashboardACL(folder.Id, acls)
+	require.NoError(t, err)
+
+	sc.resp = httptest.NewRecorder()
+
+	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
+	require.NoError(t, err)
+
+	sc.exec()
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+}
+
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 	sc, db := setupOrgUsersAPIcontext(t, models.ROLE_VIEWER)
 
@@ -171,7 +214,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 	sc.resp = httptest.NewRecorder()
 
 	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	sc.exec()
 	assert.Equal(t, http.StatusOK, sc.resp.Code)
@@ -183,7 +226,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
 
 	var err error
 	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	sc.exec()
 	assert.Equal(t, http.StatusOK, sc.resp.Code)
@@ -195,7 +238,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_Viewer(t *testing.T) {
 
 	var err error
 	sc.req, err = http.NewRequest(http.MethodGet, "/api/org/users/lookup", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	sc.exec()
 	assert.Equal(t, http.StatusForbidden, sc.resp.Code)
@@ -241,7 +284,7 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 
 			var err error
 			sc.req, err = http.NewRequest(test.method, test.url, nil)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			sc.exec()
 			assert.Equal(t, test.expectedCode, sc.resp.Code)
