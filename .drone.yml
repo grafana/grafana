@@ -97,9 +97,6 @@ steps:
   depends_on:
   - build-frontend
 
-node:
-  type: no-parallel
-
 trigger:
   event:
   - pull_request
@@ -154,6 +151,6 @@ get:
 
 ---
 kind: signature
-hmac: 7b5b0dcb45a7e4768ca26f2654f3f5bdd01db60390a4da63bb5d6ed4ccf3f092
+hmac: aabd5b8613ffce17a969ff53a95142b2c87f51e2cacb5f9b6fbd3403008fb57c
 
 ...
