@@ -28,38 +28,14 @@ export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, in
 /**
  * @internal
  */
-export enum RelatedDataType {
-  LogsVolume = 'LogsVolume',
-}
-
-/**
- * @internal
- */
 export type LogsVolume = {
   data?: DataFrame[];
   error?: DataQueryError;
   isLoading?: boolean;
 };
 
-/**
- * @internal
- */
-export type RelatedDataProviders = {
-  [type in keyof typeof RelatedDataType]?: RelatedDataProvider<any>;
-};
-
-/**
- * @internal
- */
-export type RelatedData = {
-  [type in keyof typeof RelatedDataType]?: any;
-};
-
-/**
- * @internal
- */
-export interface RelatedDataProvider<TData> {
-  getData(): Observable<TData>;
+export interface LogsVolumeDataProvider {
+  getData(): Observable<LogsVolume>;
 }
 
 export class DataSourcePlugin<
@@ -267,13 +243,6 @@ abstract class DataSourceApi<
    * Query for data, and optionally stream results
    */
   abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
-
-  /**
-   * For a given query return a set of data providers. Each data provider can return data related to the
-   * given query, for example: logs volume for logs query.
-   * @internal
-   */
-  getQueryRelatedDataProviders?(request?: DataQueryRequest<TQuery>): RelatedDataProviders;
 
   /**
    * Test & verify datasource settings & connection details (returning TestingStatus)

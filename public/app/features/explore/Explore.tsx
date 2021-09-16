@@ -13,7 +13,6 @@ import {
   RawTimeRange,
   DataFrame,
   GrafanaTheme2,
-  RelatedDataType,
   LogsVolume,
 } from '@grafana/data';
 
@@ -25,7 +24,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadRelatedData } from './state/query';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadLogsVolumeData } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -215,7 +214,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   getLogsVolumeContent(width: number, logsVolume?: LogsVolume) {
-    const { exploreId, loadRelatedData, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
+    const { exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
 
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
 
@@ -225,7 +224,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           <Button
             size="lg"
             onClick={() => {
-              loadRelatedData(exploreId, RelatedDataType.LogsVolume);
+              loadLogsVolumeData(exploreId);
             }}
           >
             Load logs volume
@@ -270,12 +269,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const { relatedData } = this.props;
-    const logsVolume = relatedData[RelatedDataType.LogsVolume];
+    const { logsVolumeData } = this.props;
 
     return (
-      <Collapse label="Logs volume" isOpen={true} loading={logsVolume?.isLoading}>
-        {this.getLogsVolumeContent(width, logsVolume)}
+      <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.isLoading}>
+        {this.getLogsVolumeContent(width, logsVolumeData)}
       </Collapse>
     );
   }
@@ -351,14 +349,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
-      relatedDataProviders,
+      logsVolumeDataProvider,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showLogsVolume = !!relatedDataProviders[RelatedDataType.LogsVolume];
+    const showLogsVolume = !!logsVolumeDataProvider;
 
     return (
       <CustomScrollbar autoHeightMin={'100%'}>
@@ -443,8 +441,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    relatedData,
-    relatedDataProviders,
+    logsVolumeDataProvider,
+    logsVolumeData,
     logsResult,
     showLogs,
     showMetrics,
@@ -462,8 +460,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    relatedDataProviders,
-    relatedData,
+    logsVolumeDataProvider,
+    logsVolumeData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
@@ -485,7 +483,7 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  loadRelatedData,
+  loadLogsVolumeData,
   addQueryRow,
   splitOpen,
 };
