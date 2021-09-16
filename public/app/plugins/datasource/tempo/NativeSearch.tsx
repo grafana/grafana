@@ -72,6 +72,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     return text;
   };
 
+  const onKeyDown = (keyEvent: React.KeyboardEvent) => {
+    if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
+      onRunQuery();
+    }
+  };
+
   return (
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
@@ -131,33 +137,31 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Min Duration" labelWidth={14} grow>
-          <QueryField
-            query={query.minDuration || ''}
+          <Input
+            value={query.minDuration || ''}
             placeholder={durationPlaceholder}
-            onChange={(value) =>
+            onChange={(v) =>
               onChange({
                 ...query,
-                minDuration: value,
+                minDuration: v.currentTarget.value,
               })
             }
-            onRunQuery={onRunQuery}
-            portalOrigin="tempo"
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Max Duration" labelWidth={14} grow>
-          <QueryField
-            query={query.maxDuration || ''}
+          <Input
+            value={query.maxDuration || ''}
             placeholder={durationPlaceholder}
-            onChange={(value) =>
+            onChange={(v) =>
               onChange({
                 ...query,
-                maxDuration: value,
+                maxDuration: v.currentTarget.value,
               })
             }
-            onRunQuery={onRunQuery}
-            portalOrigin="tempo"
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
@@ -172,6 +176,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
