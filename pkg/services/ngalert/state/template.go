@@ -40,7 +40,7 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	}
 
 	expander := template.NewTemplateExpander(
-		context.TODO(),
+		context.TODO(), // This context is only used with the `query()` function - which we don't support yet.
 		text,
 		name,
 		data,
