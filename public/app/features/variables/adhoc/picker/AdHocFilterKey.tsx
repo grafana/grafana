@@ -9,6 +9,7 @@ interface Props {
   onChange: (item: SelectableValue<string | null>) => void;
 }
 
+const MIN_WIDTH = 90;
 export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) => {
   const loadKeys = () => fetchFilterKeys(datasource);
   const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource);
@@ -22,6 +23,7 @@ export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) =
           value={filterKey}
           onChange={onChange}
           loadOptions={loadKeys}
+          inputMinWidth={MIN_WIDTH}
         />
       </div>
     );
@@ -34,6 +36,7 @@ export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) =
         value={filterKey}
         onChange={onChange}
         loadOptions={loadKeysWithRemove}
+        inputMinWidth={MIN_WIDTH}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { CatalogPlugin } from '../types';
+import * as api from '../api';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 
 // Mock the config to enable the plugin catalog
@@ -46,6 +47,8 @@ describe('Plugin details page', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    config.pluginAdminExternalManageEnabled = false;
+    config.licenseInfo.hasValidLicense = false;
   });
 
   afterAll(() => {
@@ -207,5 +210,39 @@ describe('Plugin details page', () => {
     await waitFor(() => expect(queryByText(/dependencies:/i)).toBeInTheDocument());
 
     expect(queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+  });
+
+  it('should show a confirm modal when trying to uninstall a plugin', async () => {
+    // @ts-ignore
+    api.uninstallPlugin = jest.fn();
+
+    const { queryByText, queryByRole, getByRole } = renderPluginDetails({
+      id,
+      name: 'Akumuli',
+      isInstalled: true,
+      details: {
+        pluginDependencies: [],
+        grafanaDependency: '>=8.0.0',
+        links: [],
+      },
+    });
+
+    // Wait for the install controls to be loaded
+    await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+
+    // Open the confirmation modal
+    userEvent.click(getByRole('button', { name: /uninstall/i }));
+
+    expect(queryByText('Uninstall Akumuli')).toBeInTheDocument();
+    expect(queryByText('Are you sure you want to uninstall this plugin?')).toBeInTheDocument();
+    expect(api.uninstallPlugin).toHaveBeenCalledTimes(0);
+
+    // Confirm the uninstall
+    userEvent.click(getByRole('button', { name: /confirm/i }));
+    expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
+    expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
+
+    // Check if the modal disappeared
+    expect(queryByText('Uninstall Akumuli')).not.toBeInTheDocument();
   });
 });
