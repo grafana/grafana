@@ -8,21 +8,23 @@ import (
 
 var logger = log.New("plugin.signature.validator")
 
-type validator struct {
-	cfg                           *setting.Cfg
+type Validator struct {
+	cfg *setting.Cfg
+	// allowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only
+	// runs when plugins are starting, therefore running plugins will not be terminated if they violate the new policy.
 	allowUnsignedPluginsCondition UnsignedPluginConditionFunc
 }
 
 type UnsignedPluginConditionFunc = func(plugin *plugins.Plugin) bool
 
-func NewValidator(cfg *setting.Cfg, unsignedCond UnsignedPluginConditionFunc) *validator {
-	return &validator{
+func NewValidator(cfg *setting.Cfg, unsignedCond UnsignedPluginConditionFunc) Validator {
+	return Validator{
 		cfg:                           cfg,
 		allowUnsignedPluginsCondition: unsignedCond,
 	}
 }
 
-func (s *validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureError {
+func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureError {
 	if plugin.Signature == plugins.SignatureValid {
 		logger.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
@@ -82,7 +84,7 @@ func (s *validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureErr
 	}
 }
 
-func (s *validator) allowUnsigned(plugin *plugins.Plugin) bool {
+func (s *Validator) allowUnsigned(plugin *plugins.Plugin) bool {
 	if s.allowUnsignedPluginsCondition != nil {
 		return s.allowUnsignedPluginsCondition(plugin)
 	}

@@ -27,23 +27,21 @@ var (
 )
 
 type Loader struct {
-	cfg               *setting.Cfg
-	pluginFinder      finder.Finder
-	pluginInitializer initializer.Initializer
+	cfg                *setting.Cfg
+	pluginFinder       finder.Finder
+	pluginInitializer  initializer.Initializer
+	signatureValidator signature.Validator
 
 	errs map[string]error
-	// allowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only
-	// runs when plugins are starting, therefore running plugins will not be terminated if they violate the new policy.
-	allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc
 }
 
 func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg) Loader {
 	return Loader{
-		cfg:                           cfg,
-		allowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
-		pluginFinder:                  finder.New(cfg),
-		pluginInitializer:             initializer.New(cfg, license),
-		errs:                          make(map[string]error),
+		cfg:                cfg,
+		pluginFinder:       finder.New(cfg),
+		pluginInitializer:  initializer.New(cfg, license),
+		signatureValidator: signature.NewValidator(cfg, allowUnsignedPluginsCondition),
+		errs:               make(map[string]error),
 	}
 }
 
@@ -155,7 +153,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 
 	// validate signatures
 	for _, plugin := range loadedPlugins {
-		signingError := signature.NewValidator(l.cfg, l.allowUnsignedPluginsCondition).Validate(plugin) // covert to field
+		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
 			logger.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
