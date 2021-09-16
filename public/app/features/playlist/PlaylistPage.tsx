@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
@@ -23,13 +23,19 @@ export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponent
 
 export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasFetched, setHasFetched] = useState(false);
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
-    return getAllPlaylist(searchQuery) as Promise<PlaylistDTO[]>;
+    return getAllPlaylist(searchQuery);
   }, [forcePlaylistsFetch, searchQuery]);
+  useEffect(() => {
+    if (!hasFetched && !loading) {
+      setHasFetched(true);
+    }
+  }, [loading, hasFetched]);
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
   const onDeletePlaylist = () => {
@@ -91,7 +97,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   }
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={loading}>
+      <Page.Contents isLoading={!hasFetched}>
         {!hasPlaylists && !searchQuery ? (
           emptyListBanner
         ) : (
