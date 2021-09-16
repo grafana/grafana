@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -19,7 +20,7 @@ type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(pluginID string) *Plugin
 	// Plugins returns plugins by their requested type.
-	Plugins(pluginType ...PluginType) []*Plugin
+	Plugins(pluginType ...Type) []*Plugin
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
 

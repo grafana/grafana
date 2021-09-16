@@ -10,7 +10,7 @@ func (pr *fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
 	return nil
 }
 
-func (pr *fakePluginStore) Plugins(pluginType ...plugins.PluginType) []*plugins.Plugin {
+func (pr *fakePluginStore) Plugins(pluginType ...plugins.Type) []*plugins.Plugin {
 	return nil
 }
 

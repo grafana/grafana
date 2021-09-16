@@ -16,7 +16,7 @@ type Plugin struct {
 	JSONData
 
 	PluginDir string
-	Class     PluginClass
+	Class     Class
 
 	// App fields
 	IncludedInAppID string
@@ -49,7 +49,7 @@ type Plugin struct {
 type JSONData struct {
 	// Common settings
 	ID           string             `json:"id"`
-	Type         PluginType         `json:"type"`
+	Type         Type               `json:"type"`
 	Name         string             `json:"name"`
 	Info         PluginInfo         `json:"info"`
 	Dependencies PluginDependencies `json:"dependencies"`
@@ -254,6 +254,14 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
+type PluginClient interface {
+	backend.QueryDataHandler
+	backend.CollectMetricsHandler
+	backend.CheckHealthHandler
+	backend.CallResourceHandler
+	backend.StreamHandler
+}
+
 func (p *Plugin) StaticRoute() *PluginStaticRoute {
 	return &PluginStaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
@@ -313,40 +321,32 @@ func (p *Plugin) IncludedInSignature(file string) bool {
 	return true
 }
 
-type PluginClient interface {
-	backend.QueryDataHandler
-	backend.CollectMetricsHandler
-	backend.CheckHealthHandler
-	backend.CallResourceHandler
-	backend.StreamHandler
-}
-
-type PluginClass string
+type Class string
 
 const (
-	Core     PluginClass = "core"
-	Bundled  PluginClass = "bundled"
-	External PluginClass = "external"
-	Unknown  PluginClass = "unknown"
+	Core     Class = "core"
+	Bundled  Class = "bundled"
+	External Class = "external"
+	Unknown  Class = "unknown"
 )
 
-var PluginTypes = []PluginType{
+var PluginTypes = []Type{
 	DataSource,
 	Panel,
 	App,
 	Renderer,
 }
 
-type PluginType string
+type Type string
 
 const (
-	DataSource PluginType = "datasource"
-	Panel      PluginType = "panel"
-	App        PluginType = "app"
-	Renderer   PluginType = "renderer"
+	DataSource Type = "datasource"
+	Panel      Type = "panel"
+	App        Type = "app"
+	Renderer   Type = "renderer"
 )
 
-func (pt PluginType) IsValid() bool {
+func (pt Type) IsValid() bool {
 	switch pt {
 	case DataSource, Panel, App, Renderer:
 		return true

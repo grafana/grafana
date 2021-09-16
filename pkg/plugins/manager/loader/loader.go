@@ -247,7 +247,7 @@ func validatePluginJSON(data plugins.JSONData) error {
 	return nil
 }
 
-func (l *Loader) pluginClass(pluginDir string) plugins.PluginClass {
+func (l *Loader) pluginClass(pluginDir string) plugins.Class {
 	isSubDir := func(base, target string) bool {
 		path, err := filepath.Rel(base, target)
 		if err != nil {

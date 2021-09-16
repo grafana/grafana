@@ -156,13 +156,13 @@ func (m *PluginManager) Plugin(pluginID string) *plugins.Plugin {
 	return p
 }
 
-func (m *PluginManager) Plugins(pluginTypes ...plugins.PluginType) []*plugins.Plugin {
+func (m *PluginManager) Plugins(pluginTypes ...plugins.Type) []*plugins.Plugin {
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
 	}
 
-	var requestedTypes = make(map[plugins.PluginType]struct{})
+	var requestedTypes = make(map[plugins.Type]struct{})
 	for _, pt := range pluginTypes {
 		requestedTypes[pt] = struct{}{}
 	}

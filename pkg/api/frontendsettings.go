@@ -330,9 +330,9 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 }
 
 // EnabledPlugins represents a mapping of plugin types to plugin IDs to plugins
-type EnabledPlugins map[plugins.PluginType]map[string]*plugins.Plugin
+type EnabledPlugins map[plugins.Type]map[string]*plugins.Plugin
 
-func (ep EnabledPlugins) Get(pluginType plugins.PluginType, pluginID string) *plugins.Plugin {
+func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) *plugins.Plugin {
 	return ep[pluginType][pluginID]
 }
 

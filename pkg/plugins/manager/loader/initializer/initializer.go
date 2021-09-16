@@ -164,7 +164,7 @@ func (i *Initializer) setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.
 	}
 }
 
-func pluginLogoURL(pluginType plugins.PluginType, path, baseUrl string) string {
+func pluginLogoURL(pluginType plugins.Type, path, baseUrl string) string {
 	if path == "" {
 		return defaultLogoPath(pluginType)
 	}
@@ -172,11 +172,11 @@ func pluginLogoURL(pluginType plugins.PluginType, path, baseUrl string) string {
 	return evalRelativePluginURLPath(path, baseUrl, pluginType)
 }
 
-func defaultLogoPath(pluginType plugins.PluginType) string {
+func defaultLogoPath(pluginType plugins.Type) string {
 	return "public/img/icn-" + string(pluginType) + ".svg"
 }
 
-func evalRelativePluginURLPath(pathStr, baseUrl string, pluginType plugins.PluginType) string {
+func evalRelativePluginURLPath(pathStr, baseUrl string, pluginType plugins.Type) string {
 	if pathStr == "" {
 		return ""
 	}

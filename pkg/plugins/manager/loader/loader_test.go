@@ -540,3 +540,63 @@ func Test_validatePluginJSON(t *testing.T) {
 		})
 	}
 }
+
+func Test_pluginClass(t *testing.T) {
+	type args struct {
+		pluginDir string
+		cfg       *setting.Cfg
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected plugins.Class
+	}{
+		{
+			name: "Core plugin class",
+			args: args{
+				pluginDir: "/root/app/plugins/test-app",
+				cfg: &setting.Cfg{
+					StaticRootPath: "/root",
+				},
+			},
+			expected: plugins.Core,
+		},
+		{
+			name: "Bundled plugin class",
+			args: args{
+				pluginDir: "/test-app",
+				cfg: &setting.Cfg{
+					BundledPluginsPath: "/test-app",
+				},
+			},
+			expected: plugins.Bundled,
+		},
+		{
+			name: "External plugin class",
+			args: args{
+				pluginDir: "/test-app",
+				cfg: &setting.Cfg{
+					PluginsPath: "/test-app",
+				},
+			},
+			expected: plugins.External,
+		},
+		{
+			name: "External plugin class",
+			args: args{
+				pluginDir: "/test-app",
+				cfg: &setting.Cfg{
+					PluginsPath: "/root",
+				},
+			},
+			expected: plugins.Unknown,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := New(nil, nil, tt.args.cfg)
+			got := l.pluginClass(tt.args.pluginDir)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
