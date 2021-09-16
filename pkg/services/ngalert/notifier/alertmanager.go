@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -164,12 +165,26 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
 	am.notificationLog.SetBroadcast(c.Broadcast)
 
+	//TODO yuriy. replace with silencesFilePath when fix in https://github.com/prometheus/alertmanager/pull/2710 is released
+	silenceOpts := silence.Options{
+		Metrics:   m.Registerer,
+		Retention: retentionNotificationsAndSilences,
+	}
+
+	silencesFileReader, err := os.Open(silencesFilePath)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	if silencesFileReader != nil {
+		silenceOpts.SnapshotReader = silencesFileReader
+		defer func(file *os.File) {
+			_ = file.Close()
+		}(silencesFileReader)
+	}
 	// Initialize silences
-	am.silences, err = silence.New(silence.Options{
-		Metrics:      m.Registerer,
-		SnapshotFile: silencesFilePath,
-		Retention:    retentionNotificationsAndSilences,
-	})
+	am.silences, err = silence.New(silenceOpts)
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
