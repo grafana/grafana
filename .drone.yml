@@ -114,6 +114,8 @@ steps:
     backend: s3
     bucket: test-julien
     endpoint: https://storage.googleapis.com
+    json_key:
+      from_secret: tf_google_credentials
     mount:
     - /opt/drone/gocache
     - /opt/drone/gomodcache
@@ -3579,6 +3581,6 @@ get:
 
 ---
 kind: signature
-hmac: 75348eefe4696cb306530c01700a3e5e02f2a49df59e002dce3b2fda6649f078
+hmac: af01e33c7256ee24a915907208459346f0fa05e7a4febf6df1616104dcb62a6c
 
 ...
