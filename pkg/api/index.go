@@ -28,6 +28,13 @@ var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
 	),
 )
 
+// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources" tab access
+var dataSourcesNewAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	ac.EvalPermission(ActionDatasourcesCreate),
+	ac.EvalPermission(ActionDatasourcesWrite),
+)
+
 func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	// Only set login if it's different from the name
 	var login string
