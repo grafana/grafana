@@ -438,7 +438,7 @@ def rebuild_cache_step():
              ],
          },
          'depends_on': [
-            'build-backend',
+            'build-frontend',
          ],
          'when': {
             'event': 'pull_request',
