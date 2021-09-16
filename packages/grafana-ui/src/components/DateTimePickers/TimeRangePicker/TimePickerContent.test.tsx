@@ -2,7 +2,6 @@ import { dateTime, TimeRange } from '@grafana/data';
 import { render, RenderResult, screen } from '@testing-library/react';
 import React from 'react';
 import { PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
-import { TimeRangeOption } from './TimeRangeOption';
 
 describe('TimePickerContent', () => {
   const absoluteValue = createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-18T07:49:27.433Z');
