@@ -67,7 +67,6 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
-  - yarn cache list
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
@@ -155,6 +154,6 @@ get:
 
 ---
 kind: signature
-hmac: 306d7503989ac01d2bc130bb2a64baa954b0192cf61297d6cfd22cccc82377dc
+hmac: 7b5b0dcb45a7e4768ca26f2654f3f5bdd01db60390a4da63bb5d6ed4ccf3f092
 
 ...
