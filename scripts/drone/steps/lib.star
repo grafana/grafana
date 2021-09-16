@@ -441,11 +441,17 @@ def rebuild_cache_step():
             'bucket': 'test-julien',
             'rebuild': 'true',
             'mount': [
-                '/opt/drone/yarncache',
-             ],
+                './node_modules'
+            ],
          },
          'depends_on': [
             'build-frontend',
+         ],
+         'volumes': [
+            {
+               'name': 'cache',
+               'path': '/cache',
+            },
          ],
          'when': {
             'event': 'pull_request',
