@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, parseDuration, durationToMilliseconds } from '@grafana/data';
-import { Field, InlineLabel, Input, InputControl, Switch, useStyles } from '@grafana/ui';
+import { parseDuration, durationToMilliseconds, GrafanaTheme2 } from '@grafana/data';
+import { Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 import { useFormContext, RegisterOptions } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
 import { positiveDurationValidationPattern, durationValidationPattern } from '../../utils/time';
@@ -10,6 +10,7 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 import { PreviewRule } from './PreviewRule';
 import { GrafanaConditionEvalWarning } from './GrafanaConditionEvalWarning';
+import { CollapseToggle } from '../CollapseToggle';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
@@ -43,7 +44,7 @@ const evaluateEveryValidationOptions: RegisterOptions = {
 };
 
 export const GrafanaConditionsStep: FC = () => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const {
     register,
@@ -83,9 +84,12 @@ export const GrafanaConditionsStep: FC = () => {
         </div>
       </Field>
       <GrafanaConditionEvalWarning />
-      <Field label="Configure no data and error handling" horizontal={true} className={styles.switchField}>
-        <Switch value={showErrorHandling} onChange={() => setShowErrorHandling(!showErrorHandling)} />
-      </Field>
+      <CollapseToggle
+        isCollapsed={!showErrorHandling}
+        onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
+        text="Configure no data and error handling"
+        className={styles.collapseToggle}
+      />
       {showErrorHandling && (
         <>
           <Field label="Alert state if no data or all values are null">
@@ -121,7 +125,7 @@ export const GrafanaConditionsStep: FC = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css`
     margin-bottom: 0;
   `,
@@ -131,12 +135,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: flex-start;
     align-items: flex-start;
   `,
-  switchField: css`
-    display: inline-flex;
-    flex-direction: row-reverse;
-    margin-top: ${theme.spacing.md};
-    & > div:first-child {
-      margin-left: ${theme.spacing.sm};
-    }
+  collapseToggle: css`
+    margin: ${theme.spacing(2, 0, 2, -1)};
   `,
 });

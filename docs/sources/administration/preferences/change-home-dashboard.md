@@ -40,7 +40,7 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 default_home_dashboard_path = data/main-dashboard.json
 ```
 
->**Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 ## Set the home dashboard for your organization
 
@@ -59,9 +59,10 @@ Organization administrators and Team Admins can choose a home dashboard for a te
 {{< docs/list >}}
 {{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
+
 1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
-{{< /docs/list >}}
+   {{< docs/shared "preferences/select-home-dashboard-list.md" >}}
+   {{< /docs/list >}}
 
 ## Set your personal home dashboard
 

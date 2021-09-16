@@ -23,7 +23,7 @@ export const ReceiversAndTemplatesView: FC<Props> = ({ config, alertManagerName 
       {isCloud && (
         <Alert className={styles.section} severity="info" title="Global config for contact points">
           <p>
-            For each external alert managers you can define global settings, like server addresses, usernames and
+            For each external Alertmanager you can define global settings, like server addresses, usernames and
             password, for all the supported contact points.
           </p>
           <LinkButton href={makeAMLink('alerting/notifications/global-config', alertManagerName)} variant="secondary">

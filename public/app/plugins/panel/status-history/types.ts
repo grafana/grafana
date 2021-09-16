@@ -1,4 +1,4 @@
-import { HideableFieldConfig, BarValueVisibility, OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
+import { HideableFieldConfig, BarValueVisibility, OptionsWithTooltip, OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha

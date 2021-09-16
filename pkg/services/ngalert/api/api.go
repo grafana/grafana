@@ -1,26 +1,32 @@
 package api
 
 import (
+	"context"
+	"net/url"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/quota"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
+
+type Scheduler interface {
+	AlertmanagersFor(orgID int64) []*url.URL
+	DroppedAlertmanagersFor(orgID int64) []*url.URL
+}
 
 type Alertmanager interface {
 	// Configuration
@@ -37,44 +43,48 @@ type Alertmanager interface {
 	// Alerts
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+
+	// Testing
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*notifier.TestReceiversResult, error)
 }
 
 // API handlers.
 type API struct {
-	Cfg             *setting.Cfg
-	DatasourceCache datasources.CacheService
-	RouteRegister   routing.RouteRegister
-	DataService     *tsdb.Service
-	QuotaService    *quota.QuotaService
-	Schedule        schedule.ScheduleService
-	RuleStore       store.RuleStore
-	InstanceStore   store.InstanceStore
-	AlertingStore   store.AlertingStore
-	DataProxy       *datasourceproxy.DatasourceProxyService
-	Alertmanager    Alertmanager
-	StateManager    *state.Manager
+	Cfg                  *setting.Cfg
+	DatasourceCache      datasources.CacheService
+	RouteRegister        routing.RouteRegister
+	DataService          *tsdb.Service
+	QuotaService         *quota.QuotaService
+	Schedule             schedule.ScheduleService
+	RuleStore            store.RuleStore
+	InstanceStore        store.InstanceStore
+	AlertingStore        store.AlertingStore
+	AdminConfigStore     store.AdminConfigurationStore
+	DataProxy            *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	StateManager         *state.Manager
 }
 
 // RegisterAPIEndpoints registers API handlers
-func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
+func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
 	}
 
-	// Register endpoints for proxing to Alertmanager-compatible backends.
+	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, log: logger},
 	), m)
-	// Register endpoints for proxing to Prometheus-compatible backends.
+	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	), m)
-	// Register endpoints for proxing to Cortex Ruler-compatible backends.
+	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
@@ -86,5 +96,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 		DataService:     api.DataService,
 		DatasourceCache: api.DatasourceCache,
 		log:             logger,
+	}, m)
+	api.RegisterConfigurationApiEndpoints(AdminSrv{
+		store:     api.AdminConfigStore,
+		log:       logger,
+		scheduler: api.Schedule,
 	}, m)
 }

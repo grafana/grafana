@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,6 +59,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 			"name":      ds.Name,
 			"url":       url,
 			"isDefault": ds.IsDefault,
+			"access":    ds.Access,
 		}
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
@@ -111,11 +113,16 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 	// the datasource table)
 	for _, ds := range hs.PluginManager.DataSources() {
 		if ds.BuiltIn {
-			dataSources[ds.Name] = map[string]interface{}{
+			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
 				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
+			if ds.Name == grafanads.DatasourceName {
+				info["id"] = grafanads.DatasourceID
+				info["uid"] = grafanads.DatasourceUID
+			}
+			dataSources[ds.Name] = info
 		}
 	}
 
@@ -190,38 +197,40 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":          defaultDS,
-		"datasources":                dataSources,
-		"minRefreshInterval":         setting.MinRefreshInterval,
-		"panels":                     panels,
-		"appUrl":                     hs.Cfg.AppURL,
-		"appSubUrl":                  hs.Cfg.AppSubURL,
-		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":           setting.AuthProxyEnabled,
-		"ldapEnabled":                hs.Cfg.LDAPEnabled,
-		"alertingEnabled":            setting.AlertingEnabled,
-		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
-		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
-		"alertingMinInterval":        setting.AlertingMinInterval,
-		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
-		"autoAssignOrg":              setting.AutoAssignOrg,
-		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
-		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
-		"exploreEnabled":             setting.ExploreEnabled,
-		"googleAnalyticsId":          setting.GoogleAnalyticsId,
-		"rudderstackWriteKey":        setting.RudderstackWriteKey,
-		"rudderstackDataPlaneUrl":    setting.RudderstackDataPlaneUrl,
-		"disableLoginForm":           setting.DisableLoginForm,
-		"disableUserSignUp":          !setting.AllowUserSignUp,
-		"loginHint":                  setting.LoginHint,
-		"passwordHint":               setting.PasswordHint,
-		"externalUserMngInfo":        setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
-		"viewersCanEdit":             setting.ViewersCanEdit,
-		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
-		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
-		"pluginsToPreload":           pluginsToPreload,
+		"defaultDatasource":                   defaultDS,
+		"datasources":                         dataSources,
+		"minRefreshInterval":                  setting.MinRefreshInterval,
+		"panels":                              panels,
+		"appUrl":                              hs.Cfg.AppURL,
+		"appSubUrl":                           hs.Cfg.AppSubURL,
+		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":                    setting.AuthProxyEnabled,
+		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"alertingEnabled":                     setting.AlertingEnabled,
+		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":                 setting.AlertingMinInterval,
+		"liveEnabled":                         hs.Cfg.LiveMaxConnections != 0,
+		"autoAssignOrg":                       setting.AutoAssignOrg,
+		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
+		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
+		"exploreEnabled":                      setting.ExploreEnabled,
+		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
+		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
+		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
+		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
+		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
+		"disableLoginForm":                    setting.DisableLoginForm,
+		"disableUserSignUp":                   !setting.AllowUserSignUp,
+		"loginHint":                           setting.LoginHint,
+		"passwordHint":                        setting.PasswordHint,
+		"externalUserMngInfo":                 setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
+		"viewersCanEdit":                      setting.ViewersCanEdit,
+		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
+		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":                    pluginsToPreload,
 		"buildInfo": map[string]interface{}{
 			"hideVersion":   hideVersion,
 			"version":       version,
@@ -247,7 +256,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":               (c.IsGrafanaAdmin || hs.Cfg.PluginAdminExternalManageEnabled) && hs.Cfg.PluginAdminEnabled,
+		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
 		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
@@ -259,6 +268,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
+	}
+
+	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
+		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
+	}
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		jsonObj["geomapDisableCustomBaseLayer"] = true
 	}
 
 	return jsonObj, nil

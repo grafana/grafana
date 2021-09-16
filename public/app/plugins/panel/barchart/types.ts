@@ -1,14 +1,14 @@
-import { VizOrientation } from '@grafana/data';
 import {
+  OptionsWithLegend,
+  OptionsWithTextFormatting,
+  OptionsWithTooltip,
   AxisConfig,
   BarValueVisibility,
   GraphGradientMode,
   HideableFieldConfig,
-  OptionsWithLegend,
-  OptionsWithTextFormatting,
-  OptionsWithTooltip,
   StackingMode,
-} from '@grafana/ui';
+} from '@grafana/schema';
+import { VizOrientation } from '@grafana/data';
 
 /**
  * @alpha
@@ -19,6 +19,7 @@ export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, 
   showValue: BarValueVisibility;
   barWidth: number;
   groupWidth: number;
+  rawValue: (seriesIdx: number, valueIdx: number) => number;
 }
 
 /**

@@ -33,6 +33,7 @@ Use the [Homebrew](http://brew.sh/) restart command:
 ```bash
 brew services restart grafana
 ```
+
 ### Restart standalone macOS binaries
 
 To restart Grafana:
@@ -43,6 +44,7 @@ To restart Grafana:
 ```bash
 ./bin/grafana-server web
 ```
+
 ## Linux
 
 Restart methods differ depending on whether your Linux system uses `systemd` or `init.d`.
@@ -95,6 +97,7 @@ Alternately, you can configure the Grafana server to restart at boot:
 ```bash
 sudo update-rc.d grafana-server defaults
 ```
+
 ## Docker
 
 To restart the Grafana service, use the `docker restart` command.

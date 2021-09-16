@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
+import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
-import { GraphTresholdsStyleMode, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 
 export const ThresholdsStyleEditor: React.FC<
   FieldOverrideEditorProps<SelectableValue<{ mode: GraphTresholdsStyleMode }>, any>
@@ -13,5 +14,5 @@ export const ThresholdsStyleEditor: React.FC<
     },
     [onChange]
   );
-  return <Select value={value.mode} options={item.settings.options} onChange={onChangeCb} />;
+  return <Select menuShouldPortal value={value.mode} options={item.settings.options} onChange={onChangeCb} />;
 };

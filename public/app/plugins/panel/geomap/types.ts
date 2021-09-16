@@ -1,5 +1,5 @@
 import { MapLayerOptions } from '@grafana/data';
-import Units from 'ol/proj/Units';
+import { Units } from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -8,9 +8,6 @@ export interface ControlsOptions {
 
   // let the mouse wheel zoom
   mouseWheelZoom?: boolean;
-
-  // Add legend control
-  showLegend?: boolean;
 
   // Lower right
   showAttribution?: boolean;

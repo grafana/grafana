@@ -10,11 +10,11 @@ import {
   FieldType,
   Field,
 } from '@grafana/data';
-import { geomapLayerRegistry } from '../layers/registry';
-import { defaultGrafanaThemedMap } from '../layers/basemaps';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
+import { GazetteerPathEditor } from './GazetteerPathEditor';
 
 export interface LayerEditorProps<TConfig = any> {
   options?: MapLayerOptions<TConfig>;
@@ -29,7 +29,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
     return geomapLayerRegistry.selectOptions(
       options?.type // the selected value
         ? [options.type] // as an array
-        : [defaultGrafanaThemedMap.id],
+        : [DEFAULT_BASEMAP_CONFIG.type],
       filter
     );
   }, [options?.type, filter]);
@@ -41,7 +41,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
       return null;
     }
 
-    const builder = new PanelOptionsEditorBuilder();
+    const builder = new PanelOptionsEditorBuilder<MapLayerOptions>();
     if (layer.showLocation) {
       builder
         .addRadio({
@@ -54,37 +54,54 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
               { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
               { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
               { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+              { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
             ],
           },
         })
         .addFieldNamePicker({
           path: 'location.latitude',
-          name: 'Latitude Field',
+          name: 'Latitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
         })
         .addFieldNamePicker({
           path: 'location.longitude',
-          name: 'Longitude Field',
+          name: 'Longitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
         })
         .addFieldNamePicker({
           path: 'location.geohash',
-          name: 'Geohash Field',
+          name: 'Geohash field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No strings fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
           // eslint-disable-next-line react/display-name
           // info: (props) => <div>HELLO</div>,
+        })
+        .addFieldNamePicker({
+          path: 'location.lookup',
+          name: 'Lookup field',
+          settings: {
+            filter: (f: Field) => f.type === FieldType.string,
+            noFieldsMessage: 'No strings fields found',
+          },
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+        })
+        .addCustomEditor({
+          id: 'gazetteer',
+          path: 'location.gazetteer',
+          name: 'Gazetteer',
+          editor: GazetteerPathEditor,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         });
     }
     if (layer.registerOptionsUI) {
@@ -147,6 +164,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
   return (
     <div>
       <Select
+        menuShouldPortal
         options={layerTypes.options}
         value={layerTypes.current}
         onChange={(v) => {

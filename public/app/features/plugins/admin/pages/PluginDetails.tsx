@@ -1,30 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { css } from '@emotion/css';
-
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
-
-import { VersionList } from '../components/VersionList';
-import { InstallControls } from '../components/InstallControls';
-import { usePlugin } from '../hooks/usePlugins';
+import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Page } from 'app/core/components/Page/Page';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
+import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
+import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
-import { Page } from 'app/core/components/Page/Page';
-import { PluginLogo } from '../components/PluginLogo';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { PluginTabLabels, PluginDetailsTab } from '../types';
+import { useGetSingle, useFetchStatus } from '../state/hooks';
+import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
+import { AppNotificationSeverity } from 'app/types';
 
-type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
-export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
-  const { pluginId } = match.params;
+type State = {
+  tabs: PluginDetailsTab[];
+  activeTabIndex: number;
+};
 
-  const [tabs, setTabs] = useState([
-    { label: 'Overview', active: true },
-    { label: 'Version history', active: false },
-  ]);
+const DefaultState = {
+  tabs: [{ label: PluginTabLabels.OVERVIEW }, { label: PluginTabLabels.VERSIONS }],
+  activeTabIndex: 0,
+};
 
-  const { isLoading, plugin } = usePlugin(pluginId!);
+export default function PluginDetails({ match }: Props): JSX.Element | null {
+  const { pluginId = '' } = match.params;
+  const [state, setState] = useState<State>(DefaultState);
+  const plugin = useGetSingle(pluginId); // fetches the localplugin settings
+  const { tabs } = usePluginDetailsTabs(plugin, DefaultState.tabs);
+  const { activeTabIndex } = state;
+  const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
+  const setActiveTab = useCallback((activeTabIndex: number) => setState({ ...state, activeTabIndex }), [state]);
+  const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
+
+  // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
+  useEffect(() => {
+    if (activeTabIndex > tabs.length - 1) {
+      setActiveTab(0);
+    }
+  }, [setActiveTab, activeTabIndex, tabs]);
 
   if (isLoading) {
     return (
@@ -34,135 +53,53 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
     );
   }
 
-  if (plugin) {
+  if (!plugin) {
     return (
-      <Page>
-        <PluginPage>
-          <div className={styles.headerContainer}>
-            <PluginLogo
-              src={plugin.info.logos.small}
-              className={css`
-                object-fit: cover;
-                width: 100%;
-                height: 68px;
-                max-width: 68px;
-              `}
-            />
-
-            <div className={styles.headerWrapper}>
-              <h1>{plugin.name}</h1>
-              <div className={styles.headerLinks}>
-                <a className={styles.headerOrgName} href={'/plugins'}>
-                  {plugin.orgName}
-                </a>
-                {plugin.links.map((link: any) => (
-                  <a key={link.name} href={link.url}>
-                    {link.name}
-                  </a>
-                ))}
-                {plugin.downloads > 0 && (
-                  <span>
-                    <Icon name="cloud-download" />
-                    {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
-                  </span>
-                )}
-                {plugin.version && <span>{plugin.version}</span>}
-              </div>
-              <p>{plugin.description}</p>
-              <InstallControls plugin={plugin} />
-            </div>
-          </div>
-          <TabsBar>
-            {tabs.map((tab, key) => (
-              <Tab
-                key={key}
-                label={tab.label}
-                active={tab.active}
-                onChangeTab={() => {
-                  setTabs(tabs.map((tab, index) => ({ ...tab, active: index === key })));
-                }}
-              />
-            ))}
-          </TabsBar>
-          <TabContent>
-            {tabs.find((_) => _.label === 'Overview')?.active && (
-              <div
-                className={styles.readme}
-                dangerouslySetInnerHTML={{
-                  __html: plugin?.readme ?? 'No plugin help or readme markdown file was found',
-                }}
-              />
-            )}
-            {tabs.find((_) => _.label === 'Version history')?.active && (
-              <VersionList versions={plugin?.versions ?? []} />
-            )}
-          </TabContent>
-        </PluginPage>
-      </Page>
+      <Layout justify="center" align="center">
+        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+          That plugin cannot be found. Please check the url is correct or <br />
+          go to the <a href={parentUrl}>plugin catalog</a>.
+        </Alert>
+      </Layout>
     );
   }
 
-  return null;
+  return (
+    <Page>
+      <PluginPage>
+        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} plugin={plugin} />
+
+        {/* Tab navigation */}
+        <TabsBar>
+          {tabs.map((tab: PluginDetailsTab, idx: number) => (
+            <Tab
+              key={tab.label}
+              label={tab.label}
+              active={idx === activeTabIndex}
+              onChangeTab={() => setActiveTab(idx)}
+            />
+          ))}
+        </TabsBar>
+
+        {/* Active tab */}
+        <TabContent className={styles.tabContent}>
+          <PluginDetailsSignature plugin={plugin} className={styles.signature} />
+          <PluginDetailsBody tab={tabs[activeTabIndex]} plugin={plugin} />
+        </TabContent>
+      </PluginPage>
+    </Page>
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    headerContainer: css`
-      display: flex;
-      margin-bottom: 24px;
-      margin-top: 24px;
-      min-height: 120px;
+    signature: css`
+      margin: ${theme.spacing(3)};
+      margin-bottom: 0;
     `,
-    headerWrapper: css`
-      margin-left: ${theme.spacing(3)};
-    `,
-    headerLinks: css`
-      display: flex;
-      align-items: center;
-      margin-top: ${theme.spacing()};
-      margin-bottom: ${theme.spacing(3)};
-
-      & > * {
-        &::after {
-          content: '|';
-          padding: 0 ${theme.spacing()};
-        }
-      }
-      & > *:last-child {
-        &::after {
-          content: '';
-          padding-right: 0;
-        }
-      }
-      font-size: ${theme.typography.h4.fontSize};
-    `,
-    headerOrgName: css`
-      font-size: ${theme.typography.h4.fontSize};
-    `,
-    readme: css`
-      padding: ${theme.spacing(3, 4)};
-
-      & img {
-        max-width: 100%;
-      }
-
-      h1,
-      h2,
-      h3 {
-        margin-top: ${theme.spacing(3)};
-        margin-bottom: ${theme.spacing(2)};
-      }
-
-      *:first-child {
-        margin-top: 0;
-      }
-
-      li {
-        margin-left: ${theme.spacing(2)};
-        & > p {
-          margin: ${theme.spacing()} 0;
-        }
-      }
+    // Needed due to block formatting context
+    tabContent: css`
+      overflow: auto;
     `,
   };
 };

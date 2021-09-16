@@ -1,5 +1,12 @@
 import { prepareGraphableFrames, preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import {
+  LegendDisplayMode,
+  TooltipDisplayMode,
+  BarValueVisibility,
+  GraphGradientMode,
+  StackingMode,
+} from '@grafana/schema';
+import {
   createTheme,
   DefaultTimeZone,
   EventBusSrv,
@@ -10,13 +17,6 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions } from './types';
-import {
-  BarValueVisibility,
-  GraphGradientMode,
-  LegendDisplayMode,
-  StackingMode,
-  TooltipDisplayMode,
-} from '@grafana/ui';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -94,6 +94,7 @@ describe('BarChart utils', () => {
       text: {
         valueSize: 10,
       },
+      rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
@@ -143,7 +144,7 @@ describe('BarChart utils', () => {
 
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no data in the response', () => {
-      const result = prepareGraphableFrames([]);
+      const result = prepareGraphableFrames([], createTheme(), StackingMode.None);
       expect(result.warn).toEqual('No data in response');
     });
 
@@ -154,7 +155,7 @@ describe('BarChart utils', () => {
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      const result = prepareGraphableFrames([df]);
+      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
       expect(result.warn).toEqual('Bar charts requires a string field');
       expect(result.frames).toBeUndefined();
     });
@@ -166,7 +167,7 @@ describe('BarChart utils', () => {
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      const result = prepareGraphableFrames([df]);
+      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
       expect(result.warn).toEqual('No numeric fields found');
       expect(result.frames).toBeUndefined();
     });
@@ -178,7 +179,7 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      const result = prepareGraphableFrames([df]);
+      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
 
       const field = result.frames![0].fields[1];
       expect(field!.values.toArray()).toMatchInlineSnapshot(`

@@ -16,7 +16,7 @@ import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 export class PanelCtrl {
   panel: any;
   error: any;
-  dashboard: DashboardModel;
+  declare dashboard: DashboardModel;
   pluginName = '';
   pluginId = '';
   editorTabs: any;
@@ -24,8 +24,8 @@ export class PanelCtrl {
   $injector: auto.IInjectorService;
   $timeout: any;
   editModeInitiated = false;
-  height: number;
-  width: number;
+  declare height: number;
+  declare width: number;
   containerHeight: any;
   events: EventBusExtended;
   loading = false;

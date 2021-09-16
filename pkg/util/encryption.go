@@ -15,7 +15,7 @@ import (
 const saltLength = 8
 
 // Decrypt decrypts a payload with a given secret.
-func Decrypt(payload []byte, secret string) ([]byte, error) {
+var Decrypt = func(payload []byte, secret string) ([]byte, error) {
 	if len(payload) < saltLength {
 		return nil, fmt.Errorf("unable to compute salt")
 	}
@@ -47,7 +47,7 @@ func Decrypt(payload []byte, secret string) ([]byte, error) {
 }
 
 // Encrypt encrypts a payload with a given secret.
-func Encrypt(payload []byte, secret string) ([]byte, error) {
+var Encrypt = func(payload []byte, secret string) ([]byte, error) {
 	salt, err := GetRandomString(saltLength)
 	if err != nil {
 		return nil, err

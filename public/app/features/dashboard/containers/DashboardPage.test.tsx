@@ -78,6 +78,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           }),
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
+          initError: null,
           initDashboard: jest.fn(),
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboardAndVariables: jest.fn(),

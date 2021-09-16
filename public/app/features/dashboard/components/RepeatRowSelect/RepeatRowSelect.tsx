@@ -36,5 +36,5 @@ export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
-  return <Select value={repeat} onChange={onSelectChange} options={variableOptions} />;
+  return <Select menuShouldPortal value={repeat} onChange={onSelectChange} options={variableOptions} />;
 };

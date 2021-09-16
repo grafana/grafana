@@ -2,13 +2,12 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,11 +34,11 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 		return bag, nil
 	}
 
-	eval := func(scopes ...string) (bool, error) {
-		return hs.AccessControl.Evaluate(ctx, user, accesscontrol.ActionSettingsRead, scopes...)
+	eval := func(scope string) (bool, error) {
+		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
 	}
 
-	ok, err := eval(accesscontrol.ScopeSettingsAll)
+	ok, err := eval(ac.ScopeSettingsAll)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +49,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	authorizedBag := make(setting.SettingsBag)
 
 	for section, keys := range bag {
-		ok, err := eval(getSettingsScope(section, "*"))
+		ok, err := eval(ac.Scope("settings", section, "*"))
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +59,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 		}
 
 		for key := range keys {
-			ok, err := eval(getSettingsScope(section, key))
+			ok, err := eval(ac.Scope("settings", section, key))
 			if err != nil {
 				return nil, err
 			}
@@ -73,8 +72,4 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 		}
 	}
 	return authorizedBag, nil
-}
-
-func getSettingsScope(section, key string) string {
-	return fmt.Sprintf("settings:%s:%s", section, key)
 }

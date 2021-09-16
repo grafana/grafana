@@ -19,12 +19,15 @@ func TestAvailableChannels(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers", grafanaListedAddr)
 	// nolint:gosec

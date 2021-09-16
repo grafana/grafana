@@ -29,9 +29,10 @@ export interface State {
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
-  private panelMap: { [id: string]: PanelModel } = {};
+  private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
+  private windowWidth = 1920;
   private gridWidth = 0;
 
   constructor(props: Props) {
@@ -56,8 +57,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
-      const stringId = panel.id.toString();
-      this.panelMap[stringId] = panel;
+      if (!panel.key) {
+        panel.key = `panel-${panel.id}-${Date.now()}`;
+      }
+      this.panelMap[panel.key] = panel;
 
       if (!panel.gridPos) {
         console.log('panel without gridpos');
@@ -65,7 +68,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       }
 
       const panelPos: any = {
-        i: stringId,
+        i: panel.key,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
         w: panel.gridPos.w,
@@ -152,28 +155,29 @@ export class DashboardGrid extends PureComponent<Props, State> {
     // We assume here that if width change height might have changed as well
     if (this.gridWidth !== gridWidth) {
       this.windowHeight = window.innerHeight ?? 1000;
+      this.windowWidth = window.innerWidth;
       this.gridWidth = gridWidth;
     }
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-      const itemKey = panel.id.toString();
 
       // Update is in view state
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
         <GrafanaGridItem
-          key={itemKey}
+          key={panel.key}
           className={panelClasses}
-          data-panelid={itemKey}
+          data-panelid={panel.id}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
           windowHeight={this.windowHeight}
+          windowWidth={this.windowWidth}
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height, itemKey);
+            return this.renderPanel(panel, width, height, panel.key);
           }}
         </GrafanaGridItem>
       );
@@ -259,6 +263,7 @@ interface GrafanaGridItemProps extends Record<string, any> {
   gridPos?: GridPos;
   isViewing: string;
   windowHeight: number;
+  windowWidth: number;
   children: any;
 }
 
@@ -270,15 +275,15 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, ...divProps } = props;
+  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
-    width = props.gridWidth!;
+    width = gridWidth!;
     height = windowHeight * 0.85;
     style.height = height;
     style.width = '100%';
-  } else if (props.gridWidth! < theme.breakpoints.values.md) {
+  } else if (windowWidth < theme.breakpoints.values.md) {
     width = props.gridWidth!;
     height = props.gridPos!.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
     style.height = height;

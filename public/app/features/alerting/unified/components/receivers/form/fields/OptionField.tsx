@@ -96,6 +96,7 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
         <InputControl
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
+              menuShouldPortal
               {...field}
               options={option.selectOptions ?? undefined}
               invalid={invalid}

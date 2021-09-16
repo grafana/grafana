@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent } from '../../../types/events';
 import { dispatch } from 'app/store/store';
@@ -12,7 +12,7 @@ export interface RichHistorySettingsProps {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
-  onChangeRetentionPeriod: (option: { label: string; value: number }) => void;
+  onChangeRetentionPeriod: (option: SelectableValue<number>) => void;
   toggleStarredTabAsFirstTab: () => void;
   toggleactiveDatasourceOnly: () => void;
   deleteRichHistory: () => void;
@@ -84,7 +84,12 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
         className="space-between"
       >
         <div className={styles.input}>
-          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
+          <Select
+            menuShouldPortal
+            value={selectedOption}
+            options={retentionPeriodOptions}
+            onChange={onChangeRetentionPeriod}
+          ></Select>
         </div>
       </Field>
       <Field label="Default active tab" description=" " className="space-between">

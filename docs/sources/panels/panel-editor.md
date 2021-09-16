@@ -78,7 +78,7 @@ Options are documented in the following topics:
 
 - [Add a panel]({{< relref "./add-a-panel.md" >}}) describes how to add a panel to a dashboard.
 - [Panel options]({{< relref "./panel-options.md" >}})
-- [Visualization options]({{< relref "visualizations/_index.md" >}}) vary widely. They are described in the individual visualization topic.
+- [Visualization options]({{< relref "../visualizations/_index.md" >}}) vary widely. They are described in the individual visualization topic.
 - [Standard options]({{< relref "./standard-options.md" >}})
 - [Thresholds]({{< relref "./thresholds.md" >}})
 - [Value mappings]({{< relref "./value-mappings.md" >}})

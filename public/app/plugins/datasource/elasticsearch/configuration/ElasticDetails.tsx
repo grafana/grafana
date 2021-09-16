@@ -5,7 +5,7 @@ import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt } from 'semver';
 
-const indexPatternTypes = [
+const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
   { label: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
   { label: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -53,6 +53,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
               label="Pattern"
               inputEl={
                 <Select
+                  menuShouldPortal
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
@@ -82,6 +83,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             label="Version"
             inputEl={
               <Select
+                menuShouldPortal
                 options={esVersions}
                 onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(

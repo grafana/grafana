@@ -10,18 +10,21 @@ weight = 400
 Grafana CLI is a small executable that is bundled with Grafana server. It can be executed on the same machine Grafana server is running on. Grafana CLI has `plugins` and `admin` commands, as well as global options.
 
 To list all commands and options:
+
 ```
 grafana-cli -h
 ```
+
 ## Invoking Grafana CLI
 
 To invoke Grafana CLI, add the path to the grafana binaries in your `PATH` environment variable. Alternately, if your current directory is the `bin` directory, use `./grafana-cli`. Otherwise, you can specify full path to the CLI. For example, on Linux `/usr/share/grafana/bin/grafana-cli` and on Windows `C:\Program Files\GrafanaLabs\grafana\bin\grafana-cli.exe`.
 
->**Note:** Some commands, such as installing or removing plugins, require `sudo` on Linux. If you are on Windows, run Windows PowerShell as Administrator. 
+> **Note:** Some commands, such as installing or removing plugins, require `sudo` on Linux. If you are on Windows, run Windows PowerShell as Administrator.
 
 ## Grafana CLI command syntax
 
 The general syntax for commands in Grafana CLI is:
+
 ```bash
 grafana-cli [global options] command [command options] [arguments...]
 ```
@@ -37,6 +40,7 @@ Each global option applies only to the command in which it is used. For example,
 `--help` or `-h` displays the help, including default paths and Docker configuration information.
 
 **Example:**
+
 ```bash
 grafana-cli -h
 ```
@@ -46,6 +50,7 @@ grafana-cli -h
 `--version` or `-v` prints the version of Grafana CLI currently running.
 
 **Example:**
+
 ```bash
 grafana-cli -v
 ```
@@ -55,6 +60,7 @@ grafana-cli -v
 `--pluginsDir value` overrides the path to where your local Grafana instance stores plugins. Use this option if you want to install, update, or remove a plugin somewhere other than the default directory ("/var/lib/grafana/plugins") [$GF_PLUGIN_DIR].
 
 **Example:**
+
 ```bash
 grafana-cli --pluginsDir "/var/lib/grafana/devplugins" plugins install <plugin-id>
 ```
@@ -64,6 +70,7 @@ grafana-cli --pluginsDir "/var/lib/grafana/devplugins" plugins install <plugin-i
 `--repo value` allows you to download and install or update plugins from a repository other than the default Grafana repo.
 
 **Example:**
+
 ```bash
 grafana-cli --repo "https://example.com/plugins" plugins install <plugin-id>
 ```
@@ -73,6 +80,7 @@ grafana-cli --repo "https://example.com/plugins" plugins install <plugin-id>
 `--pluginUrl value` allows you to download a .zip file containing a plugin from a local URL instead of downloading it from the default Grafana source.
 
 **Example:**
+
 ```bash
 grafana-cli --pluginUrl https://company.com/grafana/plugins/<plugin-id>-<plugin-version>.zip plugins install <plugin-id>
 ```
@@ -84,6 +92,7 @@ grafana-cli --pluginUrl https://company.com/grafana/plugins/<plugin-id>-<plugin-
 `--insecure` allows you to turn off Transport Layer Security (TLS) verification (insecure). You might want to do this if you are downloading a plugin from a non-default source.
 
 **Example:**
+
 ```bash
 grafana-cli --insecure --pluginUrl https://company.com/grafana/plugins/<plugin-id>-<plugin-version>.zip plugins install <plugin-id>
 ```
@@ -93,6 +102,7 @@ grafana-cli --insecure --pluginUrl https://company.com/grafana/plugins/<plugin-i
 `--debug` or `-d` enables debug logging. Debug output is returned and shown in the terminal.
 
 **Example:**
+
 ```bash
 grafana-cli --debug plugins install <plugin-id>
 ```
@@ -104,6 +114,7 @@ grafana-cli --debug plugins install <plugin-id>
 For example, you can use it to redirect logging to another file (maybe to log plugin installations in Grafana Cloud) or when resetting the admin password and you have non-default values for some important configuration value (like where the database is located).
 
 **Example:**
+
 ```bash
 grafana-cli --configOverrides cfg:default.paths.log=/dev/null plugins install <plugin-id>
 ```
@@ -113,6 +124,7 @@ grafana-cli --configOverrides cfg:default.paths.log=/dev/null plugins install <p
 Sets the path for the Grafana install/home path, defaults to working directory. You do not need to use this if you are in the Grafana installation directory when using the CLI.
 
 **Example:**
+
 ```bash
 grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new password>
 ```
@@ -122,6 +134,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 `--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
+
 ```bash
 grafana-cli --config "/etc/configuration/" admin reset-admin-password mynewpassword
 ```
@@ -157,6 +170,7 @@ grafana-cli plugins ls
 ```
 
 ### Update all installed plugins
+
 ```bash
 grafana-cli plugins update-all
 ```
@@ -208,6 +222,7 @@ If you need to set the password in a script, then you can use the [Grafana User 
 `encrypt-datasource-passwords` migrates passwords from unsecured fields to secure_json_data field. Returns `ok` unless there is an error. Safe to execute multiple times.
 
 **Example:**
+
 ```bash
 grafana-cli admin data-migration encrypt-datasource-passwords
 ```

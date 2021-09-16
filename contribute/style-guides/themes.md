@@ -120,7 +120,7 @@ Example use cases:
 
 ### Typography
 
-For font family, font sizes and line heights use the variables under `theme.typography`. 
+For font family, font sizes and line heights use the variables under `theme.typography`.
 
 #### Using `ThemeContext` directly
 

@@ -15,17 +15,14 @@
 package macaron
 
 import (
+	"encoding/json"
+	"html/template"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 )
-
-// Request represents an HTTP request received by a server or to be sent by a client.
-type Request struct {
-	*http.Request
-}
 
 // ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
 type ContextInvoker func(ctx *Context)
@@ -44,11 +41,9 @@ type Context struct {
 	index    int
 
 	*Router
-	Req    Request
-	Resp   ResponseWriter
-	params Params
-	Render
-	Data map[string]interface{}
+	Req      *http.Request
+	Resp     ResponseWriter
+	template *template.Template
 }
 
 func (ctx *Context) handler() Handler {
@@ -67,27 +62,13 @@ func (ctx *Context) Next() {
 	ctx.run()
 }
 
-// Written returns whether the context response has been written to
-func (ctx *Context) Written() bool {
-	return ctx.Resp.Written()
-}
-
 func (ctx *Context) run() {
 	for ctx.index <= len(ctx.handlers) {
-		vals, err := ctx.Invoke(ctx.handler())
-		if err != nil {
+		if _, err := ctx.Invoke(ctx.handler()); err != nil {
 			panic(err)
 		}
 		ctx.index++
-
-		// if the handler returned something, write it to the http response
-		if len(vals) > 0 {
-			ev := ctx.GetVal(reflect.TypeOf(ReturnHandler(nil)))
-			handleReturn := ev.Interface().(ReturnHandler)
-			handleReturn(ctx, vals)
-		}
-
-		if ctx.Written() {
+		if ctx.Resp.Written() {
 			return
 		}
 	}
@@ -108,19 +89,31 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
-func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
-	if len(data) <= 0 {
-		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
-	} else if len(data) == 1 {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0])
-	} else {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
+const (
+	headerContentType = "Content-Type"
+	contentTypeJSON   = "application/json; charset=UTF-8"
+	contentTypeHTML   = "text/html; charset=UTF-8"
+)
+
+// HTML renders the HTML with default template set.
+func (ctx *Context) HTML(status int, name string, data interface{}) {
+	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
+	ctx.Resp.WriteHeader(status)
+	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
+		panic("Context.HTML:" + err.Error())
 	}
 }
 
-// HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data ...interface{}) {
-	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
+func (ctx *Context) JSON(status int, data interface{}) {
+	ctx.Resp.Header().Set(headerContentType, contentTypeJSON)
+	ctx.Resp.WriteHeader(status)
+	enc := json.NewEncoder(ctx.Resp)
+	if Env != PROD {
+		enc.SetIndent("", "  ")
+	}
+	if err := enc.Encode(data); err != nil {
+		panic("Context.JSON: " + err.Error())
+	}
 }
 
 // Redirect sends a redirect response
@@ -130,7 +123,7 @@ func (ctx *Context) Redirect(location string, status ...int) {
 		code = status[0]
 	}
 
-	http.Redirect(ctx.Resp, ctx.Req.Request, location, code)
+	http.Redirect(ctx.Resp, ctx.Req, location, code)
 }
 
 // MaxMemory is the maximum amount of memory to use when parsing a multipart form.
@@ -142,7 +135,7 @@ func (ctx *Context) parseForm() {
 		return
 	}
 
-	contentType := ctx.Req.Header.Get(_CONTENT_TYPE)
+	contentType := ctx.Req.Header.Get(headerContentType)
 	if (ctx.Req.Method == "POST" || ctx.Req.Method == "PUT") &&
 		len(contentType) > 0 && strings.Contains(contentType, "multipart/form-data") {
 		_ = ctx.Req.ParseMultipartForm(MaxMemory)
@@ -186,32 +179,10 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
-// Params returns value of given param name.
-// e.g. ctx.Params(":uid") or ctx.Params("uid")
-func (ctx *Context) Params(name string) string {
-	if len(name) == 0 {
-		return ""
-	}
-	if len(name) > 1 && name[0] != ':' {
-		name = ":" + name
-	}
-	return ctx.params[name]
-}
-
-// AllParams returns all params.
-func (ctx *Context) AllParams() Params {
-	return ctx.params
-}
-
-// ReplaceAllParams replace all current params with given params
-func (ctx *Context) ReplaceAllParams(params Params) {
-	ctx.params = params
-}
-
 // ParamsInt64 returns params result in int64 type.
 // e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
-	n, _ := strconv.ParseInt(ctx.Params(name), 10, 64)
+	n, _ := strconv.ParseInt(Params(ctx.Req)[name], 10, 64)
 	return n
 }
 

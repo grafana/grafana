@@ -3,7 +3,6 @@ import { Select } from '@grafana/ui';
 import { Field } from '../Field';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { SelectableValue } from '@grafana/data';
-import { findOption } from '../../utils/common';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
@@ -44,8 +43,9 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
   return (
     <Field label="Service">
       <Select
+        menuShouldPortal
         inputId="azure-monitor-query-type-field"
-        value={findOption(queryTypes, query.queryType)}
+        value={query.queryType}
         options={queryTypes}
         onChange={handleChange}
         width={38}

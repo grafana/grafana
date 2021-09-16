@@ -10,6 +10,7 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { getPluginsAdminRoutes } from 'app/features/plugins/routes';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getLiveRoutes } from 'app/features/live/pages/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -431,10 +432,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/alertmanager/',
+      path: '/alerting/groups/',
       component: SafeDynamicImport(
-        () =>
-          import(/* webpackChunkName: "AlertManagerNotifications" */ 'app/features/alerting/unified/AmNotifications')
+        () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
       ),
     },
     {
@@ -464,6 +464,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
+      ),
+    },
+    {
+      path: '/alerting/admin',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
       ),
     },
     {
@@ -509,6 +516,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     ...getPluginsAdminRoutes(),
+    ...getLiveRoutes(),
     ...extraRoutes,
     {
       path: '/*',

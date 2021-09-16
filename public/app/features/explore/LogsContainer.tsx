@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LoadingState, LogRowModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
@@ -21,6 +20,7 @@ interface LogsContainerProps extends PropsFromRedux {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
+  loadingState: LoadingState;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -61,6 +61,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   render() {
     const {
       loading,
+      loadingState,
       logsHighlighterExpressions,
       logRows,
       logsMeta,
@@ -124,6 +125,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               width={width}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
+              loadingState={loadingState}
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -192,4 +194,4 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-export default hot(module)(connector(LogsContainer));
+export default connector(LogsContainer);

@@ -14,7 +14,7 @@ export default {
       page: mdx,
     },
     controls: {
-      exclude: ['size', 'variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
+      exclude: ['variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
     },
   },
 } as Meta;
@@ -32,6 +32,7 @@ const Wrapper: Story<StoryProps> = (args) => {
       <div style={{ display: 'flex', width: '100%', marginBottom: '1em' }}>
         <ClipboardButton
           variant="secondary"
+          size={args.size}
           getText={() => args.inputText}
           onClipboardCopy={() => setCopyMessage(clipboardCopyMessage)}
         >
@@ -47,4 +48,5 @@ export const CopyToClipboard = Wrapper.bind({});
 CopyToClipboard.args = {
   inputText: 'go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only',
   buttonText: 'Copy to clipboard',
+  size: 'md',
 };

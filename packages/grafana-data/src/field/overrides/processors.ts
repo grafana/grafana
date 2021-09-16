@@ -182,4 +182,14 @@ export interface FieldNamePickerConfigSettings {
    * information, including validation etc
    */
   info?: ComponentType<FieldNamePickerInfoProps> | null;
+
+  /**
+   * Sets the width to a pixel value.
+   */
+  width?: number;
+
+  /**
+   * Placeholder text to display when nothing is selected.
+   */
+  placeholderText?: string;
 }

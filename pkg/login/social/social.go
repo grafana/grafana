@@ -13,7 +13,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -22,12 +21,8 @@ var (
 	logger = log.New("social")
 )
 
-func init() {
-	registry.RegisterService(&SocialService{})
-}
-
 type SocialService struct {
-	Cfg *setting.Cfg `inject:""`
+	cfg *setting.Cfg
 
 	socialMap     map[string]SocialConnector
 	oAuthProvider map[string]*OAuthInfo
@@ -43,9 +38,11 @@ type OAuthInfo struct {
 	RoleAttributePath      string
 	RoleAttributeStrict    bool
 	GroupsAttributePath    string
+	TeamIdsAttributePath   string
 	AllowedDomains         []string
 	HostedDomain           string
 	ApiUrl                 string
+	TeamsUrl               string
 	AllowSignup            bool
 	Name                   string
 	TlsClientCert          string
@@ -54,34 +51,39 @@ type OAuthInfo struct {
 	TlsSkipVerify          bool
 }
 
-func (ss *SocialService) Init() error {
-	ss.oAuthProvider = make(map[string]*OAuthInfo)
-	ss.socialMap = make(map[string]SocialConnector)
+func ProvideService(cfg *setting.Cfg) *SocialService {
+	ss := SocialService{
+		cfg:           cfg,
+		oAuthProvider: make(map[string]*OAuthInfo),
+		socialMap:     make(map[string]SocialConnector),
+	}
 
 	for _, name := range allOauthes {
-		sec := ss.Cfg.Raw.Section("auth." + name)
+		sec := cfg.Raw.Section("auth." + name)
 
 		info := &OAuthInfo{
-			ClientId:            sec.Key("client_id").String(),
-			ClientSecret:        sec.Key("client_secret").String(),
-			Scopes:              util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:             sec.Key("auth_url").String(),
-			TokenUrl:            sec.Key("token_url").String(),
-			ApiUrl:              sec.Key("api_url").String(),
-			Enabled:             sec.Key("enabled").MustBool(),
-			EmailAttributeName:  sec.Key("email_attribute_name").String(),
-			EmailAttributePath:  sec.Key("email_attribute_path").String(),
-			RoleAttributePath:   sec.Key("role_attribute_path").String(),
-			RoleAttributeStrict: sec.Key("role_attribute_strict").MustBool(),
-			GroupsAttributePath: sec.Key("groups_attribute_path").String(),
-			AllowedDomains:      util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:        sec.Key("hosted_domain").String(),
-			AllowSignup:         sec.Key("allow_sign_up").MustBool(),
-			Name:                sec.Key("name").MustString(name),
-			TlsClientCert:       sec.Key("tls_client_cert").String(),
-			TlsClientKey:        sec.Key("tls_client_key").String(),
-			TlsClientCa:         sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
+			ClientId:             sec.Key("client_id").String(),
+			ClientSecret:         sec.Key("client_secret").String(),
+			Scopes:               util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:              sec.Key("auth_url").String(),
+			TokenUrl:             sec.Key("token_url").String(),
+			ApiUrl:               sec.Key("api_url").String(),
+			TeamsUrl:             sec.Key("teams_url").String(),
+			Enabled:              sec.Key("enabled").MustBool(),
+			EmailAttributeName:   sec.Key("email_attribute_name").String(),
+			EmailAttributePath:   sec.Key("email_attribute_path").String(),
+			RoleAttributePath:    sec.Key("role_attribute_path").String(),
+			RoleAttributeStrict:  sec.Key("role_attribute_strict").MustBool(),
+			GroupsAttributePath:  sec.Key("groups_attribute_path").String(),
+			TeamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
+			AllowedDomains:       util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:         sec.Key("hosted_domain").String(),
+			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
+			Name:                 sec.Key("name").MustString(name),
+			TlsClientCert:        sec.Key("tls_client_cert").String(),
+			TlsClientKey:         sec.Key("tls_client_key").String(),
+			TlsClientCa:          sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:        sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -107,7 +109,7 @@ func (ss *SocialService) Init() error {
 				TokenURL:  info.TokenUrl,
 				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
-			RedirectURL: strings.TrimSuffix(ss.Cfg.AppURL, "/") + SocialBaseUrl + name,
+			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
 		}
 
@@ -124,9 +126,10 @@ func (ss *SocialService) Init() error {
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:        newSocialBase(name, &config, info),
+				apiUrl:            info.ApiUrl,
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath: info.RoleAttributePath,
 			}
 		}
 
@@ -144,7 +147,7 @@ func (ss *SocialService) Init() error {
 			ss.socialMap["azuread"] = &SocialAzureAD{
 				SocialBase:        newSocialBase(name, &config, info),
 				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole: ss.Cfg.AutoAssignOrgRole,
+				autoAssignOrgRole: cfg.AutoAssignOrgRole,
 			}
 		}
 
@@ -164,6 +167,7 @@ func (ss *SocialService) Init() error {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
 				SocialBase:           newSocialBase(name, &config, info),
 				apiUrl:               info.ApiUrl,
+				teamsUrl:             info.TeamsUrl,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				nameAttributePath:    sec.Key("name_attribute_path").String(),
@@ -172,7 +176,8 @@ func (ss *SocialService) Init() error {
 				groupsAttributePath:  info.GroupsAttributePath,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),
 				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIds:              sec.Key("team_ids").Ints(","),
+				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
+				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
@@ -182,22 +187,22 @@ func (ss *SocialService) Init() error {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:   ss.Cfg.GrafanaComURL + "/oauth2/authorize",
-					TokenURL:  ss.Cfg.GrafanaComURL + "/api/oauth2/token",
+					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
 					AuthStyle: oauth2.AuthStyleInHeader,
 				},
-				RedirectURL: strings.TrimSuffix(ss.Cfg.AppURL, "/") + SocialBaseUrl + name,
+				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
 			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase:           newSocialBase(name, &config, info),
-				url:                  ss.Cfg.GrafanaComURL,
+				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 	}
-	return nil
+	return &ss
 }
 
 type BasicUserInfo struct {
@@ -270,7 +275,7 @@ func newSocialBase(name string, config *oauth2.Config, info *OAuthInfo) *SocialB
 func (ss *SocialService) GetOAuthProviders() map[string]bool {
 	result := map[string]bool{}
 
-	if ss.Cfg == nil || ss.Cfg.Raw == nil {
+	if ss.cfg == nil || ss.cfg.Raw == nil {
 		return result
 	}
 
@@ -279,7 +284,7 @@ func (ss *SocialService) GetOAuthProviders() map[string]bool {
 			name = grafanaCom
 		}
 
-		sec := ss.Cfg.Raw.Section("auth." + name)
+		sec := ss.cfg.Raw.Section("auth." + name)
 		if sec == nil {
 			continue
 		}

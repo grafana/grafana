@@ -98,9 +98,9 @@ func (f *Float) UnmarshalText(text []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler.
-// It will encode null if this Float is null.
+// It will encode null if this Float is null, NaN, of Inf.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid || math.IsNaN(f.Float64) {
+	if !f.Valid || math.IsNaN(f.Float64) || math.IsInf(f.Float64, 0) {
 		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -14,13 +15,12 @@ import { PieChart } from './PieChart';
 import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
 import { Subscription } from 'rxjs';
 import {
-  LegendDisplayMode,
+  SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,
   VizLayout,
   VizLegend,
   VizLegendItem,
-  SeriesVisibilityChangeBehavior,
 } from '@grafana/ui';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -48,6 +48,14 @@ export function PieChartPanel(props: Props) {
     replaceVariables,
     timeZone,
   });
+
+  if (!hasFrames(fieldDisplayValues)) {
+    return (
+      <div className="panel-empty">
+        <p>No data</p>
+      </div>
+    );
+  }
 
   return (
     <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues)}>
@@ -127,6 +135,10 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   );
 }
 
+function hasFrames(fieldDisplayValues: FieldDisplay[]) {
+  return fieldDisplayValues.some((fd) => fd.view?.dataFrame.length);
+}
+
 function useSliceHighlightState() {
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
   const { eventBus } = usePanelContext();
@@ -140,9 +152,9 @@ function useSliceHighlightState() {
       setHighlightedTitle(undefined);
     };
 
-    const subs = new Subscription()
-      .add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }))
-      .add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
+    const subs = new Subscription();
+    subs.add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }));
+    subs.add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
 
     return () => {
       subs.unsubscribe();

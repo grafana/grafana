@@ -66,6 +66,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         </div>
         <Select
           isSearchable={false}
+          menuShouldPortal={true}
           onChange={[Function]}
           options={
             Array [
@@ -112,7 +113,9 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           Format
         </div>
         <Select
+          className="select-container"
           isSearchable={false}
+          menuShouldPortal={true}
           onChange={[Function]}
           options={
             Array [
@@ -175,6 +178,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         }
         isEnabled={true}
         onChange={[Function]}
+        refId="A"
       />
     </div>
   }

@@ -64,8 +64,8 @@ export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage: boolean;
   secureFields?: Record<string, boolean>;
-  secureSettings?: Record<string, unknown>;
-  settings: Record<string, unknown>;
+  secureSettings?: Record<string, any>;
+  settings: Record<string, any>;
   type: string;
   name: string;
   updated?: string;
@@ -76,15 +76,15 @@ export type Receiver = {
   name: string;
 
   email_configs?: EmailConfig[];
-  pagerduty_configs?: unknown[];
-  pushover_configs?: unknown[];
-  slack_configs?: unknown[];
-  opsgenie_configs?: unknown[];
+  pagerduty_configs?: any[];
+  pushover_configs?: any[];
+  slack_configs?: any[];
+  opsgenie_configs?: any[];
   webhook_configs?: WebhookConfig[];
-  victorops_configs?: unknown[];
-  wechat_configs?: unknown[];
+  victorops_configs?: any[];
+  wechat_configs?: any[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
-  [key: string]: unknown;
+  [key: string]: any;
 };
 
 export type Route = {
@@ -225,4 +225,24 @@ export interface AlertmanagerStatus {
     revision: string;
     version: string;
   };
+}
+
+export interface TestReceiversPayload {
+  receivers?: Receiver[];
+}
+
+interface TestReceiversResultGrafanaReceiverConfig {
+  name: string;
+  uid?: string;
+  error?: string;
+  status: 'failed';
+}
+
+interface TestReceiversResultReceiver {
+  name: string;
+  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
+}
+export interface TestReceiversResult {
+  notified_at: string;
+  receivers: TestReceiversResultReceiver[];
 }

@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/prometheus/common/model"
-	ini "gopkg.in/ini.v1"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -43,6 +44,7 @@ const (
 	Dev              = "development"
 	Prod             = "production"
 	Test             = "test"
+	ApplicationName  = "Grafana"
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
@@ -63,12 +65,11 @@ var (
 	InstanceName     string
 
 	// build
-	BuildVersion    string
-	BuildCommit     string
-	BuildBranch     string
-	BuildStamp      int64
-	IsEnterprise    bool
-	ApplicationName string
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
 
 	// packaging
 	Packaging = "unknown"
@@ -83,7 +84,6 @@ var (
 	// Security settings.
 	SecretKey              string
 	DisableGravatar        bool
-	EmailCodeValidMinutes  int
 	DataProxyWhiteList     map[string]bool
 	CookieSecure           bool
 	CookieSameSiteDisabled bool
@@ -203,6 +203,9 @@ type Cfg struct {
 	EnableGzip       bool
 	EnforceDomain    bool
 
+	// Security settings
+	EmailCodeValidMinutes int
+
 	// build
 	BuildVersion string
 	BuildCommit  string
@@ -214,6 +217,7 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
+	HomePath           string
 	ProvisioningPath   string
 	DataPath           string
 	LogsPath           string
@@ -322,6 +326,8 @@ type Cfg struct {
 	DataProxyMaxIdleConns          int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
+	ResponseLimit                  int64
+	DataProxyRowLimit              int64
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -363,9 +369,11 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates      bool
-	ReportingDistributor string
-	ReportingEnabled     bool
+	CheckForUpdates                     bool
+	ReportingDistributor                string
+	ReportingEnabled                    bool
+	ApplicationInsightsConnectionString string
+	ApplicationInsightsEndpointUrl      string
 
 	// LDAP
 	LDAPEnabled     bool
@@ -400,6 +408,19 @@ type Cfg struct {
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// Alerting
+
+	// AlertingBaseInterval controls the alerting base interval in seconds.
+	// Only for internal use and not user configuration.
+	AlertingBaseInterval time.Duration
+
+	// Geomap base layer config
+	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapEnableCustomBaseLayers bool
+
+	// Unified Alerting
+	AdminConfigPollInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -427,6 +448,10 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 // some graceperiod to update all the monitoring tools.
 func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 	return cfg.FeatureToggles["disable_http_request_histogram"]
+}
+
+func (cfg Cfg) IsNewNavigationEnabled() bool {
+	return cfg.FeatureToggles["newNavigation"]
 }
 
 type CommandLineArgs struct {
@@ -466,6 +491,7 @@ func RedactedValue(key, value string) string {
 		"PRIVATE_KEY",
 		"SECRET_KEY",
 		"CERTIFICATE",
+		"ACCOUNT_KEY",
 	} {
 		if strings.Contains(uppercased, pattern) {
 			return RedactedPassword
@@ -627,9 +653,9 @@ func makeAbsolute(path string, root string) string {
 	return filepath.Join(root, path)
 }
 
-func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
+func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
-		configFile = filepath.Join(HomePath, CustomInitPath)
+		configFile = filepath.Join(cfg.HomePath, CustomInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil
@@ -665,7 +691,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	return nil
 }
 
-func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
+func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
@@ -692,7 +718,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
-	err = loadSpecifiedConfigFile(args.Config, parsedFile)
+	err = cfg.loadSpecifiedConfigFile(args.Config, parsedFile)
 	if err != nil {
 		err2 := cfg.initLogging(parsedFile)
 		if err2 != nil {
@@ -739,25 +765,29 @@ func pathExists(path string) bool {
 	return false
 }
 
-func setHomePath(args *CommandLineArgs) {
+func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 	if args.HomePath != "" {
-		HomePath = args.HomePath
+		cfg.HomePath = args.HomePath
+		HomePath = cfg.HomePath
 		return
 	}
 
 	var err error
-	HomePath, err = filepath.Abs(".")
+	cfg.HomePath, err = filepath.Abs(".")
 	if err != nil {
 		panic(err)
 	}
+
+	HomePath = cfg.HomePath
 	// check if homepath is correct
-	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
+	if pathExists(filepath.Join(cfg.HomePath, "conf/defaults.ini")) {
 		return
 	}
 
 	// try down one path
-	if pathExists(filepath.Join(HomePath, "../conf/defaults.ini")) {
-		HomePath = filepath.Join(HomePath, "../")
+	if pathExists(filepath.Join(cfg.HomePath, "../conf/defaults.ini")) {
+		cfg.HomePath = filepath.Join(cfg.HomePath, "../")
+		HomePath = cfg.HomePath
 	}
 }
 
@@ -770,19 +800,13 @@ func NewCfg() *Cfg {
 	}
 }
 
-var theCfg *Cfg
-
-// GetCfg gets the Cfg singleton.
-// XXX: This is only required for integration tests so that the configuration can be reset for each test,
-// as due to how the current DI framework functions, we can't create a new Cfg object every time (the services
-// constituting the DI graph, and referring to a Cfg instance, get created only once).
-func GetCfg() *Cfg {
-	if theCfg != nil {
-		return theCfg
+func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
+	cfg := NewCfg()
+	if err := cfg.Load(args); err != nil {
+		return nil, err
 	}
 
-	theCfg = NewCfg()
-	return theCfg
+	return cfg, nil
 }
 
 func (cfg *Cfg) validateStaticRootPath() error {
@@ -797,8 +821,8 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
-func (cfg *Cfg) Load(args *CommandLineArgs) error {
-	setHomePath(args)
+func (cfg *Cfg) Load(args CommandLineArgs) error {
+	cfg.setHomePath(args)
 
 	// Fix for missing IANA db on Windows
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
@@ -826,8 +850,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.Packaging = Packaging
 
 	cfg.ErrTemplateName = "error"
-
-	ApplicationName = "Grafana"
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
@@ -867,7 +889,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
-	if err := readRenderingSettings(iniFile, cfg); err != nil {
+	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -888,8 +910,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if len(cfg.ReportingDistributor) >= 100 {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
+	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
+	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 
 	if err := readAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -966,12 +994,27 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		ConnStr: connStr,
 	}
 
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
+	if basemapJSON != "" {
+		layer := make(map[string]interface{})
+		err = json.Unmarshal([]byte(basemapJSON), &layer)
+		if err != nil {
+			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
+		} else {
+			cfg.GeomapDefaultBaseLayerConfig = layer
+		}
+	}
+	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
+
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err
 	}
+
+	cfg.LogConfigSources()
 
 	return nil
 }
@@ -1306,7 +1349,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
+func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
@@ -1328,6 +1371,13 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
+	return nil
+}
+
+func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
+	ua := iniFile.Section("unified_alerting")
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
+	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
 
@@ -1427,10 +1477,6 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 	if cfg.CDNRootURL != nil {
 		url := *cfg.CDNRootURL
 		preReleaseFolder := ""
-
-		if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
-			preReleaseFolder = "pre-releases"
-		}
 
 		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
 		return url.String() + "/"

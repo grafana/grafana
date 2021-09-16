@@ -3,6 +3,7 @@ import { Observable, of, throwError } from 'rxjs';
 import {
   ArrayVector,
   CoreApp,
+  DataLink,
   DataQueryRequest,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
@@ -99,6 +100,7 @@ function getTestContext({
     name: 'test-elastic',
     type: 'type',
     uid: 'uid',
+    access: 'proxy',
     url: ELASTICSEARCH_MOCK_URL,
     database,
     jsonData,
@@ -255,14 +257,16 @@ describe('ElasticDatasource', function (this: any) {
           {
             field: 'host',
             url: 'http://localhost:3000/${__value.raw}',
+            urlDisplayLabel: 'Custom Label',
           },
         ],
       });
 
       expect(response.data.length).toBe(1);
-      const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
+      const links: DataLink[] = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
       expect(links.length).toBe(1);
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
+      expect(links[0].title).toBe('Custom Label');
     });
   });
 

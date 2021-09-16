@@ -21,13 +21,14 @@ Grafana licenses allow for a certain number of active users per instance. An act
 In the context of licensing, each user is classified as either a viewer or an editor/admin. This classification is the user's **licensed role**, and it can be different from that user's [organization role]({{< relref "../../permissions/organization_roles.md" >}}) in Grafana.
 
 - An editor/admin is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
-    - Grafana server administrators.
-    - Users who are assigned an organization role of Editor or Admin.
-    - Users who have been granted admin or edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}). This means that even if a user is assigned to an organization role of Viewer they will be counted as an editor.
+  - Grafana server administrators.
+  - Users who are assigned an organization role of Editor or Admin.
+  - Users who have been granted admin or edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}). This means that even if a user is assigned to an organization role of Viewer they will be counted as an editor.
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
 Additional details:
-- When the number of maximum active viewers or editor/admins is reached, only those currently active users can sign in. New users or non-active users cannot sign in. 
+
+- When the number of maximum active viewers or editor/admins is reached, only those currently active users can sign in. New users or non-active users cannot sign in.
 - A license limit banner will appear to admins when Grafana reaches its active user limit. Editor/admins and viewers will not see the banner.
 - To see how many active users you have in each licensed role (Viewer or Editor/Admin), refer to the Licensing page in the Server Admin section of Grafana, which is located at `[your-grafana-url.com]/admin/licensing`. Please note that _licensed_ roles can differ from the Active Viewer/Editor/Admin counts on the /admin/stats page in Grafana. This is because the Stats page only counts a user's assigned organization role and does not account for dashboard and folder permissions.
 - Restrictions are applied separately for viewers and editor/admins. If a Grafana instance reaches its limit of active viewers but not its limit of active editor/admins, new editors and admins will still be able to sign in.
@@ -59,6 +60,7 @@ License URL is the root URL of your Grafana instance. The license will not work 
 This CSV report helps to identify users, teams, and roles that have been granted Admin or Edit permissions at the dashboard or folder level.
 
 To download the report:
+
 1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click **Licensing**.
 1. At the bottom of the page, click **Download report**.
 

@@ -19,6 +19,7 @@ interface Props<R extends ChannelValues> {
   notifiers: NotifierDTO[];
   defaultItem: R;
   alertManagerSourceName: string;
+  onTestChannel?: (channel: R) => void;
   onSubmit: (values: ReceiverFormValues<R>) => void;
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
@@ -32,6 +33,7 @@ export function ReceiverForm<R extends ChannelValues>({
   notifiers,
   alertManagerSourceName,
   onSubmit,
+  onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
 }: Props<R>): JSX.Element {
@@ -117,6 +119,14 @@ export function ReceiverForm<R extends ChannelValues>({
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
+              onTest={
+                onTestChannel
+                  ? () => {
+                      const currentValues: R = getValues().items[index];
+                      onTestChannel(currentValues);
+                    }
+                  : undefined
+              }
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}

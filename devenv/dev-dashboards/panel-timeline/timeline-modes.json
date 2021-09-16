@@ -8,18 +8,22 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
   "id": 329,
   "links": [],
   "panels": [
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -34,8 +38,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -63,7 +66,10 @@
         },
         "mergeValues": true,
         "rowHeight": 0.9,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -165,7 +171,6 @@
               1616557148000
             ],
             [
-              null,
               1616558756000
             ],
             [
@@ -173,7 +178,6 @@
               1616561658000
             ],
             [
-              null,
               1616562446000
             ],
             [
@@ -181,7 +185,6 @@
               1616564104000
             ],
             [
-              null,
               1616564548000
             ],
             [
@@ -197,7 +200,6 @@
       "type": "state-timeline"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -212,8 +214,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -241,7 +242,10 @@
         },
         "mergeValues": true,
         "rowHeight": 0.9,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -267,7 +271,6 @@
       "type": "state-timeline"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -282,8 +285,7 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "#EAB839",
@@ -306,7 +308,6 @@
         "y": 21
       },
       "id": 4,
-      "interval": null,
       "maxDataPoints": 20,
       "options": {
         "colWidth": 0.9,
@@ -316,7 +317,10 @@
           "placement": "bottom"
         },
         "rowHeight": 0.9,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -371,5 +375,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 12
+  "version": 13
 }

@@ -42,49 +42,49 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
    - Define the required Application Role values for Grafana: Viewer, Editor, Admin. Otherwise, all users will have the Viewer role.
    - Every role requires a unique ID.
    - Generate the unique ID on Linux with `uuidgen`, and on Windows through Microsoft
-   PowerShell with `New-Guid`.
+     PowerShell with `New-Guid`.
    - Include the unique ID in the configuration file:
 
-        ```json
-        "appRoles": [
-        		{
-        			"allowedMemberTypes": [
-        				"User"
-        			],
-        			"description": "Grafana admin Users",
-        			"displayName": "Grafana Admin",
-        			"id": "SOME_UNIQUE_ID",
-        			"isEnabled": true,
-        			"lang": null,
-        			"origin": "Application",
-        			"value": "Admin"
-        		},
-        		{
-        			"allowedMemberTypes": [
-        				"User"
-        			],
-        			"description": "Grafana read only Users",
-        			"displayName": "Grafana Viewer",
-        			"id": "SOME_UNIQUE_ID",
-        			"isEnabled": true,
-        			"lang": null,
-        			"origin": "Application",
-        			"value": "Viewer"
-        		},
-        		{
-        			"allowedMemberTypes": [
-        				"User"
-        			],
-        			"description": "Grafana Editor Users",
-        			"displayName": "Grafana Editor",
-        			"id": "SOME_UNIQUE_ID",
-        			"isEnabled": true,
-        			"lang": null,
-        			"origin": "Application",
-        			"value": "Editor"
-        		}
-        	],
-        ```
+     ```json
+     "appRoles": [
+     		{
+     			"allowedMemberTypes": [
+     				"User"
+     			],
+     			"description": "Grafana admin Users",
+     			"displayName": "Grafana Admin",
+     			"id": "SOME_UNIQUE_ID",
+     			"isEnabled": true,
+     			"lang": null,
+     			"origin": "Application",
+     			"value": "Admin"
+     		},
+     		{
+     			"allowedMemberTypes": [
+     				"User"
+     			],
+     			"description": "Grafana read only Users",
+     			"displayName": "Grafana Viewer",
+     			"id": "SOME_UNIQUE_ID",
+     			"isEnabled": true,
+     			"lang": null,
+     			"origin": "Application",
+     			"value": "Viewer"
+     		},
+     		{
+     			"allowedMemberTypes": [
+     				"User"
+     			],
+     			"description": "Grafana Editor Users",
+     			"displayName": "Grafana Editor",
+     			"id": "SOME_UNIQUE_ID",
+     			"isEnabled": true,
+     			"lang": null,
+     			"origin": "Application",
+     			"value": "Editor"
+     		}
+     	],
+     ```
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
@@ -139,7 +139,7 @@ allowed_domains = mycompany.com mycompany.org
 
 ### Team Sync (Enterprise only)
 
->  Only available in Grafana Enterprise v6.7+
+> Only available in Grafana Enterprise v6.7+
 
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
 the correct teams.

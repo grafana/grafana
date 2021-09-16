@@ -6,21 +6,23 @@ interface MarkerMaker extends RegistryItem {
   hasFill: boolean;
 }
 
-export const markerMakers = new Registry<MarkerMaker>(() => [
-  {
-    id: 'circle',
-    name: 'Circle',
-    hasFill: true,
-    make: (color: string, fillColor: string, radius: number) => {
-      return new Style({
-        image: new Circle({
-          stroke: new Stroke({ color: color }),
-          fill: new Fill({ color: fillColor }),
-          radius: radius,
-        }),
-      });
-    },
+export const circleMarker: MarkerMaker = {
+  id: 'circle',
+  name: 'Circle',
+  hasFill: true,
+  make: (color: string, fillColor: string, radius: number) => {
+    return new Style({
+      image: new Circle({
+        stroke: new Stroke({ color: color }),
+        fill: new Fill({ color: fillColor }),
+        radius: radius,
+      }),
+    });
   },
+};
+
+export const markerMakers = new Registry<MarkerMaker>(() => [
+  circleMarker,
   {
     id: 'square',
     name: 'Square',

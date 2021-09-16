@@ -1,14 +1,8 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { CatalogPlugin, CatalogPluginDetails } from '../types';
+import { CatalogPlugin, CatalogPluginsState } from '../types';
 import { api } from '../api';
-import { mapLocalToCatalog, mapRemoteToCatalog, getCatalogPluginDetails, applySearchFilter } from '../helpers';
-
-type CatalogPluginsState = {
-  loading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
+import { mapLocalToCatalog, mapRemoteToCatalog, mapToCatalogPlugin } from '../helpers';
 
 export function usePlugins(): CatalogPluginsState {
   const { loading, value, error } = useAsync(async () => {
@@ -27,10 +21,6 @@ export function usePlugins(): CatalogPluginsState {
     }
 
     for (const plugin of remote) {
-      if (unique[plugin.slug]) {
-        continue;
-      }
-
       if (plugin.typeCode === 'renderer') {
         continue;
       }
@@ -39,9 +29,15 @@ export function usePlugins(): CatalogPluginsState {
         continue;
       }
 
-      unique[plugin.slug] = mapRemoteToCatalog(plugin);
+      if (unique[plugin.slug]) {
+        unique[plugin.slug] = mapToCatalogPlugin(
+          installed.find((installedPlugin) => installedPlugin.id === plugin.slug),
+          plugin
+        );
+      } else {
+        unique[plugin.slug] = mapRemoteToCatalog(plugin);
+      }
     }
-
     return Object.values(unique);
   }, [value?.installed, value?.remote]);
 
@@ -51,47 +47,3 @@ export function usePlugins(): CatalogPluginsState {
     plugins,
   };
 }
-
-type FilteredPluginsState = {
-  isLoading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
-
-export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
-  const { loading, error, plugins } = usePlugins();
-
-  const installed = useMemo(() => plugins.filter((plugin) => plugin.isInstalled), [plugins]);
-
-  if (filterBy === 'installed') {
-    return {
-      isLoading: loading,
-      error,
-      plugins: applySearchFilter(searchBy, installed),
-    };
-  }
-
-  return {
-    isLoading: loading,
-    error,
-    plugins: applySearchFilter(searchBy, plugins),
-  };
-};
-
-type PluginState = {
-  isLoading: boolean;
-  plugin?: CatalogPluginDetails;
-};
-
-export const usePlugin = (slug: string): PluginState => {
-  const { loading, value } = useAsync(async () => {
-    return await api.getPlugin(slug);
-  }, [slug]);
-
-  const plugin = getCatalogPluginDetails(value?.local, value?.remote, value?.remoteVersions);
-
-  return {
-    isLoading: loading,
-    plugin,
-  };
-};
