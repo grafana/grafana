@@ -180,16 +180,16 @@ export function roundToFiscal(fyStartMonth: number, dateTime: any, unit: string,
   switch (unit) {
     case 'y':
       if (roundUp) {
-        roundToFiscal(FYStartMonth, dateTime, unit, false).add(11, 'M').endOf('M');
+        roundToFiscal(fyStartMonth, dateTime, unit, false).add(11, 'M').endOf('M');
       } else {
-        dateTime.subtract((dateTime.month() - FYStartMonth + 12) % 12, 'M').startOf('M');
+        dateTime.subtract((dateTime.month() - fyStartMonth + 12) % 12, 'M').startOf('M');
       }
       return dateTime;
     case 'Q':
       if (roundUp) {
-        roundToFiscal(FYStartMonth, dateTime, unit, false).add(2, 'M').endOf('M');
+        roundToFiscal(fyStartMonth, dateTime, unit, false).add(2, 'M').endOf('M');
       } else {
-        dateTime.subtract((dateTime.month() - FYStartMonth + 3) % 3, 'M').startOf('M');
+        dateTime.subtract((dateTime.month() - fyStartMonth + 3) % 3, 'M').startOf('M');
       }
       return dateTime;
     default:
