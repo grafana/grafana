@@ -32,11 +32,6 @@ type InstallOpts struct {
 	InstallDir, PluginZipURL, PluginRepoURL string
 }
 
-type RendererManager interface {
-	// Renderer returns a renderer plugin.
-	Renderer() *Plugin
-}
-
 type Client interface {
 	// QueryData queries data from a plugin.
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
@@ -46,6 +41,11 @@ type Client interface {
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
 	// CheckHealth performs a health check on a plugin.
 	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
+}
+
+type RendererManager interface {
+	// Renderer returns a renderer plugin.
+	Renderer() *Plugin
 }
 
 type CoreBackendRegistrar interface {
