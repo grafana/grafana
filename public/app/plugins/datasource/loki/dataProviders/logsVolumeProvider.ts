@@ -78,6 +78,7 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
             error: error,
             data: [],
           });
+          observer.error(error);
         },
       });
       return () => {
@@ -89,8 +90,10 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
     });
   }
 
+  /**
+   * Add up values for the same level and create a single data frame for each level
+   */
   private aggregateRawLogsVolume(): DataFrame[] {
-    // Aggregate data frames by level
     const logsVolumeByLevelMap: Record<string, DataFrame[]> = {};
     this.rawLogsVolume.forEach((dataFrame) => {
       const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
@@ -101,35 +104,36 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
       logsVolumeByLevelMap[level].push(dataFrame);
     });
 
-    // Reduce all data frames to a single data frame containing total value
     return Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
-      const dataFrames = logsVolumeByLevelMap[level];
-      const color = LogLevelColor[level];
-      const fieldConfig = {
-        displayNameFromDS: level,
-        color: {
-          mode: FieldColorModeId.Fixed,
-          fixedColor: color,
-        },
-        custom: {
-          drawStyle: GraphDrawStyle.Bars,
-          barAlignment: BarAlignment.Center,
-          barWidthFactor: 0.9,
-          barMaxWidth: 5,
-          lineColor: color,
-          pointColor: color,
-          fillColor: color,
-          lineWidth: 1,
-          fillOpacity: 100,
-          stacking: {
-            mode: StackingMode.Normal,
-            group: 'A',
-          },
-        },
-      };
-      return aggregateFields(dataFrames, fieldConfig);
+      return aggregateFields(logsVolumeByLevelMap[level], getFieldConfig(level));
     });
   }
+}
+
+function getFieldConfig(level: LogLevel) {
+  const color = LogLevelColor[level];
+  return {
+    displayNameFromDS: level,
+    color: {
+      mode: FieldColorModeId.Fixed,
+      fixedColor: color,
+    },
+    custom: {
+      drawStyle: GraphDrawStyle.Bars,
+      barAlignment: BarAlignment.Center,
+      barWidthFactor: 0.9,
+      barMaxWidth: 5,
+      lineColor: color,
+      pointColor: color,
+      fillColor: color,
+      lineWidth: 1,
+      fillOpacity: 100,
+      stacking: {
+        mode: StackingMode.Normal,
+        group: 'A',
+      },
+    },
+  };
 }
 
 /**
