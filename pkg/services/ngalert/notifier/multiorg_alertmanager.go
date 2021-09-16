@@ -34,7 +34,8 @@ type MultiOrgAlertmanager struct {
 	gokitLogger gokit_log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
-	peer ClusterPeer
+	peer         ClusterPeer
+	settleCancel context.CancelFunc
 
 	configStore store.AlertingStore
 	orgStore    store.OrgStore
@@ -80,7 +81,11 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		if err != nil {
 			l.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "err", err)
 		}
-		go peer.Settle(context.Background(), cluster.DefaultGossipInterval)
+		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
+		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
+		var ctx context.Context
+		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
+		go peer.Settle(ctx, cluster.DefaultGossipInterval*10)
 		moa.peer = peer
 	}
 
@@ -171,6 +176,14 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 
 	for _, am := range moa.alertmanagers {
 		am.StopAndWait()
+	}
+
+	p, ok := moa.peer.(*cluster.Peer)
+	if ok {
+		moa.settleCancel()
+		if err := p.Leave(10 * time.Second); err != nil {
+			moa.logger.Warn("unable to leave the gossip mesh", "err", err)
+		}
 	}
 }
 
