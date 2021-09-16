@@ -18,7 +18,7 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, partition } from 'lodash';
 import { descending, deviation } from 'd3';
 import {
   ExemplarTraceIdDestination,
@@ -46,22 +46,18 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
   const promResults: DataFrame[] = cloneDeep(response.data);
 
   // Get refIds that have table format as we need to process those to table reuslts
-  const tableRefIds = options.targets.map((target) => {
-    if (target.format === 'table') {
-      return target.refId;
-    }
-    return;
-  });
+  const tableRefIds = options.targets.filter((target) => target.format === 'table').map((target) => target.refId);
+  const [tableResults, otherResults] = partition(promResults, (dataFrame) =>
+    dataFrame.refId ? tableRefIds.includes(dataFrame.refId) : false
+  );
 
   // For table results, we need to transform data frames to table data frames
-  const tableResults = promResults.filter((dataFrame) => tableRefIds.includes(dataFrame.refId));
   const tableFrames = tableResults.map((dataFrame) => {
     const df = transformDFoTable(dataFrame, options.targets.length);
     return df;
   });
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
-  const otherResults = promResults.filter((dataFrame) => !tableRefIds.includes(dataFrame.refId));
   const otherFrames = otherResults.map((dataFrame) => {
     const df = dataFrame;
     df.meta = {
