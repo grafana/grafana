@@ -7,18 +7,16 @@ import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useAsync } from 'react-use';
 import { PlaylistDTO } from './types';
-import { Button, Card, ConfirmModal, LinkButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { ConfirmModal } from '@grafana/ui';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 import { deletePlaylist, getAllPlaylist } from './api';
 import { StartModal } from './StartModal';
+import { PlaylistPageList } from './PlaylistPageList';
 
 interface ConnectedProps {
   navModel: NavModel;
 }
-let content: JSX.Element;
-
 export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponentProps {}
 
 export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
@@ -61,40 +59,6 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     />
   );
 
-  if (!hasPlaylists && searchQuery) {
-    content = <p>No playlist found!</p>;
-  }
-
-  if (hasPlaylists) {
-    content = (
-      <>
-        {playlists!.map((playlist) => (
-          <Card heading={playlist.name} key={playlist.id.toString()}>
-            <Card.Actions>
-              <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
-                Start playlist
-              </Button>
-              {contextSrv.isEditor && (
-                <>
-                  <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.id}`} icon="cog">
-                    Edit playlist
-                  </LinkButton>
-                  <Button
-                    disabled={false}
-                    onClick={() => setPlaylistToDelete({ id: playlist.id, name: playlist.name })}
-                    icon="trash-alt"
-                    variant="destructive"
-                  >
-                    Delete playlist
-                  </Button>
-                </>
-              )}
-            </Card.Actions>
-          </Card>
-        ))}
-      </>
-    );
-  }
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={!hasFetched}>
@@ -107,7 +71,14 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
               linkButton={{ title: 'New playlist', href: '/playlists/new' }}
               setSearchQuery={setSearchQuery}
             />
-            {content}
+            {!hasPlaylists && searchQuery && <EmptyQueryListBanner />}
+            {hasPlaylists && (
+              <PlaylistPageList
+                playlists={playlists}
+                setStartPlaylist={setStartPlaylist}
+                setPlaylistToDelete={setPlaylistToDelete}
+              />
+            )}
           </>
         )}
         {playlistToDelete && (
@@ -125,6 +96,8 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     </Page>
   );
 };
+
+const EmptyQueryListBanner = () => <p>No playlist found!</p>;
 
 const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'playlists'),
