@@ -310,10 +310,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let alignedTotals: AlignedData | null = null;
 
-  function prepData(alignedFrame: DataFrame) {
+  function prepData(frames: DataFrame[]) {
     alignedTotals = null;
 
-    return preparePlotData(alignedFrame, ({ totals }) => {
+    return preparePlotData(frames, ({ totals }) => {
       alignedTotals = totals;
     });
   }

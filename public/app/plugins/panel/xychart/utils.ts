@@ -3,8 +3,6 @@ import {
   DataFrameFieldIndex,
   FieldLookup,
   FrameFieldMap,
-  FieldType,
-  getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
   DimensionValues,
@@ -22,7 +20,7 @@ import { ScatterSeries, XYChartOptions } from './types';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, UPlotConfigBuilder, UPlotConfigPrepFnXY } from '@grafana/ui';
 import uPlot from 'uplot';
-import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
+import { FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
@@ -169,7 +167,7 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
   let hRect: Rect | null;
 
   // temp
-  let minSize = 6;
+  //let minSize = 6;
   let maxSize = 60;
 
   const drawBubbles: uPlot.Series.PathBuilder = (u, seriesIdx, idx0, idx1) => {

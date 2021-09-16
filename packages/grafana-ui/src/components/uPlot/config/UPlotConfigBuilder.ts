@@ -1,4 +1,4 @@
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 import { merge } from 'lodash';
 import {
   DataFrame,
@@ -32,10 +32,10 @@ const cursorDefaults: Cursor = {
   },
 };
 
-type PrepData = (frame: DataFrame[]) => AlignedData | FacetedData;
+type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
-  private series: Array<UPlotSeriesBuilder | null> = [];
+  private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
@@ -46,8 +46,8 @@ export class UPlotConfigBuilder {
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
   private sync = false;
-  private mode = 1;
-  private frame: DataFrame | undefined = undefined;
+  private mode: uPlot.Mode = 1;
+  private frames: DataFrame[] | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   // Custom handler for closest datapoint and series lookup
@@ -157,9 +157,9 @@ export class UPlotConfigBuilder {
   }
 
   setPrepData(prepData: PrepData) {
-    this.prepData = (frame) => {
-      this.frame = frame;
-      return prepData(frame);
+    this.prepData = (frames) => {
+      this.frames = frames;
+      return prepData(frames);
     };
   }
 
@@ -180,7 +180,7 @@ export class UPlotConfigBuilder {
       mode: this.mode,
       series: [
         this.mode === 2
-          ? null
+          ? (null as Series)
           : {
               value: () => '',
             },
@@ -202,7 +202,7 @@ export class UPlotConfigBuilder {
 
       // interpolate for gradients/thresholds
       if (typeof s !== 'string') {
-        let field = this.frame!.fields[seriesIdx];
+        let field = this.frames![0].fields[seriesIdx];
         s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
       }
 

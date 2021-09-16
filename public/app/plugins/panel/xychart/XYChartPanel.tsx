@@ -1,4 +1,4 @@
-import React, { /*useCallback,*/ useContext, useMemo } from 'react';
+import React, { /*useCallback, useContext,*/ useMemo } from 'react';
 import { /*Button, GraphNGLegendEvent,*/ UPlotChart, usePanelContext, useTheme2, VizLayout } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { XYChartOptions } from './types';
@@ -11,12 +11,12 @@ interface XYChartPanelProps extends PanelProps<XYChartOptions> {}
 export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   data,
   timeRange,
-  timeZone,
+  //timeZone,
   width,
   height,
   options,
-  fieldConfig,
-  onFieldConfigChange,
+  //fieldConfig,
+  //onFieldConfigChange,
 }) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();

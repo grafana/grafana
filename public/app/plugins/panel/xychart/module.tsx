@@ -2,12 +2,12 @@ import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
-import { Options } from './types';
+import { XYChartOptions } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
 import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
 import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
+export const plugin = new PanelPlugin<XYChartOptions, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
     getGraphFieldConfig({
       ...defaultGraphConfig,
