@@ -3404,4 +3404,8 @@ get:
   path: infra/data/ci/test-drone-caching
   name: secret
 
+---
+kind: signature
+hmac: daa940b99a00e75291a18e244b211a9da442551060f31e794d7c0990ba575ac5
+
 ...
