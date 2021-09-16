@@ -72,8 +72,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
-
 	r.Get("/styleguide", reqSignedIn, hs.Index)
+
+	r.Get("/live", reqGrafanaAdmin, hs.Index)
+	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
+	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/plugins", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/", reqSignedIn, hs.Index)

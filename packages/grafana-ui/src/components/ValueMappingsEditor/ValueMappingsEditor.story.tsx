@@ -30,6 +30,17 @@ export function Example() {
         },
       },
     },
+    {
+      type: MappingType.RegexToText,
+      options: {
+        pattern: '(.*).example.com',
+        result: {
+          index: 5,
+          text: '$1',
+          color: 'green',
+        },
+      },
+    },
   ]);
 
   return <ValueMappingsEditor value={mappings} onChange={setMappings} />;

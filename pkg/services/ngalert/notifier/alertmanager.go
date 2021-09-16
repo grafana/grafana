@@ -83,7 +83,7 @@ type Alertmanager struct {
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
 	fileStore *FileStore
-	Metrics   *metrics.Metrics
+	Metrics   *metrics.Alertmanager
 
 	notificationLog *nflog.Log
 	marker          types.Marker
@@ -113,7 +113,7 @@ type Alertmanager struct {
 }
 
 func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
-	decryptFn alerting.GetDecryptedValueFn, m *metrics.Metrics) (*Alertmanager, error) {
+	decryptFn alerting.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
@@ -235,7 +235,6 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	if err != nil {
 		return err
 	}
-	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
@@ -266,7 +265,6 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	if err != nil {
 		return err
 	}
-	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
@@ -307,12 +305,6 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 	if err := am.applyConfig(cfg, nil); err != nil {
 		return fmt.Errorf("unable to reload configuration: %w", err)
-	}
-
-	if q.Result.Default {
-		am.Metrics.ActiveConfigurations.Set(0)
-	} else {
-		am.Metrics.ActiveConfigurations.Set(1)
 	}
 
 	return nil

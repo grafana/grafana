@@ -5,14 +5,19 @@ import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 
-export interface DashboardPickerItem extends Pick<DashboardSearchHit, 'uid' | 'id'> {
+/**
+ * @deprecated prefer using dashboard uid rather than id
+ */
+export interface DashboardPickerItem extends SelectableValue<number> {
+  id: number;
+  uid: string;
   value: number;
   label: string;
 }
 
-export interface Props {
+interface Props {
   onChange: (dashboard: DashboardPickerItem) => void;
-  value?: SelectableValue;
+  value?: DashboardPickerItem;
   width?: number;
   isClearable?: boolean;
   invalid?: boolean;
@@ -20,7 +25,7 @@ export interface Props {
 }
 
 const getDashboards = (query = '') => {
-  return backendSrv.search({ type: 'dash-db', query }).then((result: DashboardSearchHit[]) => {
+  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
     return result.map((item: DashboardSearchHit) => ({
       id: item.id,
       uid: item.uid,
@@ -30,7 +35,10 @@ const getDashboards = (query = '') => {
   });
 };
 
-export const DashboardPicker: FC<Props> = ({ onChange, value, width, isClearable = false, invalid, disabled }) => {
+/**
+ * @deprecated prefer using dashboard uid rather than id
+ */
+export const DashboardPickerByID: FC<Props> = ({ onChange, value, width, isClearable = false, invalid, disabled }) => {
   const debouncedSearch = debounce(getDashboards, 300);
 
   return (
