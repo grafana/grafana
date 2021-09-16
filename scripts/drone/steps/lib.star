@@ -328,7 +328,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'depends_on': [
-            'test-frontend',
+            'lint-backend',
         ],
         'commands': cmds,
     }
