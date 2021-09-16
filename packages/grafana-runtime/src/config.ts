@@ -94,6 +94,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  applicationInsightsConnectionString?: string;
+  applicationInsightsEndpointUrl?: string;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

@@ -11,10 +11,10 @@ import {
 } from '@grafana/ui';
 import { Plugin, Node } from 'slate';
 import { LokiLabelBrowser } from './LokiLabelBrowser';
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
+import LokiLanguageProvider from '../language_provider';
 import { shouldRefreshLabels } from '../language_utils';
 import LokiDatasource from '../datasource';
 
@@ -55,8 +55,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
   return suggestion;
 }
 
-export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
-  history: LokiHistoryItem[];
+export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions> {
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;

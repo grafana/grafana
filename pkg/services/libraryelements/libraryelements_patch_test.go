@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -15,7 +16,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{Kind: int64(models.PanelElement)}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, resp.Status())
 		})
@@ -38,7 +39,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:    int64(models.PanelElement),
 				Version: 1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
@@ -90,7 +91,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
@@ -111,7 +112,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Name = "New Name"
@@ -132,7 +133,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.UID = cmd.UID
@@ -153,7 +154,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -166,7 +167,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -183,7 +184,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -196,7 +197,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "graph"
@@ -223,7 +224,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "text"
@@ -248,7 +249,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "graph"
@@ -269,7 +270,7 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
 			sc.reqContext.UserId = 2
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
@@ -291,7 +292,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version: 1,
 				Kind:    int64(models.PanelElement),
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -307,7 +308,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
@@ -320,7 +321,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Kind:     int64(models.PanelElement),
 			}
 			sc.reqContext.OrgId = 2
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, resp.Status())
 		})
@@ -332,7 +333,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
@@ -346,7 +347,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version:  1,
 				Kind:     int64(models.VariableElement),
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)

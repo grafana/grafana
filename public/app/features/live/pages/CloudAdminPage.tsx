@@ -10,6 +10,7 @@ import { GrafanaCloudBackend } from './types';
 export default function CloudAdminPage() {
   const navModel = useNavModel('live-cloud');
   const [cloud, setCloud] = useState<GrafanaCloudBackend[]>([]);
+  const [error, setError] = useState<string>();
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -18,12 +19,17 @@ export default function CloudAdminPage() {
       .then((data) => {
         setCloud(data.remoteWriteBackends);
       })
-      .catch((e) => console.error(e));
+      .catch((e) => {
+        if (e.data) {
+          setError(JSON.stringify(e.data, null, 2));
+        }
+      });
   }, []);
 
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        {error && <pre>{error}</pre>}
         {!cloud && <>Loading cloud definitions</>}
         {cloud &&
           cloud.map((v) => {

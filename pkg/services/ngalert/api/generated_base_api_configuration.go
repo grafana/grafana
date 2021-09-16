@@ -26,7 +26,7 @@ type ConfigurationApiService interface {
 	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
 }
 
-func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiService, m *metrics.Metrics) {
+func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/ngalert/admin_config"),

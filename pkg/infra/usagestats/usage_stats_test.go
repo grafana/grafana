@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -219,7 +221,7 @@ func TestMetrics(t *testing.T) {
 				sendUsageStats = origSendUsageStats
 			})
 			statsSent := false
-			sendUsageStats = func(*bytes.Buffer) {
+			sendUsageStats = func(uss *UsageStatsService, b *bytes.Buffer) {
 				statsSent = true
 			}
 
@@ -307,6 +309,10 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, runtime.GOOS, j.Get("os").MustString())
 			assert.Equal(t, runtime.GOARCH, j.Get("arch").MustString())
 
+			usageId := uss.GetUsageStatsId(context.Background())
+			assert.NotEmpty(t, usageId)
+			assert.Equal(t, usageId, j.Get("usageStatsId").MustString())
+
 			metrics := j.Get("metrics")
 			assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
@@ -393,6 +399,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
 			assert.Equal(t, 6, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
+
+			assert.LessOrEqual(t, 60, metrics.Get("stats.uptime").MustInt())
+			assert.Greater(t, 70, metrics.Get("stats.uptime").MustInt())
 		})
 	})
 
@@ -629,14 +638,19 @@ type httpResp struct {
 func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 	t.Helper()
 
+	sqlStore := sqlstore.InitTestDB(t)
+
 	return &UsageStatsService{
 		Bus:                bus.New(),
 		Cfg:                &cfg,
-		SQLStore:           sqlstore.InitTestDB(t),
+		SQLStore:           sqlStore,
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
 		grafanaLive:        newTestLive(t),
+		kvStore:            kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
+		log:                log.New("infra.usagestats"),
+		startTime:          time.Now().Add(-1 * time.Minute),
 	}
 }
 

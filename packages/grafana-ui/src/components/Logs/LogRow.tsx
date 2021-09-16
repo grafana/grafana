@@ -33,7 +33,6 @@ import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable2 {
-  highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
@@ -130,7 +129,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       onClickShowDetectedField,
       onClickHideDetectedField,
-      highlighterExpressions,
       enableLogDetails,
       row,
       showDuplicates,
@@ -192,7 +190,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             />
           ) : (
             <LogRowMessage
-              highlighterExpressions={highlighterExpressions}
               row={processedRow}
               getRows={getRows}
               errors={errors}

@@ -43,7 +43,6 @@ type Context struct {
 	*Router
 	Req      *http.Request
 	Resp     ResponseWriter
-	params   Params
 	template *template.Template
 }
 
@@ -180,32 +179,10 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
-// Params returns value of given param name.
-// e.g. ctx.Params(":uid") or ctx.Params("uid")
-func (ctx *Context) Params(name string) string {
-	if len(name) == 0 {
-		return ""
-	}
-	if len(name) > 1 && name[0] != ':' {
-		name = ":" + name
-	}
-	return ctx.params[name]
-}
-
-// AllParams returns all params.
-func (ctx *Context) AllParams() Params {
-	return ctx.params
-}
-
-// ReplaceAllParams replace all current params with given params
-func (ctx *Context) ReplaceAllParams(params Params) {
-	ctx.params = params
-}
-
 // ParamsInt64 returns params result in int64 type.
 // e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
-	n, _ := strconv.ParseInt(ctx.Params(name), 10, 64)
+	n, _ := strconv.ParseInt(Params(ctx.Req)[name], 10, 64)
 	return n
 }
 
