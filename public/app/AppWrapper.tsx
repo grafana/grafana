@@ -1,10 +1,19 @@
 import React, { ComponentType } from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService, navigationLogger } from '@grafana/runtime';
+import {
+  styleMixins,
+  withTheme2,
+  ErrorBoundaryAlert,
+  GlobalStyles,
+  ModalRoot,
+  ModalsProvider,
+  Themeable2,
+} from '@grafana/ui';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { GrafanaApp } from './app';
 import { getAppRoutes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
@@ -36,7 +45,7 @@ const getFlexDirection = (navPosition: typeof contextSrv.user.navPosition) => {
   }
 };
 
-interface AppWrapperProps {
+interface AppWrapperProps extends Themeable2 {
   app: GrafanaApp;
 }
 
@@ -51,7 +60,7 @@ export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
 }
 
-export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
+class AppWrapperUnthemed extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
   constructor(props: AppWrapperProps) {
@@ -103,8 +112,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   render() {
+    const { theme } = this.props;
     const navPosition = contextSrv.user.navPosition;
-    const styles = getStyles(navPosition);
+    const styles = getStyles(theme, navPosition);
     navigationLogger('AppWrapper', false, 'rendering');
 
     // @ts-ignore
@@ -147,10 +157,12 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 }
 
-const getStyles = (navPosition: typeof contextSrv.user.navPosition) => ({
+const getStyles = (theme: GrafanaTheme2, navPosition: typeof contextSrv.user.navPosition) => ({
   grafanaApp: css`
-    @media only screen and (min-width: 769px) {
+    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
       flex-direction: ${getFlexDirection(navPosition)};
     }
   `,
 });
+
+export const AppWrapper = withTheme2(AppWrapperUnthemed);
