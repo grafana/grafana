@@ -350,14 +350,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
-    const completeFilter = chunk(filters, 4)
+    const completeFilter: Filter[] = chunk(filters, 4)
       .map(([key, operator, value, condition]) => ({
         key,
         operator,
         value,
         ...(condition && { condition }),
       }))
-      .reduce((res, filter) => (filter.value ? [...res, filter] : res), [] as Filter[]);
+      .filter((item) => item.value);
 
     const filterArray = flatten(
       completeFilter.map(({ key, operator, value, condition }: Filter) => [
