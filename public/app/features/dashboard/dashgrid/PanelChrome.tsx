@@ -14,6 +14,7 @@ import {
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
+  ThresholdsConfig,
   TimeRange,
   toDataFrameDTO,
   toUtc,
@@ -84,6 +85,9 @@ export class PanelChrome extends Component<Props, State> {
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
+        // TODO: remove, added only for testing now
+        canEditThresholds: true,
+        onThresholdsChange: this.onThresholdsChange,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -340,6 +344,16 @@ export class PanelChrome extends Component<Props, State> {
 
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
+  };
+
+  onThresholdsChange = (thresholds: ThresholdsConfig) => {
+    this.onFieldConfigChange({
+      defaults: {
+        ...this.props.panel.fieldConfig.defaults,
+        thresholds,
+      },
+      overrides: this.props.panel.fieldConfig.overrides,
+    });
   };
 
   get hasPanelSnapshot() {
