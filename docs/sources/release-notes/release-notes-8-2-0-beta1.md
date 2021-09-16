@@ -89,4 +89,4 @@ Panel queries and/or annotation queries that used more than one statistic will b
 
 ### Grafana 8 alerts fixes
 
-- **Organisation level isolation:** The fix for organisation level isolation [introduces a new migration](https://github.com/grafana/grafana/pull/37414) that deletes all Grafana 8 alerting data and migrates the dashboard alerts to the new system again so that an Alertmanager configuration is created properly for each organisation. As a result, any manually created (or modified) Grafana 8 alerts or Alertmanager configuration will be removed after upgrading.
+- **Organisation level isolation:** The fix for organization level isolation introduced a [new migration flow](https://github.com/grafana/grafana/pull/37414) that deletes all Grafana 8 alerting data and migrates the dashboard alerts to the new system again so that an Alertmanager configuration is created properly for each organization. It removes any manually created (or modified) Grafana 8 alerts or Alertmanager configuration after upgrading.
