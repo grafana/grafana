@@ -440,6 +440,7 @@ def rebuild_cache_step():
             'secret_key': from_secret('secret'),
             'access_key': from_secret('access_key'),
             'rebuild': 'true',
+            'json_key': from_secret('tf_google_credentials'),
             'mount': [
                 '/opt/drone/gocache',
                 '/opt/drone/gomodcache',
