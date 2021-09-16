@@ -176,7 +176,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
   return dateTime;
 }
 
-export function roundToFiscal(FYStartMonth: number, dateTime: any, unit: string, roundUp: boolean | undefined) {
+export function roundToFiscal(fyStartMonth: number, dateTime: any, unit: string, roundUp: boolean | undefined) {
   switch (unit) {
     case 'y':
       if (roundUp) {
