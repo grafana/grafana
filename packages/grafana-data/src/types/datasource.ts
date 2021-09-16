@@ -25,24 +25,39 @@ export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQu
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
 export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
+/**
+ * @internal
+ */
 export enum RelatedDataType {
   LogsVolume = 'LogsVolume',
 }
 
+/**
+ * @internal
+ */
 export type LogsVolume = {
   data?: DataFrame[];
   error?: DataQueryError;
   isLoading?: boolean;
 };
 
+/**
+ * @internal
+ */
 export type RelatedDataProviders = {
   [type in keyof typeof RelatedDataType]?: RelatedDataProvider<any>;
 };
 
+/**
+ * @internal
+ */
 export type RelatedData = {
   [type in keyof typeof RelatedDataType]?: any;
 };
 
+/**
+ * @internal
+ */
 export interface RelatedDataProvider<TData> {
   getData(): Observable<TData>;
 }
