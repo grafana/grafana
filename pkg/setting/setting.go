@@ -18,15 +18,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gobwas/glob"
-
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -923,7 +922,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
-	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1376,43 +1375,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
-
-	return nil
-}
-
-func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
-	ua := iniFile.Section("unified_alerting")
-	var err error
-	cfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (60 * time.Second).String()))
-	if err != nil {
-		return err
-	}
-	cfg.AlertmanagerConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "alertmanager_config_poll_interval", (60 * time.Second).String()))
-	if err != nil {
-		return err
-	}
-	cfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (15 * time.Second).String()))
-	if err != nil {
-		return err
-	}
-	cfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (200 * time.Millisecond).String()))
-	if err != nil {
-		return err
-	}
-	cfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (60 * time.Second).String()))
-	if err != nil {
-		return err
-	}
-	cfg.HAListenAddr = ua.Key("ha_listen_address").MustString("0.0.0.0:9094")
-	cfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
-	peers := ua.Key("ha_peers").MustString("")
-	cfg.HAPeers = make([]string, 0)
-	if peers != "" {
-		for _, peer := range strings.Split(peers, ",") {
-			peer = strings.TrimSpace(peer)
-			cfg.HAPeers = append(cfg.HAPeers, peer)
-		}
-	}
 
 	return nil
 }

@@ -22,10 +22,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	DefaultAdminConfigPollInterval = 60 * time.Second
-)
-
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 

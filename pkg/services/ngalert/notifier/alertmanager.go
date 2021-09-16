@@ -13,12 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/prometheus/alertmanager/cluster"
-
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -28,6 +25,7 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -134,6 +132,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		dispatcherMetrics: dispatch.NewDispatcherMetrics(false, m.Registerer),
 		Store:             store,
 		peer:              peer,
+		peerTimeout:       cfg.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
 	}
@@ -727,7 +726,8 @@ func (am *Alertmanager) waitFunc() time.Duration {
 }
 
 func (am *Alertmanager) timeoutFunc(d time.Duration) time.Duration {
-	//TODO: What does MinTimeout means here?
+	// time.Duration d relates to the receiver's group_interval. Even with a group interval of 1s,
+	// we need to make sure (non-position-0) peers in the cluster wait before flushing the notifications.
 	if d < notify.MinTimeout {
 		d = notify.MinTimeout
 	}
