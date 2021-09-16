@@ -6,4 +6,4 @@ devenv
 data
 dist
 e2e/tmp
-drone
+/drone
