@@ -74,7 +74,7 @@ function useDatasource(datasourceName: string) {
   useEffect(() => {
     getDatasourceSrv()
       .loadDatasource(datasourceName)
-      .then((datasource: CloudWatchDatasource) => setDatasource(datasource));
+      .then((datasource) => setDatasource(datasource as CloudWatchDatasource));
   }, [datasourceName]);
   return datasource;
 }
