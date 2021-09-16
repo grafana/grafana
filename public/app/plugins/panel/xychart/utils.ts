@@ -64,13 +64,13 @@ export function prepDims(options: XYChartOptions, frames: DataFrame[]): ScatterS
     // map remaining frames by indicies of fields found in first frame
     else {
       let colorCfg: ColorDimensionConfig =
-        colorIdx > -1 ? { ...cfg.color, field: getFieldDisplayName(frame.fields[colorIdx], frame) } : cfg.color;
+        colorIdx > -1 ? { ...cfg.color!, field: getFieldDisplayName(frame.fields[colorIdx], frame) } : cfg.color!;
 
       let sizeCfg: ScaleDimensionConfig =
-        sizeIdx > -1 ? { ...cfg.size, field: getFieldDisplayName(frame.fields[sizeIdx], frame) } : cfg.size;
+        sizeIdx > -1 ? { ...cfg.size!, field: getFieldDisplayName(frame.fields[sizeIdx], frame) } : cfg.size!;
 
       let labelCfg: TextDimensionConfig =
-        labelIdx > -1 ? { ...cfg.label, field: getFieldDisplayName(frame.fields[labelIdx], frame) } : cfg.label;
+        labelIdx > -1 ? { ...cfg.label!, field: getFieldDisplayName(frame.fields[labelIdx], frame) } : cfg.label!;
 
       const series: ScatterSeries = {
         x: frame.fields[xIdx],
@@ -191,7 +191,7 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
         rect,
         arc
       ) => {
-        let d = u.data[seriesIdx] as FacetSeries;
+        let d = (u.data[seriesIdx] as unknown) as FacetSeries;
 
         let strokeWidth = 1;
 

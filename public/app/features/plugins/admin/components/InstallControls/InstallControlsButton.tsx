@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMountedState } from 'react-use';
 import { AppEvents, PluginType } from '@grafana/data';
-import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, ConfirmModal, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
 import { CatalogPlugin, PluginStatus } from '../../types';
@@ -18,6 +18,9 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
   const uninstall = useUninstall();
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const showConfirmModal = () => setIsConfirmModalVisible(true);
+  const hideConfirmModal = () => setIsConfirmModalVisible(false);
   const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
   const styles = useStyles2(getStyles);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
@@ -34,6 +37,7 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
   };
 
   const onUninstall = async () => {
+    hideConfirmModal();
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
@@ -49,14 +53,25 @@ export function InstallControlsButton({ plugin, pluginStatus }: InstallControlsB
 
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
-      <HorizontalGroup height="auto">
-        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
-          {uninstallBtnText}
-        </Button>
-        {hasInstalledPanel && (
-          <div className={styles.message}>Please refresh your browser window before using this plugin.</div>
-        )}
-      </HorizontalGroup>
+      <>
+        <ConfirmModal
+          isOpen={isConfirmModalVisible}
+          title={`Uninstall ${plugin.name}`}
+          body="Are you sure you want to uninstall this plugin?"
+          confirmText="Confirm"
+          icon="exclamation-triangle"
+          onConfirm={onUninstall}
+          onDismiss={hideConfirmModal}
+        />
+        <HorizontalGroup height="auto">
+          <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
+            {uninstallBtnText}
+          </Button>
+          {hasInstalledPanel && (
+            <div className={styles.message}>Please refresh your browser window before using this plugin.</div>
+          )}
+        </HorizontalGroup>
+      </>
     );
   }
 
