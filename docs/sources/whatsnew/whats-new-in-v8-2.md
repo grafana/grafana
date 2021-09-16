@@ -12,7 +12,7 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release. Additionally, not all features listed here may be present in all the beta releases.
 
-Grafana 8.2 continues to build on the foundation laid out in Grafana 8.0 & 8.1. We’ve continued to extend the GeoMap panel and bring new features to the Time Series panel. You can now share query histories with your team using Grafana’s Explore functionality. We’re also introducing a new months, quarters & fiscal quarters feature to our time picker. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics *for everyone*. 
+Grafana 8.2 continues to build on the foundation laid out in Grafana 8.0 & 8.1. We’ve continued to extend the GeoMap panel and bring new features to the Time Series panel. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics *for everyone*. 
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can checkout the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
