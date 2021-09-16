@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,7 +28,6 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
-
 	kvStore := newFakeKVStore(t)
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)

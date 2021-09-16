@@ -6,12 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/cluster"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,9 +28,8 @@ type MultiOrgAlertmanager struct {
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]*Alertmanager
 
-	settings    *setting.Cfg
-	logger      log.Logger
-	gokitLogger gokit_log.Logger
+	settings *setting.Cfg
+	logger   log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
 	peer         ClusterPeer
@@ -47,7 +45,6 @@ type MultiOrgAlertmanager struct {
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore, kvStore kvstore.KVStore, m *metrics.MultiOrgAlertmanager, l log.Logger) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		logger:        l,
-		gokitLogger:   gokit_log.With(gokit_log.NewLogfmtLogger(logging.NewWrapper(l)), "component", "cluster"),
 		settings:      cfg,
 		alertmanagers: map[int64]*Alertmanager{},
 		configStore:   configStore,
@@ -56,10 +53,11 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		metrics:       m,
 	}
 
+	clusterLogger := gokit_log.With(gokit_log.NewLogfmtLogger(logging.NewWrapper(l)), "component", "cluster")
 	moa.peer = &NilPeer{}
 	if len(cfg.HAPeers) > 0 {
 		peer, err := cluster.Create(
-			moa.gokitLogger,
+			clusterLogger,
 			m.Registerer,
 			cfg.HAListenAddr,
 			cfg.HAAdvertiseAddr,
