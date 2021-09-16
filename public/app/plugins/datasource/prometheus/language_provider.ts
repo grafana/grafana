@@ -268,8 +268,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Stitch all query lines together to support multi-line queries
     let queryOffset;
     const queryText = value.document.getBlocks().reduce((text, block) => {
+      if (!text) {
+        return '';
+      }
       if (!block) {
-        return text!;
+        return text;
       }
 
       const blockText = block?.getText();
@@ -277,7 +280,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       if (value.anchorBlock.key === block.key) {
         // Newline characters are not accounted for but this is irrelevant
         // for the purpose of extracting the selector string
-        queryOffset = value.selection.anchor.offset + text!.length;
+        queryOffset = value.selection.anchor.offset + text.length;
       }
 
       return text + blockText;
