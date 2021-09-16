@@ -1,4 +1,4 @@
-{   
+{
     "annotations": {
       "list": [
         {
@@ -587,7 +587,7 @@
           "y": 45
         },
         "id": 18,
-        "options": {        
+        "options": {
           "reduceOptions": {
             "calcs": [
               "lastNotNull"
@@ -595,6 +595,8 @@
             "fields": "",
             "values": false
           },
+          "orientation": "auto",
+          "showValue": "auto",
           "showThresholdLabels": false,
           "showThresholdMarkers": true,
           "text": {}
