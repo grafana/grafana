@@ -3,6 +3,7 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import { Style, Stroke, Fill } from 'ol/style';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -17,6 +18,7 @@ export interface GeoJSONMapperConfig {
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
+  //add default color for highlight
 };
 
 export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
@@ -38,8 +40,42 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
+    const blueStyle = new Style({
+      stroke: new Stroke({
+        color: 'rgb(28,46,116)',
+        width: 1,
+      }),
+      fill: new Fill({
+        color: 'rgb(32,51,198)',
+      }),
+    })
+
+    const yellowStyle = new Style({
+      stroke: new Stroke({
+        color: 'rgb(155,185,96)',
+        width: 1,
+      }),
+      fill: new Fill({
+        color: 'rgb(155,181,95)'
+      })
+    })
+
     const vectorLayer = new VectorLayer({
       source,
+      style: function (feature) {
+        if (!feature) {
+          return undefined;
+        }
+        const featProps = feature.getProperties();
+        if (featProps.Polarization === '0' ) {
+          return blueStyle; 
+        }
+
+        if(featProps.Polarization === '1') {
+          return yellowStyle;
+        }
+        return blueStyle;
+      }
     });
 
     return {
