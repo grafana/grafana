@@ -35,7 +35,6 @@ export function LogsVolumePanel(props: Props) {
     LogsVolumePanelContent = (
       <LogsVolumeContentWrapper>
         <Button
-          size="lg"
           onClick={() => {
             loadLogsVolumeData(exploreId);
           }}

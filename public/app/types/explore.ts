@@ -13,8 +13,8 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
+  LogsVolumeDataProvider,
 } from '@grafana/data';
-import { LogsVolumeDataProvider } from '../plugins/datasource/loki/dataProviders/logsVolumeProvider';
 
 export enum ExploreId {
   left = 'left',

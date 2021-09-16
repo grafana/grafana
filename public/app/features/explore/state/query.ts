@@ -6,6 +6,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   LoadingState,
+  LogsVolumeDataProvider,
   PanelData,
   PanelEvents,
   QueryFixAction,
@@ -36,7 +37,6 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
-import { LogsVolumeDataProvider } from '../../../plugins/datasource/loki/dataProviders/logsVolumeProvider';
 
 //
 // Actions and Payloads

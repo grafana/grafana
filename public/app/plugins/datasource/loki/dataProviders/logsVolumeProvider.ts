@@ -8,6 +8,7 @@ import {
   FieldType,
   LoadingState,
   LogLevel,
+  LogsVolumeDataProvider,
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
@@ -18,10 +19,6 @@ import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { getLogLevelFromLabels } from '../../../../features/explore/state/utils';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-
-export interface LogsVolumeDataProvider {
-  getData(): Observable<DataQueryResponse>;
-}
 
 export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
   private readonly datasource: LokiDatasource;
@@ -42,7 +39,7 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
 
     const histogramRequest = cloneDeep(this.dataQueryRequest);
     histogramRequest.targets = histogramRequest.targets
-      .filter((target) => !isMetricsQuery(target.expr))
+      .filter((target) => target.expr && !isMetricsQuery(target.expr))
       .map((target) => {
         // TODO: add level to configuration and use:
         // sum by (level) (count_over_time(${target.expr}[$__interval])
