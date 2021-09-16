@@ -6,9 +6,8 @@ import {
   FieldColorModeId,
   FieldConfig,
   FieldType,
+  LoadingState,
   LogLevel,
-  LogsVolume,
-  LogsVolumeDataProvider,
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
@@ -19,6 +18,10 @@ import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { getLogLevelFromLabels } from '../../../../features/explore/state/utils';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+
+export interface LogsVolumeDataProvider {
+  getData(): Observable<DataQueryResponse>;
+}
 
 export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
   private readonly datasource: LokiDatasource;
@@ -31,7 +34,7 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
     this.dataQueryRequest = dataQueryRequest;
   }
 
-  getData(): Observable<LogsVolume> {
+  getData(): Observable<DataQueryResponse> {
     if (this.currentSubscription) {
       this.currentSubscription.unsubscribe();
       this.currentSubscription = undefined;
@@ -51,7 +54,7 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
 
     return new Observable((observer) => {
       observer.next({
-        isLoading: true,
+        state: LoadingState.Loading,
         error: undefined,
         data: [],
       });
@@ -60,7 +63,7 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
         complete: () => {
           const aggregatedLogsVolume = this.aggregateRawLogsVolume();
           observer.next({
-            isLoading: false,
+            state: LoadingState.Done,
             error: undefined,
             data: aggregatedLogsVolume,
           });
@@ -71,7 +74,7 @@ export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
         },
         error: (error) => {
           observer.next({
-            isLoading: false,
+            state: LoadingState.Error,
             error: error,
             data: [],
           });

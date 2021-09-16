@@ -3,10 +3,9 @@ import { identity, of, Unsubscribable } from 'rxjs';
 import {
   DataQuery,
   DataQueryErrorType,
+  DataQueryResponse,
   DataSourceApi,
   LoadingState,
-  LogsVolume,
-  LogsVolumeDataProvider,
   PanelData,
   PanelEvents,
   QueryFixAction,
@@ -37,6 +36,7 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
+import { LogsVolumeDataProvider } from '../../../plugins/datasource/loki/dataProviders/logsVolumeProvider';
 
 //
 // Actions and Payloads
@@ -115,7 +115,7 @@ export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDat
 );
 export const updateLogsVolumeDataAction = createAction<{
   exploreId: ExploreId;
-  logsVolumeData: LogsVolume;
+  logsVolumeData: DataQueryResponse;
 }>('explore/updateLogsVolumeDataAction');
 
 export interface QueryEndedPayload {
@@ -515,7 +515,7 @@ export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
     const state = getState().explore[exploreId]!;
     const logsVolumeDataProvider = state.logsVolumeDataProvider;
     logsVolumeDataProvider?.getData().subscribe({
-      next: (logsVolumeData: LogsVolume) => {
+      next: (logsVolumeData: DataQueryResponse) => {
         dispatch(updateLogsVolumeDataAction({ exploreId, logsVolumeData }));
       },
     });

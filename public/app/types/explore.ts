@@ -12,9 +12,9 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
-  LogsVolume,
-  LogsVolumeDataProvider,
+  DataQueryResponse,
 } from '@grafana/data';
+import { LogsVolumeDataProvider } from '../plugins/datasource/loki/dataProviders/logsVolumeProvider';
 
 export enum ExploreId {
   left = 'left',
@@ -153,7 +153,7 @@ export interface ExploreItemState {
   cache: Array<{ key: string; value: PanelData }>;
 
   logsVolumeDataProvider?: LogsVolumeDataProvider;
-  logsVolumeData?: LogsVolume;
+  logsVolumeData?: DataQueryResponse;
   autoLoadLogsVolume: boolean;
 }
 

@@ -24,7 +24,6 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
-  LogsVolumeDataProvider,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -53,7 +52,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { LokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
+import { LogsVolumeDataProvider, LokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;

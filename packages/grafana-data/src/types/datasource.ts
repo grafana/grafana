@@ -25,19 +25,6 @@ export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQu
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
 export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
-/**
- * @internal
- */
-export type LogsVolume = {
-  data?: DataFrame[];
-  error?: DataQueryError;
-  isLoading?: boolean;
-};
-
-export interface LogsVolumeDataProvider {
-  getData(): Observable<LogsVolume>;
-}
-
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,

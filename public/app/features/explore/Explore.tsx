@@ -5,15 +5,15 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2, Button } from '@grafana/ui';
+import { Button, Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
 import {
   AbsoluteTimeRange,
+  DataFrame,
   DataQuery,
+  DataQueryResponse,
+  GrafanaTheme2,
   LoadingState,
   RawTimeRange,
-  DataFrame,
-  GrafanaTheme2,
-  LogsVolume,
 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
@@ -24,7 +24,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadLogsVolumeData } from './state/query';
+import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -213,7 +213,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  getLogsVolumeContent(width: number, logsVolume?: LogsVolume) {
+  getLogsVolumeContent(width: number, logsVolume?: DataQueryResponse) {
     const { exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen, queryResponse, theme } = this.props;
 
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -241,7 +241,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       );
     }
 
-    if (logsVolume.isLoading) {
+    if (logsVolume.state === LoadingState.Loading) {
       return <LogsVolumeContentWrapper>Logs volume is loading...</LogsVolumeContentWrapper>;
     }
 
@@ -272,7 +272,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { logsVolumeData } = this.props;
 
     return (
-      <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.isLoading}>
+      <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
         {this.getLogsVolumeContent(width, logsVolumeData)}
       </Collapse>
     );
