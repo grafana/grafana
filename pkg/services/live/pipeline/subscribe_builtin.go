@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -12,7 +11,6 @@ import (
 )
 
 type BuiltinSubscriber struct {
-	mu                   sync.Mutex
 	channelHandlerGetter ChannelHandlerGetter
 }
 
