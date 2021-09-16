@@ -2,7 +2,7 @@
 title = "Troubleshooting"
 description = "Image rendering troubleshooting"
 keywords = ["grafana", "image", "rendering", "plugin", "troubleshooting"]
-weight = 100
+weight = 115
 +++
 
 # Troubleshoot image rendering
