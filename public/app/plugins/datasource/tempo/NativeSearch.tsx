@@ -72,6 +72,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     return text;
   };
 
+  const onKeyDown = (keyEvent: React.KeyboardEvent) => {
+    if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
+      onRunQuery();
+    }
+  };
+
   return (
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
@@ -140,6 +146,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 minDuration: v.currentTarget.value,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
@@ -154,6 +161,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 maxDuration: v.currentTarget.value,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
@@ -168,6 +176,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
