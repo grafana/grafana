@@ -1,30 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
-
-import { AppNotificationSeverity } from 'app/types';
-import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
-import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
-import { usePluginDetails } from '../hooks/usePluginDetails';
-import { Page as PluginPage } from '../components/Page';
-import { Loader } from '../components/Loader';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ActionTypes } from '../types';
+import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
+import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
+import { Page as PluginPage } from '../components/Page';
+import { Loader } from '../components/Loader';
+import { PluginTabLabels, PluginDetailsTab } from '../types';
+import { useGetSingle, useFetchStatus } from '../state/hooks';
+import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
+import { AppNotificationSeverity } from 'app/types';
 
-type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
-export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
-  const { pluginId } = match.params;
-  const { state, dispatch } = usePluginDetails(pluginId!);
-  const { loading, error, plugin, pluginConfig, tabs, activeTab } = state;
-  const tab = tabs[activeTab];
+type State = {
+  tabs: PluginDetailsTab[];
+  activeTabIndex: number;
+};
+
+const DefaultState = {
+  tabs: [{ label: PluginTabLabels.OVERVIEW }, { label: PluginTabLabels.VERSIONS }],
+  activeTabIndex: 0,
+};
+
+export default function PluginDetails({ match }: Props): JSX.Element | null {
+  const { pluginId = '' } = match.params;
+  const [state, setState] = useState<State>(DefaultState);
+  const plugin = useGetSingle(pluginId); // fetches the localplugin settings
+  const { tabs } = usePluginDetailsTabs(plugin, DefaultState.tabs);
+  const { activeTabIndex } = state;
+  const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
+  const setActiveTab = useCallback((activeTabIndex: number) => setState({ ...state, activeTabIndex }), [state]);
   const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
 
-  if (loading) {
+  // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
+  useEffect(() => {
+    if (activeTabIndex > tabs.length - 1) {
+      setActiveTab(0);
+    }
+  }, [setActiveTab, activeTabIndex, tabs]);
+
+  if (isLoading) {
     return (
       <Page>
         <Loader />
@@ -33,38 +54,37 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   }
 
   if (!plugin) {
-    return null;
+    return (
+      <Layout justify="center" align="center">
+        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+          That plugin cannot be found. Please check the url is correct or <br />
+          go to the <a href={parentUrl}>plugin catalog</a>.
+        </Alert>
+      </Layout>
+    );
   }
 
   return (
     <Page>
       <PluginPage>
-        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} pluginId={pluginId} />
+        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} plugin={plugin} />
 
         {/* Tab navigation */}
         <TabsBar>
-          {tabs.map((tab: { label: string }, idx: number) => (
+          {tabs.map((tab: PluginDetailsTab, idx: number) => (
             <Tab
               key={tab.label}
               label={tab.label}
-              active={idx === activeTab}
-              onChangeTab={() => dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: idx })}
+              active={idx === activeTabIndex}
+              onChangeTab={() => setActiveTab(idx)}
             />
           ))}
         </TabsBar>
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
-          {error && (
-            <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
-              <>
-                Check the server startup logs for more information. <br />
-                If this plugin was loaded from git, make sure it was compiled.
-              </>
-            </Alert>
-          )}
-          <PluginDetailsSignature installedPlugin={pluginConfig} className={styles.signature} />
-          <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} />
+          <PluginDetailsSignature plugin={plugin} className={styles.signature} />
+          <PluginDetailsBody tab={tabs[activeTabIndex]} plugin={plugin} />
         </TabContent>
       </PluginPage>
     </Page>

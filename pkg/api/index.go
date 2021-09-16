@@ -18,6 +18,16 @@ const (
 	darkName  = "dark"
 )
 
+// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
+var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	ac.EvalAny(
+		ac.EvalPermission(ActionDatasourcesCreate),
+		ac.EvalPermission(ActionDatasourcesDelete),
+		ac.EvalPermission(ActionDatasourcesWrite),
+	),
+)
+
 func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	// Only set login if it's different from the name
 	var login string
@@ -253,7 +263,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	configNodes := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)) {
+	if hasAccess(ac.ReqOrgAdmin, dataSourcesConfigurationAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
@@ -305,6 +315,30 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Description: "Create & manage API keys",
 			Icon:        "key-skeleton-alt",
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
+		})
+	}
+
+	if true {
+		liveNavLinks := []*dtos.NavLink{}
+
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Status", Id: "live-status", Url: hs.Cfg.AppSubURL + "/live", Icon: "exchange-alt",
+		})
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Pipeline", Id: "live-pipeline", Url: hs.Cfg.AppSubURL + "/live/pipeline", Icon: "arrow-to-right",
+		})
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Cloud", Id: "live-cloud", Url: hs.Cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
+		})
+
+		navTree = append(navTree, &dtos.NavLink{
+			Id:           "live",
+			Text:         "Live",
+			SubTitle:     "Event Streaming",
+			Icon:         "exchange-alt",
+			Url:          hs.Cfg.AppSubURL + "/live",
+			Children:     liveNavLinks,
+			HideFromMenu: true,
 		})
 	}
 

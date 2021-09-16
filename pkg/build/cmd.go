@@ -45,6 +45,8 @@ func RunCmd() int {
 		return logError("Error opening package json", err)
 	}
 
+	opts.version = packageJSON.Version
+
 	version, iteration := LinuxPackageVersion(packageJSON.Version, opts.buildID)
 
 	if opts.printGenVersion {

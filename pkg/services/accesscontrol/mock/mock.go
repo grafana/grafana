@@ -42,8 +42,6 @@ type Mock struct {
 	RegisterFixedRolesFunc  func() error
 }
 
-type MockOptions func(*Mock)
-
 // Ensure the mock stays in line with the interface
 var _ fullAccessControl = New()
 

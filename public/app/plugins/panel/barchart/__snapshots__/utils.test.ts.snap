@@ -82,6 +82,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -211,6 +212,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -340,6 +342,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -469,6 +472,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -598,6 +602,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -727,6 +732,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -856,6 +862,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -985,6 +992,7 @@ Object {
       [Function],
     ],
   },
+  "padding": undefined,
   "scales": Object {
     "m/s": Object {
       "auto": true,

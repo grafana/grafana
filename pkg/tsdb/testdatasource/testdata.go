@@ -18,7 +18,7 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*TestDataP
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler:    p.queryMux,
 		CallResourceHandler: httpadapter.New(resourceMux),
-		StreamHandler:       newTestStreamHandler(p.logger),
+		StreamHandler:       newTestStreamHandler(p.logger, cfg.FeatureToggles["live-pipeline"]),
 	})
 	err := manager.Register("testdata", factory)
 	if err != nil {

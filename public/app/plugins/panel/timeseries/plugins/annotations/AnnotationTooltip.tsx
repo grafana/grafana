@@ -35,8 +35,8 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
     avatar = <img className={styles.avatar} src={annotation.avatarUrl} />;
   }
 
-  if (annotation.alertId) {
-    const stateModel = alertDef.getStateDisplayModel(annotation.newState!);
+  if (annotation.alertId !== undefined && annotation.newState) {
+    const stateModel = alertDef.getStateDisplayModel(annotation.newState);
     state = (
       <div className={styles.alertState}>
         <i className={stateModel.stateClass}>{stateModel.text}</i>

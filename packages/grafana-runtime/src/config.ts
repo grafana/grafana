@@ -66,6 +66,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     tempoServiceGraph: false,
     tempoSearch: false,
     prometheusMonaco: false,
+    newNavigation: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -93,6 +94,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  applicationInsightsConnectionString?: string;
+  applicationInsightsEndpointUrl?: string;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

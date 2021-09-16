@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LoadingState, LogRowModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
@@ -20,6 +20,7 @@ interface LogsContainerProps extends PropsFromRedux {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
+  loadingState: LoadingState;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -60,7 +61,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   render() {
     const {
       loading,
-      logsHighlighterExpressions,
+      loadingState,
       logRows,
       logsMeta,
       logsSeries,
@@ -121,8 +122,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               logsSeries={logsSeries}
               logsQueries={logsQueries}
               width={width}
-              highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
+              loadingState={loadingState}
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -150,22 +151,11 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const {
-    logsHighlighterExpressions,
-    logsResult,
-    loading,
-    scanning,
-    datasourceInstance,
-    isLive,
-    isPaused,
-    range,
-    absoluteRange,
-  } = item;
+  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
-    logsHighlighterExpressions,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
     logsSeries: logsResult?.series,

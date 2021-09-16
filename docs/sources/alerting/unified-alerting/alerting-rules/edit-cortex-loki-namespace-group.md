@@ -15,7 +15,7 @@ A namespace contains one or more groups. To rename a namespace, find a group tha
 
 1. Hover your cursor over the Alerting (bell) icon in the side menu.
 1. Locate a group that belongs to the namespace you want to edit and click the edit (pen) icon.
-1. Enter a new name in the  **Namespace** field, then click **Save changes**.
+1. Enter a new name in the **Namespace** field, then click **Save changes**.
 
 A new namespace is created and all groups are copied into this namespace from the old one. The old namespace is deleted.
 

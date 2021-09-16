@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/macaron.v1"
 )
 
 type TestingApiSrv struct {
@@ -26,13 +26,8 @@ type TestingApiSrv struct {
 	log             log.Logger
 }
 
-func (srv TestingApiSrv) RouteTestReceiverConfig(c *models.ReqContext, body apimodels.ExtendedReceiver) response.Response {
-	srv.log.Info("RouteTestReceiverConfig: ", "body", body)
-	return response.JSON(http.StatusOK, util.DynMap{"message": "success"})
-}
-
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	recipient := c.Params("Recipient")
+	recipient := macaron.Params(c.Req)[":Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
 			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")

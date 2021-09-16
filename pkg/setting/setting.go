@@ -326,6 +326,8 @@ type Cfg struct {
 	DataProxyMaxIdleConns          int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
+	ResponseLimit                  int64
+	DataProxyRowLimit              int64
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -367,9 +369,11 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates      bool
-	ReportingDistributor string
-	ReportingEnabled     bool
+	CheckForUpdates                     bool
+	ReportingDistributor                string
+	ReportingEnabled                    bool
+	ApplicationInsightsConnectionString string
+	ApplicationInsightsEndpointUrl      string
 
 	// LDAP
 	LDAPEnabled     bool
@@ -444,6 +448,10 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 // some graceperiod to update all the monitoring tools.
 func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 	return cfg.FeatureToggles["disable_http_request_histogram"]
+}
+
+func (cfg Cfg) IsNewNavigationEnabled() bool {
+	return cfg.FeatureToggles["newNavigation"]
 }
 
 type CommandLineArgs struct {
@@ -801,24 +809,6 @@ func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
 	return cfg, nil
 }
 
-var theCfg *Cfg
-
-// GetCfg gets the Cfg singleton.
-// XXX: This is only required for integration tests so that the configuration can be reset for each test,
-// as due to how the current DI framework functions, we can't create a new Cfg object every time (the services
-// constituting the DI graph, and referring to a Cfg instance, get created only once).
-func GetCfg() *Cfg {
-	if theCfg != nil {
-		return theCfg
-	}
-
-	theCfg, err := NewCfgFromArgs(CommandLineArgs{})
-	if err != nil {
-		panic(err)
-	}
-	return theCfg
-}
-
 func (cfg *Cfg) validateStaticRootPath() error {
 	if skipStaticRootValidation {
 		return nil
@@ -920,6 +910,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if len(cfg.ReportingDistributor) >= 100 {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
+	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
+	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
@@ -1485,10 +1477,6 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 	if cfg.CDNRootURL != nil {
 		url := *cfg.CDNRootURL
 		preReleaseFolder := ""
-
-		if strings.Contains(cfg.BuildVersion, "pre") || strings.Contains(cfg.BuildVersion, "alpha") {
-			preReleaseFolder = "pre-releases"
-		}
 
 		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
 		return url.String() + "/"
