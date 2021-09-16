@@ -42,7 +42,6 @@ load(
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
-    services = integration_test_services(edition)
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
@@ -52,6 +51,7 @@ def pr_pipelines(edition):
         lint_backend_step(edition=edition),
         test_frontend_step(),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        rebuild_cache_step(),
     ]
 
     trigger = {
@@ -59,7 +59,7 @@ def pr_pipelines(edition):
     }
     return [
         pipeline(
-            name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
+            name='test-pr', edition=edition, trigger=trigger, services=None, steps=steps,
             ver_mode=ver_mode,
         ),
     ]
