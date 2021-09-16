@@ -41,8 +41,14 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			return err
 		}
 
+		navPos := ""
+
+		if ss.Cfg.IsNewNavigationEnabled() {
+			navPos = ss.Cfg.NavPosition
+		}
+
 		res := &models.Preferences{
-			NavPosition:     ss.Cfg.NavPosition,
+			NavPosition:     navPos,
 			Theme:           ss.Cfg.DefaultTheme,
 			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
 			HomeDashboardId: 0,
@@ -58,7 +64,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
 			}
-			if p.NavPosition != "" {
+			if ss.Cfg.IsNewNavigationEnabled() && p.NavPosition != "" {
 				res.NavPosition = p.NavPosition
 			}
 		}
