@@ -9,6 +9,8 @@ import BottomSection from './BottomSection';
 
 jest.mock('./utils', () => ({
   getForcedLoginUrl: () => '/mockForcedLoginUrl',
+  isLinkActive: () => false,
+  isSearchActive: () => false,
 }));
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),
@@ -60,7 +62,9 @@ describe('BottomSection', () => {
   it('creates the correct children for the help link', () => {
     render(
       <BrowserRouter>
-        <BottomSection />
+        <div className="sidemenu-open--xs">
+          <BottomSection />
+        </div>
       </BrowserRouter>
     );
 

@@ -1,13 +1,9 @@
 package state
 
 import (
-	"bytes"
 	"fmt"
-	"math"
-	"strconv"
 	"strings"
 	"sync"
-	text_template "text/template"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -22,10 +18,10 @@ type cache struct {
 	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
 	log       log.Logger
-	metrics   *metrics.Metrics
+	metrics   *metrics.State
 }
 
-func newCache(logger log.Logger, metrics *metrics.Metrics) *cache {
+func newCache(logger log.Logger, metrics *metrics.State) *cache {
 	return &cache{
 		states:  make(map[int64]map[string]map[string]*State),
 		log:     logger,
@@ -105,70 +101,6 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, la
 		return expanded
 	}
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
-}
-
-// templateCaptureValue represents each value in .Values in the annotations
-// and labels template.
-type templateCaptureValue struct {
-	Labels map[string]string
-	Value  float64
-}
-
-// String implements the Stringer interface to print the value of each RefID
-// in the template via {{ $values.A }} rather than {{ $values.A.Value }}.
-func (v templateCaptureValue) String() string {
-	return strconv.FormatFloat(v.Value, 'f', -1, 64)
-}
-
-func expandTemplate(name, text string, labels map[string]string, alertInstance eval.Result) (result string, resultErr error) {
-	name = "__alert_" + name
-	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + text
-	// It'd better to have no alert description than to kill the whole process
-	// if there's a bug in the template.
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			resultErr, ok = r.(error)
-			if !ok {
-				resultErr = fmt.Errorf("panic expanding template %v: %v", name, r)
-			}
-		}
-	}()
-
-	tmpl, err := text_template.New(name).Option("missingkey=error").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
-	}
-	var buffer bytes.Buffer
-	if err := tmpl.Execute(&buffer, struct {
-		Labels map[string]string
-		Values map[string]templateCaptureValue
-		Value  string
-	}{
-		Labels: labels,
-		Values: newTemplateCaptureValues(alertInstance.Values),
-		Value:  alertInstance.EvaluationString,
-	}); err != nil {
-		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
-	}
-	return buffer.String(), nil
-}
-
-func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[string]templateCaptureValue {
-	m := make(map[string]templateCaptureValue)
-	for k, v := range values {
-		var f float64
-		if v.Value != nil {
-			f = *v.Value
-		} else {
-			f = math.NaN()
-		}
-		m[k] = templateCaptureValue{
-			Labels: v.Labels,
-			Value:  f,
-		}
-	}
-	return m
 }
 
 func (c *cache) set(entry *State) {

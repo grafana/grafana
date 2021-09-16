@@ -15,7 +15,7 @@ import (
 // DashboardProvisioner is responsible for syncing dashboard from disk to
 // Grafana's database.
 type DashboardProvisioner interface {
-	Provision() error
+	Provision(ctx context.Context) error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
@@ -59,9 +59,9 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 
 // Provision scans the disk for dashboards and updates
 // the database with the latest versions of those dashboards.
-func (provider *Provisioner) Provision() error {
+func (provider *Provisioner) Provision(ctx context.Context) error {
 	for _, reader := range provider.fileReaders {
-		if err := reader.walkDisk(); err != nil {
+		if err := reader.walkDisk(ctx); err != nil {
 			if os.IsNotExist(err) {
 				// don't stop the provisioning service in case the folder is missing. The folder can appear after the startup
 				provider.log.Warn("Failed to provision config", "name", reader.Cfg.Name, "error", err)

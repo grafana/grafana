@@ -114,7 +114,7 @@ func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
 		}
 
 		// Get the Family declaration in the models.cue file...
-		pmod := imod.Value().LookupPath(cue.MakePath(cue.Str("Family")))
+		pmod := imod.Value().LookupPath(cue.MakePath(cue.Str("Panel")))
 		if !pmod.Exists() {
 			return fmt.Errorf("%s does not contain a declaration of its models at path 'Family'", path)
 		}

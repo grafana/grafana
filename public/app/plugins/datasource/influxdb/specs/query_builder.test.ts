@@ -178,6 +178,24 @@ describe('InfluxQueryBuilder', () => {
       expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 42`);
     });
 
+    it('should handle tag-value-contains-backslash-character getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: 'lab\\el', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 'lab\\\\el'`);
+    });
+
+    it('should handle tag-value-contains-single-quote-character getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: "lab'el", operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 'lab\\'el'`);
+    });
+
     it('should handle tag-value=emptry-string when getting measurements', () => {
       const builder = new InfluxQueryBuilder(
         { measurement: undefined, tags: [{ key: 'app', value: '', operator: '==' }] },

@@ -290,6 +290,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   getVariables() {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
+
+  isTemplateVariable(value: string) {
+    return this.getVariables().includes(value);
+  }
 }
 
 function hasQueryForType(query: AzureMonitorQuery): boolean {
