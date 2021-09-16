@@ -25,7 +25,7 @@ export interface MetricMetadata {
 type SetErrorFn = (source: string, error: AzureMonitorErrorish | undefined) => void;
 type OnChangeFn = (newQuery: AzureMonitorQuery) => void;
 
-type DataHook = (
+export type DataHook = (
   query: AzureMonitorQuery,
   datasource: Datasource,
   onChange: OnChangeFn,
@@ -97,7 +97,7 @@ export const useResourceGroups: DataHook = (query, datasource, onChange, setErro
       const results = await datasource.getResourceGroups(subscription);
       const options = results.map(toOption);
 
-      if (resourceGroup && !hasOption(options, resourceGroup)) {
+      if (isInvalidOption(resourceGroup, options, datasource.getVariables())) {
         onChange(setResourceGroup(query, undefined));
       }
 
@@ -121,7 +121,7 @@ export const useResourceTypes: DataHook = (query, datasource, onChange, setError
       const results = await datasource.getMetricDefinitions(subscription, resourceGroup);
       const options = results.map(toOption);
 
-      if (metricDefinition && !hasOption(options, metricDefinition)) {
+      if (isInvalidOption(metricDefinition, options, datasource.getVariables())) {
         onChange(setResourceType(query, undefined));
       }
 
@@ -145,7 +145,7 @@ export const useResourceNames: DataHook = (query, datasource, onChange, setError
       const results = await datasource.getResourceNames(subscription, resourceGroup, metricDefinition);
       const options = results.map(toOption);
 
-      if (resourceName && !hasOption(options, resourceName)) {
+      if (isInvalidOption(resourceName, options, datasource.getVariables())) {
         onChange(setResourceName(query, undefined));
       }
 
@@ -170,9 +170,9 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       const options = results.map(toOption);
 
       // Do some cleanup of the query state if need be
-      if ((!metricNamespace && options.length) || options.length === 1) {
+      if (!metricNamespace && options.length) {
         onChange(setMetricNamespace(query, options[0].value));
-      } else if (options[0] && metricNamespace && !hasOption(options, metricNamespace)) {
+      } else if (options[0] && isInvalidOption(metricNamespace, options, datasource.getVariables())) {
         onChange(setMetricNamespace(query, options[0].value));
       }
 
@@ -205,7 +205,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
 
       const options = results.map(toOption);
 
-      if (metricName && !hasOption(options, metricName)) {
+      if (isInvalidOption(metricName, options, datasource.getVariables())) {
         onChange(setMetricName(query, undefined));
       }
 
@@ -277,3 +277,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
 
   return metricMetadata;
 };
+
+function isInvalidOption(value: string | undefined, options: AzureMonitorOption[], templateVariables: string[]) {
+  return value && !templateVariables.includes(value) && !hasOption(options, value);
+}
