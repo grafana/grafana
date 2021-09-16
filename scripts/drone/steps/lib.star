@@ -122,8 +122,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'image': build_image,
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
-                'GOCACHE': '/opt/test/gocache',
-                'GOMODCACHE': '/opt/test/gomodcache',
             },
             'commands': download_grabpl_cmds + common_cmds,
         },
@@ -297,7 +295,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'test-backend' + enterprise2_suffix(edition),
+            'lint-backend',
         ],
         'environment': env,
         'commands': cmds,
