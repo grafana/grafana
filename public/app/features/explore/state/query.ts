@@ -37,7 +37,6 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
-import { mapValues } from 'lodash';
 
 //
 // Actions and Payloads
@@ -639,11 +638,9 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     let { relatedDataProviders } = action.payload;
     return {
       ...state,
-      relatedDataProviders: { ...state.relatedDataProviders, ...relatedDataProviders },
-      // clear previous data for newly loaded providers
-      relatedData: mapValues(state.relatedData, (value, key) => {
-        return key in relatedDataProviders ? undefined : value;
-      }),
+      relatedDataProviders,
+      // clear previous when providers are loaded
+      relatedData: {},
     };
   }
 
