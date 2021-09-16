@@ -38,6 +38,8 @@ steps:
       from_secret: tf_google_credentials
     GOCACHE: /opt/drone/gocache
     GOMODCACHE: /opt/drone/gomodcache
+  depends_on:
+  - initialize
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -62,7 +64,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -194,7 +196,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -662,7 +664,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -1034,7 +1036,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -1097,7 +1099,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.2
@@ -1610,7 +1612,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -1971,7 +1973,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -2034,7 +2036,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.2
@@ -2540,7 +2542,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -2872,7 +2874,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend
   image: grafana/build-container:1.4.2
@@ -2932,7 +2934,7 @@ steps:
   environment:
     CGO_ENABLED: 1
   depends_on:
-  - initialize
+  - restore-cache
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.2
@@ -3401,9 +3403,5 @@ name: secret
 get:
   path: infra/data/ci/test-drone-caching
   name: secret
-
----
-kind: signature
-hmac: 93f392b1e44f5b8d964f4627a7e6b9d2c3e6acf87e131090ffe08fd0178f6e80
 
 ...
