@@ -248,16 +248,8 @@ export interface TestReceiversResult {
 }
 
 export interface ExternalAlertmanagers {
-  activeAlertManagers: [
-    {
-      url: 'string';
-    }
-  ];
-  droppedAlertManagers: [
-    {
-      url: 'string';
-    }
-  ];
+  activeAlertManagers: Array<{ url: 'string' }>;
+  droppedAlertManagers: Array<{ url: 'string' }>;
 }
 
 export interface ExternalAlertmanagersResponse {

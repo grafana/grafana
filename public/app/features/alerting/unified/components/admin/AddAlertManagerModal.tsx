@@ -4,24 +4,17 @@ import { useDispatch } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 import { addExternalAlertmanagers } from '../../state/actions';
+import { login } from '../../../../../../../packages/grafana-e2e/src/flows';
 
 interface Props {
   onClose: () => void;
+  alertmanagers: Array<{ url: string }>;
 }
 
-export const AddAlertManagerModal: FC<Props> = ({ onClose }) => {
+export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const defaultValues: { alertmanagers: Array<{ url: string }> } = useMemo(() => {
-    return {
-      alertmanagers: [
-        {
-          url: '',
-        },
-      ],
-    };
-  }, []);
-
+  const defaultValues = { alertmanagers: [...alertmanagers, { url: '' }] };
   const modalTitle = (
     <div className={styles.modalTitle}>
       <Icon name="bell" className={styles.modalIcon} />
@@ -47,24 +40,27 @@ export const AddAlertManagerModal: FC<Props> = ({ onClose }) => {
                 <div className={styles.fieldArray}>
                   <div className={styles.bold}>Source url</div>
                   <div className={styles.muted}>Auth can be done via URL, eg. user:password@url</div>
-                  {fields.map((field, index) => (
-                    <div className={styles.inputRow} key={`${field}-${index}`}>
-                      <Input
-                        className={styles.input}
-                        defaultValue={field.url}
-                        {...register(`alertmanagers.${index}`)}
-                        placeholder="admin:admin@some.url.dev"
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => remove(index)}
-                        variant="destructive"
-                        className={styles.destroyInputRow}
-                      >
-                        <Icon name="trash-alt" />
-                      </Button>
-                    </div>
-                  ))}
+                  {fields.map((field, index) => {
+                    console.log(field);
+                    return (
+                      <div className={styles.inputRow} key={`${field.id}-${index}`}>
+                        <Input
+                          className={styles.input}
+                          defaultValue={field.url}
+                          {...register(`alertmanagers.${index}`)}
+                          placeholder="admin:admin@some.url.dev"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => remove(index)}
+                          variant="destructive"
+                          className={styles.destroyInputRow}
+                        >
+                          <Icon name="trash-alt" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                   <Button type="button" variant="secondary" onClick={() => append({ url: '' })}>
                     Add URL
                   </Button>

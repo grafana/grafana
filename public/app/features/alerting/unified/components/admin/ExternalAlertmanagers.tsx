@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,6 +20,10 @@ export const ExternalAlertmanagers = () => {
   useEffect(() => {
     dispatch(fetchExternalAlertmanagersAction());
   }, [dispatch]);
+
+  const onDelete = useCallback(() => {
+    // dispatch delete
+  }, []);
 
   return (
     <div>
@@ -43,7 +47,7 @@ export const ExternalAlertmanagers = () => {
           <thead>
             <tr>
               <th>Url</th>
-              <th style={{ width: '2%' }} />
+              <th style={{ width: '2%' }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -54,7 +58,9 @@ export const ExternalAlertmanagers = () => {
                   <td>
                     <HorizontalGroup>
                       <Icon name="pen" />
-                      <Icon name="trash-alt" />
+                      <Button type="button" onClick={onDelete}>
+                        <Icon name="trash-alt" />
+                      </Button>
                     </HorizontalGroup>
                   </td>
                 </tr>
@@ -63,7 +69,12 @@ export const ExternalAlertmanagers = () => {
           </tbody>
         </table>
       )}
-      {modalOpen && <AddAlertManagerModal onClose={() => setModalState(false)} />}
+      {modalOpen && (
+        <AddAlertManagerModal
+          onClose={() => setModalState(false)}
+          alertmanagers={alertmanagers ? alertmanagers.data.activeAlertManagers : [{ url: '' }]}
+        />
+      )}
     </div>
   );
 };
