@@ -40,6 +40,7 @@ steps:
     endpoint: https://storage.googleapis.com
     json_key:
       from_secret: tf_google_credentials
+    region: us-east4
     restore: true
     secret_key:
       from_secret: secret
@@ -117,6 +118,7 @@ steps:
     - /opt/drone/gocache
     - /opt/drone/gomodcache
     rebuild: true
+    region: us-east4
     secret_key:
       from_secret: secret
   when:
@@ -3578,6 +3580,6 @@ get:
 
 ---
 kind: signature
-hmac: 180800318a8c84a81b2f7c6ddb0918a55965673eb0ffeabceac84626b1618a39
+hmac: 75348eefe4696cb306530c01700a3e5e02f2a49df59e002dce3b2fda6649f078
 
 ...
