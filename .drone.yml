@@ -90,11 +90,14 @@ steps:
   settings:
     bucket: test-julien
     mount:
-    - /opt/drone/yarncache
+    - ./node_modules
     rebuild: true
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
+  volumes:
+  - name: cache
+    path: /cache
   when:
     event:
     - pull_request
@@ -160,6 +163,6 @@ get:
 
 ---
 kind: signature
-hmac: ecc0c1e33790ddfe6edadd947d20d0e7f6568eb5f2c9c94a6bc3d07b056694ad
+hmac: d1b0d3f440017eefacec886553ec6b7e2bcf61c8f08e683143a5019f2bada025
 
 ...
