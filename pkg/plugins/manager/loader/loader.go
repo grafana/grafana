@@ -64,8 +64,8 @@ func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.Plugin,
 	return loadedPlugins[0], nil
 }
 
-func (l *Loader) LoadAll(path []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find(path)
+func (l *Loader) LoadAll(paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
 		logger.Error("plugin finder encountered an error", "err", err)
 	}
@@ -101,6 +101,10 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 			return nil, err
 		}
 
+		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
+			logger.Warn("Skipping plugin as it's a duplicate", "id", plugin.ID)
+			continue
+		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
@@ -279,12 +283,6 @@ type foundPlugins map[string]plugins.JSONData
 func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}) {
 	pluginsByID := make(map[string]struct{})
 	for path, scannedPlugin := range *f {
-		if _, dupe := pluginsByID[scannedPlugin.ID]; dupe {
-			logger.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.ID)
-			delete(*f, path)
-			continue
-		}
-
 		if _, existing := existingPlugins[scannedPlugin.ID]; existing {
 			logger.Debug("Skipping plugin as it's already installed", "plugin", scannedPlugin.ID)
 			delete(*f, path)

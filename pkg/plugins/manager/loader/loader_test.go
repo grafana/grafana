@@ -221,6 +221,80 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 }
 
+func TestLoader_loadDuplicatePlugins(t *testing.T) {
+	t.Run("Load identical plugin folders", func(t *testing.T) {
+		pluginDir, err := filepath.Abs("../testdata/test-app")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		expected := []*plugins.Plugin{
+			{
+				JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.PluginInfo{
+						Author: plugins.PluginInfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.PluginInfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.PluginLogos{
+							Small: "public/plugins/test-app/img/logo_small.png",
+							Large: "public/plugins/test-app/img/logo_large.png",
+						},
+						Screenshots: []plugins.PluginScreenshots{
+							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.PluginDependencies{
+						GrafanaVersion: "3.x.x",
+						Plugins: []plugins.PluginDependencyItem{
+							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
+							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+						},
+					},
+					Includes: []*plugins.PluginInclude{
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+					},
+					Backend: false,
+				},
+				PluginDir:     pluginDir,
+				Class:         plugins.External,
+				Signature:     plugins.SignatureValid,
+				SignatureType: plugins.GrafanaType,
+				SignatureOrg:  "Grafana Labs",
+				Module:        "plugins/test-app/module",
+				BaseURL:       "public/plugins/test-app",
+			},
+		}
+
+		cfg := &setting.Cfg{
+			PluginsPath: filepath.Dir(pluginDir),
+		}
+
+		l := New(nil, nil, cfg)
+
+		got, err := l.LoadAll([]string{pluginDir, pluginDir}, map[string]struct{}{})
+		assert.NoError(t, err)
+
+		if !cmp.Equal(got, expected, compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		}
+	})
+}
+
 func TestLoader_loadNestedPlugins(t *testing.T) {
 	parentDir, err := filepath.Abs("../")
 	if err != nil {
