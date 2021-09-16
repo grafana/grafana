@@ -115,7 +115,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       // the more expensive, more proper/thorough way to do this is to force all axes to recalc: plot?.redraw(false, true);
       if (ctx.plot && typeof this.props.data[0][0] === 'string') {
         //@ts-ignore
-        plot.axes[0]._values = this.props.data[0];
+        ctx.plot.axes[0]._values = this.props.data[0];
       }
     }
   }
