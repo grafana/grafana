@@ -3,8 +3,11 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
+  changeAutoLogsVolume,
+  storeAutoLogsVolumeAction,
   clearCache,
   importQueries,
+  loadLogsVolumeData,
   queryReducer,
   runQueries,
   scanStartAction,
@@ -69,6 +72,22 @@ const defaultInitialState = {
   },
 };
 
+function setupQueryResponse(state: StoreState) {
+  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+    of({
+      error: { message: 'test error' },
+      data: [
+        new MutableDataFrame({
+          fields: [{ name: 'test', values: new ArrayVector() }],
+          meta: {
+            preferredVisualisationType: 'graph',
+          },
+        }),
+      ],
+    } as DataQueryResponse)
+  );
+}
+
 describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
     setTimeSrv({
@@ -77,19 +96,7 @@ describe('runQueries', () => {
     const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
-      of({
-        error: { message: 'test error' },
-        data: [
-          new MutableDataFrame({
-            fields: [{ name: 'test', values: new ArrayVector() }],
-            meta: {
-              preferredVisualisationType: 'graph',
-            },
-          }),
-        ],
-      } as DataQueryResponse)
-    );
+    setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
@@ -301,6 +308,96 @@ describe('reducer', () => {
       await dispatch(clearCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([]);
+    });
+  });
+
+  describe('logs volume', () => {
+    let dispatch: ThunkDispatch, getState: () => StoreState;
+
+    beforeEach(() => {
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            autoLoadLogsVolume: false,
+            datasourceInstance: {
+              query: jest.fn(),
+              meta: {
+                id: 'something',
+              },
+              getLogsVolumeDataProvider: () => {
+                return {
+                  getData: () =>
+                    of(
+                      { state: LoadingState.Loading, error: undefined, data: [] },
+                      { state: LoadingState.Done, error: undefined, data: [{}] }
+                    ),
+                };
+              },
+            },
+          },
+        },
+      });
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+    });
+
+    it('should update auto load logs volume', async () => {
+      await dispatch(storeAutoLogsVolumeAction({ exploreId: ExploreId.left, autoLoadLogsVolume: true }));
+      expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(true);
+    });
+
+    it('should not load logs volume automatically after running the query if auto-loading is disbaled', async () => {
+      setupQueryResponse(getState());
+      getState().explore[ExploreId.left].autoLoadLogsVolume = false;
+
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
+    });
+
+    it('should load logs volume automatically after running the query if auto-loading is enabled', async () => {
+      setupQueryResponse(getState());
+      getState().explore[ExploreId.left].autoLoadLogsVolume = true;
+
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [{}],
+      });
+    });
+
+    it('when auto load is enabled it should load data', async () => {
+      setupQueryResponse(getState());
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
+
+      await dispatch(changeAutoLogsVolume(ExploreId.left, true));
+      expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(true);
+      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [{}],
+      });
+    });
+
+    it('should allow loading logs volume on demand', async () => {
+      setupQueryResponse(getState());
+      getState().explore[ExploreId.left].autoLoadLogsVolume = false;
+
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [{}],
+      });
     });
   });
 });

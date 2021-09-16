@@ -113,6 +113,7 @@ export interface StoreLogsVolumeDataProvider {
 export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
+
 export const updateLogsVolumeDataAction = createAction<{
   exploreId: ExploreId;
   logsVolumeData: DataQueryResponse;
@@ -183,8 +184,8 @@ export interface ClearCachePayload {
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
-export const changeAutoLogsVolumeAction = createAction<{ exploreId: ExploreId; autoLoadLogsVolume: boolean }>(
-  'explore/changeAutoLogsVolumeAction'
+export const storeAutoLogsVolumeAction = createAction<{ exploreId: ExploreId; autoLoadLogsVolume: boolean }>(
+  'explore/storeAutoLogsVolumeAction'
 );
 
 //
@@ -499,7 +500,7 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
 
 export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(changeAutoLogsVolumeAction({ exploreId, autoLoadLogsVolume }));
+    dispatch(storeAutoLogsVolumeAction({ exploreId, autoLoadLogsVolume }));
     const state = getState().explore[exploreId]!;
 
     // load logs volume automatically after switching
@@ -722,7 +723,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (changeAutoLogsVolumeAction.match(action)) {
+  if (storeAutoLogsVolumeAction.match(action)) {
     const { autoLoadLogsVolume } = action.payload;
     return {
       ...state,
