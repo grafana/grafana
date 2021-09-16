@@ -128,6 +128,7 @@ func (i *Initializer) InitializeWithFactory(p *plugins.Plugin, factory backendpl
 		p.RegisterClient(f)
 	} else {
 		logger.Warn("Could not initialize core plugin process", "pluginID", p.ID)
+		return fmt.Errorf("could not initialize plugin %s", p.ID)
 	}
 
 	return nil
@@ -164,19 +165,19 @@ func (i *Initializer) setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.
 	}
 }
 
-func pluginLogoURL(pluginType plugins.Type, path, baseUrl string) string {
+func pluginLogoURL(pluginType plugins.Type, path, baseURL string) string {
 	if path == "" {
 		return defaultLogoPath(pluginType)
 	}
 
-	return evalRelativePluginURLPath(path, baseUrl, pluginType)
+	return evalRelativePluginURLPath(path, baseURL, pluginType)
 }
 
 func defaultLogoPath(pluginType plugins.Type) string {
 	return "public/img/icn-" + string(pluginType) + ".svg"
 }
 
-func evalRelativePluginURLPath(pathStr, baseUrl string, pluginType plugins.Type) string {
+func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type) string {
 	if pathStr == "" {
 		return ""
 	}
@@ -187,11 +188,11 @@ func evalRelativePluginURLPath(pathStr, baseUrl string, pluginType plugins.Type)
 	}
 
 	// is set as default or has already been prefixed with base path
-	if pathStr == defaultLogoPath(pluginType) || strings.HasPrefix(pathStr, baseUrl) {
+	if pathStr == defaultLogoPath(pluginType) || strings.HasPrefix(pathStr, baseURL) {
 		return pathStr
 	}
 
-	return path.Join(baseUrl, pathStr)
+	return path.Join(baseURL, pathStr)
 }
 
 func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
@@ -263,9 +264,9 @@ func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
 	return env
 }
 
-func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
+func getPluginSettings(pluginID string, cfg *setting.Cfg) pluginSettings {
 	ps := pluginSettings{}
-	for k, v := range cfg.PluginSettings[plugID] {
+	for k, v := range cfg.PluginSettings[pluginID] {
 		if k == "path" || strings.ToLower(k) == "id" {
 			continue
 		}
