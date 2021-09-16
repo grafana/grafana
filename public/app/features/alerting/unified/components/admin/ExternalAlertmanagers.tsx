@@ -4,14 +4,14 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
-import { fetchExternalAlertmanagersAction } from '../../state/actions';
+import { addExternalAlertmanagers, fetchExternalAlertmanagersAction } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { initialAsyncRequestState } from '../../utils/redux';
 
 export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const [modalOpen, setModalState] = useState<boolean>(false);
+  const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
   const externalAlertManagers = useSelector((state: StoreState) => state.unifiedAlerting.externalAlertManagers);
 
   const { result: alertmanagers, loading: isLoadingAlertmanagers, error: loadingError } =
@@ -21,9 +21,45 @@ export const ExternalAlertmanagers = () => {
     dispatch(fetchExternalAlertmanagersAction());
   }, [dispatch]);
 
-  const onDelete = useCallback(() => {
-    // dispatch delete
-  }, []);
+  const onDelete = useCallback(
+    (index: number) => {
+      // to delete we need to filter the alertmanager from the list and repost
+      const newList = alertmanagers!.data.activeAlertManagers
+        .filter((am, i) => i !== index)
+        .map((am) => {
+          return am.url;
+        });
+      dispatch(addExternalAlertmanagers(newList));
+    },
+    [alertmanagers, dispatch]
+  );
+
+  const onEdit = useCallback(() => {
+    const ams = alertmanagers ? [...alertmanagers.data.activeAlertManagers] : [{ url: '' }];
+    setModalState((state) => ({
+      ...state,
+      open: true,
+      payload: ams,
+    }));
+  }, [setModalState, alertmanagers]);
+
+  const onAdd = useCallback(() => {
+    setModalState((state) => {
+      const ams = alertmanagers ? [...alertmanagers.data.activeAlertManagers, { url: '' }] : [{ url: '' }];
+      return {
+        ...state,
+        open: true,
+        payload: ams,
+      };
+    });
+  }, [alertmanagers]);
+
+  const onClose = useCallback(() => {
+    setModalState((state) => ({
+      ...state,
+      open: false,
+    }));
+  }, [setModalState]);
 
   return (
     <div>
@@ -33,7 +69,7 @@ export const ExternalAlertmanagers = () => {
         input below to discover alertmanagers.
       </div>
       <div className={styles.actions}>
-        <Button type="button" onClick={() => setModalState(true)}>
+        <Button type="button" onClick={onAdd}>
           Add Alertmanager
         </Button>
       </div>
@@ -57,8 +93,10 @@ export const ExternalAlertmanagers = () => {
                   <td className="link-td">{am.url}</td>
                   <td>
                     <HorizontalGroup>
-                      <Icon name="pen" />
-                      <Button type="button" onClick={onDelete}>
+                      <Button variant="secondary" type="button" onClick={onEdit}>
+                        <Icon name="pen" />
+                      </Button>
+                      <Button variant="secondary" type="button" onClick={() => onDelete(index)}>
                         <Icon name="trash-alt" />
                       </Button>
                     </HorizontalGroup>
@@ -69,12 +107,7 @@ export const ExternalAlertmanagers = () => {
           </tbody>
         </table>
       )}
-      {modalOpen && (
-        <AddAlertManagerModal
-          onClose={() => setModalState(false)}
-          alertmanagers={alertmanagers ? alertmanagers.data.activeAlertManagers : [{ url: '' }]}
-        />
-      )}
+      {modalState.open && <AddAlertManagerModal onClose={onClose} alertmanagers={modalState.payload} />}
     </div>
   );
 };

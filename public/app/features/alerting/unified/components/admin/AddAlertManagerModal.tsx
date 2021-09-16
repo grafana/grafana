@@ -2,9 +2,8 @@ import React, { FC, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
 import { useDispatch } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Field, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 import { addExternalAlertmanagers } from '../../state/actions';
-import { login } from '../../../../../../../packages/grafana-e2e/src/flows';
 
 interface Props {
   onClose: () => void;
@@ -14,7 +13,13 @@ interface Props {
 export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const defaultValues = { alertmanagers: [...alertmanagers, { url: '' }] };
+  const defaultValues = useMemo(
+    () => ({
+      alertmanagers: alertmanagers,
+    }),
+    [alertmanagers]
+  );
+
   const modalTitle = (
     <div className={styles.modalTitle}>
       <Icon name="bell" className={styles.modalIcon} />
@@ -23,7 +28,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
   );
 
   const onSubmit = (values: Record<string, any>) => {
-    dispatch(addExternalAlertmanagers(values.alertmanagers));
+    dispatch(addExternalAlertmanagers(values.alertmanagers.map((am) => am.url)));
     onClose();
   };
 
@@ -33,7 +38,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
         We use a service discovery method to find existing Alertmanagers for a given URL.
       </div>
       <Form onSubmit={onSubmit} defaultValues={defaultValues}>
-        {({ register, control }) => (
+        {({ register, control, errors }) => (
           <div>
             <FieldArray control={control} name="alertmanagers">
               {({ fields, append, remove }) => (
@@ -41,24 +46,29 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
                   <div className={styles.bold}>Source url</div>
                   <div className={styles.muted}>Auth can be done via URL, eg. user:password@url</div>
                   {fields.map((field, index) => {
-                    console.log(field);
                     return (
-                      <div className={styles.inputRow} key={`${field.id}-${index}`}>
+                      <Field
+                        invalid={!!errors?.alertmanagers?.[index]}
+                        error="Field is required"
+                        key={`${field.id}-${index}`}
+                      >
                         <Input
                           className={styles.input}
                           defaultValue={field.url}
-                          {...register(`alertmanagers.${index}`)}
+                          {...register(`alertmanagers.${index}.url`, { required: true })}
                           placeholder="admin:admin@some.url.dev"
+                          addonAfter={
+                            <Button
+                              type="button"
+                              onClick={() => remove(index)}
+                              variant="destructive"
+                              className={styles.destroyInputRow}
+                            >
+                              <Icon name="trash-alt" />
+                            </Button>
+                          }
                         />
-                        <Button
-                          type="button"
-                          onClick={() => remove(index)}
-                          variant="destructive"
-                          className={styles.destroyInputRow}
-                        >
-                          <Icon name="trash-alt" />
-                        </Button>
-                      </div>
+                      </Field>
                     );
                   })}
                   <Button type="button" variant="secondary" onClick={() => append({ url: '' })}>
