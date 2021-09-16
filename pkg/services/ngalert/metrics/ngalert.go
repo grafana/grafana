@@ -52,6 +52,7 @@ type Scheduler struct {
 }
 
 type MultiOrgAlertmanager struct {
+	Registerer               prometheus.Registerer
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 	registries               *OrgRegistries
@@ -178,6 +179,7 @@ func newStateMetrics(r prometheus.Registerer) *State {
 
 func newMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
 	return &MultiOrgAlertmanager{
+		Registerer: r,
 		registries: NewOrgRegistries(),
 		DiscoveredConfigurations: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,

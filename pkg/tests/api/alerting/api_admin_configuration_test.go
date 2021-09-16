@@ -21,9 +21,9 @@ import (
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:              []string{"ngalert"},
-		DisableAnonymous:                  true,
-		NGAlertAdminConfigIntervalSeconds: 2,
+		EnableFeatureToggles:           []string{"ngalert"},
+		DisableAnonymous:               true,
+		NGAlertAdminConfigPollInterval: 2 * time.Second,
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
