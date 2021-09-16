@@ -7,18 +7,24 @@ weight = 100
 
 # Troubleshoot image rendering
 
-In order to troubleshoot the image renderer, you can access different kind of logs:
+In this section, you'll learn how to enable logging for the image renderer and you'll find the most common issues.
 
-- Enable debug log messages for rendering in the Grafana configuration file and inspect the Grafana server log.
+## Enable debug logging
+
+To troubleshoot the image renderer, different kind of logs are available.
+
+You can enable debug log messages for rendering in the Grafana configuration file and inspect the Grafana server logs.
 
 ```bash
 [log]
 filters = rendering:debug
 ```
 
-- Increase the [log level]({{< relref "./#log-level" >}}) of the image renderer.
-- Enable [verbose logging]({{< relref "./#verbose-logging" >}}) for the image renderer.
-- [Capture headless browser output]({{< relref "./#capture-browser-output" >}}).
+You can also enable more logs in image renderer service itself by:
+
+- Increasing the [log level]({{< relref "./#log-level" >}}).
+- Enabling [verbose logging]({{< relref "./#verbose-logging" >}}).
+- [Capturing headless browser output]({{< relref "./#capture-browser-output" >}}).
 
 ## Missing libraries
 
