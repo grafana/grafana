@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"xorm.io/builder"
 
@@ -39,10 +40,11 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAle
 func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery) ([]*models.AlertConfiguration, error) {
 	var result []*models.AlertConfiguration
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		condition := builder.In("id",
-			builder.Select("MAX(id)").From("alert_configuration").Where(
-				builder.Between{ Col: "org_id", LessVal: query.MinOrgId, MoreVal: query.MaxOrgId }).GroupBy("org_id"))
-		if err := sess.Table("alert_configuration").Where(condition).Find(&result); err != nil {
+		subQuery := builder.Select("MAX(id)").From("alert_configuration").GroupBy("org_id")
+		if query.MinOrgId != math.MinInt64 || query.MaxOrgId != math.MaxInt64 {
+			subQuery.Where(builder.Between{Col: "org_id", LessVal: query.MinOrgId, MoreVal: query.MaxOrgId})
+		}
+		if err := sess.Table("alert_configuration").Where(builder.In("id", subQuery)).Find(&result); err != nil {
 			return err
 		}
 		return nil

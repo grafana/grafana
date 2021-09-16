@@ -10,7 +10,8 @@ import (
 )
 
 type FakeConfigStore struct {
-	configs map[int64]*models.AlertConfiguration
+	configs      map[int64]*models.AlertConfiguration
+	opsRecording []interface{} //keeps all queries the store was called
 }
 
 func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery) ([]*models.AlertConfiguration, error) {
@@ -25,6 +26,7 @@ func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(ctx context.Cont
 }
 
 func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
+	f.opsRecording = append(f.opsRecording, query)
 	var ok bool
 	query.Result, ok = f.configs[query.OrgID]
 	if !ok {
@@ -35,6 +37,7 @@ func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLa
 }
 
 func (f *FakeConfigStore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	f.opsRecording = append(f.opsRecording, cmd)
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
@@ -46,6 +49,7 @@ func (f *FakeConfigStore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertman
 }
 
 func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+	f.opsRecording = append(f.opsRecording, cmd)
 	f.configs[cmd.OrgID] = &models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,

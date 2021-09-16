@@ -421,6 +421,7 @@ type Cfg struct {
 	// Unified Alerting
 	AdminConfigPollInterval        time.Duration
 	AlertmanagerConfigPollInterval time.Duration
+	AlertmanagerConfigChunkSize    uint
 	HAListenAddr                   string
 	HAAdvertiseAddr                string
 	HAPeers                        []string

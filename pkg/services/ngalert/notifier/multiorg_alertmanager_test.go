@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"math"
 	"math/rand"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
-	"io/ioutil"
 	"os"
 
 	"github.com/golang/mock/gomock"
@@ -224,6 +226,119 @@ func TestMultiOrgAlertmanager_addOrUpdateConfiguration(t *testing.T) {
 
 		require.NotEqual(t, before, after, "the configuration was not applied but should have been")
 	})
+}
+
+func TestSliceInChunks(t *testing.T) {
+	orgs := make([]int64, 100)
+	for i := 0; i < cap(orgs); i++ {
+		orgs[i] = int64(i)
+	}
+	shuffled := make([]int64, len(orgs))
+	copy(shuffled, orgs)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+
+	chunks := sliceOrgsInChunks(shuffled, 0)
+	require.Len(t, chunks, 1)
+	require.Equal(t, chunks[0], &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: math.MinInt64, MaxOrgId: math.MaxInt64})
+
+	require.False(t, sort.SliceIsSorted(shuffled, func(i, j int) bool {
+		return shuffled[i] < shuffled[j]
+	}), "The array is not supposed to be sorted on 0 chunk size")
+
+	chunkSize := rand.Intn(3) + 1
+	var from int
+	max := len(orgs)
+	expected := make([]*models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery, 0)
+
+	for from < max {
+		to := from + chunkSize
+		if to > max {
+			to = max
+		}
+		chunk := orgs[from:to]
+		q := &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: chunk[0], MaxOrgId: chunk[len(chunk)-1]}
+		expected = append(expected, q)
+		from = to
+	}
+
+	chunks = sliceOrgsInChunks(shuffled, int64(chunkSize))
+	require.ElementsMatch(t, expected, chunks)
+
+	require.True(t, sort.SliceIsSorted(shuffled, func(i, j int) bool {
+		return shuffled[i] < shuffled[j]
+	}))
+}
+
+func TestMultiOrgAlertmanager_addOrUpdateAlertManagerConfigurations(t *testing.T) {
+	orgsToGenerate := 20
+
+	kvStore := newFakeKVStore(t)
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
+
+	configStore := &FakeConfigStore{
+		configs: map[int64]*models.AlertConfiguration{},
+	}
+
+	chunkSize := rand.Intn(3) + 2
+	cfg := &setting.Cfg{DataPath: t.TempDir(), AlertmanagerConfigChunkSize: uint(chunkSize)}
+
+	mam, initErr := NewMultiOrgAlertmanager(cfg, configStore, nil, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, initErr)
+
+	orgs := make([]int64, 0, orgsToGenerate)
+
+	for i := 0; i < orgsToGenerate; i++ {
+		config := generateFakeAlertConfiguration()
+		_, found := configStore.configs[config.OrgID]
+		if found {
+			i--
+			continue
+		}
+		orgs = append(orgs, config.OrgID)
+		configStore.configs[config.OrgID] = config
+	}
+
+	sortedOrgs := make([]int64, orgsToGenerate)
+	copy(sortedOrgs, orgs)
+	sort.Slice(sortedOrgs, func(i, j int) bool {
+		return sortedOrgs[i] < sortedOrgs[j]
+	})
+
+	chunkRange := make([]*models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery, 0, orgsToGenerate/chunkSize)
+	var from int
+	max := len(sortedOrgs)
+	for from < max {
+		to := from + chunkSize
+		if to > max {
+			to = max
+		}
+		chunk := sortedOrgs[from:to]
+		q := &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: chunk[0], MaxOrgId: chunk[len(chunk)-1]}
+		chunkRange = append(chunkRange, q)
+		from = to
+	}
+
+	found, err := mam.addOrUpdateAlertManagerConfigurations(context.Background(), orgs)
+	require.NoError(t, err)
+
+	for _, org := range sortedOrgs {
+		require.Contains(t, found, org)
+		require.Contains(t, mam.alertmanagers, org)
+	}
+
+	getQueries := make([]*models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery, 0, len(chunkRange))
+
+	for _, op := range configStore.opsRecording {
+		switch v := op.(type) {
+		case *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery:
+			getQueries = append(getQueries, v)
+		}
+	}
+
+	require.ElementsMatch(t, chunkRange, getQueries)
 }
 
 func generateFakeAlertConfiguration() *models.AlertConfiguration {

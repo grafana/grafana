@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sort"
 	"sync"
 	"time"
 
@@ -126,9 +127,8 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	return nil
 }
 
-//getLatestConfigs retrieves the latest Alertmanager configuration for every organization and returns them as a map where the key is ID of an organization
-func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int64]*models.AlertConfiguration, error) {
-	query := &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: math.MinInt64, MaxOrgId: math.MaxInt}
+//getLatestConfigs retrieves the latest AlertManager configuration for every organization and returns them as a map where the key is ID of an organization
+func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery) (map[int64]*models.AlertConfiguration, error) {
 	configs, err := moa.configStore.GetAllLatestAlertmanagerConfiguration(ctx, query)
 	if err != nil {
 		return nil, err
@@ -176,21 +176,58 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 //NOTE this is an internal method, and it is not supposed to be called without locked mutex alertmanagersMtx
 func (moa *MultiOrgAlertmanager) addOrUpdateAlertManagerConfigurations(ctx context.Context, orgIDs []int64) (map[int64]struct{}, error) {
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
-	dbConfigs, err := moa.getLatestConfigs(ctx)
-	if err != nil {
-		moa.logger.Error("failed to load Alertmanager configurations", "err", err)
-		return nil, err
-	}
-	for _, orgID := range orgIDs {
-		orgsFound[orgID] = struct{}{}
-		maybeDbConfig := dbConfigs[orgID]
-		err = moa.addOrUpdateAlertmanager(orgID, maybeDbConfig)
+
+	//process organizations in chunks of constant size. This will limit the amount of data requested from the database by a single query
+	chunks := sliceOrgsInChunks(orgIDs, int64(moa.settings.AlertmanagerConfigChunkSize))
+
+	for _, query := range chunks {
+		dbConfigs, err := moa.getLatestConfigs(ctx, query)
 		if err != nil {
-			moa.logger.Error("unable to add or update configuration of Alertmanager", "org", orgID, "err", err)
+			moa.logger.Error("failed to load Alertmanager configurations", "err", err)
+			return nil, err
+		}
+
+		for _, orgID := range orgIDs {
+			orgsFound[orgID] = struct{}{}
+			maybeDbConfig := dbConfigs[orgID]
+			err = moa.addOrUpdateAlertmanager(orgID, maybeDbConfig)
+			if err != nil {
+				moa.logger.Error("unable to add or update configuration of Alertmanager", "org", orgID, "err", err)
+			}
 		}
 	}
 
 	return orgsFound, nil
+}
+
+// sliceOrgsInChunks slices a collection of organization IDs to chunks of specific size. The chunk is represented by a query with minimum and maximum organization ID.
+// before slicing it sorts the array of orgs to enforce the proper order.
+// result is a list of queries to database. If chunkSize is 0, the result is a slice of 1 query that covers all range of IDs
+func sliceOrgsInChunks(orgIDs []int64, chunkSize int64) []*models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery {
+	//if chunk size is 0, request all records at once
+	if chunkSize == 0 {
+		q := &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: math.MinInt64, MaxOrgId: math.MaxInt}
+		return []*models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{q}
+	}
+
+	result := make([]*models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery, 0, (int64(len(orgIDs))/chunkSize)+1)
+
+	//make sure that the organizations are sorted because we rely on that below
+	sort.Slice(orgIDs, func(i, j int) bool {
+		return orgIDs[i] < orgIDs[j]
+	})
+
+	var from int64
+	max := int64(len(orgIDs))
+	for from < max {
+		to := from + chunkSize
+		if to > max {
+			to = max
+		}
+		result = append(result, &models.GetLatestAlertmanagerConfigurationsForManyOrganizationsQuery{MinOrgId: orgIDs[from], MaxOrgId: orgIDs[to-1]})
+		from = to
+	}
+	return result
 }
 
 // addOrUpdateAlertmanager gets an instance of Alertmanager that serves a specific orgID from alertmanagers, and applies a new configuration.
