@@ -3,10 +3,11 @@ package response
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -26,6 +27,17 @@ func CreateNormalResponse(header http.Header, body []byte, status int) *NormalRe
 		body:   bytes.NewBuffer(body),
 		status: status,
 	}
+}
+
+// OverrideError can be used to override default behaviour of wrapping all errors in generic error message and 500
+// status
+type OverrideError struct {
+	Status     int
+	Err        error
+}
+
+func (e *OverrideError) Error() string {
+	return e.Err.Error()
 }
 
 type NormalResponse struct {
@@ -177,6 +189,8 @@ func Success(message string) *NormalResponse {
 // Error creates an error response.
 func Error(status int, message string, err error) *NormalResponse {
 	data := make(map[string]interface{})
+	var resp *NormalResponse
+	var responseStatus = status
 
 	switch status {
 	case 404:
@@ -189,13 +203,19 @@ func Error(status int, message string, err error) *NormalResponse {
 		data["message"] = message
 	}
 
-	if err != nil {
-		if setting.Env != setting.Prod {
-			data["error"] = err.Error()
+	var overrideError *OverrideError
+	if errors.As(err, &overrideError) {
+		responseStatus = overrideError.Status
+		data["error"] = overrideError.Error()
+	} else {
+		if err != nil {
+			if setting.Env != setting.Prod {
+				data["error"] = err.Error()
+			}
 		}
 	}
 
-	resp := JSON(status, data)
+	resp = JSON(responseStatus, data)
 
 	if err != nil {
 		resp.errMessage = message

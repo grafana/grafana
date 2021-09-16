@@ -1,8 +1,20 @@
 import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
-import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+import { from, lastValueFrom, merge, Observable, of, throwError, timer, zip } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  finalize,
+  map,
+  mergeMap,
+  repeat,
+  retryWhen,
+  scan,
+  share,
+  takeWhile,
+  tap,
+} from 'rxjs/operators';
 import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
@@ -158,8 +170,40 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
+    const retryStrategy = ({
+      maxRetryAttempts = 3,
+      scalingDuration = 1000,
+    }: {
+      maxRetryAttempts?: number;
+      scalingDuration?: number;
+    } = {}) => (attempts: Observable<any>) => {
+      return attempts.pipe(
+        mergeMap((error, i) => {
+          const isLimitError = typeof error === 'string' && error.includes('LimitExceededException');
+          if (!isLimitError) {
+            return throwError(error);
+          }
+
+          const retryAttempt = i + 1;
+          if (retryAttempt > maxRetryAttempts) {
+            return throwError(error);
+          }
+          console.log(`Attempt ${retryAttempt}: retrying in ${retryAttempt * scalingDuration}ms`);
+          // retry after 1s, 2s, etc...
+          return timer(retryAttempt * scalingDuration);
+        }),
+        finalize(() => console.log('We are done!'))
+      );
+    };
+
     // This first starts the query which returns queryId which can be used to retrieve results.
     return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
+      retryWhen(
+        retryStrategy({
+          maxRetryAttempts: 1,
+          scalingDuration: 1000,
+        })
+      ),
       mergeMap((dataFrames) =>
         // This queries for the results
         this.logsQuery(

@@ -95,7 +95,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", subType, err)
 	}
 
 	return data, nil
@@ -218,6 +218,10 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
+			return nil, &response.OverrideError{Status: 400, Err: err}
+		}
 		return nil, err
 	}
 
