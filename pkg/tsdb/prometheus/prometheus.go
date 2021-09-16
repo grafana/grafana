@@ -169,7 +169,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		case Range:
 			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				return &result, fmt.Errorf("error: %v, for query: %s", err, query.Expr)
+				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
 
 		default:
