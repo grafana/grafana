@@ -411,8 +411,6 @@ def restore_cache_step():
         'name': 'restore-cache',
         'pull': 'always',
         'environment': {
-            'GOCACHE': '/opt/drone/gocache',
-            'GOMODCACHE': '/opt/drone/gomodcache',
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
@@ -430,16 +428,13 @@ def rebuild_cache_step():
         'name': 'rebuild-cache',
         'pull': 'always',
         'environment': {
-            'GOCACHE': '/opt/drone/gocache',
-            'GOMODCACHE': '/opt/drone/gomodcache',
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
          },
          'settings': {
             'bucket': 'test-julien',
             'rebuild': 'true',
             'mount': [
-                '/opt/drone/gocache',
-                '/opt/drone/gomodcache',
+                '/opt/drone/yarncache',
              ],
          },
          'depends_on': [

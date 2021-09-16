@@ -27,20 +27,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: restore-cache
-  pull: always
-  image: homerovalle/drone-gcs-cache
-  settings:
-    bucket: test-julien
-    restore: true
-  environment:
-    GCS_CACHE_JSON_KEY:
-      from_secret: tf_google_credentials
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.2
   commands:
@@ -56,6 +42,18 @@ steps:
   depends_on:
   - initialize
 
+- name: restore-cache
+  pull: always
+  image: homerovalle/drone-gcs-cache
+  settings:
+    bucket: test-julien
+    restore: true
+  environment:
+    GCS_CACHE_JSON_KEY:
+      from_secret: tf_google_credentials
+  depends_on:
+  - initialize
+
 - name: lint-backend
   image: grafana/build-container:1.4.2
   commands:
@@ -66,19 +64,13 @@ steps:
   depends_on:
   - restore-cache
 
-- name: test-backend
+- name: test-frontend
   image: grafana/build-container:1.4.2
   commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - lint-backend
-
-- name: build-backend
-  image: grafana/build-container:1.4.2
-  commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
+  - yarn cache list
+  - yarn run ci:test-frontend
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - lint-backend
 
@@ -88,26 +80,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - lint-backend
-
-- name: rebuild-cache
-  pull: always
-  image: homerovalle/drone-gcs-cache
-  settings:
-    bucket: test-julien
-    mount:
-    - /opt/drone/gocache
-    - /opt/drone/gomodcache
-    rebuild: true
-  environment:
-    GCS_CACHE_JSON_KEY:
-      from_secret: tf_google_credentials
-    GOCACHE: /opt/drone/gocache
-    GOMODCACHE: /opt/drone/gomodcache
-  when:
-    event:
-    - pull_request
-  depends_on:
-  - build-backend
 
 services:
 - name: postgres
@@ -3406,6 +3378,6 @@ get:
 
 ---
 kind: signature
-hmac: daa940b99a00e75291a18e244b211a9da442551060f31e794d7c0990ba575ac5
+hmac: bfa06a2b1f211c6740afe6c35d46a723bde0d59fcf0bd78e9fa414c98f11c2b2
 
 ...
