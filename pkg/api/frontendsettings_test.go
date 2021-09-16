@@ -42,8 +42,8 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	ps := &fakePluginStore{}
 
 	r := &rendering.RenderingService{
-		Cfg:         cfg,
-		PluginStore: ps,
+		Cfg:                   cfg,
+		RendererPluginManager: ps,
 	}
 
 	hs := &HTTPServer{

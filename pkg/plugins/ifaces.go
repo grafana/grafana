@@ -21,8 +21,6 @@ type Store interface {
 	Plugin(pluginID string) *Plugin
 	// Plugins returns plugins by their requested type.
 	Plugins(pluginType ...Type) []*Plugin
-	// Renderer returns a renderer plugin.
-	Renderer() *Plugin
 
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string, opts InstallOpts) error
@@ -32,6 +30,11 @@ type Store interface {
 
 type InstallOpts struct {
 	InstallDir, PluginZipURL, PluginRepoURL string
+}
+
+type RendererManager interface {
+	// Renderer returns a renderer plugin.
+	Renderer() *Plugin
 }
 
 type Client interface {

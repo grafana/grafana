@@ -48,9 +48,9 @@ type RenderingService struct {
 	inProgressCount int32
 	version         string
 
-	Cfg                *setting.Cfg
-	RemoteCacheService *remotecache.RemoteCache
-	PluginStore        plugins.Store
+	Cfg                   *setting.Cfg
+	RemoteCacheService    *remotecache.RemoteCache
+	RendererPluginManager plugins.RendererManager
 }
 
 type RendererPluginManager interface {
@@ -58,7 +58,7 @@ type RendererPluginManager interface {
 	StartRenderer(ctx context.Context) error
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Store) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -89,11 +89,11 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 	}
 
 	s := &RenderingService{
-		Cfg:                cfg,
-		RemoteCacheService: remoteCache,
-		PluginStore:        pm,
-		log:                log.New("rendering"),
-		domain:             domain,
+		Cfg:                   cfg,
+		RemoteCacheService:    remoteCache,
+		RendererPluginManager: rm,
+		log:                   log.New("rendering"),
+		domain:                domain,
 	}
 	return s, nil
 }
@@ -101,7 +101,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 func (rs *RenderingService) Run(ctx context.Context) error {
 	<-ctx.Done()
 
-	p := rs.PluginStore.Renderer()
+	p := rs.RendererPluginManager.Renderer()
 	if p != nil {
 		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
 		debugFilePath := path.Join(p.PluginDir, "chrome-win/debug.log")
@@ -118,7 +118,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return rs.PluginStore.Renderer() != nil
+	return rs.RendererPluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -211,7 +211,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 			return nil, err
 		}
 
-		rs.version = rs.PluginStore.Renderer().Info.Version
+		rs.version = rs.RendererPluginManager.Renderer().Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 	}
@@ -344,8 +344,8 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 }
 
 func (rs *RenderingService) StartRenderer(ctx context.Context) error {
-	if rs.PluginStore.Renderer() != nil {
-		return rs.PluginStore.Renderer().Start(ctx)
+	if rs.RendererPluginManager.Renderer() != nil {
+		return rs.RendererPluginManager.Renderer().Start(ctx)
 	}
 
 	return fmt.Errorf("could not start renderer plugin as it was not found in the plugin store")

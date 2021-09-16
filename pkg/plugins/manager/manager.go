@@ -42,6 +42,7 @@ var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.CoreBackendRegistrar = (*PluginManager)(nil)
+var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg              *setting.Cfg

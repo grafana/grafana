@@ -100,5 +100,5 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 }
 
 func (rs *RenderingService) renderer() pluginextensionv2.RendererPlugin {
-	return rs.PluginStore.Renderer().Renderer
+	return rs.RendererPluginManager.Renderer().Renderer
 }
