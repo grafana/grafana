@@ -268,7 +268,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Stitch all query lines together to support multi-line queries
     let queryOffset;
     const queryText = value.document.getBlocks().reduce((text, block) => {
-      if (!text) {
+      if (text === undefined) {
         return '';
       }
       if (!block) {
