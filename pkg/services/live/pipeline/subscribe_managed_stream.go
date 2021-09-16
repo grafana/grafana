@@ -18,7 +18,7 @@ func NewManagedStreamSubscriber(managedStream *managedstream.Runner) *ManagedStr
 	return &ManagedStreamSubscriber{managedStream: managedStream}
 }
 
-func (m ManagedStreamSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (m *ManagedStreamSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	stream, err := m.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
 	if err != nil {
 		logger.Error("Error getting managed stream", "error", err)

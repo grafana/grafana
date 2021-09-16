@@ -168,9 +168,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
-				Node:          node,
-				ManagedStream: g.ManagedStreamRunner,
-				FrameStorage:  pipeline.NewFrameStorage(),
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				ChannelHandlerGetter: g,
 			}
 		} else {
 			storage := &pipeline.FileStorage{
@@ -178,10 +179,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 			g.channelRuleStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
-				Node:          node,
-				ManagedStream: g.ManagedStreamRunner,
-				FrameStorage:  pipeline.NewFrameStorage(),
-				RuleStorage:   storage,
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				RuleStorage:          storage,
+				ChannelHandlerGetter: g,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)

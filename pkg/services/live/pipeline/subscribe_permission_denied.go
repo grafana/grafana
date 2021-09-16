@@ -13,6 +13,6 @@ func NewPermissionDeniedSubscriber() *PermissionDeniedSubscriber {
 	return &PermissionDeniedSubscriber{}
 }
 
-func (m PermissionDeniedSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (m *PermissionDeniedSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 }
