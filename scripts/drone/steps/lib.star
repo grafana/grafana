@@ -158,7 +158,7 @@ def lint_backend_step(edition):
             'CGO_ENABLED': '1',
         },
         'depends_on': [
-            'initialize',
+            'restore-cache',
         ],
         'commands': [
             # Generate Go code, will install Wire
@@ -419,6 +419,9 @@ def restore_cache_step():
             'bucket': 'test-julien',
             'restore': 'true',
          },
+         'depends_on': [
+            'initialize',
+         ],
     }
 
 def rebuild_cache_step():
