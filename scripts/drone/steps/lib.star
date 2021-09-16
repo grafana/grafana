@@ -42,7 +42,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'chmod +x bin/grabpl',
     ]
     common_cmds = [
-        './bin/grabpl verify-drone',
     ]
 
     if ver_mode == 'release':
