@@ -2,11 +2,12 @@ import {
   DataFrame,
   DataFrameFieldIndex,
   FieldLookup,
-  FieldMap,
+  FrameFieldMap,
   FieldType,
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
+  DimensionValues,
 } from '@grafana/data';
 import {
   getColorDimension,
@@ -99,27 +100,44 @@ export const prepLookup: PrepFieldLookup = (dims, frames) => {
   let seriesIndex = 0;
 
   const fieldMaps = frames.map((frame, frameIndex) => {
-    let fieldMap: FieldMap = {
-      x: frame.fields.findIndex((field) => field === dims[frameIndex].x),
-      y: frame.fields.findIndex((field, fieldIndex) => {
+    let fieldMap: FrameFieldMap = {
+      frameIndex,
+      x: [],
+      y: frame.fields.reduce((acc, field, fieldIndex) => {
         if (field === dims[frameIndex].y) {
           const displayName = getFieldDisplayName(field, frame, frames);
-          const fieldOrigin = { frameIndex, fieldIndex, seriesIndex, displayName };
+          const fieldOrigin = {
+            frameIndex,
+            fieldIndex,
+            seriesIndex,
+            displayName,
+            // frameSeriesIndex: acc.length,
+          };
 
           byIndex.set(seriesIndex, fieldOrigin);
           byName.set(displayName, fieldOrigin);
 
           seriesIndex++;
-          return true;
+          acc.push(fieldIndex);
         }
-        return false;
-      }),
-      size: frame.fields.findIndex((field) => field === dims[frameIndex].size?.field),
+        return acc;
+      }, [] as number[]),
+      size: frame.fields.reduce((acc, field, fieldIndex) => {
+        if (field === dims[frameIndex].size?.field) {
+          acc.push((frame) => frame.fields[fieldIndex].values.toArray());
+        }
+        return acc;
+      }, [] as Array<DimensionValues<number>>),
     };
 
-    fieldMap.legend = [fieldMap.y as number];
-    fieldMap.tooltip = [fieldMap.y as number];
-    fieldMap.count = 1;
+    let xIndex = frame.fields.findIndex((field) => field === dims[frameIndex].x);
+    fieldMap.x = Array(fieldMap.y.length).fill(xIndex);
+
+    fieldMap.legend = fieldMap.tooltip = fieldMap.y.map((yIndex, frameSeriesIndex) => [
+      xIndex,
+      yIndex,
+      fieldMap.size![frameSeriesIndex],
+    ]);
 
     return fieldMap;
   });
@@ -128,7 +146,7 @@ export const prepLookup: PrepFieldLookup = (dims, frames) => {
     fieldMaps,
     byIndex,
     byName,
-    enumerate(frames) {
+    setIndices(frames) {
       byIndex.forEach(({ frameIndex, fieldIndex, seriesIndex }) => {
         let field = frames[frameIndex].fields[fieldIndex];
         let state = field.state ?? {};
@@ -229,7 +247,7 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
     return null;
   };
 
-  lookup.enumerate(frames);
+  lookup.setIndices(frames);
 
   const builder = new UPlotConfigBuilder();
 
@@ -317,31 +335,39 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
   });
 
   lookup.fieldMaps.forEach((map, frameIndex) => {
-    let field = frames[frameIndex].fields[map.y as number];
+    map.y.forEach((fieldIndex, frameSeriesIndex) => {
+      let field = frames[frameIndex].fields[fieldIndex];
 
-    const scaleColor = getFieldSeriesColor(field, theme);
-    const seriesColor = scaleColor.color;
+      const scaleColor = getFieldSeriesColor(field, theme);
+      const seriesColor = scaleColor.color;
 
-    builder.addSeries({
-      pathBuilder: drawBubbles,
-      theme,
-      scaleKey: '', // facets' scales used internally (x/y)
-      lineColor: seriesColor,
-      fillColor: alpha(seriesColor, 0.5),
+      builder.addSeries({
+        pathBuilder: drawBubbles,
+        theme,
+        scaleKey: '', // facets' scales used internally (x/y)
+        lineColor: seriesColor,
+        fillColor: alpha(seriesColor, 0.5),
+      });
     });
   });
 
   builder.setPrepData((frames) => {
-    lookup.enumerate(frames);
+    lookup.setIndices(frames);
 
-    let seriesData = lookup.fieldMaps.map((f, i) => {
+    let seriesData = lookup.fieldMaps.flatMap((f, i) => {
       let { fields } = frames[i];
 
-      return [
-        fields[f.x].values.toArray(),
-        fields[f.y as number].values.toArray(),
-        fields[f.size as number].values.toArray(),
-      ];
+      return f.y.map((yIndex, frameSeriesIndex) => {
+        let xValues = fields[f.x[frameSeriesIndex]].values.toArray();
+        let yValues = fields[f.y[frameSeriesIndex]].values.toArray();
+        let sizeValues = f.size![frameSeriesIndex](frames[i]);
+
+        if (!Array.isArray(sizeValues)) {
+          sizeValues = Array(xValues.length).fill(sizeValues);
+        }
+
+        return [xValues, yValues, sizeValues];
+      });
     });
 
     return [null, ...seriesData];

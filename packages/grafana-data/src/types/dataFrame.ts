@@ -217,6 +217,8 @@ export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 
+type FieldIndex = number;
+
 /**
  * Describes where a specific data frame field is located within a
  * dataset of type DataFrame[]
@@ -225,29 +227,33 @@ export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
  */
 export interface DataFrameFieldIndex {
   frameIndex: number;
-  fieldIndex: number;
+  fieldIndex: FieldIndex;
   seriesIndex?: number;
   displayName?: string;
 }
 
+export type DimensionValues<T> = (frame: DataFrame, from?: number) => T | T[];
+
 /**
+ * each element in these dimension arrays represents a series
+ *
  * @internal
  */
-export interface FieldMap {
-  // total count of matched fields
-  count: number;
+export interface FrameFieldMap {
+  frameIndex: number;
 
   // field indices of interest e.g. filtered by FieldMatchers and/or mapped from Dimensions
-  x: number;
-  y: number | number[]; // number[] for AlignedData
-  size?: number;
-  color?: number;
-  label?: number;
-  symbol?: number;
+  x: FieldIndex[];
+  y: FieldIndex[];
+
+  size?: Array<DimensionValues<number>>;
+  color?: Array<DimensionValues<string>>;
+  label?: Array<DimensionValues<string>>;
+  symbol?: Array<DimensionValues<string>>;
 
   // field indices of interest in specific contexts
-  tooltip?: number[];
-  legend?: number[];
+  tooltip?: Array<Array<DimensionValues<any> | FieldIndex>>;
+  legend?: Array<Array<DimensionValues<any> | FieldIndex>>;
 }
 
 /*
@@ -288,7 +294,7 @@ export interface FrameFieldMapBox {
  */
 export interface FieldLookup {
   // frame-matched
-  fieldMaps: FieldMap[];
+  fieldMaps: FrameFieldMap[];
   // maps displayName => DataFrameFieldIndex
   byName: Map<string, DataFrameFieldIndex>;
   // maps enumerated/flat seriesIndex => DataFrameFieldIndex
@@ -301,5 +307,5 @@ export interface FieldLookup {
   // TODO: not sure if this should be here or external
   // will need to be run as part of fieldPrep on every data update
   // something like myPrepFieldLookup(frames) => {lookup: FieldLookup, enumerate: (frames: DataFrame[]) => void}
-  enumerate: (frames: DataFrame[]) => void;
+  setIndices: (frames: DataFrame[]) => void;
 }
