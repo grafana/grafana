@@ -414,6 +414,7 @@ def restore_cache_step():
         'pull': 'always',
          'settings': {
             'backend': 's3',
+            'region': 'us-east4',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'secret_key': from_secret('secret'),
@@ -433,6 +434,7 @@ def rebuild_cache_step():
         'pull': 'always',
          'settings': {
             'backend': 's3',
+            'region': 'us-east4',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'secret_key': from_secret('secret'),
