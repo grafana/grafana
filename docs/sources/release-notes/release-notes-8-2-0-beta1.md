@@ -87,3 +87,6 @@ Panel queries and/or annotation queries that used more than one statistic will b
 
 - **Grafana UI:** Fix TS error property `css` is missing in type. [#38078](https://github.com/grafana/grafana/pull/38078), [@jackw](https://github.com/jackw)
 
+### Grafana 8 alerts fixes
+
+- **Organisation level isolation:** The fix for organisation level isolation [introduces a new migration](https://github.com/grafana/grafana/pull/37414) that deletes all Grafana 8 alerting data and migrates the dashboard alerts to the new system again so that an Alertmanager configuration is created properly for each organisation. As a result, any manually created (or modified) Grafana 8 alerts or Alertmanager configuration will be removed after upgrading.
