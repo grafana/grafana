@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +22,8 @@ func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
 	uss := &UsageStatsService{
 		Bus:      bus.New(),
 		SQLStore: sqlStore,
+		kvStore:  kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
+		log:      log.New("infra.usagestats"),
 	}
 
 	createConcurrentTokens(t, sqlStore)

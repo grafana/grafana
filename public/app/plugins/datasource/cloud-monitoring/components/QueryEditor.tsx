@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import { Button, Select } from '@grafana/ui';
 import { MetricQueryEditor, SLOQueryEditor, QueryEditorRow } from './';
 import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, EditorMode } from '../types';
@@ -10,7 +10,7 @@ import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 import { toOption } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
 
-export type Props = ExploreQueryFieldProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
+export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
 
 export class QueryEditor extends PureComponent<Props> {
   async UNSAFE_componentWillMount() {

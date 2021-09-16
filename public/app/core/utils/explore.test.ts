@@ -95,9 +95,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -107,8 +109,8 @@ describe('state functions', () => {
       };
 
       expect(serializeStateToUrlParam(state)).toBe(
-        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
-          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
+        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},' +
+          '{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
 
@@ -119,9 +121,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -130,7 +134,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}]'
       );
     });
   });
@@ -143,9 +147,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
@@ -165,9 +171,11 @@ describe('state functions', () => {
         queries: [
           {
             expr: 'metric{test="a/b"}',
+            refId: 'A',
           },
           {
             expr: 'super{foo="x/z"}',
+            refId: 'B',
           },
         ],
         range: {
