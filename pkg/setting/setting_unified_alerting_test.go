@@ -16,6 +16,7 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 	{
 		require.Equal(t, 60*time.Second, cfg.AdminConfigPollInterval)
 		require.Equal(t, 60*time.Second, cfg.AlertmanagerConfigPollInterval)
+		require.Equal(t, uint(0), cfg.AlertmanagerConfigChunkSize)
 		require.Equal(t, 15*time.Second, cfg.HAPeerTimeout)
 		require.Equal(t, "0.0.0.0:9094", cfg.HAListenAddr)
 		require.Equal(t, "", cfg.HAAdvertiseAddr)

@@ -17,6 +17,7 @@ const (
 	AlertmanagerDefaultPushPullInterval     = cluster.DefaultPushPullInterval
 	SchedulerDefaultAdminConfigPollInterval = 60 * time.Second
 	AlertmanagerDefaultConfigPollInterval   = 60 * time.Second
+	AlertmanagerDefaultConfigChunkSize      = 0
 )
 
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
@@ -30,6 +31,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
+	cfg.AlertmanagerConfigChunkSize = ua.Key("alertmanager_config_load_chunk_size").MustUint(AlertmanagerDefaultConfigChunkSize)
 	cfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (AlertmanagerDefaultPeerTimeout).String()))
 	if err != nil {
 		return err
