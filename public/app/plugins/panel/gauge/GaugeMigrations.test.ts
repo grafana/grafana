@@ -80,12 +80,8 @@ describe('Gauge Panel Migrations', () => {
     const result = gaugePanelMigrationHandler(panel as PanelModel);
     expect(result).toMatchSnapshot();
 
-    // Ignored due to the API change
-    //@ts-ignore
-    expect(result.reduceOptions.defaults).toBeUndefined();
-    // Ignored due to the API change
-    //@ts-ignore
-    expect(result.reduceOptions.overrides).toBeUndefined();
+    // should remove orientation if present
+    expect(result.orientation).toBeUndefined();
 
     expect((panel as PanelModel).fieldConfig).toMatchInlineSnapshot(`
       Object {
@@ -162,5 +158,20 @@ describe('Gauge Panel Migrations', () => {
     expect(panel.fieldConfig.defaults.decimals).toBe(7);
     expect(newOptions.showThresholdMarkers).toBe(true);
     expect(newOptions.showThresholdLabels).toBe(true);
+  });
+
+  it('change from bar gauge to gauge', () => {
+    const prevOptions = {
+      orientation: 'auto',
+      reduceOptions: {
+        values: true,
+        limit: 100,
+      },
+    };
+
+    const panel = ({ options: {} } as unknown) as PanelModel;
+    const newOptions = gaugePanelChangedHandler(panel, 'bargauge', prevOptions);
+    expect(newOptions.orientation).toBe(undefined);
+    expect(newOptions.reduceOptions.limit).toBe(100);
   });
 });

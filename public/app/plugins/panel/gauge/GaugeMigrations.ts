@@ -4,6 +4,11 @@ import { GaugeOptions } from './types';
 
 // This is called when the panel first loads
 export const gaugePanelMigrationHandler = (panel: PanelModel<GaugeOptions>): Partial<GaugeOptions> => {
+  // remove any orientation prop
+  if (panel.options.orientation) {
+    delete (panel.options as any).orientation;
+  }
+
   return sharedSingleStatMigrationHandler(panel);
 };
 
@@ -14,7 +19,7 @@ export const gaugePanelChangedHandler = (
   prevOptions: any
 ) => {
   // This handles most config changes
-  const opts = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as GaugeOptions;
+  const opts = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions, ['reduceOptions']) as GaugeOptions;
 
   // Changing from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {

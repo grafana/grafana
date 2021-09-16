@@ -23,12 +23,11 @@ export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   orientation: VizOrientation;
 }
 
-const optionsToKeep = ['reduceOptions', 'orientation'];
-
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
-  prevOptions: any
+  prevOptions: any,
+  optionsToKeep: string[] = ['reduceOptions', 'orientation']
 ) {
   let options = panel.options;
 
