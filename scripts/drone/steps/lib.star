@@ -99,7 +99,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                     'DOCKERIZE_VERSION': dockerize_version,
                 },
                 'depends_on': [
-                    'clone', 'restore-cache'
+                    'clone'
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -117,6 +117,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     steps = [
         identify_runner_step,
+        write_creds_step(),
+        restore_cache_step(),
         {
             'name': 'initialize',
             'image': build_image,
@@ -131,10 +133,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         },
     ]
 
-    steps += [
-        write_creds_step(),
-        restore_cache_step()
-    ]
 
     return steps
 
@@ -166,9 +164,6 @@ def lint_backend_step(edition):
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
         },
-        'depends_on': [
-            'restore-cache',
-        ],
         'commands': [
             # Generate Go code, will install Wire
             # TODO: Install Wire in Docker image instead

@@ -13,23 +13,6 @@ steps:
   commands:
   - echo $DRONE_RUNNER_NAME
 
-- name: initialize
-  image: grafana/build-container:1.4.2
-  commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
-  - chmod +x bin/grabpl
-  - yarn cache dir
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
-    YARN_CACHE_FOLDER: /cache/yarn
-  depends_on:
-  - restore-cache
-
 - name: write-cache-creds
   image: grafana/build-container:1.4.2
   commands:
@@ -60,6 +43,23 @@ steps:
   depends_on:
   - write-cache-creds
 
+- name: initialize
+  image: grafana/build-container:1.4.2
+  commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - chmod +x bin/grabpl
+  - yarn cache dir
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+    YARN_CACHE_FOLDER: /cache/yarn
+  depends_on:
+  - restore-cache
+
 - name: codespell
   image: grafana/build-container:1.4.2
   commands:
@@ -82,8 +82,6 @@ steps:
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
-  depends_on:
-  - restore-cache
 
 - name: test-frontend
   image: grafana/build-container:1.4.2
@@ -184,6 +182,6 @@ get:
 
 ---
 kind: signature
-hmac: fd4fd3053178e3ad53908982263c7de595f46266436f6d6bc57b4b0e682b01ba
+hmac: 6cbd4a0646e1444412036d66ff02b05c6a380fae4036b1fc0b82af55fe062468
 
 ...
