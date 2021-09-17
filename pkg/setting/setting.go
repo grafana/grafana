@@ -18,15 +18,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gobwas/glob"
-
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -420,9 +419,16 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	UnifiedAlertingEnabled      bool
-	UnifiedAlertingDisabledOrgs map[int64]struct{}
-	AdminConfigPollInterval     time.Duration
+	AdminConfigPollInterval        time.Duration
+	AlertmanagerConfigPollInterval time.Duration
+	HAListenAddr                   string
+	HAAdvertiseAddr                string
+	HAPeers                        []string
+	HAPeerTimeout                  time.Duration
+	HAGossipInterval               time.Duration
+	HAPushPullInterval             time.Duration
+	UnifiedAlertingEnabled         bool
+	UnifiedAlertingDisabledOrgs    map[int64]struct{}
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -913,6 +919,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
+		return err
+	}
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
@@ -937,7 +946,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1364,35 +1373,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
-	return nil
-}
-
-func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
-	ua := iniFile.Section("unified_alerting")
-	cfg.UnifiedAlertingEnabled = ua.Key("enabled").MustBool(false)
-
-	// if the old feature toggle ngalert is set, enable Grafana 8 alerts anyway
-	if !cfg.UnifiedAlertingEnabled && cfg.FeatureToggles["ngalert"] {
-		cfg.UnifiedAlertingEnabled = true
-		AlertingEnabled = false
-	}
-
-	if cfg.UnifiedAlertingEnabled && AlertingEnabled {
-		return errors.New("both legacy and Grafana 8 Alerts are enabled")
-	}
-
-	cfg.UnifiedAlertingDisabledOrgs = make(map[int64]struct{})
-	orgsStr := valueAsString(ua, "disabled_orgs", "")
-	for _, org := range util.SplitString(orgsStr) {
-		orgID, err := strconv.ParseInt(org, 10, 64)
-		if err != nil {
-			return err
-		}
-		cfg.UnifiedAlertingDisabledOrgs[orgID] = struct{}{}
-	}
-
-	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
-	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
 

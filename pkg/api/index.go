@@ -318,7 +318,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if true {
+	if hs.Cfg.FeatureToggles["live-pipeline"] {
 		liveNavLinks := []*dtos.NavLink{}
 
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{

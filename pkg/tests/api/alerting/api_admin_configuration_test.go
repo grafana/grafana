@@ -22,11 +22,11 @@ import (
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	const disableOrgID int64 = 3
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting:             true,
-		EnableUnifiedAlerting:             true,
-		DisableAnonymous:                  true,
-		NGAlertAdminConfigIntervalSeconds: 2,
-		UnifiedAlertingDisabledOrgs:       []int64{disableOrgID}, // disable unified alerting for organisation 3
+		DisableLegacyAlerting:          true,
+		EnableUnifiedAlerting:          true,
+		DisableAnonymous:               true,
+		NGAlertAdminConfigPollInterval: 2 * time.Second,
+		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
