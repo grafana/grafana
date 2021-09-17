@@ -100,7 +100,7 @@ steps:
   environment:
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - lint-backend
+  - initialize
 
 - name: rebuild-cache
   pull: always
@@ -182,6 +182,6 @@ get:
 
 ---
 kind: signature
-hmac: 2722c7b759c136a0b11218d92c100c0b01583759b12a863c59db07e5ac9d718f
+hmac: 6a7c76f4a32f597d6d4bb0910f045503808013f3d1bf145596c82c308880066c
 
 ...
