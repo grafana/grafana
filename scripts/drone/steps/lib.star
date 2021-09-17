@@ -122,7 +122,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'image': build_image,
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
-                'YARN_CACHE_FOLDER': '/cache',
+                'YARN_CACHE_FOLDER': '/cache/yarn',
             },
             'commands': download_grabpl_cmds + common_cmds,
         },
@@ -329,7 +329,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'environment': {
-            'YARN_CACHE_FOLDER': '/cache',
+            'YARN_CACHE_FOLDER': '/cache/yarn',
         },
         'depends_on': [
             'lint-backend',
@@ -402,12 +402,31 @@ def test_frontend_step():
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
-            'YARN_CACHE_FOLDER': '/cache',
+            'YARN_CACHE_FOLDER': '/cache/yarn',
         },
         'commands': [
             'yarn run ci:test-frontend',
         ],
     }
+
+def write_creds_step():
+    return {
+        'name': 'write-cache-creds',
+        'image': build_image,
+        'commands': [
+            'printf "%s" "$GOOGLE_CREDENTIALS" > /cache/credentials.json',
+        ],
+        'environment': {
+            'GOOGLE_CREDENTIALS': from_secret('tf_google_credentials')
+        },
+        'volumes': [
+            {
+                'name': 'cache',
+                'path': '/cache',
+            },
+         ],
+    }
+
 
 def restore_cache_step():
     return {
@@ -415,21 +434,21 @@ def restore_cache_step():
         'name': 'restore-cache',
         'pull': 'always',
          'settings': {
-            'backend': 's3',
-            'region': 'auto',
+            'backend': 'gcs',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'restore': 'true',
             'cache_key': "test123",
             'mount': [
-                '/cache'
+                '/cache/yarn'
             ],
          },
-        'environment':
-         {
-             'AWS_ACCESS_KEY_ID':from_secret('secret'),
-      'AWS_SECRET_ACCESS_KEY':from_secret('access_key')
+         'environment': {
+            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json'
          },
+         'depends_on': [
+            'write-cache-creds'
+         ],
          'volumes': [
             {
                 'name': 'cache',
@@ -444,24 +463,21 @@ def rebuild_cache_step():
         'name': 'rebuild-cache',
         'pull': 'always',
          'settings': {
-            'backend': 's3',
-            'region': 'auto',
+            'backend': 'gcs',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'cache_key': "test123",
             'rebuild': 'true',
             'mount': [
-                '/cache'
+                '/cache/yarn'
             ],
          },
-         'environment':
-         {
-             'AWS_ACCESS_KEY_ID':from_secret('secret'),
-      'AWS_SECRET_ACCESS_KEY':from_secret('access_key')
+         'environment': {
+            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json'
          },
          'depends_on': [
             # 'build-frontend',
-            'clone'
+            'write-cache-creds'
          ],
          'volumes': [
             {

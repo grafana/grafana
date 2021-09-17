@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    YARN_CACHE_FOLDER: /cache
+    YARN_CACHE_FOLDER: /cache/yarn
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -43,26 +43,35 @@ steps:
   depends_on:
   - initialize
 
+- name: write-cache-creds
+  image: grafana/build-container:1.4.2
+  commands:
+  - printf "%s" "$GOOGLE_CREDENTIALS" > /cache/credentials.json
+  environment:
+    GOOGLE_CREDENTIALS:
+      from_secret: tf_google_credentials
+  volumes:
+  - name: cache
+    path: /cache
+
 - name: restore-cache
   pull: always
   image: meltwater/drone-cache
   settings:
-    backend: s3
+    backend: gcs
     bucket: test-julien
     cache_key: test123
     endpoint: https://storage.googleapis.com
     mount:
-    - /cache
-    region: auto
+    - /cache/yarn
     restore: true
   environment:
-    AWS_ACCESS_KEY_ID:
-      from_secret: secret
-    AWS_SECRET_ACCESS_KEY:
-      from_secret: access_key
+    GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
   volumes:
   - name: cache
     path: /cache
+  depends_on:
+  - write-cache-creds
 
 - name: lint-backend
   image: grafana/build-container:1.4.2
@@ -80,7 +89,7 @@ steps:
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
-    YARN_CACHE_FOLDER: /cache
+    YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
   - lint-backend
 
@@ -89,7 +98,7 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:
-    YARN_CACHE_FOLDER: /cache
+    YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
   - lint-backend
 
@@ -97,19 +106,15 @@ steps:
   pull: always
   image: meltwater/drone-cache
   settings:
-    backend: s3
+    backend: gcs
     bucket: test-julien
     cache_key: test123
     endpoint: https://storage.googleapis.com
     mount:
-    - /cache
+    - /cache/yarn
     rebuild: true
-    region: auto
   environment:
-    AWS_ACCESS_KEY_ID:
-      from_secret: secret
-    AWS_SECRET_ACCESS_KEY:
-      from_secret: access_key
+    GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
   volumes:
   - name: cache
     path: /cache
@@ -117,7 +122,7 @@ steps:
     event:
     - pull_request
   depends_on:
-  - clone
+  - write-cache-creds
 
 volumes:
 - name: cache
@@ -177,6 +182,6 @@ get:
 
 ---
 kind: signature
-hmac: b1f4cbe7befc02d02c734514a70533e38624c9b08fdd2ac3a5625837cb0c99d5
+hmac: 2259c6097239c9ca5e8a3a082fe640766ab88c516a89a0149078410db7714281
 
 ...
