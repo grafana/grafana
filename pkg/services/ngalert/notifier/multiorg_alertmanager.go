@@ -141,13 +141,44 @@ func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int6
 
 // SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
 func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
+	moa.alertmanagersMtx.Lock()
+
+	orgsFound, err := moa.addOrUpdateAlertManagerConfigurations(ctx, orgIDs)
+	if err != nil {
+		moa.alertmanagersMtx.Unlock()
+		return
+	}
+
+	amsToStop := map[int64]*Alertmanager{}
+	for orgId, am := range moa.alertmanagers {
+		if _, exists := orgsFound[orgId]; !exists {
+			amsToStop[orgId] = am
+			delete(moa.alertmanagers, orgId)
+			moa.metrics.RemoveOrgRegistry(orgId)
+		}
+	}
+	moa.metrics.ActiveConfigurations.Set(float64(len(moa.alertmanagers)))
+
+	moa.alertmanagersMtx.Unlock()
+
+	// Now, we can stop the Alertmanagers without having to hold a lock.
+	for orgID, am := range amsToStop {
+		moa.logger.Info("stopping Alertmanager", "org", orgID)
+		am.StopAndWait()
+		moa.logger.Info("stopped Alertmanager", "org", orgID)
+	}
+}
+
+// addOrUpdateAlertManagerConfigurations retrieves the latest configurations for all organizations and then calls addOrUpdateAlertmanager for every organization in orgIDs.
+//The result is either a map that contains ID of all organizations updated or created or error in the case something happened while fetching configurations from database
+//NOTE this is an internal method, and it is not supposed to be called without locked mutex alertmanagersMtx
+func (moa *MultiOrgAlertmanager) addOrUpdateAlertManagerConfigurations(ctx context.Context, orgIDs []int64) (map[int64]struct{}, error) {
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
 	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
 		moa.logger.Error("failed to load Alertmanager configurations", "err", err)
-		return
+		return nil, err
 	}
-	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		orgsFound[orgID] = struct{}{}
 
@@ -187,23 +218,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.alertmanagers[orgID] = alertmanager
 	}
 
-	amsToStop := map[int64]*Alertmanager{}
-	for orgId, am := range moa.alertmanagers {
-		if _, exists := orgsFound[orgId]; !exists {
-			amsToStop[orgId] = am
-			delete(moa.alertmanagers, orgId)
-			moa.metrics.RemoveOrgRegistry(orgId)
-		}
-	}
-	moa.metrics.ActiveConfigurations.Set(float64(len(moa.alertmanagers)))
-	moa.alertmanagersMtx.Unlock()
-
-	// Now, we can stop the Alertmanagers without having to hold a lock.
-	for orgID, am := range amsToStop {
-		moa.logger.Info("stopping Alertmanager", "org", orgID)
-		am.StopAndWait()
-		moa.logger.Info("stopped Alertmanager", "org", orgID)
-	}
+	return orgsFound, nil
 }
 
 func (moa *MultiOrgAlertmanager) StopAndWait() {
