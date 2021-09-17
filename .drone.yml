@@ -19,6 +19,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
+  - yarn cache dir
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -168,6 +169,6 @@ get:
 
 ---
 kind: signature
-hmac: 1843cc3d1a1806ed57e3b3ddbc721fbb7abee0334c97363f8ea72b160c718ed9
+hmac: 97b31dfdb7ebba87e7e214cff907f18a04aec7df3433bd45b57b969e949cbd4a
 
 ...
