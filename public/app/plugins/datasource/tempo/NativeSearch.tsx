@@ -4,11 +4,11 @@ import {
   InlineField,
   Input,
   QueryField,
-  Select,
   SlatePrism,
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
+  AsyncSelect,
 } from '@grafana/ui';
 import { tokenizer } from './syntax';
 import Prism from 'prismjs';
@@ -17,6 +17,7 @@ import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
 import { TempoDatasource, TempoQuery } from './datasource';
+import { debounce } from 'lodash';
 
 interface Props {
   datasource: TempoDatasource;
@@ -41,24 +42,37 @@ Prism.languages[PRISM_LANGUAGE] = tokenizer;
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [autocomplete, setAutocomplete] = useState<{
-    serviceNameOptions: Array<SelectableValue<string>>;
-    spanNameOptions: Array<SelectableValue<string>>;
+  const [autocomplete] = useState<{
+    selectedServiceName: SelectableValue<string> | undefined;
+    selectedSpanName: SelectableValue<string> | undefined;
   }>({
-    serviceNameOptions: [],
-    spanNameOptions: [],
+    selectedServiceName: undefined,
+    selectedSpanName: undefined,
   });
 
   useEffect(() => {
     const fetchAutocomplete = async () => {
       await languageProvider.start();
-      const serviceNameOptions = await languageProvider.getOptions('service.name');
-      const spanNameOptions = await languageProvider.getOptions('name');
       setHasSyntaxLoaded(true);
-      setAutocomplete({ serviceNameOptions, spanNameOptions });
     };
     fetchAutocomplete();
   }, [languageProvider]);
+
+  const debouncedFetchServiceNameOptions = debounce(
+    async () => {
+      return await languageProvider.getOptions('service.name');
+    },
+    500,
+    { leading: true, trailing: true }
+  );
+
+  const debouncedFetchSpanNameOptions = debounce(
+    async () => {
+      return await languageProvider.getOptions('name');
+    },
+    500,
+    { leading: true, trailing: true }
+  );
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
@@ -82,10 +96,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
         <InlineField label="Service Name" labelWidth={14} grow>
-          <Select
+          <AsyncSelect
             menuShouldPortal
-            options={autocomplete.serviceNameOptions}
-            value={query.serviceName || ''}
+            defaultOptions
+            loadOptions={debouncedFetchServiceNameOptions}
+            value={autocomplete.selectedServiceName}
             onChange={(v) => {
               onChange({
                 ...query,
@@ -99,10 +114,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Span Name" labelWidth={14} grow>
-          <Select
+          <AsyncSelect
             menuShouldPortal
-            options={autocomplete.spanNameOptions}
-            value={query.spanName || ''}
+            defaultOptions
+            loadOptions={debouncedFetchSpanNameOptions}
+            value={autocomplete.selectedSpanName}
             onChange={(v) => {
               onChange({
                 ...query,
