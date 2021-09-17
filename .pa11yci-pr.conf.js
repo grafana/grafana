@@ -76,7 +76,7 @@ var config = {
     {
       url: '${HOST}/dashboards',
       rootElement: '.main-view',
-      threshold: 8,
+      threshold: 11,
     },
   ],
 };

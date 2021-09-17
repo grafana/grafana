@@ -49,14 +49,21 @@ function getAllFunctionsCompletions(): Completion[] {
   }));
 }
 
-function getAllDurationsCompletions(): Completion[] {
-  // FIXME: get a better list
-  return ['5m', '1m', '30s', '15s'].map((text) => ({
-    type: 'DURATION',
-    label: text,
-    insertText: text,
-  }));
-}
+const DURATION_COMPLETIONS: Completion[] = [
+  '$__interval',
+  '$__range',
+  '$__rate_interval',
+  '1m',
+  '5m',
+  '10m',
+  '30m',
+  '1h',
+  '1d',
+].map((text) => ({
+  type: 'DURATION',
+  label: text,
+  insertText: text,
+}));
 
 async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
   // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
@@ -137,7 +144,7 @@ async function getLabelValuesForMetricCompletions(
 export async function getCompletions(intent: Intent, dataProvider: DataProvider): Promise<Completion[]> {
   switch (intent.type) {
     case 'ALL_DURATIONS':
-      return getAllDurationsCompletions();
+      return DURATION_COMPLETIONS;
     case 'ALL_METRIC_NAMES':
       return getAllMetricNamesCompletions(dataProvider);
     case 'FUNCTIONS_AND_ALL_METRIC_NAMES': {
