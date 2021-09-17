@@ -234,6 +234,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
     }
 
+    u.ctx.save();
+
     u.ctx.fillStyle = theme.colors.text.primary;
     u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
 
@@ -265,6 +267,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         );
       }
     });
+
+    u.ctx.restore();
   };
 
   // handle hover interaction with quadtree probing
