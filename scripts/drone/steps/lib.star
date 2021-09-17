@@ -420,6 +420,7 @@ def restore_cache_step():
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'restore': 'true',
+            'cache_key': "test123",
             'mount': [
                 '/cache'
             ],
@@ -447,7 +448,7 @@ def rebuild_cache_step():
             'region': 'auto',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
-
+            'cache_key': "test123",
             'rebuild': 'true',
             'mount': [
                 '/cache'

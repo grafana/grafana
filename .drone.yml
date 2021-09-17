@@ -49,6 +49,7 @@ steps:
   settings:
     backend: s3
     bucket: test-julien
+    cache_key: test123
     endpoint: https://storage.googleapis.com
     mount:
     - /cache
@@ -98,6 +99,7 @@ steps:
   settings:
     backend: s3
     bucket: test-julien
+    cache_key: test123
     endpoint: https://storage.googleapis.com
     mount:
     - /cache
@@ -175,6 +177,6 @@ get:
 
 ---
 kind: signature
-hmac: 1337d8bbabfabaa94fb97a397005f1b9116fc2d9c8c44c333c7f5a4adaaf15e7
+hmac: b1f4cbe7befc02d02c734514a70533e38624c9b08fdd2ac3a5625837cb0c99d5
 
 ...
