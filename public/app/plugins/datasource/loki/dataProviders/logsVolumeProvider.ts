@@ -42,11 +42,9 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
     histogramRequest.targets = histogramRequest.targets
       .filter((target) => target.expr && !isMetricsQuery(target.expr))
       .map((target) => {
-        // TODO: add level to configuration and use:
-        // sum by (level) (count_over_time(${target.expr}[$__interval])
         return {
           ...target,
-          expr: `count_over_time(${target.expr}[$__interval])`,
+          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
         };
       });
 
