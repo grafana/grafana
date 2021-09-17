@@ -100,8 +100,8 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
       logsVolumeByLevelMap[level]!.push(dataFrame);
     });
 
-    return Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
-      return aggregateFields(logsVolumeByLevelMap[level]!, getFieldConfig(level));
+    return Object.keys(logsVolumeByLevelMap).map((level: string) => {
+      return aggregateFields(logsVolumeByLevelMap[level as LogLevel]!, getFieldConfig(level as LogLevel));
     });
   }
 }
