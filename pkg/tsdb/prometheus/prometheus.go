@@ -422,10 +422,6 @@ func scalarToDataFrames(scalar *model.Scalar) data.Frames {
 
 func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
-	fmt.Println("========")
-	fmt.Printf("%v", vector)
-	fmt.Println("========")
-
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))
