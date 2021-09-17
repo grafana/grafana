@@ -138,10 +138,10 @@ describe('Prometheus Result Transformer', () => {
         ],
       } as unknown) as DataQueryResponse;
       const series = transformV2(response, options);
-      expect(series.data[0].fields.length).toEqual(4);
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
-      expect(series.data[1].fields.length).toEqual(2);
-      expect(series.data[1].meta?.preferredVisualisationType).toEqual('graph');
+      expect(series.data[0].fields.length).toEqual(2);
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('graph');
+      expect(series.data[1].fields.length).toEqual(4);
+      expect(series.data[1].meta?.preferredVisualisationType).toEqual('table');
     });
   });
   describe('transformDFoTable', () => {

@@ -67,17 +67,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
     return df;
   });
 
-  // Order by refIds
-  const orderedFrames = [...otherFrames, ...tableFrames].sort((df1, df2) => {
-    if (df1.refId && df2.refId) {
-      if (df1.refId < df2.refId) {
-        return -1;
-      }
-    }
-    return 1;
-  });
-
-  return { ...response, data: orderedFrames };
+  return { ...response, data: [...otherFrames, ...tableFrames] };
 }
 
 export function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
