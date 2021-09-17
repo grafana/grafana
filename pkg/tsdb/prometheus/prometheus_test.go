@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -327,75 +326,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 	})
 }
 
-func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {
-	return &backend.QueryDataRequest{
-		Queries: []backend.DataQuery{
-			{
-				JSON:      []byte(json),
-				TimeRange: timeRange,
-				RefID:     "A",
-			},
-		},
-	}
-}
-
 func TestPrometheus_parseResponse(t *testing.T) {
-	t.Run("value is not of type matrix", func(t *testing.T) {
-		//nolint: staticcheck // plugins.DataQueryResult deprecated
-		queryRes := data.Frames{}
-		value := p.Vector{}
-		res, err := parseResponse(value, nil)
-
-		require.Equal(t, queryRes, res)
-		require.Error(t, err)
-	})
-
-	t.Run("response should be parsed normally", func(t *testing.T) {
-		values := []p.SamplePair{
-			{Value: 1, Timestamp: 1000},
-			{Value: 2, Timestamp: 2000},
-			{Value: 3, Timestamp: 3000},
-			{Value: 4, Timestamp: 4000},
-			{Value: 5, Timestamp: 5000},
-		}
-		value := p.Matrix{
-			&p.SampleStream{
-				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
-				Values: values,
-			},
-		}
-		query := &PrometheusQuery{
-			LegendFormat: "legend {{app}}",
-		}
-		res, err := parseResponse(value, query)
-		require.NoError(t, err)
-
-		require.Len(t, res, 1)
-		require.Equal(t, res[0].Name, "legend Application")
-		require.Len(t, res[0].Fields, 2)
-		require.Len(t, res[0].Fields[0].Labels, 0)
-		require.Equal(t, res[0].Fields[0].Name, "time")
-		require.Len(t, res[0].Fields[1].Labels, 2)
-		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, res[0].Fields[1].Name, "value")
-		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
-
-		// Ensure the timestamps are UTC zoned
-		testValue := res[0].Fields[0].At(0)
-		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
-	})
-}
-
-func TestParseResponse(t *testing.T) {
-	t.Run("value is not of type matrix, vector or scalar", func(t *testing.T) {
-		queryRes := data.Frames{}
-		value := p.Vector{}
-		res, err := parseResponse(value, &PrometheusQuery{})
-
-		require.Equal(t, queryRes, res)
-		require.Error(t, err, nil)
-	})
-
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {
 		values := []p.SamplePair{
 			{Value: 1, Timestamp: 1000},
@@ -481,4 +412,16 @@ func TestParseResponse(t *testing.T) {
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 	})
+}
+
+func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {
+	return &backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				JSON:      []byte(json),
+				TimeRange: timeRange,
+				RefID:     "A",
+			},
+		},
+	}
 }
