@@ -46,6 +46,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.4.2
   commands:
+  - echo test
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
@@ -57,6 +58,9 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
     YARN_CACHE_FOLDER: /cache/yarn
+  volumes:
+  - name: cache
+    path: /cache
   depends_on:
   - restore-cache
 
@@ -122,7 +126,7 @@ steps:
     event:
     - pull_request
   depends_on:
-  - build-frontend
+  - initialize
 
 volumes:
 - name: cache
@@ -182,6 +186,6 @@ get:
 
 ---
 kind: signature
-hmac: 450b032747623db5b0e1ad4c4259bbd1620c12c0c283ba872edac203dafb0d5a
+hmac: f48f9cbe1484f7a7e125852ae85ef4a1fb9502b64e8cdda2dba81fd030b165ac
 
 ...

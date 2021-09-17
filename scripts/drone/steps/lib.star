@@ -129,7 +129,13 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'DOCKERIZE_VERSION': dockerize_version,
                 'YARN_CACHE_FOLDER': '/cache/yarn',
             },
-            'commands': download_grabpl_cmds + common_cmds,
+            'commands': ['echo test'] + download_grabpl_cmds + common_cmds,
+            'volumes': [
+            {
+                'name': 'cache',
+                'path': '/cache',
+            },
+         ],
         },
     ]
 
@@ -479,7 +485,7 @@ def rebuild_cache_step():
             'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json'
          },
          'depends_on': [
-            'build-frontend',
+            'initialize',
          ],
          'volumes': [
             {
