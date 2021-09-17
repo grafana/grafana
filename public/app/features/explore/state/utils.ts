@@ -4,11 +4,8 @@ import {
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
-  getLogLevelFromKey,
   HistoryItem,
-  Labels,
   LoadingState,
-  LogLevel,
   PanelData,
 } from '@grafana/data';
 
@@ -124,16 +121,4 @@ export function getResultsFromCache(
   const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
-}
-
-export function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const labelNames = ['level', 'lvl', 'loglevel'];
-  let levelLabel;
-  for (let labelName of labelNames) {
-    if (labelName in labels) {
-      levelLabel = labelName;
-      break;
-    }
-  }
-  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }

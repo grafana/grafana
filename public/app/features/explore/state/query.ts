@@ -6,7 +6,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   LoadingState,
-  LogsVolumeDataProvider,
+  RelatedDataProvider,
   PanelData,
   PanelEvents,
   QueryFixAction,
@@ -107,14 +107,20 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
 
 export interface StoreLogsVolumeDataProvider {
   exploreId: ExploreId;
-  logsVolumeDataProvider: LogsVolumeDataProvider;
+  logsVolumeDataProvider: RelatedDataProvider;
 }
 
-export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
+/**
+ * Stores available logs volume provider after running the query. Used internally by runQueries().
+ */
+const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
 
-export const updateLogsVolumeDataAction = createAction<{
+/**
+ * Stores data returned by the provider. Used internally by loadLogsVolumeData().
+ */
+const updateLogsVolumeDataAction = createAction<{
   exploreId: ExploreId;
   logsVolumeData: DataQueryResponse;
 }>('explore/updateLogsVolumeDataAction');
@@ -184,7 +190,11 @@ export interface ClearCachePayload {
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
-export const storeAutoLogsVolumeAction = createAction<{ exploreId: ExploreId; autoLoadLogsVolume: boolean }>(
+/**
+ * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
+ * update auto-load and load logs volume if it hasn't been loaded.
+ */
+const storeAutoLogsVolumeAction = createAction<{ exploreId: ExploreId; autoLoadLogsVolume: boolean }>(
   'explore/storeAutoLogsVolumeAction'
 );
 
@@ -498,6 +508,10 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+/**
+ * Uses storeLogsVolumeDataProviderAction to update the state and load logs volume when auto-load
+ * is enabled and logs volume hasn't been loaded yet.
+ */
 export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(storeAutoLogsVolumeAction({ exploreId, autoLoadLogsVolume }));
@@ -511,6 +525,9 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
   };
 }
 
+/**
+ * Initializes loading logs volume data and stores emitted value.
+ */
 export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const state = getState().explore[exploreId]!;
@@ -639,6 +656,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       logsVolumeDataProvider,
+      // clear previous data, with a new provider the previous data becomes stale
       logsVolumeData: undefined,
     };
   }

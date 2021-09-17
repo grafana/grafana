@@ -8,19 +8,20 @@ import {
   FieldType,
   LoadingState,
   LogLevel,
-  LogsVolumeDataProvider,
+  RelatedDataProvider,
   MutableDataFrame,
   toDataFrame,
+  Labels,
+  getLogLevelFromKey,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
 import { Observable, SubscriptionLike } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import LokiDatasource, { isMetricsQuery } from '../datasource';
-import { getLogLevelFromLabels } from '../../../../features/explore/state/utils';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
-export class LokiLogsVolumeProvider implements LogsVolumeDataProvider {
+export class LokiLogsVolumeProvider implements RelatedDataProvider {
   private readonly datasource: LokiDatasource;
   private readonly dataQueryRequest: DataQueryRequest<LokiQuery>;
   private rawLogsVolume: DataFrame[] = [];
@@ -168,4 +169,16 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
   });
 
   return aggregatedDataFrame;
+}
+
+function getLogLevelFromLabels(labels: Labels): LogLevel {
+  const labelNames = ['level', 'lvl', 'loglevel'];
+  let levelLabel;
+  for (let labelName of labelNames) {
+    if (labelName in labels) {
+      levelLabel = labelName;
+      break;
+    }
+  }
+  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }

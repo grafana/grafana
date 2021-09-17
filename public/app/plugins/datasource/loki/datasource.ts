@@ -21,7 +21,7 @@ import {
   FieldCache,
   LoadingState,
   LogRowModel,
-  LogsVolumeDataProvider,
+  RelatedDataProvider,
   QueryResultMeta,
   ScopedVars,
   TimeRange,
@@ -104,7 +104,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return getBackendSrv().fetch<Record<string, any>>(req);
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): LogsVolumeDataProvider | undefined {
+  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): RelatedDataProvider | undefined {
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
     return isLogsVolumeAvailable ? new LokiLogsVolumeProvider(this, request) : undefined;
   }

@@ -13,7 +13,7 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
-  LogsVolumeDataProvider,
+  RelatedDataProvider,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -152,7 +152,7 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: PanelData }>;
 
-  logsVolumeDataProvider?: LogsVolumeDataProvider;
+  logsVolumeDataProvider?: RelatedDataProvider;
   logsVolumeData?: DataQueryResponse;
   autoLoadLogsVolume: boolean;
 }

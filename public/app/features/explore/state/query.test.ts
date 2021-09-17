@@ -4,7 +4,6 @@ import {
   cancelQueries,
   cancelQueriesAction,
   changeAutoLogsVolume,
-  storeAutoLogsVolumeAction,
   clearCache,
   importQueries,
   loadLogsVolumeData,
@@ -344,16 +343,12 @@ describe('reducer', () => {
       getState = store.getState;
     });
 
-    it('should update auto load logs volume', async () => {
-      await dispatch(storeAutoLogsVolumeAction({ exploreId: ExploreId.left, autoLoadLogsVolume: true }));
-      expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(true);
-    });
-
-    it('should not load logs volume automatically after running the query if auto-loading is disbaled', async () => {
+    it('should not load logs volume automatically after running the query if auto-loading is disabled', async () => {
       setupQueryResponse(getState());
       getState().explore[ExploreId.left].autoLoadLogsVolume = false;
 
       await dispatch(runQueries(ExploreId.left));
+
       expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
     });
 
@@ -362,6 +357,7 @@ describe('reducer', () => {
       getState().explore[ExploreId.left].autoLoadLogsVolume = true;
 
       await dispatch(runQueries(ExploreId.left));
+
       expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
         state: LoadingState.Done,
         error: undefined,
@@ -369,14 +365,16 @@ describe('reducer', () => {
       });
     });
 
-    it('when auto load is enabled it should load data', async () => {
+    it('when auto-load is enabled after running the query it should load logs volume data after changing auto-load option', async () => {
       setupQueryResponse(getState());
+
       await dispatch(runQueries(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
       expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
 
       await dispatch(changeAutoLogsVolume(ExploreId.left, true));
+
       expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(true);
       expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
         state: LoadingState.Done,
@@ -385,7 +383,7 @@ describe('reducer', () => {
       });
     });
 
-    it('should allow loading logs volume on demand', async () => {
+    it('should allow loading logs volume on demand if auto-load is disabled', async () => {
       setupQueryResponse(getState());
       getState().explore[ExploreId.left].autoLoadLogsVolume = false;
 
@@ -393,6 +391,8 @@ describe('reducer', () => {
       expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
 
       await dispatch(loadLogsVolumeData(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(true);
       expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
         state: LoadingState.Done,
         error: undefined,
