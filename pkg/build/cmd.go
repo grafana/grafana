@@ -147,7 +147,8 @@ func makeLatestDistCopies() {
 }
 
 func yarn(params ...string) {
-	runPrint(`yarn run`, params...)
+	// For `yarn` command, specify `run` subcommand by prepending to params list
+	runPrint(`yarn`, append([]string{`run`}, params...)...)
 }
 
 func genPackageVersion(version string, iteration string) string {
