@@ -113,7 +113,7 @@ steps:
     event:
     - pull_request
   depends_on:
-  - build-frontend
+  - clone
 
 volumes:
 - name: cache
@@ -173,6 +173,6 @@ get:
 
 ---
 kind: signature
-hmac: 4a1dd8d5ae8c1fb6a2b6292ffc338518945ab158e51fc4cdbdafbb4360f79b9d
+hmac: 33f012764ad67895e105c9affb5a5e2ceb841aaa4b1f2957a666d677d49bb82e
 
 ...

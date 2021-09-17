@@ -453,7 +453,8 @@ def rebuild_cache_step():
             ],
          },
          'depends_on': [
-            'build-frontend',
+            # 'build-frontend',
+            'clone'
          ],
          'volumes': [
             {
