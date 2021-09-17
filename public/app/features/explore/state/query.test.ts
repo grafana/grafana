@@ -392,7 +392,7 @@ describe('reducer', () => {
 
       await dispatch(loadLogsVolumeData(ExploreId.left));
 
-      expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(true);
+      expect(getState().explore[ExploreId.left].autoLoadLogsVolume).toEqual(false);
       expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
         state: LoadingState.Done,
         error: undefined,
