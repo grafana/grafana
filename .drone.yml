@@ -75,36 +75,6 @@ steps:
   depends_on:
   - initialize
 
-- name: write-cache-creds
-  image: grafana/build-container:1.4.2
-  commands:
-  - printf "%s" "$GOOGLE_CREDENTIALS" > /cache/credentials.json
-  environment:
-    GOOGLE_CREDENTIALS:
-      from_secret: tf_google_credentials
-  volumes:
-  - name: cache
-    path: /cache
-
-- name: restore-cache
-  pull: always
-  image: meltwater/drone-cache
-  settings:
-    backend: gcs
-    bucket: test-julien
-    cache_key: test123
-    endpoint: https://storage.googleapis.com
-    mount:
-    - /cache/yarn
-    restore: true
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
-  volumes:
-  - name: cache
-    path: /cache
-  depends_on:
-  - write-cache-creds
-
 - name: lint-backend
   image: grafana/build-container:1.4.2
   commands:
@@ -214,6 +184,6 @@ get:
 
 ---
 kind: signature
-hmac: 193700e227d96ac288e9797d13e95ff5038f99ddfae23c1fc577a7bd2f78d5ef
+hmac: fd4fd3053178e3ad53908982263c7de595f46266436f6d6bc57b4b0e682b01ba
 
 ...

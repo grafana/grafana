@@ -1,7 +1,5 @@
 load(
     'scripts/drone/steps/lib.star',
-    'write_creds_step',
-    'restore_cache_step',
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
@@ -48,8 +46,6 @@ def pr_pipelines(edition):
     steps = [
         codespell_step(),
         shellcheck_step(),
-        write_creds_step(),
-        restore_cache_step(),
         lint_backend_step(edition=edition),
         test_frontend_step(),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
