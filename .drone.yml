@@ -25,6 +25,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    YARN_CACHE_FOLDER: /cache
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -47,11 +48,12 @@ steps:
   settings:
     bucket: test-julien
     mount:
-    - ./node_modules
+    - /cache
     restore: true
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
+    YARN_CACHE_FOLDER: /cache
   volumes:
   - name: cache
     path: /cache
@@ -74,6 +76,7 @@ steps:
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
+    YARN_CACHE_FOLDER: /cache
   depends_on:
   - lint-backend
 
@@ -81,6 +84,8 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  environment:
+    YARN_CACHE_FOLDER: /cache
   depends_on:
   - lint-backend
 
@@ -90,11 +95,12 @@ steps:
   settings:
     bucket: test-julien
     mount:
-    - ./node_modules
+    - /cache
     rebuild: true
   environment:
     GCS_CACHE_JSON_KEY:
       from_secret: tf_google_credentials
+    YARN_CACHE_FOLDER: /cache
   volumes:
   - name: cache
     path: /cache
@@ -106,8 +112,7 @@ steps:
 
 volumes:
 - name: cache
-  host:
-    path: /tmp/drone/cache
+  temp: {}
 
 trigger:
   event:
@@ -163,6 +168,6 @@ get:
 
 ---
 kind: signature
-hmac: d1b0d3f440017eefacec886553ec6b7e2bcf61c8f08e683143a5019f2bada025
+hmac: 1843cc3d1a1806ed57e3b3ddbc721fbb7abee0334c97363f8ea72b160c718ed9
 
 ...

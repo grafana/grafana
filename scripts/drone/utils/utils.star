@@ -39,9 +39,7 @@ def pipeline(
         'volumes': [
             {
                 'name': 'cache',
-                'host': {
-                    'path': '/tmp/drone/cache',
-                },
+                'temp': {},
             },
         ],
     }
