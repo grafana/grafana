@@ -84,15 +84,16 @@ const MonacoQueryField = (props: Props) => {
             Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
 
           const getAllMetricNames = () => {
-            const { metricsMetadata } = lpRef.current;
-            const result =
-              metricsMetadata == null
-                ? []
-                : Object.entries(metricsMetadata).map(([k, v]) => ({
-                    name: k,
-                    help: v[0].help,
-                    type: v[0].type,
-                  }));
+            const { metrics, metricsMetadata } = lpRef.current;
+            const result = metrics.map((m) => {
+              const metaItem = metricsMetadata?.[m]?.[0];
+              return {
+                name: m,
+                help: metaItem?.help ?? '',
+                type: metaItem?.type ?? '',
+              };
+            });
+
             return Promise.resolve(result);
           };
 
