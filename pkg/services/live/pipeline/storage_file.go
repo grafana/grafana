@@ -53,9 +53,6 @@ func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule Cha
 		return rule, fmt.Errorf("can't read channel rules: %w", err)
 	}
 	for _, existingRule := range channelRules.Rules {
-		if rule.Uid == existingRule.Uid {
-			return rule, fmt.Errorf("uid already exists: %s", rule.Uid)
-		}
 		if rule.Pattern == existingRule.Pattern {
 			return rule, fmt.Errorf("pattern already exists: %s", rule.Pattern)
 		}
@@ -74,7 +71,7 @@ func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule Cha
 	index := -1
 
 	for i, existingRule := range channelRules.Rules {
-		if rule.Uid == existingRule.Uid {
+		if rule.Pattern == existingRule.Pattern {
 			index = i
 			break
 		}
@@ -131,7 +128,7 @@ func (f *FileStorage) saveChannelRules(rules ChannelRules) error {
 	return nil
 }
 
-func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, uid string) error {
+func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern string) error {
 	channelRules, err := f.readRules()
 	if err != nil {
 		return fmt.Errorf("can't read channel rules: %w", err)
@@ -139,7 +136,7 @@ func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, uid stri
 
 	index := -1
 	for i, existingRule := range channelRules.Rules {
-		if uid == existingRule.Uid {
+		if pattern == existingRule.Pattern {
 			index = i
 			break
 		}

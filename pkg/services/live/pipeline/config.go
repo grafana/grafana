@@ -64,7 +64,6 @@ type ChannelRuleSettings struct {
 
 type ChannelRule struct {
 	OrgId    int64               `json:"-"`
-	Uid      string              `json:"uid"`
 	Pattern  string              `json:"pattern"`
 	Settings ChannelRuleSettings `json:"settings"`
 }
@@ -105,7 +104,7 @@ type RuleStorage interface {
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
 	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
 	UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
-	DeleteChannelRule(_ context.Context, orgID int64, uid string) error
+	DeleteChannelRule(_ context.Context, orgID int64, pattern string) error
 }
 
 type StorageRuleBuilder struct {

@@ -865,8 +865,6 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.
 
 // HandleChannelRulesPutHTTP ...
 func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.Response {
-	uid := macaron.Params(c.Req)[":uid"]
-
 	body, err := ioutil.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -876,8 +874,8 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	if uid != rule.Uid {
-		return response.Error(http.StatusBadRequest, "Rule uid mismatch", nil)
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
 	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
 	if err != nil {
@@ -890,8 +888,6 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 
 // HandleChannelRulesDeleteHTTP ...
 func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) response.Response {
-	uid := macaron.Params(c.Req)[":uid"]
-
 	body, err := ioutil.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -901,7 +897,10 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, uid)
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
 	}

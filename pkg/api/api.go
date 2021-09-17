@@ -438,8 +438,8 @@ func (hs *HTTPServer) registerRoutes() {
 				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
 				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
 				liveRoute.Post("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPostHTTP), reqOrgAdmin)
-				liveRoute.Put("/channel-rules/:uid", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
-				liveRoute.Delete("/channel-rules/:uid", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
+				liveRoute.Put("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesPutHTTP), reqOrgAdmin)
+				liveRoute.Delete("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesDeleteHTTP), reqOrgAdmin)
 				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
 			}
 		})
