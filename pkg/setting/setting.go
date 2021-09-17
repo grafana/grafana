@@ -18,15 +18,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gobwas/glob"
-
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -378,9 +377,11 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates      bool
-	ReportingDistributor string
-	ReportingEnabled     bool
+	CheckForUpdates                     bool
+	ReportingDistributor                string
+	ReportingEnabled                    bool
+	ApplicationInsightsConnectionString string
+	ApplicationInsightsEndpointUrl      string
 
 	// LDAP
 	LDAPEnabled     bool
@@ -428,6 +429,13 @@ type Cfg struct {
 
 	// Unified Alerting
 	AdminConfigPollInterval          time.Duration
+	AlertmanagerConfigPollInterval   time.Duration
+	HAListenAddr                     string
+	HAAdvertiseAddr                  string
+	HAPeers                          []string
+	HAPeerTimeout                    time.Duration
+	HAGossipInterval                 time.Duration
+	HAPushPullInterval               time.Duration
 	UnifiedAlertingMaxAttempts       int64
 	UnifiedAlertingMinInterval       int64
 	UnifiedAlertingEvaluationTimeout time.Duration
@@ -921,12 +929,13 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if len(cfg.ReportingDistributor) >= 100 {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
+	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
+	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
-
-	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1379,42 +1388,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
-
-	return nil
-}
-
-func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
-	ua := iniFile.Section("unified_alerting")
-	s := ua.Key("admin_config_poll_interval_seconds").MustInt64(defaultAdminConfigPollIntervalSec)
-	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
-
-	alerting := iniFile.Section("alerting")
-
-	unifiedAlertingExecuteAlerts := ua.Key("execute_alerts").MustBool(defaultAlertingExecuteAlerts)
-	if unifiedAlertingExecuteAlerts { // true by default
-		unifiedAlertingExecuteAlerts = alerting.Key("execute_alerts").MustBool(defaultAlertingExecuteAlerts)
-	}
-	cfg.UnifiedAlertingExecuteAlerts = unifiedAlertingExecuteAlerts
-
-	// if the unified alerting options equal the defaults, apply the respective legacy one
-	unifiedEvaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(defaultAlertingEvaluationTimeoutSec)
-	if unifiedEvaluationTimeoutSeconds == defaultAlertingEvaluationTimeoutSec {
-		unifiedEvaluationTimeoutSeconds = alerting.Key("evaluation_timeout_seconds").MustInt64(defaultAlertingEvaluationTimeoutSec)
-	}
-	cfg.UnifiedAlertingEvaluationTimeout = time.Second * time.Duration(unifiedEvaluationTimeoutSeconds)
-
-	unifiedAlertingMaxAttempts := ua.Key("max_attempts").MustInt64(defaultAlertingMaxAttempts)
-	if unifiedAlertingMaxAttempts == defaultAlertingMaxAttempts {
-		unifiedAlertingMaxAttempts = alerting.Key("max_attempts").MustInt64(defaultAlertingMaxAttempts)
-	}
-	cfg.UnifiedAlertingMaxAttempts = unifiedAlertingMaxAttempts
-
-	unifiedAlertingMinInterval := ua.Key("min_interval_seconds").MustInt64(defaultUnifiedAlertingMinInterval)
-	if unifiedAlertingMinInterval == defaultUnifiedAlertingMinInterval {
-		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		unifiedAlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(defaultUnifiedAlertingMinInterval)
-	}
-	cfg.UnifiedAlertingMinInterval = unifiedAlertingMinInterval
 
 	return nil
 }

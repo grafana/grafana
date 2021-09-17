@@ -439,11 +439,11 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 		{
 			desc: "when the unified options do not equal the defaults, it should not apply the legacy ones",
 			unifiedAlertingOptions: map[string]string{
-				"admin_config_poll_interval_seconds": "120",
-				"max_attempts":                       "6",
-				"min_interval_seconds":               "60",
-				"execute_alerts":                     "false",
-				"evaluation_timeout_seconds":         "90",
+				"admin_config_poll_interval": "120s",
+				"max_attempts":               "6",
+				"min_interval_seconds":       "60",
+				"execute_alerts":             "false",
+				"evaluation_timeout_seconds": "90",
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               strconv.FormatInt(defaultAlertingMaxAttempts, 10),
@@ -462,11 +462,11 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 		{
 			desc: "when the unified options equal the defaults, it should apply the legacy ones",
 			unifiedAlertingOptions: map[string]string{
-				"admin_config_poll_interval_seconds": "120",
-				"max_attempts":                       strconv.FormatInt(defaultAlertingMaxAttempts, 10),
-				"min_interval_seconds":               strconv.FormatInt(defaultUnifiedAlertingMinInterval, 10),
-				"execute_alerts":                     strconv.FormatBool(defaultAlertingExecuteAlerts),
-				"evaluation_timeout_seconds":         strconv.FormatInt(defaultAlertingEvaluationTimeoutSec, 10),
+				"admin_config_poll_interval": "120s",
+				"max_attempts":               strconv.FormatInt(defaultAlertingMaxAttempts, 10),
+				"min_interval_seconds":       strconv.FormatInt(defaultUnifiedAlertingMinInterval, 10),
+				"execute_alerts":             strconv.FormatBool(defaultAlertingExecuteAlerts),
+				"evaluation_timeout_seconds": strconv.FormatInt(defaultAlertingEvaluationTimeoutSec, 10),
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               "12",
@@ -485,11 +485,10 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 		{
 			desc: "when both unified and legacy options are invalid, apply the defaults",
 			unifiedAlertingOptions: map[string]string{
-				"admin_config_poll_interval_seconds": "invalid",
-				"max_attempts":                       "invalid",
-				"min_interval_seconds":               "invalid",
-				"execute_alerts":                     "invalid",
-				"evaluation_timeout_seconds":         "invalid",
+				"max_attempts":               "invalid",
+				"min_interval_seconds":       "invalid",
+				"execute_alerts":             "invalid",
+				"evaluation_timeout_seconds": "invalid",
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               "invalid",
@@ -508,11 +507,10 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 		{
 			desc: "when unified alerting options are invalid, apply legacy options",
 			unifiedAlertingOptions: map[string]string{
-				"admin_config_poll_interval_seconds": "invalid",
-				"max_attempts":                       "invalid",
-				"min_interval_seconds":               "invalid",
-				"execute_alerts":                     "invalid",
-				"evaluation_timeout_seconds":         "invalid",
+				"max_attempts":               "invalid",
+				"min_interval_seconds":       "invalid",
+				"execute_alerts":             "invalid",
+				"evaluation_timeout_seconds": "invalid",
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               "12",
@@ -546,7 +544,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				_, err = alertingSec.NewKey(k, v)
 				require.NoError(t, err)
 			}
-			err = cfg.readUnifiedAlertingSettings(f)
+			err = cfg.ReadUnifiedAlertingSettings(f)
 			require.NoError(t, err)
 			tc.verifyCfg(t, *cfg)
 		})
