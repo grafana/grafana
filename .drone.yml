@@ -85,6 +85,7 @@ steps:
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
   - restore-cache
+  - initialize
 
 - name: build-frontend
   image: grafana/build-container:1.4.2
