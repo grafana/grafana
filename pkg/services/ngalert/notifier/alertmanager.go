@@ -191,7 +191,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 }
 
 // newSilences initializes returns *silence.Silences (from the Alertmanager) with silences taken from the file by path silencesFilePath and specific metrics registerer.
-func createSilences(silencesFilePath string, registerer prometheus.Registerer) (*silence.Silences, error) {
+func newSilences(silencesFilePath string, registerer prometheus.Registerer) (*silence.Silences, error) {
 	//TODO yuriy. replace with silencesFilePath when fix in https://github.com/prometheus/alertmanager/pull/2710 is released
 	silenceOpts := silence.Options{
 		Metrics:   registerer,
