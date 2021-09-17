@@ -16,6 +16,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
+      wait: 500,
     },
     {
       url: '${HOST}/?orgId=1',
@@ -62,6 +63,7 @@ var config = {
     },
     {
       url: '${HOST}/dashboards',
+      wait: 500,
       rootElement: '.main-view',
     },
   ],
@@ -69,7 +71,7 @@ var config = {
 
 function myPa11yCiConfiguration(urls, defaults) {
   const HOST_SERVER = process.env.HOST || 'localhost';
-  const PORT_SERVER = process.env.PORT || '3000';
+  const PORT_SERVER = process.env.PORT || '3001';
   for (var idx = 0; idx < urls.length; idx++) {
     urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
   }

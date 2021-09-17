@@ -83,7 +83,7 @@ var config = {
 
 function myPa11yCiConfiguration(urls, defaults) {
   const HOST_SERVER = process.env.HOST || 'localhost';
-  const PORT_SERVER = process.env.PORT || '3000';
+  const PORT_SERVER = process.env.PORT || '3001';
   for (var idx = 0; idx < urls.length; idx++) {
     urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
   }
