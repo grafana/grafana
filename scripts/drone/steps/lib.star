@@ -120,6 +120,9 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
+            'depends_on': [
+                   'restore-cache'
+                ],
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
                 'YARN_CACHE_FOLDER': '/cache/yarn',
@@ -398,7 +401,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'build-frontend'
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',

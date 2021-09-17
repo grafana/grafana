@@ -152,7 +152,6 @@ clean: ## Clean up intermediate build artifacts.
 # you modify starlark files.
 drone:
 	drone starlark
-	drone lint
 	drone --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.

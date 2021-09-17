@@ -27,6 +27,8 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
     YARN_CACHE_FOLDER: /cache/yarn
+  depends_on:
+  - restore-cache
 
 - name: codespell
   image: grafana/build-container:1.4.2
@@ -91,7 +93,7 @@ steps:
     TEST_MAX_WORKERS: 50%
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - lint-backend
+  - build-frontend
 
 - name: build-frontend
   image: grafana/build-container:1.4.2
@@ -182,6 +184,6 @@ get:
 
 ---
 kind: signature
-hmac: 6a7c76f4a32f597d6d4bb0910f045503808013f3d1bf145596c82c308880066c
+hmac: df36fcd6d679d5ed711ae5f8621aa14d268bff3e2ba4dc131d2e28aaf9a62bdf
 
 ...
