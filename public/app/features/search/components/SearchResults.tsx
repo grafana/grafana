@@ -33,7 +33,9 @@ export const SearchResults: FC<Props> = memo(
           {results.map((section) => {
             return (
               <div aria-label={sectionLabel} className={styles.section} key={section.id || section.title}>
-                <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+                {section.title && (
+                  <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+                )}
                 {section.expanded && (
                   <div aria-label={itemsLabel} className={styles.sectionItems}>
                     {section.items.map((item) => (

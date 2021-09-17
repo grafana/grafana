@@ -180,7 +180,7 @@ export class UPlotConfigBuilder {
       mode: this.mode,
       series: [
         this.mode === 2
-          ? (null as Series)
+          ? ((null as unknown) as Series)
           : {
               value: () => '',
             },

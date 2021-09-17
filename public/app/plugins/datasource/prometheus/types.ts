@@ -10,6 +10,8 @@ export interface PromQuery extends DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  // Timezone offset to align start & end time on backend
+  offsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;

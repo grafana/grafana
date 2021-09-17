@@ -200,8 +200,8 @@ export const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({
         u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
 
-        u.ctx.fillStyle = series.fill();
-        u.ctx.strokeStyle = series.stroke();
+        u.ctx.fillStyle = (series.fill as any)();
+        u.ctx.strokeStyle = (series.stroke as any)();
         u.ctx.lineWidth = strokeWidth;
 
         let deg360 = 2 * Math.PI;
