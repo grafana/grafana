@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
@@ -56,14 +60,20 @@ type Outputter interface {
 	Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error)
 }
 
+// Subscriber can handle channel subscribe events.
+type Subscriber interface {
+	Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error)
+}
+
 // LiveChannelRule is an in-memory representation of each specific rule, with Converter, Processor
 // and Outputter to be executed by Pipeline.
 type LiveChannelRule struct {
-	OrgId     int64
-	Pattern   string
-	Converter Converter
-	Processor Processor
-	Outputter Outputter
+	OrgId      int64
+	Pattern    string
+	Subscriber Subscriber
+	Converter  Converter
+	Processor  Processor
+	Outputter  Outputter
 }
 
 // Label ...
