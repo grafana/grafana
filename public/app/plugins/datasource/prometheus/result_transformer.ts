@@ -57,9 +57,12 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = otherResults.map((dataFrame) => {
-    const df = dataFrame;
-    df.meta = {
-      preferredVisualisationType: 'graph',
+    const df = {
+      ...dataFrame,
+      meta: {
+        ...dataFrame.meta,
+        preferredVisualisationType: 'graph',
+      },
     };
     return df;
   });
