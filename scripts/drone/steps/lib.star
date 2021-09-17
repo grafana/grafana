@@ -131,6 +131,11 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         },
     ]
 
+    steps += [
+        write_creds_step(),
+        restore_cache_step()
+    ]
+
     return steps
 
 def enterprise_downstream_step(edition):
