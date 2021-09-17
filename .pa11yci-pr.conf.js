@@ -10,6 +10,7 @@ var config = {
   urls: [
     {
       url: '${HOST}/login',
+      wait: 500,
       actions: [
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",

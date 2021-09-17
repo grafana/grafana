@@ -418,7 +418,7 @@ def test_a11y_frontend_step(edition, port=3001):
         },
         'failure': 'ignore',
         'commands': [
-            'yarn wait-on http://$HOST:$PORT',
+            'yarn wait-on http://$HOST:$PORT/login',
             'yarn -s test:accessibility --json > pa11y-ci-results.json',
         ],
     }
@@ -435,7 +435,6 @@ def test_a11y_frontend_step_pr(edition, port=3001):
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
-        'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
             'yarn -s test:accessibility-pr',
