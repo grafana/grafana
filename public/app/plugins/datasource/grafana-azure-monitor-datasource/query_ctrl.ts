@@ -1,7 +1,6 @@
 import { defaultsDeep, find, map, isString } from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import TimegrainConverter from './time_grain_converter';
-import './editor/editor_component';
 
 import { TemplateSrv } from '@grafana/runtime';
 import { auto } from 'angular';
