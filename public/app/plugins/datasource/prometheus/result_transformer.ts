@@ -45,7 +45,7 @@ interface TimeAndValue {
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
   // Get refIds that have table format as we need to process those to table reuslts
   const tableRefIds = options.targets.filter((target) => target.format === 'table').map((target) => target.refId);
-  const [tableResults, otherResults] = partition(response.data, (dataFrame) =>
+  const [tableResults, otherResults]: [DataFrame[], DataFrame[]] = partition(response.data, (dataFrame) =>
     dataFrame.refId ? tableRefIds.includes(dataFrame.refId) : false
   );
 
@@ -63,7 +63,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
         ...dataFrame.meta,
         preferredVisualisationType: 'graph',
       },
-    };
+    } as DataFrame;
     return df;
   });
 
@@ -71,7 +71,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
 }
 
 export function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
-  if (!df || df.length === 0) {
+  if (df.length === 0) {
     return df;
   }
 
