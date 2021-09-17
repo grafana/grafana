@@ -91,7 +91,7 @@ steps:
     TEST_MAX_WORKERS: 50%
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - build-frontend
+  - initialize
 
 - name: build-frontend
   image: grafana/build-container:1.4.2
@@ -182,6 +182,6 @@ get:
 
 ---
 kind: signature
-hmac: 6cbd4a0646e1444412036d66ff02b05c6a380fae4036b1fc0b82af55fe062468
+hmac: 450b032747623db5b0e1ad4c4259bbd1620c12c0c283ba872edac203dafb0d5a
 
 ...

@@ -401,7 +401,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'build-frontend'
+            'initialize'
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
