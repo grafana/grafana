@@ -28,10 +28,16 @@ var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
 	),
 )
 
-// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources" tab access
+// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
 var dataSourcesNewAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
 	ac.EvalPermission(ActionDatasourcesCreate),
+	ac.EvalPermission(ActionDatasourcesWrite),
+)
+
+// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
+var dataSourcesEditAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
 	ac.EvalPermission(ActionDatasourcesWrite),
 )
 
