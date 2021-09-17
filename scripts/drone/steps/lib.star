@@ -429,8 +429,9 @@ def restore_cache_step():
             'bucket': 'test-julien',
             'restore': 'true',
             'cache_key': "test123",
+            'local_root': '/cache',
             'mount': [
-                '/cache/yarn'
+                'yarn'
             ],
          },
          'depends_on': [
@@ -455,8 +456,9 @@ def rebuild_cache_step():
             'bucket': 'test-julien',
             'cache_key': "test123",
             'rebuild': 'true',
+            'local_root': '/cache',
             'mount': [
-                '/cache/yarn'
+                'yarn'
             ],
          },
          'depends_on': [
