@@ -76,6 +76,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
+        "stacking": "none",
         "text": {},
         "tooltip": {
           "mode": "single"
@@ -83,7 +84,7 @@
       },
       "targets": [
         {
-          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
+          "csvContent": "Time,Name,Stat1,Stat2\n2020-01-01T00:00:00Z,Stockholm, 10, 15\n2020-01-01T00:00:00Z,New York, 19, 5\n2020-01-01T00:00:00Z,London, 10, 1\n2020-01-01T00:00:00Z,Negative, 15, -5\n2020-01-01T00:00:00Z,Long value, 15,10",
           "refId": "A",
           "scenarioId": "csv_content"
         }
@@ -147,6 +148,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
+        "stacking": "none",
         "text": {},
         "tooltip": {
           "mode": "single"
@@ -216,6 +218,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
+        "stacking": "none",
         "text": {},
         "tooltip": {
           "mode": "single"
@@ -285,6 +288,7 @@
         },
         "orientation": "auto",
         "showValue": "always",
+        "stacking": "none",
         "text": {},
         "tooltip": {
           "mode": "single"
@@ -353,6 +357,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
+        "stacking": "none",
         "text": {
           "titleSize": 10,
           "valueSize": 25
@@ -425,6 +430,7 @@
         },
         "orientation": "horizontal",
         "showValue": "auto",
+        "stacking": "none",
         "text": {},
         "tooltip": {
           "mode": "single"
@@ -495,6 +501,7 @@
         },
         "orientation": "horizontal",
         "showValue": "auto",
+        "stacking": "none",
         "text": {},
         "tooltip": {
           "mode": "single"
