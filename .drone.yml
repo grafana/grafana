@@ -36,6 +36,7 @@ steps:
     - /cache/yarn
     restore: true
   environment:
+    GCS_BUCKET: test-julien
     GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
   volumes:
   - name: cache
@@ -118,6 +119,7 @@ steps:
     - /cache/yarn
     rebuild: true
   environment:
+    GCS_BUCKET: test-julien
     GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
   volumes:
   - name: cache
@@ -186,6 +188,6 @@ get:
 
 ---
 kind: signature
-hmac: f48f9cbe1484f7a7e125852ae85ef4a1fb9502b64e8cdda2dba81fd030b165ac
+hmac: 3f0c0d1ace88034ac43c64809271640e13b39c74b9713bc7ad476cab6c8ef603
 
 ...

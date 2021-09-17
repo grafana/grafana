@@ -453,7 +453,8 @@ def restore_cache_step():
             ],
          },
          'environment': {
-            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json'
+            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json',
+            'GCS_BUCKET': 'test-julien'
          },
          'depends_on': [
             'write-cache-creds'
@@ -482,7 +483,8 @@ def rebuild_cache_step():
             ],
          },
          'environment': {
-            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json'
+            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json',
+            'GCS_BUCKET': 'test-julien'
          },
          'depends_on': [
             'initialize',
