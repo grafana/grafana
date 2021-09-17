@@ -13,37 +13,23 @@ steps:
   commands:
   - echo $DRONE_RUNNER_NAME
 
-- name: write-cache-creds
-  image: grafana/build-container:1.4.2
-  commands:
-  - printf "%s" "$GOOGLE_CREDENTIALS" > /cache/credentials.json
-  environment:
-    GOOGLE_CREDENTIALS:
-      from_secret: tf_google_credentials
-  volumes:
-  - name: cache
-    path: /cache
-
 - name: restore-cache
   pull: always
-  image: meltwater/drone-cache
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty
   settings:
     backend: gcs
     bucket: test-julien
     cache_key: test123
-    endpoint: https://storage.googleapis.com
+    json_key:
+      from_secret: tf_google_credentials
     mount:
     - /cache/yarn
     restore: true
-  environment:
-    GCS_BUCKET: test-julien
-    GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
-    S3_BUCKET: test-julien
   volumes:
   - name: cache
     path: /cache
   depends_on:
-  - write-cache-creds
+  - clone
 
 - name: initialize
   image: grafana/build-container:1.4.2
@@ -110,19 +96,16 @@ steps:
 
 - name: rebuild-cache
   pull: always
-  image: meltwater/drone-cache
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty
   settings:
     backend: gcs
     bucket: test-julien
     cache_key: test123
-    endpoint: https://storage.googleapis.com
+    json_key:
+      from_secret: tf_google_credentials
     mount:
     - /cache/yarn
     rebuild: true
-  environment:
-    GCS_BUCKET: test-julien
-    GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
-    S3_BUCKET: test-julien
   volumes:
   - name: cache
     path: /cache
@@ -190,6 +173,6 @@ get:
 
 ---
 kind: signature
-hmac: fce303e6a39af70fb64c3401baec15eaa7a7b1778f46d5635f996b3da6ff0d00
+hmac: a3cadd19aa41d35ce90d394c2234440195d49d5a531aab9d476d10fb47d3c600
 
 ...

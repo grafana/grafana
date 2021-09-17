@@ -117,7 +117,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     steps = [
         identify_runner_step,
-        write_creds_step(),
         restore_cache_step(),
         {
             'name': 'initialize',
@@ -418,33 +417,15 @@ def test_frontend_step():
         ],
     }
 
-def write_creds_step():
-    return {
-        'name': 'write-cache-creds',
-        'image': build_image,
-        'commands': [
-            'printf "%s" "$GOOGLE_CREDENTIALS" > /cache/credentials.json',
-        ],
-        'environment': {
-            'GOOGLE_CREDENTIALS': from_secret('tf_google_credentials')
-        },
-        'volumes': [
-            {
-                'name': 'cache',
-                'path': '/cache',
-            },
-         ],
-    }
-
 
 def restore_cache_step():
     return {
-        'image': 'meltwater/drone-cache',
+        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty',
         'name': 'restore-cache',
         'pull': 'always',
          'settings': {
             'backend': 'gcs',
-            'endpoint': 'https://storage.googleapis.com',
+            'json_key': from_secret('tf_google_credentials'),
             'bucket': 'test-julien',
             'restore': 'true',
             'cache_key': "test123",
@@ -452,13 +433,8 @@ def restore_cache_step():
                 '/cache/yarn'
             ],
          },
-         'environment': {
-            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json',
-            'GCS_BUCKET': 'test-julien',
-            'S3_BUCKET': 'test-julien',
-         },
          'depends_on': [
-            'write-cache-creds'
+            'clone'
          ],
          'volumes': [
             {
@@ -470,23 +446,18 @@ def restore_cache_step():
 
 def rebuild_cache_step():
     return {
-        'image': 'meltwater/drone-cache',
+        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty',
         'name': 'rebuild-cache',
         'pull': 'always',
          'settings': {
             'backend': 'gcs',
-            'endpoint': 'https://storage.googleapis.com',
+            'json_key': from_secret('tf_google_credentials'),
             'bucket': 'test-julien',
             'cache_key': "test123",
             'rebuild': 'true',
             'mount': [
                 '/cache/yarn'
             ],
-         },
-         'environment': {
-            'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json',
-            'GCS_BUCKET': 'test-julien',
-            'S3_BUCKET': 'test-julien',
          },
          'depends_on': [
             'initialize',
