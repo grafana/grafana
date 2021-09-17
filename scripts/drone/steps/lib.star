@@ -121,6 +121,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'image': build_image,
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
+                'YARN_CACHE_FOLDER': '/cache',
             },
             'commands': download_grabpl_cmds + common_cmds,
         },
@@ -326,6 +327,9 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     return {
         'name': 'build-frontend',
         'image': build_image,
+        'environment': {
+            'YARN_CACHE_FOLDER': '/cache',
+        },
         'depends_on': [
             'lint-backend',
         ],
@@ -397,6 +401,7 @@ def test_frontend_step():
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
+            'YARN_CACHE_FOLDER': '/cache',
         },
         'commands': [
             'yarn run ci:test-frontend',
@@ -410,12 +415,13 @@ def restore_cache_step():
         'pull': 'always',
         'environment': {
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
+            'YARN_CACHE_FOLDER': '/cache',
          },
          'settings': {
             'bucket': 'test-julien',
             'restore': 'true',
             'mount': [
-                './node_modules'
+                '/cache'
             ],
          },
          'depends_on': [
@@ -436,12 +442,13 @@ def rebuild_cache_step():
         'pull': 'always',
         'environment': {
             'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
+            'YARN_CACHE_FOLDER': '/cache',
          },
          'settings': {
             'bucket': 'test-julien',
             'rebuild': 'true',
             'mount': [
-                './node_modules'
+                '/cache'
             ],
          },
          'depends_on': [
