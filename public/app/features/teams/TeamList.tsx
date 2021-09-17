@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Page from 'app/core/components/Page/Page';
-import { DeleteButton, LinkButton } from '@grafana/ui';
+import { DeleteButton, LinkButton, FilterInput } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { OrgRole, StoreState, Team } from 'app/types';
@@ -11,7 +11,6 @@ import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { setSearchQuery } from './state/reducers';
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;

@@ -12,9 +12,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { Button } from '@grafana/ui';
+import { Button, FilterInput } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 function mapStateToProps(state: any) {
   return {

@@ -1,7 +1,7 @@
 import React, { FC, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { Button, LinkButton, List, PluginSignatureBadge } from '@grafana/ui';
+import { Button, LinkButton, List, PluginSignatureBadge, FilterInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
@@ -11,7 +11,6 @@ import { getDataSourcePlugins } from './state/selectors';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { Card } from 'app/core/components/Card/Card';
 import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 function mapStateToProps(state: StoreState) {
   return {

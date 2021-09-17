@@ -6,7 +6,7 @@ import { uniqBy } from 'lodash';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
-import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select } from '@grafana/ui';
+import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import {
@@ -21,7 +21,6 @@ import {
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { useDebounce } from 'react-use';
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 export interface Props {
   queries: RichHistoryQuery[];

@@ -1,4 +1,4 @@
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
+import { FilterInput } from '@grafana/ui';
 import React, { useState, useRef } from 'react';
 import { useDebounce } from 'react-use';
 

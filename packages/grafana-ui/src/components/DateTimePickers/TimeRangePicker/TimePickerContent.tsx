@@ -12,7 +12,7 @@ import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 import { getFocusStyles } from '../../../themes/mixins';
 import { selectors } from '@grafana/e2e-selectors';
-import { FilterInput } from '../../FilterInput/FilterInput';
+import { FilterInput } from '../..';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {

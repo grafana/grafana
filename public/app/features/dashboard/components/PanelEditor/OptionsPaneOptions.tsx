@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
@@ -13,7 +13,6 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 interface Props {
   plugin: PanelPlugin;

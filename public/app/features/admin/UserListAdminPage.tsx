@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
-import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -10,7 +10,6 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
-import { FilterInput } from '@grafana/ui/src/components/FilterInput/FilterInput';
 
 const mapDispatchToProps = {
   fetchUsers,
