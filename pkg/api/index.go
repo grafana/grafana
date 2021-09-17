@@ -318,6 +318,30 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
+	if hs.Cfg.FeatureToggles["live-pipeline"] {
+		liveNavLinks := []*dtos.NavLink{}
+
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Status", Id: "live-status", Url: hs.Cfg.AppSubURL + "/live", Icon: "exchange-alt",
+		})
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Pipeline", Id: "live-pipeline", Url: hs.Cfg.AppSubURL + "/live/pipeline", Icon: "arrow-to-right",
+		})
+		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
+			Text: "Cloud", Id: "live-cloud", Url: hs.Cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
+		})
+
+		navTree = append(navTree, &dtos.NavLink{
+			Id:           "live",
+			Text:         "Live",
+			SubTitle:     "Event Streaming",
+			Icon:         "exchange-alt",
+			Url:          hs.Cfg.AppSubURL + "/live",
+			Children:     liveNavLinks,
+			HideFromMenu: true,
+		})
+	}
+
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
 			Id:         dtos.NavIDCfg,
