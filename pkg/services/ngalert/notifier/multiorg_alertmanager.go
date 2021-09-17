@@ -181,44 +181,49 @@ func (moa *MultiOrgAlertmanager) addOrUpdateAlertManagerConfigurations(ctx conte
 	}
 	for _, orgID := range orgIDs {
 		orgsFound[orgID] = struct{}{}
-
-		alertmanager, found := moa.alertmanagers[orgID]
-		if !found {
-			// These metrics are not exported by Grafana and are mostly a placeholder.
-			// To export them, we need to translate the metrics from each individual registry and,
-			// then aggregate them on the main registry.
-			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, m)
-			if err != nil {
-				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
-			}
-			alertmanager = am
-		}
-
-		dbConfig, cfgFound := dbConfigs[orgID]
-		if !cfgFound {
-			if found {
-				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
-				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
-			}
-			err := alertmanager.SaveAndApplyDefaultConfig()
-			if err != nil {
-				moa.logger.Error("failed to apply the default Alertmanager configuration", "org", orgID)
-				continue
-			}
-			moa.alertmanagers[orgID] = alertmanager
-			continue
-		}
-
-		err := alertmanager.ApplyConfig(dbConfig)
+		maybeDbConfig := dbConfigs[orgID]
+		err = moa.addOrUpdateAlertmanager(orgID, maybeDbConfig)
 		if err != nil {
-			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
-			continue
+			moa.logger.Error("unable to add or update configuration of Alertmanager", "org", orgID, "err", err)
 		}
-		moa.alertmanagers[orgID] = alertmanager
+	}
+	return orgsFound, nil
+}
+
+// addOrUpdateAlertmanager gets an instance of Alertmanager that serves a specific orgID from alertmanagers, and applies a new configuration.
+//If the configuration is not provided, it applies the default one.
+//If there is no Alertmanager service the organization, it creates a new instance, applies the configuration (if provided, default otherwise) and adds it to alertmanagers.
+func (moa *MultiOrgAlertmanager) addOrUpdateAlertmanager(orgID int64, maybeDbConfig *models.AlertConfiguration) error {
+	alertmanager, found := moa.alertmanagers[orgID]
+	if !found {
+		// These metrics are not exported by Grafana and are mostly a placeholder.
+		// To export them, we need to translate the metrics from each individual registry and,
+		// then aggregate them on the main registry.
+		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+		am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, m)
+		if err != nil {
+			return fmt.Errorf("failed to create a new Alertmanager: %w", err)
+		}
+		alertmanager = am
 	}
 
-	return orgsFound, nil
+	if maybeDbConfig == nil {
+		if found {
+			// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
+			moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
+		}
+		if err := alertmanager.SaveAndApplyDefaultConfig(); err != nil {
+			return fmt.Errorf("failed to apply Alertmanager configuration: %w", err)
+		}
+		moa.alertmanagers[orgID] = alertmanager
+		return nil
+	}
+
+	if err := alertmanager.ApplyConfig(maybeDbConfig); err != nil {
+		return fmt.Errorf("failed to apply Alertmanager configuration: %w", err)
+	}
+	moa.alertmanagers[orgID] = alertmanager
+	return nil
 }
 
 func (moa *MultiOrgAlertmanager) StopAndWait() {
