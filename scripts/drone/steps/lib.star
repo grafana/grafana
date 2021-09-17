@@ -405,7 +405,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'initialize'
+            'restore-cache'
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
