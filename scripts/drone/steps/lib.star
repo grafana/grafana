@@ -476,8 +476,7 @@ def rebuild_cache_step():
             'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json'
          },
          'depends_on': [
-            # 'build-frontend',
-            'write-cache-creds'
+            'build-frontend',
          ],
          'volumes': [
             {
