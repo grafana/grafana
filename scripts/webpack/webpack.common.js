@@ -49,6 +49,7 @@ module.exports = {
       path.resolve('node_modules'),
     ],
     fallback: {
+      buffer: false,
       fs: false,
       stream: false,
       http: false,
