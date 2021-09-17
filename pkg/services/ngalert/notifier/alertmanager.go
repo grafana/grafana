@@ -165,7 +165,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
 	am.notificationLog.SetBroadcast(c.Broadcast)
 
-	am.silences, err = createSilences(silencesFilePath, m.Registerer)
+	am.silences, err = newSilences(silencesFilePath, m.Registerer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
