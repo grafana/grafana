@@ -93,7 +93,7 @@ steps:
   environment:
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - test_frontend
+  - test-frontend
 
 - name: rebuild-cache
   pull: always
@@ -175,6 +175,6 @@ get:
 
 ---
 kind: signature
-hmac: 8e8f9c8aa6363d8c82022b063144ab7e380f535c9a0b067d5bf835e24ca398a2
+hmac: 793541d76cc48d807fd14f8c0c3a100bbc6363a0067486a58a5cbf00c48d4e5f
 
 ...

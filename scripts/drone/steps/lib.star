@@ -339,7 +339,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
             'YARN_CACHE_FOLDER': '/cache/yarn',
         },
         'depends_on': [
-            'test_frontend',
+            'test-frontend',
         ],
         'commands': cmds,
     }
