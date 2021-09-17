@@ -5,7 +5,7 @@ keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
 aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/histogram/"]
 weight = 605
 +++
-
+# Visualize Prometheus histogram in Grafana
 Assuming users have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana, this documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/).
 
 To review basic information, check out the Grafana's "[Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)."
