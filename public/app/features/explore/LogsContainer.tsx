@@ -62,7 +62,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     const {
       loading,
       loadingState,
-      logsHighlighterExpressions,
       logRows,
       logsMeta,
       logsSeries,
@@ -123,7 +122,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               logsSeries={logsSeries}
               logsQueries={logsQueries}
               width={width}
-              highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               loadingState={loadingState}
               onChangeTime={this.onChangeTime}
@@ -153,22 +151,11 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const {
-    logsHighlighterExpressions,
-    logsResult,
-    loading,
-    scanning,
-    datasourceInstance,
-    isLive,
-    isPaused,
-    range,
-    absoluteRange,
-  } = item;
+  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
-    logsHighlighterExpressions,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
     logsSeries: logsResult?.series,

@@ -51,6 +51,7 @@ type QueryModel struct {
 	RangeQuery     bool   `json:"range"`
 	InstantQuery   bool   `json:"instant"`
 	IntervalFactor int64  `json:"intervalFactor"`
+	OffsetSec      int64  `json:"offsetSec"`
 }
 
 type Service struct {
@@ -162,13 +163,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+		var results model.Value
 
-		if err != nil {
-			return &result, err
+		switch query.QueryType {
+		case Range:
+			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
+			if err != nil {
+				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+			}
+
+		default:
+			return &result, fmt.Errorf("unknown Query type detected %#v", query.QueryType)
 		}
 
-		frame, err := parseResponse(value, query)
+		frame, err := parseResponse(results, query)
 		if err != nil {
 			return &result, err
 		}
@@ -283,13 +291,20 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
 		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
+		queryType := Range
+
+		// Align query range to step. It rounds start and end down to a multiple of step.
+		start := int64(math.Floor((float64(query.TimeRange.From.Unix()+model.OffsetSec)/interval.Seconds()))*interval.Seconds() - float64(model.OffsetSec))
+		end := int64(math.Floor((float64(query.TimeRange.To.Unix()+model.OffsetSec)/interval.Seconds()))*interval.Seconds() - float64(model.OffsetSec))
+
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
 			Step:         interval,
 			LegendFormat: model.LegendFormat,
-			Start:        query.TimeRange.From,
-			End:          query.TimeRange.To,
+			Start:        time.Unix(start, 0),
+			End:          time.Unix(end, 0),
 			RefId:        query.RefID,
+			QueryType:    queryType,
 		})
 	}
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"gopkg.in/macaron.v1"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -15,12 +16,12 @@ func TestGetLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
 			resp := sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": "unknown"})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":name": "unknown"})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})
@@ -68,7 +69,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 
@@ -77,7 +78,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": sc.initialResult.Result.Name})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			arrayResult := validateAndUnMarshalArrayResponse(t, resp)
 
@@ -163,7 +164,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
 			result := validateAndUnMarshalResponse(t, resp)
 
@@ -172,7 +173,7 @@ func TestGetLibraryElement(t *testing.T) {
 			}
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": sc.initialResult.Result.Name})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			arrayResult := validateAndUnMarshalArrayResponse(t, resp)
 			if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
@@ -186,12 +187,12 @@ func TestGetLibraryElement(t *testing.T) {
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
 
 			// by uid
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 
 			// by name
-			sc.reqContext.ReplaceAllParams(map[string]string{":name": sc.initialResult.Result.Name})
+			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})

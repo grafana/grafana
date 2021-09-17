@@ -1,124 +1,32 @@
 +++
-title = "Image rendering"
-description = ""
-keywords = ["grafana", "image", "rendering", "plugin"]
-weight = 300
+title = "Troubleshooting"
+description = "Image rendering troubleshooting"
+keywords = ["grafana", "image", "rendering", "plugin", "troubleshooting"]
+weight = 115
 +++
 
-# Image rendering
+# Troubleshoot image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/old-alerting/notifications.md" >}}).
+In this section, you'll learn how to enable logging for the image renderer and you'll find the most common issues.
 
-> **Note:** Image rendering of dashboards is not supported at this time.
+## Enable debug logging
 
-While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
+To troubleshoot the image renderer, different kind of logs are available.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../administration/configuration/#temp-data-lifetime" >}}) setting.
-
-You can also render a PNG by clicking the dropdown arrow next to a panel title, then clicking **Share > Direct link rendered image**.
-
-## Memory requirements
-
-Minimum free memory recommendation is 16GB on the system doing the rendering.
-
-Rendering images can require a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. If multiple images are rendered in parallel, then the rendering has a bigger memory footprint. One advantage of using the remote rendering service is that the rendering will be done on the remote system, so your local system resources will not be affected by rendering.
-
-## Alerting and render limits
-
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../administration/configuration/#concurrent_render_limit" >}}).
-
-## Install Grafana Image Renderer plugin
-
-The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chrome.
-
-To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/?tab=installation).
-
-## Run in custom Grafana Docker image
-
-We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service]({{< relref "#remote-rendering-service" >}}) for instructions.
-
-If you still want to install the plugin in the Grafana Docker image, refer to [Build with Grafana Image Renderer plugin pre-installed]({{< relref "../installation/docker/#build-with-grafana-image-renderer-plugin-pre-installed" >}}).
-
-## Remote rendering service
-
-> Requires an internet connection.
-
-The [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can also be run as a remote HTTP rendering service. In this setup, Grafana renders an image by making a HTTP request to the remote rendering service, which in turn renders the image and returns it back in the HTTP response to Grafana.
-
-You can run the remote HTTP rendering service using Docker or as a standalone Node.js application.
-
-### Run in Docker
-
-The following example shows how to run Grafana and the remote HTTP rendering service in two separate Docker containers using Docker Compose.
-
-Create a `docker-compose.yml` with the following content:
-
-```yaml
-version: '2'
-
-services:
-  grafana:
-    image: grafana/grafana:main
-    ports:
-      - '3000:3000'
-    environment:
-      GF_RENDERING_SERVER_URL: http://renderer:8081/render
-      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
-      GF_LOG_FILTERS: rendering:debug
-  renderer:
-    image: grafana/grafana-image-renderer:latest
-    ports:
-      - 8081
-```
-
-And then run:
-
-```bash
-docker-compose up
-```
-
-## Run as standalone Node.js application
-
-The following example describes how to build and run the remote HTTP rendering service as a standalone Node.js application and configure Grafana appropriately.
-
-1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
-1. Install dependencies and build:
-
-   ```bash
-   yarn install --pure-lockfile
-   yarn run build
-   ```
-
-1. Run the server:
-
-   ```bash
-   node build/app.js server --port=8081
-   ```
-
-1. Update Grafana configuration:
-
-   ```
-   [rendering]
-   server_url = http://localhost:8081/render
-   callback_url = http://localhost:3000/
-   ```
-
-1. Restart Grafana.
-
-## PhantomJS
-
-> Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
-
-## Troubleshoot image rendering
-
-Enable debug log messages for rendering in the Grafana configuration file and inspect the Grafana server log.
+You can enable debug log messages for rendering in the Grafana configuration file and inspect the Grafana server logs.
 
 ```bash
 [log]
 filters = rendering:debug
 ```
 
-### Grafana image renderer plugin and remote rendering service
+You can also enable more logs in image renderer service itself by:
+
+- Increasing the [log level]({{< relref "./#log-level" >}}).
+- Enabling [verbose logging]({{< relref "./#verbose-logging" >}}).
+- [Capturing headless browser output]({{< relref "./#capture-browser-output" >}}).
+
+## Missing libraries
 
 The plugin and rendering service uses [Chromium browser](https://www.chromium.org/) which depends on certain libraries.
 If you don't have all of those libraries installed in your system you may encounter errors when trying to render an image, e.g.
@@ -175,7 +83,7 @@ On a minimal Centos installation, the following dependencies have been confirmed
 libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-theme adwaita-icon-theme at at-spi2-atk at-spi2-core cairo-gobject colord-libs dconf desktop-file-utils ed emacs-filesystem gdk-pixbuf2 glib-networking gnutls gsettings-desktop-schemas gtk-update-icon-cache gtk3 hicolor-icon-theme jasper-libs json-glib libappindicator-gtk3 libdbusmenu libdbusmenu-gtk3 libepoxy liberation-fonts liberation-narrow-fonts liberation-sans-fonts liberation-serif-fonts libgusb libindicator-gtk3 libmodman libproxy libsoup libwayland-cursor libwayland-egl libxkbcommon m4 mailx nettle patch psmisc redhat-lsb-core redhat-lsb-submod-security rest spax time trousers xdg-utils xkeyboard-config alsa-lib
 ```
 
-### Certificate signed by internal certificate authorities
+## Certificate signed by internal certificate authorities
 
 In many cases, Grafana runs on internal servers and uses certificates that have not been signed by a CA ([Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority)) known to Chrome, and therefore cannot be validated. Chrome internally uses NSS ([Network Security Services](https://en.wikipedia.org/wiki/Network_Security_Services)) for cryptographic operations such as the validation of certificates.
 
@@ -187,26 +95,47 @@ t=2019-12-04T12:39:22+0000 lvl=error msg="Rendering failed." logger=context user
 t=2019-12-04T12:39:22+0000 lvl=error msg="Request Completed" logger=context userId=1 orgId=1 uname=admin method=GET path=/render/d-solo/zxDJxNaZk/graphite-metrics status=500 remote_addr=192.168.106.101 time_ms=310 size=1722 referer="https://grafana.xxx-xxx/d/zxDJxNaZk/graphite-metrics?orgId=1&refresh=1m"
 ```
 
-(The severity-level `error` in the above messages might be misspelled with a single `r`)
-
 If this happens, then you have to add the certificate to the trust store. If you have the certificate file for the internal root CA in the file `internal-root-ca.crt.pem`, then use these commands to create a user specific NSS trust store for the Grafana user (`grafana` for the purpose of this example) and execute the following steps:
 
-```[root@server ~]# [ -d /usr/share/grafana/.pki/nssdb ] || mkdir -p /usr/share/grafana/.pki/nssdb
+**Linux:**
+
+```
+[root@server ~]# [ -d /usr/share/grafana/.pki/nssdb ] || mkdir -p /usr/share/grafana/.pki/nssdb
 [root@merver ~]# certutil -d sql:/usr/share/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
 [root@server ~]# chown -R grafana: /usr/share/grafana/.pki/nssdb
 ```
 
-### Custom Chrome/Chromium
+**Windows:**
+
+```
+certutil –addstore "Root" <path>/internal-root-ca.crt.pem
+```
+
+## Custom Chrome/Chromium
 
 As a last resort, if you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
-installed on your system, then you can configure [Grafana Image renderer plugin](#grafana-image-renderer-plugin) to use this
+installed on your system, then you can configure the [Grafana Image renderer plugin](../#custom-chromechromium) to use this
 instead of the pre-packaged version of Chromium.
 
-> Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
-> compatible with the [Grafana Image renderer plugin](#grafana-image-renderer-plugin).
+> **Note:** Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
+> compatible with the [Grafana Image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
-To override the path to the Chrome/Chromium executable, set an environment variable and make sure that it's available for the Grafana process. For example:
+To override the path to the Chrome/Chromium executable in plugin mode, set an environment variable and make sure that it's available for the Grafana process. For example:
 
 ```bash
 export GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chromium-browser"
+```
+
+In remote rendering mode, you need to set the environment variable or update the configuration file and make sure that it's available for the image rendering service process:
+
+```bash
+CHROME_BIN="/usr/bin/chromium-browser"
+```
+
+```json
+{
+  "rendering": {
+    "chromeBin": "/usr/bin/chromium-browser"
+  }
+}
 ```

@@ -119,7 +119,7 @@ describe('refreshExplore', () => {
     await dispatch(
       refreshExplore(
         ExploreId.left,
-        serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()' }], range: testRange })
+        serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );
     // same
@@ -138,7 +138,7 @@ describe('refreshExplore', () => {
     await dispatch(
       refreshExplore(
         ExploreId.left,
-        serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()' }], range: testRange })
+        serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );
 
