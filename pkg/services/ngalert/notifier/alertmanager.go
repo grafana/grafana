@@ -420,7 +420,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, inhibitionStage, stage}
 	}
 
-	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
