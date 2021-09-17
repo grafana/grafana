@@ -31,11 +31,14 @@ steps:
     backend: gcs
     bucket: test-julien
     cache_key: test123
+    endpoint: https://storage.googleapis.com
     mount:
     - /cache/yarn
     restore: true
   environment:
+    GCS_BUCKET: test-julien
     GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
+    S3_BUCKET: test-julien
   volumes:
   - name: cache
     path: /cache
@@ -112,11 +115,14 @@ steps:
     backend: gcs
     bucket: test-julien
     cache_key: test123
+    endpoint: https://storage.googleapis.com
     mount:
     - /cache/yarn
     rebuild: true
   environment:
+    GCS_BUCKET: test-julien
     GOOGLE_APPLICATION_CREDENTIALS: /cache/credentials.json
+    S3_BUCKET: test-julien
   volumes:
   - name: cache
     path: /cache
@@ -184,6 +190,6 @@ get:
 
 ---
 kind: signature
-hmac: 62263fc8a27af2e81b08bc07680ea5821ca8adc0944faa76570eb11160ead0fe
+hmac: fce303e6a39af70fb64c3401baec15eaa7a7b1778f46d5635f996b3da6ff0d00
 
 ...

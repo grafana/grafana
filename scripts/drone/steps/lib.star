@@ -444,6 +444,7 @@ def restore_cache_step():
         'pull': 'always',
          'settings': {
             'backend': 'gcs',
+            'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'restore': 'true',
             'cache_key': "test123",
@@ -453,6 +454,8 @@ def restore_cache_step():
          },
          'environment': {
             'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json',
+            'GCS_BUCKET': 'test-julien',
+            'S3_BUCKET': 'test-julien',
          },
          'depends_on': [
             'write-cache-creds'
@@ -472,6 +475,7 @@ def rebuild_cache_step():
         'pull': 'always',
          'settings': {
             'backend': 'gcs',
+            'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'cache_key': "test123",
             'rebuild': 'true',
@@ -481,6 +485,8 @@ def rebuild_cache_step():
          },
          'environment': {
             'GOOGLE_APPLICATION_CREDENTIALS': '/cache/credentials.json',
+            'GCS_BUCKET': 'test-julien',
+            'S3_BUCKET': 'test-julien',
          },
          'depends_on': [
             'initialize',
