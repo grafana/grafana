@@ -190,7 +190,13 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
         {(!isFullscreen || !hideQuickRanges) && (
           <div className={styles.rightSide}>
             <div className={styles.timeRangeFilter}>
-              <FilterInput width={0} value={searchTerm} onChange={setSearchQuery} placeholder={'Search quick ranges'} />
+              <FilterInput
+                width={0}
+                autoFocus={true}
+                value={searchTerm}
+                onChange={setSearchQuery}
+                placeholder={'Search quick ranges'}
+              />
             </div>
             <CustomScrollbar>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
