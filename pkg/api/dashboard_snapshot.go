@@ -146,6 +146,9 @@ func CreateDashboardSnapshot(c *models.ReqContext, cmd models.CreateDashboardSna
 // GET /api/snapshots/:key
 func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := c.Params(":key")
+	if len(key) == 0 {
+		return response.Error(404, "Snapshot not found", nil)
+	}
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
 	err := bus.Dispatch(query)
@@ -215,6 +218,9 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 // GET /api/snapshots-delete/:deleteKey
 func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
 	key := c.Params(":deleteKey")
+	if len(key) == 0 {
+		return response.Error(404, "Snapshot not found", nil)
+	}
 
 	query := &models.GetDashboardSnapshotQuery{DeleteKey: key}
 
@@ -245,6 +251,9 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 // DELETE /api/snapshots/:key
 func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := c.Params(":key")
+	if len(key) == 0 {
+		return response.Error(404, "Snapshot not found", nil)
+	}
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
