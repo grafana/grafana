@@ -5,7 +5,7 @@ import {
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
 } from '@grafana/data';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export class DatasourceSrvMock {
   constructor(private defaultDS: DataSourceApi, private datasources: { [name: string]: DataSourceApi }) {
@@ -54,7 +54,6 @@ export class MockDataSourceApi extends DataSourceApi {
 }
 
 export class MockObservableDataSourceApi extends DataSourceApi {
-  observer: Subscriber<DataQueryResponse>;
   results: DataQueryResponse[] = [{ data: [] }];
 
   constructor(name?: string, results?: DataQueryResponse[], meta?: any, private error: string | null = null) {

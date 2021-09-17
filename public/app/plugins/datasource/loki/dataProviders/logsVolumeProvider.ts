@@ -90,18 +90,18 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
    * Add up values for the same level and create a single data frame for each level
    */
   private aggregateRawLogsVolume(): DataFrame[] {
-    const logsVolumeByLevelMap: Record<string, DataFrame[]> = {};
+    const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
     this.rawLogsVolume.forEach((dataFrame) => {
       const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
       const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
       if (!logsVolumeByLevelMap[level]) {
         logsVolumeByLevelMap[level] = [];
       }
-      logsVolumeByLevelMap[level].push(dataFrame);
+      logsVolumeByLevelMap[level]!.push(dataFrame);
     });
 
     return Object.keys(logsVolumeByLevelMap).map((level: LogLevel) => {
-      return aggregateFields(logsVolumeByLevelMap[level], getFieldConfig(level));
+      return aggregateFields(logsVolumeByLevelMap[level]!, getFieldConfig(level));
     });
   }
 }
