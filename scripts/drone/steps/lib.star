@@ -415,11 +415,13 @@ def restore_cache_step():
         'name': 'restore-cache',
         'pull': 'always',
          'settings': {
-            'backend': 'gcs',
+            'backend': 's3',
+            'region': 'auto',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
+            'secret_key': from_secret('secret'),
+            'access_key': from_secret('access_key'),
             'restore': 'true',
-            'json_key': from_secret('tf_google_credentials'),
             'mount': [
                 '/cache'
             ],
@@ -441,10 +443,12 @@ def rebuild_cache_step():
         'name': 'rebuild-cache',
         'pull': 'always',
          'settings': {
-            'backend': 'gcs',
+            'backend': 's3',
+            'region': 'auto',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
-            'json_key': from_secret('tf_google_credentials'),
+            'secret_key': from_secret('secret'),
+            'access_key': from_secret('access_key'),
             'rebuild': 'true',
             'mount': [
                 '/cache'

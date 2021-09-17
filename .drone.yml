@@ -50,14 +50,17 @@ steps:
   name: restore-cache
   pull: always
   settings:
-    backend: gcs
+    access_key:
+      from_secret: access_key
+    backend: s3
     bucket: test-julien
     endpoint: https://storage.googleapis.com
-    json_key:
-      from_secret: tf_google_credentials
     mount:
     - /cache
+    region: auto
     restore: "true"
+    secret_key:
+      from_secret: secret
   volumes:
   - name: cache
     path: /cache
@@ -94,14 +97,17 @@ steps:
   name: rebuild-cache
   pull: always
   settings:
-    backend: gcs
+    access_key:
+      from_secret: access_key
+    backend: s3
     bucket: test-julien
     endpoint: https://storage.googleapis.com
-    json_key:
-      from_secret: tf_google_credentials
     mount:
     - /cache
     rebuild: "true"
+    region: auto
+    secret_key:
+      from_secret: secret
   volumes:
   - name: cache
     path: /cache
@@ -116,6 +122,6 @@ volumes:
   temp: {}
 ---
 kind: signature
-hmac: 97ee4d6f5381b9c666810b18321475b56758ac1c63def27d73760cd57ff69b97
+hmac: b537cbacf128e5355db11ab6d6d073abd88f348db4340d8595e56c5e4a236ba9
 
 ...
