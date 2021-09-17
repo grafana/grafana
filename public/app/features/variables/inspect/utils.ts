@@ -108,7 +108,7 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
 };
 
 const validVariableNames: Record<string, RegExp[]> = {
-  alias: [/^m$/, /^measurement$/, /^col$/, /^tag_\w+|\d+$/],
+  alias: [/^m$/, /^measurement$/, /^col$/, /^tag_(\w+|\d+)$/],
   query: [/^timeFilter$/],
 };
 
@@ -122,7 +122,12 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     const isValidName = validVariableNames[key]
       ? validVariableNames[key].find((regex: RegExp) => regex.test(variableId))
       : undefined;
-    const hasVariable = containsVariable(value, variableId);
+
+    let hasVariable = containsVariable(value, variableId);
+    if (key === 'repeat' && value === variableId) {
+      // repeat stores value without variable format
+      hasVariable = true;
+    }
 
     if (!isValidName && hasVariable) {
       all = {
@@ -132,14 +137,22 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     }
 
     return all;
-  }, {});
+  }, {} as Record<string, any>);
 
   const objectValues = Object.keys(parent.value).reduce((all, key) => {
     const value = parent.value[key];
     if (value && typeof value === 'object' && Object.keys(value).length) {
-      const id = value.title || value.name || value.id || key;
+      let id = value.title || value.name || value.id || key;
+      if (Array.isArray(parent.value) && parent.key === 'panels') {
+        id = `${id}[${value.id}]`;
+      }
+
       const newResult = getPropsWithVariable(variableId, { key, value }, {});
+
       if (Object.keys(newResult).length) {
+        if (all[id]) {
+          console.log({ id, all });
+        }
         all = {
           ...all,
           [id]: newResult,
@@ -148,7 +161,7 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     }
 
     return all;
-  }, {});
+  }, {} as Record<string, any>);
 
   if (Object.keys(stringValues).length || Object.keys(objectValues).length) {
     result = {
@@ -205,6 +218,22 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
 
   return { unUsed, unknown, usages };
 };
+
+export function getAffectedPanelIdsForVariable(variableId: string, dashboard: DashboardModel): number[] {
+  if (!dashboard || !dashboard?.panels?.length) {
+    return [];
+  }
+
+  const affectedPanelIds: number[] = [];
+  for (const panel of dashboard.panels) {
+    const props = getPropsWithVariable(variableId, { key: 'panel', value: panel }, {});
+    if (Object.keys(props).length) {
+      affectedPanelIds.push(panel.id);
+    }
+  }
+
+  return affectedPanelIds;
+}
 
 export interface UsagesToNetwork {
   variable: VariableModel;
