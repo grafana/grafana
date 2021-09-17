@@ -419,14 +419,16 @@ def restore_cache_step():
             'region': 'auto',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
-            'secret_key': from_secret('secret'),
-            'access_key': from_secret('access_key'),
             'restore': 'true',
             'mount': [
                 '/cache'
             ],
          },
-         
+        'environment':
+         {
+             'AWS_ACCESS_KEY_ID':from_secret('secret'),
+      'AWS_SECRET_ACCESS_KEY':from_secret('access_key')
+         },
          'volumes': [
             {
                 'name': 'cache',
@@ -445,12 +447,16 @@ def rebuild_cache_step():
             'region': 'auto',
             'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
-            'secret_key': from_secret('secret'),
-            'access_key': from_secret('access_key'),
+
             'rebuild': 'true',
             'mount': [
                 '/cache'
             ],
+         },
+         'environment':
+         {
+             'AWS_ACCESS_KEY_ID':from_secret('secret'),
+      'AWS_SECRET_ACCESS_KEY':from_secret('access_key')
          },
          'depends_on': [
             # 'build-frontend',

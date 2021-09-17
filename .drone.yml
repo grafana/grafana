@@ -47,8 +47,6 @@ steps:
   pull: always
   image: meltwater/drone-cache
   settings:
-    access_key:
-      from_secret: access_key
     backend: s3
     bucket: test-julien
     endpoint: https://storage.googleapis.com
@@ -56,8 +54,11 @@ steps:
     - /cache
     region: auto
     restore: true
-    secret_key:
+  environment:
+    AWS_ACCESS_KEY_ID:
       from_secret: secret
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: access_key
   volumes:
   - name: cache
     path: /cache
@@ -95,8 +96,6 @@ steps:
   pull: always
   image: meltwater/drone-cache
   settings:
-    access_key:
-      from_secret: access_key
     backend: s3
     bucket: test-julien
     endpoint: https://storage.googleapis.com
@@ -104,8 +103,11 @@ steps:
     - /cache
     rebuild: true
     region: auto
-    secret_key:
+  environment:
+    AWS_ACCESS_KEY_ID:
       from_secret: secret
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: access_key
   volumes:
   - name: cache
     path: /cache
@@ -173,6 +175,6 @@ get:
 
 ---
 kind: signature
-hmac: 33f012764ad67895e105c9affb5a5e2ceb841aaa4b1f2957a666d677d49bb82e
+hmac: 1337d8bbabfabaa94fb97a397005f1b9116fc2d9c8c44c333c7f5a4adaaf15e7
 
 ...
