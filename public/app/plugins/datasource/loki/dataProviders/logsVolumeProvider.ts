@@ -6,13 +6,13 @@ import {
   FieldColorModeId,
   FieldConfig,
   FieldType,
+  getLogLevelFromKey,
+  Labels,
   LoadingState,
   LogLevel,
-  RelatedDataProvider,
   MutableDataFrame,
+  RelatedDataProvider,
   toDataFrame,
-  Labels,
-  getLogLevelFromKey,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
 import { Observable, SubscriptionLike } from 'rxjs';
@@ -91,25 +91,28 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
    */
   private aggregateRawLogsVolume(): DataFrame[] {
     const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
+    let levels = 0;
     this.rawLogsVolume.forEach((dataFrame) => {
       const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
       const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
       if (!logsVolumeByLevelMap[level]) {
         logsVolumeByLevelMap[level] = [];
+        levels++;
       }
       logsVolumeByLevelMap[level]!.push(dataFrame);
     });
 
     return Object.keys(logsVolumeByLevelMap).map((level: string) => {
-      return aggregateFields(logsVolumeByLevelMap[level as LogLevel]!, getFieldConfig(level as LogLevel));
+      return aggregateFields(logsVolumeByLevelMap[level as LogLevel]!, getFieldConfig(level as LogLevel, levels));
     });
   }
 }
 
-function getFieldConfig(level: LogLevel) {
+function getFieldConfig(level: LogLevel, levels: number) {
+  const name = levels === 1 && level === LogLevel.unknown ? 'logs' : level;
   const color = LogLevelColor[level];
   return {
-    displayNameFromDS: level,
+    displayNameFromDS: name,
     color: {
       mode: FieldColorModeId.Fixed,
       fixedColor: color,
