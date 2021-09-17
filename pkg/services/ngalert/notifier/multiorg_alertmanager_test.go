@@ -3,12 +3,18 @@ package notifier
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
-	"os"
+	"fmt"
+	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
+	"io/ioutil"
+	"os"
+
+	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -141,6 +147,93 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		_, err := mam.AlertmanagerFor(2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
+	}
+}
+
+func TestMultiOrgAlertmanager_addOrUpdateConfiguration(t *testing.T) {
+	kvStore := newFakeKVStore(t)
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	configStore := &FakeConfigStore{
+		configs: map[int64]*models.AlertConfiguration{},
+	}
+
+	cfg := &setting.Cfg{DataPath: t.TempDir()}
+
+	mam, initErr := NewMultiOrgAlertmanager(cfg, configStore, nil, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, initErr)
+
+	t.Run("Adds missing Alertmanager and applies existing configuration", func(t *testing.T) {
+		dbConfig := generateFakeAlertConfiguration()
+		orgID := dbConfig.OrgID
+
+		//there is no instance of alert manager, but there is a configuration
+		err := mam.addOrUpdateAlertmanager(orgID, dbConfig)
+		require.NoError(t, err)
+
+		require.Contains(t, mam.alertmanagers, orgID, "AlertManager was not added to the map but it should be")
+		require.NotContains(t, configStore.configs, orgID, "The configuration should not be pushed")
+	})
+
+	t.Run("Add missing Alertmanager and applies default configuration", func(t *testing.T) {
+		orgID := rand.Int63()
+		err := mam.addOrUpdateAlertmanager(orgID, nil)
+		require.NoError(t, err)
+
+		require.Contains(t, mam.alertmanagers, orgID)
+		am := mam.alertmanagers[orgID]
+		require.NotNil(t, am.config)
+
+		require.Contains(t, configStore.configs, orgID)
+		dbConfig := configStore.configs[orgID]
+		require.Equal(t, dbConfig.AlertmanagerConfiguration, alertmanagerDefaultConfiguration)
+	})
+
+	t.Run("Updates the existing Alertmanager with the new configuration", func(t *testing.T) {
+		dbConfig := generateFakeAlertConfiguration()
+		orgID := dbConfig.OrgID
+
+		updErr := mam.addOrUpdateAlertmanager(orgID, nil)
+		require.NoError(t, updErr)
+		require.Contains(t, mam.alertmanagers, orgID)
+		before := mam.alertmanagers[orgID].config.AlertmanagerConfig
+
+		updErr = mam.addOrUpdateAlertmanager(orgID, dbConfig)
+		require.NoError(t, updErr)
+		after := mam.alertmanagers[orgID].config.AlertmanagerConfig
+
+		require.NotEqual(t, before, after, "the configuration was not applied but should have been")
+	})
+
+	t.Run("Resets existing Alertmanager to the default configuration if config is not provided", func(t *testing.T) {
+		dbConfig := generateFakeAlertConfiguration()
+		orgID := dbConfig.OrgID
+
+		updErr := mam.addOrUpdateAlertmanager(orgID, dbConfig)
+		require.NoError(t, updErr)
+		require.Contains(t, mam.alertmanagers, orgID)
+		before := mam.alertmanagers[orgID].config.AlertmanagerConfig
+
+		updErr = mam.addOrUpdateAlertmanager(orgID, nil)
+		require.NoError(t, updErr)
+		require.Contains(t, mam.alertmanagers, orgID)
+		after := mam.alertmanagers[orgID].config.AlertmanagerConfig
+
+		require.NotEqual(t, before, after, "the configuration was not applied but should have been")
+	})
+}
+
+func generateFakeAlertConfiguration() *models.AlertConfiguration {
+	return &models.AlertConfiguration{
+		ID:                        rand.Int63(),
+		AlertmanagerConfiguration: strings.Replace(alertmanagerDefaultConfiguration, "grafana-default-email", "grafana-custom-email", -1),
+		ConfigurationVersion:      fmt.Sprint(rand.Int()),
+		CreatedAt:                 rand.Int63(),
+		Default:                   rand.Int()%2 > 0,
+		OrgID:                     rand.Int63(),
 	}
 }
 
