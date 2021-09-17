@@ -17,7 +17,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const defaultProvider = "grafana-provider"
@@ -119,7 +118,25 @@ func newRandomDataKey() ([]byte, error) {
 
 var b64 = base64.RawStdEncoding
 
-func (s *SecretsService) Encrypt(payload []byte, opt util.EncryptionOption) ([]byte, error) {
+type EncryptionOptions func() string
+
+// WithoutScope uses a root level data key for encryption (DEK),
+// in other words this DEK is not bound to any specific scope (not attached to any user, org, etc.).
+func WithoutScope() EncryptionOptions {
+	return func() string {
+		return "root"
+	}
+}
+
+// WithScope uses a data key for encryption bound to some specific scope (i.e., user, org, etc.).
+// Scope should look like "user:10", "org:1".
+func WithScope(scope string) EncryptionOptions {
+	return func() string {
+		return scope
+	}
+}
+
+func (s *SecretsService) Encrypt(payload []byte, opt EncryptionOptions) ([]byte, error) {
 	scope := opt()
 	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.defaultProvider)
 
@@ -219,4 +236,43 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	}
 
 	return decrypted, nil
+}
+
+func (s *SecretsService) EncryptJsonData(kv map[string]string, opt EncryptionOptions) (map[string][]byte, error) {
+	encrypted := make(map[string][]byte)
+	for key, value := range kv {
+		encryptedData, err := s.Encrypt([]byte(value), opt)
+		if err != nil {
+			return nil, err
+		}
+
+		encrypted[key] = encryptedData
+	}
+	return encrypted, nil
+}
+
+func (s *SecretsService) DecryptJsonData(sjd map[string][]byte) (map[string]string, error) {
+	decrypted := make(map[string]string)
+	for key, data := range sjd {
+		decryptedData, err := s.Decrypt(data)
+		if err != nil {
+			return nil, err
+		}
+
+		decrypted[key] = string(decryptedData)
+	}
+	return decrypted, nil
+}
+
+func (s *SecretsService) GetDecryptedValue(sjd map[string][]byte, key, fallback string) string {
+	if value, ok := sjd[key]; ok {
+		decryptedData, err := s.Decrypt(value)
+		if err != nil {
+			return fallback
+		}
+
+		return string(decryptedData)
+	}
+
+	return fallback
 }

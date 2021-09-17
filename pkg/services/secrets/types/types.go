@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-var (
-	ErrDataKeyNotFound = errors.New("data key not found")
-)
+var ErrDataKeyNotFound = errors.New("data key not found")
 
 type DataKey struct {
 	Active        bool
