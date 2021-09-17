@@ -18,7 +18,7 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { cloneDeep, partition } from 'lodash';
+import { partition } from 'lodash';
 import { descending, deviation } from 'd3';
 import {
   ExemplarTraceIdDestination,
@@ -43,11 +43,9 @@ interface TimeAndValue {
 
 // V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
-  const promResults: DataFrame[] = cloneDeep(response.data);
-
   // Get refIds that have table format as we need to process those to table reuslts
   const tableRefIds = options.targets.filter((target) => target.format === 'table').map((target) => target.refId);
-  const [tableResults, otherResults] = partition(promResults, (dataFrame) =>
+  const [tableResults, otherResults] = partition(response.data, (dataFrame) =>
     dataFrame.refId ? tableRefIds.includes(dataFrame.refId) : false
   );
 
