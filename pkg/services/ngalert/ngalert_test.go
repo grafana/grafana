@@ -65,7 +65,6 @@ func TestGetRuleDefaultIntervalSeconds(t *testing.T) {
 			}
 			require.Equal(t, tc.expDefaultIntervalSeconds, alertNG.getRuleDefaultIntervalSeconds())
 			require.Equal(t, tc.expMinIntervalSeconds, alertNG.getRuleMinIntervalSeconds())
-
 		})
 	}
 }
