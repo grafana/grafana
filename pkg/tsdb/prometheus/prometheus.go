@@ -163,16 +163,16 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		var results model.Value
+		var response model.Value
 
 		switch query.QueryType {
 		case Range:
-			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
+			response, _, err = client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
 		case Instant:
-			results, _, err = client.Query(ctx, query.Expr, query.End)
+			response, _, err = client.Query(ctx, query.Expr, query.End)
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
@@ -180,7 +180,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, fmt.Errorf("unknown Query type detected %#v", query.QueryType)
 		}
 
-		frame, err := parseResponse(results, query)
+		frame, err := parseResponse(response, query)
 		if err != nil {
 			return &result, err
 		}
@@ -353,10 +353,6 @@ func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, erro
 		frames = append(frames, scalarFrames...)
 	}
 
-	if len(frames) == 0 {
-		return frames, fmt.Errorf("unsupported result format: %q", value.Type().String())
-	}
-
 	return frames, nil
 }
 
@@ -426,6 +422,9 @@ func scalarToDataFrames(scalar *model.Scalar) data.Frames {
 
 func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
+	fmt.Println("========")
+	fmt.Printf("%v", vector)
+	fmt.Println("========")
 
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
