@@ -20,7 +20,7 @@ import { contextSrv } from 'app/core/core';
 
 interface Props {
   orgs: UserOrg[];
-  isExternalUser: boolean | undefined;
+  isExternalUser?: boolean;
 
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
@@ -104,7 +104,7 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface OrgRowProps extends Themeable {
   org: UserOrg;
-  isExternalUser: boolean | undefined;
+  isExternalUser?: boolean;
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
 }
