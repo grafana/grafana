@@ -15,7 +15,7 @@ steps:
 
 - name: restore-cache
   pull: always
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
   settings:
     backend: gcs
     bucket: test-julien
@@ -96,7 +96,7 @@ steps:
 
 - name: rebuild-cache
   pull: always
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
   settings:
     backend: gcs
     bucket: test-julien
@@ -173,6 +173,6 @@ get:
 
 ---
 kind: signature
-hmac: a3cadd19aa41d35ce90d394c2234440195d49d5a531aab9d476d10fb47d3c600
+hmac: c50e982d568b9c822cc9daa182eba7242e858974441ed9361bb55ff5dff2cd7b
 
 ...

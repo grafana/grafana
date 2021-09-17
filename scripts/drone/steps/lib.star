@@ -420,7 +420,7 @@ def test_frontend_step():
 
 def restore_cache_step():
     return {
-        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty',
+        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',
         'name': 'restore-cache',
         'pull': 'always',
          'settings': {
@@ -446,7 +446,7 @@ def restore_cache_step():
 
 def rebuild_cache_step():
     return {
-        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirty',
+        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',
         'name': 'rebuild-cache',
         'pull': 'always',
          'settings': {
