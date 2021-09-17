@@ -411,16 +411,15 @@ def test_frontend_step():
 
 def restore_cache_step():
     return {
-        'image': 'homerovalle/drone-gcs-cache',
+        'image': 'meltwater/drone-cache',
         'name': 'restore-cache',
         'pull': 'always',
-        'environment': {
-            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
-            'YARN_CACHE_FOLDER': '/cache',
-         },
          'settings': {
+            'backend': 'gcs',
+            'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
             'restore': 'true',
+            'json_key': from_secret('tf_google_credentials'),
             'mount': [
                 '/cache'
             ],
@@ -438,15 +437,14 @@ def restore_cache_step():
 
 def rebuild_cache_step():
     return {
-        'image': 'homerovalle/drone-gcs-cache',
+        'image': 'meltwater/drone-cache',
         'name': 'rebuild-cache',
         'pull': 'always',
-        'environment': {
-            'GCS_CACHE_JSON_KEY': from_secret('tf_google_credentials'),
-            'YARN_CACHE_FOLDER': '/cache',
-         },
          'settings': {
+            'backend': 'gcs',
+            'endpoint': 'https://storage.googleapis.com',
             'bucket': 'test-julien',
+            'json_key': from_secret('tf_google_credentials'),
             'rebuild': 'true',
             'mount': [
                 '/cache'

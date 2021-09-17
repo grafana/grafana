@@ -1,21 +1,17 @@
 ---
+depends_on: []
 kind: pipeline
-type: docker
 name: test-pr
-
 platform:
-  os: linux
   arch: amd64
-
+  os: linux
+services: null
 steps:
-- name: identify-runner
-  image: alpine:3.14.2
-  commands:
+- commands:
   - echo $DRONE_RUNNER_NAME
-
-- name: initialize
-  image: grafana/build-container:1.4.2
-  commands:
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
@@ -27,148 +23,99 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
     YARN_CACHE_FOLDER: /cache
-
-- name: codespell
   image: grafana/build-container:1.4.2
-  commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
-
-- name: shellcheck
   image: grafana/build-container:1.4.2
-  commands:
+  name: codespell
+- commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - initialize
-
-- name: restore-cache
+  image: grafana/build-container:1.4.2
+  name: shellcheck
+- depends_on:
+  - initialize
+  image: meltwater/drone-cache
+  name: restore-cache
   pull: always
-  image: homerovalle/drone-gcs-cache
   settings:
+    backend: gcs
     bucket: test-julien
+    endpoint: https://storage.googleapis.com
+    json_key:
+      from_secret: tf_google_credentials
     mount:
     - /cache
-    restore: true
-  environment:
-    GCS_CACHE_JSON_KEY:
-      from_secret: tf_google_credentials
-    YARN_CACHE_FOLDER: /cache
+    restore: "true"
   volumes:
   - name: cache
     path: /cache
-  depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.2
-  commands:
+- commands:
   - make gen-go
   - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
   depends_on:
   - restore-cache
-
-- name: test-frontend
+  environment:
+    CGO_ENABLED: "1"
   image: grafana/build-container:1.4.2
-  commands:
+  name: lint-backend
+- commands:
   - yarn run ci:test-frontend
+  depends_on:
+  - lint-backend
   environment:
     TEST_MAX_WORKERS: 50%
     YARN_CACHE_FOLDER: /cache
+  image: grafana/build-container:1.4.2
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - lint-backend
-
-- name: build-frontend
-  image: grafana/build-container:1.4.2
-  commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:
     YARN_CACHE_FOLDER: /cache
-  depends_on:
-  - lint-backend
-
-- name: rebuild-cache
+  image: grafana/build-container:1.4.2
+  name: build-frontend
+- depends_on:
+  - build-frontend
+  image: meltwater/drone-cache
+  name: rebuild-cache
   pull: always
-  image: homerovalle/drone-gcs-cache
   settings:
+    backend: gcs
     bucket: test-julien
+    endpoint: https://storage.googleapis.com
+    json_key:
+      from_secret: tf_google_credentials
     mount:
     - /cache
-    rebuild: true
-  environment:
-    GCS_CACHE_JSON_KEY:
-      from_secret: tf_google_credentials
-    YARN_CACHE_FOLDER: /cache
+    rebuild: "true"
   volumes:
   - name: cache
     path: /cache
   when:
-    event:
-    - pull_request
-  depends_on:
-  - build-frontend
-
-volumes:
-- name: cache
-  temp: {}
-
+    event: pull_request
 trigger:
   event:
   - pull_request
-
----
-kind: secret
-name: dockerconfigjson
-
-get:
-  path: secret/data/common/gcr
-  name: .dockerconfigjson
-
----
-kind: secret
-name: github_token
-
-get:
-  path: infra/data/ci/github/grafanabot
-  name: pat
-
----
-kind: secret
-name: drone_token
-
-get:
-  path: infra/data/ci/drone
-  name: machine-user-token
-
----
-kind: secret
-name: tf_google_credentials
-
-get:
-  path: infra/data/ci/terraform/google
-  name: credentials.json
-
----
-kind: secret
-name: access_key
-
-get:
-  path: infra/data/ci/test-drone-caching
-  name: access-key
-
----
-kind: secret
-name: secret
-
-get:
-  path: infra/data/ci/test-drone-caching
-  name: secret
-
+type: docker
+volumes:
+- name: cache
+  temp: {}
 ---
 kind: signature
-hmac: 97b31dfdb7ebba87e7e214cff907f18a04aec7df3433bd45b57b969e949cbd4a
+hmac: 97ee4d6f5381b9c666810b18321475b56758ac1c63def27d73760cd57ff69b97
 
 ...
