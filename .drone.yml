@@ -44,9 +44,7 @@ steps:
   - initialize
   image: grafana/build-container:1.4.2
   name: shellcheck
-- depends_on:
-  - initialize
-  image: meltwater/drone-cache
+- image: meltwater/drone-cache
   name: restore-cache
   pull: always
   settings:
@@ -122,6 +120,6 @@ volumes:
   temp: {}
 ---
 kind: signature
-hmac: b537cbacf128e5355db11ab6d6d073abd88f348db4340d8595e56c5e4a236ba9
+hmac: e1b2f31d3731c97e7af2325ead707161723d80d2b0cfb40a2b38f74ade8a5211
 
 ...

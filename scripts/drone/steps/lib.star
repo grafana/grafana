@@ -99,7 +99,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                     'DOCKERIZE_VERSION': dockerize_version,
                 },
                 'depends_on': [
-                    'clone',
+                    'clone', 'restore-cache'
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -426,9 +426,7 @@ def restore_cache_step():
                 '/cache'
             ],
          },
-         'depends_on': [
-            'initialize',
-         ],
+         
          'volumes': [
             {
                 'name': 'cache',
