@@ -1,3 +1,4 @@
+import { DataFrame, Field } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
 import { DimensionValues, FrameFieldMap } from '@grafana/ui';
 import { ScatterLineMode } from './models.gen';
@@ -14,6 +15,37 @@ export interface ScatterFrameFieldMap extends FrameFieldMap {
 
   label: VisibilityMode[];
   labelValue: Array<DimensionValues<string>>;
+}
+
+export interface LegendInfo {
+  color: CanvasRenderingContext2D['strokeStyle'];
+  text: string;
+  symbol: string;
+  openEditor?: (evt: any) => void;
+}
+
+export interface ScatterSeries {
+  name: string;
+
+  frame: (raw: DataFrame[]) => DataFrame;
+
+  x: (frame: DataFrame) => Field;
+  y: (frame: DataFrame) => Field;
+  tooltip: (frame: DataFrame) => Field[];
+  legend: (frame: DataFrame) => LegendInfo[]; // could be single if symbol is constant
+
+  line: ScatterLineMode;
+  lineWidth: number;
+  lineStyle: LineStyle;
+  lineColor: (frame: DataFrame) => CanvasRenderingContext2D['strokeStyle']; // gradients may need dynamic min/max
+
+  point: VisibilityMode;
+  pointSize: DimensionValues<number>;
+  pointColor: DimensionValues<CanvasRenderingContext2D['strokeStyle']>;
+  pointSymbol: DimensionValues<string>; // single field, multiple symbols.... kinda equals multiple series 🤔
+
+  label: VisibilityMode;
+  labelValue: DimensionValues<string>;
 }
 
 /*
