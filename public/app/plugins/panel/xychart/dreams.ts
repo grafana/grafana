@@ -16,6 +16,7 @@ export interface LegendInfo {
 export interface ScatterSeries {
   name: string;
 
+  /** Finds the relevant frame from the raw panel data */
   frame: (raw: DataFrame[]) => DataFrame;
 
   x: (frame: DataFrame) => Field;
