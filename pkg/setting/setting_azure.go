@@ -10,9 +10,12 @@ const (
 )
 
 type AzureSettings struct {
-	Cloud                   string
-	ManagedIdentityEnabled  bool
-	ManagedIdentityClientId string
+	Cloud                     string
+	ManagedIdentityEnabled    bool
+	ManagedIdentityClientId   string
+	UserIdentityEnabled       bool
+	UserIdentityTokenEndpoint string
+	UserIdentityAuthHeader    string
 }
 
 func (cfg *Cfg) readAzureSettings() {
@@ -25,6 +28,11 @@ func (cfg *Cfg) readAzureSettings() {
 	// Managed Identity
 	cfg.Azure.ManagedIdentityEnabled = azureSection.Key("managed_identity_enabled").MustBool(false)
 	cfg.Azure.ManagedIdentityClientId = azureSection.Key("managed_identity_client_id").String()
+	// User Identity toke endpoint
+	cfg.Azure.UserIdentityEnabled = azureSection.Key("user_identity_enabled").MustBool(false)
+	cfg.Azure.UserIdentityTokenEndpoint = azureSection.Key("user_identity_token_endpoint").String()
+	cfg.Azure.UserIdentityAuthHeader = azureSection.Key("user_identity_auth_header").String()
+
 }
 
 func normalizeAzureCloud(cloudName string) string {

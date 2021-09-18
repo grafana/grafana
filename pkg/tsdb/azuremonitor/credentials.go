@@ -82,6 +82,9 @@ func getAzureCloud(cfg *setting.Cfg, jsonData *simplejson.Json) (string, error) 
 	case azcredentials.AzureAuthManagedIdentity:
 		// In case of managed identity, the cloud is always same as where Grafana is hosted
 		return getDefaultAzureCloud(cfg)
+	case azcredentials.AzureAuthUserIdentity:
+		// In case of user identity, the cloud is always same as where Grafana is hosted
+		return getDefaultAzureCloud(cfg)
 	case azcredentials.AzureAuthClientSecret:
 		if cloud := jsonData.Get("cloudName").MustString(); cloud != "" {
 			return normalizeAzureCloud(cloud)
@@ -101,7 +104,12 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 	case azcredentials.AzureAuthManagedIdentity:
 		credentials := &azcredentials.AzureManagedIdentityCredentials{}
 		return credentials, nil
-
+	case azcredentials.AzureAuthUserIdentity:
+		credentials := &azcredentials.AzureUserIdentityCredentials{
+			TokenEndpoint: cfg.Azure.UserIdentityTokenEndpoint,
+			AuthHeader:    cfg.Azure.UserIdentityAuthHeader,
+		}
+		return credentials, nil
 	case azcredentials.AzureAuthClientSecret:
 		cloud, err := getAzureCloud(cfg, jsonData)
 		if err != nil {

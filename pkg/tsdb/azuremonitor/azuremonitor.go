@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
 )
 
 const (
@@ -195,6 +196,10 @@ func (s *Service) newMux() *datasource.QueryTypeMux {
 			service, ok := dsInfo.Services[dst]
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
+			}
+			// Pass in the context with logged in userId
+			if req.PluginContext.User != nil {
+				ctx = context.WithValue(ctx, aztokenprovider.ContextKeyLoginUser, req.PluginContext.User.Login)
 			}
 			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
 		})

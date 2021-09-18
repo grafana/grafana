@@ -72,6 +72,56 @@ func TestCredentials_getAuthType(t *testing.T) {
 			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
 		})
 	})
+
+	t.Run("when user identity is enabled", func(t *testing.T) {
+		cfg.Azure.UserIdentityEnabled = true
+		cfg.Azure.ManagedIdentityEnabled = false
+
+		t.Run("should be userid if auth type is set to user identity", func(t *testing.T) {
+			jsonData := simplejson.NewFromAny(map[string]interface{}{
+				"azureAuthType": azcredentials.AzureAuthUserIdentity,
+			})
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthUserIdentity, authType)
+		})
+
+		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
+			jsonData := simplejson.NewFromAny(map[string]interface{}{
+				"azureAuthType": "",
+			})
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
+		})
+	})
+
+	t.Run("when user identities disabled", func(t *testing.T) {
+		cfg.Azure.UserIdentityEnabled = false
+
+		t.Run("should be user identity if auth type is set to user identity", func(t *testing.T) {
+			jsonData := simplejson.NewFromAny(map[string]interface{}{
+				"azureAuthType": azcredentials.AzureAuthUserIdentity,
+			})
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthUserIdentity, authType)
+		})
+
+		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
+			jsonData := simplejson.NewFromAny(map[string]interface{}{
+				"azureAuthType": "",
+			})
+
+			authType := getAuthType(cfg, jsonData)
+
+			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
+		})
+	})
+
 }
 
 func TestCredentials_getAzureCloud(t *testing.T) {

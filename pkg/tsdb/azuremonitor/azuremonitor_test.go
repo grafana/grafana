@@ -40,6 +40,25 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "creates an instance with azureAuthType of userid",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"azureAuthType":"userid"}`),
+				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				ID:                      40,
+			},
+			expectedModel: datasourceInfo{
+				Cloud:                   setting.AzurePublic,
+				Credentials:             &azcredentials.AzureUserIdentityCredentials{},
+				Settings:                azureMonitorSettings{},
+				Routes:                  routes[setting.AzurePublic],
+				JSONData:                map[string]interface{}{"azureAuthType": "userid"},
+				DatasourceID:            40,
+				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				Services:                map[string]datasourceService{},
+			},
+			Err: require.NoError,
+		},
 	}
 
 	cfg := &setting.Cfg{

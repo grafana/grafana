@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +30,8 @@ var (
 	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
 )
+
+const ContextKeyLoginUser string = "loginUser"
 
 type DataSourceProxy struct {
 	ds                *models.DataSource
@@ -236,7 +239,12 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.Header.Del("Referer")
 
 	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
+		// Pass in the context with signed-in userId, so that it can be used to obtain user token if the configured token provider supports
+		ctx := proxy.ctx.Req.Context()
+		if proxy.ctx.SignedInUser != nil {
+			ctx = context.WithValue(ctx, ContextKeyLoginUser, proxy.ctx.SignedInUser.Login)
+		}
+		ApplyRoute(ctx, req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {

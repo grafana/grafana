@@ -1,8 +1,13 @@
 package aztokenprovider
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -34,6 +39,7 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 
 	t.Run("when managed identities enabled", func(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = true
+		cfg.Azure.UserIdentityEnabled = true
 
 		t.Run("should resolve managed identity retriever if auth type is managed identity", func(t *testing.T) {
 			credentials := &azcredentials.AzureManagedIdentityCredentials{}
@@ -43,6 +49,20 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 
 			getAccessTokenFunc = func(credential TokenRetriever, scopes []string) {
 				assert.IsType(t, &managedIdentityTokenRetriever{}, credential)
+			}
+
+			_, err = provider.GetAccessToken(ctx, scopes)
+			require.NoError(t, err)
+		})
+
+		t.Run("should resolve user identity retriever if auth type is user identity", func(t *testing.T) {
+			credentials := &azcredentials.AzureUserIdentityCredentials{}
+
+			provider, err := NewAzureAccessTokenProvider(cfg, credentials)
+			require.NoError(t, err)
+
+			getAccessTokenFunc = func(credential TokenRetriever, scopes []string) {
+				assert.IsType(t, &userIdentityTokenRetriever{}, credential)
 			}
 
 			_, err = provider.GetAccessToken(ctx, scopes)
@@ -72,6 +92,17 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 
 			_, err := NewAzureAccessTokenProvider(cfg, credentials)
 			assert.Error(t, err, "managed identity authentication is not enabled in Grafana config")
+		})
+	})
+
+	t.Run("when user identities disabled", func(t *testing.T) {
+		cfg.Azure.UserIdentityEnabled = false
+
+		t.Run("should return error if auth type is user identity", func(t *testing.T) {
+			credentials := &azcredentials.AzureUserIdentityCredentials{}
+
+			_, err := NewAzureAccessTokenProvider(cfg, credentials)
+			assert.Error(t, err, "user identity authentication is not enabled in Grafana config")
 		})
 	})
 }
@@ -124,5 +155,81 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		credential := (result).(*clientSecretTokenRetriever)
 
 		assert.Equal(t, "https://another.com/", credential.authority)
+	})
+}
+
+func TestAzureTokenProvider_GetUserIdAccessToken(t *testing.T) {
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			UserIdentityEnabled: true,
+		},
+	}
+	ctx := context.Background()
+
+	credentials := &azcredentials.AzureUserIdentityCredentials{
+		TokenEndpoint: "https://test.io",
+		AuthHeader:    "Bear xxxxx",
+	}
+
+	scope := []string{"testresource/.default"}
+
+	t.Run("return error if there is no signed in user", func(t *testing.T) {
+		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials)
+		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
+
+		_, err := tokenRetriver.GetAccessToken(ctx, scope)
+		assert.Error(t, err, "Failed to get signed-in user")
+	})
+
+	t.Run("return error if there is empty signed in user", func(t *testing.T) {
+		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials)
+		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
+
+		ctx = context.WithValue(ctx, ContextKeyLoginUser, "")
+		_, err := tokenRetriver.GetAccessToken(ctx, scope)
+		assert.Error(t, err, "Empty signed-in userId")
+	})
+}
+
+func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			UserIdentityEnabled: true,
+		},
+	}
+
+	credentials := &azcredentials.AzureUserIdentityCredentials{
+		TokenEndpoint: "https://test.io",
+		AuthHeader:    "Bear xxxxx",
+	}
+	value := struct {
+		Token     string      `json:"access_token"`
+		ExpiresIn json.Number `json:"expires_in"`
+		ExpiresOn string      `json:"expires_on"`
+	}{
+		Token:     "testtoken",
+		ExpiresIn: "1000",
+	}
+
+	data, err := json.Marshal(value)
+	assert.Empty(t, err, "Failed to marshal data")
+
+	body := io.NopCloser(bytes.NewReader(data))
+	var resp = &http.Response{
+		StatusCode: 200,
+		Body:       body,
+	}
+
+	t.Run("return error if there is empty signed in user", func(t *testing.T) {
+		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
+		token, err := tokenRetriver.getAccessTokenFromResponse(resp)
+		assert.Empty(t, err, "Failed on getting token")
+
+		assert.Equal(t, value.Token, token.Token)
+
+		timeMin := time.Now().UTC().Add(time.Second * 950)
+		timeMax := timeMin.Add(time.Second * 100)
+		assert.True(t, token.ExpiresOn.After(timeMin), "token.ExpiresOn is not after timeMin")
+		assert.True(t, token.ExpiresOn.Before(timeMax), "token.ExpiresOn is not before timeMax")
 	})
 }

@@ -180,6 +180,15 @@ func (m *Manager) getAzureEnvironmentVariables() []string {
 	if m.Cfg.Azure.ManagedIdentityEnabled {
 		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
 	}
+	if m.Cfg.Azure.UserIdentityTokenEndpoint != "" {
+		variables = append(variables, "AZURE_USER_IDENTITY_TOKEN_ENDPOINT="+m.Cfg.Azure.UserIdentityTokenEndpoint)
+	}
+	if m.Cfg.Azure.UserIdentityAuthHeader != "" {
+		variables = append(variables, "AZURE_USER_IDENTITY_AUTH_HEADER="+m.Cfg.Azure.UserIdentityAuthHeader)
+	}
+	if m.Cfg.Azure.UserIdentityEnabled {
+		variables = append(variables, "AZURE_USER_IDENTITY_ENABLED=true")
+	}
 
 	return variables
 }

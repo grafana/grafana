@@ -859,6 +859,18 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### user_identity_enabled
+
+Enable the user identity token mode (separate token endpoint for user token). Disabled by default, needs to be explicitly enabled.
+
+### user_identity_token_endpoint
+
+Specify the endpoint to be used to retrieve access token of a user for the plugin
+
+### user_identity_auth_header
+
+Specify the credential (Authorization header) to be used to communicate with the token endpoint
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
