@@ -4,7 +4,6 @@ import {
   DataFrame,
   DefaultTimeZone,
   EventBus,
-  FieldLookup,
   getTimeZoneInfo,
   GrafanaTheme2,
   TimeRange,
@@ -17,6 +16,7 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '@grafana/schema';
 import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
+import { FieldLookup } from './types';
 
 const cursorDefaults: Cursor = {
   // prevent client-side zoom from triggering at the end of a selection

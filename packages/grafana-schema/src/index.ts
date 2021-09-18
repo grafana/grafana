@@ -8,3 +8,4 @@ export * from './schema/tooltip.gen';
 export * from './schema/text.gen';
 export * from './schema/table.gen';
 export * from './schema/graph.gen';
+export * from './schema/general.gen';

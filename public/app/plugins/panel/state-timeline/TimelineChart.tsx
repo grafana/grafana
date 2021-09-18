@@ -1,5 +1,5 @@
 import React from 'react';
-import { LegendDisplayMode, BarValueVisibility } from '@grafana/schema';
+import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import {
   PanelContext,
   PanelContextRoot,
@@ -22,7 +22,7 @@ export interface TimelineProps
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
   rowHeight: number;
-  showValue: BarValueVisibility;
+  showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
   legendItems?: VizLegendItem[];

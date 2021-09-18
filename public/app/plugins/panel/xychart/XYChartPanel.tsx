@@ -83,6 +83,10 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   }
   */
 
+  if (true) {
+    return <div>{JSON.stringify(config, null, 2)}</div>;
+  }
+
   return (
     <VizLayout width={width} height={height}>
       {(vizWidth: number, vizHeight: number) => (
