@@ -56,6 +56,9 @@ export function prpareScatterPlot(options: XYChartOptions, data: PanelData, tz: 
     } as ScatterPanelInfo;
   }
   const series: ScatterSeries[] = [];
+  // TODO use configs to construct series
+  // multiple series may exist across incoming frames
+
   const builder = new UPlotConfigBuilder(tz);
 
   return {
