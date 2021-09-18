@@ -11,6 +11,11 @@ export enum AxisPlacement {
   Right = 'right',
   Top = 'top',
 }
+export enum VisibilityMode {
+  Auto = 'auto',
+  Always = 'always',
+  Never = 'never',
+}
 export enum GraphDrawStyle {
   Bars = 'bars',
   Line = 'line',
@@ -39,12 +44,6 @@ export enum GraphGradientMode {
 export interface LineStyle {
   dash?: number[];
   fill?: 'solid' | 'dash' | 'dot' | 'square';
-}
-
-export enum VisibilityMode {
-  Auto = 'auto',
-  Always = 'always',
-  Never = 'never',
 }
 export interface PointsConfig {
   pointColor?: string;
