@@ -25,7 +25,7 @@ jobs:
       id: generate-docs
       with:
         node-version: '14'
-    - run: yarn install --pure-lockfile --no-progress
+    - run: YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
     - run: ./scripts/ci-reference-docs-build.sh
     - name: publish-to-git
       uses: ./.github/actions/website-sync
