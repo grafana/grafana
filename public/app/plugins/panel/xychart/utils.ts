@@ -1,5 +1,5 @@
-import { DataFrame, DataFrameFieldIndex, getFieldSeriesColor } from '@grafana/data';
-import { ScatterFrameFieldMap, ScatterSeries, XYChartOptions } from './types';
+import { DataFrame, DataFrameFieldIndex, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
+import { ScatterFrameFieldMap } from './types';
 import {
   AxisPlacement,
   FieldLookup,
@@ -12,17 +12,70 @@ import uPlot from 'uplot';
 import { FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { defaultScatterConfig, ScatterSeries, XYChartOptions, ScatterLineMode } from './models.gen';
+import {
+  findFieldIndex,
+  getColorDimension,
+  getColorDimensionForField,
+  getScaledDimensionForField,
+  getTextDimensionForField,
+  TextDimensionMode,
+} from 'app/features/dimensions';
+import { config } from '@grafana/runtime';
+import { VisibilityMode } from '@grafana/schema';
 
 // This is called the 1st time structure and options change
 // This will consolidate the configuration into a set of series
-export function prepDims(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
+export function prepDims(options: XYChartOptions, frames: DataFrame[]): { warn?: string; series: ScatterSeries[] } {
   if (!frames.length) {
-    return [];
+    return { warn: 'No data', series: [] };
   }
 
   const series: ScatterSeries[] = [];
+  if (options.mode === 'single') {
+    const { single } = options;
+    if (!single?.x) {
+      return {
+        warn: `Select X dimension`,
+        series,
+      };
+    }
+    if (!single?.y) {
+      return {
+        warn: `Select Y dimension`,
+        series,
+      };
+    }
 
-  return series;
+    for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+      const frame = frames[frameIndex];
+      const xIndex = findFieldIndex(frame, single.x);
+      if (xIndex != null) {
+        const yIndex = findFieldIndex(frame, single.y);
+        if (yIndex == null) {
+          return {
+            warn: `Y must be in the same frame as X`,
+            series,
+          };
+        }
+
+        const y = frame.fields[xIndex];
+        series.push({
+          ...defaultScatterConfig,
+          ...y.config?.custom,
+          frameIndex,
+          xIndex,
+          yIndex,
+        });
+        return { series };
+      }
+    }
+  }
+
+  return {
+    warn: `Unsupported mode: ${options.mode}`,
+    series,
+  };
   // const cfg = options.series ?? {};
 
   // // field indices found in first frame
@@ -89,52 +142,95 @@ export const prepLookup: PrepFieldLookup = (dims, frames) => {
   const byIndex = new Map<number, DataFrameFieldIndex>();
   const byName = new Map<string, DataFrameFieldIndex>();
 
-  let seriesIndex = 0;
+  // ??? all arrays will be of length dims.length ???
+  const fieldMaps: ScatterFrameFieldMap[] = frames.map((frame, frameIndex) => {
+    frame.fields.forEach((field, fieldIndex) => {
+      const displayName = getFieldDisplayName(field, frame, frames);
+      const fieldOrigin = {
+        frameIndex,
+        fieldIndex,
+        //   seriesIndex,
+        displayName,
+        // frameSeriesIndex: acc.length,
+      };
 
-  // const fieldMaps = frames.map((frame, frameIndex) => {
-  //   let fieldMap: FrameFieldMap = {
-  //     frameIndex,
-  //     x: [],
-  //     y: frame.fields.reduce((acc, field, fieldIndex) => {
-  //       if (field === dims[frameIndex].y) {
-  //         const displayName = getFieldDisplayName(field, frame, frames);
-  //         const fieldOrigin = {
-  //           frameIndex,
-  //           fieldIndex,
-  //           seriesIndex,
-  //           displayName,
-  //           // frameSeriesIndex: acc.length,
-  //         };
+      //   byIndex.set(seriesIndex, fieldOrigin);  <<< multiple series in one frame ???
+      byName.set(displayName, fieldOrigin);
+    });
 
-  //         byIndex.set(seriesIndex, fieldOrigin);
-  //         byName.set(displayName, fieldOrigin);
+    return {
+      frameIndex, // << the only real field
+      x: [],
+      y: [],
+      tooltip: [],
+      legend: [],
 
-  //         seriesIndex++;
-  //         acc.push(fieldIndex);
-  //       }
-  //       return acc;
-  //     }, [] as number[]),
-  //     size: frame.fields.reduce((acc, field, fieldIndex) => {
-  //       if (field === dims[frameIndex].size?.field) {
-  //         acc.push((frame) => frame.fields[fieldIndex].values.toArray());
-  //       }
-  //       return acc;
-  //     }, [] as Array<DimensionValues<number>>),
-  //   };
+      line: [],
+      lineWidth: [],
+      lineStyle: [],
+      lineColor: [],
 
-  //   let xIndex = frame.fields.findIndex((field) => field === dims[frameIndex].x);
-  //   fieldMap.x = Array(fieldMap.y.length).fill(xIndex);
+      point: [],
+      pointSize: [],
+      pointColor: [],
 
-  //   fieldMap.legend = fieldMap.tooltip = fieldMap.y.map((yIndex, frameSeriesIndex) => [
-  //     xIndex,
-  //     yIndex,
-  //     fieldMap.size![frameSeriesIndex],
-  //   ]);
+      label: [],
+      labelValue: [],
+    };
+  });
 
-  //   return fieldMap;
-  // });
+  for (let seriesIdx = 0; seriesIdx < dims.length; seriesIdx++) {
+    const seriesConfig = dims[seriesIdx];
+    const fieldMap = fieldMaps[seriesConfig.frameIndex];
+    const frame = frames[seriesConfig.frameIndex];
 
-  const fieldMaps: ScatterFrameFieldMap[] = [];
+    fieldMap.x.push(seriesConfig.xIndex);
+    fieldMap.y.push(seriesConfig.yIndex);
+    fieldMap.tooltip!.push([seriesConfig.xIndex, seriesConfig.yIndex]);
+    fieldMap.legend!.push([seriesConfig.yIndex]);
+
+    fieldMap.line!.push(seriesConfig.line ?? ScatterLineMode.None);
+    fieldMap.lineWidth!.push(seriesConfig.lineWidth ?? defaultScatterConfig.lineWidth!);
+    fieldMap.lineStyle!.push(seriesConfig.lineStyle ?? defaultScatterConfig.lineStyle!);
+
+    let color = getColorDimension(frame, seriesConfig.lineColor ?? { fixed: 'red' }, config.theme2);
+    fieldMap.lineColor!.push(color.fixed ?? 'blue'); // solid or gradient
+
+    fieldMap.point!.push(seriesConfig.point ?? VisibilityMode.Auto);
+    const scaleIndex = findFieldIndex(frame, seriesConfig.pointSize?.field);
+    if (scaleIndex == null) {
+      const fixed = seriesConfig.pointSize?.fixed ?? 5;
+      fieldMap.pointSize!.push((frame: DataFrame, from?: number) => fixed);
+    } else {
+      fieldMap.pointSize!.push((frame: DataFrame, from?: number) => {
+        const field = frame.fields[scaleIndex];
+        const dims = getScaledDimensionForField(field, seriesConfig.pointSize ?? defaultScatterConfig.pointSize!);
+        return field.values.toArray().map((v, idx) => dims.get(idx)); // could be better :)
+      });
+    }
+
+    const pointColorIndex = findFieldIndex(frame, seriesConfig.pointColor?.field);
+    if (pointColorIndex == null) {
+      const fixed = seriesConfig.pointColor?.fixed ?? '#FF0';
+      fieldMap.pointColor!.push((frame: DataFrame, from?: number) => fixed);
+    } else {
+      fieldMap.pointColor!.push((frame: DataFrame, from?: number) => {
+        const field = frame.fields[pointColorIndex];
+        const dims = getColorDimensionForField(field, seriesConfig.pointColor ?? { fixed: 'red' }, config.theme2);
+        return field.values.toArray().map((v, idx) => dims.get(idx)); // could be better :)
+      });
+    }
+
+    fieldMap.label!.push(seriesConfig.label ?? VisibilityMode.Auto);
+    fieldMap.labelValue!.push((frame: DataFrame, from?: number) => {
+      const field = frame.fields[seriesConfig.yIndex];
+      const dims = getTextDimensionForField(
+        field,
+        seriesConfig.labelValue ?? { mode: TextDimensionMode.Field, fixed: '' }
+      );
+      return field.values.toArray().map((v, idx) => dims.get(idx)); // could be better :)
+    });
+  }
 
   return {
     fieldMaps,

@@ -9,7 +9,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 
-import { XYDimensionConfig, XYChartOptions } from './types';
+import { XYDimensionConfig, XYChartOptions } from './models.gen';
 import { getXYDimensions, isGraphable } from './dims';
 
 interface XYInfo {

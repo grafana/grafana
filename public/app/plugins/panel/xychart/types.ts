@@ -1,56 +1,6 @@
-import { OptionsWithTooltip, OptionsWithLegend, LineStyle, VisibilityMode, HideableFieldConfig } from '@grafana/schema';
-import { ColorDimensionConfig, TextDimensionConfig, ScaleDimensionConfig } from 'app/features/dimensions';
+import { LineStyle, VisibilityMode } from '@grafana/schema';
 import { DimensionValues, FrameFieldMap } from '@grafana/ui';
-
-/** Old config saved with 8.0+ */
-export interface XYDimensionConfig {
-  frame: number;
-  x?: string; // name | first
-  exclude?: string[]; // all other numbers except
-}
-
-export enum ScatterLineMode {
-  None = 'none',
-  Linear = 'linear',
-  // Smooth
-  // r2, etc
-}
-
-export interface ScatterFieldConfig extends HideableFieldConfig {
-  line?: ScatterLineMode;
-  lineWidth?: number;
-  lineStyle?: LineStyle;
-  lineColor?: ColorDimensionConfig;
-
-  point?: VisibilityMode;
-  pointSize?: ScaleDimensionConfig;
-  pointColor?: ColorDimensionConfig;
-  // pointSymbol?: DimensionSupplier<string>;
-
-  label?: VisibilityMode;
-  labelValue?: TextDimensionConfig;
-}
-
-export const defaultScatterConfig: ScatterFieldConfig = {
-  line: ScatterLineMode.None, // no line
-  point: VisibilityMode.Auto, //
-};
-
-// Runtime processed type send to render
-export interface ScatterSeries extends ScatterFieldConfig {
-  frameIndex: number;
-  xField: number;
-  yField: number;
-}
-
-export interface XYChartOptions extends OptionsWithLegend, OptionsWithTooltip {
-  dims: XYDimensionConfig; // <<< OLD!!
-
-  // Flag to trigger new behavior
-  mode?: 'auto' | 'explicit';
-
-  series?: ScatterSeries[];
-}
+import { ScatterLineMode } from './models.gen';
 
 export interface ScatterFrameFieldMap extends FrameFieldMap {
   line: ScatterLineMode[];

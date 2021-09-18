@@ -5,35 +5,12 @@ import {
   identityOverrideProcessor,
   SetFieldConfigOptionsArgs,
 } from '@grafana/data';
-import {
-  BarAlignment,
-  GraphDrawStyle,
-  GraphFieldConfig,
-  GraphGradientMode,
-  LineInterpolation,
-  LineStyle,
-  StackingMode,
-  VisibilityMode,
-} from '@grafana/schema';
+import { LineStyle, VisibilityMode } from '@grafana/schema';
 
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
-import { ScatterFieldConfig, ScatterLineMode } from './types';
-
-export const defaultGraphConfig: GraphFieldConfig = {
-  drawStyle: GraphDrawStyle.Line,
-  lineInterpolation: LineInterpolation.Linear,
-  lineWidth: 1,
-  fillOpacity: 0,
-  gradientMode: GraphGradientMode.None,
-  barAlignment: BarAlignment.Center,
-  stacking: {
-    mode: StackingMode.None,
-    group: 'A',
-  },
-  axisGridShow: true,
-};
+import { ScatterFieldConfig, ScatterLineMode } from './models.gen';
 
 const categoryStyles = ['Scatter styles'];
 
@@ -164,15 +141,14 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
           override: TextDimensionEditor as any,
           settings: {},
           defaultValue: {
-            // Configured values
-            fixed: 'grey',
+            placeholderText: 'Value',
           },
           showIf: (c) => c.label !== VisibilityMode.Never,
           process: identityOverrideProcessor,
           shouldApply: (f) => true,
         });
 
-      //  commonOptionsBuilder.addAxisConfig(builder, cfg);
+      commonOptionsBuilder.addAxisConfig(builder, cfg);
       commonOptionsBuilder.addHideFrom(builder);
     },
   };

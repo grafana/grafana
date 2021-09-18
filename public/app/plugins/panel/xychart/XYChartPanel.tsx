@@ -1,10 +1,9 @@
-import React, { /*useCallback, useContext,*/ useMemo } from 'react';
-import { /*Button, GraphNGLegendEvent,*/ UPlotChart, usePanelContext, useTheme2, VizLayout } from '@grafana/ui';
+import React, { useMemo } from 'react';
+import { UPlotChart, UPlotConfigBuilder, usePanelContext, useTheme2, VizLayout } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
-import { XYChartOptions } from './types';
-//import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
-//import { getXYDimensions } from './dims';
+import { XYChartOptions } from './models.gen';
 import { prepDims, prepLookup, prepConfig } from './utils';
+import { AlignedData } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 
 interface XYChartPanelProps extends PanelProps<XYChartOptions> {}
 
@@ -21,50 +20,43 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
 
-  const config = useMemo(() => {
+  const { warn, config } = useMemo(() => {
     // dim mapping from panel config
-    const dims = prepDims(options, data.series);
+    const { warn, series } = prepDims(options, data.series);
+    if (warn) {
+      return { warn, config: new UPlotConfigBuilder() };
+    }
+
     // seriesIndex enumerator & fast lookup cache (displayName <-> seriesIndex <-> DataFrameFieldIndex)
-    const lookup = prepLookup(dims, data.series);
+    const lookup = prepLookup(series, data.series);
     // initial uplot config, custom renderer, data prepper, can be extended by plugins or children of vis component below
-    return prepConfig({
-      frames: data.series,
-      lookup,
-      eventBus,
-      theme,
-      ...options,
-    });
+    return {
+      config: prepConfig({
+        frames: data.series,
+        lookup,
+        eventBus,
+        theme,
+        ...options,
+      }),
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.structureRev, options]); // optionsRev?
 
   // enumerates field.state.seriesIdx based on internal lookup
   // preps data in various shapes...aligned, stacked, merged, interpolated, etc..
-  const preparedData = useMemo(() => config.prepData!(data.series), [config, data.series]);
+  const preparedData = useMemo(() => (warn ? (([] as unknown) as AlignedData) : config.prepData!(data.series)), [
+    warn,
+    config,
+    data.series,
+  ]);
 
-  /*
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frames));
-    },
-    [fieldConfig, onFieldConfigChange, frames]
-  );
-  */
-
-  /*
-  if (dims.error) {
+  if (warn) {
     return (
-      <div>
-        <div>ERROR: {dims.error}</div>
-        {dims.hasData && (
-          <div>
-            <Button onClick={() => alert('TODO, switch vis')}>Show as Table</Button>
-            {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
-          </div>
-        )}
+      <div className="panel-empty">
+        <p>{warn}</p>
       </div>
     );
   }
-  */
 
   /*
   if (options.mode === 'scatter') {
