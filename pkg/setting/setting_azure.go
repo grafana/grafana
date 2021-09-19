@@ -32,7 +32,6 @@ func (cfg *Cfg) readAzureSettings() {
 	cfg.Azure.UserIdentityEnabled = azureSection.Key("user_identity_enabled").MustBool(false)
 	cfg.Azure.UserIdentityTokenEndpoint = azureSection.Key("user_identity_token_endpoint").String()
 	cfg.Azure.UserIdentityAuthHeader = azureSection.Key("user_identity_auth_header").String()
-
 }
 
 func normalizeAzureCloud(cloudName string) string {

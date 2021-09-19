@@ -53,7 +53,6 @@ func getAzureCredentials(cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) azc
 			TokenEndpoint: cfg.Azure.UserIdentityTokenEndpoint,
 			AuthHeader:    cfg.Azure.UserIdentityAuthHeader,
 		}
-
 	} else {
 		return &azcredentials.AzureClientSecretCredentials{
 			AzureCloud:   authParams.Params["azure_cloud"],

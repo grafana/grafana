@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -178,16 +179,16 @@ func TestAzureTokenProvider_GetUserIdAccessToken(t *testing.T) {
 		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
 
 		_, err := tokenRetriver.GetAccessToken(ctx, scope)
-		assert.Error(t, err, "Failed to get signed-in user")
+		assert.Error(t, err, "failed to get signed-in user")
 	})
 
 	t.Run("return error if there is empty signed in user", func(t *testing.T) {
 		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials)
 		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
 
-		ctx = context.WithValue(ctx, ContextKeyLoginUser, "")
+		ctx = context.WithValue(ctx, proxyutil.ContextKeyLoginUser{}, "")
 		_, err := tokenRetriver.GetAccessToken(ctx, scope)
-		assert.Error(t, err, "Empty signed-in userId")
+		assert.Error(t, err, "empty signed-in userId")
 	})
 }
 
@@ -203,7 +204,7 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 		AuthHeader:    "Bear xxxxx",
 	}
 
-	t.Run("Sucessful token parse", func(t *testing.T) {
+	t.Run("Successful token parse", func(t *testing.T) {
 		value := struct {
 			Token     string      `json:"access_token"`
 			ExpiresIn json.Number `json:"expires_in"`

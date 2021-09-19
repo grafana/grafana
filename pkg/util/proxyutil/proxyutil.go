@@ -5,6 +5,9 @@ import (
 	"net/http"
 )
 
+// ContextKeyLoginUser is the context key for signed-in user
+type ContextKeyLoginUser struct{}
+
 // PrepareProxyRequest prepares a request for being proxied.
 // Removes X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto headers.
 // Set X-Forwarded-For headers.

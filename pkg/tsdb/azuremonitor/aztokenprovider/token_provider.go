@@ -19,13 +19,12 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 var (
 	azureTokenCache = NewConcurrentTokenCache()
 )
-
-const ContextKeyLoginUser string = "loginUser"
 
 type AzureTokenProvider interface {
 	GetAccessToken(ctx context.Context, scopes []string) (string, error)
@@ -231,14 +230,14 @@ func (c *userIdentityTokenRetriever) Init() error {
 }
 
 func (c *userIdentityTokenRetriever) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	value := ctx.Value(ContextKeyLoginUser)
+	value := ctx.Value(proxyutil.ContextKeyLoginUser{})
 	if value == nil {
-		return nil, fmt.Errorf("Failed to get signed-in user")
+		return nil, fmt.Errorf("failed to get signed-in user")
 	}
 
 	userId := value.(string)
 	if userId == "" {
-		return nil, fmt.Errorf("Empty signed-in userId")
+		return nil, fmt.Errorf("empty signed-in userId")
 	}
 
 	return c.getUserAccessToken(userId, scopes)
@@ -256,7 +255,7 @@ func (c *userIdentityTokenRetriever) getUserAccessToken(userId string, scopes []
 	// scope=xxx&user_id=xxx
 	req, err := http.NewRequest("POST", c.tokenEndpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create token request, %w", err)
+		return nil, fmt.Errorf("failed to create token request, %w", err)
 	}
 
 	// Token server supports POST method with parameters in the body
@@ -289,14 +288,16 @@ func (c *userIdentityTokenRetriever) getUserAccessToken(userId string, scopes []
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get AccessToken: %w", err)
 	}
-	defer resp.Body.Close()
+
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 
 	return c.getAccessTokenFromResponse(resp)
 }
 
 func (c *userIdentityTokenRetriever) getAccessTokenFromResponse(resp *http.Response) (*AccessToken, error) {
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-
 		return nil, fmt.Errorf("Bad statuscode on token request: %d", resp.StatusCode)
 	}
 

@@ -121,7 +121,6 @@ func TestCredentials_getAuthType(t *testing.T) {
 			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
 		})
 	})
-
 }
 
 func TestCredentials_getAzureCloud(t *testing.T) {
