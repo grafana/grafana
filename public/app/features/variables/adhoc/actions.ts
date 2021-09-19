@@ -134,7 +134,7 @@ export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const filterTableName = filterTableNamePrefix + ' ' + options.datasource;
+    const filterTableName = filterTableNamePrefix + '_' + options.datasource.replace(' ', '_');
     const model = {
       ...cloneDeep(initialAdHocVariableModelState),
       datasource: options.datasource,
