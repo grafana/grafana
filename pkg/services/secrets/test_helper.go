@@ -14,10 +14,13 @@ import (
 
 func SetupTestService(t *testing.T) SecretsService {
 	t.Helper()
+	defaultKey := "SdlklWklckeLS"
+	if len(setting.SecretKey) > 0 {
+		defaultKey = setting.SecretKey
+	}
 	raw, err := ini.Load([]byte(`
 		[security]
-		secret_key = SdlklWklckeLS
-	`))
+		secret_key = ` + defaultKey))
 	require.NoError(t, err)
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
