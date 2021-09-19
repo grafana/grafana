@@ -86,9 +86,13 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource(options.datasource).build();
+      const variable = adHocBuilder()
+        .withId('Filters_influxdb')
+        .withName('Filters_influxdb')
+        .withDatasource(options.datasource)
+        .build();
 
-      const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
+      const expectedQuery = { 'var-Filters_influxdb': ['filter-key|=|filter-value'] };
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
       tester.thenDispatchedActionsShouldEqual(
@@ -144,7 +148,11 @@ describe('adhoc actions', () => {
         .withDatasource('elasticsearch')
         .build();
 
-      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource(options.datasource).build();
+      const variable = adHocBuilder()
+        .withId('Filters_influxdb')
+        .withName('Filters_influxdb')
+        .withDatasource(options.datasource)
+        .build();
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
@@ -152,7 +160,10 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
-      const expectedQuery = { 'var-elastic-filter': [] as string[], 'var-Filters': ['filter-key|=|filter-value'] };
+      const expectedQuery = {
+        'var-elastic-filter': [] as string[],
+        'var-Filters_influxdb': ['filter-key|=|filter-value'],
+      };
 
       tester.thenDispatchedActionsShouldEqual(
         createAddVariableAction(variable, 1),
