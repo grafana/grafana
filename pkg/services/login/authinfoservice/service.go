@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,17 +19,17 @@ type Implementation struct {
 	Bus                   bus.Bus
 	SQLStore              *sqlstore.SQLStore
 	UserProtectionService login.UserProtectionService
-	EncryptionService     encryption.Service
+	SecretsService        secrets.SecretsService
 	logger                log.Logger
 }
 
 func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, userProtectionService login.UserProtectionService,
-	encryptionService encryption.Service) *Implementation {
+	secretsService secrets.SecretsService) *Implementation {
 	s := &Implementation{
 		Bus:                   bus,
 		SQLStore:              store,
 		UserProtectionService: userProtectionService,
-		EncryptionService:     encryptionService,
+		SecretsService:        secretsService,
 		logger:                log.New("login.authinfo"),
 	}
 

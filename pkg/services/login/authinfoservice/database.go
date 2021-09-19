@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var getTime = time.Now
@@ -169,7 +169,7 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := s.EncryptionService.Decrypt(decoded, setting.SecretKey)
+	decrypted, err := s.SecretsService.Decrypt(decoded)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +179,7 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
 func (s *Implementation) encryptAndEncode(str string) (string, error) {
-	encrypted, err := s.EncryptionService.Encrypt([]byte(str), setting.SecretKey)
+	encrypted, err := s.SecretsService.Encrypt([]byte(str), secrets.WithoutScope())
 	if err != nil {
 		return "", err
 	}
