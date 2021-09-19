@@ -23,6 +23,12 @@ import (
 func TestService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
+	origSecret := setting.SecretKey
+	setting.SecretKey = "datasources_service_test"
+	t.Cleanup(func() {
+		setting.SecretKey = origSecret
+	})
+
 	secretsService := secrets.SetupTestService(t)
 	s := ProvideService(bus.New(), sqlStore, secretsService)
 
