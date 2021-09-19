@@ -2,30 +2,21 @@ package secrets
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/types"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 )
 
 func TestSecrets_EnvelopeEncryption(t *testing.T) {
-	svc := setupSecretService(t)
+	svc := SetupTestService(t)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(plaintext, util.WithoutScope())
+		encrypted, err := svc.Encrypt(plaintext, WithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(encrypted)
@@ -39,7 +30,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(plaintext, util.WithoutScope())
+		encrypted, err := svc.Encrypt(plaintext, WithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(encrypted)
@@ -53,7 +44,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
-		encrypted, err := svc.Encrypt(plaintext, util.WithScope("user:100"))
+		encrypted, err := svc.Encrypt(plaintext, WithScope("user:100"))
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(encrypted)
@@ -82,7 +73,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestSecretsService_DataKeys(t *testing.T) {
-	svc := setupSecretService(t)
+	svc := SetupTestService(t)
 	ctx := context.Background()
 
 	dataKey := types.DataKey{
@@ -133,21 +124,4 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		assert.Equal(t, types.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
-}
-
-func setupSecretService(t *testing.T) SecretsService {
-	t.Helper()
-	raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = SdlklWklckeLS
-	`))
-	require.NoError(t, err)
-	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
-
-	return ProvideSecretsService(
-		database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
-		bus.New(),
-		ossencryption.ProvideService(),
-		settings,
-	)
 }
