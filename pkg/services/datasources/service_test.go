@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -23,13 +23,8 @@ import (
 func TestService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
-	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
-
-	origSecret := setting.SecretKey
-	setting.SecretKey = "datasources_service_test"
-	t.Cleanup(func() {
-		setting.SecretKey = origSecret
-	})
+	secretsService := secrets.SetupTestService(t)
+	s := ProvideService(bus.New(), sqlStore, secretsService)
 
 	var ds *models.DataSource
 
@@ -41,7 +36,7 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 
 		ds = cmd.Result
-		decrypted, err := s.EncryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+		decrypted, err := s.SecretsService.DecryptJsonData(ds.SecureJsonData)
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
@@ -52,7 +47,7 @@ func TestService(t *testing.T) {
 		err := s.UpdateDataSource(&cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.DecryptJsonData(cmd.Result.SecureJsonData, setting.SecretKey)
+		decrypted, err := s.SecretsService.DecryptJsonData(cmd.Result.SecureJsonData)
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
@@ -74,7 +69,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		dsService := ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
@@ -101,15 +97,13 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
-
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		tlsCaCert, err := encryptionService.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := secretsService.Encrypt([]byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -151,18 +145,16 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
-
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		tlsClientCert, err := encryptionService.Encrypt([]byte(clientCert), "password")
+		tlsClientCert, err := secretsService.Encrypt([]byte(clientCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
-		tlsClientKey, err := encryptionService.Encrypt([]byte(clientKey), "password")
+		tlsClientKey, err := secretsService.Encrypt([]byte(clientKey), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -193,16 +185,14 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
-
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		tlsCaCert, err := encryptionService.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := secretsService.Encrypt([]byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -236,8 +226,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
 			Id:       1,
@@ -267,10 +257,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		encryptedData, err := encryptionService.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		encryptedData, err := secretsService.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -326,8 +316,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"timeout": 19,
 		})
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
 			Id:       1,
@@ -359,8 +349,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
 			Type:     models.DS_ES,
@@ -393,8 +383,8 @@ func TestService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	encryptionService := ossencryption.ProvideService()
-	dsService := ProvideService(bus.New(), nil, encryptionService)
+	secretsService := secrets.SetupTestService(t)
+	dsService := ProvideService(bus.New(), nil, secretsService)
 
 	for _, tc := range testCases {
 		ds := &models.DataSource{
@@ -406,12 +396,12 @@ func TestService_getTimeout(t *testing.T) {
 
 func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secrets.SetupTestService(t)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		encryptedJsonData, err := encryptionService.EncryptJsonData(map[string]string{
+		encryptedJsonData, err := secretsService.EncryptJsonData(map[string]string{
 			"password": "password",
-		}, setting.SecretKey)
+		}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -427,9 +417,9 @@ func TestService_DecryptedValue(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		encryptedJsonData, err = encryptionService.EncryptJsonData(map[string]string{
+		encryptedJsonData, err = secretsService.EncryptJsonData(map[string]string{
 			"password": "",
-		}, setting.SecretKey)
+		}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds.SecureJsonData = encryptedJsonData
@@ -440,11 +430,11 @@ func TestService_DecryptedValue(t *testing.T) {
 	})
 
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
-		encryptionService := ossencryption.ProvideService()
+		secretsService := secrets.SetupTestService(t)
 
-		encryptedJsonData, err := encryptionService.EncryptJsonData(map[string]string{
+		encryptedJsonData, err := secretsService.EncryptJsonData(map[string]string{
 			"password": "password",
-		}, setting.SecretKey)
+		}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -455,16 +445,16 @@ func TestService_DecryptedValue(t *testing.T) {
 			SecureJsonData: encryptedJsonData,
 		}
 
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		// Populate cache
 		password, ok := dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		ds.SecureJsonData, err = encryptionService.EncryptJsonData(map[string]string{
+		ds.SecureJsonData, err = secretsService.EncryptJsonData(map[string]string{
 			"password": "",
-		}, setting.SecretKey)
+		}, secrets.WithoutScope())
 		ds.Updated = time.Now()
 		require.NoError(t, err)
 
@@ -488,8 +478,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secrets.SetupTestService(t)
+			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -505,8 +495,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureAuth": true,
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secrets.SetupTestService(t)
+			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -525,8 +515,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secrets.SetupTestService(t)
+			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -549,8 +539,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secrets.SetupTestService(t)
+			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
@@ -567,8 +557,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureCredentials": "invalid",
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secrets.SetupTestService(t)
+			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			_, err := dsService.httpClientOptions(&ds)
 			assert.Error(t, err)
@@ -581,8 +571,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secrets.SetupTestService(t)
+			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
