@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -158,9 +160,10 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
-			encryptedJsonData, err := ossencryption.ProvideService().EncryptJsonData(
+			secretsService := secrets.SetupTestService(t)
+			encryptedJsonData, err := secretsService.EncryptJsonData(
 				map[string]string{"key": "123"},
-				setting.SecretKey,
+				secrets.WithoutScope(),
 			)
 
 			if err != nil {
@@ -202,7 +205,7 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, ossencryption.ProvideService())
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, secrets.SetupTestService(t))
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/macaron.v1"
 )
@@ -291,7 +290,7 @@ func (hs *HTTPServer) fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand
 		return models.ErrDatasourceIsReadOnly
 	}
 
-	secureJSONData, err := hs.EncryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+	secureJSONData, err := hs.SecretsService.DecryptJsonData(ds.SecureJsonData)
 	if err != nil {
 		return err
 	}
@@ -490,7 +489,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 
 func (hs *HTTPServer) decryptSecureJsonData() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, _ := hs.EncryptionService.DecryptJsonData(m, setting.SecretKey)
+		decryptedJsonData, _ := hs.SecretsService.DecryptJsonData(m)
 		return decryptedJsonData
 	}
 }

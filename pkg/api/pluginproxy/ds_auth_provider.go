@@ -7,19 +7,20 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute,
-	ds *models.DataSource, cfg *setting.Cfg, encryptionService encryption.Service) {
+	ds *models.DataSource, cfg *setting.Cfg, secretsService secrets.SecretsService) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
-	secureJsonData, err := encryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+	secureJsonData, err := secretsService.DecryptJsonData(ds.SecureJsonData)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return

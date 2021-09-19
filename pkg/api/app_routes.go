@@ -60,7 +60,7 @@ func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer)
 	return func(c *models.ReqContext) {
 		path := macaron.Params(c.Req)["*"]
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.EncryptionService)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.SecretsService)
 		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req)
 	}

@@ -246,7 +246,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		ApplyRoute(
 			proxy.ctx.Req.Context(), req, proxy.proxyPath,
 			proxy.route, proxy.ds, proxy.cfg,
-			proxy.dataSourcesService.EncryptionService,
+			proxy.dataSourcesService.SecretsService,
 		)
 	}
 
