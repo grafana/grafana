@@ -4,13 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -39,19 +40,19 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, encryptionService encryption.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.SecretsService, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:               cfg,
-		DataSourceCache:   dataSourceCache,
-		RouteRegister:     routeRegister,
-		SQLStore:          sqlStore,
-		KVStore:           kvStore,
-		DataService:       dataService,
-		DataProxy:         dataProxy,
-		QuotaService:      quotaService,
-		EncryptionService: encryptionService,
-		Metrics:           m,
-		Log:               log.New("ngalert"),
+		Cfg:             cfg,
+		DataSourceCache: dataSourceCache,
+		RouteRegister:   routeRegister,
+		SQLStore:        sqlStore,
+		KVStore:         kvStore,
+		DataService:     dataService,
+		DataProxy:       dataProxy,
+		QuotaService:    quotaService,
+		SecretsService:  secretsService,
+		Metrics:         m,
+		Log:             log.New("ngalert"),
 	}
 
 	if ng.IsDisabled() {
@@ -67,19 +68,19 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg               *setting.Cfg
-	DataSourceCache   datasources.CacheService
-	RouteRegister     routing.RouteRegister
-	SQLStore          *sqlstore.SQLStore
-	KVStore           kvstore.KVStore
-	DataService       *tsdb.Service
-	DataProxy         *datasourceproxy.DataSourceProxyService
-	QuotaService      *quota.QuotaService
-	EncryptionService encryption.Service
-	Metrics           *metrics.NGAlert
-	Log               log.Logger
-	schedule          schedule.ScheduleService
-	stateManager      *state.Manager
+	Cfg             *setting.Cfg
+	DataSourceCache datasources.CacheService
+	RouteRegister   routing.RouteRegister
+	SQLStore        *sqlstore.SQLStore
+	KVStore         kvstore.KVStore
+	DataService     *tsdb.Service
+	DataProxy       *datasourceproxy.DataSourceProxyService
+	QuotaService    *quota.QuotaService
+	SecretsService  secrets.SecretsService
+	Metrics         *metrics.NGAlert
+	Log             log.Logger
+	schedule        schedule.ScheduleService
+	stateManager    *state.Manager
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -101,7 +102,7 @@ func (ng *AlertNG) init() error {
 		Logger:                 ng.Log,
 	}
 
-	decryptFn := ng.EncryptionService.GetDecryptedValue
+	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
 	if err != nil {
@@ -141,7 +142,7 @@ func (ng *AlertNG) init() error {
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
-		EncryptionService:    ng.EncryptionService,
+		SecretsService:       ng.SecretsService,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
