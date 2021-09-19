@@ -336,7 +336,7 @@
     "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
-    "uplot": "1.6.15",
+    "uplot": "1.6.16",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.1.0"
@@ -360,6 +360,7 @@
   },
   "volta": {
     "node": "14.16.0",
-    "yarn": "1.22.5"
-  }
+    "yarn": "3.1.0-rc.5"
+  },
+  "packageManager": "yarn@3.1.0-rc.5"
 }
