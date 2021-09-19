@@ -3,6 +3,8 @@ package dashboardsnapshots
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -18,6 +20,12 @@ func TestDashboardSnapshotsService(t *testing.T) {
 		SQLStore:       sqlStore,
 		SecretsService: secretService,
 	}
+
+	origSecret := setting.SecretKey
+	setting.SecretKey = "dashboard_snapshot_service_test"
+	t.Cleanup(func() {
+		setting.SecretKey = origSecret
+	})
 
 	dashboardKey := "12345"
 
