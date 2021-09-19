@@ -4,22 +4,21 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	Bus            bus.Bus
+	SQLStore       *sqlstore.SQLStore
+	SecretsService secrets.SecretsService
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service) *Service {
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.SecretsService) *Service {
 	s := &Service{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		Bus:            bus,
+		SQLStore:       store,
+		SecretsService: secretsService,
 	}
 
 	s.Bus.AddHandler(s.CreateDashboardSnapshot)
@@ -37,7 +36,7 @@ func (s *Service) CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCom
 		return err
 	}
 
-	encryptedDashboard, err := s.EncryptionService.Encrypt(marshalledData, setting.SecretKey)
+	encryptedDashboard, err := s.SecretsService.Encrypt(marshalledData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -54,7 +53,7 @@ func (s *Service) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) 
 	}
 
 	if query.Result.DashboardEncrypted != nil {
-		decryptedDashboard, err := s.EncryptionService.Decrypt(query.Result.DashboardEncrypted, setting.SecretKey)
+		decryptedDashboard, err := s.SecretsService.Decrypt(query.Result.DashboardEncrypted)
 		if err != nil {
 			return err
 		}
