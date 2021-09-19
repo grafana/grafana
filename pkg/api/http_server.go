@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -51,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -105,7 +105,7 @@ type HTTPServer struct {
 	SocialService          social.Service
 	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
-	EncryptionService      encryption.Service
+	SecretsService         secrets.SecretsService
 	DataSourcesService     *datasources.Service
 	cleanUpService         *cleanup.CleanUpService
 	tracingService         *tracing.TracingService
@@ -134,7 +134,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service, dataSourcesService *datasources.Service) (*HTTPServer, error) {
+	secretsService secrets.SecretsService, dataSourcesService *datasources.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 
@@ -181,7 +181,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Listener:               opts.Listener,
 		SocialService:          socialService,
 		OAuthTokenService:      oauthTokenService,
-		EncryptionService:      encryptionService,
+		SecretsService:         secretsService,
 		DataSourcesService:     dataSourcesService,
 	}
 	if hs.Listener != nil {
