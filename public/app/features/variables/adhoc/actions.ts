@@ -24,7 +24,7 @@ export interface AdHocTableOptions {
   operator: string;
 }
 
-const filterTableName = 'Filters';
+const filterTableNamePrefix = 'Filters';
 
 export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -134,6 +134,7 @@ export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
+    const filterTableName = filterTableNamePrefix + ' ' + options.datasource;
     const model = {
       ...cloneDeep(initialAdHocVariableModelState),
       datasource: options.datasource,

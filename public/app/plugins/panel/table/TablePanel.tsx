@@ -9,6 +9,8 @@ import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Ta
 import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { MIXED_DATASOURCE_NAME } from '../../datasource/mixed/MixedDataSource';
+import { getDatasourceSrv } from '../../../features/plugins/datasource_srv';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -65,12 +67,33 @@ export class TablePanel extends Component<Props> {
     this.forceUpdate();
   };
 
-  onCellFilterAdded = (filter: FilterItem) => {
+  onCellFilterAdded = async (filter: FilterItem) => {
     const { key, value, operator } = filter;
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
     const datasource = panelModel?.datasource;
 
     if (!datasource) {
+      return;
+    }
+
+    if (datasource === MIXED_DATASOURCE_NAME) {
+      if (panelModel?.targets == null) {
+        return;
+      }
+      for (let i = 0; i < panelModel.targets.length; i++) {
+        let targetDatasource = panelModel.targets[i].datasource;
+        if (targetDatasource == null) {
+          continue;
+        }
+        const ds = await getDatasourceSrv().get(targetDatasource);
+        // as there isn't a better option for checking if a datasource is adhoc-able, check if the getTagKeys method
+        // is implemented
+        if (!ds || !ds.getTagKeys) {
+          continue;
+        }
+
+        dispatch(applyFilterFromTable({ datasource: targetDatasource, key, operator, value }));
+      }
       return;
     }
 
