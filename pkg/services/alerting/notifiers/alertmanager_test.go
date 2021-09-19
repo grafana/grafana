@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
@@ -81,6 +82,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 //nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
 	Convey("Alertmanager notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -92,7 +94,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewAlertmanagerNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -106,7 +108,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewAlertmanagerNotifier(model, secretsService.GetDecryptedValue)
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)
@@ -125,7 +127,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewAlertmanagerNotifier(model, secretsService.GetDecryptedValue)
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)

@@ -5,12 +5,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -27,6 +28,7 @@ func presenceComparer(a, b string) bool {
 
 func TestPagerdutyNotifier(t *testing.T) {
 	Convey("Pagerduty notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -40,7 +42,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err = NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err = NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -56,7 +58,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 				So(err, ShouldBeNil)
@@ -79,7 +81,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 				So(err, ShouldBeNil)
@@ -106,7 +108,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 				So(err, ShouldBeNil)
@@ -131,7 +133,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -188,7 +190,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -245,7 +247,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -315,7 +317,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -395,7 +397,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -474,7 +476,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewPagerdutyNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)

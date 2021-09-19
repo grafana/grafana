@@ -3,25 +3,25 @@ package alerting
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AlertNotificationService struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	Bus            bus.Bus
+	SQLStore       *sqlstore.SQLStore
+	SecretsService secrets.SecretsService
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service,
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.SecretsService,
 ) *AlertNotificationService {
 	s := &AlertNotificationService{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		Bus:            bus,
+		SQLStore:       store,
+		SecretsService: secretsService,
 	}
 
 	s.Bus.AddHandler(s.GetAlertNotifications)
@@ -47,7 +47,7 @@ func (s *AlertNotificationService) GetAlertNotifications(query *models.GetAlertN
 
 func (s *AlertNotificationService) CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) error {
 	var err error
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(cmd.SecureSettings, setting.SecretKey)
+	cmd.EncryptedSecureSettings, err = s.SecretsService.EncryptJsonData(cmd.SecureSettings, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(cmd *models.Cr
 
 func (s *AlertNotificationService) UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 	var err error
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(cmd.SecureSettings, setting.SecretKey)
+	cmd.EncryptedSecureSettings, err = s.SecretsService.EncryptJsonData(cmd.SecureSettings, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
