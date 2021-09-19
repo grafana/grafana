@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -286,24 +287,26 @@ func (c *userIdentityTokenRetriever) getUserAccessToken(userId string, scopes []
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get AccessToken: %w", err)
+		return nil, fmt.Errorf("failed to get AccessToken: %w", err)
 	}
 
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("error closing response:", err)
+		}
+	}()
 
 	return c.getAccessTokenFromResponse(resp)
 }
 
 func (c *userIdentityTokenRetriever) getAccessTokenFromResponse(resp *http.Response) (*AccessToken, error) {
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-		return nil, fmt.Errorf("Bad statuscode on token request: %d", resp.StatusCode)
+		return nil, fmt.Errorf("bad statuscode on token request: %d", resp.StatusCode)
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read token response: %w", err)
+		return nil, fmt.Errorf("failed to read token response: %w", err)
 	}
 
 	value := struct {
@@ -313,11 +316,11 @@ func (c *userIdentityTokenRetriever) getAccessTokenFromResponse(resp *http.Respo
 	}{}
 
 	if err := json.Unmarshal(respBody, &value); err != nil {
-		return nil, fmt.Errorf("Failed to deserialize token response: %w", err)
+		return nil, fmt.Errorf("failed to deserialize token response: %w", err)
 	}
 	t, err := value.ExpiresIn.Int64()
 	if err != nil {
-		return nil, fmt.Errorf("Faile to get ExpiresIn property of the token: %w", err)
+		return nil, fmt.Errorf("failed to get ExpiresIn property of the token: %w", err)
 	}
 	return &AccessToken{
 		Token:     value.Token,

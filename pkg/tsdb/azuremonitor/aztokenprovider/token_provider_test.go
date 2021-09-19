@@ -214,7 +214,7 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 			ExpiresIn: "1000",
 		}
 		data, err := json.Marshal(value)
-		assert.Empty(t, err, "Failed to marshal data")
+		assert.Empty(t, err, "failed to marshal data")
 
 		body := io.NopCloser(bytes.NewReader(data))
 		var resp = &http.Response{
@@ -223,7 +223,7 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 		}
 		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
 		token, err := tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Empty(t, err, "Failed on getting token")
+		assert.Empty(t, err, "failed on getting token")
 
 		assert.Equal(t, value.Token, token.Token)
 
@@ -243,7 +243,7 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 			ExpiresIn: "1000",
 		}
 		data, err := json.Marshal(value)
-		assert.Empty(t, err, "Failed to marshal data")
+		assert.Empty(t, err, "failed to marshal data")
 
 		body := io.NopCloser(bytes.NewReader(data))
 		var resp = &http.Response{
@@ -252,12 +252,12 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 		}
 		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
 		_, err = tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Error(t, err, "Bad statuscode on token request: 401")
+		assert.Error(t, err, "bad statuscode on token request: 401")
 	})
 
 	t.Run("Fail token parse on bad data", func(t *testing.T) {
 		data, err := json.Marshal("bad test")
-		assert.Empty(t, err, "Failed to marshal data")
+		assert.Empty(t, err, "failed to marshal data")
 
 		body := io.NopCloser(bytes.NewReader(data))
 		var resp = &http.Response{
@@ -266,7 +266,7 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 		}
 		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
 		_, err = tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Contains(t, err.Error(), "Failed to deserialize token response")
+		assert.Contains(t, err.Error(), "failed to deserialize token response")
 	})
 
 	t.Run("Fail token parse on bad expiresIn", func(t *testing.T) {
@@ -279,7 +279,7 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 			ExpiresIn: "99.999",
 		}
 		data, err := json.Marshal(value)
-		assert.Empty(t, err, "Failed to marshal data")
+		assert.Empty(t, err, "failed to marshal data")
 
 		body := io.NopCloser(bytes.NewReader(data))
 		var resp = &http.Response{
@@ -288,6 +288,6 @@ func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
 		}
 		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
 		_, err = tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Contains(t, err.Error(), "Faile to get ExpiresIn property of the token")
+		assert.Contains(t, err.Error(), "failed to get ExpiresIn property of the token")
 	})
 }
