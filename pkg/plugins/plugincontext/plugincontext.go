@@ -12,21 +12,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
-	dataSourceCache datasources.CacheService, encryptionService encryption.Service,
+	dataSourceCache datasources.CacheService, secretsService secrets.SecretsService,
 	pluginSettingsService *pluginsettings.Service) *Provider {
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,
 		PluginManager:         pluginManager,
 		DataSourceCache:       dataSourceCache,
-		EncryptionService:     encryptionService,
+		SecretsService:        secretsService,
 		PluginSettingsService: pluginSettingsService,
 	}
 }
@@ -36,7 +35,7 @@ type Provider struct {
 	CacheService          *localcache.CacheService
 	PluginManager         plugins.Manager
 	DataSourceCache       datasources.CacheService
-	EncryptionService     encryption.Service
+	SecretsService        secrets.SecretsService
 	PluginSettingsService *pluginsettings.Service
 }
 
@@ -120,7 +119,7 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 
 func (p *Provider) decryptSecureJsonData() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, _ := p.EncryptionService.DecryptJsonData(m, setting.SecretKey)
+		decryptedJsonData, _ := p.SecretsService.DecryptJsonData(m)
 		return decryptedJsonData
 	}
 }

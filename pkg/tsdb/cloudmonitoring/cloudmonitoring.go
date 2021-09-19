@@ -16,8 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/encryption"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -26,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2/google"
 )
@@ -87,11 +86,11 @@ type Service struct {
 
 // Executor executes queries for the CloudMonitoring datasource.
 type Executor struct {
-	httpClient        *http.Client
-	dsInfo            *models.DataSource
-	pluginManager     plugins.Manager
-	encryptionService encryption.Service
-	cfg               *setting.Cfg
+	httpClient     *http.Client
+	dsInfo         *models.DataSource
+	pluginManager  plugins.Manager
+	secretsService secrets.SecretsService
+	cfg            *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
@@ -103,11 +102,11 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 	}
 
 	return &Executor{
-		httpClient:        httpClient,
-		dsInfo:            dsInfo,
-		pluginManager:     s.PluginManager,
-		encryptionService: s.dsService.EncryptionService,
-		cfg:               s.Cfg,
+		httpClient:     httpClient,
+		dsInfo:         dsInfo,
+		pluginManager:  s.PluginManager,
+		secretsService: s.dsService.SecretsService,
+		cfg:            s.Cfg,
 	}, nil
 }
 
@@ -555,7 +554,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg, e.encryptionService)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg, e.secretsService)
 
 	return req, nil
 }
