@@ -330,6 +330,10 @@ func TestExpandTemplate(t *testing.T) {
 		text:     `{{ match "a+" "aa" }} {{ match "a+" "b" }}`,
 		expected: "true false",
 	}, {
+		name:     "regex replacement",
+		text:     "{{ reReplaceAll \"(a)b\" \"x$1\" \"ab\" }}",
+		expected: "xa",
+	}, {
 		name:     "pass multiple arguments to templates",
 		text:     `{{define "x"}}{{.arg0}} {{.arg1}}{{end}}{{template "x" (args 1 "2")}}`,
 		expected: "1 2",
