@@ -1,13 +1,12 @@
 package schema
 
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
-PointVisibility:    "auto" | "never" | "always"                             @cuetsy(kind="enum")
+VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
 DrawStyle:          "line" | "bars" | "points"                              @cuetsy(kind="enum")
 LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
 ScaleDistribution:  "linear" | "log"                                        @cuetsy(kind="enum")
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
 StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
-BarValueVisibility: "auto" | "never" | "always"                             @cuetsy(kind="enum")
 BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")
 ScaleOrientation:   0 | 1                                                   @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
 ScaleDirection:     1 | 1 | -1 | -1                                         @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
@@ -33,7 +32,7 @@ FillConfig: {
 	fillBelowTo?: string
 } @cuetsy(kind="interface")
 PointsConfig: {
-	showPoints?:  PointVisibility
+	showPoints?:  VisibilityMode
 	pointSize?:   number
 	pointColor?:  string
 	pointSymbol?: string
