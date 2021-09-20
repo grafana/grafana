@@ -198,7 +198,9 @@ export async function addAlertManagers(alertManagers: string[]): Promise<void> {
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-  );
+  ).then(() => {
+    fetchExternalAlertmanagerConfig();
+  });
 }
 
 export async function fetchExternalAlertmanagers(): Promise<ExternalAlertmanagersResponse> {
@@ -206,6 +208,17 @@ export async function fetchExternalAlertmanagers(): Promise<ExternalAlertmanager
     getBackendSrv().fetch<ExternalAlertmanagersResponse>({
       method: 'GET',
       url: '/api/v1/ngalert/alertmanagers',
+    })
+  );
+
+  return result.data;
+}
+
+export async function fetchExternalAlertmanagerConfig(): Promise<{ alertmanagers: string[] }> {
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<{ alertmanagers: string[] }>({
+      method: 'GET',
+      url: '/api/v1/ngalert/admin_config',
     })
   );
 

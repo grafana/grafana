@@ -5,14 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import { addExternalAlertmanagers, fetchExternalAlertmanagersAction } from '../../state/actions';
-import { StoreState } from 'app/types';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { useExternalAmSelector } from '../../hooks/useExternalAmSelector';
 
 export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
-  const externalAlertManagers = useSelector((state: StoreState) => state.unifiedAlerting.externalAlertManagers);
+  const externalAlertManagers = useExternalAmSelector();
 
   const { result: alertmanagers, loading: isLoadingAlertmanagers, error: loadingError } =
     externalAlertManagers || initialAsyncRequestState;

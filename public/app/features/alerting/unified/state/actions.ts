@@ -31,6 +31,7 @@ import {
   testReceivers,
   addAlertManagers,
   fetchExternalAlertmanagers,
+  fetchExternalAlertmanagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -96,6 +97,13 @@ export const fetchExternalAlertmanagersAction = createAsyncThunk(
   'unifiedAlerting/fetchExternalAlertmanagers',
   (): Promise<ExternalAlertmanagersResponse> => {
     return withSerializedError(fetchExternalAlertmanagers());
+  }
+);
+
+export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchExternAlertmanagersConfig',
+  (): Promise<{ alertmanagers: string[] }> => {
+    return withSerializedError(fetchExternalAlertmanagerConfig());
   }
 );
 
