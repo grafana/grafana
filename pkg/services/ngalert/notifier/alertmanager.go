@@ -286,11 +286,17 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 }
 
 //ApplyConfig applies the configuration to the Alertmanager
-func (am *Alertmanager) ApplyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
+	var err error
+	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
+	}
+
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
-	if err := am.applyConfig(cfg, nil); err != nil {
+	if err = am.applyConfig(cfg, nil); err != nil {
 		return fmt.Errorf("unable to apply configuration: %w", err)
 	}
 	return nil

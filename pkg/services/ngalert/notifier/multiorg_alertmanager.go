@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -151,18 +150,6 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	for _, orgID := range orgIDs {
 		orgsFound[orgID] = struct{}{}
 
-		dbConfig, cfgFound := dbConfigs[orgID]
-
-		var cfg *api.PostableUserConfig
-		if cfgFound {
-			var err error
-			cfg, loadErr = Load([]byte(dbConfig.AlertmanagerConfiguration))
-			if err != nil {
-				moa.logger.Error("failed to parse Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
-				continue
-			}
-		}
-
 		alertmanager, found := moa.alertmanagers[orgID]
 		if !found {
 			// These metrics are not exported by Grafana and are mostly a placeholder.
@@ -176,8 +163,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			alertmanager = am
 		}
 
+		dbConfig, cfgFound := dbConfigs[orgID]
 		if cfgFound {
-			err := alertmanager.ApplyConfig(cfg)
+			err := alertmanager.ApplyConfig(dbConfig)
 			if err != nil {
 				moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
 				continue
