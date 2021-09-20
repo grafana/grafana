@@ -2621,7 +2621,6 @@ __metadata:
     hoist-non-react-statics: 3.3.2
     immutable: 3.8.2
     is-hotkey: 0.1.6
-    jquery: 3.5.1
     lodash: 4.17.21
     mock-raf: 1.0.1
     moment: 2.29.1
@@ -2660,10 +2659,18 @@ __metadata:
     uplot: 1.6.16
     webpack-filter-warnings-plugin: 1.2.1
   peerDependencies:
+    "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
+    enzyme: 3.11.0
+    jquery: 3.5.1
     react: 17.0.1
     react-dom: 17.0.1
     react-hook-form: 7.5.3
     react-router-dom: ^5.2.0
+  peerDependenciesMeta:
+    "@wojtekmaj/enzyme-adapter-react-17":
+      optional: true
+    enzyme:
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -17759,6 +17766,7 @@ fsevents@^1.2.7:
     jest: 26.6.3
     jest-canvas-mock: 2.3.0
     jest-date-mock: 1.0.8
+    jest-junit: ^6.4.0
     jest-matcher-utils: 26.0.0
     jquery: 3.5.1
     json-source-map: 0.6.1

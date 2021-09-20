@@ -47,7 +47,6 @@
     "hoist-non-react-statics": "3.3.2",
     "immutable": "3.8.2",
     "is-hotkey": "0.1.6",
-    "jquery": "3.5.1",
     "lodash": "4.17.21",
     "moment": "2.29.1",
     "monaco-editor": "0.27.0",
@@ -126,10 +125,21 @@
     "webpack-filter-warnings-plugin": "1.2.1"
   },
   "peerDependencies": {
+    "@wojtekmaj/enzyme-adapter-react-17": "0.6.2",
+    "enzyme": "3.11.0",
+    "jquery": "3.5.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-hook-form": "7.5.3",
     "react-router-dom": "^5.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@wojtekmaj/enzyme-adapter-react-17": {
+      "optional": true
+    },
+    "enzyme": {
+      "optional": true
+    }
   },
   "types": "src/index.ts",
   "volta": {
