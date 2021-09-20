@@ -12,16 +12,24 @@ import {
   stylesFactory,
 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { ResourceCards } from './ResourceCards';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 import { getPublicOrAbsoluteUrl } from '../resource';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
+}
+
+interface ResourceItem {
+  label: string;
+  value: string;
+  search: string;
+  imgUrl: string;
 }
 
 export function ResourcePicker(props: Props) {
@@ -36,43 +44,52 @@ export function ResourcePicker(props: Props) {
     { label: 'Select', active: true },
     // { label: 'Upload', active: false },
   ]);
-  const [directoryIndex, setDirectoryIndex] = useState<SelectableValue[]>([]);
-  const [defaultList, setDefaultList] = useState<SelectableValue[]>([]);
+  const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
+  const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   useEffect(() => {
     // we don't want to load everything before picking a folder
-    if (currentFolder) {
-      getBackendSrv()
-        .get(`public/${currentFolder?.value}/index.json`)
-        .then((data) => {
-          const cards = data.files.map((v: string) => ({
-            value: v,
-            label: v,
-            imgUrl: `public/${currentFolder?.value}/${v}`,
-          }));
-          setDirectoryIndex(cards);
-          setDefaultList(cards);
-        })
-        .catch((e) => console.error(e));
-    } else {
-      return;
+    const folder = currentFolder?.value;
+    if (folder) {
+      const filter =
+        mediaType === 'icon'
+          ? (item: FileElement) => item.name.endsWith('.svg')
+          : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
+
+      getDatasourceSrv()
+        .get('-- Grafana --')
+        .then((ds) => {
+          (ds as GrafanaDatasource).listFiles(folder).subscribe({
+            next: (frame) => {
+              const cards: ResourceItem[] = [];
+              frame.forEach((item) => {
+                if (filter(item)) {
+                  const idx = item.name.lastIndexOf('.');
+                  cards.push({
+                    value: item.name,
+                    label: item.name,
+                    search: (idx ? item.name.substr(0, idx) : item.name).toLowerCase(),
+                    imgUrl: `public/${folder}/${item.name}`,
+                  });
+                }
+              });
+              setDirectoryIndex(cards);
+              setFilteredIndex(cards);
+            },
+          });
+        });
     }
-  }, [currentFolder]);
+  }, [mediaType, currentFolder]);
 
   const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      const filtered = directoryIndex.filter((card) =>
-        card.value
-          // exclude file type (.svg) in the search
-          .substr(0, card.value.length - 4)
-          .toLocaleLowerCase()
-          .includes(e.target.value.toLocaleLowerCase())
-      );
-      setDirectoryIndex(filtered);
+    let query = e.currentTarget.value;
+    if (query) {
+      query = query.toLowerCase();
+      setFilteredIndex(directoryIndex.filter((card) => card.search.includes(query)));
     } else {
-      setDirectoryIndex(defaultList);
+      setFilteredIndex(directoryIndex);
     }
   };
   const imgSrc = getPublicOrAbsoluteUrl(value!);
@@ -106,9 +123,9 @@ export function ResourcePicker(props: Props) {
           <div className={styles.tabContent}>
             <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
             <Input placeholder="Search" onChange={onChangeSearch} />
-            {directoryIndex ? (
+            {filteredIndex ? (
               <div className={styles.cardsWrapper}>
-                <ResourceCards cards={directoryIndex} onChange={onChange} currentFolder={currentFolder} />
+                <ResourceCards cards={filteredIndex} onChange={onChange} currentFolder={currentFolder} />
               </div>
             ) : (
               <Spinner />

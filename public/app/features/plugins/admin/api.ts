@@ -1,6 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
+import { PluginError } from '@grafana/data';
 import {
   PluginDetails,
   Org,
@@ -13,9 +14,13 @@ import {
 } from './types';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
-  const [localPlugins, remotePlugins] = await Promise.all([getLocalPlugins(), getRemotePlugins()]);
+  const [localPlugins, remotePlugins, pluginErrors] = await Promise.all([
+    getLocalPlugins(),
+    getRemotePlugins(),
+    getPluginErrors(),
+  ]);
 
-  return mergeLocalsAndRemotes(localPlugins, remotePlugins);
+  return mergeLocalsAndRemotes(localPlugins, remotePlugins, pluginErrors);
 }
 
 export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
@@ -66,6 +71,14 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
     remoteVersions: versions,
     local: localPlugin,
   };
+}
+
+async function getPluginErrors(): Promise<PluginError[]> {
+  try {
+    return await getBackendSrv().get(`${API_ROOT}/errors`);
+  } catch (error) {
+    return [];
+  }
 }
 
 async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {

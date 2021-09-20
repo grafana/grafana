@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { cloneDeep } from 'lodash';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from '../../app_events';
 import { ShowModalReactEvent } from '../../../types/events';
@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: none;
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       display: block;
       margin-bottom: ${theme.spacing(2)};
     }

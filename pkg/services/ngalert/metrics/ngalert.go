@@ -52,6 +52,7 @@ type Scheduler struct {
 }
 
 type MultiOrgAlertmanager struct {
+	Registerer               prometheus.Registerer
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 	registries               *OrgRegistries
@@ -128,7 +129,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_evaluations_total",
 				Help:      "The total number of rule evaluations.",
 			},
-			[]string{"user"},
+			[]string{"org"},
 		),
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.
@@ -139,7 +140,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_evaluation_failures_total",
 				Help:      "The total number of rule evaluation failures.",
 			},
-			[]string{"user"},
+			[]string{"org"},
 		),
 		EvalDuration: promauto.With(r).NewSummaryVec(
 			prometheus.SummaryOpts{
@@ -149,7 +150,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:       "The duration for a rule to execute.",
 				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 			},
-			[]string{"user"},
+			[]string{"org"},
 		),
 	}
 }
@@ -165,7 +166,7 @@ func newStateMetrics(r prometheus.Registerer) *State {
 				Name:      "rule_group_rules",
 				Help:      "The number of rules.",
 			},
-			[]string{"user"},
+			[]string{"org"},
 		),
 		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: Namespace,
@@ -178,6 +179,7 @@ func newStateMetrics(r prometheus.Registerer) *State {
 
 func newMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
 	return &MultiOrgAlertmanager{
+		Registerer: r,
 		registries: NewOrgRegistries(),
 		DiscoveredConfigurations: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,

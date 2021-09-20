@@ -20,15 +20,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gobwas/glob"
-
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -429,7 +428,7 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	AdminConfigPollInterval time.Duration
+	UnifiedAlerting UnifiedAlertingSettings
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -934,8 +933,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
 	}
-
-	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1389,13 +1387,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
-	return nil
-}
-
-func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
-	ua := iniFile.Section("unified_alerting")
-	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
-	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
 

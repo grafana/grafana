@@ -63,7 +63,7 @@ func (cmd Command) validateScuemata(c utils.CommandLine) error {
 	if err != nil {
 		return err
 	}
-	fspaths.DistPluginCueFS, err = populate(paths.DistPluginCueFS, "public/app/plugins")
+	fspaths.DistPluginCueFS, err = populate(paths.DistPluginCueFS, "")
 	if err != nil {
 		return err
 	}
