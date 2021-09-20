@@ -145,7 +145,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const hasUpdate =
     local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
-  const hasRemoteSignature = remote?.signatureType !== '' || remote?.versionSignatureType !== '';
+  const hasRemoteSignature = remote?.signatureType || remote?.versionSignatureType;
   const isDisabled = !!error;
 
   let logos = {
