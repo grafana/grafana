@@ -419,14 +419,7 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	AdminConfigPollInterval        time.Duration
-	AlertmanagerConfigPollInterval time.Duration
-	HAListenAddr                   string
-	HAAdvertiseAddr                string
-	HAPeers                        []string
-	HAPeerTimeout                  time.Duration
-	HAGossipInterval               time.Duration
-	HAPushPullInterval             time.Duration
+	UnifiedAlerting UnifiedAlertingSettings
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
