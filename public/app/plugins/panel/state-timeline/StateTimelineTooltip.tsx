@@ -32,6 +32,17 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
 
   const field = alignedData.fields[seriesIdx!];
+
+  /**
+   * There could be a case when the tooltip shows a data from one of a multiple query and the other query finishes first
+   * from refreshing. This causes data to be out of sync. alignedData - 1 because Time field doesn't count.
+   * Render nothing in this case to prevent error.
+   * See https://github.com/grafana/support-escalations/issues/932
+   */
+  if (alignedData.fields.length - 1 !== data.length || !field) {
+    return null;
+  }
+
   const dataFrameFieldIndex = field.state?.origin;
   const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
   const value = field.values.get(datapointIdx!);
