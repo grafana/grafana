@@ -125,7 +125,7 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	return nil
 }
 
-//getLatestConfigs retrieves the latest Alertmanager configuration for every organization and returns them as a map where the key is ID of an organization
+// getLatestConfigs retrieves the latest Alertmanager configuration for every organization. It returns a map where the key is the ID of each organization and the value is the configuration.
 func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int64]*models.AlertConfiguration, error) {
 	configs, err := moa.configStore.GetAllLatestAlertmanagerConfiguration(ctx)
 	if err != nil {
