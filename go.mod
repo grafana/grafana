@@ -35,6 +35,7 @@ require (
 	github.com/go-kit/kit v0.11.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 	github.com/go-openapi/strfmt v0.20.1
+	github.com/go-redis/redis/v8 v8.11.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-stack/stack v1.8.0
@@ -141,6 +142,7 @@ require (
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/deepmap/oapi-codegen v1.3.13 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
