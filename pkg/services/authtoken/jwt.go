@@ -8,19 +8,25 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "JWTService",
-		Instance:     &JWT{},
-		InitPriority: registry.High,
-	})
+func ProvideService(cfg *setting.Cfg) (*JWT, error) {
+	j := &JWT{Cfg: cfg}
+	rsaPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+	j.rsaPrivateKey = rsaPrivateKey
+	signer, err := newInMemoryRSASigner(rsaPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	j.rsaSigner = signer
+	return j, nil
 }
 
 type JWT struct {

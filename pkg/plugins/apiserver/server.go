@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authtoken"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -30,8 +29,56 @@ var (
 	logger = log.New("plugin_grpc_api")
 )
 
-func init() {
-	registry.RegisterServiceWithPriority(&GRPCAPIServer{}, registry.High)
+func ProvideService(
+	cfg *setting.Cfg,
+	GrafanaLive *live.GrafanaLive,
+	DatasourceCache datasources.CacheService,
+	JWT *authtoken.JWT,
+) (*GRPCAPIServer, error) {
+	s := &GRPCAPIServer{
+		Cfg:             cfg,
+		GrafanaLive:     GrafanaLive,
+		DatasourceCache: DatasourceCache,
+		JWT:             JWT,
+	}
+
+	logger.Info("Plugin GRPC API server initialization", "address", s.Cfg.GRPCServerAddress, "network", s.Cfg.GRPCServerNetwork, "tls", s.Cfg.GRPCServerUseTLS)
+
+	if !s.IsEnabled() {
+		logger.Debug("GRPCAPIServer not enabled, skipping initialization")
+		return nil, nil
+	}
+
+	listener, err := net.Listen(s.Cfg.GRPCServerNetwork, s.Cfg.GRPCServerAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen: %v", err)
+	}
+
+	authenticator := &Authenticator{JWT: s.JWT}
+
+	opts := []grpc.ServerOption{
+		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
+		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
+	}
+	if s.Cfg.GRPCServerUseTLS {
+		cred, err := s.loadTLSCredentials()
+		if err != nil {
+			return nil, fmt.Errorf("error loading GRPC TLS Credentials: %w", err)
+		}
+		opts = append(opts, grpc.Creds(cred))
+	}
+
+	grpcServer := grpc.NewServer(opts...)
+	s.server = grpcServer
+	server.RegisterGrafanaServer(grpcServer, s)
+	go func() {
+		err := grpcServer.Serve(listener)
+		if err != nil {
+			logger.Error("can't serve GRPC", "error", err)
+		}
+	}()
+
+	return s, nil
 }
 
 // GRPCAPIServer ...
@@ -54,46 +101,6 @@ func (s *GRPCAPIServer) loadTLSCredentials() (credentials.TransportCredentials, 
 		ClientAuth:   tls.NoClientCert,
 	}
 	return credentials.NewTLS(config), nil
-}
-
-// Init Receiver.
-func (s *GRPCAPIServer) Init() error {
-	logger.Info("Plugin GRPC API server initialization", "address", s.Cfg.GRPCServerAddress, "network", s.Cfg.GRPCServerNetwork, "tls", s.Cfg.GRPCServerUseTLS)
-
-	if !s.IsEnabled() {
-		logger.Debug("GRPCAPIServer not enabled, skipping initialization")
-		return nil
-	}
-
-	listener, err := net.Listen(s.Cfg.GRPCServerNetwork, s.Cfg.GRPCServerAddress)
-	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
-	}
-
-	authenticator := &Authenticator{JWT: s.JWT}
-
-	opts := []grpc.ServerOption{
-		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
-		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
-	}
-	if s.Cfg.GRPCServerUseTLS {
-		cred, err := s.loadTLSCredentials()
-		if err != nil {
-			return fmt.Errorf("error loading GRPC TLS Credentials: %w", err)
-		}
-		opts = append(opts, grpc.Creds(cred))
-	}
-
-	grpcServer := grpc.NewServer(opts...)
-	s.server = grpcServer
-	server.RegisterGrafanaServer(grpcServer, s)
-	go func() {
-		err := grpcServer.Serve(listener)
-		if err != nil {
-			logger.Error("can't serve GRPC", "error", err)
-		}
-	}()
-	return nil
 }
 
 // Run Server.
@@ -163,8 +170,8 @@ func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.Publi
 	}
 	logger.Debug("plugin publishes data to a channel", "pluginId", pluginIdentity.PluginID, "orgId", pluginIdentity.OrgID, "channel", request.Channel)
 
-	channel := liveDto.ParseChannel(request.Channel)
-	if !channel.IsValid() {
+	channel, err := liveDto.ParseChannel(request.Channel)
+	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, `invalid channel`)
 	}
 
@@ -200,7 +207,7 @@ func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.Publi
 
 	// Permission checks passed, let message be published.
 
-	err := s.GrafanaLive.Publish(pluginIdentity.OrgID, request.Channel, request.Data)
+	err = s.GrafanaLive.Publish(pluginIdentity.OrgID, request.Channel, request.Data)
 	if err != nil {
 		logger.Error("Error publishing into channel", "error", err, "channel", request.Channel, "data", string(request.Data))
 		return nil, status.Error(codes.Internal, `internal error`)

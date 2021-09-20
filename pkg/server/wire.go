@@ -5,6 +5,7 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/authtoken"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/apiserver"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -144,6 +146,8 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
+	authtoken.ProvideService,
+	apiserver.ProvideService,
 )
 
 var wireSet = wire.NewSet(
