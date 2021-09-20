@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gobwas/glob"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -39,9 +37,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"gopkg.in/redis.v5"
 )
 
 var (
@@ -233,7 +232,7 @@ func (g *GrafanaLive) Init() error {
 		redisClient := redis.NewClient(&redis.Options{
 			Addr: g.Cfg.LiveHAEngineAddress,
 		})
-		cmd := redisClient.Ping()
+		cmd := redisClient.Ping(context.TODO())
 		if _, err := cmd.Result(); err != nil {
 			return fmt.Errorf("error pinging Redis: %v", err)
 		}
