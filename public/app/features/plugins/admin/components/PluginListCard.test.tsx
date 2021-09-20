@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { PluginListCard } from './PluginListCard';
 import { CatalogPlugin } from '../types';
 
@@ -27,6 +27,7 @@ describe('PluginCard', () => {
     isCore: false,
     isDev: false,
     isEnterprise: false,
+    isDisabled: false,
   };
 
   it('renders a card with link, image, name, orgName and badges', () => {
@@ -63,5 +64,12 @@ describe('PluginCard', () => {
     render(<PluginListCard plugin={appPlugin} pathName="" />);
 
     expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
+  });
+
+  it('renders a disabled plugin with a badge to indicate its error', () => {
+    const pluginWithError = { ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature };
+    render(<PluginListCard plugin={pluginWithError} pathName="" />);
+
+    expect(screen.getByText(/disabled/i)).toBeVisible();
   });
 });

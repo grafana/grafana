@@ -275,6 +275,45 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", models[0].Expr)
 	})
+
+	t.Run("parsing query model of range query", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A",
+			"range": true
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, Range, models[0].QueryType)
+	})
+
+	t.Run("parsing query model of with default query type", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, Range, models[0].QueryType)
+	})
 }
 
 func queryContext(json string, timeRange backend.TimeRange) *backend.QueryDataRequest {

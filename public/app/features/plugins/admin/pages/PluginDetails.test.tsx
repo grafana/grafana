@@ -7,7 +7,10 @@ import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { CatalogPlugin } from '../types';
+import * as api from '../api';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
+import { PluginErrorCode } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 // Mock the config to enable the plugin catalog
 jest.mock('@grafana/runtime', () => {
@@ -46,6 +49,8 @@ describe('Plugin details page', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    config.pluginAdminExternalManageEnabled = false;
+    config.licenseInfo.hasValidLicense = false;
   });
 
   afterAll(() => {
@@ -168,6 +173,13 @@ describe('Plugin details page', () => {
     await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
   });
 
+  it('should not display install / uninstall buttons for disabled plugins', async () => {
+    const { queryByRole } = renderPluginDetails({ id, isInstalled: true, isDisabled: true });
+
+    await waitFor(() => expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
+  });
+
   it('should display install link with `config.pluginAdminExternalManageEnabled` set to true', async () => {
     config.pluginAdminExternalManageEnabled = true;
 
@@ -193,6 +205,17 @@ describe('Plugin details page', () => {
     expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
   });
 
+  it('should display alert with information about why the plugin is disabled', async () => {
+    const { queryByLabelText } = renderPluginDetails({
+      id,
+      isInstalled: true,
+      isDisabled: true,
+      error: PluginErrorCode.modifiedSignature,
+    });
+
+    await waitFor(() => expect(queryByLabelText(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument());
+  });
+
   it('should display grafana dependencies for a plugin if they are available', async () => {
     const { queryByText } = renderPluginDetails({
       id,
@@ -207,5 +230,39 @@ describe('Plugin details page', () => {
     await waitFor(() => expect(queryByText(/dependencies:/i)).toBeInTheDocument());
 
     expect(queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+  });
+
+  it('should show a confirm modal when trying to uninstall a plugin', async () => {
+    // @ts-ignore
+    api.uninstallPlugin = jest.fn();
+
+    const { queryByText, queryByRole, getByRole } = renderPluginDetails({
+      id,
+      name: 'Akumuli',
+      isInstalled: true,
+      details: {
+        pluginDependencies: [],
+        grafanaDependency: '>=8.0.0',
+        links: [],
+      },
+    });
+
+    // Wait for the install controls to be loaded
+    await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
+
+    // Open the confirmation modal
+    userEvent.click(getByRole('button', { name: /uninstall/i }));
+
+    expect(queryByText('Uninstall Akumuli')).toBeInTheDocument();
+    expect(queryByText('Are you sure you want to uninstall this plugin?')).toBeInTheDocument();
+    expect(api.uninstallPlugin).toHaveBeenCalledTimes(0);
+
+    // Confirm the uninstall
+    userEvent.click(getByRole('button', { name: /confirm/i }));
+    expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
+    expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
+
+    // Check if the modal disappeared
+    expect(queryByText('Uninstall Akumuli')).not.toBeInTheDocument();
   });
 });

@@ -3,17 +3,16 @@ package influxdb
 import "time"
 
 type Query struct {
-	Measurement  string
-	Policy       string
-	ResultFormat string
-	Tags         []*Tag
-	GroupBy      []*QueryPart
-	Selects      []*Select
-	RawQuery     string
-	UseRawQuery  bool
-	Alias        string
-	Interval     time.Duration
-	Tz           string
+	Measurement string
+	Policy      string
+	Tags        []*Tag
+	GroupBy     []*QueryPart
+	Selects     []*Select
+	RawQuery    string
+	UseRawQuery bool
+	Alias       string
+	Interval    time.Duration
+	Tz          string
 }
 
 type Tag struct {
