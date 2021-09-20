@@ -26,10 +26,10 @@ export function PluginListCard({ plugin, pathName }: PluginListCardProps) {
             className={styles.image}
             height={LOGO_SIZE}
           />
-          <h3 className={styles.name}>{plugin.name}</h3>
+          <h2 className={styles.name}>{plugin.name}</h2>
           {plugin.type && (
-            <div className={styles.icon}>
-              <Icon name={IconName[plugin.type]} aria-label={`${plugin.type} plugin icon`} />
+            <div className={styles.icon} data-testid={`${plugin.type} plugin icon`}>
+              <Icon name={IconName[plugin.type]} />
             </div>
           )}
         </div>
