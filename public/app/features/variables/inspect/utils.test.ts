@@ -1,4 +1,14 @@
-import { getAffectedPanelIdsForVariable, getPropsWithVariable } from './utils';
+import {
+  getAffectedPanelIdsForVariable,
+  getAllAffectedPanelIdsForVariableChange,
+  getDependenciesForVariable,
+  getPropsWithVariable,
+} from './utils';
+import { PanelModel } from '@grafana/data';
+import { variableAdapters } from '../adapters';
+import { createDataSourceVariableAdapter } from '../datasource/adapter';
+import { createCustomVariableAdapter } from '../custom/adapter';
+import { createQueryVariableAdapter } from '../query/adapter';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
@@ -207,8 +217,71 @@ describe('getPropsWithVariable', () => {
 describe('getAffectedPanelIdsForVariable', () => {
   describe('when called with a real world example with rows and repeats', () => {
     it('then it should return correct panel ids', () => {
-      const result = getAffectedPanelIdsForVariable('query0', dashWithRepeatsAndRows);
+      const panels = dashWithRepeatsAndRows.panels.map(
+        (panel: PanelModel) =>
+          (({
+            id: panel.id,
+            getSaveModel: () => panel,
+          } as unknown) as PanelModel)
+      );
+      const dashboard: any = { panels };
+      const result = getAffectedPanelIdsForVariable('query0', dashboard);
       expect(result).toEqual([15, 16, 17, 11, 12, 13, 2, 5, 7, 6]);
+    });
+  });
+});
+
+variableAdapters.setInit(() => [
+  createDataSourceVariableAdapter(),
+  createCustomVariableAdapter(),
+  createQueryVariableAdapter(),
+]);
+
+describe('getDependenciesForVariable', () => {
+  describe('when called with a real world example with dependencies', () => {
+    it('then it should return correct dependencies', () => {
+      const result = getDependenciesForVariable('ds_instance', dashWithTemplateDependenciesAndPanels, new Set());
+      expect([...result]).toEqual([
+        'ds',
+        'query_with_ds',
+        'depends_on_query_with_ds',
+        'depends_on_query_with_ds_regex',
+        'depends_on_all',
+      ]);
+    });
+  });
+});
+
+describe('getAllAffectedPanelIdsForVariableChange ', () => {
+  describe('when called with a real world example with dependencies and panels', () => {
+    it('then it should return correct panelIds', () => {
+      const { panels: panelsAsJson, templating } = dashWithTemplateDependenciesAndPanels;
+      const panels = panelsAsJson.map(
+        (panel: PanelModel) =>
+          (({
+            id: panel.id,
+            getSaveModel: () => panel,
+          } as unknown) as PanelModel)
+      );
+      const dashboard: any = { panels, templating };
+      const result = getAllAffectedPanelIdsForVariableChange('ds_instance', dashboard);
+      expect(result).toEqual([2, 3, 4, 5]);
+    });
+  });
+
+  describe('when called with a real world example with dependencies and panels on a leaf variable', () => {
+    it('then it should return correct panelIds', () => {
+      const { panels: panelsAsJson, templating } = dashWithTemplateDependenciesAndPanels;
+      const panels = panelsAsJson.map(
+        (panel: PanelModel) =>
+          (({
+            id: panel.id,
+            getSaveModel: () => panel,
+          } as unknown) as PanelModel)
+      );
+      const dashboard: any = { panels, templating };
+      const result = getAllAffectedPanelIdsForVariableChange('depends_on_all', dashboard);
+      expect(result).toEqual([2]);
     });
   });
 });
@@ -1073,4 +1146,499 @@ const dashWithRepeatsAndRows: any = {
   title: 'Variables update POC',
   uid: 'tISItwInz',
   version: 2,
+};
+
+const dashWithTemplateDependenciesAndPanels: any = {
+  annotations: {
+    list: [
+      {
+        builtIn: 1,
+        datasource: '-- Grafana --',
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        target: {
+          limit: 100,
+          matchAny: false,
+          tags: [],
+          type: 'dashboard',
+        },
+        type: 'dashboard',
+      },
+    ],
+  },
+  editable: true,
+  gnetId: null,
+  graphTooltip: 0,
+  id: 522,
+  iteration: 1632133230646,
+  links: [],
+  liveNow: false,
+  panels: [
+    {
+      datasource: null,
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'palette-classic',
+          },
+          custom: {
+            axisLabel: '',
+            axisPlacement: 'auto',
+            barAlignment: 0,
+            drawStyle: 'line',
+            fillOpacity: 0,
+            gradientMode: 'none',
+            hideFrom: {
+              legend: false,
+              tooltip: false,
+              viz: false,
+            },
+            lineInterpolation: 'linear',
+            lineWidth: 1,
+            pointSize: 5,
+            scaleDistribution: {
+              type: 'linear',
+            },
+            showPoints: 'auto',
+            spanNulls: false,
+            stacking: {
+              group: 'A',
+              mode: 'none',
+            },
+            thresholdsStyle: {
+              mode: 'off',
+            },
+          },
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 6,
+        w: 4,
+        x: 0,
+        y: 0,
+      },
+      id: 2,
+      options: {
+        legend: {
+          calcs: [],
+          displayMode: 'list',
+          placement: 'bottom',
+        },
+        tooltip: {
+          mode: 'single',
+        },
+      },
+      title: 'Depends on all $depends_on_all [2]',
+      type: 'timeseries',
+    },
+    {
+      datasource: null,
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'palette-classic',
+          },
+          custom: {
+            axisLabel: '',
+            axisPlacement: 'auto',
+            barAlignment: 0,
+            drawStyle: 'line',
+            fillOpacity: 0,
+            gradientMode: 'none',
+            hideFrom: {
+              legend: false,
+              tooltip: false,
+              viz: false,
+            },
+            lineInterpolation: 'linear',
+            lineWidth: 1,
+            pointSize: 5,
+            scaleDistribution: {
+              type: 'linear',
+            },
+            showPoints: 'auto',
+            spanNulls: false,
+            stacking: {
+              group: 'A',
+              mode: 'none',
+            },
+            thresholdsStyle: {
+              mode: 'off',
+            },
+          },
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 6,
+        w: 4,
+        x: 4,
+        y: 0,
+      },
+      id: 3,
+      options: {
+        legend: {
+          calcs: [],
+          displayMode: 'list',
+          placement: 'bottom',
+        },
+        tooltip: {
+          mode: 'single',
+        },
+      },
+      title: 'Depends on regex $depends_on_query_with_ds_regex [3]',
+      type: 'timeseries',
+    },
+    {
+      datasource: null,
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'palette-classic',
+          },
+          custom: {
+            axisLabel: '',
+            axisPlacement: 'auto',
+            barAlignment: 0,
+            drawStyle: 'line',
+            fillOpacity: 0,
+            gradientMode: 'none',
+            hideFrom: {
+              legend: false,
+              tooltip: false,
+              viz: false,
+            },
+            lineInterpolation: 'linear',
+            lineWidth: 1,
+            pointSize: 5,
+            scaleDistribution: {
+              type: 'linear',
+            },
+            showPoints: 'auto',
+            spanNulls: false,
+            stacking: {
+              group: 'A',
+              mode: 'none',
+            },
+            thresholdsStyle: {
+              mode: 'off',
+            },
+          },
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 6,
+        w: 4,
+        x: 8,
+        y: 0,
+      },
+      id: 4,
+      options: {
+        legend: {
+          calcs: [],
+          displayMode: 'list',
+          placement: 'bottom',
+        },
+        tooltip: {
+          mode: 'single',
+        },
+      },
+      title: 'Depends on query $depends_on_query_with_ds [4]',
+      type: 'timeseries',
+    },
+    {
+      datasource: null,
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: 'palette-classic',
+          },
+          custom: {
+            axisLabel: '',
+            axisPlacement: 'auto',
+            barAlignment: 0,
+            drawStyle: 'line',
+            fillOpacity: 0,
+            gradientMode: 'none',
+            hideFrom: {
+              legend: false,
+              tooltip: false,
+              viz: false,
+            },
+            lineInterpolation: 'linear',
+            lineWidth: 1,
+            pointSize: 5,
+            scaleDistribution: {
+              type: 'linear',
+            },
+            showPoints: 'auto',
+            spanNulls: false,
+            stacking: {
+              group: 'A',
+              mode: 'none',
+            },
+            thresholdsStyle: {
+              mode: 'off',
+            },
+          },
+          mappings: [],
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      gridPos: {
+        h: 6,
+        w: 4,
+        x: 12,
+        y: 0,
+      },
+      id: 5,
+      options: {
+        legend: {
+          calcs: [],
+          displayMode: 'list',
+          placement: 'bottom',
+        },
+        tooltip: {
+          mode: 'single',
+        },
+      },
+      title: 'Depends on ds $query_with_ds [5]',
+      type: 'timeseries',
+    },
+  ],
+  schemaVersion: 31,
+  style: 'dark',
+  tags: [],
+  templating: {
+    list: [
+      {
+        current: {
+          selected: false,
+          text: 'TestData DB',
+          value: 'TestData DB',
+        },
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: false,
+        label: null,
+        multi: false,
+        name: 'ds',
+        options: [],
+        query: 'testdata',
+        queryValue: '',
+        refresh: 1,
+        regex: '/$ds_instance/',
+        skipUrlSync: false,
+        type: 'datasource',
+      },
+      {
+        allValue: null,
+        current: {
+          selected: true,
+          text: ['A'],
+          value: ['A'],
+        },
+        datasource: '${ds}',
+        definition: '*',
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: true,
+        label: null,
+        multi: true,
+        name: 'query_with_ds',
+        options: [],
+        query: {
+          query: '*',
+          refId: 'StandardVariableQuery',
+        },
+        refresh: 1,
+        regex: '',
+        skipUrlSync: false,
+        sort: 0,
+        type: 'query',
+      },
+      {
+        allValue: null,
+        current: {
+          selected: true,
+          text: ['AA'],
+          value: ['AA'],
+        },
+        datasource: null,
+        definition: '$query_with_ds.*',
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: true,
+        label: null,
+        multi: true,
+        name: 'depends_on_query_with_ds',
+        options: [],
+        query: {
+          query: '$query_with_ds.*',
+          refId: 'StandardVariableQuery',
+        },
+        refresh: 1,
+        regex: '',
+        skipUrlSync: false,
+        sort: 0,
+        type: 'query',
+      },
+      {
+        allValue: null,
+        current: {
+          selected: false,
+          text: 'A',
+          value: 'A',
+        },
+        datasource: null,
+        definition: '*',
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: false,
+        label: null,
+        multi: false,
+        name: 'depends_on_query_with_ds_regex',
+        options: [],
+        query: {
+          query: '*',
+          refId: 'StandardVariableQuery',
+        },
+        refresh: 1,
+        regex: '/.*$query_with_ds.*/',
+        skipUrlSync: false,
+        sort: 0,
+        type: 'query',
+      },
+      {
+        allValue: null,
+        current: {
+          selected: false,
+          text: 'AB',
+          value: 'AB',
+        },
+        datasource: '${ds}',
+        definition: '$query_with_ds.*',
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: false,
+        label: null,
+        multi: false,
+        name: 'depends_on_all',
+        options: [],
+        query: {
+          query: '$query_with_ds.*',
+          refId: 'StandardVariableQuery',
+        },
+        refresh: 1,
+        regex: '/.*$depends_on_query_with_ds_regex.*/',
+        skipUrlSync: false,
+        sort: 0,
+        type: 'query',
+      },
+      {
+        allValue: null,
+        current: {
+          selected: true,
+          text: 'TestData DB',
+          value: 'TestData DB',
+        },
+        description: null,
+        error: null,
+        hide: 0,
+        includeAll: false,
+        label: null,
+        multi: false,
+        name: 'ds_instance',
+        options: [
+          {
+            selected: true,
+            text: 'TestData DB',
+            value: 'TestData DB',
+          },
+          {
+            selected: false,
+            text: 'gdev-testdata',
+            value: 'gdev-testdata',
+          },
+        ],
+        query: 'TestData DB, gdev-testdata',
+        queryValue: '',
+        skipUrlSync: false,
+        type: 'custom',
+      },
+    ],
+  },
+  time: {
+    from: 'now-6h',
+    to: 'now',
+  },
+  timepicker: {},
+  timezone: '',
+  title: 'Variables dependencies update POC',
+  uid: 'n60iRMNnk',
+  version: 6,
 };

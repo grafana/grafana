@@ -219,16 +219,85 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
   return { unUsed, unknown, usages };
 };
 
-export function getAffectedPanelIdsForVariable(variableId: string, dashboard: DashboardModel): number[] {
+/*
+  getAllAffectedPanelIdsForVariableChange is a function that extracts all the panel ids that are affected by a single variable
+  change. It will traverse all chained variables to identify all cascading changes too.
+
+  This is done entirely by parsing the current dashboard json and doesn't take under consideration a user cancelling
+  a variable query or any faulty variable queries.
+
+  This doesn't take circular dependencies in consideration.
+ */
+export function getAllAffectedPanelIdsForVariableChange(
+  variableId: string,
+  dashboard: DashboardModel | null
+): number[] {
+  let affectedPanelIds: number[] = getAffectedPanelIdsForVariable(variableId, dashboard);
+
+  const dependencies = getDependenciesForVariable(variableId, dashboard, new Set());
+  for (const dependency of dependencies) {
+    const affectedPanelIdsForDependency = getAffectedPanelIdsForVariable(dependency, dashboard);
+    affectedPanelIds = [...new Set([...affectedPanelIdsForDependency, ...affectedPanelIds])];
+  }
+
+  return affectedPanelIds;
+}
+
+export function getDependenciesForVariable(
+  variableId: string,
+  dashboard: DashboardModel | null,
+  deps: Set<string>
+): Set<string> {
+  if (!dashboard || !dashboard?.templating?.list?.length) {
+    return deps;
+  }
+
+  const variables: VariableModel[] = dashboard.templating.list;
+  for (const variable of variables) {
+    if (variable.name === variableId) {
+      continue;
+    }
+
+    const depends = variableAdapters.get(variable.type).dependsOn(variable, { name: variableId });
+    if (!depends) {
+      continue;
+    }
+
+    deps.add(variable.name);
+    deps = getDependenciesForVariable(variable.name, dashboard, deps);
+  }
+
+  return deps;
+}
+
+export function getAffectedPanelIdsForVariable(variableId: string, dashboard: DashboardModel | null): number[] {
   if (!dashboard || !dashboard?.panels?.length) {
     return [];
   }
 
   const affectedPanelIds: number[] = [];
+  const repeatRegex = new RegExp(`"repeat":"${variableId}"`);
   for (const panel of dashboard.panels) {
-    const props = getPropsWithVariable(variableId, { key: 'panel', value: panel }, {});
-    if (Object.keys(props).length) {
+    const panelAsJson = safeStringifyValue(panel.getSaveModel());
+
+    // check for repeats that don't use variableRegex
+    const repeatMatches = panelAsJson.match(repeatRegex);
+    if (repeatMatches?.length) {
       affectedPanelIds.push(panel.id);
+      continue;
+    }
+
+    const matches = panelAsJson.match(variableRegex);
+    if (!matches) {
+      continue;
+    }
+
+    for (const match of matches) {
+      const variableName = getVariableName(match);
+      if (variableName === variableId) {
+        affectedPanelIds.push(panel.id);
+        break;
+      }
     }
   }
 
