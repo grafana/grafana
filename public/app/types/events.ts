@@ -204,3 +204,11 @@ export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
 }
+
+export class DashboardProcessRepeats extends BusEventBase {
+  static type = 'dashboard-process-repeats';
+}
+
+export class DashboardStartRefresh extends BusEventBase {
+  static type = 'dashboard-start-refresh';
+}

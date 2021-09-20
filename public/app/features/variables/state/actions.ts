@@ -8,6 +8,7 @@ import {
   OrgVariableModel,
   QueryVariableModel,
   UserVariableModel,
+  VariableChanged,
   VariableHide,
   VariableModel,
   VariableOption,
@@ -64,6 +65,8 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { locationService } from '@grafana/runtime';
+import { appEvents } from '../../../core/core';
+import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -492,7 +495,8 @@ const createGraph = (variables: VariableModel[]) => {
 
 export const variableUpdated = (
   identifier: VariableIdentifier,
-  emitChangeEvents: boolean
+  emitChangeEvents: boolean,
+  events: typeof appEvents = appEvents
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.id, getState());
@@ -509,6 +513,10 @@ export const variableUpdated = (
 
     const variables = getVariables(getState());
     const g = createGraph(variables);
+    const affectedPanelIds = getAllAffectedPanelIdsForVariableChange(
+      variableInState.id,
+      getState().dashboard.getModel()
+    );
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -525,11 +533,8 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
-        const dashboard = getState().dashboard.getModel();
-        dashboard?.setChangeAffectsAllPanels();
-        dashboard?.processRepeats();
+        events.publish(new VariableChanged({ panelIds: affectedPanelIds }));
         locationService.partial(getQueryWithVariables(getState));
-        dashboard?.startRefresh();
       }
     });
   };

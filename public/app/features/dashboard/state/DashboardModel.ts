@@ -31,10 +31,10 @@ import {
   DateTimeInput,
   EventBusExtended,
   EventBusSrv,
+  PanelModel as IPanelModel,
   TimeRange,
   TimeZone,
   UrlQueryValue,
-  PanelModel as IPanelModel,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -45,6 +45,9 @@ import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { Unsubscribable } from 'rxjs';
+import appEvents from '../../../core/app_events';
+import { VariableChanged } from '../../variables/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -96,7 +99,6 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
-  private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
   // not persisted
@@ -106,6 +108,7 @@ export class DashboardModel {
   iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
+  private appEventsSubscription: Unsubscribable;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -119,7 +122,7 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
-    hasChangesThatAffectsAllPanels: true,
+    appEventsSubscription: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -161,7 +164,10 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
-    this.hasChangesThatAffectsAllPanels = false;
+    this.appEventsSubscription = appEvents.subscribe(VariableChanged, (event) => {
+      this.processRepeats(event.payload.panelIds);
+      this.startRefresh(event.payload.panelIds);
+    });
   }
 
   addBuiltInAnnotationQuery() {
@@ -346,7 +352,7 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
-  startRefresh() {
+  startRefresh(affectedPanelIds?: number[]) {
     this.events.publish(new RefreshEvent());
 
     if (this.panelInEdit) {
@@ -356,7 +362,14 @@ export class DashboardModel {
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
-        panel.refresh();
+        if (!affectedPanelIds) {
+          panel.refresh();
+          continue;
+        }
+
+        if (affectedPanelIds.includes(panel.id)) {
+          panel.refresh();
+        }
       }
     }
   }
@@ -394,30 +407,18 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfChangeAffectsAllPanels();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
-    this.refreshIfChangeAffectsAllPanels();
     getTimeSrv().resumeAutoRefresh();
   }
 
-  setChangeAffectsAllPanels() {
-    if (this.panelInEdit || this.panelInView) {
-      this.hasChangesThatAffectsAllPanels = true;
-    }
-  }
-
-  private refreshIfChangeAffectsAllPanels() {
-    if (!this.hasChangesThatAffectsAllPanels) {
-      return;
-    }
-
-    this.hasChangesThatAffectsAllPanels = false;
-    this.startRefresh();
-  }
+  /*
+   * @deprecated used to be used internally by variables
+   * */
+  setChangeAffectsAllPanels() {}
 
   private ensureListExist(data: any) {
     if (!data) {
@@ -524,7 +525,7 @@ export class DashboardModel {
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
-  processRepeats() {
+  processRepeats(affectedPanelIds?: number[]) {
     if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
@@ -536,7 +537,17 @@ export class DashboardModel {
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];
       if (panel.repeat) {
-        this.repeatPanel(panel, i);
+        if (!affectedPanelIds) {
+          this.repeatPanel(panel, i);
+          continue;
+        }
+
+        if (
+          affectedPanelIds.includes(panel.id) ||
+          (panel.repeatPanelId && affectedPanelIds.includes(panel.repeatPanelId))
+        ) {
+          this.repeatPanel(panel, i);
+        }
       }
     }
 
@@ -887,6 +898,7 @@ export class DashboardModel {
   }
 
   destroy() {
+    this.appEventsSubscription.unsubscribe();
     this.events.removeAllListeners();
     for (const panel of this.panels) {
       panel.destroy();

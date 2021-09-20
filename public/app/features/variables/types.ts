@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
 import {
+  BusEventWithPayload,
   DataQuery,
   DataSourceJsonData,
   LoadingState,
@@ -150,3 +151,11 @@ export type VariableQueryEditorType<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
+
+export interface VariableChangedEvent {
+  panelIds: number[];
+}
+
+export class VariableChanged extends BusEventWithPayload<VariableChangedEvent> {
+  static type = 'dashboard-change-affects-all-panels';
+}
