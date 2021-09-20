@@ -622,11 +622,15 @@ export const templateVarsChangedInUrl = (vars: ExtendedUrlQueryMap): ThunkResult
   }
 };
 
-const isVariableUrlValueDifferentFromCurrent = (variable: VariableModel, urlValue: any): boolean => {
-  const stringUrlValue = ensureStringValues(urlValue);
+export function isVariableUrlValueDifferentFromCurrent(variable: VariableModel, urlValue: any): boolean {
+  const variableValue = variableAdapters.get(variable.type).getValueForUrl(variable);
+  let stringUrlValue = ensureStringValues(urlValue);
+  if (Array.isArray(variableValue) && !Array.isArray(stringUrlValue)) {
+    stringUrlValue = [stringUrlValue];
+  }
   // lodash isEqual handles array of value equality checks as well
-  return !isEqual(variableAdapters.get(variable.type).getValueForUrl(variable), stringUrlValue);
-};
+  return !isEqual(variableValue, stringUrlValue);
+}
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
   const queryParams = locationService.getSearchObject();

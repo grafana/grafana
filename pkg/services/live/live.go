@@ -168,9 +168,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
-				Node:          node,
-				ManagedStream: g.ManagedStreamRunner,
-				FrameStorage:  pipeline.NewFrameStorage(),
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				ChannelHandlerGetter: g,
 			}
 		} else {
 			storage := &pipeline.FileStorage{
@@ -178,10 +179,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 			g.channelRuleStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
-				Node:          node,
-				ManagedStream: g.ManagedStreamRunner,
-				FrameStorage:  pipeline.NewFrameStorage(),
-				RuleStorage:   storage,
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				RuleStorage:          storage,
+				ChannelHandlerGetter: g,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -509,22 +511,47 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
 
-	handler, addr, err := g.GetChannelHandler(user, channel)
-	if err != nil {
-		if errors.Is(err, live.ErrInvalidChannelID) {
-			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+	var reply models.SubscribeReply
+	var status backend.SubscribeStreamStatus
+
+	var subscribeRuleFound bool
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		if ok && rule.Subscriber != nil {
+			subscribeRuleFound = true
+			var err error
+			reply, status, err = rule.Subscriber.Subscribe(client.Context(), pipeline.Vars{
+				OrgID:   orgID,
+				Channel: channel,
+			})
+			if err != nil {
+				logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+				return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			}
+		}
 	}
-	reply, status, err := handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
-		Channel: channel,
-		Path:    addr.Path,
-	})
-	if err != nil {
-		logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+	if !subscribeRuleFound {
+		handler, addr, err := g.GetChannelHandler(user, channel)
+		if err != nil {
+			if errors.Is(err, live.ErrInvalidChannelID) {
+				logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+				return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+			}
+			logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
+		reply, status, err = handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
+			Channel: channel,
+			Path:    addr.Path,
+		})
+		if err != nil {
+			logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
 	}
 	if status != backend.SubscribeStreamStatusOK {
 		// using HTTP error codes for WS errors too.
