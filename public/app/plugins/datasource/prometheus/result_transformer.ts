@@ -13,8 +13,12 @@ import {
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  DataQueryResponse,
+  DataQueryRequest,
+  PreferredVisualisationType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { partition } from 'lodash';
 import { descending, deviation } from 'd3';
 import {
   ExemplarTraceIdDestination,
@@ -35,6 +39,85 @@ const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
 interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
   [TIME_SERIES_VALUE_FIELD_NAME]: number;
+}
+
+// V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
+export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
+  // Get refIds that have table format as we need to process those to table reuslts
+  const tableRefIds = options.targets.filter((target) => target.format === 'table').map((target) => target.refId);
+  const [tableResults, otherResults]: [DataFrame[], DataFrame[]] = partition(response.data, (dataFrame) =>
+    dataFrame.refId ? tableRefIds.includes(dataFrame.refId) : false
+  );
+
+  // For table results, we need to transform data frames to table data frames
+  const responseLength = options.targets.filter((target) => !target.hide).length;
+  const tableFrames = tableResults.map((dataFrame) => {
+    const df = transformDFoTable(dataFrame, responseLength);
+    return df;
+  });
+
+  // Everything else is processed as time_series result and graph preferredVisualisationType
+  const otherFrames = otherResults.map((dataFrame) => {
+    const df = {
+      ...dataFrame,
+      meta: {
+        ...dataFrame.meta,
+        preferredVisualisationType: 'graph',
+      },
+    } as DataFrame;
+    return df;
+  });
+
+  return { ...response, data: [...otherFrames, ...tableFrames] };
+}
+
+export function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
+  if (df.length === 0) {
+    return df;
+  }
+
+  const timeField = df.fields[0];
+  const valueField = df.fields[1];
+
+  // Create label fields
+  const promLabels: PromMetric = valueField.labels ?? {};
+  const labelFields = Object.keys(promLabels)
+    .sort()
+    .map((label) => {
+      const numberField = label === 'le';
+      return {
+        name: label,
+        config: { filterable: true },
+        type: numberField ? FieldType.number : FieldType.string,
+        values: new ArrayVector(),
+      };
+    });
+
+  // Fill labelFields with label values
+  labelFields.forEach((field) => field.values.add(getLabelValue(promLabels, field.name)));
+
+  const tableDataFrame = {
+    ...df,
+    name: undefined,
+    meta: { ...df.meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+    fields: [
+      timeField,
+      ...labelFields,
+      {
+        ...valueField,
+        name: getValueText(responseLength, df.refId),
+        labels: undefined,
+        config: { ...valueField.config, displayNameFromDS: undefined },
+        state: { ...valueField.state, displayName: undefined },
+      },
+    ],
+  };
+
+  return tableDataFrame;
+}
+
+function getValueText(responseLength: number, refId = '') {
+  return responseLength > 1 ? `Value #${refId}` : 'Value';
 }
 
 export function transform(
