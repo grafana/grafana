@@ -28,7 +28,7 @@ export function PluginListCard({ plugin, pathName }: PluginListCardProps) {
           />
           <h2 className={styles.name}>{plugin.name}</h2>
           {plugin.type && (
-            <div className={styles.icon}>
+            <div className={styles.icon} data-testid={`${plugin.type} plugin icon`}>
               <Icon name={IconName[plugin.type]} />
             </div>
           )}
