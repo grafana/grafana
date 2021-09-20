@@ -12,6 +12,7 @@ var config = {
       url: '${HOST}/login',
       wait: 500,
       actions: [
+        "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",
         "click element button[aria-label='Login button']",
