@@ -1,19 +1,19 @@
 import React, { FC, useEffect, useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
-import { GrafanaTheme, NavModel } from '@grafana/data';
+import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useAsync } from 'react-use';
 import { PlaylistDTO } from './types';
-import { ConfirmModal, useStyles } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 import { deletePlaylist, getAllPlaylist } from './api';
 import { StartModal } from './StartModal';
 import { PlaylistPageList } from './PlaylistPageList';
-import { css } from '@emotion/css';
+import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 
 interface ConnectedProps {
   navModel: NavModel;
@@ -101,19 +101,3 @@ const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state:
 });
 
 export default connect(mapStateToProps)(PlaylistPage);
-
-const EmptyQueryListBanner = () => {
-  const styles = useStyles(getStyles);
-  return <div className={styles.noResult}>No playlist found!</div>;
-};
-
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    noResult: css`
-      padding: ${theme.spacing.md};
-      background: ${theme.colors.bg2};
-      font-style: italic;
-      margin-top: ${theme.spacing.md};
-    `,
-  };
-};
