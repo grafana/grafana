@@ -5,7 +5,7 @@ import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 import { PlaylistDTO } from './types';
 import { ConfirmModal } from '@grafana/ui';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -22,6 +22,7 @@ export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponent
 
 export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [hasFetched, setHasFetched] = useState(false);
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
@@ -29,12 +30,14 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
 
   const { value: playlists, loading } = useAsync(async () => {
     return getAllPlaylist(searchQuery);
-  }, [forcePlaylistsFetch, searchQuery]);
+  }, [forcePlaylistsFetch, debouncedSearchQuery]);
   useEffect(() => {
     if (!hasFetched && !loading) {
       setHasFetched(true);
     }
   }, [loading, hasFetched]);
+  useDebounce(() => setDebouncedSearchQuery(searchQuery), 350, [searchQuery]);
+
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
   const onDeletePlaylist = () => {
