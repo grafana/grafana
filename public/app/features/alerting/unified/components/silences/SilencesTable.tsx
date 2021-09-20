@@ -2,9 +2,9 @@ import React, { FC, useMemo } from 'react';
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { NoSilencesSplash } from './NoSilencesCTA';
-import { getFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
+import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { SilencesFilter } from './SilencesFilter';
@@ -35,7 +35,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   const [queryParams] = useQueryParams();
   const filteredSilences = useFilteredSilences(silences);
 
-  const { silenceState } = getFiltersFromUrlParams(queryParams);
+  const { silenceState } = getSilenceFiltersFromUrlParams(queryParams);
 
   const showExpiredSilencesBanner =
     !!filteredSilences.length && (silenceState === undefined || silenceState === SilenceState.Expired);
@@ -69,17 +69,23 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
               </Link>
             </div>
           )}
-          <DynamicTable
-            items={items}
-            cols={columns}
-            isExpandable
-            renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
-          />
-          {showExpiredSilencesBanner && (
-            <div className={styles.callout}>
-              <Icon className={styles.calloutIcon} name="info-circle" />
-              <span>Expired silences are automatically deleted after 5 days.</span>
-            </div>
+          {!!items.length ? (
+            <>
+              <DynamicTable
+                items={items}
+                cols={columns}
+                isExpandable
+                renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
+              />
+              {showExpiredSilencesBanner && (
+                <div className={styles.callout}>
+                  <Icon className={styles.calloutIcon} name="info-circle" />
+                  <span>Expired silences are automatically deleted after 5 days.</span>
+                </div>
+              )}
+            </>
+          ) : (
+            'No matching silences found'
           )}
         </>
       )}
@@ -91,7 +97,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
 const useFilteredSilences = (silences: Silence[]) => {
   const [queryParams] = useQueryParams();
   return useMemo(() => {
-    const { queryString, silenceState } = getFiltersFromUrlParams(queryParams);
+    const { queryString, silenceState } = getSilenceFiltersFromUrlParams(queryParams);
     const silenceIdsString = queryParams?.silenceIds;
     return silences.filter((silence) => {
       if (typeof silenceIdsString === 'string') {
@@ -185,7 +191,9 @@ function useColumns(alertManagerSourceName: string) {
       {
         id: 'alerts',
         label: 'Alerts',
-        renderCell: ({ data: { silencedAlerts } }) => silencedAlerts.length,
+        renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
+          return <span data-testid="alerts">{silencedAlerts.length}</span>;
+        },
         size: 1,
       },
       {
