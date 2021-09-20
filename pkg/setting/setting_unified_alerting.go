@@ -19,39 +19,51 @@ const (
 	AlertmanagerDefaultConfigPollInterval   = 60 * time.Second
 )
 
+type UnifiedAlertingSettings struct {
+	AdminConfigPollInterval        time.Duration
+	AlertmanagerConfigPollInterval time.Duration
+	HAListenAddr                   string
+	HAAdvertiseAddr                string
+	HAPeers                        []string
+	HAPeerTimeout                  time.Duration
+	HAGossipInterval               time.Duration
+	HAPushPullInterval             time.Duration
+}
+
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
+	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
 	var err error
-	cfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (SchedulerDefaultAdminConfigPollInterval).String()))
+	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (SchedulerDefaultAdminConfigPollInterval).String()))
 	if err != nil {
 		return err
 	}
-	cfg.AlertmanagerConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "alertmanager_config_poll_interval", (AlertmanagerDefaultConfigPollInterval).String()))
+	uaCfg.AlertmanagerConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "alertmanager_config_poll_interval", (AlertmanagerDefaultConfigPollInterval).String()))
 	if err != nil {
 		return err
 	}
-	cfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (AlertmanagerDefaultPeerTimeout).String()))
+	uaCfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (AlertmanagerDefaultPeerTimeout).String()))
 	if err != nil {
 		return err
 	}
-	cfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (AlertmanagerDefaultGossipInterval).String()))
+	uaCfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (AlertmanagerDefaultGossipInterval).String()))
 	if err != nil {
 		return err
 	}
-	cfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (AlertmanagerDefaultPushPullInterval).String()))
+	uaCfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (AlertmanagerDefaultPushPullInterval).String()))
 	if err != nil {
 		return err
 	}
-	cfg.HAListenAddr = ua.Key("ha_listen_address").MustString(AlertmanagerDefaultClusterAddr)
-	cfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
+	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(AlertmanagerDefaultClusterAddr)
+	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
 	peers := ua.Key("ha_peers").MustString("")
-	cfg.HAPeers = make([]string, 0)
+	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
 		for _, peer := range strings.Split(peers, ",") {
 			peer = strings.TrimSpace(peer)
-			cfg.HAPeers = append(cfg.HAPeers, peer)
+			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
-
+	cfg.UnifiedAlerting = uaCfg
 	return nil
 }

@@ -197,7 +197,6 @@
     "nodemon": "2.0.2",
     "pa11y-ci": "2.4.2",
     "postcss": "8.3.6",
-    "postcss-browser-reporter": "0.6.0",
     "postcss-loader": "6.1.1",
     "postcss-reporter": "7.0.2",
     "prettier": "2.2.1",

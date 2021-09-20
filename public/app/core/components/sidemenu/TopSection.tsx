@@ -4,7 +4,7 @@ import { cloneDeep } from 'lodash';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon, IconName, styleMixins, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import config from '../../config';
 import { isLinkActive, isSearchActive } from './utils';
 import SideMenuItem from './SideMenuItem';
@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
     flex-grow: 1;
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       display: block;
       margin-top: ${theme.spacing(5)};
     }
