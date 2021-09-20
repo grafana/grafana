@@ -31,11 +31,13 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const { value: playlists, loading } = useAsync(async () => {
     return getAllPlaylist(searchQuery);
   }, [forcePlaylistsFetch, debouncedSearchQuery]);
+
   useEffect(() => {
     if (!hasFetched && !loading) {
       setHasFetched(true);
     }
   }, [loading, hasFetched]);
+
   useDebounce(() => setDebouncedSearchQuery(searchQuery), 350, [searchQuery]);
 
   const hasPlaylists = playlists && playlists.length > 0;
