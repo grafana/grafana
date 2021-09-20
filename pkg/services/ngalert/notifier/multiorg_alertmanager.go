@@ -155,9 +155,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 
 		var cfg *api.PostableUserConfig
 		if cfgFound {
-			var loadErr error
+			var err error
 			cfg, loadErr = Load([]byte(dbConfig.AlertmanagerConfiguration))
-			if loadErr != nil {
+			if err != nil {
 				moa.logger.Error("failed to parse Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
 				continue
 			}
