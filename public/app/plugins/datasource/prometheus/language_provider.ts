@@ -8,7 +8,6 @@ import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput
 import {
   addLimitInfo,
   fixSummariesMetadata,
-  limitSuggestions,
   parseSelector,
   processHistogramLabels,
   processLabels,
@@ -239,10 +238,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     });
 
     if (metrics && metrics.length) {
-      const limitInfo = addLimitInfo(metrics);
       suggestions.push({
-        label: `Metrics${limitInfo}`,
-        items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
+        label: 'Metrics',
+        items: metrics.map((m) => addMetricsMetadata(m, metricsMetadata)),
         searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
