@@ -39,15 +39,13 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise
   }));
 }
 
-function getAllFunctionsCompletions(): Completion[] {
-  return FUNCTIONS.map((f) => ({
-    type: 'FUNCTION',
-    label: f.label,
-    insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
-    detail: f.detail,
-    documentation: f.documentation,
-  }));
-}
+const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
+  type: 'FUNCTION',
+  label: f.label,
+  insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
+  detail: f.detail,
+  documentation: f.documentation,
+}));
 
 const DURATION_COMPLETIONS: Completion[] = [
   '$__interval',
@@ -149,12 +147,12 @@ export async function getCompletions(intent: Intent, dataProvider: DataProvider)
       return getAllMetricNamesCompletions(dataProvider);
     case 'FUNCTIONS_AND_ALL_METRIC_NAMES': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
-      return [...getAllFunctionsCompletions(), ...metricNames];
+      return [...FUNCTION_COMPLETIONS, ...metricNames];
     }
     case 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...getAllFunctionsCompletions(), ...metricNames];
+      return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
     }
     case 'LABEL_NAMES_FOR_SELECTOR':
       return getLabelNamesForSelectorCompletions(intent.metricName, intent.otherLabels, dataProvider);
