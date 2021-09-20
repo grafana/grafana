@@ -38,8 +38,8 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
       this.currentSubscription = undefined;
     }
 
-    const histogramRequest = cloneDeep(this.dataQueryRequest);
-    histogramRequest.targets = histogramRequest.targets
+    const logsVolumeRequest = cloneDeep(this.dataQueryRequest);
+    logsVolumeRequest.targets = logsVolumeRequest.targets
       .filter((target) => target.expr && !isMetricsQuery(target.expr))
       .map((target) => {
         return {
@@ -55,7 +55,7 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
         data: [],
       });
 
-      this.currentSubscription = this.datasource.query(histogramRequest).subscribe({
+      this.currentSubscription = this.datasource.query(logsVolumeRequest).subscribe({
         complete: () => {
           const aggregatedLogsVolume = this.aggregateRawLogsVolume();
           observer.next({
