@@ -19,17 +19,28 @@ var config = {
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
       threshold: 2,
+      log: {
+        debug: console.log,
+        error: console.error,
+        info: console.info,
+      },
     },
     {
       url: '${HOST}/?orgId=1',
       wait: 500,
       threshold: 7,
+      log: {
+        debug: console.log,
+        error: console.error,
+        info: console.info,
+      },
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
       wait: 500,
       hideElements: '.sidemenu',
       threshold: 2,
+      screenCapture: 'myDir/test-gauge.png',
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
