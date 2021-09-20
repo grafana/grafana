@@ -56,10 +56,20 @@ type OutputterConfig struct {
 	ChangeLogOutputConfig   *ChangeLogOutputConfig     `json:"changeLog,omitempty"`
 }
 
+type MultipleSubscriberConfig struct {
+	Subscribers []SubscriberConfig `json:"subscribers"`
+}
+
+type SubscriberConfig struct {
+	Type                     string                    `json:"type"`
+	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
+}
+
 type ChannelRuleSettings struct {
-	Converter *ConverterConfig `json:"converter,omitempty"`
-	Processor *ProcessorConfig `json:"processor,omitempty"`
-	Outputter *OutputterConfig `json:"output,omitempty"`
+	Subscriber *SubscriberConfig `json:"subscriber,omitempty"`
+	Converter  *ConverterConfig  `json:"converter,omitempty"`
+	Processor  *ProcessorConfig  `json:"processor,omitempty"`
+	Outputter  *OutputterConfig  `json:"output,omitempty"`
 }
 
 type ChannelRule struct {
@@ -105,10 +115,40 @@ type RuleStorage interface {
 }
 
 type StorageRuleBuilder struct {
-	Node          *centrifuge.Node
-	ManagedStream *managedstream.Runner
-	FrameStorage  *FrameStorage
-	RuleStorage   RuleStorage
+	Node                 *centrifuge.Node
+	ManagedStream        *managedstream.Runner
+	FrameStorage         *FrameStorage
+	RuleStorage          RuleStorage
+	ChannelHandlerGetter ChannelHandlerGetter
+}
+
+func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscriber, error) {
+	if config == nil {
+		return nil, nil
+	}
+	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
+	switch config.Type {
+	case "builtin":
+		return NewBuiltinSubscriber(f.ChannelHandlerGetter), nil
+	case "managedStream":
+		return NewManagedStreamSubscriber(f.ManagedStream), nil
+	case "multiple":
+		if config.MultipleSubscriberConfig == nil {
+			return nil, missingConfiguration
+		}
+		var subscribers []Subscriber
+		for _, outConf := range config.MultipleSubscriberConfig.Subscribers {
+			out := outConf
+			sub, err := f.extractSubscriber(&out)
+			if err != nil {
+				return nil, err
+			}
+			subscribers = append(subscribers, sub)
+		}
+		return NewMultipleSubscriber(subscribers...), nil
+	default:
+		return nil, fmt.Errorf("unknown subscriber type: %s", config.Type)
+	}
 }
 
 func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converter, error) {
@@ -302,6 +342,10 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			Pattern: ruleConfig.Pattern,
 		}
 		var err error
+		rule.Subscriber, err = f.extractSubscriber(ruleConfig.Settings.Subscriber)
+		if err != nil {
+			return nil, err
+		}
 		rule.Converter, err = f.extractConverter(ruleConfig.Settings.Converter)
 		if err != nil {
 			return nil, err

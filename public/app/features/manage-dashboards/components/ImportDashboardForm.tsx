@@ -1,20 +1,28 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
   Button,
+  Field,
   FormAPI,
+  FormFieldErrors,
   FormsOnSubmit,
   HorizontalGroup,
-  FormFieldErrors,
   Input,
-  Field,
   InputControl,
   Legend,
 } from '@grafana/ui';
 import { DataSourcePicker } from '@grafana/runtime';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
-import { validateTitle, validateUid } from '../utils/validation';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import {
+  DashboardInput,
+  DashboardInputs,
+  DataSourceInput,
+  ImportDashboardDTO,
+  LibraryPanelInputState,
+} from '../state/reducers';
+import { validateTitle, validateUid } from '../utils/validation';
+import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
 
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
@@ -41,6 +49,7 @@ export const ImportDashboardForm: FC<Props> = ({
 }) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
+  const watchFolder = watch('folder');
 
   /*
     This useEffect is needed for overwriting a dashboard. It
@@ -51,6 +60,8 @@ export const ImportDashboardForm: FC<Props> = ({
       onSubmit(getValues(), {} as any);
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
+  const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
+  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exits) ?? [];
 
   return (
     <>
@@ -136,6 +147,18 @@ export const ImportDashboardForm: FC<Props> = ({
             </Field>
           );
         })}
+      <ImportDashboardLibraryPanelsList
+        inputs={newLibraryPanels}
+        label="New library panels"
+        description="List of new library panels that will get imported."
+        folderName={watchFolder.title}
+      />
+      <ImportDashboardLibraryPanelsList
+        inputs={existingLibraryPanels}
+        label="Existing library panels"
+        description="List of existing library panels. These panels are not affected by the import."
+        folderName={watchFolder.title}
+      />
       <HorizontalGroup>
         <Button
           type="submit"
