@@ -35,12 +35,12 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
  */
 export function changeDatasource(
   exploreId: ExploreId,
-  datasourceName: string,
+  datasourceUid: string,
   options?: { importQueries: boolean }
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, datasourceName);
+    const { history, instance } = await loadAndInitDatasource(orgId, datasourceUid);
     const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
     dispatch(
