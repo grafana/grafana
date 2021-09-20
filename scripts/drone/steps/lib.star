@@ -438,7 +438,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn wait-on http://$HOST:$PORT/login''
+            'yarn wait-on http://$HOST:$PORT/login',
             'yarn -s test:accessibility-pr',
         ],
     }
