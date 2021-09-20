@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,6 +19,11 @@ import (
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
 		sqlStore := InitTestDB(t)
+
+		// Set up bus handlers
+		bus.AddHandler("deleteAlertNotification", func(cmd *models.DeleteAlertNotificationCommand) error {
+			return sqlStore.DeleteAlertNotification(cmd)
+		})
 
 		Convey("Alert notification state", func() {
 			var alertID int64 = 7
@@ -457,6 +463,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Uid:   cmd.Result.Uid,
 					OrgId: 1,
 				}
+
 				err = sqlStore.DeleteAlertNotificationWithUid(deleteWithUidCmd)
 				So(err, ShouldBeNil)
 				So(deleteWithUidCmd.DeletedAlertNotificationId, ShouldEqual, cmd.Result.Id)
