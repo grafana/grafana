@@ -3,7 +3,8 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
-import { Style, Stroke, Fill } from 'ol/style';
+import { Style, Stroke, Fill } from 'ol/style'; 
+import { ColorDimensionConfig } from 'app/features/dimensions';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -14,11 +15,30 @@ export interface GeoJSONMapperConfig {
 
   // Field to use that will set color
   valueField?: string;
+
+  // Styles that can be applied
+  styles?: GeoMapStyle[];
+
+  // Rule specific to feature property to apply style
+  featureStyleRules?: GeoJSONMapperRule[];
+}
+interface GeoJSONMapperRule {
+  property: string;
+  comparisonType: string;
+  comparisonValue: string;
+  styleIndex: string;
+}
+interface GeoMapStyle {
+  shape?: string;
+  fill?: ColorDimensionConfig;
+  stroke?: ColorDimensionConfig;
+  strokeWidth?: number;
 }
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
-  //add default color for highlight
+  styles: [],
+  featureStyleRules: [],
 };
 
 export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
@@ -40,25 +60,22 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
-    const blueStyle = new Style({
-      stroke: new Stroke({
-        color: 'rgb(28,46,116)',
-        width: 1,
-      }),
-      fill: new Fill({
-        color: 'rgb(32,51,198)',
-      }),
-    })
-
-    const yellowStyle = new Style({
-      stroke: new Stroke({
-        color: 'rgb(155,185,96)',
-        width: 1,
-      }),
-      fill: new Fill({
-        color: 'rgb(155,181,95)'
-      })
-    })
+    const customStyles: Style[] = [];
+    if (config?.styles) {
+      const configStyles = config.styles;
+      for (let s = 0; s < configStyles.length; s++) {
+        customStyles[s] = new Style({
+          fill: configStyles[s].fill && new Fill({
+            color: `${configStyles[s].fill}`,
+          }),
+          stroke: configStyles[s].stroke && new Stroke({
+            color: `${configStyles[s].stroke}`,
+            width: Number(configStyles[s].strokeWidth)
+          })
+        }) 
+      }
+      //add shape
+    }
 
     const vectorLayer = new VectorLayer({
       source,
@@ -66,15 +83,31 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         if (!feature) {
           return undefined;
         }
-        const featProps = feature.getProperties();
-        if (featProps.Polarization === '0' ) {
-          return blueStyle; 
+        let style = undefined;
+        const styleRules = config?.featureStyleRules;
+        if (styleRules?.length) {
+          const featProps = feature.getProperties();
+          for (let rule = 0; rule < styleRules.length; rule++) {
+            switch (styleRules[rule].comparisonType) {
+              case "equals":
+                if (featProps[styleRules[rule].property] === styleRules[rule].comparisonValue) {
+                  style = customStyles[Number(styleRules[rule].styleIndex)];
+                }
+                break;
+              case "greater":
+                if (featProps[styleRules[rule].property] > styleRules[rule].comparisonValue) {
+                  style = customStyles[Number(styleRules[rule].styleIndex)];
+                }
+                break;
+              case "lesser":
+                if (featProps[styleRules[rule].property] < styleRules[rule].comparisonValue) {
+                  style = customStyles[Number(styleRules[rule].styleIndex)];
+                }
+                break; 
+            }
+          }
         }
-
-        if(featProps.Polarization === '1') {
-          return yellowStyle;
-        }
-        return blueStyle;
+        return style;
       }
     });
 
@@ -104,7 +137,9 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         allowCustomValue: true,
       },
       defaultValue: defaultOptions.src,
-    });
+    })
+
+    ;
   },
 
   // fill in the default values
