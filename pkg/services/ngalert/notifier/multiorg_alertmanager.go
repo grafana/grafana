@@ -164,13 +164,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		}
 
 		dbConfig, cfgFound := dbConfigs[orgID]
-		if cfgFound {
-			err := alertmanager.ApplyConfig(dbConfig)
-			if err != nil {
-				moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
-				continue
-			}
-		} else {
+		if !cfgFound {
 			if found {
 				//This means that the configuration is gone but the organization as well as the Alertmanager exists
 				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
@@ -180,12 +174,16 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				moa.logger.Error("failed to apply the default Alertmanager configuration", "org", orgID)
 				continue
 			}
+			moa.alertmanagers[orgID] = alertmanager
+			continue
 		}
 
-		//if everything went well and this is a new alert manager, add it to the map
-		if !found {
-			moa.alertmanagers[orgID] = alertmanager
+		err := alertmanager.ApplyConfig(dbConfig)
+		if err != nil {
+			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
+			continue
 		}
+		moa.alertmanagers[orgID] = alertmanager
 	}
 
 	amsToStop := map[int64]*Alertmanager{}
