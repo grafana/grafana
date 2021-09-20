@@ -18,29 +18,6 @@ const (
 	darkName  = "dark"
 )
 
-// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
-var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
-	ac.EvalAny(
-		ac.EvalPermission(ActionDatasourcesCreate),
-		ac.EvalPermission(ActionDatasourcesDelete),
-		ac.EvalPermission(ActionDatasourcesWrite),
-	),
-)
-
-// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
-var dataSourcesNewAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
-	ac.EvalPermission(ActionDatasourcesCreate),
-	ac.EvalPermission(ActionDatasourcesWrite),
-)
-
-// dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
-var dataSourcesEditAccessEvaluator = ac.EvalAll(
-	ac.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
-	ac.EvalPermission(ActionDatasourcesWrite),
-)
-
 func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	// Only set login if it's different from the name
 	var login string
