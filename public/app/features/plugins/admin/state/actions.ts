@@ -5,6 +5,7 @@ import { StoreState, ThunkResult } from 'app/types';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 import { getCatalogPlugins, getPluginDetails, installPlugin, uninstallPlugin } from '../api';
 import { STATE_PREFIX } from '../constants';
+import { updatePanels } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -28,16 +29,16 @@ export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, asy
   }
 });
 
+// We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk(
   `${STATE_PREFIX}/install`,
   async ({ id, version, isUpdating = false }: { id: string; version: string; isUpdating?: boolean }, thunkApi) => {
     const changes = isUpdating ? { isInstalled: true, hasUpdate: false } : { isInstalled: true };
     try {
       await installPlugin(id, version);
-      return {
-        id,
-        changes,
-      } as Update<CatalogPlugin>;
+      await updatePanels();
+
+      return { id, changes } as Update<CatalogPlugin>;
     } catch (e) {
       return thunkApi.rejectWithValue('Unknown error.');
     }
@@ -47,6 +48,8 @@ export const install = createAsyncThunk(
 export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id: string, thunkApi) => {
   try {
     await uninstallPlugin(id);
+    await updatePanels();
+
     return {
       id,
       changes: { isInstalled: false },
