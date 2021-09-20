@@ -1,9 +1,7 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
 import { CatalogPlugin } from '../types';
+import { PluginEnterpriseBadge, PluginDisabledBadge, PluginInstalledBadge } from './Badges';
 
 type PluginBadgeType = {
   plugin: CatalogPlugin;
@@ -11,49 +9,19 @@ type PluginBadgeType = {
 
 export function PluginListBadges({ plugin }: PluginBadgeType) {
   if (plugin.isEnterprise) {
-    return <EnterpriseBadge plugin={plugin} />;
-  }
-  return (
-    <HorizontalGroup>
-      <PluginSignatureBadge status={plugin.signature} />
-      {plugin.isInstalled && <InstalledBadge />}
-    </HorizontalGroup>
-  );
-}
-
-function EnterpriseBadge({ plugin }: { plugin: CatalogPlugin }) {
-  const customBadgeStyles = useStyles2(getBadgeColor);
-  const onClick = (ev: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    ev.preventDefault();
-    window.open(
-      `https://grafana.com/grafana/plugins/${plugin.id}?utm_source=grafana_catalog_learn_more`,
-      '_blank',
-      'noopener,noreferrer'
+    return (
+      <HorizontalGroup>
+        <PluginEnterpriseBadge plugin={plugin} />
+        {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
+      </HorizontalGroup>
     );
-  };
-
-  if (config.licenseInfo?.hasValidLicense) {
-    return <Badge text="Enterprise" color="blue" />;
   }
 
   return (
     <HorizontalGroup>
       <PluginSignatureBadge status={plugin.signature} />
-      <Badge icon="lock" aria-label="lock icon" text="Enterprise" color="blue" className={customBadgeStyles} />
-      <Button size="sm" fill="text" icon="external-link-alt" onClick={onClick}>
-        Learn more
-      </Button>
+      {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
+      {plugin.isInstalled && <PluginInstalledBadge />}
     </HorizontalGroup>
   );
 }
-
-function InstalledBadge() {
-  const customBadgeStyles = useStyles2(getBadgeColor);
-  return <Badge text="Installed" color="orange" className={customBadgeStyles} />;
-}
-
-const getBadgeColor = (theme: GrafanaTheme2) => css`
-  background: ${theme.colors.background.primary};
-  border-color: ${theme.colors.border.strong};
-  color: ${theme.colors.text.secondary};
-`;
