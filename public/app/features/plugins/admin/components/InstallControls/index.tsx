@@ -32,7 +32,7 @@ export const InstallControls = ({ plugin }: Props) => {
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
 
-  if (plugin.isCore) {
+  if (plugin.isCore || plugin.isDisabled) {
     return null;
   }
 
