@@ -3,9 +3,12 @@ package metrics
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cortexproject/cortex/pkg/util"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -55,7 +58,23 @@ type MultiOrgAlertmanager struct {
 	Registerer               prometheus.Registerer
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
-	registries               *OrgRegistries
+	//registries               *OrgRegistries
+	registries *util.UserRegistries
+
+	alertsReceived *prometheus.Desc
+	alertsInvalid  *prometheus.Desc
+}
+
+func (moa *MultiOrgAlertmanager) Describe(out chan<- *prometheus.Desc) {
+	out <- moa.alertsReceived
+	out <- moa.alertsInvalid
+}
+
+func (moa *MultiOrgAlertmanager) Collect(out chan<- prometheus.Metric) {
+	data := moa.registries.BuildMetricFamiliesPerUser()
+
+	data.SendSumOfCountersPerUser(out, moa.alertsReceived, "grafana_alerting_alertmanager_alerts_received_total")
+	data.SendSumOfCountersPerUser(out, moa.alertsInvalid, "grafana_alerting_alertmanager_alerts_invalid_total")
 }
 
 type API struct {
@@ -90,13 +109,19 @@ func (ng *NGAlert) GetMultiOrgAlertmanagerMetrics() *MultiOrgAlertmanager {
 
 // NewNGAlert manages the metrics of all the alerting components.
 func NewNGAlert(r prometheus.Registerer) *NGAlert {
-	return &NGAlert{
+	ng := &NGAlert{
 		Registerer:                  r,
 		schedulerMetrics:            newSchedulerMetrics(r),
 		stateMetrics:                newStateMetrics(r),
 		multiOrgAlertmanagerMetrics: newMultiOrgAlertmanagerMetrics(r),
 		apiMetrics:                  newAPIMetrics(r),
 	}
+
+	if r != nil {
+		r.MustRegister(ng.multiOrgAlertmanagerMetrics)
+	}
+
+	return ng
 }
 
 // NewAlertmanagerMetrics creates a set of metrics for the Alertmanager of each organization.
@@ -105,16 +130,6 @@ func NewAlertmanagerMetrics(r prometheus.Registerer) *Alertmanager {
 		Registerer: r,
 		Alerts:     metrics.NewAlerts("grafana", prometheus.WrapRegistererWithPrefix(fmt.Sprintf("%s_%s_", Namespace, Subsystem), r)),
 	}
-}
-
-// RemoveOrgRegistry removes the *prometheus.Registry for the specified org. It is safe to call concurrently.
-func (moa *MultiOrgAlertmanager) RemoveOrgRegistry(id int64) {
-	moa.registries.RemoveOrgRegistry(id)
-}
-
-// GetOrCreateOrgRegistry gets or creates a *prometheus.Registry for the specified org. It is safe to call concurrently.
-func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Registerer {
-	return moa.registries.GetOrCreateOrgRegistry(id)
 }
 
 func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
@@ -180,7 +195,7 @@ func newStateMetrics(r prometheus.Registerer) *State {
 func newMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
 	return &MultiOrgAlertmanager{
 		Registerer: r,
-		registries: NewOrgRegistries(),
+		registries: util.NewUserRegistries(),
 		DiscoveredConfigurations: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
@@ -193,6 +208,16 @@ func newMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
 		}),
+		alertsReceived: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alerts_received_total", Namespace, Subsystem),
+			"The total number of received alerts.",
+			[]string{"org"}, nil,
+		),
+		alertsInvalid: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alerts_invalid_total", Namespace, Subsystem),
+			"The total number of received alerts that were invalid.",
+			[]string{"org"}, nil,
+		),
 	}
 }
 
@@ -214,12 +239,12 @@ func newAPIMetrics(r prometheus.Registerer) *API {
 // OrgRegistries represents a map of registries per org.
 type OrgRegistries struct {
 	regsMu sync.Mutex
-	regs   map[int64]prometheus.Registerer
+	regs   map[int64]*prometheus.Registry
 }
 
 func NewOrgRegistries() *OrgRegistries {
 	return &OrgRegistries{
-		regs: make(map[int64]prometheus.Registerer),
+		regs: make(map[int64]*prometheus.Registry),
 	}
 }
 
@@ -281,6 +306,18 @@ func Instrument(
 		res.WriteTo(c)
 		metrics.RequestDuration.With(ls).Observe(time.Since(start).Seconds())
 	}
+}
+
+// RemoveOrgRegistry removes the *prometheus.Registry for the specified org. It is safe to call concurrently.
+func (moa *MultiOrgAlertmanager) RemoveOrgRegistry(id int64) {
+	moa.registries.RemoveUserRegistry(strconv.Itoa(int(id)), true)
+}
+
+// GetOrCreateOrgRegistry gets or creates a *prometheus.Registry for the specified org. It is safe to call concurrently.
+func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Registerer {
+	r := prometheus.NewRegistry()
+	moa.registries.AddUserRegistry(strconv.Itoa(int(id)), r)
+	return r
 }
 
 var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
