@@ -1,8 +1,10 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
 import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
-import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { Settings } from 'app/core/config';
+import { CatalogPlugin, LocalPlugin, RemotePlugin } from './types';
 
 export function isGrafanaAdmin(): boolean {
   return config.bootData.user.isGrafanaAdmin;
@@ -221,3 +223,11 @@ function groupErrorsByPluginId(errors: PluginError[]): Record<string, PluginErro
     return byId;
   }, {} as Record<string, PluginError | undefined>);
 }
+
+// Updates the core Grafana config to have the correct list available panels
+export const updatePanels = () =>
+  getBackendSrv()
+    .get('/api/frontend/settings')
+    .then((settings: Settings) => {
+      config.panels = settings.panels;
+    });
