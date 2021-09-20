@@ -8,7 +8,6 @@ import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput
 import {
   addLimitInfo,
   fixSummariesMetadata,
-  limitSuggestions,
   parseSelector,
   processHistogramLabels,
   processLabels,
