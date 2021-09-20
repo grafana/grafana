@@ -62,25 +62,23 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={!hasFetched}>
-        {!hasPlaylists && !searchQuery ? (
-          emptyListBanner
+        <PageActionBar
+          searchQuery={searchQuery}
+          linkButton={{ title: 'New playlist', href: '/playlists/new' }}
+          setSearchQuery={setSearchQuery}
+        />
+        {!hasPlaylists && searchQuery ? (
+          <EmptyQueryListBanner />
         ) : (
-          <>
-            <PageActionBar
-              searchQuery={searchQuery}
-              linkButton={{ title: 'New playlist', href: '/playlists/new' }}
-              setSearchQuery={setSearchQuery}
-            />
-            {!hasPlaylists && searchQuery && <EmptyQueryListBanner />}
-            {hasPlaylists && (
-              <PlaylistPageList
-                playlists={playlists}
-                setStartPlaylist={setStartPlaylist}
-                setPlaylistToDelete={setPlaylistToDelete}
-              />
-            )}
-          </>
+          <PlaylistPageList
+            playlists={playlists}
+            setStartPlaylist={setStartPlaylist}
+            setPlaylistToDelete={setPlaylistToDelete}
+          />
         )}
+
+        {!hasPlaylists && searchQuery.length < 1 && emptyListBanner}
+
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
