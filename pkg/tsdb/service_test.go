@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -12,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -26,7 +27,7 @@ func TestHandleRequest(t *testing.T) {
 			},
 		}
 
-		svc, exe, _ := createService()
+		svc, exe, _ := createService(t)
 		exe.Return("A", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "argh"}})
 
 		res, err := svc.HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
@@ -43,7 +44,7 @@ func TestHandleRequest(t *testing.T) {
 			},
 		}
 
-		svc, exe, _ := createService()
+		svc, exe, _ := createService(t)
 		exe.Return("A", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "argh"}})
 		exe.Return("B", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "barg"}})
 
@@ -56,7 +57,7 @@ func TestHandleRequest(t *testing.T) {
 	})
 
 	t.Run("Should fallback to backend plugin manager when handling request for query with unregistered type", func(t *testing.T) {
-		svc, _, manager := createService()
+		svc, _, manager := createService(t)
 		backendPluginManagerCalled := false
 		manager.QueryDataHandlerFunc = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			backendPluginManagerCalled = true
@@ -140,12 +141,13 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 	return false
 }
 
-func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
+func createService(t *testing.T) (*Service, *fakeExecutor, *fakeBackendPM) {
+	t.Helper()
 	fakeBackendPM := &fakeBackendPM{}
 	manager := &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM,
 	}
-	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	dsService := datasources.ProvideService(bus.New(), nil, secrets.SetupTestService(t))
 
 	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{}, dsService)
 	e := &fakeExecutor{
