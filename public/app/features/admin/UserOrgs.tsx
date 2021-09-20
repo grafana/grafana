@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactElement } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   Button,
@@ -10,9 +10,10 @@ import {
   stylesFactory,
   Themeable,
   Tooltip,
+  useStyles2,
   withTheme,
 } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import { AccessControlAction, Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
@@ -276,67 +277,62 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
   }
 }
 
-interface UnThemedChangeOrgButtonProps extends Themeable {
+interface ChangeOrgButtonProps {
   isExternalUser?: boolean;
   onChangeRoleClick: () => void;
   onCancelClick: () => void;
   onOrgRoleSave: () => void;
 }
 
-interface UnThemedChangeOrgButtonState {
-  isChangingRole: boolean;
-}
-
-const getChangeOrgButtonTheme = (theme: GrafanaTheme) => ({
+const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
   disabledTooltip: css`
     display: flex;
   `,
   tooltipItemLink: css`
-    color: ${theme.palette.blue95};
+    color: ${theme.v1.palette.blue95};
   `,
 });
 
-export class UnThemedChangeOrgButton extends PureComponent<UnThemedChangeOrgButtonProps, UnThemedChangeOrgButtonState> {
-  render() {
-    const { isExternalUser, theme } = this.props;
-    const styles = getChangeOrgButtonTheme(theme);
-
-    return (
-      <div className={styles.disabledTooltip}>
-        <ConfirmButton
-          confirmText="Save"
-          onClick={this.props.onChangeRoleClick}
-          onCancel={this.props.onCancelClick}
-          onConfirm={this.props.onOrgRoleSave}
-          disabled={isExternalUser}
+export function ChangeOrgButton({
+  onChangeRoleClick,
+  isExternalUser,
+  onOrgRoleSave,
+  onCancelClick,
+}: ChangeOrgButtonProps): ReactElement {
+  const styles = useStyles2(getChangeOrgButtonTheme);
+  return (
+    <div className={styles.disabledTooltip}>
+      <ConfirmButton
+        confirmText="Save"
+        onClick={onChangeRoleClick}
+        onCancel={onCancelClick}
+        onConfirm={onOrgRoleSave}
+        disabled={isExternalUser}
+      >
+        Change role
+      </ConfirmButton>
+      {isExternalUser && (
+        <Tooltip
+          placement="right-end"
+          content={
+            <div>
+              This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+              the&nbsp;
+              <a
+                className={styles.tooltipItemLink}
+                href={'https://grafana.com/docs/grafana/latest/auth'}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Grafana authentication docs
+              </a>
+              &nbsp;for details.
+            </div>
+          }
         >
-          Change role
-        </ConfirmButton>
-        {isExternalUser && (
-          <Tooltip
-            placement="right-end"
-            content={
-              <div>
-                This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-                the&nbsp;
-                <a
-                  className={styles.tooltipItemLink}
-                  href={'https://grafana.com/docs/grafana/latest/auth'}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Grafana authentication docs
-                </a>
-                &nbsp;for details.
-              </div>
-            }
-          >
-            <Icon name="question-circle" />
-          </Tooltip>
-        )}
-      </div>
-    );
-  }
+          <Icon name="question-circle" />
+        </Tooltip>
+      )}
+    </div>
+  );
 }
-
-const ChangeOrgButton = withTheme(UnThemedChangeOrgButton);
