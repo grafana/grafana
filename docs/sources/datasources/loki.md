@@ -87,6 +87,10 @@ Querying and displaying log data from Loki is available via [Explore]({{< relref
 
 A log query consists of two parts: log stream selector, and a log pipeline. For performance reasons begin by choosing a log stream by selecting a log label.
 
+#### Logs volume
+
+Logs volume histogram can be displayed after running a log query. By default, the histogram is loaded only after clicking on "Load logs volume" button. Select "Auto-load logs volume" option in log options row to load it automatically after each query. This feature is available only in Explore.
+
 ### Log context
 
 When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
