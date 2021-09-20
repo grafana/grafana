@@ -320,6 +320,7 @@ Family: scuemata.#Family & {
                     if !list.Contains(compose._panelTypes, type) {
                         options: {...}
                         fieldConfig: defaults: custom: {...}
+                        ...
                     }
                 }
 
