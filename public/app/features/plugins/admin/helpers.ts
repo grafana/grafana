@@ -17,7 +17,7 @@ export function isOrgAdmin() {
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
   remote: RemotePlugin[] = [],
-  errors: PluginError[]
+  errors?: PluginError[]
 ): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
@@ -217,7 +217,7 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   return plugins;
 };
 
-function groupErrorsByPluginId(errors: PluginError[]): Record<string, PluginError | undefined> {
+function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, PluginError | undefined> {
   return errors.reduce((byId, error) => {
     byId[error.pluginId] = error;
     return byId;
