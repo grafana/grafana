@@ -31,7 +31,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 		rawDashboard, err := dashboard.Encode()
 		require.NoError(t, err)
 
-		encryptedDashboard, err := ossencryption.ProvideService().Encrypt(rawDashboard, setting.SecretKey)
+		encryptedDashboard, err := ossencryption.ProvideService().Encrypt(context.Background(), rawDashboard, setting.SecretKey)
 		require.NoError(t, err)
 
 		cmd := models.CreateDashboardSnapshotCommand{
