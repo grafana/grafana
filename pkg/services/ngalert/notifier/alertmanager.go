@@ -135,7 +135,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		dispatcherMetrics: dispatch.NewDispatcherMetrics(false, m.Registerer),
 		Store:             store,
 		peer:              peer,
-		peerTimeout:       cfg.HAPeerTimeout,
+		peerTimeout:       cfg.UnifiedAlerting.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
 		decryptFn:         decryptFn,
