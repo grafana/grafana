@@ -84,6 +84,11 @@ func (ctx *Context) RemoteAddr() string {
 			if i := strings.LastIndex(addr, ":"); i > -1 {
 				addr = addr[:i]
 			}
+		} else {
+			ips := strings.Split(addr, ",")
+			if len(ips) > 1 {
+				addr = ips[0]
+			}
 		}
 	}
 	return addr
