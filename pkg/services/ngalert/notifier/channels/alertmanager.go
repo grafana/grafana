@@ -42,7 +42,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, fn alerting.GetDe
 		urls = append(urls, u)
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := fn(model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
+	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
 
 	return &AlertmanagerNotifier{
 		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{

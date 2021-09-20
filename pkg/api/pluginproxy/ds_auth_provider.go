@@ -19,7 +19,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	ds *models.DataSource, cfg *setting.Cfg, encryptionService encryption.Service) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
-	secureJsonData, err := encryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+	secureJsonData, err := encryptionService.DecryptJsonData(ctx, ds.SecureJsonData, setting.SecretKey)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return

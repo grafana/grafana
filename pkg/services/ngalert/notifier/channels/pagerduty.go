@@ -48,7 +48,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
-	key := fn(model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString(), setting.SecretKey)
+	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString(), setting.SecretKey)
 	if key == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
 	}

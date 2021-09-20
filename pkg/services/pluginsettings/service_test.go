@@ -1,6 +1,7 @@
 package pluginsettings
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,12 +14,16 @@ import (
 
 func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
+		ctx := context.Background()
+
 		encryptionService := ossencryption.ProvideService()
 		psService := ProvideService(bus.New(), nil, encryptionService)
 
-		encryptedJsonData, err := encryptionService.EncryptJsonData(map[string]string{
-			"password": "password",
-		}, setting.SecretKey)
+		encryptedJsonData, err := encryptionService.EncryptJsonData(
+			ctx,
+			map[string]string{
+				"password": "password",
+			}, setting.SecretKey)
 		require.NoError(t, err)
 
 		ps := models.PluginSetting{
@@ -32,9 +37,11 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		require.Equal(t, "password", password)
 		require.True(t, ok)
 
-		encryptedJsonData, err = encryptionService.EncryptJsonData(map[string]string{
-			"password": "",
-		}, setting.SecretKey)
+		encryptedJsonData, err = encryptionService.EncryptJsonData(
+			ctx,
+			map[string]string{
+				"password": "",
+			}, setting.SecretKey)
 		require.NoError(t, err)
 
 		ps.SecureJsonData = encryptedJsonData
@@ -44,12 +51,16 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	})
 
 	t.Run("When plugin settings is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
+		ctx := context.Background()
+
 		encryptionService := ossencryption.ProvideService()
 		psService := ProvideService(bus.New(), nil, encryptionService)
 
-		encryptedJsonData, err := encryptionService.EncryptJsonData(map[string]string{
-			"password": "password",
-		}, setting.SecretKey)
+		encryptedJsonData, err := encryptionService.EncryptJsonData(
+			ctx,
+			map[string]string{
+				"password": "password",
+			}, setting.SecretKey)
 		require.NoError(t, err)
 
 		ps := models.PluginSetting{
@@ -63,9 +74,11 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		require.Equal(t, "password", password)
 		require.True(t, ok)
 
-		encryptedJsonData, err = encryptionService.EncryptJsonData(map[string]string{
-			"password": "",
-		}, setting.SecretKey)
+		encryptedJsonData, err = encryptionService.EncryptJsonData(
+			ctx,
+			map[string]string{
+				"password": "",
+			}, setting.SecretKey)
 		require.NoError(t, err)
 
 		ps.SecureJsonData = encryptedJsonData

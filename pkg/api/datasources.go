@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -92,7 +93,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 		return response.Error(400, "Missing valid datasource id", nil)
 	}
 
-	ds, err := getRawDataSourceById(id, c.OrgId)
+	ds, err := getRawDataSourceById(c.Req.Context(), id, c.OrgId)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
@@ -106,7 +107,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 
 	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -240,7 +241,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDa
 		return resp
 	}
 
-	err := hs.fillWithSecureJSONData(&cmd)
+	err := hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update datasource", err)
 	}
@@ -277,12 +278,12 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDa
 	})
 }
 
-func (hs *HTTPServer) fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
+func (hs *HTTPServer) fillWithSecureJSONData(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	if len(cmd.SecureJsonData) == 0 {
 		return nil
 	}
 
-	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
+	ds, err := getRawDataSourceById(ctx, cmd.Id, cmd.OrgId)
 	if err != nil {
 		return err
 	}
@@ -291,7 +292,7 @@ func (hs *HTTPServer) fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand
 		return models.ErrDatasourceIsReadOnly
 	}
 
-	secureJSONData, err := hs.EncryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+	secureJSONData, err := hs.EncryptionService.DecryptJsonData(ctx, ds.SecureJsonData, setting.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -305,13 +306,13 @@ func (hs *HTTPServer) fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand
 	return nil
 }
 
-func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
+func getRawDataSourceById(ctx context.Context, id int64, orgID int64) (*models.DataSource, error) {
 	query := models.GetDataSourceQuery{
 		Id:    id,
 		OrgId: orgID,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -490,7 +491,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 
 func (hs *HTTPServer) decryptSecureJsonData() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, _ := hs.EncryptionService.DecryptJsonData(m, setting.SecretKey)
+		decryptedJsonData, _ := hs.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
 		return decryptedJsonData
 	}
 }

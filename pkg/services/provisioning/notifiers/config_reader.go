@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -160,6 +161,7 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 
 		for _, notification := range notifications[i].Notifications {
 			encryptedSecureSettings, err := cr.encryptionService.EncryptJsonData(
+				context.Background(),
 				notification.SecureSettings,
 				setting.SecretKey,
 			)

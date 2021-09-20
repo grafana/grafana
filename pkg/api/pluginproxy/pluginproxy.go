@@ -30,7 +30,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			return
 		}
 
-		secureJsonData, err := encryptionService.DecryptJsonData(query.Result.SecureJsonData, setting.SecretKey)
+		secureJsonData, err := encryptionService.DecryptJsonData(ctx.Req.Context(), query.Result.SecureJsonData, setting.SecretKey)
 		if err != nil {
 			ctx.JsonApiErr(500, "Failed to decrypt plugin settings", err)
 			return

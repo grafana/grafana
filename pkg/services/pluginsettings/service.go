@@ -1,6 +1,7 @@
 package pluginsettings
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -40,7 +41,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 	}
 
 	s.Bus.AddHandler(s.GetPluginSettingById)
-	s.Bus.AddHandler(s.UpdatePluginSetting)
+	s.Bus.AddHandlerCtx(s.UpdatePluginSetting)
 	s.Bus.AddHandler(s.UpdatePluginSettingVersion)
 
 	return s
@@ -50,9 +51,9 @@ func (s *Service) GetPluginSettingById(query *models.GetPluginSettingByIdQuery) 
 	return s.SQLStore.GetPluginSettingById(query)
 }
 
-func (s *Service) UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
+func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(cmd.SecureJsonData, setting.SecretKey)
+	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureJsonData, setting.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
 		return item.json
 	}
 
-	json, err := s.EncryptionService.DecryptJsonData(ps.SecureJsonData, setting.SecretKey)
+	json, err := s.EncryptionService.DecryptJsonData(context.Background(), ps.SecureJsonData, setting.SecretKey)
 	if err != nil {
 		return map[string]string{}
 	}

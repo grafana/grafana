@@ -85,7 +85,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
-		key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
+		key, err := ossencryption.ProvideService().Encrypt(context.Background(), []byte("123"), "password")
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -228,7 +228,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
-		key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
+		key, err := ossencryption.ProvideService().Encrypt(context.Background(), []byte("123"), "password")
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -817,6 +817,8 @@ const (
 )
 
 func createAuthTest(t *testing.T, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+	ctx := context.Background()
+
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -833,9 +835,11 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 		message = fmt.Sprintf("%v should add username and password", dsType)
 		test.datasource.User = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(map[string]string{
-				"password": "password",
-			}, setting.SecretKey)
+			test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(
+				ctx,
+				map[string]string{
+					"password": "password",
+				}, setting.SecretKey)
 		} else {
 			test.datasource.Password = "password"
 		}
@@ -844,9 +848,11 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 		test.datasource.BasicAuth = true
 		test.datasource.BasicAuthUser = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(map[string]string{
-				"basicAuthPassword": "password",
-			}, setting.SecretKey)
+			test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(
+				ctx,
+				map[string]string{
+					"basicAuthPassword": "password",
+				}, setting.SecretKey)
 		} else {
 			test.datasource.BasicAuthPassword = "password"
 		}

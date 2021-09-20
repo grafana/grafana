@@ -30,7 +30,7 @@ var (
 	logger = log.New("alerting.testnotification")
 )
 
-func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Context, cmd *NotificationTestCommand) error {
+func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
 	notifier := newNotificationService(nil, nil)
 
 	model := &models.AlertNotification{
@@ -52,7 +52,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Conte
 
 		if query.Result.SecureSettings != nil {
 			var err error
-			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(query.Result.SecureSettings, setting.SecretKey)
+			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Conte
 	}
 
 	var err error
-	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(secureSettingsMap, setting.SecretKey)
+	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, secureSettingsMap, setting.SecretKey)
 	if err != nil {
 		return err
 	}

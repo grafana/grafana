@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -77,7 +78,7 @@ func NewThreemaNotifier(model *models.AlertNotification, fn alerting.GetDecrypte
 
 	gatewayID := model.Settings.Get("gateway_id").MustString()
 	recipientID := model.Settings.Get("recipient_id").MustString()
-	apiSecret := fn(model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString(), setting.SecretKey)
+	apiSecret := fn(context.Background(), model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString(), setting.SecretKey)
 
 	// Validation
 	if gatewayID == "" {

@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,25 +27,29 @@ func TestService(t *testing.T) {
 	var an *models.AlertNotification
 
 	t.Run("create alert notification should encrypt the secure json data", func(t *testing.T) {
+		ctx := context.Background()
+
 		ss := map[string]string{"password": "12345"}
 		cmd := models.CreateAlertNotificationCommand{SecureSettings: ss}
 
-		err := s.CreateAlertNotificationCommand(&cmd)
+		err := s.CreateAlertNotificationCommand(ctx, &cmd)
 		require.NoError(t, err)
 
 		an = cmd.Result
-		decrypted, err := s.EncryptionService.DecryptJsonData(an.SecureSettings, setting.SecretKey)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, an.SecureSettings, setting.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 	})
 
 	t.Run("update alert notification should encrypt the secure json data", func(t *testing.T) {
+		ctx := context.Background()
+
 		ss := map[string]string{"password": "678910"}
 		cmd := models.UpdateAlertNotificationCommand{Id: an.Id, Settings: simplejson.New(), SecureSettings: ss}
-		err := s.UpdateAlertNotification(&cmd)
+		err := s.UpdateAlertNotification(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.DecryptJsonData(cmd.Result.SecureSettings, setting.SecretKey)
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, cmd.Result.SecureSettings, setting.SecretKey)
 		require.NoError(t, err)
 		require.Equal(t, ss, decrypted)
 	})

@@ -25,8 +25,8 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 	}
 
 	s.Bus.AddHandler(s.GetAlertNotifications)
-	s.Bus.AddHandler(s.CreateAlertNotificationCommand)
-	s.Bus.AddHandler(s.UpdateAlertNotification)
+	s.Bus.AddHandlerCtx(s.CreateAlertNotificationCommand)
+	s.Bus.AddHandlerCtx(s.UpdateAlertNotification)
 	s.Bus.AddHandler(s.DeleteAlertNotification)
 	s.Bus.AddHandler(s.GetAllAlertNotifications)
 	s.Bus.AddHandlerCtx(s.GetOrCreateAlertNotificationState)
@@ -45,9 +45,9 @@ func (s *AlertNotificationService) GetAlertNotifications(query *models.GetAlertN
 	return s.SQLStore.GetAlertNotifications(query)
 }
 
-func (s *AlertNotificationService) CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) error {
+func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
 	var err error
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(cmd.SecureSettings, setting.SecretKey)
+	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -55,9 +55,9 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(cmd *models.Cr
 	return s.SQLStore.CreateAlertNotificationCommand(cmd)
 }
 
-func (s *AlertNotificationService) UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
+func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 	var err error
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(cmd.SecureSettings, setting.SecretKey)
+	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package pluginproxy
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -24,8 +25,8 @@ func TestPluginProxy(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
-			key, err := ossencryption.ProvideService().Encrypt([]byte("123"), "password")
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+			key, err := ossencryption.ProvideService().Encrypt(ctx, []byte("123"), "password")
 			if err != nil {
 				return err
 			}
@@ -157,8 +158,9 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			encryptedJsonData, err := ossencryption.ProvideService().EncryptJsonData(
+				ctx,
 				map[string]string{"key": "123"},
 				setting.SecretKey,
 			)
