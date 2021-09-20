@@ -313,7 +313,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       this.access === 'proxy' &&
       options.app === CoreApp.Explore &&
       !options.targets.some((query) => query.exemplar) &&
-      // When running both queries, run torugh proxy
+      // When running both queries, run through proxy
       !options.targets.some((query) => query.instant && query.range);
 
     if (shouldRunBackendQuery) {
