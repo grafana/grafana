@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -51,6 +52,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			assert.NotNil(t, query.Result)
 
 			decryptedDashboard, err := ossencryption.ProvideService().Decrypt(
+				context.Background(),
 				query.Result.DashboardEncrypted,
 				setting.SecretKey,
 			)
@@ -132,6 +134,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 		t.Run("Should have encrypted dashboard data", func(t *testing.T) {
 			decryptedDashboard, err := ossencryption.ProvideService().Decrypt(
+				context.Background(),
 				cmd.Result.DashboardEncrypted,
 				setting.SecretKey,
 			)
