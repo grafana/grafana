@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -90,8 +92,19 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		}
 		serviceAccountId = int(user.Id)
 
-		//FIXME Clone user permissions onto service account
 	}
+	//FIXME Clone user permissions onto service account
+
+	roles, err := hs.AccessControl.GetUserRoles(c.Req.Context(), c.SignedInUser)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to list user roles.", err)
+	}
+
+	for _, v := range roles {
+		log.Println(fmt.Sprintf("Loaded role: %+v", v))
+	}
+
+	//AddUserRole //Add role to user
 
 	cmd.ServiceAccountId = fmt.Sprintf("%v", serviceAccountId)
 
