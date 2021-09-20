@@ -2110,6 +2110,54 @@ describe('prepareTargets', () => {
   });
 });
 
+describe('prepareOptionsV2', () => {
+  it('creates instant target', () => {
+    const query: PromQuery = { refId: 'A', expr: 'go_goroutines', instant: true, format: 'table' };
+    const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    const instantTarget = ds.createTargetV2(query, 'instant');
+    expect(instantTarget.refId).toEqual('A');
+    expect(instantTarget.range).toEqual(false);
+    expect(instantTarget.instant).toEqual(true);
+    expect(instantTarget.format).toEqual('table');
+  });
+
+  it('creates range target', () => {
+    const query: PromQuery = { refId: 'A', expr: 'go_goroutines', range: true, format: 'time_series' };
+    const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    const rangeTarget = ds.createTargetV2(query, 'range');
+    expect(rangeTarget.refId).toEqual('A');
+    expect(rangeTarget.range).toEqual(true);
+    expect(rangeTarget.instant).toEqual(false);
+    expect(rangeTarget.format).toEqual('time_series');
+  });
+
+  it('creates both targets', () => {
+    const query: PromQuery = { refId: 'A', expr: 'go_goroutines', range: true, instant: true };
+    const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    const instantTarget = ds.createTargetV2(query, 'instant', 'table', true);
+    const rangeTarget = ds.createTargetV2(query, 'range', 'time_series', true);
+    expect(instantTarget.refId).toEqual('A_instant');
+    expect(rangeTarget.refId).toEqual('A');
+    expect(instantTarget.range).toEqual(false);
+    expect(rangeTarget.range).toEqual(true);
+    expect(instantTarget.instant).toEqual(true);
+    expect(rangeTarget.instant).toEqual(false);
+    expect(instantTarget.format).toEqual('table');
+    expect(rangeTarget.format).toEqual('time_series');
+  });
+
+  it('overrides the format', () => {
+    const query: PromQuery = { refId: 'A', expr: 'go_goroutines', range: true, format: 'time_series' };
+    const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    const rangeTarget = ds.createTargetV2(query, 'range', 'table');
+    expect(rangeTarget.format).toEqual('table');
+  });
+});
+
 describe('modifyQuery', () => {
   describe('when called with ADD_FILTER', () => {
     describe('and query has no labels', () => {

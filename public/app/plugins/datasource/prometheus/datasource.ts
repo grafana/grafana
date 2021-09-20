@@ -289,19 +289,41 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
+  createTargetV2 = (
+    target: PromQuery,
+    type: 'instant' | 'range',
+    format?: 'table' | 'time_series',
+    multipleQueryTypes?: boolean
+  ): PromQuery => {
+    const refId = multipleQueryTypes && type !== 'range' ? `${target.refId}_${type}` : target.refId;
+    const resultFormat = format ?? target.format;
+
+    return {
+      ...target,
+      range: type === 'range' ? true : false,
+      instant: type === 'instant' ? true : false,
+      utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      format: resultFormat,
+      refId,
+    };
+  };
+
   prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
-    const targets = options.targets.map((target) => {
+    const targets: PromQuery[] = [];
+
+    options.targets.forEach((target) => {
       //This is currently only preparing options for Explore queries where we know the format of data we want to receive
-      if (target.instant) {
-        return { ...target, instant: true, range: false, format: 'table' };
+      if (target.instant && target.range) {
+        const targetInstant = this.createTargetV2(target, 'instant', 'table', true);
+        const targetRange = this.createTargetV2(target, 'range', 'time_series', true);
+        targets.push(targetInstant, targetRange);
+      } else if (target.instant) {
+        const targetInstant = this.createTargetV2(target, 'instant', 'table', false);
+        targets.push(targetInstant);
+      } else {
+        const targetRange = this.createTargetV2(target, 'range', 'time_series', false);
+        targets.push(targetRange);
       }
-      return {
-        ...target,
-        instant: false,
-        range: true,
-        format: 'time_series',
-        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
-      };
     });
 
     return { ...options, targets };
@@ -310,11 +332,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
     const shouldRunBackendQuery =
-      this.access === 'proxy' &&
-      options.app === CoreApp.Explore &&
-      !options.targets.some((query) => query.exemplar) &&
-      // When running both queries, run through proxy
-      !options.targets.some((query) => query.instant && query.range);
+      this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
 
     if (shouldRunBackendQuery) {
       const newOptions = this.prepareOptionsV2(options);
