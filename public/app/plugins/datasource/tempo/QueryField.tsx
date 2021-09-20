@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { DataSourceApi, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   FileDropzone,
@@ -21,7 +21,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
 import NativeSearch from './NativeSearch';
 
-interface Props extends ExploreQueryFieldProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 

@@ -12,21 +12,6 @@ import (
 	"github.com/prometheus/prometheus/promql"
 )
 
-// swagger:route Post /api/v1/receiver/test/{Recipient} testing RouteTestReceiverConfig
-//
-// Test receiver
-//
-//     Consumes:
-//     - application/json
-//
-//     Produces:
-//     - application/json
-//
-//     Responses:
-//       200: Success
-//		 412: SmtpNotEnabled
-//		 500: Failure
-
 // swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
 //
 // Test rule

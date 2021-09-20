@@ -3,7 +3,6 @@ package searchusers
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -14,12 +13,11 @@ type Service interface {
 }
 
 type OSSService struct {
-	routerRegister routing.RouteRegister
-	bus            bus.Bus
+	bus bus.Bus
 }
 
-func ProvideUsersService(routerRegister routing.RouteRegister, bus bus.Bus) *OSSService {
-	return &OSSService{routerRegister: routerRegister, bus: bus}
+func ProvideUsersService(bus bus.Bus) *OSSService {
+	return &OSSService{bus: bus}
 }
 
 func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {

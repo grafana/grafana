@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -47,7 +48,9 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 				}
 			}
 			handlers = append(handlers, AppPluginRoute(route, plugin.Id, hs))
-			r.Handle(route.Method, url, handlers)
+			for _, method := range strings.Split(route.Method, ",") {
+				r.Handle(strings.TrimSpace(method), url, handlers)
+			}
 			log.Debugf("Plugins: Adding proxy route %s", url)
 		}
 	}
@@ -55,7 +58,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 
 func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) macaron.Handler {
 	return func(c *models.ReqContext) {
-		path := c.Params("*")
+		path := macaron.Params(c.Req)["*"]
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg)
 		proxy.Transport = pluginProxyTransport

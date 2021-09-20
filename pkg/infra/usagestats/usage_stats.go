@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -24,6 +25,7 @@ type UsageReport struct {
 	Edition         string                 `json:"edition"`
 	HasValidLicense bool                   `json:"hasValidLicense"`
 	Packaging       string                 `json:"packaging"`
+	UsageStatsId    string                 `json:"usageStatsId"`
 }
 
 func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
@@ -36,22 +38,26 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		edition = "enterprise"
 	}
 	report := UsageReport{
-		Version:   version,
-		Metrics:   metrics,
-		Os:        runtime.GOOS,
-		Arch:      runtime.GOARCH,
-		Edition:   edition,
-		Packaging: uss.Cfg.Packaging,
+		Version:      version,
+		Metrics:      metrics,
+		Os:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		Edition:      edition,
+		Packaging:    uss.Cfg.Packaging,
+		UsageStatsId: uss.GetUsageStatsId(ctx),
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
-		metricsLogger.Error("Failed to get system stats", "error", err)
+		uss.log.Error("Failed to get system stats", "error", err)
 		return report, err
 	}
 
 	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
 	metrics["stats.users.count"] = statsQuery.Result.Users
+	metrics["stats.admins.count"] = statsQuery.Result.Admins
+	metrics["stats.editors.count"] = statsQuery.Result.Editors
+	metrics["stats.viewers.count"] = statsQuery.Result.Viewers
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
 	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
@@ -59,6 +65,15 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
+	metrics["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
+	metrics["stats.active_editors.count"] = statsQuery.Result.ActiveEditors
+	metrics["stats.active_viewers.count"] = statsQuery.Result.ActiveViewers
+	metrics["stats.active_sessions.count"] = statsQuery.Result.ActiveSessions
+	metrics["stats.daily_active_users.count"] = statsQuery.Result.DailyActiveUsers
+	metrics["stats.daily_active_admins.count"] = statsQuery.Result.DailyActiveAdmins
+	metrics["stats.daily_active_editors.count"] = statsQuery.Result.DailyActiveEditors
+	metrics["stats.daily_active_viewers.count"] = statsQuery.Result.DailyActiveViewers
+	metrics["stats.daily_active_sessions.count"] = statsQuery.Result.DailyActiveSessions
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 	metrics["stats.stars.count"] = statsQuery.Result.Stars
 	metrics["stats.folders.count"] = statsQuery.Result.Folders
@@ -120,7 +135,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {
-		metricsLogger.Error("Failed to get datasource stats", "error", err)
+		uss.log.Error("Failed to get datasource stats", "error", err)
 		return report, err
 	}
 
@@ -139,7 +154,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
 	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
-		metricsLogger.Error("Failed to get elasticsearch json data", "error", err)
+		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
 
@@ -184,7 +199,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
-		metricsLogger.Error("Failed to get datasource access stats", "error", err)
+		uss.log.Error("Failed to get datasource access stats", "error", err)
 		return report, err
 	}
 
@@ -213,8 +228,8 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
-	if err := uss.Bus.Dispatch(&anStats); err != nil {
-		metricsLogger.Error("Failed to get alert notification stats", "error", err)
+	if err := uss.Bus.DispatchCtx(ctx, &anStats); err != nil {
+		uss.log.Error("Failed to get alert notification stats", "error", err)
 		return report, err
 	}
 
@@ -244,7 +259,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	// Get concurrent users stats as histogram
 	concurrentUsersStats, err := uss.GetConcurrentUsersStats(ctx)
 	if err != nil {
-		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
+		uss.log.Error("Failed to get concurrent users stats", "error", err)
 		return report, err
 	}
 
@@ -256,6 +271,8 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
 	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
 
+	metrics["stats.uptime"] = int64(time.Since(uss.startTime).Seconds())
+
 	return report, nil
 }
 
@@ -263,7 +280,7 @@ func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interfa
 	for _, fn := range uss.externalMetrics {
 		fnMetrics, err := fn()
 		if err != nil {
-			metricsLogger.Error("Failed to fetch external metrics", "error", err)
+			uss.log.Error("Failed to fetch external metrics", "error", err)
 			continue
 		}
 
@@ -282,7 +299,7 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 		return nil
 	}
 
-	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
+	uss.log.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
 	report, err := uss.GetUsageReport(ctx)
 	if err != nil {
@@ -295,23 +312,23 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 	}
 
 	data := bytes.NewBuffer(out)
-	sendUsageStats(data)
+	sendUsageStats(uss, data)
 	return nil
 }
 
 // sendUsageStats sends usage statistics.
 //
 // Stubbable by tests.
-var sendUsageStats = func(data *bytes.Buffer) {
+var sendUsageStats = func(uss *UsageStatsService, data *bytes.Buffer) {
 	go func() {
 		client := http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Post(usageStatsURL, "application/json", data)
 		if err != nil {
-			metricsLogger.Error("Failed to send usage stats", "err", err)
+			uss.log.Error("Failed to send usage stats", "err", err)
 			return
 		}
 		if err := resp.Body.Close(); err != nil {
-			metricsLogger.Warn("Failed to close response body", "err", err)
+			uss.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 }
@@ -351,7 +368,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
-		metricsLogger.Error("Failed to get system stats", "error", err)
+		uss.log.Error("Failed to get system stats", "error", err)
 		return
 	}
 
@@ -375,7 +392,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {
-		metricsLogger.Error("Failed to get datasource stats", "error", err)
+		uss.log.Error("Failed to get datasource stats", "error", err)
 		return
 	}
 
@@ -391,4 +408,32 @@ func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
 	}
 
 	return ds.Signature.IsValid() || ds.Signature.IsInternal()
+}
+
+func (uss *UsageStatsService) GetUsageStatsId(ctx context.Context) string {
+	anonId, ok, err := uss.kvStore.Get(ctx, "anonymous_id")
+	if err != nil {
+		uss.log.Error("Failed to get usage stats id", "error", err)
+		return ""
+	}
+
+	if ok {
+		return anonId
+	}
+
+	newId, err := uuid.NewRandom()
+	if err != nil {
+		uss.log.Error("Failed to generate usage stats id", "error", err)
+		return ""
+	}
+
+	anonId = newId.String()
+
+	err = uss.kvStore.Set(ctx, "anonymous_id", anonId)
+	if err != nil {
+		uss.log.Error("Failed to store usage stats id", "error", err)
+		return ""
+	}
+
+	return anonId
 }
