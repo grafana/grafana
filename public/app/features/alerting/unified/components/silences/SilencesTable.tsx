@@ -204,7 +204,7 @@ function useColumns(alertManagerSourceName: string) {
             </>
           );
         },
-        size: 2,
+        size: '150px',
       },
     ];
     if (showActions) {
