@@ -8,7 +8,7 @@ import {
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
-  AsyncSelect,
+  Select,
 } from '@grafana/ui';
 import { tokenizer } from './syntax';
 import Prism from 'prismjs';
@@ -42,37 +42,53 @@ Prism.languages[PRISM_LANGUAGE] = tokenizer;
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [autocomplete] = useState<{
+  const [autocomplete, setAutocomplete] = useState<{
+    serviceNameOptions: Array<SelectableValue<string>>;
     selectedServiceName: SelectableValue<string> | undefined;
+    spanNameOptions: Array<SelectableValue<string>>;
     selectedSpanName: SelectableValue<string> | undefined;
   }>({
+    serviceNameOptions: [],
     selectedServiceName: undefined,
+    spanNameOptions: [],
     selectedSpanName: undefined,
   });
+
+  const fetchServiceNameOptions = useMemo(
+    () =>
+      debounce(
+        async () => {
+          const res = await languageProvider.getOptions('service.name');
+          setAutocomplete((prev) => ({ ...prev, serviceNameOptions: res }));
+        },
+        500,
+        { leading: true, trailing: true }
+      ),
+    [languageProvider]
+  );
+
+  const fetchSpanNameOptions = useMemo(
+    () =>
+      debounce(
+        async () => {
+          const res = await languageProvider.getOptions('name');
+          setAutocomplete((prev) => ({ ...prev, spanNameOptions: res }));
+        },
+        500,
+        { leading: true, trailing: true }
+      ),
+    [languageProvider]
+  );
 
   useEffect(() => {
     const fetchAutocomplete = async () => {
       await languageProvider.start();
+      await fetchServiceNameOptions();
+      await fetchSpanNameOptions();
       setHasSyntaxLoaded(true);
     };
     fetchAutocomplete();
-  }, [languageProvider]);
-
-  const debouncedFetchServiceNameOptions = debounce(
-    async () => {
-      return await languageProvider.getOptions('service.name');
-    },
-    500,
-    { leading: true, trailing: true }
-  );
-
-  const debouncedFetchSpanNameOptions = debounce(
-    async () => {
-      return await languageProvider.getOptions('name');
-    },
-    500,
-    { leading: true, trailing: true }
-  );
+  }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
@@ -96,11 +112,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
         <InlineField label="Service Name" labelWidth={14} grow>
-          <AsyncSelect
+          <Select
             menuShouldPortal
-            defaultOptions
-            loadOptions={debouncedFetchServiceNameOptions}
-            value={autocomplete.selectedServiceName}
+            options={autocomplete.serviceNameOptions}
+            value={query.serviceName || ''}
             onChange={(v) => {
               onChange({
                 ...query,
@@ -108,17 +123,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               });
             }}
             placeholder="Select a service"
+            onOpenMenu={fetchServiceNameOptions}
             isClearable
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Span Name" labelWidth={14} grow>
-          <AsyncSelect
+          <Select
             menuShouldPortal
-            defaultOptions
-            loadOptions={debouncedFetchSpanNameOptions}
-            value={autocomplete.selectedSpanName}
+            options={autocomplete.spanNameOptions}
+            value={query.spanName || ''}
             onChange={(v) => {
               onChange({
                 ...query,
@@ -126,6 +141,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               });
             }}
             placeholder="Select a span"
+            onOpenMenu={fetchSpanNameOptions}
             isClearable
           />
         </InlineField>
