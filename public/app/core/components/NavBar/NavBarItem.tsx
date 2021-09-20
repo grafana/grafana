@@ -86,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       }
     }
 
-    @media ${theme.breakpoints.up('md')} {
+    ${theme.breakpoints.up('md')} {
       color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
 
       &:hover {

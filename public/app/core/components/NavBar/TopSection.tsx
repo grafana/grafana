@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
     flex-grow: 1;
 
-    @media ${theme.breakpoints.up('md')} {
+    ${theme.breakpoints.up('md')} {
       display: block;
       margin-top: ${theme.spacing(5)};
     }

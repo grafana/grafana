@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.components.sidemenu.width}px;
     z-index: ${theme.zIndex.sidemenu};
 
-    @media ${theme.breakpoints.up('md')} {
+    ${theme.breakpoints.up('md')} {
       background-color: ${theme.colors.background.primary};
       position: relative;
     }
@@ -94,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       width: ${theme.spacing(3.5)};
     }
 
-    @media ${theme.breakpoints.up('md')} {
+    ${theme.breakpoints.up('md')} {
       align-items: center;
       display: flex;
       justify-content: center;
@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     padding: ${theme.spacing(2)};
 
-    @media ${theme.breakpoints.up('md')} {
+    ${theme.breakpoints.up('md')} {
       display: none;
     }
   `,

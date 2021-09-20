@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: none;
 
-    @media ${theme.breakpoints.up('md')} {
+    ${theme.breakpoints.up('md')} {
       display: block;
       margin-bottom: ${theme.spacing(2)};
     }
