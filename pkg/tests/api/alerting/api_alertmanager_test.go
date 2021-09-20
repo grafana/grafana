@@ -2018,7 +2018,7 @@ func TestQuota(t *testing.T) {
 	t.Run("when quota limit exceed creating new rule should fail", func(t *testing.T) {
 		// get existing org quota
 		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
-		err = sqlstore.GetOrgQuotaByTarget(&query)
+		err = store.GetOrgQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 		used := query.Result.Used
 		limit := query.Result.Limit
@@ -2029,7 +2029,7 @@ func TestQuota(t *testing.T) {
 			Target: "alert_rule",
 			Limit:  used,
 		}
-		err := sqlstore.UpdateOrgQuota(&orgCmd)
+		err := store.UpdateOrgQuota(context.Background(), &orgCmd)
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
@@ -2039,7 +2039,7 @@ func TestQuota(t *testing.T) {
 				Target: "alert_rule",
 				Limit:  limit,
 			}
-			err := sqlstore.UpdateOrgQuota(&orgCmd)
+			err := store.UpdateOrgQuota(context.Background(), &orgCmd)
 			require.NoError(t, err)
 		})
 
