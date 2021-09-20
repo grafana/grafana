@@ -43,8 +43,12 @@ export interface DataQuery {
   queryType?: string;
 
   /**
-   * For mixed data sources the selected datasource is on the query level.
-   * For non mixed scenarios this is undefined.
+   * The datasource ref of the datasource. This can be undefined to not break older code.
    */
   datasource?: DatasourceRef;
+
+  /**
+   * The id of the datasource. This can be undefined to not break older code.
+   */
+  datasourceId?: number;
 }

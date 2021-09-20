@@ -124,17 +124,9 @@ export class QueryGroup extends PureComponent<Props, State> {
         }
       }
     } else if (dsSettings) {
-      // if switching from mixed
-      if (dsSettings.meta.mixed) {
-        // Remove the explicit datasource
-        for (const query of queries) {
-          if (query.datasource !== ExpressionDatasourceID) {
-            delete query.datasource;
-          }
-        }
-      } else if (dsSettings.meta.id !== newSettings.meta.id) {
+      if (dsSettings.meta.id !== newSettings.meta.id) {
         // we are changing data source type, clear queries
-        queries = [{ refId: 'A' }];
+        queries = [{ refId: 'A', datasource: newSettings.name, datasourceId: newSettings.id }];
       }
     }
 
@@ -162,14 +154,11 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   newQuery(): Partial<DataQuery> {
-    const { dsSettings, defaultDataSource } = this.state;
-
-    if (!dsSettings?.meta.mixed) {
-      return {};
-    }
+    const { defaultDataSource } = this.state;
 
     return {
       datasource: defaultDataSource?.name,
+      datasourceId: defaultDataSource?.id,
     };
   }
 
