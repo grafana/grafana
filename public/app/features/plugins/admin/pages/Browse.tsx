@@ -91,6 +91,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
               <div>
                 <Select
                   menuShouldPortal
+                  aria-label="Sort Plugins List"
                   width={24}
                   value={sortBy}
                   onChange={onSortByChange}
