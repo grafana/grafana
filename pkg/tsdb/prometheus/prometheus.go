@@ -304,15 +304,20 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
 		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
-		queryType := Range
-		if model.InstantQuery {
-			queryType = Instant
+		if model.RangeQuery && model.InstantQuery {
+			return nil, fmt.Errorf("the provided query is not valid, expected only one of `range` and `instant` to be true")
 		}
 
-		start := query.TimeRange.From
-		end := query.TimeRange.To
+		var queryType PrometheusQueryType
+		var start time.Time
+		var end time.Time
 
-		if queryType == Range {
+		if model.InstantQuery {
+			queryType = Instant
+			start = query.TimeRange.From
+			end = query.TimeRange.To
+		} else {
+			queryType = Range
 			// Align query range to step. It rounds start and end down to a multiple of step.
 			start = time.Unix(int64(math.Floor((float64(query.TimeRange.From.Unix()+model.UtcOffsetSec)/interval.Seconds()))*interval.Seconds()-float64(model.UtcOffsetSec)), 0)
 			end = time.Unix(int64(math.Floor((float64(query.TimeRange.To.Unix()+model.UtcOffsetSec)/interval.Seconds()))*interval.Seconds()-float64(model.UtcOffsetSec)), 0)
