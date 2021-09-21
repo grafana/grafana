@@ -358,3 +358,12 @@ func convertDataTimePoint(point DataTimePoint) (t *time.Time, f *float64) {
 	}
 	return
 }
+
+type ErrTooManyRequests struct {
+	error
+	Details string
+}
+
+func (e *ErrTooManyRequests) Error() string {
+	return "too many requests"
+}

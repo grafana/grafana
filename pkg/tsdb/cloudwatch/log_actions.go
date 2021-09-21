@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -220,7 +221,8 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			return nil, &response.OverrideError{Status: 400, Err: err}
+			plog.Info("executeStartQuery limit exceeded", "err", awsErr)
+			return nil, &plugins.ErrTooManyRequests{Details: err.Error()}
 		}
 		return nil, err
 	}

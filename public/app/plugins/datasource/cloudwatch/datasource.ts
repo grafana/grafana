@@ -179,7 +179,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     } = {}) => (attempts: Observable<any>) => {
       return attempts.pipe(
         mergeMap((error, i) => {
-          const isLimitError = typeof error === 'string' && error.includes('LimitExceededException');
+          const isLimitError = error.status === 429;
           if (!isLimitError) {
             return throwError(error);
           }
@@ -191,6 +191,15 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           console.log(`Attempt ${retryAttempt}: retrying in ${retryAttempt * scalingDuration}ms`);
           // retry after 1s, 2s, etc...
           return timer(retryAttempt * scalingDuration);
+        }),
+        catchError((err) => {
+          if (err.data?.error) {
+            throw err.data.error;
+          } else if (err.data?.message) {
+            // In PROD we do not supply .error
+            throw err.data.message;
+          }
+          throw err;
         }),
         finalize(() => console.log('We are done!'))
       );
@@ -596,6 +605,11 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err) => {
+        if (err.status === 429) {
+          throw err;
+        }
+
+        // TODO: check why we need to unwrap this here
         if (err.data?.error) {
           throw err.data.error;
         } else if (err.data?.message) {
