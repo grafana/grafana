@@ -63,7 +63,7 @@ Lets you choose what unit a field should use. Click in the **Unit** field, then 
 
 ### Custom units
 
-You can use the unit dropdown to also specify custom units, custom prefix or suffix and date time formats .
+You can use the unit dropdown to also specify custom units, custom prefix or suffix and date time formats.
 
 To select a custom unit enter the unit and select the last `Custom: xxx` option in the dropdown.
 
