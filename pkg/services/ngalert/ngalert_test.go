@@ -60,7 +60,9 @@ func TestGetRuleDefaultIntervalSeconds(t *testing.T) {
 			alertNG := AlertNG{
 				Log: log.New("test"),
 				Cfg: &setting.Cfg{
-					UnifiedAlertingMinInterval: tc.alertingMinIntervalCfg,
+					UnifiedAlerting: setting.UnifiedAlertingSettings{
+						MinInterval: tc.alertingMinIntervalCfg,
+					},
 				},
 			}
 			require.Equal(t, tc.expDefaultIntervalSeconds, alertNG.getRuleDefaultIntervalSeconds())

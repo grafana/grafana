@@ -55,16 +55,16 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 
 	clusterLogger := gokit_log.With(gokit_log.NewLogfmtLogger(logging.NewWrapper(l)), "component", "cluster")
 	moa.peer = &NilPeer{}
-	if len(cfg.HAPeers) > 0 {
+	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
 		peer, err := cluster.Create(
 			clusterLogger,
 			m.Registerer,
-			cfg.HAListenAddr,
-			cfg.HAAdvertiseAddr,
-			cfg.HAPeers, // peers
+			cfg.UnifiedAlerting.HAListenAddr,
+			cfg.UnifiedAlerting.HAAdvertiseAddr,
+			cfg.UnifiedAlerting.HAPeers, // peers
 			true,
-			cfg.HAPushPullInterval,
-			cfg.HAGossipInterval,
+			cfg.UnifiedAlerting.HAPushPullInterval,
+			cfg.UnifiedAlerting.HAGossipInterval,
 			cluster.DefaultTcpTimeout,
 			cluster.DefaultProbeTimeout,
 			cluster.DefaultProbeInterval,
@@ -98,7 +98,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			moa.StopAndWait()
 			return nil
-		case <-time.After(moa.settings.AlertmanagerConfigPollInterval):
+		case <-time.After(moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval):
 			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
 				moa.logger.Error("error while synchronizing Alertmanager orgs", "err", err)
 			}
