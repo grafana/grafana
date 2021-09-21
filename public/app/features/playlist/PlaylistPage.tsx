@@ -29,7 +29,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
-    return getAllPlaylist(searchQuery);
+    return await getAllPlaylist(searchQuery);
   }, [forcePlaylistsFetch, debouncedSearchQuery]);
 
   useEffect(() => {
@@ -82,9 +82,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
             setPlaylistToDelete={setPlaylistToDelete}
           />
         )}
-
-        {!hasPlaylists && searchQuery.length < 1 && emptyListBanner}
-
+        {!hasPlaylists && !loading && debouncedSearchQuery.length < 1 && emptyListBanner}
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
