@@ -74,7 +74,7 @@ type PluginManager struct {
 	pluginsMu    sync.RWMutex
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) (*PluginManager, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) (plugins.Manager, error) {
 	pm := newManager(cfg, sqlStore, backendPM)
 	if err := pm.init(); err != nil {
 		return nil, err
