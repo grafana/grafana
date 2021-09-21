@@ -16,7 +16,7 @@ type testRuleGetter struct {
 	rules map[string]*LiveChannelRule
 }
 
-func (t *testRuleGetter) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
+func (t *testRuleGetter) Get(_ int64, channel string) (*LiveChannelRule, bool, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	rule, ok := t.rules[channel]
@@ -48,11 +48,19 @@ type testConverter struct {
 	frame   *data.Frame
 }
 
+func (t *testConverter) Type() string {
+	return "test"
+}
+
 func (t *testConverter) Convert(_ context.Context, _ Vars, _ []byte) ([]*ChannelFrame, error) {
 	return []*ChannelFrame{{Channel: t.channel, Frame: t.frame}}, nil
 }
 
 type testProcessor struct{}
+
+func (t *testProcessor) Type() string {
+	return "test"
+}
 
 func (t *testProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
 	return frame, nil
@@ -61,6 +69,10 @@ func (t *testProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.
 type testOutputter struct {
 	err   error
 	frame *data.Frame
+}
+
+func (t *testOutputter) Type() string {
+	return "test"
 }
 
 func (t *testOutputter) Output(_ context.Context, _ OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {

@@ -868,6 +868,45 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	})
 }
 
+// HandlePipelineEntitiesListHTTP ...
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"outputs": []struct {
+			Type string `json:"type"`
+		}{
+			{Type: pipeline.OutputTypeManagedStream},
+			{Type: pipeline.OutputTypeMultiple},
+			{Type: pipeline.OutputTypeConditional},
+			{Type: pipeline.OutputTypeRedirect},
+			{Type: pipeline.OutputTypeThreshold},
+			{Type: pipeline.OutputTypeChangeLog},
+			{Type: pipeline.OutputTypeRemoteWrite},
+		},
+		"converters": []struct {
+			Type string `json:"type"`
+		}{
+			{Type: pipeline.ConverterTypeJsonAuto},
+			{Type: pipeline.ConverterTypeJsonExact},
+			{Type: pipeline.ConverterTypeInfluxAuto},
+			{Type: pipeline.ConverterTypeJsonFrame},
+		},
+		"processors": []struct {
+			Type string `json:"type"`
+		}{
+			{Type: pipeline.ProcessorTypeKeepFields},
+			{Type: pipeline.ProcessorTypeDropFields},
+			{Type: pipeline.ProcessorTypeMultiple},
+		},
+		"subscribers": []struct {
+			Type string `json:"type"`
+		}{
+			{Type: pipeline.SubscriberTypeBuiltin},
+			{Type: pipeline.SubscriberTypeManagedStream},
+			{Type: pipeline.SubscriberTypeMultiple},
+		},
+	})
+}
+
 // HandleRemoteWriteBackendsListHTTP ...
 func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
 	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
