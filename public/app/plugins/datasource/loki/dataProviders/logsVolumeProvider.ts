@@ -15,7 +15,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
-import { Observable, SubscriptionLike } from 'rxjs';
+import { Observable } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { LogLevelColor } from '../../../../core/logs_model';
@@ -25,7 +25,6 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
   private readonly datasource: LokiDatasource;
   private readonly dataQueryRequest: DataQueryRequest<LokiQuery>;
   private rawLogsVolume: DataFrame[] = [];
-  private currentSubscription?: SubscriptionLike;
 
   constructor(datasource: LokiDatasource, dataQueryRequest: DataQueryRequest<LokiQuery>) {
     this.datasource = datasource;
@@ -33,11 +32,6 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
   }
 
   getData(): Observable<DataQueryResponse> {
-    if (this.currentSubscription) {
-      this.currentSubscription.unsubscribe();
-      this.currentSubscription = undefined;
-    }
-
     const logsVolumeRequest = cloneDeep(this.dataQueryRequest);
     logsVolumeRequest.targets = logsVolumeRequest.targets
       .filter((target) => target.expr && !isMetricsQuery(target.expr))
@@ -55,7 +49,7 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
         data: [],
       });
 
-      this.currentSubscription = this.datasource.query(logsVolumeRequest).subscribe({
+      const subscription = this.datasource.query(logsVolumeRequest).subscribe({
         complete: () => {
           const aggregatedLogsVolume = this.aggregateRawLogsVolume();
           observer.next({
@@ -78,10 +72,7 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
         },
       });
       return () => {
-        if (this.currentSubscription) {
-          this.currentSubscription.unsubscribe();
-          this.currentSubscription = undefined;
-        }
+        subscription?.unsubscribe();
       };
     });
   }

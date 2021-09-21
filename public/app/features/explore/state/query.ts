@@ -1,5 +1,5 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, of, Unsubscribable } from 'rxjs';
+import { identity, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   DataQuery,
   DataQueryErrorType,
@@ -115,6 +115,18 @@ export interface StoreLogsVolumeDataProvider {
  */
 const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
+);
+
+export interface StoreLogsVolumeDataSubscriptionPayload {
+  exploreId: ExploreId;
+  logsVolumeDataSubscription?: SubscriptionLike;
+}
+
+/**
+ * Stores current logs volume subscription for given explore pane.
+ */
+const storeLogsVolumeDataSubscriptionAction = createAction<StoreLogsVolumeDataSubscriptionPayload>(
+  'explore/storeLogsVolumeDataSubscriptionAction'
 );
 
 /**
@@ -523,11 +535,12 @@ export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const state = getState().explore[exploreId]!;
     const logsVolumeDataProvider = state.logsVolumeDataProvider;
-    logsVolumeDataProvider?.getData().subscribe({
+    const logsVolumeDataSubscription = logsVolumeDataProvider?.getData().subscribe({
       next: (logsVolumeData: DataQueryResponse) => {
         dispatch(updateLogsVolumeDataAction({ exploreId, logsVolumeData }));
       },
     });
+    dispatch(storeLogsVolumeDataSubscriptionAction({ exploreId, logsVolumeDataSubscription }));
   };
 }
 
@@ -644,11 +657,23 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   if (storeLogsVolumeDataProviderAction.match(action)) {
     let { logsVolumeDataProvider } = action.payload;
+    if (state.logsVolumeDataSubscription) {
+      state.logsVolumeDataSubscription.unsubscribe();
+    }
     return {
       ...state,
       logsVolumeDataProvider,
+      logsVolumeDataSubscription: undefined,
       // clear previous data, with a new provider the previous data becomes stale
       logsVolumeData: undefined,
+    };
+  }
+
+  if (storeLogsVolumeDataSubscriptionAction.match(action)) {
+    const { logsVolumeDataSubscription } = action.payload;
+    return {
+      ...state,
+      logsVolumeDataSubscription,
     };
   }
 

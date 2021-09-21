@@ -1,4 +1,4 @@
-import { Unsubscribable } from 'rxjs';
+import { SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -158,6 +158,7 @@ export interface ExploreItemState {
   cache: Array<{ key: string; value: PanelData }>;
 
   logsVolumeDataProvider?: RelatedDataProvider;
+  logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
 }
 
