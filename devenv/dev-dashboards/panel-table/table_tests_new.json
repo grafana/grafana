@@ -491,7 +491,7 @@
                 "value": [
                   {
                     "title": "Details",
-                    "url": "http://detail?serverLabel=${__field.labels.server}﻿﻿&valueNumeric=${__value.numeric}"
+                    "url": "http://detail?serverLabel=${__field.labels.server}&valueNumeric=${__value.numeric}"
                   }
                 ]
               }
