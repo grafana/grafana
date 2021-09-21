@@ -140,7 +140,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		response := make(map[PrometheusQueryType]model.Value)
 
 		if query.RangeQuery {
-
 			timeRange := apiv1.Range{
 				Step: query.Step,
 				// Align query range to step. It rounds start and end down to a multiple of step.
@@ -387,9 +386,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, queryType P
 			},
 		}
 		frames = append(frames, frame)
-
 	}
-
 	return frames
 }
 
