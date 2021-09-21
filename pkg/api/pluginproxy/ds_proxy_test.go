@@ -527,21 +527,21 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		secretsService := secrets.SetupTestService(t)
 
 		tests := []*testCase{
-			createAuthTest(t, &secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, false),
-			createAuthTest(t, &secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, true),
-			createAuthTest(t, &secretsService, models.DS_INFLUXDB, authTypePassword, authCheckHeader, true),
-			createAuthTest(t, &secretsService, models.DS_INFLUXDB, authTypePassword, authCheckHeader, false),
-			createAuthTest(t, &secretsService, models.DS_INFLUXDB, authTypeBasic, authCheckHeader, true),
-			createAuthTest(t, &secretsService, models.DS_INFLUXDB, authTypeBasic, authCheckHeader, false),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, false),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, true),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypePassword, authCheckHeader, true),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypePassword, authCheckHeader, false),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypeBasic, authCheckHeader, true),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypeBasic, authCheckHeader, false),
 
 			// These two should be enough for any other datasource at the moment. Proxy has special handling
 			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
 			// do not go through proxy but through TSDB API which is not tested here.
-			createAuthTest(t, &secretsService, models.DS_ES, authTypeBasic, authCheckHeader, false),
-			createAuthTest(t, &secretsService, models.DS_ES, authTypeBasic, authCheckHeader, true),
+			createAuthTest(t, secretsService, models.DS_ES, authTypeBasic, authCheckHeader, false),
+			createAuthTest(t, secretsService, models.DS_ES, authTypeBasic, authCheckHeader, true),
 		}
 		for _, test := range tests {
-			runDatasourceAuthTest(t, &secretsService, test)
+			runDatasourceAuthTest(t, secretsService, test)
 		}
 	})
 }
@@ -819,7 +819,7 @@ const (
 	authCheckHeader = "header"
 )
 
-func createAuthTest(t *testing.T, secretsService *secrets.SecretsService, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+func createAuthTest(t *testing.T, secretsService secrets.SecretsService, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
 	ctx := context.Background()
 
 	// Basic user:password
@@ -884,10 +884,10 @@ func createAuthTest(t *testing.T, secretsService *secrets.SecretsService, dsType
 	return test
 }
 
-func runDatasourceAuthTest(t *testing.T, secretsService *secrets.SecretsService, test *testCase) {
+func runDatasourceAuthTest(t *testing.T, secretsService secrets.SecretsService, test *testCase) {
 	plugin := &plugins.DataSourcePlugin{}
 	ctx := &models.ReqContext{}
-	dsService := datasources.ProvideService(bus.New(), nil, *secretsService)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
 	require.NoError(t, err)
 
