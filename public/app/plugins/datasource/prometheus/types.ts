@@ -48,7 +48,7 @@ export interface PromMetricsMetadataItem {
 }
 
 export interface PromMetricsMetadata {
-  [metric: string]: PromMetricsMetadataItem[];
+  [metric: string]: PromMetricsMetadataItem;
 }
 
 export interface PromDataSuccessResponse<T = PromData> {
