@@ -6,23 +6,23 @@ aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/late
 weight = 605
 +++
 
-# Visualize a Prometheus Data in a Grafana Histogram
+# Visualize Prometheus data in Grafana histogram
 
-In this document, you will learn how to visualize a Premetheus histogram in Grafana.
+Grafana has a histogram visualization which allows you to do <such and such things>. To review basic information, check out the Grafana's "[Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)." This topic discusses how to visualize a Premetheus histogram in Grafana.
 
-Grafana has a histogran visualization which allows you to do such and such things. To review basic information, check out the Grafana's "[Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)."
+List what users need here
+
+Assuming users have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana, this documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/). There are later versions of Grafana.
+
+For the purposes of this topic, the data sample is from a fictional image hosting service.
 
 Notes about this sample data:
 
 - Assume the Prometheus data does not contain any relevant resets and does not require joining metrics.
-- Only positive numeric values are included in this sample. Therefore, `_sum` can be used as a counter. However, it is possible to have negative values.
+
+- Only positive numeric values are included in this sample. Therefore, `_sum` can be used as a counter. However, it is possible to have negative values.
+
 - The Go Prometheus client uses scientific notation for large numbers. This sample does not which causes the screenshots to be slightly off. However, the principle is the same.
-
-## Prerequisites
-
-Assuming users have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana, this documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/).
-
-The data sample is from a fictional image hosting service.
 
 A Prometheus histogram consists of three elements:
 
