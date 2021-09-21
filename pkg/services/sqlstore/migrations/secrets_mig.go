@@ -17,5 +17,5 @@ func addSecretsMigration(mg *migrator.Migrator) {
 		Indices: []*migrator.Index{},
 	}
 
-	mg.AddMigration("create data keys table", migrator.NewAddTableMigration(dataKeysV1))
+	mg.AddMigration("create data_keys table", migrator.NewAddTableMigration(dataKeysV1))
 }

@@ -16,10 +16,10 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(plaintext, WithoutScope())
+		encrypted, err := svc.Encrypt(context.Background(), plaintext, WithoutScope())
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(encrypted)
+		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -30,10 +30,10 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(plaintext, WithoutScope())
+		encrypted, err := svc.Encrypt(context.Background(), plaintext, WithoutScope())
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(encrypted)
+		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -44,10 +44,10 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
-		encrypted, err := svc.Encrypt(plaintext, WithScope("user:100"))
+		encrypted, err := svc.Encrypt(context.Background(), plaintext, WithScope("user:100"))
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(encrypted)
+		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -57,7 +57,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	})
 
 	t.Run("decrypting empty payload should return error", func(t *testing.T) {
-		_, err := svc.Decrypt([]byte(""))
+		_, err := svc.Decrypt(context.Background(), []byte(""))
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
@@ -66,7 +66,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("decrypting legacy secret encrypted with secret key from settings", func(t *testing.T) {
 		expected := "grafana"
 		encrypted := []byte{122, 56, 53, 113, 101, 117, 73, 89, 20, 254, 36, 112, 112, 16, 128, 232, 227, 52, 166, 108, 192, 5, 28, 125, 126, 42, 197, 190, 251, 36, 94}
-		decrypted, err := svc.Decrypt(encrypted)
+		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, expected, string(decrypted))
 	})

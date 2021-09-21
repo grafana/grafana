@@ -68,54 +68,6 @@ type Provider interface {
 	Decrypt(blob []byte) ([]byte, error)
 }
 
-// newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
-	// 1. Create new DEK
-	dataKey, err := newRandomDataKey()
-	if err != nil {
-		return nil, err
-	}
-	provider, exists := s.providers[s.defaultProvider]
-	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
-	}
-
-	// 2. Encrypt it
-	encrypted, err := provider.Encrypt(dataKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. Store its encrypted value in db
-	err = s.store.CreateDataKey(ctx, types.DataKey{
-		Active:        true, // TODO: right now we do never mark a key as deactivated
-		Name:          name,
-		Provider:      s.defaultProvider,
-		EncryptedData: encrypted,
-		Scope:         scope,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// 4. Cache its unencrypted value and return it
-	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
-		dataKey: dataKey,
-	}
-
-	return dataKey, nil
-}
-
-func newRandomDataKey() ([]byte, error) {
-	rawDataKey := make([]byte, 16)
-	_, err := rand.Read(rawDataKey)
-	if err != nil {
-		return nil, err
-	}
-	return rawDataKey, nil
-}
-
 var b64 = base64.RawStdEncoding
 
 type EncryptionOptions func() string
@@ -136,14 +88,14 @@ func WithScope(scope string) EncryptionOptions {
 	}
 }
 
-func (s *SecretsService) Encrypt(payload []byte, opt EncryptionOptions) ([]byte, error) {
+func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt EncryptionOptions) ([]byte, error) {
 	scope := opt()
 	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.defaultProvider)
 
-	dataKey, err := s.dataKey(keyName)
+	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
 		if errors.Is(err, types.ErrDataKeyNotFound) {
-			dataKey, err = s.newDataKey(context.TODO(), keyName, scope)
+			dataKey, err = s.newDataKey(ctx, keyName, scope)
 			if err != nil {
 				return nil, err
 			}
@@ -169,7 +121,7 @@ func (s *SecretsService) Encrypt(payload []byte, opt EncryptionOptions) ([]byte,
 	return blob, nil
 }
 
-func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
+func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
@@ -193,7 +145,7 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 			return nil, err
 		}
 
-		dataKey, err = s.dataKey(string(key))
+		dataKey, err = s.dataKey(ctx, string(key))
 		if err != nil {
 			return nil, err
 		}
@@ -202,8 +154,95 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 	return s.enc.Decrypt(payload, string(dataKey))
 }
 
+func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt EncryptionOptions) (map[string][]byte, error) {
+	encrypted := make(map[string][]byte)
+	for key, value := range kv {
+		encryptedData, err := s.Encrypt(ctx, []byte(value), opt)
+		if err != nil {
+			return nil, err
+		}
+
+		encrypted[key] = encryptedData
+	}
+	return encrypted, nil
+}
+
+func (s *SecretsService) DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error) {
+	decrypted := make(map[string]string)
+	for key, data := range sjd {
+		decryptedData, err := s.Decrypt(ctx, data)
+		if err != nil {
+			return nil, err
+		}
+
+		decrypted[key] = string(decryptedData)
+	}
+	return decrypted, nil
+}
+
+func (s *SecretsService) GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string {
+	if value, ok := sjd[key]; ok {
+		decryptedData, err := s.Decrypt(ctx, value)
+		if err != nil {
+			return fallback
+		}
+
+		return string(decryptedData)
+	}
+
+	return fallback
+}
+
+func newRandomDataKey() ([]byte, error) {
+	rawDataKey := make([]byte, 16)
+	_, err := rand.Read(rawDataKey)
+	if err != nil {
+		return nil, err
+	}
+	return rawDataKey, nil
+}
+
+// newDataKey creates a new random DEK, caches it and returns its value
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
+	// 1. Create new DEK
+	dataKey, err := newRandomDataKey()
+	if err != nil {
+		return nil, err
+	}
+	provider, exists := s.providers[s.defaultProvider]
+	if !exists {
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
+	}
+
+	// 2. Encrypt it
+	encrypted, err := provider.Encrypt(dataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Store its encrypted value in db
+	err = s.store.CreateDataKey(ctx, types.DataKey{
+		Active:        true, // TODO: right now we never mark a key as deactivated
+		Name:          name,
+		Provider:      s.defaultProvider,
+		EncryptedData: encrypted,
+		Scope:         scope,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Cache its unencrypted value and return it
+	s.dataKeyCache[name] = dataKeyCacheItem{
+		expiry:  time.Now().Add(15 * time.Minute),
+		dataKey: dataKey,
+	}
+
+	return dataKey, nil
+}
+
 // dataKey looks up DEK in cache or database, and decrypts it
-func (s *SecretsService) dataKey(name string) ([]byte, error) {
+func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, error) {
 	if item, exists := s.dataKeyCache[name]; exists {
 		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
 			delete(s.dataKeyCache, name)
@@ -213,7 +252,7 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	}
 
 	// 1. get encrypted data key from database
-	dataKey, err := s.store.GetDataKey(context.Background(), name)
+	dataKey, err := s.store.GetDataKey(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -236,43 +275,4 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	}
 
 	return decrypted, nil
-}
-
-func (s *SecretsService) EncryptJsonData(kv map[string]string, opt EncryptionOptions) (map[string][]byte, error) {
-	encrypted := make(map[string][]byte)
-	for key, value := range kv {
-		encryptedData, err := s.Encrypt([]byte(value), opt)
-		if err != nil {
-			return nil, err
-		}
-
-		encrypted[key] = encryptedData
-	}
-	return encrypted, nil
-}
-
-func (s *SecretsService) DecryptJsonData(sjd map[string][]byte) (map[string]string, error) {
-	decrypted := make(map[string]string)
-	for key, data := range sjd {
-		decryptedData, err := s.Decrypt(data)
-		if err != nil {
-			return nil, err
-		}
-
-		decrypted[key] = string(decryptedData)
-	}
-	return decrypted, nil
-}
-
-func (s *SecretsService) GetDecryptedValue(sjd map[string][]byte, key, fallback string) string {
-	if value, ok := sjd[key]; ok {
-		decryptedData, err := s.Decrypt(value)
-		if err != nil {
-			return fallback
-		}
-
-		return string(decryptedData)
-	}
-
-	return fallback
 }
