@@ -285,7 +285,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	return nil
 }
 
-//ApplyConfig applies the configuration to the Alertmanager
+// ApplyConfig applies the configuration to the Alertmanager.
 func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
