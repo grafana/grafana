@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/models"
 	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -42,7 +42,7 @@ func ProvideBackgroundServiceRegistry(
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
 	backendPM *backendmanager.Manager, metrics *metrics.InternalMetricsService,
-	usageStats *usagestats.UsageStatsService, tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
+	usageStats *uss.UsageStats, tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
