@@ -227,13 +227,17 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 			"id", query.UserId,
 			"org", query.OrgId,
 		)
-		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
+		//Use the old APIkey method for now.  This provides backwards compatibility.  Later, return a 401
+		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.OrgRole = apikey.Role
+		reqContext.ApiKeyId = apikey.Id
+		reqContext.OrgId = apikey.OrgId
+		reqContext.IsSignedIn = true
 		return true
-	} else {
-		reqContext.SignedInUser = query.Result
 	}
 
 	reqContext.IsSignedIn = true
+	reqContext.SignedInUser = query.Result
 	return true
 }
 
