@@ -1,4 +1,4 @@
-package usagestats
+package service
 
 import (
 	"bytes"
@@ -12,23 +12,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
-type UsageReport struct {
-	Version         string                 `json:"version"`
-	Metrics         map[string]interface{} `json:"metrics"`
-	Os              string                 `json:"os"`
-	Arch            string                 `json:"arch"`
-	Edition         string                 `json:"edition"`
-	HasValidLicense bool                   `json:"hasValidLicense"`
-	Packaging       string                 `json:"packaging"`
-	UsageStatsId    string                 `json:"usageStatsId"`
-}
-
-func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
+func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, error) {
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
@@ -37,7 +27,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	if uss.Cfg.IsEnterprise {
 		edition = "enterprise"
 	}
-	report := UsageReport{
+	report := usagestats.Report{
 		Version:      version,
 		Metrics:      metrics,
 		Os:           runtime.GOOS,
@@ -276,7 +266,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	return report, nil
 }
 
-func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
+func (uss *UsageStats) registerExternalMetrics(metrics map[string]interface{}) {
 	for _, fn := range uss.externalMetrics {
 		fnMetrics, err := fn()
 		if err != nil {
@@ -290,11 +280,11 @@ func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interfa
 	}
 }
 
-func (uss *UsageStatsService) RegisterMetricsFunc(fn MetricsFunc) {
+func (uss *UsageStats) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
 	uss.externalMetrics = append(uss.externalMetrics, fn)
 }
 
-func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
+func (uss *UsageStats) sendUsageStats(ctx context.Context) error {
 	if !uss.Cfg.ReportingEnabled {
 		return nil
 	}
@@ -319,7 +309,7 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 // sendUsageStats sends usage statistics.
 //
 // Stubbable by tests.
-var sendUsageStats = func(uss *UsageStatsService, data *bytes.Buffer) {
+var sendUsageStats = func(uss *UsageStats, data *bytes.Buffer) {
 	go func() {
 		client := http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Post(usageStatsURL, "application/json", data)
@@ -333,7 +323,7 @@ var sendUsageStats = func(uss *UsageStatsService, data *bytes.Buffer) {
 	}()
 }
 
-func (uss *UsageStatsService) sampleLiveStats() {
+func (uss *UsageStats) sampleLiveStats() {
 	current := uss.grafanaLive.UsageStats()
 
 	uss.liveStats.sampleCount++
@@ -357,11 +347,11 @@ func (uss *UsageStatsService) sampleLiveStats() {
 	}
 }
 
-func (uss *UsageStatsService) resetLiveStats() {
+func (uss *UsageStats) resetLiveStats() {
 	uss.liveStats = liveUsageStats{}
 }
 
-func (uss *UsageStatsService) updateTotalStats() {
+func (uss *UsageStats) updateTotalStats() {
 	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
 		return
 	}
@@ -401,7 +391,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 }
 
-func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
+func (uss *UsageStats) ShouldBeReported(dsType string) bool {
 	ds := uss.PluginManager.GetDataSource(dsType)
 	if ds == nil {
 		return false
@@ -410,7 +400,7 @@ func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
 	return ds.Signature.IsValid() || ds.Signature.IsInternal()
 }
 
-func (uss *UsageStatsService) GetUsageStatsId(ctx context.Context) string {
+func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 	anonId, ok, err := uss.kvStore.Get(ctx, "anonymous_id")
 	if err != nil {
 		uss.log.Error("Failed to get usage stats id", "error", err)
