@@ -110,7 +110,9 @@ export class DashboardGrid extends PureComponent<Props, State> {
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
-    this.panelMap[newItem.i!].updateGridPos(newItem);
+    const panel = this.panelMap[newItem.i!];
+    panel.updateGridPos(newItem);
+    panel.configRev++; // trigger change handler
   };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {

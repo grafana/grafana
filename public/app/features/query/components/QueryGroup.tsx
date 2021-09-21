@@ -39,6 +39,7 @@ import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
+import { GroupActionComponents } from './QueryActionComponent';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -327,6 +328,12 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
+  renderExtraActions() {
+    return GroupActionComponents.getAllExtraRenderAction().map((c) => {
+      return React.createElement(c, { onAddQuery: this.onAddQuery });
+    });
+  }
+
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
     const { isAddingMixed } = this.state;
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
@@ -356,6 +363,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             </Button>
           </Tooltip>
         )}
+        {this.renderExtraActions()}
       </HorizontalGroup>
     );
   }

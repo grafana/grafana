@@ -16,7 +16,7 @@ import (
 func TestMiddlewareQuota(t *testing.T) {
 	t.Run("With user not logged in", func(t *testing.T) {
 		middlewareScenario(t, "and global quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -33,7 +33,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "and global quota reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -53,7 +53,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		})
 
 		middlewareScenario(t, "and global session quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -101,7 +101,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				}, nil
 			}
 
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
