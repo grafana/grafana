@@ -39,11 +39,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"gopkg.in/macaron.v1"
-	"gopkg.in/redis.v5"
 )
 
 var (
@@ -148,7 +148,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		redisClient := redis.NewClient(&redis.Options{
 			Addr: g.Cfg.LiveHAEngineAddress,
 		})
-		cmd := redisClient.Ping()
+		cmd := redisClient.Ping(context.TODO())
 		if _, err := cmd.Result(); err != nil {
 			return nil, fmt.Errorf("error pinging Redis: %v", err)
 		}
@@ -170,9 +170,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
-				Node:          node,
-				ManagedStream: g.ManagedStreamRunner,
-				FrameStorage:  pipeline.NewFrameStorage(),
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				ChannelHandlerGetter: g,
 			}
 		} else {
 			storage := &pipeline.FileStorage{
@@ -180,10 +181,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 			g.channelRuleStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
-				Node:          node,
-				ManagedStream: g.ManagedStreamRunner,
-				FrameStorage:  pipeline.NewFrameStorage(),
-				RuleStorage:   storage,
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				RuleStorage:          storage,
+				ChannelHandlerGetter: g,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -511,22 +513,47 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
 
-	handler, addr, err := g.GetChannelHandler(user, channel)
-	if err != nil {
-		if errors.Is(err, live.ErrInvalidChannelID) {
-			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+	var reply models.SubscribeReply
+	var status backend.SubscribeStreamStatus
+
+	var subscribeRuleFound bool
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		if ok && rule.Subscriber != nil {
+			subscribeRuleFound = true
+			var err error
+			reply, status, err = rule.Subscriber.Subscribe(client.Context(), pipeline.Vars{
+				OrgID:   orgID,
+				Channel: channel,
+			})
+			if err != nil {
+				logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+				return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			}
+		}
 	}
-	reply, status, err := handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
-		Channel: channel,
-		Path:    addr.Path,
-	})
-	if err != nil {
-		logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+	if !subscribeRuleFound {
+		handler, addr, err := g.GetChannelHandler(user, channel)
+		if err != nil {
+			if errors.Is(err, live.ErrInvalidChannelID) {
+				logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+				return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+			}
+			logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
+		reply, status, err = handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
+			Channel: channel,
+			Path:    addr.Path,
+		})
+		if err != nil {
+			logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
 	}
 	if status != backend.SubscribeStreamStatusOK {
 		// using HTTP error codes for WS errors too.
@@ -905,6 +932,94 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{})
+}
+
+type configInfo struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Example     interface{} `json:"example,omitempty"`
+}
+
+// HandlePipelineEntitiesListHTTP ...
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"subscribers": []configInfo{
+			{
+				Type:        pipeline.SubscriberTypeBuiltin,
+				Description: "list the fields that should be removed",
+				// Example:     pipeline.Bu{},
+			},
+			{
+				Type:        pipeline.SubscriberTypeManagedStream,
+				Description: "list the fields that should be removed",
+			},
+			{
+				Type: pipeline.SubscriberTypeMultiple,
+			},
+		},
+		"outputs": []configInfo{
+			{
+				Type:        pipeline.OutputTypeManagedStream,
+				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+				Example:     pipeline.ManagedStreamOutputConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeMultiple,
+				Description: "Send the output to multiple destinations",
+				Example:     pipeline.MultipleOutputterConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeConditional,
+				Description: "send to an output depending on frame values",
+				Example:     pipeline.ConditionalOutputConfig{},
+			},
+			{
+				Type: pipeline.OutputTypeRedirect,
+			},
+			{
+				Type: pipeline.OutputTypeThreshold,
+			},
+			{
+				Type: pipeline.OutputTypeChangeLog,
+			},
+			{
+				Type: pipeline.OutputTypeRemoteWrite,
+			},
+		},
+		"converters": []configInfo{
+			{
+				Type: pipeline.ConverterTypeJsonAuto,
+			},
+			{
+				Type: pipeline.ConverterTypeJsonExact,
+			},
+			{
+				Type:        pipeline.ConverterTypeInfluxAuto,
+				Description: "accept influx line protocol",
+				Example:     pipeline.AutoInfluxConverterConfig{},
+			},
+			{
+				Type: pipeline.ConverterTypeJsonFrame,
+			},
+		},
+		"processors": []configInfo{
+			{
+				Type:        pipeline.ProcessorTypeKeepFields,
+				Description: "list the fields that should stay",
+				Example:     pipeline.KeepFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeDropFields,
+				Description: "list the fields that should be removed",
+				Example:     pipeline.DropFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeMultiple,
+				Description: "apply multiplie processors",
+				Example:     pipeline.MultipleProcessorConfig{},
+			},
+		},
+	})
 }
 
 // HandleRemoteWriteBackendsListHTTP ...

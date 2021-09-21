@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
@@ -27,7 +26,6 @@ interface Props extends Themeable2 {
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  highlighterExpressions?: string[];
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
   updateLimit?: () => void;
@@ -100,7 +98,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
   render() {
     const {
-      highlighterExpressions,
       row,
       theme,
       errors,
@@ -118,11 +115,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
 
-    const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
-    const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const highlightClassName = previewHighlights
-      ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
-      : cx([style.logsRowMatchHighLight]);
+    const highlightClassName = cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
 
     return (
@@ -146,7 +139,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(hasAnsi, restructuredEntry, highlights, highlightClassName)}
+            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, highlightClassName)}
           </span>
           {showContextToggle?.(row) && (
             <span

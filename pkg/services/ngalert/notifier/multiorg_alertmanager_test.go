@@ -3,9 +3,12 @@ package notifier
 import (
 	"bytes"
 	"context"
+	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,19 +19,27 @@ import (
 )
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
-	t.Skipf("Skipping multiorg alertmanager tests for now")
 	configStore := &FakeConfigStore{
 		configs: map[int64]*models.AlertConfiguration{},
 	}
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
-	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
+
+	tmpDir, err := ioutil.TempDir("", "test")
+	require.NoError(t, err)
 	kvStore := newFakeKVStore(t)
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics())
+	cfg := &setting.Cfg{
+		DataPath:        tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute}, // do not poll in tests.
+	}
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, err)
 	ctx := context.Background()
+
+	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 
 	// Ensure that one Alertmanager is created per org.
 	{
@@ -74,20 +85,26 @@ grafana_alerting_discovered_configurations 4
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
-	t.Skipf("Skipping multiorg alertmanager tests for now")
 	configStore := &FakeConfigStore{
 		configs: map[int64]*models.AlertConfiguration{},
 	}
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
-
-	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
+	tmpDir, err := ioutil.TempDir("", "test")
+	require.NoError(t, err)
+	cfg := &setting.Cfg{
+		DataPath:        tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute}, // do not poll in tests.
+	}
 	kvStore := newFakeKVStore(t)
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics())
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, err)
 	ctx := context.Background()
+
+	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 
 	// Ensure that one Alertmanagers is created per org.
 	{
@@ -124,5 +141,12 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		_, err := mam.AlertmanagerFor(2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
+	}
+}
+
+// nolint:unused
+func cleanOrgDirectories(path string, t *testing.T) func() {
+	return func() {
+		require.NoError(t, os.RemoveAll(path))
 	}
 }

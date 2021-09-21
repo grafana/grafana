@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureResultFormat } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
 import { setFormatAs } from './setQueryValue';
 
-const FORMAT_OPTIONS: Array<AzureMonitorOption<AzureResultFormat>> = [
+const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
 ];
@@ -14,7 +14,7 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
   const options = useMemo(() => [...FORMAT_OPTIONS, variableOptionGroup], [variableOptionGroup]);
 
   const handleChange = useCallback(
-    (change: SelectableValue<AzureResultFormat>) => {
+    (change: SelectableValue<string>) => {
       const { value } = change;
       if (!value) {
         return;

@@ -8,7 +8,6 @@ import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput
 import {
   addLimitInfo,
   fixSummariesMetadata,
-  limitSuggestions,
   parseSelector,
   processHistogramLabels,
   processLabels,
@@ -54,7 +53,7 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
-    const { type, help } = metadata[metric][0];
+    const { type, help } = metadata[metric];
     item.documentation = `${type.toUpperCase()}: ${help}`;
   }
   return item;
@@ -62,6 +61,9 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
 
 const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
+interface AutocompleteContext {
+  history?: Array<HistoryItem<PromQuery>>;
+}
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   timeRange?: { start: number; end: number };
@@ -140,7 +142,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   provideCompletionItems = async (
     { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
-    context: { history: Array<HistoryItem<PromQuery>> } = { history: [] }
+    context: AutocompleteContext = {}
   ): Promise<TypeaheadOutput> => {
     const emptyResult: TypeaheadOutput = { suggestions: [] };
 
@@ -194,13 +196,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return emptyResult;
   };
 
-  getBeginningCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
+  getBeginningCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
     return {
       suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
     };
   };
 
-  getEmptyCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
+  getEmptyCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
     const { history } = context;
     const suggestions: CompletionItemGroup[] = [];
 
@@ -236,10 +238,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     });
 
     if (metrics && metrics.length) {
-      const limitInfo = addLimitInfo(metrics);
       suggestions.push({
-        label: `Metrics${limitInfo}`,
-        items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
+        label: 'Metrics',
+        items: metrics.map((m) => addMetricsMetadata(m, metricsMetadata)),
         searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
@@ -264,7 +265,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     // Stitch all query lines together to support multi-line queries
     let queryOffset;
-    const queryText = value.document.getBlocks().reduce((text: string, block) => {
+    const queryText = value.document.getBlocks().reduce((text, block) => {
+      if (text === undefined) {
+        return '';
+      }
       if (!block) {
         return text;
       }

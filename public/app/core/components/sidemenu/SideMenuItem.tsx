@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Link, styleMixins, useTheme2 } from '@grafana/ui';
+import { Link, useTheme2 } from '@grafana/ui';
 import SideMenuDropDown from './SideMenuDropDown';
 
 export interface Props {
@@ -86,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       }
     }
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
 
       &:hover {

@@ -81,7 +81,7 @@ func getLibraryElement(dialect migrator.Dialect, session *sqlstore.DBSession, ui
 		return LibraryElementWithMeta{}, err
 	}
 	if len(elements) == 0 {
-		return LibraryElementWithMeta{}, errLibraryElementNotFound
+		return LibraryElementWithMeta{}, ErrLibraryElementNotFound
 	}
 	if len(elements) > 1 {
 		return LibraryElementWithMeta{}, fmt.Errorf("found %d elements, while expecting at most one", len(elements))
@@ -196,28 +196,28 @@ func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid s
 		if rowsAffected, err := result.RowsAffected(); err != nil {
 			return err
 		} else if rowsAffected != 1 {
-			return errLibraryElementNotFound
+			return ErrLibraryElementNotFound
 		}
 
 		return nil
 	})
 }
 
-// getLibraryElement gets a Library Element where param == value
-func (l *LibraryElementService) getLibraryElements(c *models.ReqContext, params []Pair) ([]LibraryElementDTO, error) {
+// getLibraryElements gets a Library Element where param == value
+func getLibraryElements(c *models.ReqContext, store *sqlstore.SQLStore, params []Pair) ([]LibraryElementDTO, error) {
 	libraryElements := make([]LibraryElementWithMeta, 0)
-	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	err := store.WithDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
 		builder.Write(", '' as folder_uid ")
-		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.Dialect))
+		builder.Write(getFromLibraryElementDTOWithMeta(store.Dialect))
 		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", 0})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
 		builder.Write(", dashboard.uid as folder_uid ")
-		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.Dialect))
+		builder.Write(getFromLibraryElementDTOWithMeta(store.Dialect))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
@@ -228,7 +228,7 @@ func (l *LibraryElementService) getLibraryElements(c *models.ReqContext, params 
 			return err
 		}
 		if len(libraryElements) == 0 {
-			return errLibraryElementNotFound
+			return ErrLibraryElementNotFound
 		}
 
 		return nil
@@ -274,8 +274,8 @@ func (l *LibraryElementService) getLibraryElements(c *models.ReqContext, params 
 }
 
 // getLibraryElementByUid gets a Library Element by uid.
-func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext) (LibraryElementDTO, error) {
-	libraryElements, err := l.getLibraryElements(c, []Pair{{key: "org_id", value: c.SignedInUser.OrgId}, {key: "uid", value: macaron.Params(c.Req)[":uid"]}})
+func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext, UID string) (LibraryElementDTO, error) {
+	libraryElements, err := getLibraryElements(c, l.SQLStore, []Pair{{key: "org_id", value: c.SignedInUser.OrgId}, {key: "uid", value: UID}})
 	if err != nil {
 		return LibraryElementDTO{}, err
 	}
@@ -288,7 +288,7 @@ func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext) (Li
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c *models.ReqContext) ([]LibraryElementDTO, error) {
-	return l.getLibraryElements(c, []Pair{{"org_id", c.SignedInUser.OrgId}, {"name", macaron.Params(c.Req)[":name"]}})
+	return getLibraryElements(c, l.SQLStore, []Pair{{"org_id", c.SignedInUser.OrgId}, {"name", macaron.Params(c.Req)[":name"]}})
 }
 
 // getAllLibraryElements gets all Library Elements.
@@ -458,7 +458,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 			}
 
 			_, err := getLibraryElement(l.SQLStore.Dialect, session, updateUID, c.SignedInUser.OrgId)
-			if !errors.Is(err, errLibraryElementNotFound) {
+			if !errors.Is(err, ErrLibraryElementNotFound) {
 				return errLibraryElementAlreadyExists
 			}
 		}
@@ -498,7 +498,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 			}
 			return err
 		} else if rowsAffected != 1 {
-			return errLibraryElementNotFound
+			return ErrLibraryElementNotFound
 		}
 
 		dto = LibraryElementDTO{
