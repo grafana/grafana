@@ -14,6 +14,7 @@ import { PluginTabLabels, PluginDetailsTab } from '../types';
 import { useGetSingle, useFetchStatus } from '../state/hooks';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { AppNotificationSeverity } from 'app/types';
+import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
@@ -83,7 +84,8 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
-          <PluginDetailsSignature plugin={plugin} className={styles.signature} />
+          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+          <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsBody tab={tabs[activeTabIndex]} plugin={plugin} />
         </TabContent>
       </PluginPage>
@@ -93,7 +95,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    signature: css`
+    alert: css`
       margin: ${theme.spacing(3)};
       margin-bottom: 0;
     `,
