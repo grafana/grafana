@@ -64,8 +64,8 @@ type dataKeyCacheItem struct {
 }
 
 type Provider interface {
-	Encrypt(blob []byte) ([]byte, error)
-	Decrypt(blob []byte) ([]byte, error)
+	Encrypt(ctx context.Context, blob []byte) ([]byte, error)
+	Decrypt(ctx context.Context, blob []byte) ([]byte, error)
 }
 
 var b64 = base64.RawStdEncoding
@@ -104,7 +104,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt Encryp
 		}
 	}
 
-	encrypted, err := s.enc.Encrypt(payload, string(dataKey))
+	encrypted, err := s.enc.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		}
 	}
 
-	return s.enc.Decrypt(payload, string(dataKey))
+	return s.enc.Decrypt(ctx, payload, string(dataKey))
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt EncryptionOptions) (map[string][]byte, error) {
@@ -215,7 +215,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 2. Encrypt it
-	encrypted, err := provider.Encrypt(dataKey)
+	encrypted, err := provider.Encrypt(ctx, dataKey)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
 
-	decrypted, err := provider.Decrypt(dataKey.EncryptedData)
+	decrypted, err := provider.Decrypt(ctx, dataKey.EncryptedData)
 	if err != nil {
 		return nil, err
 	}
