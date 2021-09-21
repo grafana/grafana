@@ -159,6 +159,7 @@ export const Pages = {
   PluginPage: {
     page: 'Plugin page',
     signatureInfo: 'Plugin signature info',
+    disabledInfo: 'Plugin disabled info',
   },
   PlaylistForm: {
     name: 'Playlist name',

@@ -1,5 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { LibraryElementDTO } from '../../library-panels/types';
 
 export enum DashboardSource {
   Gcom = 0,
@@ -12,12 +13,20 @@ export interface ImportDashboardDTO {
   gnetId: string;
   constants: string[];
   dataSources: DataSourceInstanceSettings[];
+  elements: LibraryElementDTO[];
   folder: { id: number; title?: string };
 }
 
 export enum InputType {
   DataSource = 'datasource',
   Constant = 'constant',
+  LibraryPanel = 'libraryPanel',
+}
+
+export enum LibraryPanelInputState {
+  New = 'new',
+  Exits = 'exists',
+  Different = 'different',
 }
 
 export interface DashboardInput {
@@ -32,9 +41,15 @@ export interface DataSourceInput extends DashboardInput {
   pluginId: string;
 }
 
+export interface LibraryPanelInput {
+  model: LibraryElementDTO;
+  state: LibraryPanelInputState;
+}
+
 export interface DashboardInputs {
   dataSources: DataSourceInput[];
   constants: DashboardInput[];
+  libraryPanels: LibraryPanelInput[];
 }
 
 export interface ImportDashboardState {
@@ -45,7 +60,7 @@ export interface ImportDashboardState {
   isLoaded: boolean;
 }
 
-const initialImportDashboardState: ImportDashboardState = {
+export const initialImportDashboardState: ImportDashboardState = {
   meta: { updatedAt: '', orgName: '' },
   dashboard: {},
   source: DashboardSource.Json,
@@ -57,47 +72,48 @@ const importDashboardSlice = createSlice({
   name: 'manageDashboards',
   initialState: initialImportDashboardState,
   reducers: {
-    setGcomDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {
-          ...action.payload.json,
-          id: null,
-        },
-        meta: { updatedAt: action.payload.updatedAt, orgName: action.payload.orgName },
-        source: DashboardSource.Gcom,
-        isLoaded: true,
+    setGcomDashboard: (state: Draft<ImportDashboardState>, action: PayloadAction<any>) => {
+      state.dashboard = {
+        ...action.payload.json,
+        id: null,
       };
+      state.meta = { updatedAt: action.payload.updatedAt, orgName: action.payload.orgName };
+      state.source = DashboardSource.Gcom;
+      state.isLoaded = true;
     },
-    setJsonDashboard: (state, action: PayloadAction<any>): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {
-          ...action.payload,
-          id: null,
-        },
-        source: DashboardSource.Json,
-        isLoaded: true,
+    setJsonDashboard: (state: Draft<ImportDashboardState>, action: PayloadAction<any>) => {
+      state.dashboard = {
+        ...action.payload,
+        id: null,
       };
+      state.meta = initialImportDashboardState.meta;
+      state.source = DashboardSource.Json;
+      state.isLoaded = true;
     },
-    clearDashboard: (state): ImportDashboardState => {
-      return {
-        ...state,
-        dashboard: {},
-        isLoaded: false,
-      };
+    clearDashboard: (state: Draft<ImportDashboardState>) => {
+      state.dashboard = {};
+      state.isLoaded = false;
     },
-    setInputs: (state, action: PayloadAction<any[]>): ImportDashboardState => ({
-      ...state,
-      inputs: {
+    setInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<any[]>) => {
+      state.inputs = {
         dataSources: action.payload.filter((p) => p.type === InputType.DataSource),
         constants: action.payload.filter((p) => p.type === InputType.Constant),
-      },
-    }),
+        libraryPanels: [],
+      };
+    },
+    setLibraryPanelInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<LibraryPanelInput[]>) => {
+      state.inputs.libraryPanels = action.payload;
+    },
   },
 });
 
-export const { clearDashboard, setInputs, setGcomDashboard, setJsonDashboard } = importDashboardSlice.actions;
+export const {
+  clearDashboard,
+  setInputs,
+  setGcomDashboard,
+  setJsonDashboard,
+  setLibraryPanelInputs,
+} = importDashboardSlice.actions;
 
 export const importDashboardReducer = importDashboardSlice.reducer;
 

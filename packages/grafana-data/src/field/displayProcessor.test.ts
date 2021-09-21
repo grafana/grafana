@@ -157,6 +157,18 @@ describe('Format value', () => {
     expect(result.text).toEqual('elva');
   });
 
+  it('should return mapped color but use value format if no value mapping text specified', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.RangeToText, options: { from: 1, to: 9, result: { color: '#FFF' } } },
+    ];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 2, mappings: valueMappings });
+    const result = instance(5);
+
+    expect(result.color).toEqual('#FFF');
+    expect(result.text).toEqual('5.00');
+  });
+
   it('should replace a matching regex', () => {
     const valueMappings: ValueMapping[] = [
       { type: MappingType.RegexToText, options: { pattern: '([^.]*).example.com', result: { text: '$1' } } },

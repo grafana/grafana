@@ -105,3 +105,25 @@ func TestPipeline_OutputError(t *testing.T) {
 	_, err = p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
 	require.ErrorIs(t, err, boomErr)
 }
+
+func TestPipeline_Recursion(t *testing.T) {
+	p, err := New(&testRuleGetter{
+		rules: map[string]*LiveChannelRule{
+			"stream/test/xxx": {
+				Converter: &testConverter{"", data.NewFrame("test")},
+				Outputter: NewRedirectOutput(RedirectOutputConfig{
+					Channel: "stream/test/yyy",
+				}),
+			},
+			"stream/test/yyy": {
+				Converter: &testConverter{"", data.NewFrame("test")},
+				Outputter: NewRedirectOutput(RedirectOutputConfig{
+					Channel: "stream/test/xxx",
+				}),
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
+	require.ErrorIs(t, err, errChannelRecursion)
+}

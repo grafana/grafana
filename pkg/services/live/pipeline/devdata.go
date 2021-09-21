@@ -10,10 +10,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/centrifugal/centrifuge"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type Data struct {
@@ -90,15 +90,20 @@ func postTestData() {
 }
 
 type DevRuleBuilder struct {
-	Node          *centrifuge.Node
-	ManagedStream *managedstream.Runner
-	FrameStorage  *FrameStorage
+	Node                 *centrifuge.Node
+	ManagedStream        *managedstream.Runner
+	FrameStorage         *FrameStorage
+	ChannelHandlerGetter ChannelHandlerGetter
 }
 
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
+			Pattern: "plugin/testdata/random-20Hz-stream",
+			Subscriber: NewMultipleSubscriber(
+				NewBuiltinSubscriber(f.ChannelHandlerGetter),
+				NewManagedStreamSubscriber(f.ManagedStream),
+			),
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),

@@ -497,6 +497,22 @@ export class DashboardModel {
     });
   }
 
+  clearUnsavedChanges() {
+    for (const panel of this.panels) {
+      panel.configRev = 0;
+    }
+  }
+
+  hasUnsavedChanges() {
+    for (const panel of this.panels) {
+      if (panel.hasChanged) {
+        console.log('Panel has changed', panel);
+        return true;
+      }
+    }
+    return false;
+  }
+
   cleanUpRepeats() {
     if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
