@@ -12,8 +12,6 @@ export interface DatasourceValidationResult {
   title?: string;
 }
 
-export type AzureResultFormat = 'time_series' | 'table';
-
 /**
  * Azure clouds known to Azure Monitor.
  */
