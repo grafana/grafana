@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -15,6 +16,7 @@ import (
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -24,9 +26,11 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
@@ -38,6 +42,9 @@ import (
 )
 
 const (
+	notificationLogFilename = "notifications"
+	silencesFilename        = "silences"
+
 	workingDir = "alerting"
 	// How long should we keep silences and notification entries on-disk after they've served their purpose.
 	retentionNotificationsAndSilences = 5 * 24 * time.Hour
@@ -73,18 +80,28 @@ const (
 `
 )
 
+type ClusterPeer interface {
+	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
+	Position() int
+	WaitReady(context.Context) error
+}
+
 type Alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
+	OrgID       int64
 
-	Settings *setting.Cfg
-	Store    store.AlertingStore
-	Metrics  *metrics.Metrics
+	Settings  *setting.Cfg
+	Store     store.AlertingStore
+	fileStore *FileStore
+	Metrics   *metrics.Alertmanager
 
 	notificationLog *nflog.Log
 	marker          types.Marker
 	alerts          *mem.Alerts
 	route           *dispatch.Route
+	peer            ClusterPeer
+	peerTimeout     time.Duration
 
 	dispatcher *dispatch.Dispatcher
 	inhibitor  *inhibit.Inhibitor
@@ -106,55 +123,96 @@ type Alertmanager struct {
 	orgID           int64
 }
 
-func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Alertmanager, error) {
+func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore, peer ClusterPeer, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
 		logger:            log.New("alertmanager", "org", orgID),
 		marker:            types.NewMarker(m.Registerer),
 		stageMetrics:      notify.NewMetrics(m.Registerer),
-		dispatcherMetrics: dispatch.NewDispatcherMetrics(m.Registerer),
+		dispatcherMetrics: dispatch.NewDispatcherMetrics(false, m.Registerer),
 		Store:             store,
+		peer:              peer,
+		peerTimeout:       cfg.UnifiedAlerting.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
 	}
 
 	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
+	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
+
+	nflogFilepath, err := am.fileStore.FilepathFor(context.TODO(), notificationLogFilename)
+	if err != nil {
+		return nil, err
+	}
+	silencesFilePath, err := am.fileStore.FilepathFor(context.TODO(), silencesFilename)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize the notification log
 	am.wg.Add(1)
-	var err error
 	am.notificationLog, err = nflog.New(
 		nflog.WithRetention(retentionNotificationsAndSilences),
-		nflog.WithSnapshot(filepath.Join(am.WorkingDirPath(), "notifications")),
-		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done),
+		nflog.WithSnapshot(nflogFilepath),
+		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
+			return am.fileStore.Persist(context.TODO(), notificationLogFilename, am.notificationLog)
+		}),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
-	// Initialize silences
-	am.silences, err = silence.New(silence.Options{
-		Metrics:      m.Registerer,
-		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
-		Retention:    retentionNotificationsAndSilences,
-	})
+	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
+	am.notificationLog.SetBroadcast(c.Broadcast)
+
+	am.silences, err = newSilences(silencesFilePath, m.Registerer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
+	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.OrgID), am.silences, m.Registerer)
+	am.silences.SetBroadcast(c.Broadcast)
+
 	am.wg.Add(1)
 	go func() {
-		am.silences.Maintenance(15*time.Minute, filepath.Join(am.WorkingDirPath(), "silences"), am.stopc)
+		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
+			return am.fileStore.Persist(context.TODO(), silencesFilename, am.silences)
+		})
 		am.wg.Done()
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, am.gokitLogger)
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.gokitLogger)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
 
 	return am, nil
+}
+
+// newSilences initializes returns *silence.Silences (from the Alertmanager) with silences taken from the file by path silencesFilePath and specific metrics registerer.
+func newSilences(silencesFilePath string, registerer prometheus.Registerer) (*silence.Silences, error) {
+	//TODO yuriy: Replace with silencesFilePath when fix in https://github.com/prometheus/alertmanager/pull/2710 is merged.
+	silenceOpts := silence.Options{
+		Metrics:   registerer,
+		Retention: retentionNotificationsAndSilences,
+	}
+
+	//The path is generated by the filestore. So presumably it should be safe
+	//nolint:gosec
+	silencesFileReader, err := os.Open(silencesFilePath)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	if silencesFileReader != nil {
+		silenceOpts.SnapshotReader = silencesFileReader
+		defer func(file *os.File) {
+			_ = file.Close()
+		}(silencesFileReader)
+	}
+	// Initialize silences
+	return silence.New(silenceOpts)
 }
 
 func (am *Alertmanager) Ready() bool {
@@ -214,7 +272,6 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	if err != nil {
 		return err
 	}
-	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
@@ -245,55 +302,24 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	if err != nil {
 		return err
 	}
-	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
 
-// SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
-// the components with the new config.
-func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
+// ApplyConfig applies the configuration to the Alertmanager.
+func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
+	var err error
+	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
+	}
+
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
-	// First, let's get the configuration we need from the database.
-	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: am.orgID}
-	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
-		// If there's no configuration in the database, let's use the default configuration.
-		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			// First, let's save it to the database. We don't need to use a transaction here as we'll always succeed.
-			am.logger.Info("no Alertmanager configuration found, saving and applying a default")
-			savecmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
-				Default:                   true,
-				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-				OrgID:                     am.orgID,
-			}
-			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
-				return err
-			}
-
-			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration, Default: true}
-		} else {
-			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
-		}
+	if err = am.applyConfig(cfg, nil); err != nil {
+		return fmt.Errorf("unable to apply configuration: %w", err)
 	}
-
-	cfg, err := Load([]byte(q.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
-
-	if err := am.applyConfig(cfg, nil); err != nil {
-		return fmt.Errorf("unable to reload configuration: %w", err)
-	}
-
-	if q.Result.Default {
-		am.Metrics.ActiveConfigurations.Set(0)
-	} else {
-		am.Metrics.ActiveConfigurations.Set(1)
-	}
-
 	return nil
 }
 
@@ -382,15 +408,16 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.gokitLogger)
 	am.silencer = silence.NewSilencer(am.silences, am.marker, am.gokitLogger)
 
+	meshStage := notify.NewGossipSettleStage(am.peer)
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{silencingStage, inhibitionStage, stage}
+		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{meshStage, silencingStage, inhibitionStage, stage}
 	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, am.gokitLogger, am.dispatcherMetrics)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
 	go func() {
@@ -691,19 +718,19 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 	return fs
 }
 
-func waitFunc() time.Duration {
-	// When it's a single instance, we don't need additional wait. The routing policies will have their own group wait.
-	// We need >0 wait here in case we have peers to sync the notification state with. 0 wait in that case can result
-	// in duplicate notifications being sent.
-	// TODO: we have setting.AlertingNotificationTimeout in legacy settings. Either use that or separate set of config
-	// for clustering with intuitive name, like "PeerTimeout".
-	return 0
+func (am *Alertmanager) waitFunc() time.Duration {
+	return time.Duration(am.peer.Position()) * am.peerTimeout
 }
 
-func timeoutFunc(d time.Duration) time.Duration {
-	//TODO: What does MinTimeout means here?
+func (am *Alertmanager) timeoutFunc(d time.Duration) time.Duration {
+	// time.Duration d relates to the receiver's group_interval. Even with a group interval of 1s,
+	// we need to make sure (non-position-0) peers in the cluster wait before flushing the notifications.
 	if d < notify.MinTimeout {
 		d = notify.MinTimeout
 	}
-	return d + waitFunc()
+	return d + am.waitFunc()
 }
+
+type nilLimits struct{}
+
+func (n nilLimits) MaxNumberOfAggregationGroups() int { return 0 }

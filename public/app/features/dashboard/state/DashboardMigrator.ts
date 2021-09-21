@@ -21,6 +21,8 @@ import {
   ValueMapping,
   getActiveThreshold,
   DataTransformerConfig,
+  AnnotationQuery,
+  DataQuery,
 } from '@grafana/data';
 // Constants
 import {
@@ -42,6 +44,11 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { getDataSourceSrv } from '@grafana/runtime';
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
+import {
+  migrateMultipleStatsMetricsQuery,
+  migrateMultipleStatsAnnotationQuery,
+} from 'app/plugins/datasource/cloudwatch/migrations';
+import { CloudWatchMetricsQuery, CloudWatchAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -737,6 +744,31 @@ export class DashboardMigrator {
     }
   }
 
+  // Migrates metric queries and/or annotation queries that use more than one statistic.
+  // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
+  // New queries, that were created during migration, are put at the end of the array.
+  migrateCloudWatchQueries() {
+    for (const panel of this.dashboard.panels) {
+      for (const target of panel.targets) {
+        if (isLegacyCloudWatchQuery(target)) {
+          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+          for (const newQuery of newQueries) {
+            panel.targets.push(newQuery);
+          }
+        }
+      }
+    }
+
+    for (const annotation of this.dashboard.annotations.list) {
+      if (isLegacyCloudWatchAnnotationQuery(annotation)) {
+        const newAnnotationQueries = migrateMultipleStatsAnnotationQuery(annotation);
+        for (const newAnnotationQuery of newAnnotationQueries) {
+          this.dashboard.annotations.list.push(newAnnotationQuery);
+        }
+      }
+    }
+  }
+
   upgradeToGridLayout(old: any) {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
@@ -1061,6 +1093,25 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   }
 
   return panel;
+}
+
+function isLegacyCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
+  return (
+    target.hasOwnProperty('dimensions') &&
+    target.hasOwnProperty('namespace') &&
+    target.hasOwnProperty('region') &&
+    target.hasOwnProperty('statistics')
+  );
+}
+
+function isLegacyCloudWatchAnnotationQuery(target: AnnotationQuery<DataQuery>): target is CloudWatchAnnotationQuery {
+  return (
+    target.hasOwnProperty('dimensions') &&
+    target.hasOwnProperty('namespace') &&
+    target.hasOwnProperty('region') &&
+    target.hasOwnProperty('prefixMatching') &&
+    target.hasOwnProperty('statistics')
+  );
 }
 
 function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {

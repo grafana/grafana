@@ -17,7 +17,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -73,7 +73,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.4.2
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
   depends_on:
   - test-backend
 
@@ -112,7 +112,7 @@ steps:
 - name: package
   image: grafana/build-container:1.4.2
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - gen-version
 
@@ -145,6 +145,20 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
+
+- name: test-a11y-frontend-pr
+  image: buildkite/puppeteer
+  commands:
+  - yarn wait-on http://$HOST:$PORT
+  - yarn -s test:accessibility-pr
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
+    PORT: 3001
+  failure: ignore
+  depends_on:
+  - end-to-end-tests-server
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.2
@@ -254,7 +268,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -595,7 +609,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -644,7 +658,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   environment:
@@ -732,7 +746,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1034,7 +1048,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1084,7 +1098,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1502,7 +1516,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1570,7 +1584,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1678,7 +1692,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -1969,7 +1983,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2019,7 +2033,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2431,7 +2445,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout main
@@ -2499,7 +2513,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -2607,7 +2621,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -2873,7 +2887,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2919,7 +2933,7 @@ steps:
   image: grafana/build-container:1.4.2
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3334,7 +3348,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -3478,6 +3492,6 @@ get:
 
 ---
 kind: signature
-hmac: 4792c3d8d3bbbff15138c73482622af1a7bad000a3bf75c0b797957969cc205e
+hmac: 9211e316cd24660667ba57b860129d2f06b0a4a669aa4d5c1f13156667ae027f
 
 ...

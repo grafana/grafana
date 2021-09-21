@@ -4,14 +4,51 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRequestParser(t *testing.T) {
-	timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
+	t.Run("Query migration ", func(t *testing.T) {
+		t.Run("legacy statistics field is migrated", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			oldQuery := &backend.DataQuery{
+				MaxDataPoints: 0,
+				QueryType:     "timeSeriesQuery",
+				Interval:      0,
+			}
+			oldQuery.RefID = "A"
+			oldQuery.JSON = []byte(`{
+				"region": "us-east-1",
+				"namespace": "ec2",
+				"metricName": "CPUUtilization",
+				"dimensions": {
+				  "InstanceId": ["test"]
+				},
+				"statistics": ["Average", "Sum"],
+				"period": "600",
+				"hide": false
+			  }`)
+			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, startTime, endTime)
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(migratedQueries))
+
+			migratedQuery := migratedQueries[0]
+			assert.Equal(t, "A", migratedQuery.RefID)
+			model, err := simplejson.NewJson(migratedQuery.JSON)
+			require.NoError(t, err)
+			assert.Equal(t, "Average", model.Get("statistic").MustString())
+			res, err := model.Get("statistic").Array()
+			assert.Error(t, err)
+			assert.Nil(t, res)
+		})
+	})
+
+	timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
 	from, err := timeRange.ParseFrom()
 	require.NoError(t, err)
 	to, err := timeRange.ParseTo()
@@ -29,9 +66,9 @@ func TestRequestParser(t *testing.T) {
 				"InstanceId":   []interface{}{"test"},
 				"InstanceType": []interface{}{"test2", "test3"},
 			},
-			"statistics": []interface{}{"Average"},
-			"period":     "600",
-			"hide":       false,
+			"statistic": "Average",
+			"period":    "600",
+			"hide":      false,
 		})
 
 		res, err := parseRequestQuery(query, "ref1", from, to)
@@ -40,7 +77,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "ref1", res.RefId)
 		assert.Equal(t, "ec2", res.Namespace)
 		assert.Equal(t, "CPUUtilization", res.MetricName)
-		assert.Empty(t, res.Id)
+		assert.Equal(t, "queryref1", res.Id)
 		assert.Empty(t, res.Expression)
 		assert.Equal(t, 600, res.Period)
 		assert.True(t, res.ReturnData)
@@ -48,8 +85,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Len(t, res.Dimensions["InstanceId"], 1)
 		assert.Len(t, res.Dimensions["InstanceType"], 2)
 		assert.Equal(t, "test3", res.Dimensions["InstanceType"][1])
-		assert.Len(t, res.Statistics, 1)
-		assert.Equal(t, "Average", *res.Statistics[0])
+		assert.Equal(t, "Average", res.Statistic)
 	})
 
 	t.Run("Old dimensions structure (backwards compatibility)", func(t *testing.T) {
@@ -64,9 +100,9 @@ func TestRequestParser(t *testing.T) {
 				"InstanceId":   "test",
 				"InstanceType": "test2",
 			},
-			"statistics": []interface{}{"Average"},
-			"period":     "600",
-			"hide":       false,
+			"statistic": "Average",
+			"period":    "600",
+			"hide":      false,
 		})
 
 		res, err := parseRequestQuery(query, "ref1", from, to)
@@ -75,7 +111,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "ref1", res.RefId)
 		assert.Equal(t, "ec2", res.Namespace)
 		assert.Equal(t, "CPUUtilization", res.MetricName)
-		assert.Empty(t, res.Id)
+		assert.Equal(t, "queryref1", res.Id)
 		assert.Empty(t, res.Expression)
 		assert.Equal(t, 600, res.Period)
 		assert.True(t, res.ReturnData)
@@ -83,7 +119,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Len(t, res.Dimensions["InstanceId"], 1)
 		assert.Len(t, res.Dimensions["InstanceType"], 1)
 		assert.Equal(t, "test2", res.Dimensions["InstanceType"][0])
-		assert.Equal(t, "Average", *res.Statistics[0])
+		assert.Equal(t, "Average", res.Statistic)
 	})
 
 	t.Run("Period defined in the editor by the user is being used when time range is short", func(t *testing.T) {
@@ -98,11 +134,11 @@ func TestRequestParser(t *testing.T) {
 				"InstanceId":   "test",
 				"InstanceType": "test2",
 			},
-			"statistics": []interface{}{"Average"},
-			"hide":       false,
+			"statistic": "Average",
+			"hide":      false,
 		})
 		query.Set("period", "900")
-		timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
+		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
 		from, err := timeRange.ParseFrom()
 		require.NoError(t, err)
 		to, err := timeRange.ParseTo()
@@ -125,9 +161,9 @@ func TestRequestParser(t *testing.T) {
 				"InstanceId":   "test",
 				"InstanceType": "test2",
 			},
-			"statistics": []interface{}{"Average"},
-			"hide":       false,
-			"period":     "auto",
+			"statistic": "Average",
+			"hide":      false,
+			"period":    "auto",
 		})
 
 		t.Run("Time range is 5 minutes", func(t *testing.T) {

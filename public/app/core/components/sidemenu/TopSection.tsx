@@ -1,28 +1,36 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { cloneDeep } from 'lodash';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon, IconName } from '@grafana/ui';
-import SideMenuItem from './SideMenuItem';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import config from '../../config';
-import { NavModelItem } from '@grafana/data';
+import { isLinkActive, isSearchActive } from './utils';
+import SideMenuItem from './SideMenuItem';
 
 const TopSection = () => {
+  const location = useLocation();
+  const theme = useTheme2();
+  const styles = getStyles(theme);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const mainLinks = navTree.filter((item) => !item.hideFromMenu);
+  const activeItemId = mainLinks.find((item) => isLinkActive(location.pathname, item))?.id;
 
   const onOpenSearch = () => {
     locationService.partial({ search: 'open' });
   };
 
   return (
-    <div data-testid="top-section-items" className="sidemenu__top">
-      <SideMenuItem label="Search dashboards" onClick={onOpenSearch}>
+    <div data-testid="top-section-items" className={styles.container}>
+      <SideMenuItem isActive={isSearchActive(location)} label="Search dashboards" onClick={onOpenSearch}>
         <Icon name="search" size="xl" />
       </SideMenuItem>
       {mainLinks.map((link, index) => {
         return (
           <SideMenuItem
             key={`${link.id}-${index}`}
+            isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
             menuItems={link.children}
             target={link.target}
@@ -38,3 +46,19 @@ const TopSection = () => {
 };
 
 export default TopSection;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: none;
+    flex-grow: 1;
+
+    ${theme.breakpoints.up('md')} {
+      display: block;
+      margin-top: ${theme.spacing(5)};
+    }
+
+    .sidemenu-open--xs & {
+      display: block;
+    }
+  `,
+});

@@ -1,12 +1,11 @@
 import { from, merge, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv } from '@grafana/runtime';
 import {
   AnnotationQuery,
   AnnotationQueryRequest,
+  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DatasourceRef,
   isValidLiveChannelAddress,
@@ -20,10 +19,11 @@ import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 import { isString } from 'lodash';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
+import { map } from 'rxjs/operators';
 
 let counter = 100;
 
-export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
+export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
     this.annotations = {
@@ -56,7 +56,8 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   }
 
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
-    const queries: Array<Observable<DataQueryResponse>> = [];
+    const results: Array<Observable<DataQueryResponse>> = [];
+    const targets: GrafanaQuery[] = [];
     const templateSrv = getTemplateSrv();
     for (const target of request.targets) {
       if (target.queryType === GrafanaQueryType.Annotations) {
@@ -97,7 +98,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
           buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
         }
 
-        queries.push(
+        results.push(
           getGrafanaLiveSrv().getDataStream({
             key: `${request.requestId}.${counter++}`,
             addr: addr!,
@@ -106,17 +107,47 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
           })
         );
       } else {
-        queries.push(getRandomWalk(request));
+        if (!target.queryType) {
+          target.queryType = GrafanaQueryType.RandomWalk;
+        }
+        targets.push(target);
       }
     }
-    // With a single query just return the results
-    if (queries.length === 1) {
-      return queries[0];
+
+    if (targets.length) {
+      results.push(
+        super.query({
+          ...request,
+          targets,
+        })
+      );
     }
-    if (queries.length > 1) {
-      return merge(...queries);
+
+    if (results.length) {
+      // With a single query just return the results
+      if (results.length === 1) {
+        return results[0];
+      }
+      return merge(...results);
     }
     return of(); // nothing
+  }
+
+  listFiles(path: string): Observable<DataFrameView<FileElement>> {
+    return this.query({
+      targets: [
+        {
+          refId: 'A',
+          queryType: GrafanaQueryType.List,
+          path,
+        },
+      ],
+    } as any).pipe(
+      map((v) => {
+        const frame = v.data[0] ?? toDataFrame({});
+        return new DataFrameView<FileElement>(frame);
+      })
+    );
   }
 
   metricFindQuery(options: any) {
@@ -179,31 +210,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   }
 }
 
-// Note that the query does not actually matter
-function getRandomWalk(request: DataQueryRequest): Observable<DataQueryResponse> {
-  const { intervalMs, maxDataPoints, range, requestId } = request;
-
-  // Yes, this implementation ignores multiple targets!  But that matches existing behavior
-  const params: Record<string, any> = {
-    intervalMs,
-    maxDataPoints,
-    from: range.from.valueOf(),
-    to: range.to.valueOf(),
-  };
-
-  return getBackendSrv()
-    .fetch({
-      url: '/api/tsdb/testdata/random-walk',
-      method: 'GET',
-      params,
-      requestId,
-    })
-    .pipe(
-      map((rsp: any) => {
-        return toDataQueryResponse(rsp);
-      }),
-      catchError((err) => {
-        return of(toDataQueryResponse(err));
-      })
-    );
+export interface FileElement {
+  name: string;
+  ['media-type']: string;
 }

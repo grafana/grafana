@@ -8,7 +8,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
@@ -17,7 +16,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -26,7 +25,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
+import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   isFetchErrorResponse,
@@ -39,22 +38,21 @@ import {
   PromQueryRequest,
   PromScalarData,
   PromVectorData,
-  StepMode,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { DEFAULT_STEP_MODE } from './components/PromQueryEditor';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this query are not available.';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
-export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
+export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
   url: string;
   directUrl: string;
+  access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
@@ -77,6 +75,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.url = instanceSettings.url!;
+    this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
@@ -290,24 +289,56 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
+  prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
+    const targets = options.targets.map((target) => {
+      //This is currently only preparing options for Explore queries where we know the format of data we want to receive
+      if (target.instant) {
+        return { ...target, instant: true, range: false, format: 'table' };
+      }
+      return {
+        ...target,
+        instant: false,
+        range: true,
+        format: 'time_series',
+        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      };
+    });
+
+    return { ...options, targets };
+  };
+
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    const start = this.getPrometheusTime(options.range.from, false);
-    const end = this.getPrometheusTime(options.range.to, true);
-    const { queries, activeTargets } = this.prepareTargets(options, start, end);
+    // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
+    const shouldRunBackendQuery =
+      this.access === 'proxy' &&
+      options.app === CoreApp.Explore &&
+      !options.targets.some((query) => query.exemplar) &&
+      // When running both queries, run through proxy
+      !options.targets.some((query) => query.instant && query.range);
 
-    // No valid targets, return the empty result to save a round trip.
-    if (!queries || !queries.length) {
-      return of({
-        data: [],
-        state: LoadingState.Done,
-      });
+    if (shouldRunBackendQuery) {
+      const newOptions = this.prepareOptionsV2(options);
+      return super.query(newOptions).pipe(map((response) => transformV2(response, newOptions)));
+      // Run queries trough browser/proxy
+    } else {
+      const start = this.getPrometheusTime(options.range.from, false);
+      const end = this.getPrometheusTime(options.range.to, true);
+      const { queries, activeTargets } = this.prepareTargets(options, start, end);
+
+      // No valid targets, return the empty result to save a round trip.
+      if (!queries || !queries.length) {
+        return of({
+          data: [],
+          state: LoadingState.Done,
+        });
+      }
+
+      if (options.app === CoreApp.Explore) {
+        return this.exploreQuery(queries, activeTargets, end);
+      }
+
+      return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
     }
-
-    if (options.app === CoreApp.Explore) {
-      return this.exploreQuery(queries, activeTargets, end);
-    }
-
-    return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
@@ -417,12 +448,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       end: 0,
     };
     const range = Math.ceil(end - start);
-    // target.stepMode specifies whether to use min, max or exact step
-    const stepMode = target.stepMode || (DEFAULT_STEP_MODE.value as StepMode);
+
     // options.interval is the dynamically calculated interval
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
-    const stepInterval = rangeUtil.intervalToSeconds(
+    const minInterval = rangeUtil.intervalToSeconds(
       this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
@@ -433,7 +463,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    const adjustedInterval = this.adjustInterval(interval, stepInterval, range, intervalFactor, stepMode);
+    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
@@ -486,13 +516,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
-  adjustInterval(
-    dynamicInterval: number,
-    stepInterval: number,
-    range: number,
-    intervalFactor: number,
-    stepMode: StepMode
-  ) {
+  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.
     // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
@@ -501,20 +525,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (safeInterval > 1) {
       safeInterval = Math.ceil(safeInterval);
     }
-
-    //Calculate adjusted interval based on the current step option
-    let adjustedInterval = safeInterval;
-    if (stepMode === 'min') {
-      adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
-    } else if (stepMode === 'max') {
-      adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
-      if (adjustedInterval < safeInterval) {
-        adjustedInterval = safeInterval;
-      }
-    } else if (stepMode === 'exact') {
-      adjustedInterval = Math.max(stepInterval * intervalFactor, safeInterval);
-    }
-    return adjustedInterval;
+    return Math.max(interval * intervalFactor, minInterval, safeInterval);
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
@@ -845,6 +856,27 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   getOriginalMetricName(labelData: { [key: string]: string }) {
     return getOriginalMetricName(labelData);
+  }
+
+  // Used when running queries trough backend
+  filterQuery(query: PromQuery): boolean {
+    if (query.hide || !query.expr) {
+      return false;
+    }
+    return true;
+  }
+
+  // Used when running queries trough backend
+  applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
+    const variables = cloneDeep(scopedVars);
+    // We want to interpolate these variables on backend
+    delete variables.__interval;
+    delete variables.__interval_ms;
+
+    return {
+      ...target,
+      expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+    };
   }
 }
 

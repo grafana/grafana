@@ -219,7 +219,7 @@ func URL(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 		obj := reflect.New(reflect.TypeOf(obj))
 
 		val := obj.Elem()
-		for k, v := range ctx.AllParams() {
+		for k, v := range macaron.Params(ctx.Req) {
 			field := val.FieldByName(k[1:])
 			if field.IsValid() {
 				errors = setWithProperType(field.Kind(), v, field, k, errors)
@@ -417,6 +417,10 @@ func validateField(errors Errors, zero interface{}, field reflect.StructField, f
 			sliceVal := fieldVal.Index(i)
 			if sliceVal.Kind() == reflect.Ptr {
 				sliceVal = sliceVal.Elem()
+			}
+
+			if sliceVal.Kind() == reflect.Invalid {
+				continue
 			}
 
 			sliceValue := sliceVal.Interface()

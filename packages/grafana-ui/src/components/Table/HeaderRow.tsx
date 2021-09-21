@@ -6,14 +6,16 @@ import { getTableStyles, TableStyles } from './styles';
 import { useStyles2 } from '../../themes';
 import { Filter } from './Filter';
 import { Icon } from '../Icon/Icon';
+import { getFieldTypeIcon } from '../../types';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
   data: DataFrame;
+  showTypeIcons?: boolean;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, data } = props;
+  const { headerGroups, data, showTypeIcons } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -30,7 +32,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
             role="row"
           >
             {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, data.fields[index])
+              renderHeaderCell(column, tableStyles, data.fields[index], showTypeIcons)
             )}
           </div>
         );
@@ -39,7 +41,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
   );
 };
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
+function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field, showTypeIcons?: boolean) {
   const headerProps = column.getHeaderProps();
 
   if (column.canResize) {
@@ -58,6 +60,9 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
             className={tableStyles.headerCellLabel}
             title={column.render('Header')}
           >
+            {showTypeIcons && (
+              <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" style={{ marginRight: '8px' }} />
+            )}
             <div>{column.render('Header')}</div>
             <div>
               {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}

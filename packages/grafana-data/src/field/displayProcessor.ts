@@ -79,14 +79,12 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       value = dateTime(value).valueOf();
     }
 
-    let text = toString(value);
     let numeric = isStringUnit ? NaN : anyToNumber(value);
-    let prefix: string | undefined = undefined;
-    let suffix: string | undefined = undefined;
-    let color: string | undefined = undefined;
-    let percent: number | undefined = undefined;
-
-    let shouldFormat = true;
+    let text: string | undefined;
+    let prefix: string | undefined;
+    let suffix: string | undefined;
+    let color: string | undefined;
+    let percent: number | undefined;
 
     if (mappings && mappings.length > 0) {
       const mappingResult = getValueMappingResult(mappings, value);
@@ -99,13 +97,11 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         if (mappingResult.color != null) {
           color = options.theme.visualization.getColorByName(mappingResult.color);
         }
-
-        shouldFormat = false;
       }
     }
 
     if (!isNaN(numeric)) {
-      if (shouldFormat && !isBoolean(value)) {
+      if (text == null && !isBoolean(value)) {
         const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
         text = v.text;
         suffix = v.suffix;
@@ -113,18 +109,21 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
 
       // Return the value along with scale info
-      if (color === undefined) {
+      if (color == null) {
         const scaleResult = scaleFunc(numeric);
         color = scaleResult.color;
         percent = scaleResult.percent;
       }
     }
 
-    if (!text) {
-      if (config.noValue) {
-        text = config.noValue;
-      } else {
-        text = ''; // No data?
+    if (text == null) {
+      text = toString(value);
+      if (!text) {
+        if (config.noValue) {
+          text = config.noValue;
+        } else {
+          text = ''; // No data?
+        }
       }
     }
 

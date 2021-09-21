@@ -5,7 +5,7 @@ import {
   GraphGradientMode,
   AxisPlacement,
   GraphDrawStyle,
-  PointVisibility,
+  VisibilityMode,
   ScaleOrientation,
   ScaleDirection,
   GraphTresholdsStyleMode,
@@ -37,6 +37,7 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "padding": undefined,
           "scales": Object {},
           "select": undefined,
           "series": Array [
@@ -86,6 +87,7 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "padding": undefined,
           "scales": Object {
             "scale-x": Object {
               "auto": false,
@@ -164,6 +166,7 @@ describe('UPlotConfigBuilder', () => {
               },
             },
             "hooks": Object {},
+            "padding": undefined,
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
@@ -215,6 +218,7 @@ describe('UPlotConfigBuilder', () => {
                 },
               },
               "hooks": Object {},
+              "padding": undefined,
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -267,6 +271,7 @@ describe('UPlotConfigBuilder', () => {
                 },
               },
               "hooks": Object {},
+              "padding": undefined,
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -382,6 +387,7 @@ describe('UPlotConfigBuilder', () => {
           },
         },
         "hooks": Object {},
+        "padding": undefined,
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -473,7 +479,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
-      showPoints: PointVisibility.Auto,
+      showPoints: VisibilityMode.Auto,
       pointSize: 5,
       lineColor: '#0000ff',
       lineWidth: 1,
@@ -499,6 +505,7 @@ describe('UPlotConfigBuilder', () => {
           },
         },
         "hooks": Object {},
+        "padding": undefined,
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -537,7 +544,7 @@ describe('UPlotConfigBuilder', () => {
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
-        showPoints: PointVisibility.Auto,
+        showPoints: VisibilityMode.Auto,
         lineColor: '#0000ff',
         lineWidth: 1,
         spanNulls: false,
@@ -548,7 +555,7 @@ describe('UPlotConfigBuilder', () => {
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
-        showPoints: PointVisibility.Auto,
+        showPoints: VisibilityMode.Auto,
         pointSize: 5,
         lineColor: '#00ff00',
         lineWidth: 1,
@@ -561,7 +568,7 @@ describe('UPlotConfigBuilder', () => {
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
-        showPoints: PointVisibility.Auto,
+        showPoints: VisibilityMode.Auto,
         pointSize: 5,
         lineColor: '#ff0000',
         lineWidth: 1,
@@ -612,6 +619,7 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "padding": undefined,
           "scales": Object {},
           "select": undefined,
           "series": Array [
