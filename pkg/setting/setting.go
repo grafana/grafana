@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -419,14 +419,7 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	AdminConfigPollInterval        time.Duration
-	AlertmanagerConfigPollInterval time.Duration
-	HAListenAddr                   string
-	HAAdvertiseAddr                string
-	HAPeers                        []string
-	HAPeerTimeout                  time.Duration
-	HAGossipInterval               time.Duration
-	HAPushPullInterval             time.Duration
+	UnifiedAlerting UnifiedAlertingSettings
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables

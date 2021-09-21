@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
-import { Legend, Form } from '@grafana/ui';
+import { Form, Legend } from '@grafana/ui';
 import { connect, ConnectedProps } from 'react-redux';
 import { ImportDashboardForm } from './ImportDashboardForm';
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
@@ -87,7 +87,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         )}
         <Form
           onSubmit={this.onSubmit}
-          defaultValues={{ ...dashboard, constants: [], dataSources: [], folder: folder }}
+          defaultValues={{ ...dashboard, constants: [], dataSources: [], elements: [], folder: folder }}
           validateOnMount
           validateFieldsOnMount={['title', 'uid']}
           validateOn="onChange"
