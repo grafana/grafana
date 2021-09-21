@@ -40,7 +40,7 @@ func toMacaronPath(path string) string {
 }
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := ctx.Params("Recipient")
+	recipient := macaron.Params(ctx.Req)[":Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		return apimodels.GrafanaBackend, nil
 	}
@@ -103,8 +103,8 @@ func (p *AlertingProxy) withReq(
 		req.Header.Add(h, v)
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
-	newCtx.Req.Request = req
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
+	newCtx.Req = req
+	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64(":Recipient"))
 
 	status := resp.Status()
 	if status >= 400 {

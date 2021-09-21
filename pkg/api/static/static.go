@@ -160,7 +160,7 @@ func staticHandler(ctx *macaron.Context, log log.Logger, opt StaticOptions) bool
 				rePrefix := regexp.MustCompile(`^(?:/\\|/+)`)
 				path = rePrefix.ReplaceAllString(path, "/")
 			}
-			http.Redirect(ctx.Resp, ctx.Req.Request, path, http.StatusFound)
+			http.Redirect(ctx.Resp, ctx.Req, path, http.StatusFound)
 			return true
 		}
 
@@ -190,7 +190,7 @@ func staticHandler(ctx *macaron.Context, log log.Logger, opt StaticOptions) bool
 		opt.AddHeaders(ctx)
 	}
 
-	http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
+	http.ServeContent(ctx.Resp, ctx.Req, file, fi.ModTime(), f)
 	return true
 }
 

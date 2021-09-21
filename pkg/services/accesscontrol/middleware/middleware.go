@@ -19,7 +19,7 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscont
 		}
 
 		return func(c *models.ReqContext) {
-			injected, err := evaluator.Inject(c.AllParams())
+			injected, err := evaluator.Inject(macaron.Params(c.Req))
 			if err != nil {
 				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 				return

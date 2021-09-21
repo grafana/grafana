@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import {
   ButtonCascader,
   CascaderOption,
@@ -21,7 +21,7 @@ import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
 
-type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
+type Props = QueryEditorProps<ZipkinDatasource, ZipkinQuery>;
 
 export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
   const serviceOptions = useServices(datasource);
@@ -77,12 +77,10 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
           />
         </div>
       ) : (
-        <div className="gf-form-inline gf-form-inline--nowrap">
-          <div className="gf-form flex-shrink-0">
-            <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
-              Traces
-            </ButtonCascader>
-          </div>
+        <InlineFieldRow>
+          <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
+            Traces
+          </ButtonCascader>
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               query={query.query}
@@ -92,7 +90,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
               portalOrigin="zipkin"
             />
           </div>
-        </div>
+        </InlineFieldRow>
       )}
     </>
   );

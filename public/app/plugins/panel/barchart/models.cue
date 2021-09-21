@@ -18,7 +18,7 @@ import (
     ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Family: {
+Panel: {
     lineages: [
         [
             {
@@ -29,7 +29,7 @@ Family: {
                     orientation: ui.VizOrientation
                     // TODO this default is a guess based on common devenv values
                     stacking: ui.StackingMode | *"none"
-                    showValue: ui.BarValueVisibility
+                    showValue: ui.VisibilityMode
                     barWidth: number
                     groupWidth: number
                 }

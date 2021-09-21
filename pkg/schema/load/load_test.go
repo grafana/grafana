@@ -7,11 +7,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"testing/fstest"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
+	"cuelang.org/go/cue/load"
+	cuejson "cuelang.org/go/pkg/encoding/json"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
@@ -50,8 +54,6 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDevenvDashboardValidity(t *testing.T) {
-	t.Skip()
-
 	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 
 	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
@@ -109,11 +111,9 @@ func TestDevenvDashboardValidity(t *testing.T) {
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
 
-	// TODO disabled because base variant validation currently must fail in order for
-	// dist/instance validation to do closed validation of plugin-specified fields
-	// t.Run("base", doTest(dash))
-	// dash, err := BaseDashboardFamily(p)
-	// require.NoError(t, err, "error while loading base dashboard scuemata")
+	dash, err := BaseDashboardFamily(p)
+	require.NoError(t, err, "error while loading base dashboard scuemata")
+	t.Run("base", doTest(dash))
 
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
@@ -178,4 +178,46 @@ func TestCueErrorWrapper(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "in file")
 	require.Contains(t, err.Error(), "line: ")
+}
+
+func TestAllPluginsInDist(t *testing.T) {
+	overlay, err := defaultOverlay(p)
+	require.NoError(t, err)
+
+	cfg := &load.Config{
+		Overlay:    overlay,
+		ModuleRoot: prefix,
+		Module:     "github.com/grafana/grafana",
+		Dir:        filepath.Join(prefix, dashboardDir, "dist"),
+		Package:    "dist",
+	}
+	inst, err := rt.Build(load.Instances(nil, cfg)[0])
+	require.NoError(t, err)
+
+	dinst, err := rt.Compile("str", `
+	Family: compose: Panel: {}
+	typs: [for typ, _ in Family.compose.Panel {typ}]
+	`)
+	require.NoError(t, err)
+
+	typs := dinst.Value().Unify(inst.Value()).LookupPath(cue.MakePath(cue.Str("typs")))
+	j, err := cuejson.Marshal(typs)
+	require.NoError(t, err)
+
+	var importedPanelTypes, loadedPanelTypes []string
+	require.NoError(t, json.Unmarshal([]byte(j), &importedPanelTypes))
+
+	// TODO a more canonical way of getting all the dist plugin types with
+	// models.cue would be nice.
+	m, err := loadPanelScuemata(p)
+	require.NoError(t, err)
+
+	for typ := range m {
+		loadedPanelTypes = append(loadedPanelTypes, typ)
+	}
+
+	sort.Strings(importedPanelTypes)
+	sort.Strings(loadedPanelTypes)
+
+	require.Equal(t, loadedPanelTypes, importedPanelTypes, "%s/family.cue needs updating, it must compose the same set of panel plugin models that are found by the plugin loader", cfg.Dir)
 }

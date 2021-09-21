@@ -34,6 +34,7 @@ import {
   TimeRange,
   TimeZone,
   UrlQueryValue,
+  PanelModel as IPanelModel,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -43,6 +44,7 @@ import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -239,6 +241,26 @@ export class DashboardModel {
     };
 
     return copy;
+  }
+
+  /**
+   * This will load a new dashboard, but keep existing panels unchanged
+   *
+   * This function can be used to implement:
+   * 1. potentially faster loading dashboard loading
+   * 2. dynamic dashboard behavior
+   * 3. "live" dashboard editing
+   *
+   * @internal and experimental
+   */
+  updatePanels(panels: IPanelModel[]): PanelMergeInfo {
+    const info = mergePanels(this.panels, panels ?? []);
+    if (info.changed) {
+      this.panels = info.panels ?? [];
+      this.sortPanelsByGridPos();
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
+    return info;
   }
 
   private getPanelSaveModels() {
@@ -475,6 +497,22 @@ export class DashboardModel {
     });
   }
 
+  clearUnsavedChanges() {
+    for (const panel of this.panels) {
+      panel.configRev = 0;
+    }
+  }
+
+  hasUnsavedChanges() {
+    for (const panel of this.panels) {
+      if (panel.hasChanged) {
+        console.log('Panel has changed', panel);
+        return true;
+      }
+    }
+    return false;
+  }
+
   cleanUpRepeats() {
     if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
@@ -562,9 +600,9 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    const clone = new PanelModel(sourcePanel.getSaveModel());
-
-    clone.id = this.getNextPanelId();
+    const m = sourcePanel.getSaveModel();
+    m.id = this.getNextPanelId();
+    const clone = new PanelModel(m);
 
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
@@ -716,9 +754,11 @@ export class DashboardModel {
         panelBelowIndex = insertPos + rowPanels.length;
       }
 
-      // Update gridPos for panels below
-      for (let i = panelBelowIndex; i < this.panels.length; i++) {
-        this.panels[i].gridPos.y += yPos;
+      // Update gridPos for panels below if we inserted more than 1 repeated row panel
+      if (selectedOptions.length > 1) {
+        for (let i = panelBelowIndex; i < this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
+        }
       }
     }
   }
@@ -726,6 +766,7 @@ export class DashboardModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
+    panel.key = `${panel.id}`;
     panel.repeatIteration = this.iteration;
     if (repeatedByRow) {
       panel.repeatedByRow = true;
@@ -993,6 +1034,7 @@ export class DashboardModel {
   private updateSchema(old: any) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
+    migrator.migrateCloudWatchQueries();
   }
 
   resetOriginalTime() {

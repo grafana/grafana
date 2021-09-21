@@ -1,11 +1,12 @@
 package dashboards
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,7 +24,7 @@ type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
-	MakeUserAdmin(orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
+	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 }
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
@@ -103,7 +104,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 
 	if !util.IsValidShortUID(dash.Uid) {
 		return nil, models.ErrDashboardInvalidUid
-	} else if len(dash.Uid) > 40 {
+	} else if util.IsShortUIDTooLong(dash.Uid) {
 		return nil, models.ErrDashboardUidTooLong
 	}
 

@@ -1,3 +1,4 @@
+//go:build go1.3
 // +build go1.3
 
 // Copyright 2014 The Macaron Authors
@@ -117,6 +118,21 @@ func FromContext(c context.Context) *Context {
 	return nil
 }
 
+type paramsKey struct{}
+
+// Params returns the named route parameters for the current request, if any.
+func Params(r *http.Request) map[string]string {
+	if rv := r.Context().Value(paramsKey{}); rv != nil {
+		return rv.(map[string]string)
+	}
+	return map[string]string{}
+}
+
+// SetURLParams sets the named URL parameters for the given request. This should only be used for testing purposes.
+func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), paramsKey{}, vars))
+}
+
 // UseMiddleware is a traditional approach to writing middleware in Go.
 // A middleware is a function that has a reference to the next handler in the chain
 // and returns the actual middleware handler, that may do its job and optionally
@@ -128,7 +144,7 @@ func FromContext(c context.Context) *Context {
 func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		c := FromContext(req.Context())
-		c.Req.Request = req
+		c.Req = req
 		if mrw, ok := rw.(*responseWriter); ok {
 			c.Resp = mrw
 		} else {
@@ -156,14 +172,12 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		index:    0,
 		Router:   m.Router,
 		Resp:     NewResponseWriter(req.Method, rw),
-		Data:     make(map[string]interface{}),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
-	c.Map(defaultReturnHandler())
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
-	c.Req = Request{req}
+	c.Req = req
 	return c
 }
 

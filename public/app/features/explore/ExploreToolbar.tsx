@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
 
@@ -32,7 +31,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    this.props.changeDatasource(this.props.exploreId, dsSettings.name, { importQueries: true });
+    this.props.changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
   };
 
   onClearAll = () => {
@@ -251,4 +250,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const ExploreToolbar = hot(module)(connector(UnConnectedExploreToolbar));
+export const ExploreToolbar = connector(UnConnectedExploreToolbar);

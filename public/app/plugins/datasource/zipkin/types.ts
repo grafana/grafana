@@ -12,6 +12,7 @@ export type ZipkinSpan = {
   annotations?: ZipkinAnnotation[];
   tags?: { [key: string]: string };
   kind?: 'CLIENT' | 'SERVER' | 'PRODUCER' | 'CONSUMER';
+  shared?: boolean;
 };
 
 export type ZipkinEndpoint = {

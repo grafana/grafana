@@ -35,7 +35,7 @@ func TestCSVFileScenario(t *testing.T) {
 					_ = fileReader.Close()
 				}()
 
-				frame, err := p.loadCsvContent(fileReader, name)
+				frame, err := LoadCsvContent(fileReader, name)
 				require.NoError(t, err)
 				require.NotNil(t, frame)
 

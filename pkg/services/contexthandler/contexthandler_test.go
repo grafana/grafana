@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -96,12 +96,8 @@ func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *Conte
 		return nil, nil, err
 	}
 	reqContext := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-		},
-		Logger: log.New("testlogger"),
+		Context: &macaron.Context{Req: req},
+		Logger:  log.New("testlogger"),
 	}
 
 	mw := mockWriter{rr}

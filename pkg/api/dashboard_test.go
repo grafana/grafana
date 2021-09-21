@@ -33,7 +33,7 @@ import (
 func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: macaron.Request{Request: httpReq}}}
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
@@ -1245,10 +1245,19 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.Req
 	return nil
 }
 
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard, folderID int64) error {
+	return nil
+}
+
 type mockLibraryElementService struct {
 }
 
 func (l *mockLibraryElementService) CreateElement(c *models.ReqContext, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+	return libraryelements.LibraryElementDTO{}, nil
+}
+
+// GetElement gets an element from a UID.
+func (l *mockLibraryElementService) GetElement(c *models.ReqContext, UID string) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 

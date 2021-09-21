@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -70,7 +71,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	uid := c.Params(":uid")
+	uid := macaron.Params(c.Req)[":uid"]
 	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -214,7 +215,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 }
 
 func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
-	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
+	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: macaron.Params(c.Req)[":slug"]}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return response.Error(500, "Failed to retrieve dashboards by slug", err)
@@ -232,7 +233,7 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, macaron.Params(c.Req)[":uid"])
 	if rsp != nil {
 		return rsp
 	}
@@ -276,12 +277,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	ctx := c.Req.Context()
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 	if cmd.FolderUid != "" {
 		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-		folder, err := folders.GetFolderByUID(cmd.FolderUid)
+		folder, err := folders.GetFolderByUID(ctx, cmd.FolderUid)
 		if err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
@@ -361,7 +363,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := dashSvc.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
