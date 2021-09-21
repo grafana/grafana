@@ -873,7 +873,7 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 type ConvertDryRunRequest struct {
 	ChannelRules []pipeline.ChannelRule `json:"channelRules"`
 	Channel      string                 `json:"channel"`
-	Data         json.RawMessage        `json:"data"`
+	Data         string                 `json:"data"`
 }
 
 type ConvertDryRunResponse struct {
@@ -925,7 +925,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 	if !ok {
 		return response.Error(http.StatusNotFound, "No rule found", nil)
 	}
-	channelFrames, ok, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, req.Data)
+	channelFrames, ok, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, []byte(req.Data))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting data", err)
 	}
