@@ -9,6 +9,7 @@ import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import store from '../../../core/store';
 
 //
 // Actions and Payloads
@@ -160,6 +161,8 @@ export const navigateToExplore = (
   };
 };
 
+export const AUTO_LOAD_LOGS_VOLUME_SETTING_KEY = 'grafana.explore.logs.autoLoadLogsVolume';
+
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
@@ -169,7 +172,7 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
-  autoLoadLogsVolume: false,
+  autoLoadLogsVolume: store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false),
 };
 
 /**

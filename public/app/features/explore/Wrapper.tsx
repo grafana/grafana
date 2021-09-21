@@ -3,6 +3,7 @@ import { connect, ConnectedProps, ReactReduxContext } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import {
+  AUTO_LOAD_LOGS_VOLUME_SETTING_KEY,
   lastSavedUrl,
   resetExploreAction,
   richHistoryUpdatedAction,
@@ -17,8 +18,6 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from 'app/types';
 import store from '../../core/store';
 
-export const AUTO_LOAD_LOGS_VOLUME_SETTING_KEY = 'grafana.explore.logs.autoLoadLogsVolume';
-
 interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
 interface OwnProps {}
 
@@ -26,6 +25,7 @@ const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'explore'),
     exploreState: state.explore,
+    autoLoadLogsVolume: state.explore.autoLoadLogsVolume,
   };
 };
 
@@ -54,9 +54,7 @@ class WrapperUnconnected extends PureComponent<Props> {
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
 
-    const autoLoadLogsVolume = store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false);
-    this.props.storeAutoLoadLogsVolumeAction(autoLoadLogsVolume);
-    let previousAutoLoadLogsVolume = autoLoadLogsVolume;
+    let previousAutoLoadLogsVolume = this.props.autoLoadLogsVolume;
     this.unsubscribe = this.context.store.subscribe(() => {
       const newAutoLoadLogsVolume = this.context.store.getState().explore.autoLoadLogsVolume;
       if (newAutoLoadLogsVolume !== previousAutoLoadLogsVolume) {
