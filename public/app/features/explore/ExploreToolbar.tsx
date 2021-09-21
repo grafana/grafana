@@ -205,7 +205,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
-  const syncedTimes = state.explore.syncedTimes;
+  const { syncedTimes, autoLoadLogsVolume } = state.explore;
   const exploreItem: ExploreItemState = state.explore[exploreId]!;
   const {
     datasourceInstance,
@@ -216,7 +216,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isLive,
     isPaused,
     containerWidth,
-    autoLoadLogsVolume,
   } = exploreItem;
 
   const hasLiveOption = !!datasourceInstance?.meta?.streaming;

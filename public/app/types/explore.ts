@@ -46,6 +46,11 @@ export interface ExploreState {
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
+
+  /**
+   * Auto-loading logs volume after running the query
+   */
+  autoLoadLogsVolume: boolean;
 }
 
 export interface ExploreItemState {
@@ -154,7 +159,6 @@ export interface ExploreItemState {
 
   logsVolumeDataProvider?: RelatedDataProvider;
   logsVolumeData?: DataQueryResponse;
-  autoLoadLogsVolume: boolean;
 }
 
 export interface ExploreUpdateState {

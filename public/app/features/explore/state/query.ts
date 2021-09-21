@@ -32,7 +32,7 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction, stateSave } from './main';
+import { richHistoryUpdatedAction, stateSave, storeAutoLoadLogsVolumeAction } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
@@ -190,14 +190,6 @@ export interface ClearCachePayload {
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
-/**
- * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
- * update auto-load and load logs volume if it hasn't been loaded.
- */
-const storeAutoLogsVolumeAction = createAction<{ exploreId: ExploreId; autoLoadLogsVolume: boolean }>(
-  'explore/storeAutoLogsVolumeAction'
-);
-
 //
 // Action creators
 //
@@ -313,7 +305,7 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
-    const richHistory = getState().explore.richHistory;
+    const { richHistory, autoLoadLogsVolume } = getState().explore;
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
@@ -328,7 +320,6 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      autoLoadLogsVolume,
     } = exploreItemState;
     let newQuerySub;
 
@@ -514,7 +505,7 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
  */
 export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(storeAutoLogsVolumeAction({ exploreId, autoLoadLogsVolume }));
+    dispatch(storeAutoLoadLogsVolumeAction(autoLoadLogsVolume));
     const state = getState().explore[exploreId]!;
 
     // load logs volume automatically after switching
@@ -738,14 +729,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       cache: [],
-    };
-  }
-
-  if (storeAutoLogsVolumeAction.match(action)) {
-    const { autoLoadLogsVolume } = action.payload;
-    return {
-      ...state,
-      autoLoadLogsVolume,
     };
   }
 

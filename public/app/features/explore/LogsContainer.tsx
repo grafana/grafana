@@ -3,7 +3,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
 import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
-import store from 'app/core/store';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
@@ -15,7 +14,6 @@ import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
-import { AUTO_LOAD_LOGS_VOLUME_SETTING_KEY } from './ExplorePaneContainer';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
@@ -142,7 +140,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               autoLoadLogsVolume={autoLoadLogsVolume}
               onChangeAutoLogsVolume={(autoLoadLogsVolume) => {
                 changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
-                store.set(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, autoLoadLogsVolume);
               }}
               loadingLogsVolumeAvailable={loadingLogsVolumeAvailable}
             />
@@ -157,6 +154,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
+  const autoLoadLogsVolume = explore.autoLoadLogsVolume;
   const {
     logsResult,
     loading,
@@ -166,7 +164,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    autoLoadLogsVolume,
     logsVolumeDataProvider,
   } = item;
   const timeZone = getTimeZone(state.user);

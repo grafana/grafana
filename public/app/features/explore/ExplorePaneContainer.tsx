@@ -25,8 +25,6 @@ interface OwnProps {
   split: boolean;
 }
 
-export const AUTO_LOAD_LOGS_VOLUME_SETTING_KEY = 'grafana.explore.logs.autoLoadLogsVolume';
-
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
 
 /**
@@ -49,8 +47,6 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props> 
     const { initialized, exploreId, initialDatasource, initialQueries, initialRange, originPanelId } = this.props;
     const width = this.el?.offsetWidth ?? 0;
 
-    const autoLoadLogsVolume = store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false);
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
       this.props.initializeExplore(
@@ -60,7 +56,6 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props> 
         initialRange,
         width,
         this.exploreEvents,
-        autoLoadLogsVolume,
         originPanelId
       );
     }

@@ -22,6 +22,12 @@ export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
 
 /**
+ * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
+ * update auto-load and load logs volume if it hasn't been loaded.
+ */
+export const storeAutoLoadLogsVolumeAction = createAction<boolean>('explore/storeAutoLoadLogsVolumeAction');
+
+/**
  * Resets state for explore.
  */
 export interface ResetExplorePayload {
@@ -163,6 +169,7 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
+  autoLoadLogsVolume: false,
 };
 
 /**
@@ -214,6 +221,14 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       richHistory: action.payload.richHistory,
+    };
+  }
+
+  if (storeAutoLoadLogsVolumeAction.match(action)) {
+    const autoLoadLogsVolume = action.payload;
+    return {
+      ...state,
+      autoLoadLogsVolume,
     };
   }
 
