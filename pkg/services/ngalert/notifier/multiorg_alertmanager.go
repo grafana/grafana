@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -116,20 +117,41 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
-	moa.SyncAlertmanagersForOrgs(orgIDs)
+	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
 
 	moa.logger.Debug("done synchronizing Alertmanagers for orgs")
 
 	return nil
 }
 
-func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
+// getLatestConfigs retrieves the latest Alertmanager configuration for every organization. It returns a map where the key is the ID of each organization and the value is the configuration.
+func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int64]*models.AlertConfiguration, error) {
+	configs, err := moa.configStore.GetAllLatestAlertmanagerConfiguration(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[int64]*models.AlertConfiguration, len(configs))
+	for _, config := range configs {
+		result[config.OrgID] = config
+	}
+
+	return result, nil
+}
+
+// SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
+func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
+	dbConfigs, err := moa.getLatestConfigs(ctx)
+	if err != nil {
+		moa.logger.Error("failed to load Alertmanager configurations", "err", err)
+		return
+	}
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		orgsFound[orgID] = struct{}{}
 
-		existing, found := moa.alertmanagers[orgID]
+		alertmanager, found := moa.alertmanagers[orgID]
 		if !found {
 			// These metrics are not exported by Grafana and are mostly a placeholder.
 			// To export them, we need to translate the metrics from each individual registry and,
@@ -139,14 +161,30 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}
-			moa.alertmanagers[orgID] = am
-			existing = am
+			alertmanager = am
 		}
 
-		//TODO: This will create an N+1 query
-		if err := existing.SyncAndApplyConfigFromDatabase(); err != nil {
-			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "err", err)
+		dbConfig, cfgFound := dbConfigs[orgID]
+		if !cfgFound {
+			if found {
+				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
+				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
+			}
+			err := alertmanager.SaveAndApplyDefaultConfig()
+			if err != nil {
+				moa.logger.Error("failed to apply the default Alertmanager configuration", "org", orgID)
+				continue
+			}
+			moa.alertmanagers[orgID] = alertmanager
+			continue
 		}
+
+		err := alertmanager.ApplyConfig(dbConfig)
+		if err != nil {
+			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "err", err)
+			continue
+		}
+		moa.alertmanagers[orgID] = alertmanager
 	}
 
 	amsToStop := map[int64]*Alertmanager{}
