@@ -127,8 +127,8 @@ export function fillOptionsPaneItems(
     // Nested options get passed up one level
     if (isNestedPanelOptions(pluginOption)) {
       fillOptionsPaneItems(
-        pluginOption.options.builder,
-        pluginOption.options.values(access),
+        pluginOption.getBuilder(),
+        pluginOption.getNestedValueAccess(access),
         getOptionsPaneCategory,
         context
       );

@@ -42,4 +42,21 @@ export const plugin = new PanelPlugin<DebugPanelOptions>(DebugPanel).useFieldCon
         isClearable: true,
       },
     });
+
+  builder.addNestedBuilder({
+    category: ['Data layer'],
+    path: 'layers',
+    build: (sub) => {
+      sub.addBooleanSwitch({
+        path: 'switchA',
+        name: 'Switch A',
+        defaultValue: true,
+      });
+      sub.addBooleanSwitch({
+        path: 'switchB',
+        name: 'Switch B',
+        defaultValue: true,
+      });
+    },
+  });
 });

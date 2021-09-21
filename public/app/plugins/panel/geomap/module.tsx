@@ -50,17 +50,6 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: [defaultMarkersConfig],
     });
 
-    builder.addNestedBuilder({
-      category: ['Data layer'],
-      path: 'layers',
-      defaultValue: [defaultMarkersConfig],
-      getValue: (cfg: any, path:string) => cfg,
-      onChange: ()
-      options: {
-
-      },
-    } as unknown as any);
-
     // The controls section
     category = ['Map controls'];
     builder
@@ -99,7 +88,3 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         defaultValue: false,
       });
   });
-function lodashGet(cfg: any, path: string) {
-  throw new Error('Function not implemented.');
-}
-

@@ -3,7 +3,6 @@ import {
   GrafanaPlugin,
   PanelEditorProps,
   PanelMigrationHandler,
-  PanelOptionEditorsRegistry,
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
@@ -125,17 +124,12 @@ export class PanelPlugin<
     let result = this._defaults || {};
 
     if (!this._defaults) {
-     // const builder = new PanelOptionsEditorBuilder<TOptions>();
-      // this.initPanelEditor(builder);
-      // builder.get
+      const builder = new PanelOptionsEditorBuilder<TOptions>();
+      this.initPanelEditor(builder);
 
-      // if (!editors || editors.list().length === 0) {
-      //   return null;
-      // }
-
-      // for (const editor of editors.list()) {
-      //   set(result, editor.id, editor.defaultValue);
-      // }
+      builder.getItems().forEach((item) => {
+        set(result, item.path, item.defaultValue);
+      });
     }
 
     return result;
