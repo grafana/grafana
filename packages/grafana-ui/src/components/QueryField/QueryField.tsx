@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { debounce } from 'lodash';
 import React, { Context } from 'react';
 
 import { Value, Editor as CoreEditor } from 'slate';
@@ -64,7 +64,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
 
-    this.runOnChangeDebounced = _.debounce(this.runOnChange, 500);
+    this.runOnChangeDebounced = debounce(this.runOnChange, 500);
 
     const { onTypeahead, cleanText, portalOrigin, onWillApplySuggestion } = props;
 
@@ -148,9 +148,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   runOnChange = () => {
     const { onChange } = this.props;
-
+    const value = Plain.serialize(this.state.value);
     if (onChange) {
-      onChange(Plain.serialize(this.state.value));
+      onChange(this.cleanText(value));
     }
   };
 
@@ -189,6 +189,12 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
     return next();
   };
+
+  cleanText(text: string) {
+    // RegExp with invisible characters we want to remove - currently only carriage return (newlines are visible)
+    const newText = text.replace(/[\r]/g, '');
+    return newText;
+  }
 
   render() {
     const { disabled } = this.props;

@@ -1,48 +1,32 @@
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import React, { FC, useMemo } from 'react';
-import { useStyles } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { isAlertingRule } from '../../utils/rules';
-import { isCloudRulesSource } from '../../utils/datasource';
-import { Annotation } from '../Annotation';
+import { CombinedRule } from 'app/types/unified-alerting';
+import React, { FC } from 'react';
+import { useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { AlertLabels } from '../AlertLabels';
-import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from '../DetailsField';
-import { RuleQuery } from './RuleQuery';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
+import { RuleDetailsDataSources } from './RuleDetailsDataSources';
+import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
+import { RuleDetailsExpression } from './RuleDetailsExpression';
+import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
 
 interface Props {
   rule: CombinedRule;
-  rulesSource: RulesSource;
 }
 
-export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
-  const styles = useStyles(getStyles);
+export const RuleDetails: FC<Props> = ({ rule }) => {
+  const styles = useStyles2(getStyles);
+  const {
+    promRule,
+    namespace: { rulesSource },
+  } = rule;
 
-  const { promRule } = rule;
-
-  const annotations = Object.entries(rule.annotations);
-
-  const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
-    if (isCloudRulesSource(rulesSource)) {
-      return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
-    } else if (rule.queries) {
-      return rule.queries
-        .map(({ datasource }) => {
-          const ds = getDataSourceSrv().getInstanceSettings(datasource);
-          if (ds) {
-            return { name: ds.name, icon: ds.meta.info.logos.small };
-          }
-          return { name: datasource };
-        })
-        .filter(({ name }) => name !== '__expr__');
-    }
-    return [];
-  }, [rule, rulesSource]);
+  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
 
   return (
     <div>
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (
@@ -50,58 +34,33 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
-          <DetailsField label="Expression" className={cx({ [styles.exprRow]: !!annotations.length })} horizontal={true}>
-            <RuleQuery rule={rule} rulesSource={rulesSource} />
-          </DetailsField>
-          {annotations.map(([key, value]) => (
-            <DetailsField key={key} label={key} horizontal={true}>
-              <Annotation annotationKey={key} value={value} />
-            </DetailsField>
-          ))}
+          <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
+          <RuleDetailsAnnotations annotations={annotations} />
         </div>
         <div className={styles.rightSide}>
-          {!!dataSources.length && (
-            <DetailsField label="Data source">
-              {dataSources.map(({ name, icon }) => (
-                <div key={name}>
-                  {icon && (
-                    <>
-                      <img className={styles.dataSourceIcon} src={icon} />{' '}
-                    </>
-                  )}
-                  {name}
-                </div>
-              ))}
-            </DetailsField>
-          )}
+          <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      {promRule && isAlertingRule(promRule) && !!promRule.alerts?.length && (
-        <DetailsField label="Matching instances" horizontal={true}>
-          <AlertInstancesTable instances={promRule.alerts} />
-        </DetailsField>
-      )}
+      <RuleDetailsMatchingInstances promRule={promRule} />
     </div>
   );
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
     flex-direction: row;
+    ${theme.breakpoints.down('md')} {
+      flex-direction: column;
+    }
   `,
   leftSide: css`
     flex: 1;
   `,
   rightSide: css`
-    padding-left: 90px;
-    width: 300px;
-  `,
-  exprRow: css`
-    margin-bottom: 46px;
-  `,
-  dataSourceIcon: css`
-    width: ${theme.spacing.md};
-    height: ${theme.spacing.md};
+    ${theme.breakpoints.up('md')} {
+      padding-left: 90px;
+      width: 300px;
+    }
   `,
 });

@@ -5,23 +5,27 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var getTime = time.Now
 
-func init() {
-	registry.RegisterService(&ShortURLService{})
+func ProvideService(sqlStore *sqlstore.SQLStore) *ShortURLService {
+	return &ShortURLService{
+		SQLStore: sqlStore,
+	}
+}
+
+type Service interface {
+	GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error)
+	CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error)
+	UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error
+	DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error
 }
 
 type ShortURLService struct {
-	SQLStore *sqlstore.SQLStore `inject:""`
-}
-
-func (s *ShortURLService) Init() error {
-	return nil
+	SQLStore *sqlstore.SQLStore
 }
 
 func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error) {
@@ -89,3 +93,5 @@ func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.D
 		return nil
 	})
 }
+
+var _ Service = &ShortURLService{}

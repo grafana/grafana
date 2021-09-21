@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package sqlstore
@@ -325,6 +326,10 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				err := GetAllAlertNotifications(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
+				So(query.Result[0].Name, ShouldEqual, cmd4.Name)
+				So(query.Result[1].Name, ShouldEqual, cmd1.Name)
+				So(query.Result[2].Name, ShouldEqual, cmd3.Name)
+				So(query.Result[3].Name, ShouldEqual, cmd2.Name)
 			})
 		})
 

@@ -2,6 +2,7 @@ package cleanup
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -13,25 +14,26 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
+	shortURLService shorturls.Service) *CleanUpService {
+	s := &CleanUpService{
+		Cfg:               cfg,
+		ServerLockService: serverLockService,
+		ShortURLService:   shortURLService,
+		log:               log.New("cleanup"),
+	}
+	return s
+}
+
 type CleanUpService struct {
 	log               log.Logger
-	Cfg               *setting.Cfg                  `inject:""`
-	ServerLockService *serverlock.ServerLockService `inject:""`
-	ShortURLService   *shorturls.ShortURLService    `inject:""`
-}
-
-func init() {
-	registry.RegisterService(&CleanUpService{})
-}
-
-func (srv *CleanUpService) Init() error {
-	srv.log = log.New("cleanup")
-	return nil
+	Cfg               *setting.Cfg
+	ServerLockService *serverlock.ServerLockService
+	ShortURLService   shorturls.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -66,7 +68,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 	cleaner := annotations.GetAnnotationCleaner()
 	affected, affectedTags, err := cleaner.CleanAnnotations(ctx, srv.Cfg)
-	if err != nil {
+	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		srv.log.Error("failed to clean up old annotations", "error", err)
 	} else {
 		srv.log.Debug("Deleted excess annotations", "annotations affected", affected, "annotation tags affected", affectedTags)
@@ -74,13 +76,24 @@ func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 }
 
 func (srv *CleanUpService) cleanUpTmpFiles() {
-	if _, err := os.Stat(srv.Cfg.ImagesDir); os.IsNotExist(err) {
+	folders := []string{
+		srv.Cfg.ImagesDir,
+		srv.Cfg.CSVsDir,
+	}
+
+	for _, f := range folders {
+		srv.cleanUpTmpFolder(f)
+	}
+}
+
+func (srv *CleanUpService) cleanUpTmpFolder(folder string) {
+	if _, err := os.Stat(folder); os.IsNotExist(err) {
 		return
 	}
 
-	files, err := ioutil.ReadDir(srv.Cfg.ImagesDir)
+	files, err := ioutil.ReadDir(folder)
 	if err != nil {
-		srv.log.Error("Problem reading image dir", "error", err)
+		srv.log.Error("Problem reading dir", "folder", folder, "error", err)
 		return
 	}
 
@@ -94,14 +107,14 @@ func (srv *CleanUpService) cleanUpTmpFiles() {
 	}
 
 	for _, file := range toDelete {
-		fullPath := path.Join(srv.Cfg.ImagesDir, file.Name())
+		fullPath := path.Join(folder, file.Name())
 		err := os.Remove(fullPath)
 		if err != nil {
 			srv.log.Error("Failed to delete temp file", "file", file.Name(), "error", err)
 		}
 	}
 
-	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "kept", len(files))
+	srv.log.Debug("Found old rendered file to delete", "folder", folder, "deleted", len(toDelete), "kept", len(files))
 }
 
 func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.Time) bool {

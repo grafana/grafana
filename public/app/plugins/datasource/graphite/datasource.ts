@@ -1,30 +1,42 @@
-import _ from 'lodash';
+import { each, indexOf, isArray, isString, map as _map } from 'lodash';
+import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { getBackendSrv } from '@grafana/runtime';
 import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   dateMath,
+  MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
-  toDataFrame,
   TimeRange,
-  MetricFindValue,
+  toDataFrame,
 } from '@grafana/data';
+
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import gfunc from './gfunc';
-import { getBackendSrv } from '@grafana/runtime';
+import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
+import {
+  GraphiteLokiMapping,
+  GraphiteOptions,
+  GraphiteQuery,
+  GraphiteQueryImportConfiguration,
+  GraphiteType,
+  MetricTankRequestMeta,
+} from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
 
-export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
+export class GraphiteDatasource extends DataSourceApi<
+  GraphiteQuery,
+  GraphiteOptions,
+  GraphiteQueryImportConfiguration
+> {
   basicAuth: string;
   url: string;
   name: string;
@@ -34,9 +46,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   rollupIndicatorEnabled: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
-  funcDefs: any = null;
+  funcDefs: FuncDefs | null = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -46,6 +59,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     // graphiteVersion is set when a datasource is created but it hadn't been set in the past so we're
     // still falling back to the default behavior here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
+    this.metricMappings = instanceSettings.jsonData.importConfiguration?.loki?.mappings || [];
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
@@ -66,6 +80,14 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           url: 'http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana',
         },
       ],
+    };
+  }
+
+  getImportQueryConfiguration(): GraphiteQueryImportConfiguration {
+    return {
+      loki: {
+        mappings: this.metricMappings,
+      },
     };
   }
 
@@ -127,7 +149,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     // Series are either at the root or under a node called 'series'
     const series = result.data.series || result.data;
 
-    if (!_.isArray(series)) {
+    if (!isArray(series)) {
       throw { message: 'Missing series in result', data: result };
     }
 
@@ -229,8 +251,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery)
-        .pipe(
+      return lastValueFrom(
+        this.query(graphiteQuery).pipe(
           map((result: any) => {
             const list = [];
 
@@ -256,13 +278,13 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
             return list;
           })
         )
-        .toPromise();
+      );
     } else {
       // Graphite event as annotation
       const tags = this.templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.range, tags: tags }).then((results: any) => {
         const list = [];
-        if (!_.isArray(results.data)) {
+        if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
           return [];
         }
@@ -270,7 +292,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           const e = results.data[i];
 
           let tags = e.tags;
-          if (_.isString(e.tags)) {
+          if (isString(e.tags)) {
             tags = this.parseTags(e.tags);
           }
 
@@ -294,15 +316,17 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       if (options.tags) {
         tags = '&tags=' + options.tags;
       }
-      return this.doGraphiteRequest({
-        method: 'GET',
-        url:
-          '/events/get_data?from=' +
-          this.translateTime(options.range.raw.from, false, options.timezone) +
-          '&until=' +
-          this.translateTime(options.range.raw.to, true, options.timezone) +
-          tags,
-      }).toPromise();
+      return lastValueFrom(
+        this.doGraphiteRequest({
+          method: 'GET',
+          url:
+            '/events/get_data?from=' +
+            this.translateTime(options.range.raw.from, false, options.timezone) +
+            '&until=' +
+            this.translateTime(options.range.raw.to, true, options.timezone) +
+            tags,
+        })
+      );
     } catch (err) {
       return Promise.reject(err);
     }
@@ -313,7 +337,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       if (date === 'now') {
         return 'now';
       } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
@@ -344,6 +368,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
   metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
+
+    // First attempt to check for tag-related functions (using empty wildcard for interpolation)
     let interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '', options: optionalOptions })
@@ -365,32 +391,66 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
 
+    // If no tag-related query was found, perform metric-based search (using * as the wildcard for interpolation)
+    let useExpand = query.match(/^expand\((.*)\)$/);
+    query = useExpand ? useExpand[1] : query;
+
     interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '*', options: optionalOptions })
     );
 
+    let range;
+    if (options.range) {
+      range = {
+        from: this.translateTime(options.range.from, false, options.timezone),
+        until: this.translateTime(options.range.to, true, options.timezone),
+      };
+    }
+
+    if (useExpand) {
+      return this.requestMetricExpand(interpolatedQuery, options.requestId, range);
+    } else {
+      return this.requestMetricFind(interpolatedQuery, options.requestId, range);
+    }
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/find endpoint. It will
+   * return all possible values at the last level of the query, for example:
+   *
+   * metrics: prod.servers.001.cpu, prod.servers.002.cpu
+   * query: *.servers.*
+   * result: 001, 002
+   *
+   * For more complex searches use requestMetricExpand
+   */
+  private requestMetricFind(
+    query: string,
+    requestId: string,
+    range?: { from: any; until: any }
+  ): Promise<MetricFindValue[]> {
     const httpOptions: any = {
       method: 'POST',
       url: '/metrics/find',
       params: {},
-      data: `query=${interpolatedQuery}`,
+      data: `query=${query}`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       // for cancellations
-      requestId: options.requestId,
+      requestId: requestId,
     };
 
-    if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
-      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
+    if (range) {
+      httpOptions.params.from = range.from;
+      httpOptions.params.until = range.until;
     }
 
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
+    return lastValueFrom(
+      this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
-          return _.map(results.data, (metric) => {
+          return _map(results.data, (metric) => {
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false,
@@ -398,7 +458,47 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           });
         })
       )
-      .toPromise();
+    );
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/expand endpoint.
+   * The result will contain all metrics (with full name) matching provided query.
+   * It's a more flexible version of /metrics/find endpoint (@see requestMetricFind)
+   */
+  private requestMetricExpand(
+    query: string,
+    requestId: string,
+    range?: { from: any; until: any }
+  ): Promise<MetricFindValue[]> {
+    const httpOptions: any = {
+      method: 'GET',
+      url: '/metrics/expand',
+      params: { query },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      // for cancellations
+      requestId,
+    };
+
+    if (range) {
+      httpOptions.params.from = range.from;
+      httpOptions.params.until = range.until;
+    }
+
+    return lastValueFrom(
+      this.doGraphiteRequest(httpOptions).pipe(
+        map((results: any) => {
+          return _map(results.data.results, (metric) => {
+            return {
+              text: metric,
+              expandable: false,
+            };
+          });
+        })
+      )
+    );
   }
 
   getTags(optionalOptions: any) {
@@ -416,10 +516,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
+    return lastValueFrom(
+      this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
-          return _.map(results.data, (tag) => {
+          return _map(results.data, (tag) => {
             return {
               text: tag.tag,
               id: tag.id,
@@ -427,7 +527,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           });
         })
       )
-      .toPromise();
+    );
   }
 
   getTagValues(options: any = {}) {
@@ -443,11 +543,11 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
+    return lastValueFrom(
+      this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
           if (results.data && results.data.values) {
-            return _.map(results.data.values, (value) => {
+            return _map(results.data.values, (value) => {
               return {
                 text: value.value,
                 id: value.id,
@@ -458,7 +558,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           }
         })
       )
-      .toPromise();
+    );
   }
 
   getTagsAutoComplete(expressions: any[], tagPrefix: any, optionalOptions?: any) {
@@ -468,7 +568,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
+        expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
       },
       // for cancellations
       requestId: options.requestId,
@@ -484,7 +584,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
-    return this.doGraphiteRequest(httpOptions).pipe(mapToTags()).toPromise();
+    return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
   getTagValuesAutoComplete(expressions: any[], tag: any, valuePrefix: any, optionalOptions: any) {
@@ -494,7 +594,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
+        expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
         tag: this.templateSrv.replace((tag || '').trim()),
       },
       // for cancellations
@@ -511,7 +611,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
-    return this.doGraphiteRequest(httpOptions).pipe(mapToTags()).toPromise();
+    return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
   getVersion(optionalOptions: any) {
@@ -523,8 +623,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       requestId: options.requestId,
     };
 
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
+    return lastValueFrom(
+      this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
           if (results.data) {
             const semver = new SemVersion(results.data);
@@ -536,10 +636,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           return of('');
         })
       )
-      .toPromise();
+    );
   }
 
-  createFuncInstance(funcDef: any, options?: any) {
+  createFuncInstance(funcDef: any, options?: any): FuncInstance {
     return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
   }
 
@@ -567,8 +667,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       url: '/functions',
     };
 
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
+    return lastValueFrom(
+      this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
           if (results.status !== 200 || typeof results.data !== 'object') {
             if (typeof results.data === 'string') {
@@ -593,7 +693,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           return of(this.funcDefs);
         })
       )
-      .toPromise();
+    );
   }
 
   testDatasource() {
@@ -607,9 +707,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       maxDataPoints: 300,
     } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-    return this.query(query)
-      .toPromise()
-      .then(() => ({ status: 'success', message: 'Data source is working' }));
+    return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }
 
   doGraphiteRequest(options: {
@@ -690,8 +788,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       }
     }
 
-    _.each(options, (value, key) => {
-      if (_.indexOf(graphiteOptions, key) === -1) {
+    each(options, (value, key) => {
+      if (indexOf(graphiteOptions, key) === -1) {
         return;
       }
       if (value) {
@@ -719,7 +817,7 @@ function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
   return pipe(
     map((results: any) => {
       if (results.data) {
-        return _.map(results.data, (value) => {
+        return _map(results.data, (value) => {
           return { text: value };
         });
       } else {

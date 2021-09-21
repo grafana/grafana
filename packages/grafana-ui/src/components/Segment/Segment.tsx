@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { cx } from '@emotion/css';
-import _ from 'lodash';
+import { isObject } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 import { getSegmentStyles } from './styles';
@@ -11,6 +11,7 @@ export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTM
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
+  inputMinWidth?: number;
 }
 
 export function Segment<T>({
@@ -20,15 +21,21 @@ export function Segment<T>({
   Component,
   className,
   allowCustomValue,
+  allowEmptyValue,
   placeholder,
   disabled,
+  inputMinWidth,
+  inputPlaceholder,
+  onExpandedChange,
+  autofocus = false,
   ...rest
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
-  const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
+  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
+  const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
-    const label = _.isObject(value) ? value.label : value;
+    const label = isObject(value) ? value.label : value;
 
     return (
       <Label
@@ -56,11 +63,13 @@ export function Segment<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !_.isObject(value) ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
+      placeholder={inputPlaceholder}
       options={options}
       width={width}
       onClickOutside={() => setExpanded(false)}
       allowCustomValue={allowCustomValue}
+      allowEmptyValue={allowEmptyValue}
       onChange={(item) => {
         setExpanded(false);
         onChange(item);

@@ -9,7 +9,8 @@ import { ChannelSettings } from './ChannelSettings';
 
 import config from 'app/core/config';
 
-interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
+interface Props
+  extends Pick<FormAPI<NotificationChannelDTO>, 'control' | 'errors' | 'register' | 'watch' | 'getValues'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
   imageRendererAvailable: boolean;
@@ -19,7 +20,7 @@ interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
 }
 
 export interface NotificationSettingsProps
-  extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'watch' | 'getValues'> {
+  extends Pick<FormAPI<NotificationChannelDTO>, 'control' | 'errors' | 'register'> {
   currentFormValues: NotificationChannelDTO;
 }
 
@@ -100,7 +101,7 @@ export const NotificationChannelForm: FC<Props> = ({
       <div className={styles.formButtons}>
         <HorizontalGroup>
           <Button type="submit">Save</Button>
-          <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
+          <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues())}>
             Test
           </Button>
           <a href={`${config.appSubUrl}/alerting/notifications`}>

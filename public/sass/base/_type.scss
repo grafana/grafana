@@ -32,6 +32,15 @@ mark,
   background: $alert-warning-bg;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+}
+
 // Lists
 // --------------------------------------------------
 
@@ -205,9 +214,13 @@ a.external-link {
   }
 
   table {
+    margin-bottom: $spacer;
+  }
+
+  table {
     td,
     th {
-      padding: $spacer * 0.5 $spacer;
+      padding: $space-xs $space-sm;
     }
     th {
       font-weight: $font-weight-semi-bold;

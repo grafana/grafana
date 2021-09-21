@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { Form, Button, Input, Field } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
@@ -46,15 +45,15 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
                   invalid={!!errors.name}
                   error={errors.name ? 'Name is required' : undefined}
                 >
-                  <Input name="name" ref={register({ required: true })} />
+                  <Input {...register('name', { required: true })} />
                 </Field>
 
                 <Field label="Email">
-                  <Input name="email" ref={register} />
+                  <Input {...register('email')} />
                 </Field>
 
                 <Field label="Username">
-                  <Input name="login" ref={register} />
+                  <Input {...register('login')} />
                 </Field>
                 <Field
                   label="Password"
@@ -63,11 +62,10 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
                   error={errors.password ? 'Password is required and must contain at least 4 characters' : undefined}
                 >
                   <Input
-                    type="password"
-                    name="password"
-                    ref={register({
+                    {...register('password', {
                       validate: (value) => value.trim() !== '' && value.length >= 4,
                     })}
+                    type="password"
                   />
                 </Field>
                 <Button type="submit">Create user</Button>
@@ -84,4 +82,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
 });
 
-export default hot(module)(connect(mapStateToProps)(UserCreatePage));
+export default connect(mapStateToProps)(UserCreatePage);

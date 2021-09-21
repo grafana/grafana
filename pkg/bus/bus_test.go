@@ -69,6 +69,22 @@ func TestDispatchCtx(t *testing.T) {
 	require.True(t, invoked, "expected handler to be called")
 }
 
+func TestDispatchCtx_NoContextHandler(t *testing.T) {
+	bus := New()
+
+	var invoked bool
+
+	bus.AddHandler(func(query *testQuery) error {
+		invoked = true
+		return nil
+	})
+
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
+	require.NoError(t, err)
+
+	require.True(t, invoked, "expected handler to be called")
+}
+
 func TestDispatchCtx_NoRegisteredHandler(t *testing.T) {
 	bus := New()
 

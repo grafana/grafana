@@ -7,8 +7,14 @@ package scuemata
 // rather, they are composed into panel structures as they are defined within
 // the larger Dashboard schema.
 #PanelSchema: {
-    PanelOptions: {...}
-    PanelFieldConfig: {...}
+    // Defines plugin specific options for a panel
+    PanelOptions: {...} @cuetsy(kind="interface")
+
+    // Define the custom properties that exist within standard field config
+    PanelFieldConfig?: {...} @cuetsy(kind="interface")
+
+    // Panels may define their own types
+    ...
 }
 
 // A lineage of panel schema

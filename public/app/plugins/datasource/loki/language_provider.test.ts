@@ -5,6 +5,7 @@ import { TypeaheadInput } from '@grafana/ui';
 
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
+import { DataQuery, DataSourceApi } from '@grafana/data';
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -83,6 +84,21 @@ describe('Language completion provider', () => {
       expect(result.suggestions.length).toEqual(2);
       expect(result.suggestions[0].label).toEqual('Operators');
       expect(result.suggestions[1].label).toEqual('Parsers');
+    });
+  });
+
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const datasource = makeMockLokiDatasource({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+        end: 1560163909000,
+        'match[]': '{job="grafana"}',
+        start: 1560153109000,
+      });
     });
   });
 
@@ -220,7 +236,7 @@ describe('Request URL', () => {
     const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels);
-    instance.fetchLogLabels();
+    instance.fetchLabels();
     const expectedUrl = '/loki/api/v1/label';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });
@@ -231,7 +247,9 @@ describe('Query imports', () => {
 
   it('returns empty queries for unknown origin datasource', async () => {
     const instance = new LanguageProvider(datasource);
-    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' }], 'unknown');
+    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' } as DataQuery], {
+      meta: { id: 'unknown' },
+    } as DataSourceApi);
     expect(result).toEqual([{ refId: 'bar', expr: '' }]);
   });
 

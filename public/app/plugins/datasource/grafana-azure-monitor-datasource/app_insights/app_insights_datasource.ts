@@ -1,18 +1,19 @@
 import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import _, { isString } from 'lodash';
+import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { isString } from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import { routeNames } from '../utils/common';
 import ResponseParser from './response_parser';
 
 export interface LogAnalyticsColumn {
   text: string;
   value: string;
 }
+
 export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
-  url: string;
-  baseUrl: string;
+  resourcePath: string;
   version = 'beta';
   applicationId: string;
   logAnalyticsColumns: { [key: string]: LogAnalyticsColumn[] } = {};
@@ -21,23 +22,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     super(instanceSettings);
     this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
-    switch (instanceSettings.jsonData?.cloudName) {
-      // Azure US Government
-      case 'govazuremonitor':
-        break;
-      // Azure Germany
-      case 'germanyazuremonitor':
-        break;
-      // Azue China
-      case 'chinaazuremonitor':
-        this.baseUrl = `/chinaappinsights/${this.version}/apps/${this.applicationId}`;
-        break;
-      // Azure Global
-      default:
-        this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
-    }
-
-    this.url = instanceSettings.url || '';
+    this.resourcePath = `${routeNames.appInsights}/${this.version}/apps/${this.applicationId}`;
   }
 
   isConfigured(): boolean {
@@ -70,14 +55,18 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
-    const item = target.appInsights!;
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
+    const item = target.appInsights;
+
+    if (!item) {
+      return target;
+    }
 
     const old: any = item;
     // fix for timeGrainUnit which is a deprecated/removed field name
     if (old.timeGrainCount) {
       item.timeGrain = TimegrainConverter.createISO8601Duration(old.timeGrainCount, item.timeGrainUnit);
-    } else if (item.timeGrainUnit && item.timeGrain !== 'auto') {
+    } else if (item.timeGrain && item.timeGrainUnit && item.timeGrain !== 'auto') {
       item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
     }
 
@@ -104,19 +93,15 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     const templateSrv = getTemplateSrv();
 
     return {
-      type: 'timeSeriesQuery',
       refId: target.refId,
-      format: target.format,
       queryType: AzureQueryType.ApplicationInsights,
       appInsights: {
         timeGrain: templateSrv.replace((item.timeGrain || '').toString(), scopedVars),
-        allowedTimeGrainsMs: item.allowedTimeGrainsMs,
         metricName: templateSrv.replace(item.metricName, scopedVars),
         aggregation: templateSrv.replace(item.aggregation, scopedVars),
         dimension: item.dimension.map((d) => templateSrv.replace(d, scopedVars)),
         dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
-        format: target.format,
       },
     };
   }
@@ -142,21 +127,14 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     return null;
   }
 
-  testDatasource() {
-    const url = `${this.baseUrl}/metrics/metadata`;
-    return this.doRequest(url)
-      .then((response: any) => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Application Insights service.',
-            title: 'Success',
-          };
-        }
-
+  testDatasource(): Promise<DatasourceValidationResult> {
+    const path = `${this.resourcePath}/metrics/metadata`;
+    return this.getResource(path)
+      .then<DatasourceValidationResult>((response: any) => {
         return {
-          status: 'error',
-          message: 'Application Insights: Returned http status code ' + response.status,
+          status: 'success',
+          message: 'Successfully queried the Application Insights service.',
+          title: 'Success',
         };
       })
       .catch((error: any) => {
@@ -178,29 +156,14 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
       });
   }
 
-  doRequest(url: any, maxRetries = 1): Promise<any> {
-    return getBackendSrv()
-      .datasourceRequest({
-        url: this.url + url,
-        method: 'GET',
-      })
-      .catch((error: any) => {
-        if (maxRetries > 0) {
-          return this.doRequest(url, maxRetries - 1);
-        }
-
-        throw error;
-      });
-  }
-
   getMetricNames() {
-    const url = `${this.baseUrl}/metrics/metadata`;
-    return this.doRequest(url).then(ResponseParser.parseMetricNames);
+    const path = `${this.resourcePath}/metrics/metadata`;
+    return this.getResource(path).then(ResponseParser.parseMetricNames);
   }
 
   getMetricMetadata(metricName: string) {
-    const url = `${this.baseUrl}/metrics/metadata`;
-    return this.doRequest(url).then((result: any) => {
+    const path = `${this.resourcePath}/metrics/metadata`;
+    return this.getResource(path).then((result: any) => {
       return new ResponseParser(result).parseMetadata(metricName);
     });
   }
@@ -212,8 +175,8 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
   }
 
   getQuerySchema() {
-    const url = `${this.baseUrl}/query/schema`;
-    return this.doRequest(url).then((result: any) => {
+    const path = `${this.resourcePath}/query/schema`;
+    return this.getResource(path).then((result: any) => {
       const schema = new ResponseParser(result).parseQuerySchema();
       // console.log(schema);
       return schema;

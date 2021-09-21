@@ -1,5 +1,5 @@
 import sinon, { SinonFakeTimers } from 'sinon';
-import each from 'lodash/each';
+import { each } from 'lodash';
 
 import * as dateMath from './datemath';
 import { dateTime, DurationUnit, DateTime } from './moment_wrapper';

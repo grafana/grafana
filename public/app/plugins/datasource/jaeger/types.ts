@@ -1,3 +1,5 @@
+import { DataQuery } from '@grafana/data';
+
 export type TraceKeyValuePair = {
   key: string;
   type?: string;
@@ -46,4 +48,27 @@ export type TraceResponse = {
   traceID: string;
   warnings?: string[] | null;
   spans: Span[];
+};
+
+export type JaegerQuery = {
+  // undefined means the old behavior, showing only trace ID input
+  queryType?: JaegerQueryType;
+  service?: string;
+  operation?: string;
+  // trace ID
+  query?: string;
+  tags?: string;
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
+} & DataQuery;
+
+export type JaegerQueryType = 'search' | 'upload';
+
+export type JaegerResponse = {
+  data: TraceResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+  errors?: string[] | null;
 };

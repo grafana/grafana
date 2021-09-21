@@ -1,49 +1,35 @@
-import React, { useCallback } from 'react';
-import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
+import React from 'react';
+import {
+  DataFrame,
+  DisplayValue,
+  fieldReducers,
+  getFieldDisplayName,
+  getFieldSeriesColor,
+  reduceField,
+} from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem } from '../VizLegend/types';
-import { VizLegendOptions } from '../VizLegend/models.gen';
-import { AxisPlacement } from './config';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
-import { mapMouseEventToMode } from '../GraphNG/utils';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { GraphNGLegendEvent } from '..';
+import { useTheme2 } from '../../themes';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
-  onSeriesColorChange?: (label: string, color: string) => void;
-  onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
 export const PlotLegend: React.FC<PlotLegendProps> = ({
   data,
   config,
-  onSeriesColorChange,
-  onLegendClick,
   placement,
   calcs,
   displayMode,
   ...vizLayoutLegendProps
 }) => {
-  const onLegendLabelClick = useCallback(
-    (legend: VizLegendItem, event: React.MouseEvent) => {
-      const { fieldIndex } = legend;
-
-      if (!onLegendClick || !fieldIndex) {
-        return;
-      }
-
-      onLegendClick({
-        fieldIndex,
-        mode: mapMouseEventToMode(event),
-      });
-    },
-    [onLegendClick]
-  );
-
+  const theme = useTheme2();
   const legendItems = config
     .getSeries()
     .map<VizLegendItem | undefined>((s) => {
@@ -51,22 +37,24 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       const fieldIndex = seriesConfig.dataFrameFieldIndex;
       const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
 
-      if (seriesConfig.hideInLegend || !fieldIndex) {
+      if (!fieldIndex) {
         return undefined;
       }
 
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
-      if (!field) {
+      if (!field || field.config.custom?.hideFrom?.legend) {
         return undefined;
       }
 
-      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!);
+      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+      const scaleColor = getFieldSeriesColor(field, theme);
+      const seriesColor = scaleColor.color;
 
       return {
-        disabled: !seriesConfig.show ?? false,
+        disabled: !(seriesConfig.show ?? true),
         fieldIndex,
-        color: seriesConfig.lineColor!,
+        color: seriesColor,
         label,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => {
@@ -80,10 +68,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
             reducers: calcs,
           });
 
-          return calcs.map<DisplayValue>((reducer) => {
+          return calcs.map<DisplayValue>((reducerId) => {
+            const fieldReducer = fieldReducers.get(reducerId);
+
             return {
-              ...fmt(fieldCalcs[reducer]),
-              title: fieldReducers.get(reducer).name,
+              ...fmt(fieldCalcs[reducerId]),
+              title: fieldReducer.name,
+              description: fieldReducer.description,
             };
           });
         },
@@ -94,13 +85,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
   return (
     <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
-      <VizLegend
-        onLabelClick={onLegendLabelClick}
-        placement={placement}
-        items={legendItems}
-        displayMode={displayMode}
-        onSeriesColorChange={onSeriesColorChange}
-      />
+      <VizLegend placement={placement} items={legendItems} displayMode={displayMode} />
     </VizLayout.Legend>
   );
 };

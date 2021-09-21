@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 // package search_test contains integration tests for search
@@ -11,14 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var dialect migrator.Dialect
 
 const (
 	limit int64 = 15
@@ -33,7 +31,8 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	}
 
 	db := setupTestEnvironment(t)
-	createDashboards(t, db, 0, 1, user.OrgId)
+	dashIds := createDashboards(t, db, 0, 1, user.OrgId)
+	require.Len(t, dashIds, 1)
 
 	// create one dashboard in another organization that shouldn't
 	// be listed in the results.
@@ -44,7 +43,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgId},
 			searchstore.TitleSorter{},
 		},
-		Dialect: dialect,
+		Dialect: db.Dialect,
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
@@ -58,7 +57,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	res[0].UID = ""
 	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
 		{
-			ID:    1,
+			ID:    dashIds[0],
 			Title: "A",
 			Slug:  "a",
 			Term:  "templated",
@@ -81,7 +80,7 @@ func TestBuilder_Pagination(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgId},
 			searchstore.TitleSorter{},
 		},
-		Dialect: dialect,
+		Dialect: db.Dialect,
 	}
 
 	resPg1 := []sqlstore.DashboardSearchProjection{}
@@ -129,14 +128,14 @@ func TestBuilder_Permissions(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgId},
 			searchstore.TitleSorter{},
 			permissions.DashboardPermissionFilter{
-				Dialect:         dialect,
+				Dialect:         db.Dialect,
 				OrgRole:         user.OrgRole,
 				OrgId:           user.OrgId,
 				UserId:          user.UserId,
 				PermissionLevel: level,
 			},
 		},
-		Dialect: dialect,
+		Dialect: db.Dialect,
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
@@ -152,15 +151,15 @@ func TestBuilder_Permissions(t *testing.T) {
 func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
-	dialect = store.Dialect
 	return store
 }
 
-func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, orgID int64) {
+func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, orgID int64) []int64 {
 	t.Helper()
 
 	require.GreaterOrEqual(t, endID, startID)
 
+	createdIds := []int64{}
 	for i := startID; i < endID; i++ {
 		dashboard, err := simplejson.NewJson([]byte(`{
 			"id": null,
@@ -172,14 +171,18 @@ func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, o
 			"version": 0
 		}`))
 		require.NoError(t, err)
-		_, err = db.SaveDashboard(models.SaveDashboardCommand{
+		dash, err := db.SaveDashboard(models.SaveDashboardCommand{
 			Dashboard: dashboard,
 			UserId:    1,
 			OrgId:     orgID,
 			UpdatedAt: time.Now(),
 		})
 		require.NoError(t, err)
+
+		createdIds = append(createdIds, dash.Id)
 	}
+
+	return createdIds
 }
 
 // lexiCounter counts in a lexicographically sortable order.

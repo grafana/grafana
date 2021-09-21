@@ -28,7 +28,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Given the default ini files", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			So(err, ShouldBeNil)
 
 			So(cfg.AdminUser, ShouldEqual, "admin")
@@ -54,12 +54,22 @@ func TestLoadingSettings(t *testing.T) {
 			}
 		})
 
+		Convey("sample.ini should load successfully", func() {
+			customInitPath := CustomInitPath
+			CustomInitPath = "conf/sample.ini"
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+			So(err, ShouldBeNil)
+			// Restore CustomInitPath to avoid side effects.
+			CustomInitPath = customInitPath
+		})
+
 		Convey("Should be able to override via environment variables", func() {
 			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(cfg.AdminUser, ShouldEqual, "superduper")
@@ -72,20 +82,10 @@ func TestLoadingSettings(t *testing.T) {
 			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
-		})
-
-		Convey("Should return an error when url is invalid", func() {
-			err := os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
-			require.NoError(t, err)
-
-			cfg := NewCfg()
-			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
-
-			So(err, ShouldNotBeNil)
 		})
 
 		Convey("Should replace password in URL when url environment is defined", func() {
@@ -93,10 +93,10 @@ func TestLoadingSettings(t *testing.T) {
 			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:-redacted-@localhost:3306/database")
+			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
 		})
 
 		Convey("Should get property map from command line args array", func() {
@@ -110,7 +110,7 @@ func TestLoadingSettings(t *testing.T) {
 		Convey("Should be able to override via command line", func() {
 			if runtime.GOOS == windows {
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err := cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{`cfg:paths.data=c:\tmp\data`, `cfg:paths.logs=c:\tmp\logs`},
 				})
@@ -119,7 +119,7 @@ func TestLoadingSettings(t *testing.T) {
 				So(cfg.LogsPath, ShouldEqual, `c:\tmp\logs`)
 			} else {
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err := cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
 				})
@@ -132,7 +132,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Should be able to override defaults via command line", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args: []string{
 					"cfg:default.server.domain=test2",
@@ -147,7 +147,7 @@ func TestLoadingSettings(t *testing.T) {
 		Convey("Defaults can be overridden in specified config file", func() {
 			if runtime.GOOS == windows {
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err := cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
@@ -157,7 +157,7 @@ func TestLoadingSettings(t *testing.T) {
 				So(cfg.DataPath, ShouldEqual, `c:\tmp\override`)
 			} else {
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err := cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:default.paths.data=/tmp/data"},
@@ -171,7 +171,7 @@ func TestLoadingSettings(t *testing.T) {
 		Convey("Command line overrides specified config file", func() {
 			if runtime.GOOS == windows {
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err := cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
@@ -181,7 +181,7 @@ func TestLoadingSettings(t *testing.T) {
 				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
 			} else {
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err := cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:paths.data=/tmp/data"},
@@ -197,7 +197,7 @@ func TestLoadingSettings(t *testing.T) {
 				err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 				require.NoError(t, err)
 				cfg := NewCfg()
-				err = cfg.Load(&CommandLineArgs{
+				err = cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -208,7 +208,7 @@ func TestLoadingSettings(t *testing.T) {
 				err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
 				require.NoError(t, err)
 				cfg := NewCfg()
-				err = cfg.Load(&CommandLineArgs{
+				err = cfg.Load(CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -220,7 +220,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("instance_name default to hostname even if hostname env is empty", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 			})
 			So(err, ShouldBeNil)
@@ -232,7 +232,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Reading callback_url should add trailing slash", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
 			})
@@ -243,7 +243,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Only sync_ttl should return the value sync_ttl", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.sync_ttl=2"},
 			})
@@ -254,7 +254,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=5"},
 			})
@@ -265,7 +265,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.sync_ttl=5"},
 			})
@@ -276,7 +276,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=12", "cfg:auth.proxy.sync_ttl=5"},
 			})
@@ -413,8 +413,8 @@ func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
 	cfg.BuildVersion = "v7.5.0-11124pre"
 	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
 	require.NoError(t, err)
-	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/sub/grafana/pre-releases/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
 }
 
 // Adding a case for this in case we switch to proper semver version strings
@@ -424,6 +424,6 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	cfg.BuildVersion = "v7.5.0-alpha.11124"
 	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
 	require.NoError(t, err)
-	require.Equal(t, "http://cdn.grafana.com/grafana-oss/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/grafana/pre-releases/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
+	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
 }

@@ -4,11 +4,11 @@ import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Playlist } from './types';
-import { DashboardPicker } from '../../core/components/Select/DashboardPicker';
 import { TagFilter } from '../../core/components/TagFilter/TagFilter';
 import { SearchSrv } from '../../core/services/search_srv';
 import { usePlaylistItems } from './usePlaylistItems';
 import { PlaylistTable } from './PlaylistTable';
+import { DashboardPickerByID } from 'app/core/components/editors/DashboardPickerByID';
 
 interface PlaylistFormProps {
   onSubmit: (playlist: Playlist) => void;
@@ -30,8 +30,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
               <Field label="Name" invalid={!!errors.name} error={errors?.name?.message}>
                 <Input
                   type="text"
-                  name="name"
-                  ref={register({ required: 'Name is required' })}
+                  {...register('name', { required: 'Name is required' })}
                   placeholder="Name"
                   defaultValue={name}
                   aria-label={selectors.pages.PlaylistForm.name}
@@ -40,8 +39,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
               <Field label="Interval" invalid={!!errors.interval} error={errors?.interval?.message}>
                 <Input
                   type="text"
-                  name="interval"
-                  ref={register({ required: 'Interval is required' })}
+                  {...register('interval', { required: 'Interval is required' })}
                   placeholder="5m"
                   defaultValue={interval ?? '5m'}
                   aria-label={selectors.pages.PlaylistForm.interval}
@@ -54,7 +52,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
                 <h3 className="page-headering">Add dashboards</h3>
 
                 <Field label="Add by title">
-                  <DashboardPicker onChange={addById} isClearable />
+                  <DashboardPickerByID onChange={addById} isClearable />
                 </Field>
 
                 <Field label="Add by tag">

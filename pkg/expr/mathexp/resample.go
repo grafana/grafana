@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // Resample turns the Series into a Number based on the given reduction function
-func (s Series) Resample(refID string, interval time.Duration, downsampler string, upsampler string, tr backend.TimeRange) (Series, error) {
-	newSeriesLength := int(float64(tr.To.Sub(tr.From).Nanoseconds()) / float64(interval.Nanoseconds()))
+func (s Series) Resample(refID string, interval time.Duration, downsampler string, upsampler string, from, to time.Time) (Series, error) {
+	newSeriesLength := int(float64(to.Sub(from).Nanoseconds()) / float64(interval.Nanoseconds()))
 	if newSeriesLength <= 0 {
 		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")
 	}
-	resampled := NewSeries(refID, s.GetLabels(), s.TimeIdx, true, s.ValueIdx, true, newSeriesLength+1)
+	resampled := NewSeries(refID, s.GetLabels(), newSeriesLength+1)
 	bookmark := 0
 	var lastSeen *float64
 	idx := 0
-	t := tr.From
-	for !t.After(tr.To) && idx <= newSeriesLength {
+	t := from
+	for !t.After(to) && idx <= newSeriesLength {
 		vals := make([]*float64, 0)
 		sIdx := bookmark
 		for {
@@ -73,8 +72,7 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			}
 			value = tmp
 		}
-		tv := t // his is required otherwise all points keep the latest timestamp; anything better?
-		if err := resampled.SetPoint(idx, &tv, value); err != nil {
+		if err := resampled.SetPoint(idx, t, value); err != nil {
 			return resampled, err
 		}
 		t = t.Add(interval)

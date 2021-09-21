@@ -15,7 +15,7 @@ import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import { githubPublishTask } from './tasks/plugin.utils';
 import { pluginUpdateTask } from './tasks/plugin.update';
-import { ciBuildPluginDocsTask, ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
+import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
 import { pluginSignTask } from './tasks/plugin.sign';
@@ -148,6 +148,8 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:build')
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
     .option('--coverage', 'Run code coverage', false)
+    .option('--skipTest', 'Skip running tests (for pipelines that run it separate)', false)
+    .option('--skipLint', 'Skip running lint (for pipelines that run it separate)', false)
     .option('--preserveConsole', 'Preserves console calls', false)
     .description('Prepares plugin dist package')
     .action(async (cmd) => {
@@ -156,6 +158,8 @@ export const run = (includeInternalScripts = false) => {
         silent: true,
         maxJestWorkers: cmd.maxJestWorkers,
         preserveConsole: cmd.preserveConsole,
+        skipLint: cmd.skipLint,
+        skipTest: cmd.skipTest,
       });
     });
 
@@ -210,7 +214,7 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:ci-build')
     .option('--finish', 'move all results to the jobs folder', false)
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('Build the plugin, leaving results in /dist and /coverage')
+    .description('[deprecated] Build the plugin, leaving results in /dist and /coverage')
     .action(async (cmd) => {
       await execTask(ciBuildPluginTask)({
         finish: cmd.finish,
@@ -219,18 +223,11 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-docs')
-    .description('Build the HTML docs')
-    .action(async (cmd) => {
-      await execTask(ciBuildPluginDocsTask)({});
-    });
-
-  program
     .command('plugin:ci-package')
     .option('--signatureType <type>', 'Signature Type')
     .option('--rootUrls <urls...>', 'Root URLs')
     .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
-    .description('Create a zip packages for the plugin')
+    .description('[deprecated] Create a zip packages for the plugin')
     .action(async (cmd) => {
       await execTask(ciPackagePluginTask)({
         signatureType: cmd.signatureType,
@@ -240,7 +237,7 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-report')
-    .description('Build a report for this whole process')
+    .description('[deprecated] Build a report for this whole process')
     .option('--upload', 'upload packages also')
     .action(async (cmd) => {
       await execTask(ciPluginReportTask)({

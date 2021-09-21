@@ -113,16 +113,13 @@
       "id": 47,
       "maxDataPoints": 500,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -237,16 +234,13 @@
       "id": 48,
       "maxDataPoints": 20,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -361,16 +355,13 @@
       "id": 55,
       "maxDataPoints": 20,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -485,16 +476,13 @@
       "id": 56,
       "maxDataPoints": 90,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -609,16 +597,13 @@
       "id": 52,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -733,16 +718,13 @@
       "id": 53,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -857,16 +839,13 @@
       "id": 54,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -981,16 +960,13 @@
       "id": 57,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1184,16 +1160,13 @@
       },
       "id": 60,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1468,12 +1441,11 @@
       "interval": null,
       "maxDataPoints": 100,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "list",
           "placement": "right"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1599,16 +1571,13 @@
       "id": 63,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1737,16 +1706,13 @@
       "id": 64,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1875,16 +1841,13 @@
       "id": 65,
       "maxDataPoints": 10,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2013,16 +1976,13 @@
       "id": 66,
       "maxDataPoints": 100,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2179,16 +2139,13 @@
       "id": 32,
       "maxDataPoints": 100,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "list",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2319,16 +2276,13 @@
       "id": 35,
       "maxDataPoints": 100,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "list",
           "isVisible": false,
           "placement": "right"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2473,16 +2427,13 @@
       "id": 31,
       "maxDataPoints": 200,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": true,
           "displayMode": "table",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2626,16 +2577,13 @@
       "id": 51,
       "maxDataPoints": 200,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": true,
           "displayMode": "table",
           "isVisible": true,
           "placement": "right"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2768,16 +2716,13 @@
       },
       "id": 19,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2876,16 +2821,13 @@
       },
       "id": 20,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "multi"
         }
       },
@@ -2983,16 +2925,13 @@
       },
       "id": 21,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "none"
         }
       },
@@ -3091,16 +3030,13 @@
       },
       "id": 9,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "multi"
         }
       },
@@ -3215,16 +3151,13 @@
       },
       "id": 46,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "displayMode": "list",
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -3358,12 +3291,11 @@
       },
       "id": 68,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },

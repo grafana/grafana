@@ -17,6 +17,7 @@ func ModelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 		ID:                      ds.Id,
 		Name:                    ds.Name,
 		URL:                     ds.Url,
+		UID:                     ds.Uid,
 		Database:                ds.Database,
 		User:                    ds.User,
 		BasicAuthEnabled:        ds.BasicAuth,

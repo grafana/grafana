@@ -1,12 +1,6 @@
-// Libaries
-import flattenDeep from 'lodash/flattenDeep';
-import cloneDeep from 'lodash/cloneDeep';
-// Components
-import coreModule from 'app/core/core_module';
-// Utils & Services
-import { dedupAnnotations } from './events_processing';
-// Types
-import { DashboardModel } from '../dashboard/state';
+import { cloneDeep, flattenDeep } from 'lodash';
+import { lastValueFrom, Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import {
   AnnotationEvent,
   AppEvents,
@@ -17,14 +11,17 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+
+import coreModule from 'app/core/core_module';
+import { dedupAnnotations } from './events_processing';
+import { DashboardModel } from '../dashboard/state';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
 import { RefreshEvent } from 'app/types/events';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 
 let counter = 100;
 function getNextRequestId() {
@@ -154,11 +151,9 @@ export class AnnotationsSrv {
               });
             }
             // Note: future annotation lifecycle will use observables directly
-            return executeAnnotationQuery(options, datasource, annotation)
-              .toPromise()
-              .then((res) => {
-                return res.events ?? [];
-              });
+            return lastValueFrom(executeAnnotationQuery(options, datasource, annotation)).then((res) => {
+              return res.events ?? [];
+            });
           })
           .then((results) => {
             // store response in annotation object if this is a snapshot call
@@ -177,19 +172,17 @@ export class AnnotationsSrv {
 
   saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    return getBackendSrv().post('/api/annotations', annotation);
+    return saveAnnotation(annotation);
   }
 
   updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    return getBackendSrv().put(`/api/annotations/${annotation.id}`, annotation);
+    return updateAnnotation(annotation);
   }
 
   deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    const deleteUrl = `/api/annotations/${annotation.id}`;
-
-    return getBackendSrv().delete(deleteUrl);
+    return deleteAnnotation(annotation);
   }
 
   translateQueryResult(annotation: any, results: any) {

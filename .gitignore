@@ -50,6 +50,7 @@ public/css/*.min.css
 *.tmp
 .DS_Store
 .vscode/
+!.vscode/launch.json
 .vs/
 .eslintcache
 
@@ -74,6 +75,7 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions/*
+/pkg/server/wireexts_enterprise.go
 !/pkg/extensions/main.go
 /public/app/extensions
 debug.test
@@ -121,8 +123,15 @@ compilation-stats.json
 !/e2e/**/screenshots/expected/*
 /e2e/**/videos/*
 
+# a11y tests
+/pa11y-ci-results.json
+/pa11y-ci-report
+
 # report dumping the whole system env
 /report.*.json
 
 # auto generated frontend docs
 /docs/sources/packages_api
+
+# auto generated Go files
+*_gen.go

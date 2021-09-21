@@ -141,6 +141,8 @@ export default chance.mixin({
       max: traceEndTime,
     });
 
+    const maxDuration = traceEndTime - startTime;
+
     return {
       traceID,
       processID: chance.pickone(Object.keys(processes)),
@@ -149,7 +151,7 @@ export default chance.mixin({
       operationName: chance.pickone(operations),
       references: [],
       startTime,
-      duration: chance.integer({ min: 1, max: traceEndTime - startTime }),
+      duration: chance.integer({ min: 1, max: maxDuration <= 1 ? 2 : maxDuration }),
       tags: chance.tags(),
       logs: [],
     };

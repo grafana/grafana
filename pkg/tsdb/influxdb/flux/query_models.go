@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 // queryOptions represents datasource configuration options
@@ -28,66 +27,29 @@ type queryModel struct {
 	Interval      time.Duration     `json:"-"`
 }
 
-// The following is commented out but kept as it should be useful when
-// restoring this code to be closer to the SDK's models.
-
-// func GetQueryModel(query backend.DataQuery) (*queryModel, error) {
-// 	model := &queryModel{}
-
-// 	err := json.Unmarshal(query.JSON, &model)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error reading query: %s", err.Error())
-// 	}
-
-// 	// Copy directly from the well typed query
-// 	model.TimeRange = query.TimeRange
-// 	model.MaxDataPoints = query.MaxDataPoints
-// 	model.Interval = query.Interval
-// 	return model, nil
-// }
-
-// getQueryModelTSDB builds a queryModel from plugins.DataQuery information and datasource configuration (dsInfo).
-func getQueryModelTSDB(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
-	dsInfo *models.DataSource) (*queryModel, error) {
+func getQueryModel(query backend.DataQuery, timeRange backend.TimeRange,
+	dsInfo *models.DatasourceInfo) (*queryModel, error) {
 	model := &queryModel{}
-	queryBytes, err := query.Model.Encode()
-	if err != nil {
-		return nil, fmt.Errorf("failed to re-encode the flux query into JSON: %w", err)
-	}
-
-	if err := json.Unmarshal(queryBytes, &model); err != nil {
+	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, fmt.Errorf("error reading query: %w", err)
 	}
 	if model.Options.DefaultBucket == "" {
-		model.Options.DefaultBucket = dsInfo.JsonData.Get("defaultBucket").MustString("")
+		model.Options.DefaultBucket = dsInfo.DefaultBucket
 	}
 	if model.Options.Bucket == "" {
 		model.Options.Bucket = model.Options.DefaultBucket
 	}
 	if model.Options.Organization == "" {
-		model.Options.Organization = dsInfo.JsonData.Get("organization").MustString("")
-	}
-
-	startTime, err := timeRange.ParseFrom()
-	if err != nil && timeRange.From != "" {
-		return nil, fmt.Errorf("error reading startTime: %w", err)
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil && timeRange.To != "" {
-		return nil, fmt.Errorf("error reading endTime: %w", err)
+		model.Options.Organization = dsInfo.Organization
 	}
 
 	// Copy directly from the well typed query
-	model.TimeRange = backend.TimeRange{
-		From: startTime,
-		To:   endTime,
-	}
+	model.TimeRange = timeRange
 	model.MaxDataPoints = query.MaxDataPoints
 	if model.MaxDataPoints == 0 {
 		model.MaxDataPoints = 10000 // 10k/series should be a reasonable place to abort!
 	}
-	model.Interval = time.Millisecond * time.Duration(query.IntervalMS)
+	model.Interval = query.Interval
 	if model.Interval.Milliseconds() == 0 {
 		model.Interval = time.Millisecond // 1ms
 	}

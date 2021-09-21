@@ -9,8 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-
-	"github.com/pkg/errors"
 )
 
 func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
@@ -79,7 +77,7 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 	cfg := &api.PostableUserConfig{}
 
 	if err := json.Unmarshal(rawConfig, cfg); err != nil {
-		return nil, errors.Wrap(err, "unable to parse Alertmanager configuration")
+		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
 	}
 
 	return cfg, nil

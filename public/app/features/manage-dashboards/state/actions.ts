@@ -2,16 +2,23 @@ import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/da
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   clearDashboard,
-  setInputs,
-  setGcomDashboard,
-  setJsonDashboard,
-  InputType,
   ImportDashboardDTO,
+  InputType,
+  LibraryPanelInput,
+  LibraryPanelInputState,
+  setGcomDashboard,
+  setInputs,
+  setJsonDashboard,
+  setLibraryPanelInputs,
 } from './reducers';
-import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { DashboardSearchHit } from '../../search/types';
+import { getLibraryPanel } from '../../library-panels/state/api';
+import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
+import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -19,6 +26,7 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       dispatch(setGcomDashboard(dashboard));
       dispatch(processInputs(dashboard.json));
+      dispatch(processElements(dashboard.json));
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [error.data.message || error]);
     }
@@ -29,6 +37,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
+    dispatch(processElements(dashboard));
   };
 }
 
@@ -57,6 +66,54 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
       });
       dispatch(setInputs(inputs));
     }
+  };
+}
+
+function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }): ThunkResult<void> {
+  return async function (dispatch) {
+    if (!dashboardJson || !dashboardJson.__elements) {
+      return;
+    }
+
+    const libraryPanelInputs: LibraryPanelInput[] = [];
+
+    for (const element of dashboardJson.__elements) {
+      if (element.kind !== LibraryElementKind.Panel) {
+        continue;
+      }
+
+      const model = element.model;
+      const { type, description } = model;
+      const { uid, name } = element;
+      const input: LibraryPanelInput = {
+        model: {
+          model,
+          uid,
+          name,
+          version: 0,
+          meta: {},
+          id: 0,
+          type,
+          kind: LibraryElementKind.Panel,
+          description,
+        } as LibraryElementDTO,
+        state: LibraryPanelInputState.New,
+      };
+
+      try {
+        const panelInDb = await getLibraryPanel(uid, true);
+        input.state = LibraryPanelInputState.Exits;
+        input.model = panelInDb;
+      } catch (e: any) {
+        if (e.status !== 404) {
+          throw e;
+        }
+      }
+
+      libraryPanelInputs.push(input);
+    }
+
+    dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
 }
 
@@ -93,7 +150,10 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
     });
 
     const result = await getBackendSrv().post('api/dashboards/import', {
-      dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
+      // uid: if user changed it, take the new uid from importDashboardForm,
+      // else read it from original dashboard
+      // by default the uid input is disabled, onSubmit ignores values from disabled inputs
+      dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
       overwrite: true,
       inputs: inputsToPersist,
       folderId: importDashboardForm.folder.id,
@@ -213,13 +273,21 @@ export function saveDashboard(options: SaveDashboardOptions) {
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
-    url: `/api/folders/${uid}`,
+    url: `/api/folders/${uid}?forceDeleteRules=true`,
     showSuccessAlert: showSuccessAlert === true,
   });
 }
 
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
+}
+
+export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
+  return getBackendSrv().search({ query, type: 'dash-folder', permission });
+}
+
+export function getFolderById(id: number): Promise<{ id: number; title: string }> {
+  return getBackendSrv().get(`/api/folders/id/${id}`);
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {

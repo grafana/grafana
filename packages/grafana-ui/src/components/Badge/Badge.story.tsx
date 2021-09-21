@@ -9,13 +9,11 @@ export default {
   decorators: [],
   parameters: {
     docs: {},
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
-    icon: { control: { type: 'select', options: iconOptions } },
+    icon: { options: iconOptions, control: { type: 'select' } },
     color: { control: 'select' },
+    text: { control: 'text' },
   },
 };
 

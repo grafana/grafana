@@ -29,12 +29,10 @@
 
 // LAYOUTS
 @import 'layout/lists';
-@import 'layout/page';
 
 // COMPONENTS
 @import '../app/features/dashboard/components/AddPanelWidget/AddPanelWidget';
 @import 'components/scrollbar';
-@import 'components/cards';
 @import 'components/buttons';
 @import 'components/navs';
 @import 'components/tabs';
@@ -44,7 +42,6 @@
 @import 'components/tags';
 @import 'components/panel_graph';
 @import 'components/submenu';
-@import 'components/panel_alertlist';
 @import 'components/panel_dashlist';
 @import 'components/panel_gettingstarted';
 @import 'components/panel_piechart';
@@ -57,7 +54,6 @@
 @import 'components/tables_lists';
 @import 'components/search';
 @import 'components/gf-form';
-@import 'components/sidemenu';
 @import 'components/navbar';
 @import 'components/filter-controls';
 @import 'components/filter-list';
@@ -69,7 +65,6 @@
 @import 'components/dropdown';
 @import 'components/footer';
 @import 'components/infobox';
-@import 'components/shortcuts';
 @import 'components/drop';
 @import 'components/query_editor';
 @import 'components/tabbed_view';
@@ -83,7 +78,6 @@
 @import 'components/dashboard_list';
 @import 'components/page_header';
 @import 'components/dashboard_settings';
-@import 'components/panel_editor';
 @import 'components/toolbar';
 @import 'components/add_data_source.scss';
 @import 'components/page_loader';

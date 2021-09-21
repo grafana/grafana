@@ -44,7 +44,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
   const onEvalFunctionChange = (evalFunction: SelectableValue<EvalFunction>) => {
     onChange({
       ...condition,
-      evaluator: { params: [], type: evalFunction.value! },
+      evaluator: { params: condition.evaluator.params, type: evalFunction.value! },
     });
   };
 
@@ -79,6 +79,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
         />
       )}
       <Select
+        menuShouldPortal
         options={reducerFunctions}
         onChange={onReducerFunctionChange}
         width={20}
@@ -86,6 +87,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
       />
       <div className={styles.button}>OF</div>
       <Select
+        menuShouldPortal
         onChange={onRefIdChange}
         options={refIds}
         width={15}
@@ -122,7 +124,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
         />
       ) : null}
 
-      <Button variant="secondary" onClick={() => onRemoveCondition(index)}>
+      <Button variant="secondary" type="button" onClick={() => onRemoveCondition(index)}>
         <Icon name="trash-alt" />
       </Button>
     </InlineFieldRow>

@@ -13,7 +13,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
-import { config } from 'app/core/config';
 
 interface SeriesVars {
   name?: string;
@@ -100,8 +99,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               value: {
                 name: dataFrame.name,
                 refId: dataFrame.refId,
-                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!, {
-                  theme: config.theme,
+                fields: getFieldDisplayValuesProxy({
+                  frame: dataFrame,
+                  rowIndex: value.rowIndex!,
                 }),
               },
               text: 'Data',

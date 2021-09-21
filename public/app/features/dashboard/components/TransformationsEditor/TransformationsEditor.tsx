@@ -4,25 +4,24 @@ import {
   Button,
   Container,
   CustomScrollbar,
-  stylesFactory,
   Themeable,
-  FeatureInfoBox,
-  useTheme,
   VerticalGroup,
   withTheme,
   Input,
   IconButton,
+  useStyles2,
+  Card,
 } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
   DocsId,
-  GrafanaTheme,
+  GrafanaTheme2,
   PanelData,
   SelectableValue,
   standardTransformersRegistry,
+  TransformerRegistryItem,
 } from '@grafana/data';
-import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
@@ -34,6 +33,7 @@ import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
@@ -216,13 +216,15 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   renderTransformsPicker() {
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
-    let xforms = standardTransformersRegistry.list();
+    let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+
     if (search) {
       const lower = search.toLowerCase();
       const filtered = xforms.filter((t) => {
         const txt = (t.name + t.description).toLowerCase();
         return txt.indexOf(lower) >= 0;
       });
+
       suffix = (
         <>
           {filtered.length} / {xforms.length} &nbsp;&nbsp;
@@ -241,6 +243,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
     const noTransforms = !transformations?.length;
     const showPicker = noTransforms || this.state.showPicker;
+
     if (!suffix && showPicker && !noTransforms) {
       suffix = (
         <IconButton
@@ -264,25 +267,29 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 }
 
                 return (
-                  <FeatureInfoBox
+                  <Alert
                     title="Transformations"
-                    className={css`
-                      margin-bottom: ${this.props.theme.spacing.lg};
-                    `}
-                    onDismiss={() => {
+                    severity="info"
+                    onRemove={() => {
                       onDismiss(true);
                     }}
-                    url={getDocsLink(DocsId.Transformations)}
                   >
                     <p>
                       Transformations allow you to join, calculate, re-order, hide, and rename your query results before
                       they are visualized. <br />
                       Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
-                      only only supports time series data. <br />
+                      only supports time series data. <br />
                       It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
-                      <br />
                     </p>
-                  </FeatureInfoBox>
+                    <a
+                      href={getDocsLink(DocsId.Transformations)}
+                      className="external-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Read more
+                    </a>
+                  </Alert>
                 );
               }}
             </LocalStorageValueProvider>
@@ -304,10 +311,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               return (
                 <TransformationCard
                   key={t.name}
-                  title={t.name}
-                  description={t.description}
-                  actions={<Button>Select</Button>}
-                  ariaLabel={selectors.components.TransformTab.newTransform(t.name)}
+                  transform={t}
                   onClick={() => {
                     this.onTransformationAdd({ value: t.id });
                   }}
@@ -361,32 +365,40 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   }
 }
 
-const TransformationCard: React.FC<CardProps> = (props) => {
-  const theme = useTheme();
-  const styles = getTransformationCardStyles(theme);
-  return <Card {...props} className={styles.card} />;
-};
+interface TransformationCardProps {
+  transform: TransformerRegistryItem<any>;
+  onClick: () => void;
+}
 
-const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
+function TransformationCard({ transform, onClick }: TransformationCardProps) {
+  const styles = useStyles2(getStyles);
+  return (
+    <Card
+      className={styles.card}
+      heading={transform.name}
+      aria-label={selectors.components.TransformTab.newTransform(transform.name)}
+      onClick={onClick}
+    >
+      <Card.Meta>{transform.description}</Card.Meta>
+      {transform.state && (
+        <Card.Tags>
+          <PluginStateInfo state={transform.state} />
+        </Card.Tags>
+      )}
+    </Card>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
-      background: ${theme.colors.bg2};
-      width: 100%;
-      border: none;
-      padding: ${theme.spacing.sm};
+      margin: 0;
 
-      // hack because these cards use classes from a very different card for some reason
-      .add-data-source-item-text {
-        font-size: ${theme.typography.size.md};
-      }
-
-      &:hover {
-        background: ${theme.v2.palette.action.hover};
-        box-shadow: none;
-        border: none;
+      > div {
+        padding: ${theme.spacing(1)};
       }
     `,
   };
-});
+};
 
 export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

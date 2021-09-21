@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Histogram",
+  "id": "histogram",
+
+  "state": "beta",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/histogram.svg",
+      "large": "img/histogram.svg"
+    }
+  }
+}

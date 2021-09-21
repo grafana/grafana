@@ -1,10 +1,11 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
+const { Switch, Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { gte, lt } from 'semver';
 
-const indexPatternTypes = [
+const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
   { label: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
   { label: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -14,20 +15,20 @@ const indexPatternTypes = [
 ];
 
 const esVersions = [
-  { label: '2.x', value: 2 },
-  { label: '5.x', value: 5 },
-  { label: '5.6+', value: 56 },
-  { label: '6.0+', value: 60 },
-  { label: '7.0+', value: 70 },
+  { label: '2.x', value: '2.0.0' },
+  { label: '5.x', value: '5.0.0' },
+  { label: '5.6+', value: '5.6.0' },
+  { label: '6.0+', value: '6.0.0' },
+  { label: '7.0+', value: '7.0.0' },
+  { label: '7.7+', value: '7.7.0' },
+  { label: '7.10+', value: '7.10.0' },
 ];
 
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
-export const ElasticDetails = (props: Props) => {
-  const { value, onChange } = props;
-
+export const ElasticDetails = ({ value, onChange }: Props) => {
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
@@ -52,6 +53,7 @@ export const ElasticDetails = (props: Props) => {
               label="Pattern"
               inputEl={
                 <Select
+                  menuShouldPortal
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
@@ -81,6 +83,7 @@ export const ElasticDetails = (props: Props) => {
             label="Version"
             inputEl={
               <Select
+                menuShouldPortal
                 options={esVersions}
                 onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
@@ -101,7 +104,7 @@ export const ElasticDetails = (props: Props) => {
             }
           />
         </div>
-        {value.jsonData.esVersion >= 56 && (
+        {gte(value.jsonData.esVersion, '5.6.0') && (
           <div className="gf-form max-width-30">
             <FormField
               aria-label={'Max concurrent Shard Requests input'}
@@ -142,11 +145,31 @@ export const ElasticDetails = (props: Props) => {
             />
           </div>
         </div>
+        <div className="gf-form-inline">
+          <Switch
+            label="X-Pack enabled"
+            labelClass="width-10"
+            checked={value.jsonData.xpack || false}
+            onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
+          />
+        </div>
+
+        {gte(value.jsonData.esVersion, '6.6.0') && value.jsonData.xpack && (
+          <div className="gf-form-inline">
+            <Switch
+              label="Include frozen indices"
+              labelClass="width-10"
+              checked={value.jsonData.includeFrozen ?? false}
+              onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
 };
 
+// TODO: Use change handlers from @grafana/data
 const changeHandler = (
   key: keyof DataSourceSettings<ElasticsearchOptions>,
   value: Props['value'],
@@ -158,6 +181,7 @@ const changeHandler = (
   });
 };
 
+// TODO: Use change handlers from @grafana/data
 const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
@@ -166,6 +190,20 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
     jsonData: {
       ...value.jsonData,
       [key]: event.currentTarget.value,
+    },
+  });
+};
+
+const jsonDataSwitchChangeHandler = (
+  key: keyof ElasticsearchOptions,
+  value: Props['value'],
+  onChange: Props['onChange']
+) => (event: React.SyntheticEvent<HTMLInputElement>) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.checked,
     },
   });
 };
@@ -207,18 +245,18 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: number): number {
-  if (maxConcurrentShardRequests === 5 && version < 70) {
+function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: string): number {
+  if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0')) {
     return 256;
   }
 
-  if (maxConcurrentShardRequests === 256 && version >= 70) {
+  if (maxConcurrentShardRequests === 256 && gte(version, '7.0.0')) {
     return 5;
   }
 
   return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
 }
 
-export function defaultMaxConcurrentShardRequests(version: number) {
-  return version >= 70 ? 5 : 256;
+export function defaultMaxConcurrentShardRequests(version: string) {
+  return gte(version, '7.0.0') ? 5 : 256;
 }

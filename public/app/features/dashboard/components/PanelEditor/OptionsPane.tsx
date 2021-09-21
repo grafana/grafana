@@ -18,7 +18,7 @@ interface Props {
   dashboard: DashboardModel;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
-  onPanelConfigChange: (configKey: string, value: any) => void;
+  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
 }
 
 export const OptionsPane: React.FC<Props> = ({
@@ -67,14 +67,14 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex: 1 1 0;
       flex-direction: column;
-      padding: ${theme.spacing.md} 0 0 0;
+      padding: 0;
     `,
     optionsWrapper: css`
       flex-grow: 1;
       min-height: 0;
     `,
     vizButtonWrapper: css`
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.md} 0;
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
     `,
     legacyOptions: css`
       label: legacy-options;

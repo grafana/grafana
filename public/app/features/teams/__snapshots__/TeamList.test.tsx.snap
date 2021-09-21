@@ -47,9 +47,6 @@ exports[`Render should render teams table 1`] = `
           value=""
         />
       </div>
-      <div
-        className="page-action-bar__spacer"
-      />
       <LinkButton
         className=""
         href="org/teams/new"
@@ -380,9 +377,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
           value=""
         />
       </div>
-      <div
-        className="page-action-bar__spacer"
-      />
       <LinkButton
         className=" disabled"
         href="#"
@@ -505,9 +499,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
           value=""
         />
       </div>
-      <div
-        className="page-action-bar__spacer"
-      />
       <LinkButton
         className=""
         href="org/teams/new"

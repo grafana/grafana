@@ -17,44 +17,42 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
-func init() {
-	registry.RegisterServiceWithPriority(&manager{
-		logger:  log.New("plugins.backend"),
-		plugins: map[string]backendplugin.Plugin{},
-	}, registry.MediumHigh)
+func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
+	pluginRequestValidator models.PluginRequestValidator) *Manager {
+	s := &Manager{
+		Cfg:                    cfg,
+		License:                licensing,
+		PluginRequestValidator: pluginRequestValidator,
+		logger:                 log.New("plugins.backend"),
+		plugins:                map[string]backendplugin.Plugin{},
+	}
+	return s
 }
 
-type manager struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	License                models.Licensing              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator `inject:""`
+type Manager struct {
+	Cfg                    *setting.Cfg
+	License                models.Licensing
+	PluginRequestValidator models.PluginRequestValidator
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
 }
 
-func (m *manager) Init() error {
-	return nil
-}
-
-func (m *manager) Run(ctx context.Context) error {
-	m.start(ctx)
+func (m *Manager) Run(ctx context.Context) error {
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
 }
 
 // Register registers a backend plugin
-func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -82,6 +80,8 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	}
 
 	hostEnv = append(hostEnv, m.getAWSEnvironmentVariables()...)
+	hostEnv = append(hostEnv, m.getAzureEnvironmentVariables()...)
+
 	pluginSettings := getPluginSettings(pluginID, m.Cfg)
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
@@ -96,12 +96,68 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	return nil
 }
 
-func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+// RegisterAndStart registers and starts a backend plugin
+func (m *Manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	err := m.Register(pluginID, factory)
+	if err != nil {
+		return err
+	}
+
+	p, exists := m.Get(pluginID)
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.start(ctx, p)
+
+	return nil
+}
+
+// UnregisterAndStop unregisters and stops a backend plugin
+func (m *Manager) UnregisterAndStop(ctx context.Context, pluginID string) error {
+	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	p, exists := m.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.logger.Debug("Stopping backend plugin process", "pluginId", pluginID)
+	if err := p.Decommission(); err != nil {
+		return err
+	}
+
+	if err := p.Stop(ctx); err != nil {
+		return err
+	}
+
+	delete(m.plugins, pluginID)
+
+	m.logger.Debug("Backend plugin unregistered", "pluginId", pluginID)
+	return nil
+}
+
+func (m *Manager) IsRegistered(pluginID string) bool {
+	p, _ := m.Get(pluginID)
+
+	return p != nil && !p.IsDecommissioned()
+}
+
+func (m *Manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
+	if ok && p.IsDecommissioned() {
+		return nil, false
+	}
+
 	return p, ok
 }
 
-func (m *manager) getAWSEnvironmentVariables() []string {
+func (m *Manager) getAWSEnvironmentVariables() []string {
 	variables := []string{}
 	if m.Cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
@@ -113,37 +169,34 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 	return variables
 }
 
-func (m *manager) GetDataPlugin(pluginID string) interface{} {
-	plugin := m.plugins[pluginID]
-	if plugin == nil {
-		return nil
+func (m *Manager) getAzureEnvironmentVariables() []string {
+	variables := []string{}
+	if m.Cfg.Azure.Cloud != "" {
+		variables = append(variables, "AZURE_CLOUD="+m.Cfg.Azure.Cloud)
+	}
+	if m.Cfg.Azure.ManagedIdentityClientId != "" {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+m.Cfg.Azure.ManagedIdentityClientId)
+	}
+	if m.Cfg.Azure.ManagedIdentityEnabled {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
 	}
 
-	if dataPlugin, ok := plugin.(plugins.DataPlugin); ok {
-		return dataPlugin
-	}
-
-	return nil
+	return variables
 }
 
-// start starts all managed backend plugins
-func (m *manager) start(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
-		if !p.IsManaged() {
-			continue
-		}
+// start starts a managed backend plugin
+func (m *Manager) start(ctx context.Context, p backendplugin.Plugin) {
+	if !p.IsManaged() {
+		return
+	}
 
-		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
-			p.Logger().Error("Failed to start plugin", "error", err)
-			continue
-		}
+	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+		p.Logger().Error("Failed to start plugin", "error", err)
 	}
 }
 
 // StartPlugin starts a non-managed backend plugin
-func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
+func (m *Manager) StartPlugin(ctx context.Context, pluginID string) error {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -159,7 +212,7 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 }
 
 // stop stops all managed backend plugins
-func (m *manager) stop(ctx context.Context) {
+func (m *Manager) stop(ctx context.Context) {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
 	var wg sync.WaitGroup
@@ -178,11 +231,8 @@ func (m *manager) stop(ctx context.Context) {
 }
 
 // CollectMetrics collects metrics from a registered backend plugin.
-func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
-
+func (m *Manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+	p, registered := m.Get(pluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -200,7 +250,7 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 }
 
 // CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+func (m *Manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
 	var dsURL string
 	if pluginContext.DataSourceInstanceSettings != nil {
 		dsURL = pluginContext.DataSourceInstanceSettings.URL
@@ -214,10 +264,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 		}, nil
 	}
 
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginContext.PluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pluginContext.PluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -243,15 +290,39 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	return resp, nil
 }
 
+func (m *Manager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	p, registered := m.Get(req.PluginContext.PluginID)
+	if !registered {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	var resp *backend.QueryDataResponse
+	err := instrumentation.InstrumentQueryDataRequest(p.PluginID(), func() (innerErr error) {
+		resp, innerErr = p.QueryData(ctx, req)
+		return
+	})
+
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		return nil, errutil.Wrap("failed to query data", err)
+	}
+
+	return resp, nil
+}
+
 type keepCookiesJSONModel struct {
 	KeepCookies []string `json:"keepCookies"`
 }
 
-func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pCtx.PluginID]
-	m.pluginsMu.RUnlock()
-
+func (m *Manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
+	p, registered := m.Get(pCtx.PluginID)
 	if !registered {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -311,13 +382,13 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 }
 
 // CallResource calls a plugin resource.
-func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+func (m *Manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
 	var dsURL string
 	if pCtx.DataSourceInstanceSettings != nil {
 		dsURL = pCtx.DataSourceInstanceSettings.URL
 	}
 
-	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req.Request)
+	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req)
 	if err != nil {
 		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -434,6 +505,11 @@ func restartKilledProcess(ctx context.Context, p backendplugin.Plugin) error {
 			}
 			return nil
 		case <-ticker.C:
+			if p.IsDecommissioned() {
+				p.Logger().Debug("Plugin decommissioned")
+				return nil
+			}
+
 			if !p.Exited() {
 				continue
 			}

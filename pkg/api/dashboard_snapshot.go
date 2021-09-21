@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 var client = &http.Client{
@@ -44,6 +45,8 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 		"name":      cmd.Name,
 		"expires":   cmd.Expires,
 		"dashboard": cmd.Dashboard,
+		"key":       cmd.Key,
+		"deleteKey": cmd.DeleteKey,
 	}
 
 	messageBytes, err := simplejson.NewFromAny(message).Encode()
@@ -143,7 +146,7 @@ func CreateDashboardSnapshot(c *models.ReqContext, cmd models.CreateDashboardSna
 
 // GET /api/snapshots/:key
 func GetDashboardSnapshot(c *models.ReqContext) response.Response {
-	key := c.Params(":key")
+	key := macaron.Params(c.Req)[":key"]
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
 	err := bus.Dispatch(query)
@@ -158,13 +161,8 @@ func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 		return response.Error(404, "Dashboard snapshot not found", err)
 	}
 
-	dashboard, err := snapshot.DashboardJSON()
-	if err != nil {
-		return response.Error(500, "Failed to get dashboard data for dashboard snapshot", err)
-	}
-
 	dto := dtos.DashboardFullWithMeta{
-		Dashboard: dashboard,
+		Dashboard: snapshot.Dashboard,
 		Meta: dtos.DashboardMeta{
 			Type:       models.DashTypeSnapshot,
 			IsSnapshot: true,
@@ -183,9 +181,12 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 	if err != nil {
 		return err
 	}
-	if err := response.Body.Close(); err != nil {
-		plog.Warn("Failed closing response body", "err", err)
-	}
+
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			plog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if response.StatusCode == 200 {
 		return nil
@@ -209,7 +210,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 
 // GET /api/snapshots-delete/:deleteKey
 func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
-	key := c.Params(":deleteKey")
+	key := macaron.Params(c.Req)[":deleteKey"]
 
 	query := &models.GetDashboardSnapshotQuery{DeleteKey: key}
 
@@ -239,7 +240,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 
 // DELETE /api/snapshots/:key
 func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
-	key := c.Params(":key")
+	key := macaron.Params(c.Req)[":key"]
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
@@ -251,11 +252,7 @@ func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 		return response.Error(404, "Failed to get dashboard snapshot", nil)
 	}
 
-	dashboard, err := query.Result.DashboardJSON()
-	if err != nil {
-		return response.Error(500, "Failed to get dashboard data for dashboard snapshot", err)
-	}
-	dashboardID := dashboard.Get("id").MustInt64()
+	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
 	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()

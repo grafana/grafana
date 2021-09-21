@@ -126,7 +126,6 @@ func (db *MySQLDialect) CleanDB() error {
 
 	for _, table := range tables {
 		switch table.Name {
-		case "migration_log":
 		default:
 			if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
 				return errutil.Wrap("failed to disable foreign key checks", err)
@@ -155,6 +154,8 @@ func (db *MySQLDialect) TruncateDBTables() error {
 
 	for _, table := range tables {
 		switch table.Name {
+		case "migration_log":
+			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {

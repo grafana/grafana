@@ -8,6 +8,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     dataSourceConfig: {
       id: 4,
+      uid: 'x',
       orgId: 1,
       name: 'gdev-influxdb',
       type: 'influxdb',

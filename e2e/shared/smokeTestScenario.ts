@@ -15,19 +15,17 @@ export const smokeTestScenario = {
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().should('be.visible').click();
-
-        cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
       });
 
+    cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
+
     // Make sure the graph renders via checking legend
-    e2e.components.Panels.Visualization.Graph.Legend.legendItemAlias('A-series').should('be.visible');
+    e2e.components.VizLegend.seriesName('A-series').should('be.visible');
 
     // Expand options section
-    e2e.components.Panels.Visualization.Graph.VisualizationTab.legendSection().click();
+    e2e.components.PanelEditor.applyButton();
 
-    // Disable legend
-    e2e.components.Panels.Visualization.Graph.Legend.showLegendSwitch().click();
-
-    e2e.components.Panels.Visualization.Graph.Legend.legendItemAlias('A-series').should('not.exist');
+    // Make sure panel is & visualization is added to dashboard
+    e2e.components.VizLegend.seriesName('A-series').should('be.visible');
   },
 };

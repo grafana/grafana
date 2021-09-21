@@ -1,7 +1,9 @@
-// Libraries
-import _ from 'lodash';
+import { sortedUniq } from 'lodash';
+import { lastValueFrom } from 'rxjs';
+import Prism, { Grammar } from 'prismjs';
+import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
+import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-// Services & Utils
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -12,14 +14,8 @@ import syntax, {
   QUERY_COMMANDS,
   STRING_FUNCTIONS,
 } from './syntax';
-
-// Types
 import { CloudWatchQuery, TSDBResponse } from './types';
-import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
-
 import { CloudWatchDatasource } from './datasource';
-import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
-import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -30,8 +26,8 @@ type TypeaheadContext = {
 };
 
 export class CloudWatchLanguageProvider extends LanguageProvider {
-  started: boolean;
-  initialRange: AbsoluteTimeRange;
+  started = false;
+  declare initialRange: AbsoluteTimeRange;
   datasource: CloudWatchDatasource;
 
   constructor(datasource: CloudWatchDatasource, initialValues?: any) {
@@ -50,7 +46,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   request = (url: string, params?: any): Promise<TSDBResponse> => {
-    return this.datasource.awsRequest(url, params).toPromise();
+    return lastValueFrom(this.datasource.awsRequest(url, params));
   };
 
   start = () => {
@@ -141,7 +137,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     if (
       this.fetchedFieldsCache &&
       Date.now() - this.fetchedFieldsCache.time < 30 * 1000 &&
-      _.sortedUniq(this.fetchedFieldsCache.logGroups).join('|') === _.sortedUniq(logGroups).join('|')
+      sortedUniq(this.fetchedFieldsCache.logGroups).join('|') === sortedUniq(logGroups).join('|')
     ) {
       return this.fetchedFieldsCache.fields;
     }

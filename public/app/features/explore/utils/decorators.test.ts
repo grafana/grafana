@@ -1,12 +1,10 @@
-jest.mock('@grafana/data/src/datetime/formatter', () => ({
-  dateTimeFormat: () => 'format() jest mocked',
-  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
-}));
-
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { lastValueFrom } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
   DataQueryRequest,
+  FieldColorModeId,
   FieldType,
   LoadingState,
   PanelData,
@@ -23,6 +21,11 @@ import {
 import { describe } from '../../../../test/lib/common';
 import { ExplorePanelData } from 'app/types';
 import TableModel from 'app/core/table_model';
+
+jest.mock('@grafana/data/src/datetime/formatter', () => ({
+  dateTimeFormat: () => 'format() jest mocked',
+  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+}));
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({
@@ -182,7 +185,7 @@ describe('decorateWithTableResult', () => {
   it('should process table type dataFrame', async () => {
     const { table, emptyTable } = getTestContext();
     const panelData = createExplorePanelData({ tableFrames: [table, emptyTable] });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
 
     let theResult = panelResult.tableResult;
 
@@ -239,7 +242,7 @@ describe('decorateWithTableResult', () => {
       }),
     ];
     const panelData = createExplorePanelData({ tableFrames });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     const result = panelResult.tableResult;
 
     expect(result?.fields[0].name).toBe('Time');
@@ -262,20 +265,20 @@ describe('decorateWithTableResult', () => {
     tableFrames[0].fields[0].display = displayFunctionMock;
 
     const panelData = createExplorePanelData({ tableFrames });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     expect(panelResult.tableResult?.fields[0].display).toBe(displayFunctionMock);
   });
 
   it('should return null when passed empty array', async () => {
     const panelData = createExplorePanelData({ tableFrames: [] });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     expect(panelResult.tableResult).toBeNull();
   });
 
   it('returns data if panelData has error', async () => {
     const { table, emptyTable } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, tableFrames: [table, emptyTable] });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     expect(panelResult.tableResult).not.toBeNull();
   });
 });
@@ -349,35 +352,38 @@ describe('decorateWithLogsResult', () => {
       ],
       series: [
         {
-          label: 'unknown',
-          color: '#8e8e8e',
-          data: [[0, 3]],
-          isVisible: true,
-          yAxis: {
-            index: 1,
-            min: 0,
-            tickDecimals: 0,
-          },
-          seriesIndex: 0,
-          timeField: {
-            name: 'Time',
-            type: 'time',
-            config: {},
-            values: new ArrayVector([0]),
-            index: 0,
-            display: expect.anything(),
-          },
-          valueField: {
-            name: 'unknown',
-            type: 'number',
-            config: { unit: undefined, color: '#8e8e8e' },
-            values: new ArrayVector([3]),
-            labels: undefined,
-            index: 1,
-            display: expect.anything(),
-            state: expect.anything(),
-          },
-          timeStep: 0,
+          name: 'unknown',
+          length: 1,
+          fields: [
+            { name: 'Time', type: 'time', values: new ArrayVector([0]), config: {} },
+            {
+              name: 'Value',
+              type: 'number',
+              labels: undefined,
+              values: new ArrayVector([3]),
+              config: {
+                color: {
+                  fixedColor: '#8e8e8e',
+                  mode: FieldColorModeId.Fixed,
+                },
+                min: 0,
+                decimals: 0,
+                unit: undefined,
+                custom: {
+                  drawStyle: GraphDrawStyle.Bars,
+                  barAlignment: 0,
+                  barMaxWidth: 5,
+                  barWidthFactor: 0.9,
+                  lineColor: '#8e8e8e',
+                  fillColor: '#8e8e8e',
+                  pointColor: '#8e8e8e',
+                  lineWidth: 0,
+                  fillOpacity: 100,
+                  stacking: { mode: StackingMode.Normal, group: 'A' },
+                },
+              },
+            },
+          ],
         },
       ],
       visibleRange: undefined,

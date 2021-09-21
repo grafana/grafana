@@ -40,28 +40,26 @@ export const LoginPage: FC = () => {
             {!isChangingPassword && (
               <InnerBox>
                 {!disableLoginForm && (
-                  <>
-                    <LoginForm
-                      onSubmit={login}
-                      loginHint={loginHint}
-                      passwordHint={passwordHint}
-                      isLoggingIn={isLoggingIn}
-                    >
-                      {!(ldapEnabled || authProxyEnabled) ? (
-                        <HorizontalGroup justify="flex-end">
-                          <LinkButton
-                            className={forgottenPasswordStyles}
-                            variant="link"
-                            href={`${config.appSubUrl}/user/password/send-reset-email`}
-                          >
-                            Forgot your password?
-                          </LinkButton>
-                        </HorizontalGroup>
-                      ) : (
-                        <></>
-                      )}
-                    </LoginForm>
-                  </>
+                  <LoginForm
+                    onSubmit={login}
+                    loginHint={loginHint}
+                    passwordHint={passwordHint}
+                    isLoggingIn={isLoggingIn}
+                  >
+                    {!(ldapEnabled || authProxyEnabled) ? (
+                      <HorizontalGroup justify="flex-end">
+                        <LinkButton
+                          className={forgottenPasswordStyles}
+                          fill="text"
+                          href={`${config.appSubUrl}/user/password/send-reset-email`}
+                        >
+                          Forgot your password?
+                        </LinkButton>
+                      </HorizontalGroup>
+                    ) : (
+                      <></>
+                    )}
+                  </LoginForm>
                 )}
                 <LoginServiceButtons />
                 {!disableUserSignUp && <UserSignup />}

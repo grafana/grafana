@@ -10,6 +10,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
+import { setContextSrv } from '../../../core/services/context_srv';
 
 describe('getFieldLinksForExplore', () => {
   it('returns correct link model for external link', () => {
@@ -48,7 +49,9 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
-      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
+      )}`
     );
     expect(links[0].title).toBe('test_ds');
 
@@ -62,9 +65,40 @@ describe('getFieldLinksForExplore', () => {
       range,
     });
   });
+
+  it('returns correct link model for external link when user does not have access to explore', () => {
+    const { field, range } = setup(
+      {
+        title: 'external',
+        url: 'http://regionalhost',
+      },
+      false
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+
+    expect(links[0].href).toBe('http://regionalhost');
+    expect(links[0].title).toBe('external');
+  });
+
+  it('returns no internal links if when user does not have access to explore', () => {
+    const { field, range } = setup(
+      {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query_1' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+        },
+      },
+      false
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    expect(links).toHaveLength(0);
+  });
 });
 
-function setup(link: DataLink) {
+function setup(link: DataLink, hasAccess = true) {
   setLinkSrv({
     getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
@@ -81,6 +115,10 @@ function setup(link: DataLink) {
       return link.url;
     },
   });
+
+  setContextSrv({
+    hasAccessToExplore: () => hasAccess,
+  } as any);
 
   const field: Field<string> = {
     name: 'flux-dimensions',

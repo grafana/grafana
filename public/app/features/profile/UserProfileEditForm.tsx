@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
-import { Button, Tooltip, Icon, Form, Input, Field, FieldSet } from '@grafana/ui';
+import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
 import { UserDTO } from 'app/types';
 import config from 'app/core/config';
-import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
+import { ProfileUpdateFields } from './types';
 
 export interface Props {
-  user: UserDTO;
+  user: UserDTO | null;
   isSavingUser: boolean;
   updateProfile: (payload: ProfileUpdateFields) => void;
 }
@@ -24,33 +24,33 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
           <FieldSet label="Edit profile">
             <Field label="Name" invalid={!!errors.name} error="Name is required" disabled={disableLoginForm}>
               <Input
-                name="name"
-                ref={register({ required: true })}
+                {...register('name', { required: true })}
+                id="edit-user-profile-name"
                 placeholder="Name"
-                defaultValue={user.name}
+                defaultValue={user?.name ?? ''}
                 suffix={<InputSuffix />}
               />
             </Field>
             <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
               <Input
-                name="email"
-                ref={register({ required: true })}
+                {...register('email', { required: true })}
+                id="edit-user-profile-email"
                 placeholder="Email"
-                defaultValue={user.email}
+                defaultValue={user?.email ?? ''}
                 suffix={<InputSuffix />}
               />
             </Field>
             <Field label="Username" disabled={disableLoginForm}>
               <Input
-                name="login"
-                ref={register}
-                defaultValue={user.login}
+                {...register('login')}
+                id="edit-user-profile-username"
+                defaultValue={user?.login ?? ''}
                 placeholder="Username"
                 suffix={<InputSuffix />}
               />
             </Field>
             <div className="gf-form-button-row">
-              <Button variant="primary" disabled={isSavingUser}>
+              <Button variant="primary" disabled={isSavingUser} aria-label="Edit user profile save button">
                 Save
               </Button>
             </div>

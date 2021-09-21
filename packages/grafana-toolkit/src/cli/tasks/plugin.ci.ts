@@ -41,6 +41,10 @@ export interface PluginCIOptions {
  *
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
+ *
+ * @deprecated -- this task was written with a specific circle-ci build in mind.  That system
+ * has been replaced with Drone, and this is no longer the best practice.  Any new work
+ * should be defined in the grafana build pipeline tool or drone configs directly.
  */
 const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish, maxJestWorkers }) => {
   const start = Date.now();
@@ -67,43 +71,17 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish, maxJestW
 export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
 
 /**
- * 2. Build Docs
- *
- *  Take /docs/* and format it into /ci/docs/HTML site
- *
- */
-const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
-  const docsSrc = path.resolve(process.cwd(), 'docs');
-  if (!fs.existsSync(docsSrc)) {
-    console.log('No docs src');
-    return;
-  }
-
-  const start = Date.now();
-  const workDir = getJobFolder();
-  await execa('rimraf', [workDir]);
-  fs.mkdirSync(workDir);
-
-  const docsDest = path.resolve(process.cwd(), 'ci', 'docs');
-  fs.mkdirSync(docsDest);
-
-  const exe = await execa('cp', ['-rv', docsSrc + '/.', docsDest]);
-  console.log(exe.stdout);
-
-  fs.writeFileSync(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, { encoding: 'utf-8' });
-
-  writeJobStats(start, workDir);
-};
-
-export const ciBuildPluginDocsTask = new Task<PluginCIOptions>('Build Plugin Docs', buildPluginDocsRunner);
-
-/**
  * 2. Package
  *
  *  Take everything from `~/ci/job/{any}/dist` and
  *  1. merge it into: `~/ci/dist`
  *  2. zip it into packages in `~/ci/packages`
  *  3. prepare grafana environment in: `~/ci/grafana-test-env`
+ *
+ *
+ * @deprecated -- this task was written with a specific circle-ci build in mind.  That system
+ * has been replaced with Drone, and this is no longer the best practice.  Any new work
+ * should be defined in the grafana build pipeline tool or drone configs directly.
  */
 const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType, rootUrls }) => {
   const start = Date.now();
@@ -224,6 +202,10 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
  * 4. Report
  *
  *  Create a report from all the previous steps
+ *
+ * @deprecated -- this task was written with a specific circle-ci build in mind.  That system
+ * has been replaced with Drone, and this is no longer the best practice.  Any new work
+ * should be defined in the grafana build pipeline tool or drone configs directly.
  */
 const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const ciDir = path.resolve(process.cwd(), 'ci');

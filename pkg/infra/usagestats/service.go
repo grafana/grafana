@@ -6,58 +6,97 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var metricsLogger log.Logger = log.New("metrics")
-
-func init() {
-	registry.RegisterService(&UsageStatsService{
-		log:             log.New("infra.usagestats"),
-		externalMetrics: make(map[string]MetricFunc),
-	})
-}
-
 type UsageStats interface {
-	GetUsageReport(ctx context.Context) (UsageReport, error)
-	RegisterMetric(name string, fn MetricFunc)
+	GetUsageReport(context.Context) (UsageReport, error)
+	RegisterMetricsFunc(MetricsFunc)
+	ShouldBeReported(string) bool
 }
 
-type MetricFunc func() (interface{}, error)
+type MetricsFunc func() (map[string]interface{}, error)
 
 type UsageStatsService struct {
-	Cfg                *setting.Cfg               `inject:""`
-	Bus                bus.Bus                    `inject:""`
-	SQLStore           *sqlstore.SQLStore         `inject:""`
-	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
-	License            models.Licensing           `inject:""`
-	PluginManager      plugins.Manager            `inject:""`
+	Cfg                *setting.Cfg
+	Bus                bus.Bus
+	SQLStore           *sqlstore.SQLStore
+	AlertingUsageStats alerting.UsageStatsQuerier
+	PluginManager      plugins.Manager
+	SocialService      social.Service
+	grafanaLive        *live.GrafanaLive
+	kvStore            *kvstore.NamespacedKVStore
 
 	log log.Logger
 
 	oauthProviders           map[string]bool
-	externalMetrics          map[string]MetricFunc
+	externalMetrics          []MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
+	liveStats                liveUsageStats
+	startTime                time.Time
 }
 
-func (uss *UsageStatsService) Init() error {
-	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
-	return nil
+type liveUsageStats struct {
+	numClientsMax int
+	numClientsMin int
+	numClientsSum int
+	numUsersMax   int
+	numUsersMin   int
+	numUsersSum   int
+	sampleCount   int
+}
+
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
+	alertingStats alerting.UsageStatsQuerier, pluginManager plugins.Manager,
+	socialService social.Service, grafanaLive *live.GrafanaLive,
+	kvStore kvstore.KVStore) *UsageStatsService {
+	s := &UsageStatsService{
+		Cfg:                cfg,
+		Bus:                bus,
+		SQLStore:           sqlStore,
+		AlertingUsageStats: alertingStats,
+		oauthProviders:     socialService.GetOAuthProviders(),
+		PluginManager:      pluginManager,
+		grafanaLive:        grafanaLive,
+		kvStore:            kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
+		log:                log.New("infra.usagestats"),
+		startTime:          time.Now(),
+	}
+	return s
 }
 
 func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 
-	sendReportTicker := time.NewTicker(time.Hour * 24)
+	// try to load last sent time from kv store
+	lastSent := time.Now()
+	if val, ok, err := uss.kvStore.Get(ctx, "last_sent"); err != nil {
+		uss.log.Error("Failed to get last sent time", "error", err)
+	} else if ok {
+		if parsed, err := time.Parse(time.RFC3339, val); err != nil {
+			uss.log.Error("Failed to parse last sent time", "error", err)
+		} else {
+			lastSent = parsed
+		}
+	}
+
+	// calculate initial send delay
+	sendInterval := time.Hour * 24
+	nextSendInterval := time.Until(lastSent.Add(sendInterval))
+	if nextSendInterval < time.Minute {
+		nextSendInterval = time.Minute
+	}
+
+	sendReportTicker := time.NewTicker(nextSendInterval)
 	updateStatsTicker := time.NewTicker(time.Minute * 30)
+
 	defer sendReportTicker.Stop()
 	defer updateStatsTicker.Stop()
 
@@ -65,10 +104,24 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 		select {
 		case <-sendReportTicker.C:
 			if err := uss.sendUsageStats(ctx); err != nil {
-				metricsLogger.Warn("Failed to send usage stats", "err", err)
+				uss.log.Warn("Failed to send usage stats", "error", err)
 			}
+
+			lastSent = time.Now()
+			if err := uss.kvStore.Set(ctx, "last_sent", lastSent.Format(time.RFC3339)); err != nil {
+				uss.log.Warn("Failed to update last sent time", "error", err)
+			}
+
+			if nextSendInterval != sendInterval {
+				nextSendInterval = sendInterval
+				sendReportTicker.Reset(nextSendInterval)
+			}
+
+			// always reset live stats every report tick
+			uss.resetLiveStats()
 		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
+			uss.sampleLiveStats()
 		case <-ctx.Done():
 			return ctx.Err()
 		}

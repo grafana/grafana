@@ -92,12 +92,11 @@
       "interval": "1m",
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -181,12 +180,11 @@
       "links": [],
       "maxDataPoints": 10,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -270,12 +268,11 @@
       "links": [],
       "maxDataPoints": 20,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -358,12 +355,11 @@
       "interval": "1m",
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -447,12 +443,11 @@
       "links": [],
       "maxDataPoints": 80,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -536,12 +531,11 @@
       "links": [],
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },

@@ -4,7 +4,6 @@ import { GraphDimensions } from './GraphTooltip/types';
 import {
   FlotDataPoint,
   getValueFromDimension,
-  getDisplayProcessor,
   Dimensions,
   dateTimeFormat,
   TimeZone,
@@ -60,12 +59,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
         contextDimensions.yAxis[0],
         contextDimensions.yAxis[1]
       );
-      const display =
-        source.series.valueField.display ??
-        getDisplayProcessor({
-          field: source.series.valueField,
-          timeZone,
-        });
+      const display = source.series.valueField.display!;
       value = display(valueFromDimensions);
     }
 
@@ -85,13 +79,12 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   };
   const renderMenuGroupItems = () => {
     return itemsToRender?.map((group, index) => (
-      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+      <MenuGroup key={`${group.label}${index}`} label={group.label}>
         {(group.items || []).map((item) => (
           <MenuItem
             key={`${item.label}`}
             url={item.url}
             label={item.label}
-            ariaLabel={item.label}
             target={item.target}
             icon={item.icon}
             active={item.active}

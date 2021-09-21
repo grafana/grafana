@@ -7,7 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -15,57 +19,33 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
-// setupTestEnv initializes a store to used by the tests.
-func setupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
+// SetupTestEnv initializes a store to used by the tests.
+func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+	t.Helper()
+
 	cfg := setting.NewCfg()
+	cfg.AlertingBaseInterval = baseInterval
 	// AlertNG is disabled by default and only if it's enabled
 	// its database migrations run and the relative database tables are created
 	cfg.FeatureToggles = map[string]bool{"ngalert": true}
 
-	ng := overrideAlertNGInRegistry(t, cfg)
-	ng.SQLStore = sqlstore.InitTestDB(t)
-
-	err := ng.Init()
+	m := metrics.NewNGAlert(prometheus.NewRegistry())
+	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil, nil, m)
 	require.NoError(t, err)
-	return &store.DBstore{SQLStore: ng.SQLStore, BaseInterval: time.Duration(baseIntervalSeconds) * time.Second}
+	return ng, &store.DBstore{
+		SQLStore:     ng.SQLStore,
+		BaseInterval: baseInterval * time.Second,
+		Logger:       log.New("ngalert-test"),
+	}
 }
 
-func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
-	ng := ngalert.AlertNG{
-		Cfg:           cfg,
-		RouteRegister: routing.NewRouteRegister(),
-		Log:           log.New("ngalert-test"),
-	}
-
-	// hook for initialising the service after the Cfg is populated
-	// so that database migrations will run
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*ngalert.AlertNG); ok {
-			return &registry.Descriptor{
-				Name:         descriptor.Name,
-				Instance:     &ng,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-
-	registry.RegisterOverride(overrideServiceFunc)
-
-	return ng
-}
-
-// createTestAlertRule creates a dummy alert definition to be used by the tests.
-func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+// CreateTestAlertRule creates a dummy alert definition to be used by the tests.
+func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
@@ -76,8 +56,10 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
+					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     1,
 						Title:     fmt.Sprintf("an alert definition %d", d),
 						Condition: "A",
 						Data: []models.AlertQuery{
@@ -116,7 +98,7 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 }
 
 // updateTestAlertRule update a dummy alert definition to be used by the tests.
-func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
+func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
 	cmd := store.UpdateRuleGroupCmd{
 		OrgID:        1,
 		NamespaceUID: "namespace",
@@ -126,8 +108,7 @@ func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID: 1,
-						UID:   existingRule.UID,
+						UID: existingRule.UID,
 					},
 				},
 			},

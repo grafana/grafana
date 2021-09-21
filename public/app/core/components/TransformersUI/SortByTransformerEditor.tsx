@@ -1,23 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
-
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
+import { useAllFieldNamesFromDataFrames } from './utils';
 
 export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransformerOptions>> = ({
   input,
   options,
   onChange,
 }) => {
-  const fieldNames = useMemo(
-    () =>
-      getAllFieldNamesFromDataFrames(input).map((n) => ({
-        value: n,
-        label: n,
-      })),
-    [input]
-  );
+  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
 
   // Only supports single sort for now
   const onSortChange = useCallback(
@@ -36,8 +28,9 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
           <InlineFieldRow key={`${s.field}/${index}`}>
             <InlineField label="Field" labelWidth={10} grow={true}>
               <Select
+                menuShouldPortal
                 options={fieldNames}
-                value={fieldNames.find((v) => v.value === s.field)}
+                value={s.field}
                 placeholder="Select field"
                 onChange={(v) => {
                   onSortChange(index, { ...s, field: v.value! });

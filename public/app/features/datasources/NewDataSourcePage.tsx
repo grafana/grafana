@@ -1,12 +1,11 @@
 import React, { FC, PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { connect, ConnectedProps } from 'react-redux';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
 import { Button, LinkButton, List, PluginSignatureBadge } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
-import { DataSourcePluginCategory, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -14,16 +13,25 @@ import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { Card } from 'app/core/components/Card/Card';
 import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
 
-export interface Props {
-  navModel: NavModel;
-  plugins: DataSourcePluginMeta[];
-  categories: DataSourcePluginCategory[];
-  isLoading: boolean;
-  addDataSource: typeof addDataSource;
-  loadDataSourcePlugins: typeof loadDataSourcePlugins;
-  searchQuery: string;
-  setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(),
+    plugins: getDataSourcePlugins(state.dataSources),
+    searchQuery: state.dataSources.dataSourceTypeSearchQuery,
+    categories: state.dataSources.categories,
+    isLoading: state.dataSources.isLoadingDataSources,
+  };
 }
+
+const mapDispatchToProps = {
+  addDataSource,
+  loadDataSourcePlugins,
+  setDataSourceTypeSearchQuery,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
 
 class NewDataSourcePage extends PureComponent<Props> {
   componentDidMount() {
@@ -96,19 +104,11 @@ class NewDataSourcePage extends PureComponent<Props> {
           <div className="page-action-bar">
             <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
-            <LinkButton href="datasources">Cancel</LinkButton>
+            <LinkButton href="datasources" fill="outline" variant="secondary" icon="arrow-left">
+              Cancel
+            </LinkButton>
           </div>
-          {!searchQuery && (
-            <PluginsErrorsInfo>
-              <>
-                <br />
-                <p>
-                  Note that unsigned front-end data source plugins are still usable, but this is subject to change in
-                  the upcoming releases of Grafana.
-                </p>
-              </>
-            </PluginsErrorsInfo>
-          )}
+          {!searchQuery && <PluginsErrorsInfo />}
           <div>
             {searchQuery && this.renderPlugins(plugins)}
             {!searchQuery && this.renderCategories()}
@@ -178,20 +178,4 @@ export function getNavModel(): NavModel {
   };
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(),
-    plugins: getDataSourcePlugins(state.dataSources),
-    searchQuery: state.dataSources.dataSourceTypeSearchQuery,
-    categories: state.dataSources.categories,
-    isLoading: state.dataSources.isLoadingDataSources,
-  };
-}
-
-const mapDispatchToProps = {
-  addDataSource,
-  loadDataSourcePlugins,
-  setDataSourceTypeSearchQuery,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));
+export default connector(NewDataSourcePage);

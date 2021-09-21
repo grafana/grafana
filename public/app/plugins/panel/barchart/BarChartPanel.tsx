@@ -1,22 +1,24 @@
-import React, { useCallback, useMemo } from 'react';
-import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
-import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
-import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import React, { useMemo } from 'react';
+import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
+import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import { TooltipPlugin, useTheme2 } from '@grafana/ui';
+import { BarChartOptions } from './types';
+import { BarChart } from './BarChart';
+import { prepareGraphableFrames } from './utils';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({
-  data,
-  options,
-  width,
-  height,
-  fieldConfig,
-  onFieldConfigChange,
-}) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
+  const theme = useTheme2();
+
+  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options.stacking), [
+    data,
+    theme,
+    options.stacking,
+  ]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -25,53 +27,36 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     return options.orientation;
   }, [width, height, options.orientation]);
 
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
+  // Force 'multi' tooltip setting or stacking mode
+  const tooltip = useMemo(() => {
+    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
+      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
+    }
+    return options.tooltip;
+  }, [options.tooltip, options.stacking]);
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
-  if (!data || !data.series?.length) {
+  if (!frames || warn) {
     return (
       <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
-
-  const firstFrame = data.series[0];
-  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
-    return (
-      <div className="panel-empty">
-        <p>Bar charts requires a string field</p>
-      </div>
-    );
-  }
-  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
-    return (
-      <div className="panel-empty">
-        <p>No numeric fields found</p>
+        <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
   }
 
   return (
     <BarChart
-      data={data.series}
+      frames={frames}
+      timeZone={timeZone}
+      timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
+      structureRev={data.structureRev}
       width={width}
       height={height}
-      onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
       {...options}
       orientation={orientation}
-    />
+    >
+      {(config, alignedFrame) => {
+        return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
+      }}
+    </BarChart>
   );
 };

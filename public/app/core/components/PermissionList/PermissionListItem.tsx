@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select, Icon } from '@grafana/ui';
+import { Select, Icon, Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
@@ -75,6 +75,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td className="query-keyword">Can</td>
         <td>
           <Select
+            menuShouldPortal
             isSearchable={false}
             options={dashboardPermissionLevels}
             onChange={this.onPermissionChanged}
@@ -85,13 +86,9 @@ export default class PermissionsListItem extends PureComponent<Props> {
         </td>
         <td>
           {!item.inherited ? (
-            <a className="btn btn-danger btn-small" onClick={this.onRemoveItem}>
-              <Icon name="times" style={{ marginBottom: 0 }} />
-            </a>
+            <Button size="sm" variant="destructive" icon="times" onClick={this.onRemoveItem} />
           ) : (
-            <button className="btn btn-inverse btn-small">
-              <Icon name="lock" style={{ marginBottom: '3px' }} />
-            </button>
+            <Button size="sm" disabled icon="times" />
           )}
         </td>
       </tr>

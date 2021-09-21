@@ -19,6 +19,7 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery plugins.DataQuery,
 	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
@@ -45,6 +46,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	}
 	intervalCalculator := interval.NewCalculator(interval.CalculatorOptions{})
 	interval := intervalCalculator.Calculate(*tsdbQuery.TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second)
+
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | graph_period %s | within d'%s', d'%s'", interval.Text, from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 
@@ -94,6 +96,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
@@ -264,6 +267,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 	return nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *plugins.DataQueryResult,
 	data cloudMonitoringResponse, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)

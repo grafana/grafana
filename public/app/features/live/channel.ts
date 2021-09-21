@@ -1,12 +1,12 @@
 import {
   LiveChannelConfig,
-  LiveChannel,
   LiveChannelStatusEvent,
   LiveChannelEvent,
   LiveChannelEventType,
   LiveChannelConnectionState,
   LiveChannelPresenceStatus,
   LiveChannelAddress,
+  DataFrameJSON,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -22,14 +22,17 @@ import { Subject, of, Observable } from 'rxjs';
 /**
  * Internal class that maps Centrifuge support to GrafanaLive
  */
-export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements LiveChannel<TMessage, TPublish> {
+export class CentrifugeLiveChannel<T = any> {
   readonly currentStatus: LiveChannelStatusEvent;
 
   readonly opened = Date.now();
   readonly id: string;
   readonly addr: LiveChannelAddress;
 
-  readonly stream = new Subject<LiveChannelEvent<TMessage>>();
+  readonly stream = new Subject<LiveChannelEvent<T>>();
+
+  // Hold on to the last header with schema
+  lastMessageWithSchema?: DataFrameJSON;
 
   /** Static definition of the channel definition.  This may describe the channel usage */
   config?: LiveChannelConfig;
@@ -59,6 +62,10 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       publish: (ctx: PublicationContext) => {
         try {
           if (ctx.data) {
+            if (ctx.data.schema) {
+              this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+            }
+
             this.stream.next({
               type: LiveChannelEventType.Message,
               message: ctx.data,
@@ -72,7 +79,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
             this.sendStatus();
           }
         } catch (err) {
-          console.log('publish error', config.path, err);
+          console.log('publish error', this.addr, err);
           this.currentStatus.error = err;
           this.currentStatus.timestamp = Date.now();
           this.sendStatus();
@@ -87,6 +94,11 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
+
+        if (ctx.data?.schema) {
+          this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+        }
+
         this.sendStatus(ctx.data);
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
@@ -103,14 +115,6 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       events.leave = (ctx: JoinLeaveContext) => {
         this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
       };
-
-      this.getPresence = () => {
-        return this.subscription!.presence().then((v) => {
-          return {
-            users: Object.keys(v.presence),
-          };
-        });
-      };
     }
     return events;
   }
@@ -123,6 +127,13 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     this.stream.next(copy);
   }
 
+  disconnectIfNoListeners = () => {
+    const count = this.stream.observers.length;
+    if (count === 0) {
+      this.disconnect();
+    }
+  };
+
   /**
    * Get the stream of events and
    */
@@ -133,25 +144,29 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       return () => {
         sub.unsubscribe();
         const count = this.stream.observers.length;
-        console.log('unsubscribe stream', this.addr, count);
 
-        // Fully disconnect when no more listeners
+        // Wait 1/4 second to fully disconnect
         if (count === 0) {
-          this.disconnect();
+          setTimeout(this.disconnectIfNoListeners, 250);
         }
       };
-    }) as Observable<LiveChannelEvent<TMessage>>;
+    }) as Observable<LiveChannelEvent<T>>;
   }
 
   /**
    * This is configured by the server when the config supports presence
    */
-  getPresence?: () => Promise<LiveChannelPresenceStatus>;
+  async getPresence(): Promise<LiveChannelPresenceStatus> {
+    if (!this.subscription) {
+      return Promise.reject('not subscribed');
+    }
 
-  /**
-   * This is configured by the server when config supports writing
-   */
-  publish?: (msg: TPublish) => Promise<any>;
+    return this.subscription!.presence().then((v) => {
+      return {
+        users: Object.keys(v.presence),
+      };
+    });
+  }
 
   /**
    * This will close and terminate all streams for this channel
@@ -183,7 +198,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 }
 
-export function getErrorChannel(msg: string, id: string, addr: LiveChannelAddress): LiveChannel {
+export function getErrorChannel<TMessage>(msg: string, id: string, addr: LiveChannelAddress) {
   return {
     id,
     opened: Date.now(),

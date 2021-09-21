@@ -29,7 +29,7 @@ A Histogram is a kind of bar chart that groups numbers into ranges, often called
 
 The Graph Panel now supports Histograms.
 
-![](/img/docs/v43/heatmap_histogram.png)
+![](/static/img/docs/v43/heatmap_histogram.png)
 
 ## Histogram Aggregation Support for Elasticsearch
 
@@ -41,7 +41,7 @@ The Histogram support in the Graph Panel does not show changes over time - it ag
 
 Every column in a Heatmap is a histogram snapshot. Instead of visualizing higher values with higher bars, a heatmap visualizes higher values with color. The histogram shown above is equivalent to one column in the heatmap shown below.
 
-![](/img/docs/v43/heatmap_histogram_over_time.png)
+![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
 The Heatmap panel also works with Elasticsearch Histogram Aggregations for more accurate server side bucketing.
 
@@ -52,15 +52,15 @@ The Heatmap panel also works with Elasticsearch Histogram Aggregations for more 
 This release includes a [new core data source for MySQL](http://docs.grafana.org/features/datasources/mysql/). You can write any possible MySQL query and format it as either Time Series or Table Data allowing it be used with the Graph Panel, Table Panel and SingleStat Panel.
 
 We are still working on the MySQL data source. As it's missing some important features, like templating and macros and future changes could be breaking, we are
-labeling the state of the data source as Alpha. Instead of holding up the release of v4.3 we are including it in its current shape to get some early feedback.  So please try it out and let us know what you think on [twitter](https://twitter.com/intent/tweet?text=.%40grafana&source=4_3_beta_blog&related=blog) or on our [community forum](https://community.grafana.com/c/releases). Is this a feature that you would use? How can we make it better?
+labeling the state of the data source as Alpha. Instead of holding up the release of v4.3 we are including it in its current shape to get some early feedback. So please try it out and let us know what you think on [twitter](https://twitter.com/intent/tweet?text=.%40grafana&source=4_3_beta_blog&related=blog) or on our [community forum](https://community.grafana.com/c/releases). Is this a feature that you would use? How can we make it better?
 
 **The query editor can show the generated and interpolated SQL that is sent to the MySQL server.**
 
-![](/img/docs/v43/mysql_table_query.png)
+![](/static/img/docs/v43/mysql_table_query.png)
 
 **The query editor will also show any errors that resulted from running the query (very useful when you have a syntax error!).**
 
-![](/img/docs/v43/mysql_query_error.png)
+![](/static/img/docs/v43/mysql_query_error.png)
 
 ## Health Check Endpoint
 
@@ -74,7 +74,7 @@ Grafana now delays loading panels until they become visible (scrolled into view)
 
 The Prometheus data source now supports the Table Data format by automatically assigning a column to a label. This makes it really easy to browse data in the table panel.
 
-![](/img/docs/v43/prom_table_cols_as_labels.png)
+![](/static/img/docs/v43/prom_table_cols_as_labels.png)
 
 ## Other Highlights From The Changelog
 

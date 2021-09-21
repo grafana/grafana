@@ -1,17 +1,16 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import uniqBy from 'lodash/uniqBy';
+import { uniqBy } from 'lodash';
 // Types
+import { TooltipDisplayMode } from '@grafana/schema';
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
-import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../VizTooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
-import { TooltipDisplayMode } from '../VizTooltip/models.gen';
 
 export interface GraphProps {
   ariaLabel?: string;

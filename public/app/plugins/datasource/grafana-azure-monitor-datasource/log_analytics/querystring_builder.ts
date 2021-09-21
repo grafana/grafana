@@ -45,7 +45,7 @@ export default class LogAnalyticsQuerystringBuilder {
   }
 
   getUntil(options: any) {
-    if (options.rangeRaw.to === 'now') {
+    if (options.rangeRaw?.to === 'now') {
       const now = Date.now();
       return `datetime(${dateTime(now).startOf('minute').toISOString()})`;
     } else {
@@ -56,7 +56,7 @@ export default class LogAnalyticsQuerystringBuilder {
 
   getTimeFilter(timeFieldArg: any, options: any) {
     const timeField = timeFieldArg || this.defaultTimeField;
-    if (options.rangeRaw.to === 'now') {
+    if (options.rangeRaw?.to === 'now') {
       return `${timeField} >= ${this.getFrom(options)}`;
     } else {
       return `${timeField}  >= ${this.getFrom(options)} and ${timeField} <= ${this.getUntil(options)}`;

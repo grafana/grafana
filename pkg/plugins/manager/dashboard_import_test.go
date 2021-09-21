@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -21,12 +22,13 @@ func TestDashboardImport(t *testing.T) {
 		mock := &dashboards.FakeDashboardService{}
 		dashboards.MockDashboardService(mock)
 
-		info, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
+		info, dash, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
 			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
 			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, info)
+		require.NotNil(t, dash)
 
 		resultStr, err := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
 		require.NoError(t, err)
@@ -78,15 +80,16 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 	t.Helper()
 
 	t.Run("Given a plugin", func(t *testing.T) {
-		pm := newManager(&setting.Cfg{
+		cfg := &setting.Cfg{
 			FeatureToggles: map[string]bool{},
 			PluginSettings: setting.PluginSettings{
 				"test-app": map[string]string{
 					"path": "testdata/test-app",
 				},
 			},
-		})
-		err := pm.Init()
+		}
+		pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+		err := pm.init()
 		require.NoError(t, err)
 
 		t.Run(desc, func(t *testing.T) {

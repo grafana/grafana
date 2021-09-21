@@ -10,7 +10,7 @@ For styling components, use [Emotion's `css` function](https://emotion.sh/docs/e
 
 ```tsx
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 const ComponentA = () => (
   <div
@@ -33,14 +33,13 @@ To access the theme in your styles, use the `useStyles` hook. It provides basic 
 import React, { FC } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 const Foo: FC<FooProps> = () => {
   const styles = useStyles(getStyles);
 
   // Use styles with classNames
-  return <div className={styles}>...</div>
-
+  return <div className={styles}>...</div>;
 };
 
 const getStyles = (theme: GrafanaTheme) => css`
@@ -56,15 +55,15 @@ Let's say you need to style a component that has a different background dependin
 
 ```tsx
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
 
 interface ComponentAProps {
-  isActive: boolean
+  isActive: boolean;
 }
 
-const ComponentA: React.FC<ComponentAProps> = ({isActive}) => {
+const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
   const theme = useTheme();
   const styles = getStyles(theme, isActive);
 
@@ -75,7 +74,6 @@ const ComponentA: React.FC<ComponentAProps> = ({isActive}) => {
     </div>
   );
 };
-
 
 // Mind, that you can pass multiple arguments, theme included
 const getStyles = stylesFactory((theme: GrafanaTheme, isActive: boolean) => {
@@ -100,7 +98,7 @@ For class composition, use [Emotion's `cx` function](https://emotion.sh/docs/emo
 
 ```tsx
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props {
   className?: string;

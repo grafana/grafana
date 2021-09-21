@@ -5,6 +5,7 @@ import (
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 )
@@ -23,8 +24,9 @@ func TestMigrations(t *testing.T) {
 	_, err = x.SQL(query).Get(&result)
 	require.Error(t, err)
 
-	mg := NewMigrator(x)
-	AddMigrations(mg)
+	mg := NewMigrator(x, &setting.Cfg{})
+	migrations := &OSSMigrations{}
+	migrations.AddMigration(mg)
 	expectedMigrations := mg.MigrationsCount()
 
 	err = mg.Start()
@@ -36,8 +38,8 @@ func TestMigrations(t *testing.T) {
 
 	require.Equal(t, expectedMigrations, result.Count)
 
-	mg = NewMigrator(x)
-	AddMigrations(mg)
+	mg = NewMigrator(x, &setting.Cfg{})
+	migrations.AddMigration(mg)
 
 	err = mg.Start()
 	require.NoError(t, err)

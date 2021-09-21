@@ -4,10 +4,11 @@ import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
+import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEventListener()
 import 'file-saver';
 import 'jquery';
-import '@grafana/ui/src/components/Icon/iconBundle';
 
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import ReactDOM from 'react-dom';
 import React from 'react';
@@ -15,6 +16,7 @@ import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
   locationUtil,
+  monacoLanguageRegistry,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -29,7 +31,7 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
@@ -43,6 +45,12 @@ import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
+import getDefaultMonacoLanguages from '../lib/monaco-languages';
+import { contextSrv } from './core/services/context_srv';
+import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
+import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
+import { getAllOptionEditors } from './core/components/editors/registry';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -75,10 +83,11 @@ export class GrafanaApp {
     initExtensions();
     configureStore();
 
-    standardEditorsRegistry.setInit(getStandardOptionEditors);
+    standardEditorsRegistry.setInit(getAllOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
+    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
     setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());
@@ -143,7 +152,9 @@ function initEchoSrv() {
     }
   });
 
-  registerEchoBackend(new PerformanceBackend({}));
+  if (contextSrv.user.orgRole !== '') {
+    registerEchoBackend(new PerformanceBackend({}));
+  }
 
   if (config.sentry.enabled) {
     registerEchoBackend(
@@ -151,6 +162,33 @@ function initEchoSrv() {
         ...config.sentry,
         user: config.bootData.user,
         buildInfo: config.buildInfo,
+      })
+    );
+  }
+
+  if ((config as any).googleAnalyticsId) {
+    registerEchoBackend(
+      new GAEchoBackend({
+        googleAnalyticsId: (config as any).googleAnalyticsId,
+      })
+    );
+  }
+
+  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+    registerEchoBackend(
+      new RudderstackBackend({
+        writeKey: (config as any).rudderstackWriteKey,
+        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        user: config.bootData.user,
+      })
+    );
+  }
+
+  if (config.applicationInsightsConnectionString) {
+    registerEchoBackend(
+      new ApplicationInsightsBackend({
+        connectionString: config.applicationInsightsConnectionString,
+        endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
   }

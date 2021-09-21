@@ -202,15 +202,13 @@ Or redirect port 80 to the Grafana port using:
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 ```
 
-Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
+Another way is to put a web server like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
-
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -329,6 +327,10 @@ Set to `true` to log the sql calls and execution times.
 For Postgres, use either `disable`, `require` or `verify-full`.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
+### isolation_level
+
+Only the MySQL driver supports isolation levels in Grafana. In case the value is empty, the driver's default isolation level is applied. Available options are "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
+
 ### ca_cert_path
 
 The path to the CA certificate to use. On many Linux systems, certs can be found in `/etc/ssl/certs`.
@@ -410,9 +412,20 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 
 The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
 
+### max_conns_per_host
+
+Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials are blocked. A value of `0` means that there are no limits. Default is `0`.
+For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
+
 ### max_idle_connections
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
+
+### max_idle_connections_per_host
+
+[Deprecated - use max_idle_connections instead]
+
+The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
 
 ### idle_conn_timeout_seconds
 
@@ -421,6 +434,14 @@ The length of time that Grafana maintains idle connections before closing them. 
 ### send_user_header
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
+
+### response_limit
+
+Limits the amount of bytes that will be read/accepted from responses of outgoing HTTP requests. Default is `0` which means disabled.
+
+### row_limit
+
+Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
 
 <hr />
 
@@ -446,6 +467,14 @@ Analytics ID here. By default this feature is disabled.
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
+
+### application_insights_connection_string
+
+If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
+
+### application_insights_endpoint_url
+
+    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -496,7 +525,7 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
-mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking). Default is `false`.
 
 ### strict_transport_security
 
@@ -573,7 +602,9 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+
+> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
 
@@ -803,6 +834,31 @@ Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/A
 
 <hr />
 
+## [azure]
+
+Grafana supports additional integration with Azure services when hosted in the Azure Cloud.
+
+### cloud
+
+Azure cloud environment where Grafana is hosted:
+
+| Azure Cloud                                      | Value                  |
+| ------------------------------------------------ | ---------------------- |
+| Microsoft Azure public cloud                     | AzureCloud (_default_) |
+| Microsoft Chinese national cloud                 | AzureChinaCloud        |
+| US Government cloud                              | AzureUSGovernment      |
+| Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
+
+### managed_identity_enabled
+
+Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
+
+### managed_identity_client_id
+
+The client ID to use for user-assigned managed identity.
+
+Should be set for user-assigned identity and should be empty for system-assigned identity.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
@@ -869,7 +925,11 @@ Default is `false`.
 
 ### templates_pattern
 
-Default is `emails/*.html`.
+Enter a comma separated list of template patterns. Default is `emails/*.html, emails/*.txt`.
+
+### content_types
+
+Enter a comma-separated list of content types that should be included in the emails that are sent. List the content types according descending preference, e.g. `text/html, text/plain` for HTML as the most preferred. The order of the parts is significant as the mail clients will use the content type that is supported and most preferred by the sender. Supported content types are `text/html` and `text/plain`. Default is `text/html`.
 
 <hr>
 
@@ -1021,6 +1081,10 @@ Limit the number of data sources allowed per organization. Default is 10.
 
 Limit the number of API keys that can be entered per organization. Default is 10.
 
+### org_alert_rule
+
+Limit the number of alert rules that can be entered per organization. Default is 100.
+
 ### user_org
 
 Limit the number of organizations a user can create. Default is 10.
@@ -1044,6 +1108,62 @@ Sets global limit of API keys that can be entered. Default is -1 (unlimited).
 ### global_session
 
 Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
+
+### global_alert_rule
+
+Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
+
+<hr>
+
+## [unified_alerting]
+
+For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+
+### admin_config_poll_interval
+
+Specify the frequency of polling for admin config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### alertmanager_config_poll_interval
+
+Specify the frequency of polling for Alertmanager config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_listen_address
+
+Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+
+### ha_advertise_address
+
+Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+
+### ha_peers
+
+Comma-separated list of initial instances (in a format of host:port) that will form the HA cluster. Configuring this setting will enable High Availability mode for alerting.
+
+### ha_peer_timeout
+
+Time to wait for an instance to send a notification via the Alertmanager. In HA, each Grafana instance will
+be assigned a position (e.g. 0, 1). We then multiply this position with the timeout to indicate how long should
+each instance wait before sending the notification to take into account replication lag. The default value is `15s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_gossip_interval
+
+The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated
+across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_push_pull_interval
+
+The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds
+across larger clusters at the expense of increased bandwidth usage. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
 <hr>
 
@@ -1341,7 +1461,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence \${file}, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -1364,7 +1484,7 @@ Optional extra path inside bucket.
 
 ### enable_signed_urls
 
-If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls] for
+If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) for
 the image uploaded to Google Cloud Storage.
 
 ### signed_url_expiration
@@ -1428,17 +1548,84 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 ### allow_loading_unsigned_plugins
 
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-### marketplace_url
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../plugins/plugin-signatures.md" >}}).
 
-Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+### plugin_admin_enabled
+
+Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+
+For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
+
+### plugin_admin_external_manage_enabled
+
+Set to `true` if you want to enable external management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
+
+### plugin_catalog_url
+
+Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
+<hr>
+
+## [live]
+
+### max_connections
+
+> **Note**: Available in Grafana v8.0 and later versions.
+
+The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
+
+Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+
+0 disables Grafana Live, -1 means unlimited connections.
+
+### allowed_origins
+
+> **Note**: Available in Grafana v8.0.4 and later versions.
+
+The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
+
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+
+Origin patterns support wildcard symbol "\*".
+
+For example:
+
+```ini
+[live]
+allowed_origins = "https://*.example.com"
+```
+
+### ha_engine
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
+
+For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+
+### ha_engine_address
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
+
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = 127.0.0.1:6379
+```
 
 <hr>
 
 ## [plugin.grafana-image-renderer]
 
-For more information, refer to [Image rendering]({{< relref "image_rendering.md" >}}).
+For more information, refer to [Image rendering]({{< relref "../image-rendering/" >}}).
 
 ### rendering_timezone
 
@@ -1474,7 +1661,7 @@ It can be useful to set this to `true` when troubleshooting.
 
 ### rendering_args
 
-Additional arguments to pass to the headless browser instance. Default is --no-sandbox. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
+Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
 
 ### rendering_chrome_bin
 
@@ -1577,3 +1764,26 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 ### enabled
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
+
+## [geomap]
+
+This section controls the defaults settings for Geomap Plugin.
+
+### default_baselayer_config
+
+The json config used to define the default base map. Four base map options to choose from are `carto`, `esriXYZTiles`, `xyzTiles`, `standard`.
+For example, to set cartoDB light as the default base layer:
+
+```ini
+default_baselayer_config = `{
+  "type": "xyz",
+  "config": {
+    "attribution": "Open street map",
+    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+### enable_custom_baselayers
+
+Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.

@@ -1,7 +1,8 @@
 import { css } from '@emotion/react';
-import { GrafanaThemeV2, ThemeTypographyVariant } from '@grafana/data';
+import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+import { getFocusStyles } from '../mixins';
 
-export function getElementStyles(theme: GrafanaThemeV2) {
+export function getElementStyles(theme: GrafanaTheme2) {
   return css`
     html {
       -ms-overflow-style: scrollbar;
@@ -17,8 +18,8 @@ export function getElementStyles(theme: GrafanaThemeV2) {
       height: 100%;
       width: 100%;
       position: absolute;
-      color: ${theme.palette.text.primary};
-      background-color: ${theme.palette.background.canvas};
+      color: ${theme.colors.text.primary};
+      background-color: ${theme.colors.background.canvas};
       ${getVariantStyles(theme.typography.body)}
     }
 
@@ -53,6 +54,13 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     button {
       letter-spacing: ${theme.typography.body.letterSpacing};
+
+      &:focus-visible {
+        outline: ${getFocusStyles(theme)};
+      }
+      &:focus {
+        outline: none;
+      }
     }
 
     // Ex: 14px base font * 85% = about 12px
@@ -67,7 +75,7 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     em {
       font-style: italic;
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
     }
 
     cite {
@@ -76,29 +84,29 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     // Utility classes
     .muted {
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
     }
 
     a.muted:hover,
     a.muted:focus {
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
     }
 
     .text-warning {
-      color: ${theme.palette.warning.text};
+      color: ${theme.colors.warning.text};
 
       &:hover,
       &:focus {
-        color: ${theme.palette.emphasize(theme.palette.warning.text, 0.15)};
+        color: ${theme.colors.emphasize(theme.colors.warning.text, 0.15)};
       }
     }
 
     .text-error {
-      color: ${theme.palette.error.text};
+      color: ${theme.colors.error.text};
 
       &:hover,
       &:focus {
-        color: ${theme.palette.emphasize(theme.palette.error.text, 0.15)};
+        color: ${theme.colors.emphasize(theme.colors.error.text, 0.15)};
       }
     }
 
@@ -107,17 +115,21 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
       &:hover,
       &:focus {
-        color: ${theme.palette.emphasize(theme.palette.success.text, 0.15)};
+        color: ${theme.colors.emphasize(theme.colors.success.text, 0.15)};
       }
     }
 
     a {
       cursor: pointer;
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       text-decoration: none;
 
       &:focus {
         outline: none;
+      }
+
+      &:focus-visible {
+        ${getFocusStyles(theme)}
       }
 
       &: [disabled] {
@@ -152,6 +164,6 @@ export function getVariantStyles(variant: ThemeTypographyVariant) {
     font-weight: ${variant.fontWeight};
     letter-spacing: ${variant.letterSpacing};
     font-family: ${variant.fontFamily};
-    margin-bottom: 0.35em;
+    margin-bottom: 0.45em;
   `;
 }

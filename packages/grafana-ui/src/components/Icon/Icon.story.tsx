@@ -7,7 +7,7 @@ import { useTheme } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'General/Icon',
+  title: 'Docs overview/Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {
@@ -52,7 +52,8 @@ const IconWrapper = ({ name }: { name: IconName }) => {
   );
 };
 
-const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
+const icons = [...getAvailableIcons()];
+icons.sort((a, b) => a.localeCompare(b));
 
 export const IconsOverview = () => {
   const [filter, setFilter] = useState('');

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, extend, isString } from 'lodash';
 import {
   dateMath,
   dateTime,
@@ -22,6 +22,7 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
+  previousAutoRefresh: any;
   oldRefresh: string | null | undefined;
   dashboard?: DashboardModel;
   timeAtLoad: any;
@@ -57,7 +58,19 @@ export class TimeSrv {
     this.parseTime();
 
     // remember time at load so we can go back to it
-    this.timeAtLoad = _.cloneDeep(this.time);
+    this.timeAtLoad = cloneDeep(this.time);
+
+    const range = rangeUtil.convertRawToRange(this.time, this.dashboard?.getTimezone());
+
+    if (range.to.isBefore(range.from)) {
+      this.setTime(
+        {
+          from: range.raw.to,
+          to: range.raw.from,
+        },
+        false
+      );
+    }
 
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
@@ -74,10 +87,10 @@ export class TimeSrv {
 
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
-    if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
+    if (isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
       this.time.from = dateTime(this.time.from).utc();
     }
-    if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
+    if (isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
       this.time.to = dateTime(this.time.to).utc();
     }
   }
@@ -155,7 +168,9 @@ export class TimeSrv {
     this.refresh = getRefreshFromUrl({
       params: paramsJSON,
       currentRefresh: this.refresh,
-      refreshIntervals: this.dashboard?.timepicker?.refresh_intervals,
+      refreshIntervals: Array.isArray(this.dashboard?.timepicker?.refresh_intervals)
+        ? this.dashboard?.timepicker?.refresh_intervals
+        : undefined,
       isAllowedIntervalFn: this.contextSrv.isAllowedInterval,
       minRefreshInterval: config.minRefreshInterval,
     });
@@ -196,21 +211,29 @@ export class TimeSrv {
 
     this.stopAutoRefresh();
 
-    if (interval) {
-      const validInterval = this.contextSrv.getValidInterval(interval);
-      const intervalMs = rangeUtil.intervalToMs(validInterval);
+    const currentUrlState = locationService.getSearchObject();
 
-      this.refreshTimer = setTimeout(() => {
-        this.startNextRefreshTimer(intervalMs);
-        this.refreshDashboard();
-      }, intervalMs);
+    if (!interval) {
+      // Clear URL state
+      if (currentUrlState.refresh) {
+        locationService.partial({ refresh: null }, true);
+      }
+
+      return;
     }
 
-    if (interval) {
-      const refresh = this.contextSrv.getValidInterval(interval);
+    const validInterval = this.contextSrv.getValidInterval(interval);
+    const intervalMs = rangeUtil.intervalToMs(validInterval);
+
+    this.refreshTimer = setTimeout(() => {
+      this.startNextRefreshTimer(intervalMs);
+      this.refreshDashboard();
+    }, intervalMs);
+
+    const refresh = this.contextSrv.getValidInterval(interval);
+
+    if (currentUrlState.refresh !== refresh) {
       locationService.partial({ refresh }, true);
-    } else {
-      locationService.partial({ refresh: null }, true);
     }
   }
 
@@ -233,8 +256,20 @@ export class TimeSrv {
     clearTimeout(this.refreshTimer);
   }
 
+  // store dashboard refresh value and pause auto-refresh in some places
+  // i.e panel edit
+  pauseAutoRefresh() {
+    this.previousAutoRefresh = this.dashboard?.refresh;
+    this.setAutoRefresh('');
+  }
+
+  // resume auto-refresh based on old dashboard refresh property
+  resumeAutoRefresh() {
+    this.setAutoRefresh(this.previousAutoRefresh);
+  }
+
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
-    _.extend(this.time, time);
+    extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
@@ -249,6 +284,13 @@ export class TimeSrv {
     if (fromRouteUpdate !== true) {
       const urlRange = this.timeRangeForUrl();
       const urlParams = locationService.getSearch();
+
+      const from = urlParams.get('from');
+      const to = urlParams.get('to');
+
+      if (from && to && from === urlRange.from.toString() && to === urlRange.to.toString()) {
+        return;
+      }
 
       urlParams.set('from', urlRange.from.toString());
       urlParams.set('to', urlRange.to.toString());

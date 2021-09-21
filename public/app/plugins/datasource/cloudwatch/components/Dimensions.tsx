@@ -1,5 +1,5 @@
 import React, { FunctionComponent, Fragment, useState, useEffect } from 'react';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync, Icon } from '@grafana/ui';
 import { SelectableStrings } from '../types';

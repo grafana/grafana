@@ -13,34 +13,25 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
 
+// nolint:staticcheck // plugins.DataPlugin deprecated
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
-		data.NewField("time", nil, []*time.Time{utp(1)}),
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", nil, []*float64{fp(2)}))
 
-	dataSvc := tsdb.NewService()
-	dataSvc.PluginManager = &manager.PluginManager{
-		BackendPluginManager: fakeBackendPM{},
-	}
-	s := Service{DataService: &dataSvc}
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
 	}
-	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (plugins.DataPlugin, error) {
-		return me, nil
-	})
+	s := Service{DataService: me}
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil
 	})
 
-	queries := []backend.DataQuery{
+	queries := []Query{
 		{
 			RefID: "A",
 			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
@@ -51,7 +42,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &backend.QueryDataRequest{Queries: queries}
+	req := &Request{Queries: queries}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -60,7 +51,7 @@ func TestService(t *testing.T) {
 	require.NoError(t, err)
 
 	bDF := data.NewFrame("",
-		data.NewField("Time", nil, []*time.Time{utp(1)}),
+		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
 
@@ -89,11 +80,6 @@ func TestService(t *testing.T) {
 	}
 }
 
-func utp(sec int64) *time.Time {
-	t := time.Unix(sec, 0)
-	return &t
-}
-
 func fp(f float64) *float64 {
 	return &f
 }
@@ -102,8 +88,8 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
-	plugins.DataResponse, error) {
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
+func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	return plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
 			"A": {
@@ -113,10 +99,7 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 	}, nil
 }
 
-type fakeBackendPM struct {
-	backendplugin.Manager
-}
-
-func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
-	return nil
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
+func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
+	return me.DataQuery(ctx, ds, query)
 }

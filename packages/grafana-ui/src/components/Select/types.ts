@@ -19,7 +19,7 @@ export interface SelectCommonProps<T> {
   components?: any;
   defaultValue?: any;
   disabled?: boolean;
-  filterOption?: (option: SelectableValue, searchQuery: string) => boolean;
+  filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
@@ -42,6 +42,12 @@ export interface SelectCommonProps<T> {
   maxVisibleValues?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';
+  /**
+   * @deprecated
+   * Setting to true will portal the menu to `document.body`.
+   * This property will soon be removed and portalling will be the default behavior.
+   */
+  menuShouldPortal?: boolean;
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
@@ -64,6 +70,12 @@ export interface SelectCommonProps<T> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
   isOptionDisabled?: () => boolean;
+  /** allowCustomValue must be enabled. Determines whether the "create new" option should be displayed based on the current input value, select value and options array. */
+  isValidNewOption?: (
+    inputValue: string,
+    value: SelectableValue<T> | null,
+    options: Readonly<Array<SelectableValue<T>>>
+  ) => boolean;
 }
 
 export interface SelectAsyncProps<T> {

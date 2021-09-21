@@ -2,7 +2,7 @@ import React from 'react';
 import { InlineList } from '../List/InlineList';
 import { css } from '@emotion/css';
 import { DisplayValue, formattedValueToString } from '@grafana/data';
-import capitalize from 'lodash/capitalize';
+import { capitalize } from 'lodash';
 import { useStyles } from '../../themes/ThemeContext';
 
 /**
@@ -20,7 +20,7 @@ export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[]
       className={styles.list}
       items={stats}
       renderItem={(stat) => (
-        <div className={styles.item}>
+        <div className={styles.item} title={stat.description}>
           {stat.title && `${capitalize(stat.title)}:`} {formattedValueToString(stat)}
         </div>
       )}

@@ -1,37 +1,37 @@
 import { CSSObject } from '@emotion/css';
-import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 
-export function cardChrome(theme: GrafanaTheme): string {
+export function cardChrome(theme: GrafanaTheme2): string {
   return `
-    background: ${theme.colors.bg2};
+    background: ${theme.colors.background.secondary};
     &:hover {
-      background: ${hoverColor(theme.colors.bg2, theme)};
+      background: ${hoverColor(theme.colors.background.secondary, theme)};
     }
-    box-shadow: ${theme.shadows.listItem};
-    border-radius: ${theme.border.radius.md};
+    box-shadow: ${theme.components.panel.boxShadow};
+    border-radius: ${theme.shape.borderRadius(2)};
 `;
 }
 
-export function hoverColor(color: string, theme: GrafanaTheme): string {
+export function hoverColor(color: string, theme: GrafanaTheme2): string {
   return theme.isDark ? tinycolor(color).brighten(2).toString() : tinycolor(color).darken(2).toString();
 }
 
-export function listItem(theme: GrafanaTheme): string {
+export function listItem(theme: GrafanaTheme2): string {
   return `
-  background: ${theme.colors.bg2};
+  background: ${theme.colors.background.secondary};
   &:hover {
-    background: ${hoverColor(theme.colors.bg2, theme)};
+    background: ${hoverColor(theme.colors.background.secondary, theme)};
   }
-  box-shadow: ${theme.shadows.listItem};
-  border-radius: ${theme.border.radius.md};
+  box-shadow: ${theme.components.panel.boxShadow};
+  border-radius: ${theme.shape.borderRadius(2)};
 `;
 }
 
-export function listItemSelected(theme: GrafanaTheme): string {
+export function listItemSelected(theme: GrafanaTheme2): string {
   return `
-    background: ${hoverColor(theme.colors.bg2, theme)};
-    color: ${theme.colors.textStrong};
+    background: ${hoverColor(theme.colors.background.secondary, theme)};
+    color: ${theme.colors.text.maxContrast};
 `;
 }
 
@@ -46,28 +46,29 @@ export const focusCss = (theme: GrafanaTheme) => `
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
-export function getMouseFocusStyles(theme: GrafanaThemeV2): CSSObject {
+export function getMouseFocusStyles(theme: GrafanaTheme2): CSSObject {
   return {
     outline: 'none',
     boxShadow: `none`,
   };
 }
 
-export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
+export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
   return {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
-    boxShadow: `0 0 0 2px ${theme.palette.background.canvas}, 0 0 0px 4px ${theme.palette.primary.main}`,
+    boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main}`,
     transition: `all 0.2s cubic-bezier(0.19, 1, 0.22, 1)`,
   };
 }
 
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
-export const getTooltipContainerStyles = (theme: GrafanaTheme) => `
+export const getTooltipContainerStyles = (theme: GrafanaTheme2) => `
   overflow: hidden;
-  background: ${theme.colors.bg2};
+  background: ${theme.colors.background.secondary};
+  box-shadow: ${theme.shadows.z2};
   max-width: 800px;
-  padding: ${theme.spacing.sm};
-  border-radius: ${theme.border.radius.sm};
+  padding: ${theme.spacing(1)};
+  border-radius: ${theme.shape.borderRadius()};
   z-index: ${theme.zIndex.tooltip};
 `;

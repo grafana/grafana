@@ -1,18 +1,17 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import _ from 'lodash';
+import { find, isNumber } from 'lodash';
 import { NavModel } from '@grafana/data';
 
 export class NavModelSrv {
   navItems: any;
 
-  /** @ngInject */
   constructor() {
     this.navItems = config.bootData.navTree;
   }
 
   getCfgNode() {
-    return _.find(this.navItems, { id: 'cfg' });
+    return find(this.navItems, { id: 'cfg' });
   }
 
   getNav(...args: Array<string | number>) {
@@ -23,12 +22,12 @@ export class NavModelSrv {
 
     for (const id of args) {
       // if its a number then it's the index to use for main
-      if (_.isNumber(id)) {
+      if (isNumber(id)) {
         nav.main = nav.breadcrumbs[id];
         break;
       }
 
-      const node: any = _.find(children, { id: id });
+      const node: any = find(children, { id: id });
       nav.breadcrumbs.push(node);
       nav.node = node;
       nav.main = node;

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { connect, ConnectedProps } from 'react-redux';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -20,16 +19,30 @@ import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface Props {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+  const explore = state.explore;
+  const { datasourceInstance } = explore[exploreId]!;
+  return {
+    exploreId,
+    datasourceInstance,
+  };
+}
+
+const mapDispatchToProps = {
+  changeDatasource,
+  updateRichHistory,
+  setQueries,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {
   query: RichHistoryQuery;
   dsImg: string;
   isRemoved: boolean;
-  changeDatasource: typeof changeDatasource;
-  updateRichHistory: typeof updateRichHistory;
-  setQueries: typeof setQueries;
-  exploreId: ExploreId;
-  datasourceInstance: DataSourceApi;
 }
+
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
@@ -37,19 +50,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   const rigtColumnContentWidth = '170px';
 
   /* If datasource was removed, card will have inactive color */
-  const cardColor = theme.isLight
-    ? isRemoved
-      ? theme.palette.gray95
-      : theme.palette.white
-    : isRemoved
-    ? theme.palette.gray15
-    : theme.palette.gray05;
+  const cardColor = theme.colors.bg2;
 
   return {
     queryCard: css`
       display: flex;
       flex-direction: column;
-      border: 1px solid ${theme.colors.formInputBorder};
+      border: 1px solid ${theme.colors.border1};
       margin: ${theme.spacing.sm} 0;
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
@@ -64,7 +71,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       padding: ${theme.spacing.sm};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${theme.colors.formInputBorder};
+        border-bottom: 1px solid ${theme.colors.border1};
         padding: ${theme.spacing.xs} ${theme.spacing.sm};
       }
       img {
@@ -93,7 +100,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
-      border-top: 1px solid ${theme.colors.formInputBorder};
+      border-top: 1px solid ${theme.colors.border1};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -117,14 +124,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     textArea: css`
-      border: 1px solid ${theme.colors.formInputBorder};
-      background: inherit;
-      color: inherit;
       width: 100%;
-      font-size: ${theme.typography.size.sm};
-      &placeholder {
-        padding: 0 ${theme.spacing.sm};
-      }
     `,
     runButton: css`
       max-width: ${rigtColumnContentWidth};
@@ -317,19 +317,4 @@ export function RichHistoryCard(props: Props) {
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
-  const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId]!;
-  return {
-    exploreId,
-    datasourceInstance,
-  };
-}
-
-const mapDispatchToProps = {
-  changeDatasource,
-  updateRichHistory,
-  setQueries,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryCard));
+export default connector(RichHistoryCard);

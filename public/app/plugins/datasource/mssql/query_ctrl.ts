@@ -1,14 +1,7 @@
-import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
-
-export interface MssqlQuery {
-  refId: string;
-  format: string;
-  alias: string;
-  rawSql: string;
-}
+import { MssqlQuery } from './types';
 
 const defaultQuery = `SELECT
   $__timeEpoch(<time_column>),
@@ -21,14 +14,13 @@ WHERE
 ORDER BY
   <time_column> ASC`;
 
-export class MssqlQueryCtrl extends QueryCtrl {
+export class MssqlQueryCtrl extends QueryCtrl<MssqlQuery> {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
-  target: MssqlQuery;
   lastQueryMeta?: QueryResultMeta;
   lastQueryError?: string;
-  showHelp: boolean;
+  showHelp = false;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {

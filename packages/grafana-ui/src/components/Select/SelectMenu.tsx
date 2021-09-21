@@ -1,9 +1,11 @@
 import React from 'react';
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getSelectStyles } from './getSelectStyles';
 import { cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types';
 
 interface SelectMenuProps {
   maxHeight: number;
@@ -12,7 +14,7 @@ interface SelectMenuProps {
 }
 
 export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuProps>>((props, ref) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const { children, maxHeight, innerRef, innerProps } = props;
 
@@ -38,7 +40,7 @@ interface SelectMenuOptionProps<T> {
 
 export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuOptionProps<any>>>(
   (props, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
 
@@ -49,6 +51,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
         {...innerProps}
         aria-label="Select option"
       >
+        {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
         {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
         <div className={styles.optionBody}>
           <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>

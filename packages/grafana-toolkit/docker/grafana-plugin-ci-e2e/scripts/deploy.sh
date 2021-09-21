@@ -5,12 +5,12 @@ source "/etc/profile"
 source "./deploy-slim.sh"
 source "./deploy-common.sh"
 
-NODEVER="v12.19.0-linux-x64"
+NODEVER="v14.17.3"
 # Install Node
-wget -O - "https://nodejs.org/dist/v12.19.0/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
+wget -O - "https://nodejs.org/dist/${NODEVER}/node-${NODEVER}-linux-x64.tar.xz" | tar Jvxf - -C "/tmp"
 
 # Move node to /usr/local so it's in the path
-pushd /tmp/node-${NODEVER}
+pushd /tmp/node-${NODEVER}-linux-x64
 /bin/rm -f CHANGELOG.md README.md LICENSE
 /bin/cp -r * /usr/local
 popd
@@ -22,8 +22,8 @@ source "/etc/profile"
 npm i -g yarn
 
 # Install Go
-filename="go1.16.1.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "3edc22f8332231c3ba8be246f184b736b8d28f06ce24f08168d8ecf052549769"
+filename="go1.17.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
@@ -41,7 +41,7 @@ chmod 755 /usr/local/bin/golangci-lint
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
+    "5e72323531a2d1842d81ec784a2b4ed789cc9c8ecf0213d4f701855fa13d1bfb"
 chmod 755 /usr/local/bin/cc-test-reporter
 
 wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/grabpl"

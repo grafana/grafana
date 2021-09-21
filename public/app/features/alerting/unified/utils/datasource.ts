@@ -14,7 +14,7 @@ export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceTy
 
 export function getRulesDataSources() {
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -59,6 +59,13 @@ export function isGrafanaRulesSource(
 
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
+}
+
+export function getRulesSourceByName(name: string): RulesSource | undefined {
+  if (name === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
+  }
+  return getDataSourceByName(name);
 }
 
 export function getDatasourceAPIId(dataSourceName: string) {

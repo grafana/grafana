@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { pickBy } from 'lodash';
 
 // Utils
 import { getBackendSrv, locationService } from '@grafana/runtime';
@@ -14,15 +14,15 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
 
 export class PlaylistSrv {
   private nextTimeoutId: any;
-  private dashboards: Array<{ url: string }>;
-  private index: number;
-  private interval: number;
-  private startUrl: string;
+  private declare dashboards: Array<{ url: string }>;
+  private index = 0;
+  private declare interval: number;
+  private declare startUrl: string;
   private numberOfLoops = 0;
-  private validPlaylistUrl: string;
+  private declare validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
 
-  isPlaying: boolean;
+  isPlaying = false;
 
   constructor() {
     this.locationUpdated = this.locationUpdated.bind(this);
@@ -46,7 +46,7 @@ export class PlaylistSrv {
 
     const dash = this.dashboards[this.index];
     const queryParams = locationService.getSearchObject();
-    const filteredParams = _.pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
+    const filteredParams = pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
     const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
 
     this.index++;

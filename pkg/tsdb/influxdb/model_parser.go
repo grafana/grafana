@@ -1,17 +1,22 @@
 package influxdb
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource) (*Query, error) {
+func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't unmarshal query")
+	}
+
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
 	useRawQuery := model.Get("rawQuery").MustBool(false)
@@ -19,11 +24,6 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 	tz := model.Get("tz").MustString("")
 
 	measurement := model.Get("measurement").MustString("")
-
-	resultFormat, err := model.Get("resultFormat").String()
-	if err != nil {
-		return nil, err
-	}
 
 	tags, err := qp.parseTags(model)
 	if err != nil {
@@ -40,23 +40,26 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		return nil, err
 	}
 
-	parsedInterval, err := interval.GetIntervalFrom(dsInfo, model, time.Millisecond*1)
-	if err != nil {
-		return nil, err
+	interval := query.Interval
+
+	// we make sure it is at least 1 millisecond
+	minInterval := time.Millisecond
+
+	if interval < minInterval {
+		interval = minInterval
 	}
 
 	return &Query{
-		Measurement:  measurement,
-		Policy:       policy,
-		ResultFormat: resultFormat,
-		GroupBy:      groupBys,
-		Tags:         tags,
-		Selects:      selects,
-		RawQuery:     rawQuery,
-		Interval:     parsedInterval,
-		Alias:        alias,
-		UseRawQuery:  useRawQuery,
-		Tz:           tz,
+		Measurement: measurement,
+		Policy:      policy,
+		GroupBy:     groupBys,
+		Tags:        tags,
+		Selects:     selects,
+		RawQuery:    rawQuery,
+		Interval:    interval,
+		Alias:       alias,
+		UseRawQuery: useRawQuery,
+		Tz:          tz,
 	}, nil
 }
 

@@ -14,9 +14,13 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().should('be.visible').click();
+      });
 
-        e2e.components.Select.option().should('be.visible').first().click();
+    e2e.components.Select.option().should('be.visible').first().click();
 
+    e2e.components.FolderPicker.container()
+      .should('be.visible')
+      .within(() => {
         e2e.components.Select.input().should('exist').should('have.focus');
       });
 

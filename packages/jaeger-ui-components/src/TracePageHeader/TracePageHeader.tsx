@@ -13,9 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import _get from 'lodash/get';
-import _maxBy from 'lodash/maxBy';
-import _values from 'lodash/values';
+import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
 import { css } from '@emotion/css';
 import cx from 'classnames';
@@ -28,12 +26,13 @@ import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
 import { TNil } from '../types';
 import { Trace } from '../types/trace';
-import { formatDatetime, formatDuration } from '../utils/date';
+import { formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
 
 import ExternalLinks from '../common/ExternalLinks';
 import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
+import { dateTimeFormat, TimeZone } from '@grafana/data';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -102,7 +101,7 @@ const getStyles = createStyle((theme: Theme) => {
       font-size: 1.7em;
       line-height: 1em;
       margin: 0 0 0 0.5em;
-      padding: 0.5em 0;
+      padding-bottom: 0.5em;
     `,
     TracePageHeaderTitleCollapsible: css`
       label: TracePageHeaderTitleCollapsible;
@@ -159,14 +158,16 @@ type TracePageHeaderEmbedProps = {
   searchValue: string;
   onSearchValueChange: (value: string) => void;
   hideSearchButtons?: boolean;
+  timeZone: TimeZone;
 };
 
 export const HEADER_ITEMS = [
   {
     key: 'timestamp',
     label: 'Trace Start',
-    renderer(trace: Trace, styles: ReturnType<typeof getStyles>) {
-      const dateStr = formatDatetime(trace.startTime);
+    renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
+      // Convert date from micro to milli seconds
+      const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone });
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (
         <span className={styles.TracePageHeaderOverviewItemValue}>
@@ -221,6 +222,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     searchValue,
     onSearchValueChange,
     hideSearchButtons,
+    timeZone,
   } = props;
 
   const styles = getStyles(useTheme());
@@ -240,7 +242,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     !slimView &&
     HEADER_ITEMS.map((item) => {
       const { renderer, ...rest } = item;
-      return { ...rest, value: renderer(trace, styles) };
+      return { ...rest, value: renderer(trace, timeZone, styles) };
     });
 
   const title = (

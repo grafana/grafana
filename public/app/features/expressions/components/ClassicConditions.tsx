@@ -76,7 +76,7 @@ export const ClassicConditions: FC<Props> = ({ onChange, query, refIds }) => {
           </div>
         </InlineField>
       </InlineFieldRow>
-      <Button variant="secondary" onClick={onAddCondition}>
+      <Button variant="secondary" type="button" onClick={onAddCondition}>
         <Icon name="plus-circle" />
       </Button>
     </div>

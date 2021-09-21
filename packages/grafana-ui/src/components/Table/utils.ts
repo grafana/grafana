@@ -12,9 +12,10 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { TableCellDisplayMode, TableFieldOptions } from './types';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
+import { getFooterValue } from './FooterRow';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
@@ -41,7 +42,12 @@ export function getTextAlign(field?: Field): ContentPosition {
   return 'flex-start';
 }
 
-export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
+export function getColumns(
+  data: DataFrame,
+  availableWidth: number,
+  columnMinWidth: number,
+  footerValues?: FooterItem[]
+): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
@@ -60,6 +66,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
     const selectSortType = (type: FieldType): string => {
       switch (type) {
         case FieldType.number:
+          return 'number';
         case FieldType.time:
           return 'basic';
         default:
@@ -77,24 +84,38 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       },
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
-      minWidth: 50,
+      minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
+      Footer: getFooterValue(fieldIndex, footerValues),
     });
   }
 
+  // set columns that are at minimum width
+  let sharedWidth = availableWidth / fieldCountWithoutWidth;
+  for (let i = fieldCountWithoutWidth; i > 0; i--) {
+    for (const column of columns) {
+      if (!column.width && column.minWidth > sharedWidth) {
+        column.width = column.minWidth;
+        availableWidth -= column.width;
+        fieldCountWithoutWidth -= 1;
+        sharedWidth = availableWidth / fieldCountWithoutWidth;
+      }
+    }
+  }
+
   // divide up the rest of the space
-  const sharedWidth = availableWidth / fieldCountWithoutWidth;
   for (const column of columns) {
     if (!column.width) {
-      column.width = Math.max(sharedWidth, columnMinWidth);
+      column.width = sharedWidth;
     }
+    column.minWidth = 50;
   }
 
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:
@@ -207,4 +228,23 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 
 export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
   return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
+}
+
+// sortNumber needs to have great performance as it is called a lot
+export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
+  const a = toNumber(rowA.values[id]);
+  const b = toNumber(rowB.values[id]);
+  return a === b ? 0 : a > b ? 1 : -1;
+}
+
+function toNumber(value: any): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (value === null || value === undefined || value === '' || isNaN(value)) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  return Number(value);
 }

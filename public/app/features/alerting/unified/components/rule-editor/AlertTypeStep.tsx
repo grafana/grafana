@@ -1,143 +1,150 @@
-import React, { FC, useCallback, useEffect } from 'react';
-import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Field, Input, InputControl, Select, useStyles } from '@grafana/ui';
+import React, { FC, useMemo } from 'react';
+import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { DataSourcePicker, DataSourcePickerProps } from '@grafana/runtime';
-import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-
-const alertTypeOptions: SelectableValue[] = [
-  {
-    label: 'Threshold',
-    value: RuleFormType.threshold,
-    description: 'Metric alert based on a defined threshold',
-  },
-  {
-    label: 'System or application',
-    value: RuleFormType.system,
-    description: 'Alert based on a system or application behavior. Based on Prometheus.',
-  },
-];
+import { contextSrv } from 'app/core/services/context_srv';
+import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 
 interface Props {
   editingExistingRule: boolean;
 }
 
-export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
-  const styles = useStyles(getStyles);
+const recordingRuleNameValidationPattern = {
+  message:
+    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+  value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
+};
 
-  const { register, control, watch, errors, setValue } = useFormContext<RuleFormValues>();
+export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
+  const styles = useStyles2(getStyles);
+
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  useEffect(() => {}, [ruleFormType]);
+  const alertTypeOptions = useMemo((): SelectableValue[] => {
+    const result = [
+      {
+        label: 'Grafana managed alert',
+        value: RuleFormType.grafana,
+        description: 'Classic Grafana alerts based on thresholds.',
+      },
+    ];
 
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+    if (contextSrv.isEditor) {
+      result.push({
+        label: 'Cortex/Loki managed alert',
+        value: RuleFormType.cloudAlerting,
+        description: 'Alert based on a system or application behavior. Based on Prometheus.',
+      });
+      result.push({
+        label: 'Cortex/Loki managed recording rule',
+        value: RuleFormType.cloudRecording,
+        description: 'Recording rule to pre-compute frequently needed or expensive calculations. Based on Prometheus.',
+      });
+    }
 
-  const dataSourceFilter = useCallback(
-    (ds: DataSourceInstanceSettings): boolean => {
-      if (ruleFormType === RuleFormType.threshold) {
-        return !!ds.meta.alerting;
-      } else {
-        // filter out only rules sources that support ruler and thus can have alerts edited
-        return !!rulesSourcesWithRuler.find(({ id }) => id === ds.id);
-      }
-    },
-    [ruleFormType, rulesSourcesWithRuler]
-  );
+    return result;
+  }, []);
 
   return (
-    <RuleEditorSection stepNo={1} title="Alert type">
+    <RuleEditorSection stepNo={1} title="Rule type">
       <Field
         className={styles.formInput}
-        label="Alert name"
+        label="Rule name"
         error={errors?.name?.message}
         invalid={!!errors.name?.message}
       >
         <Input
+          id="name"
+          {...register('name', {
+            required: { value: true, message: 'Must enter an alert name' },
+            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
+          })}
           autoFocus={true}
-          ref={register({ required: { value: true, message: 'Must enter an alert name' } })}
-          name="name"
         />
       </Field>
       <div className={styles.flexRow}>
         <Field
           disabled={editingExistingRule}
-          label="Alert type"
+          label="Rule type"
           className={styles.formInput}
           error={errors.type?.message}
           invalid={!!errors.type?.message}
+          data-testid="alert-type-picker"
         >
           <InputControl
-            as={Select}
+            render={({ field: { onChange, ref, ...field } }) => (
+              <Select
+                menuShouldPortal
+                {...field}
+                options={alertTypeOptions}
+                onChange={(v: SelectableValue) => onChange(v?.value)}
+              />
+            )}
             name="type"
-            options={alertTypeOptions}
             control={control}
             rules={{
               required: { value: true, message: 'Please select alert type' },
             }}
-            onChange={(values: SelectableValue[]) => {
-              const value = values[0]?.value;
-              // when switching to system alerts, null out data source selection if it's not a rules source with ruler
-              if (
-                value === RuleFormType.system &&
-                dataSourceName &&
-                !rulesSourcesWithRuler.find(({ name }) => name === dataSourceName)
-              ) {
-                setValue('dataSourceName', null);
-              }
-              return value;
-            }}
           />
         </Field>
-        {ruleFormType === RuleFormType.system && (
+        {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) && (
           <Field
             className={styles.formInput}
             label="Select data source"
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
+            data-testid="datasource-picker"
           >
             <InputControl
-              as={(DataSourcePicker as unknown) as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
-              valueName="current"
-              filter={dataSourceFilter}
+              render={({ field: { onChange, ref, ...field } }) => (
+                <CloudRulesSourcePicker
+                  {...field}
+                  onChange={(ds: DataSourceInstanceSettings) => {
+                    // reset location if switching data sources, as different rules source will have different groups and namespaces
+                    setValue('location', undefined);
+                    onChange(ds?.name ?? null);
+                  }}
+                />
+              )}
               name="dataSourceName"
-              noDefault={true}
               control={control}
-              alerting={true}
               rules={{
                 required: { value: true, message: 'Please select a data source' },
-              }}
-              onChange={(ds: DataSourceInstanceSettings[]) => {
-                // reset location if switching data sources, as differnet rules source will have different groups and namespaces
-                setValue('location', undefined);
-                return ds[0]?.name ?? null;
               }}
             />
           </Field>
         )}
       </div>
-      {ruleFormType === RuleFormType.system && dataSourceName && (
-        <GroupAndNamespaceFields dataSourceName={dataSourceName} />
-      )}
-      {ruleFormType === RuleFormType.threshold && (
+      {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
+        dataSourceName && <GroupAndNamespaceFields dataSourceName={dataSourceName} />}
+
+      {ruleFormType === RuleFormType.grafana && (
         <Field
           label="Folder"
           className={styles.formInput}
           error={errors.folder?.message}
           invalid={!!errors.folder?.message}
+          data-testid="folder-picker"
         >
           <InputControl
-            as={RuleFolderPicker}
+            render={({ field: { ref, ...field } }) => (
+              <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
+            )}
             name="folder"
-            enableCreateNew={true}
-            enableReset={true}
             rules={{
               required: { value: true, message: 'Please select a folder' },
             }}
@@ -148,11 +155,11 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   formInput: css`
     width: 330px;
     & + & {
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(3)};
     }
   `,
   flexRow: css`

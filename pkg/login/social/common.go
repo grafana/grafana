@@ -74,7 +74,7 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 	return
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (string, error) {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (interface{}, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}
@@ -93,10 +93,40 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (strin
 		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
 	}
 
+	return val, nil
+}
+
+func (s *SocialBase) searchJSONForStringAttr(attributePath string, data []byte) (string, error) {
+	val, err := s.searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return "", err
+	}
+
 	strVal, ok := val.(string)
 	if ok {
 		return strVal, nil
 	}
 
 	return "", nil
+}
+
+func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []byte) ([]string, error) {
+	val, err := s.searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return []string{}, err
+	}
+
+	ifArr, ok := val.([]interface{})
+	if !ok {
+		return []string{}, nil
+	}
+
+	result := []string{}
+	for _, v := range ifArr {
+		if strVal, ok := v.(string); ok {
+			result = append(result, strVal)
+		}
+	}
+
+	return result, nil
 }

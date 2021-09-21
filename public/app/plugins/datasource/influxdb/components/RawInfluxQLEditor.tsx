@@ -1,17 +1,9 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { TextArea, InlineFormLabel, Input, Select, HorizontalGroup } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
-import { ResultFormat, InfluxQuery } from '../types';
+import { InfluxQuery } from '../types';
 import { useShadowedState } from './useShadowedState';
 import { useUniqueId } from './useUniqueId';
-
-const RESULT_FORMATS: Array<SelectableValue<ResultFormat>> = [
-  { label: 'Time series', value: 'time_series' },
-  { label: 'Table', value: 'table' },
-  { label: 'Logs', value: 'logs' },
-];
-
-const DEFAULT_RESULT_FORMAT: ResultFormat = 'time_series';
+import { RESULT_FORMATS, DEFAULT_RESULT_FORMAT } from './constants';
 
 type Props = {
   query: InfluxQuery;
@@ -22,17 +14,20 @@ type Props = {
 // we handle 3 fields: "query", "alias", "resultFormat"
 // "resultFormat" changes are applied immediately
 // "query" and "alias" changes only happen on onblur
-export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) => {
+export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
   const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
   const aliasElementId = useUniqueId();
   const selectElementId = useUniqueId();
+
+  const resultFormat = query.resultFormat ?? DEFAULT_RESULT_FORMAT;
 
   const applyDelayedChangesAndRunQuery = () => {
     onChange({
       ...query,
       query: currentQuery,
       alias: currentAlias,
+      resultFormat,
     });
     onRunQuery();
   };
@@ -53,12 +48,13 @@ export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) =>
       <HorizontalGroup>
         <InlineFormLabel htmlFor={selectElementId}>Format as</InlineFormLabel>
         <Select
+          menuShouldPortal
           inputId={selectElementId}
           onChange={(v) => {
             onChange({ ...query, resultFormat: v.value });
             onRunQuery();
           }}
-          value={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
+          value={resultFormat}
           options={RESULT_FORMATS}
         />
         <InlineFormLabel htmlFor={aliasElementId}>Alias by</InlineFormLabel>

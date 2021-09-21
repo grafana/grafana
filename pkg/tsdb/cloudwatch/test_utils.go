@@ -51,10 +51,15 @@ func (m FakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, inpu
 
 type FakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
+	cloudwatch.GetMetricDataOutput
 
 	Metrics []*cloudwatch.Metric
 
 	MetricsPerPage int
+}
+
+func (c FakeCWClient) GetMetricDataWithContext(aws.Context, *cloudwatch.GetMetricDataInput, ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+	return &c.GetMetricDataOutput, nil
 }
 
 func (c FakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {

@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import PluginList from './PluginList';
 import { getMockPlugins } from './__mocks__/pluginMocks';
-import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
+import { LayoutModes } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props = Object.assign(

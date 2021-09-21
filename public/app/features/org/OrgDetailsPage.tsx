@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 
@@ -38,7 +37,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
-            <VerticalGroup>
+            <VerticalGroup spacing="lg">
               <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />
               <SharedPreferences resourceUri="org" />
             </VerticalGroup>
@@ -62,4 +61,4 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);

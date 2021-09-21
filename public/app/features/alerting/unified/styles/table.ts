@@ -1,19 +1,19 @@
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export const getAlertTableStyles = (theme: GrafanaTheme) => ({
+export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
   table: css`
     width: 100%;
-    border-radius: ${theme.border.radius.sm};
-    border: solid 1px ${theme.colors.border3};
-    background-color: ${theme.colors.bg2};
+    border-radius: ${theme.shape.borderRadius()};
+    border: solid 1px ${theme.colors.border.weak};
+    background-color: ${theme.colors.background.secondary};
 
     th {
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
     }
 
     td {
-      padding: 0 ${theme.spacing.sm};
+      padding: 0 ${theme.spacing(1)};
     }
 
     tr {
@@ -21,7 +21,7 @@ export const getAlertTableStyles = (theme: GrafanaTheme) => ({
     }
   `,
   evenRow: css`
-    background-color: ${theme.colors.bodyBg};
+    background-color: ${theme.colors.background.primary};
   `,
   colExpand: css`
     width: 36px;
@@ -32,7 +32,7 @@ export const getAlertTableStyles = (theme: GrafanaTheme) => ({
     white-space: nowrap;
 
     & > * + * {
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(1)};
     }
   `,
 });

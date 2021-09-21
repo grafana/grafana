@@ -1,4 +1,5 @@
 import Datasource from '../datasource';
+import { mocked } from 'ts-jest/utils';
 
 type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
@@ -25,14 +26,23 @@ export default function createMockDatasource() {
     getMetricNamespaces: jest.fn().mockResolvedValueOnce([]),
     getMetricNames: jest.fn().mockResolvedValueOnce([]),
     getMetricMetadata: jest.fn().mockResolvedValueOnce({
-      primaryAggType: 'average',
-      supportedAggTypes: [],
+      primaryAggType: 'Average',
+      supportedAggTypes: ['Average', 'Maximum', 'Minimum'],
       supportedTimeGrains: [],
       dimensions: [],
     }),
+
+    azureLogAnalyticsDatasource: {
+      getKustoSchema: () => Promise.resolve(),
+    },
+    resourcePickerData: {
+      getResourcePickerData: () => ({}),
+      getResourcesForResourceGroup: () => ({}),
+      getResourceURIFromWorkspace: () => '',
+    },
   };
 
   const mockDatasource = _mockDatasource as Datasource;
 
-  return mockDatasource;
+  return mocked(mockDatasource, true);
 }

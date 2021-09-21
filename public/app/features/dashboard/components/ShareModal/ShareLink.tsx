@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, InfoBox, Input, FieldSet } from '@grafana/ui';
+import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, Input, FieldSet, Alert } from '@grafana/ui';
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { buildImageUrl, buildShareUrl } from './utils';
@@ -90,70 +90,62 @@ export class ShareLink extends PureComponent<Props, State> {
     const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
-      <div className="share-modal-body">
-        <div className="share-modal-header">
-          <div className="share-modal-content">
-            <p className="share-modal-info-text">
-              Create a direct link to this dashboard or panel, customized with the options below.
-            </p>
-            <FieldSet>
-              <Field
-                label="Lock time range"
-                description={
-                  isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''
-                }
-              >
-                <Switch
-                  id="share-current-time-range"
-                  value={useCurrentTimeRange}
-                  onChange={this.onUseCurrentTimeRangeChange}
-                />
-              </Field>
-              <Field label="Theme">
-                <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-              </Field>
-              <Field label="Shorten URL">
-                <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
-              </Field>
+      <>
+        <p className="share-modal-info-text">
+          Create a direct link to this dashboard or panel, customized with the options below.
+        </p>
+        <FieldSet>
+          <Field
+            label="Lock time range"
+            description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
+          >
+            <Switch
+              id="share-current-time-range"
+              value={useCurrentTimeRange}
+              onChange={this.onUseCurrentTimeRangeChange}
+            />
+          </Field>
+          <Field label="Theme">
+            <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+          </Field>
+          <Field label="Shorten URL">
+            <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
+          </Field>
 
-              <Field label="Link URL">
-                <Input
-                  value={shareUrl}
-                  readOnly
-                  addonAfter={
-                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
-                      <Icon name="copy" /> Copy
-                    </ClipboardButton>
-                  }
-                />
-              </Field>
-            </FieldSet>
-            {panel && config.rendererAvailable && (
-              <div className="gf-form">
-                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" /> Direct link rendered image
-                </a>
-              </div>
-            )}
-            {panel && !config.rendererAvailable && (
-              <InfoBox>
-                <p>
-                  <>To render a panel image, you must install the </>
-                  <a
-                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="external-link"
-                  >
-                    Grafana Image Renderer plugin
-                  </a>
-                  . Please contact your Grafana administrator to install the plugin.
-                </p>
-              </InfoBox>
-            )}
+          <Field label="Link URL">
+            <Input
+              value={shareUrl}
+              readOnly
+              addonAfter={
+                <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                  <Icon name="copy" /> Copy
+                </ClipboardButton>
+              }
+            />
+          </Field>
+        </FieldSet>
+        {panel && config.rendererAvailable && (
+          <div className="gf-form">
+            <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+              <Icon name="camera" /> Direct link rendered image
+            </a>
           </div>
-        </div>
-      </div>
+        )}
+        {panel && !config.rendererAvailable && (
+          <Alert severity="info" title="Image renderer plugin not installed" bottomSpacing={0}>
+            <>To render a panel image, you must install the </>
+            <a
+              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="external-link"
+            >
+              Grafana image renderer plugin
+            </a>
+            . Please contact your Grafana administrator to install the plugin.
+          </Alert>
+        )}
+      </>
     );
   }
 }

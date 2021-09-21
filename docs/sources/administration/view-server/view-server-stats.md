@@ -7,14 +7,16 @@ weight = 400
 
 # View Grafana server stats
 
-If you are a Grafana server admin, then you can view useful statistics about your Grafana server in the Stats tab.
+> Refer to [Fine-grained access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+
+If you are a Grafana server admin, then you can view useful statistics about your Grafana server in the Stats & Licensing tab.
 
 > **Note:** Only Grafana server administrators can access the **Server Admin** menu. For more information about about administrative permissions, refer to [Grafana server admin]({{< relref "../../permissions/_index.md" >}}).
 
 ## View server stats
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click the **Stats** tab.
+1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click the **Stats & Licensing** tab.
 
 ## Available stats
 
@@ -45,5 +47,5 @@ If a user belongs to several organizations, then that user is counted once as a 
 
 For example, if Sofia is a Viewer in two organizations, an Editor in two organizations, and Admin in three organizations, then she would be reflected in the stats as:
 
-- Total users     1
-- Total admins    1
+- Total users 1
+- Total admins 1

@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -13,21 +14,28 @@ const (
 	PluginTypeDashboard = "dashboard"
 )
 
+var (
+	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
+	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
+	ErrPluginNotInstalled          = errors.New("plugin is not installed")
+)
+
 type PluginNotFoundError struct {
 	PluginID string
 }
 
 func (e PluginNotFoundError) Error() string {
-	return fmt.Sprintf("plugin with ID %q not found", e.PluginID)
+	return fmt.Sprintf("plugin with ID '%s' not found", e.PluginID)
 }
 
 type DuplicatePluginError struct {
-	Plugin         *PluginBase
-	ExistingPlugin *PluginBase
+	PluginID          string
+	ExistingPluginDir string
 }
 
 func (e DuplicatePluginError) Error() string {
-	return fmt.Sprintf("plugin with ID %q already loaded from %q", e.Plugin.Id, e.ExistingPlugin.PluginDir)
+	return fmt.Sprintf("plugin with ID '%s' already exists in '%s'", e.PluginID, e.ExistingPluginDir)
 }
 
 func (e DuplicatePluginError) Is(err error) bool {
@@ -63,14 +71,31 @@ type PluginBase struct {
 	PluginDir       string              `json:"-"`
 	DefaultNavUrl   string              `json:"-"`
 	IsCorePlugin    bool                `json:"-"`
-	Files           []string            `json:"-"`
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
+	SignedFiles     PluginFiles         `json:"-"`
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 
 	Root *PluginBase
+}
+
+func (p *PluginBase) IncludedInSignature(file string) bool {
+	// permit Core plugin files
+	if p.IsCorePlugin {
+		return true
+	}
+
+	// permit when no signed files (no MANIFEST)
+	if p.SignedFiles == nil {
+		return true
+	}
+
+	if _, exists := p.SignedFiles[file]; !exists {
+		return false
+	}
+	return true
 }
 
 type PluginDependencies struct {
@@ -88,8 +113,17 @@ type PluginInclude struct {
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
 	Icon       string          `json:"icon"`
+	UID        string          `json:"uid"`
 
 	Id string `json:"-"`
+}
+
+func (e PluginInclude) GetSlugOrUIDLink() string {
+	if len(e.UID) > 0 {
+		return "/d/" + e.UID
+	} else {
+		return "/dashboard/db/" + e.Slug
+	}
 }
 
 type PluginDependencyItem struct {
@@ -141,4 +175,8 @@ type EnabledPlugins struct {
 	Panels      []*PanelPlugin
 	DataSources map[string]*DataSourcePlugin
 	Apps        []*AppPlugin
+}
+
+type UpdateInfo struct {
+	PluginZipURL string
 }

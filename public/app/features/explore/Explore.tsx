@@ -1,27 +1,15 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, stylesFactory, withTheme, CustomScrollbar } from '@grafana/ui';
-import {
-  AbsoluteTimeRange,
-  DataQuery,
-  DataSourceApi,
-  GrafanaTheme,
-  LoadingState,
-  PanelData,
-  RawTimeRange,
-  TimeZone,
-  LogsModel,
-  DataFrame,
-} from '@grafana/data';
+import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
-import QueryRows from './QueryRows';
+import { QueryRows } from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -34,14 +22,14 @@ import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
-import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
+import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { ExploreGraph } from './ExploreGraph';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css`
       label: exploreMain;
@@ -58,42 +46,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       // Need to override normal css class and don't want to count on ordering of the classes in html.
       height: auto !important;
       flex: unset !important;
-      padding: ${theme.panelPadding}px;
+      display: unset !important;
+      padding: ${theme.spacing(1)};
     `,
   };
-});
+};
 
-export interface ExploreProps {
-  changeSize: typeof changeSize;
-  datasourceInstance: DataSourceApi | null;
-  datasourceMissing: boolean;
+export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
-  modifyQueries: typeof modifyQueries;
-  scanning?: boolean;
-  scanRange?: RawTimeRange;
-  scanStart: typeof scanStart;
-  scanStopAction: typeof scanStopAction;
-  setQueries: typeof setQueries;
-  queryKeys: string[];
-  isLive: boolean;
-  syncedTimes: boolean;
-  updateTimeRange: typeof updateTimeRange;
-  graphResult: DataFrame[] | null;
-  logsResult?: LogsModel;
-  absoluteRange: AbsoluteTimeRange;
-  timeZone: TimeZone;
-  onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  queryResponse: PanelData;
-  originPanelId: number;
-  addQueryRow: typeof addQueryRow;
-  theme: GrafanaTheme;
-  loading: boolean;
-  showMetrics: boolean;
-  showTable: boolean;
-  showLogs: boolean;
-  showTrace: boolean;
-  showNodeGraph: boolean;
-  splitOpen: typeof splitOpen;
+  theme: GrafanaTheme2;
 }
 
 enum ExploreDrawer {
@@ -104,6 +65,8 @@ enum ExploreDrawer {
 interface ExploreState {
   openDrawer?: ExploreDrawer;
 }
+
+export type Props = ExploreProps & ConnectedProps<typeof connector>;
 
 /**
  * Explore provides an area for quick query iteration for a given datasource.
@@ -129,8 +92,8 @@ interface ExploreState {
  * The result viewers determine some of the query options sent to the datasource, e.g.,
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
-export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
-  constructor(props: ExploreProps) {
+export class Explore extends React.PureComponent<Props, ExploreState> {
+  constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
@@ -223,18 +186,22 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading } = this.props;
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
-      <ExploreGraphNGPanel
-        data={graphResult!}
-        width={width}
-        absoluteRange={absoluteRange}
-        timeZone={timeZone}
-        onUpdateTimeRange={this.onUpdateTimeRange}
-        annotations={queryResponse.annotations}
-        splitOpenFn={splitOpen}
-        isLoading={loading}
-      />
+      <Collapse label="Graph" loading={loading} isOpen>
+        <ExploreGraph
+          data={graphResult!}
+          height={400}
+          width={width - spacing}
+          absoluteRange={absoluteRange}
+          onChangeTime={this.onUpdateTimeRange}
+          timeZone={timeZone}
+          annotations={queryResponse.annotations}
+          splitOpenFn={splitOpen}
+          loadingState={queryResponse.state}
+        />
+      </Collapse>
     );
   }
 
@@ -251,12 +218,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes } = this.props;
+    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
-        width={width}
         exploreId={exploreId}
+        loadingState={queryResponse.state}
         syncedTimes={syncedTimes}
+        width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
@@ -271,7 +240,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       <NodeGraphContainer
         dataFrames={this.getNodeGraphDataFrames(queryResponse.series)}
         exploreId={exploreId}
-        short={showTrace}
+        withTraceView={showTrace}
       />
     );
   }
@@ -290,7 +259,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && <TraceView exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
+      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
     );
   }
 
@@ -299,7 +268,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasourceInstance,
       datasourceMissing,
       exploreId,
-      queryKeys,
       graphResult,
       queryResponse,
       isLive,
@@ -323,7 +291,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         {datasourceInstance && (
           <div className="explore-container">
             <div className={cx('panel-container', styles.queryContainer)}>
-              <QueryRows exploreId={exploreId} queryKeys={queryKeys} />
+              <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
                 // We cannot show multiple traces at the same time right now so we do not show add query button.
@@ -335,8 +303,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onClickRichHistoryButton={this.toggleShowRichHistory}
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
+              <ResponseErrorContainer exploreId={exploreId} />
             </div>
-            <ResponseErrorContainer exploreId={exploreId} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -348,11 +316,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                     <ErrorBoundaryAlert>
                       {showPanels && (
                         <>
-                          {showMetrics && graphResult && this.renderGraphPanel(width)}
-                          {showTable && this.renderTablePanel(width)}
-                          {showLogs && this.renderLogsPanel(width)}
-                          {showNodeGraph && this.renderNodeGraphPanel()}
-                          {showTrace && this.renderTraceViewPanel()}
+                          {showMetrics && graphResult && (
+                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                          )}
+                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                          {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
+                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                         </>
                       )}
                       {showRichHistory && (
@@ -381,7 +351,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId]!;
@@ -423,7 +393,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   };
 }
 
-const mapDispatchToProps: Partial<ExploreProps> = {
+const mapDispatchToProps = {
   changeSize,
   modifyQueries,
   scanStart,
@@ -434,8 +404,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   splitOpen,
 };
 
-export default compose(
-  hot(module),
-  connect(mapStateToProps, mapDispatchToProps),
-  withTheme
-)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;

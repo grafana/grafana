@@ -1,9 +1,11 @@
 import React, { FC } from 'react';
+import { css } from '@emotion/css';
+import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
+
 import config from 'app/core/config';
 import { UserDTO } from 'app/types';
-import { Button, LinkButton, Form, Field, Input, HorizontalGroup } from '@grafana/ui';
-import { ChangePasswordFields } from 'app/core/utils/UserProvider';
-import { css } from '@emotion/css';
+import { ChangePasswordFields } from './types';
+import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 
 export interface Props {
   user: UserDTO;
@@ -33,14 +35,18 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
           return (
             <>
               <Field label="Old password" invalid={!!errors.oldPassword} error={errors?.oldPassword?.message}>
-                <Input type="password" name="oldPassword" ref={register({ required: 'Old password is required' })} />
+                <PasswordField
+                  id="current-password"
+                  autoComplete="current-password"
+                  {...register('oldPassword', { required: 'Old password is required' })}
+                />
               </Field>
 
               <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
-                <Input
-                  type="password"
-                  name="newPassword"
-                  ref={register({
+                <PasswordField
+                  id="new-password"
+                  autoComplete="new-password"
+                  {...register('newPassword', {
                     required: 'New password is required',
                     validate: {
                       confirm: (v) => v === getValues().confirmNew || 'Passwords must match',
@@ -51,10 +57,10 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
               </Field>
 
               <Field label="Confirm password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
-                <Input
-                  type="password"
-                  name="confirmNew"
-                  ref={register({
+                <PasswordField
+                  id="confirm-new-password"
+                  autoComplete="new-password"
+                  {...register('confirmNew', {
                     required: 'New password confirmation is required',
                     validate: (v) => v === getValues().newPassword || 'Passwords must match',
                   })}
@@ -64,7 +70,7 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
                 <Button variant="primary" disabled={isSaving}>
                   Change Password
                 </Button>
-                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`}>
+                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">
                   Cancel
                 </LinkButton>
               </HorizontalGroup>

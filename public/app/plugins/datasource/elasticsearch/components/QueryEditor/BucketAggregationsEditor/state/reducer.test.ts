@@ -10,7 +10,7 @@ import {
   changeBucketAggregationType,
   removeBucketAggregation,
 } from './actions';
-import { reducer } from './reducer';
+import { createReducer } from './reducer';
 import { initQuery } from '../../state';
 import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
@@ -29,7 +29,7 @@ describe('Bucket Aggregations Reducer', () => {
     };
 
     reducerTester<ElasticsearchQuery['bucketAggs']>()
-      .givenReducer(reducer, [])
+      .givenReducer(createReducer('@timestamp'), [])
       .whenActionIsDispatched(addBucketAggregation(firstAggregation.id))
       .thenStateShouldEqual([firstAggregation])
       .whenActionIsDispatched(addBucketAggregation(secondAggregation.id))
@@ -48,7 +48,7 @@ describe('Bucket Aggregations Reducer', () => {
     };
 
     reducerTester<ElasticsearchQuery['bucketAggs']>()
-      .givenReducer(reducer, [firstAggregation, secondAggregation])
+      .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
       .whenActionIsDispatched(removeBucketAggregation(firstAggregation.id))
       .thenStateShouldEqual([secondAggregation]);
   });
@@ -70,8 +70,10 @@ describe('Bucket Aggregations Reducer', () => {
     };
 
     reducerTester<ElasticsearchQuery['bucketAggs']>()
-      .givenReducer(reducer, [firstAggregation, secondAggregation])
-      .whenActionIsDispatched(changeBucketAggregationType(secondAggregation.id, expectedSecondAggregation.type))
+      .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
+      .whenActionIsDispatched(
+        changeBucketAggregationType({ id: secondAggregation.id, newType: expectedSecondAggregation.type })
+      )
       .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
   });
 
@@ -91,8 +93,10 @@ describe('Bucket Aggregations Reducer', () => {
     };
 
     reducerTester<ElasticsearchQuery['bucketAggs']>()
-      .givenReducer(reducer, [firstAggregation, secondAggregation])
-      .whenActionIsDispatched(changeBucketAggregationField(secondAggregation.id, expectedSecondAggregation.field))
+      .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
+      .whenActionIsDispatched(
+        changeBucketAggregationField({ id: secondAggregation.id, newField: expectedSecondAggregation.field })
+      )
       .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
   });
 
@@ -106,15 +110,15 @@ describe('Bucket Aggregations Reducer', () => {
       ];
 
       reducerTester<ElasticsearchQuery['bucketAggs']>()
-        .givenReducer(reducer, initialState)
+        .givenReducer(createReducer('@timestamp'), initialState)
         // If the new metric aggregation is `isSingleMetric` we should remove all bucket aggregations.
-        .whenActionIsDispatched(changeMetricType('Some id', 'raw_data'))
+        .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'raw_data' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 0)
         // Switching back to another aggregation that is NOT `isSingleMetric` should bring back a bucket aggregation
-        .whenActionIsDispatched(changeMetricType('Some id', 'max'))
+        .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'max' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 1)
         // When none of the above is true state shouldn't change.
-        .whenActionIsDispatched(changeMetricType('Some id', 'min'))
+        .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'min' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 1);
     });
   });
@@ -137,17 +141,38 @@ describe('Bucket Aggregations Reducer', () => {
     };
 
     reducerTester<ElasticsearchQuery['bucketAggs']>()
-      .givenReducer(reducer, [firstAggregation, secondAggregation])
+      .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
       .whenActionIsDispatched(
-        changeBucketAggregationSetting(firstAggregation, 'min_doc_count', expectedSettings.min_doc_count!)
+        changeBucketAggregationSetting({
+          bucketAgg: firstAggregation,
+          settingName: 'min_doc_count',
+          newValue: expectedSettings.min_doc_count!,
+        })
       )
       .thenStateShouldEqual([{ ...firstAggregation, settings: expectedSettings }, secondAggregation]);
   });
 
-  it('Should correctly initialize first Bucket Aggregation', () => {
-    reducerTester<ElasticsearchQuery['bucketAggs']>()
-      .givenReducer(reducer, [])
-      .whenActionIsDispatched(initQuery())
-      .thenStateShouldEqual([defaultBucketAgg('2')]);
+  describe('Initialization', () => {
+    it('Correctly adds a default Date Histogram if there is no aggregation', () => {
+      const defaultTimeField = '@timestamp';
+
+      reducerTester<ElasticsearchQuery['bucketAggs']>()
+        .givenReducer(createReducer(defaultTimeField), [])
+        .whenActionIsDispatched(initQuery())
+        .thenStateShouldEqual([{ ...defaultBucketAgg('2'), field: defaultTimeField }]);
+    });
+
+    it('Does NOT change aggregations if there is already one', () => {
+      const bucketAgg: DateHistogram = {
+        id: '18',
+        type: 'date_histogram',
+        field: '@my_time_field',
+      };
+
+      reducerTester<ElasticsearchQuery['bucketAggs']>()
+        .givenReducer(createReducer('@timestamp'), [bucketAgg])
+        .whenActionIsDispatched(initQuery())
+        .thenStateShouldEqual([bucketAgg]);
+    });
   });
 });

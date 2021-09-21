@@ -20,7 +20,7 @@ Big thumbs up!
 - **Hipchat**: Adds support for sending alert notifications to hipchat [#6451](https://github.com/grafana/grafana/issues/6451), thx [@jregovic](https://github.com/jregovic)
 - **Telegram**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
 - **LINE**: Add LINE as alerting notification channel [#7301](https://github.com/grafana/grafana/pull/7301), thx [@huydx](https://github.com/huydx)
-- **Templating**: Make $__interval and $__interval_ms global built in variables that can be used in by any data source (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
+- **Templating**: Make $**interval and $**interval_ms global built in variables that can be used in by any data source (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
 - **Alerting**: Adds deduping of alert notifications [#7632](https://github.com/grafana/grafana/pull/7632)
 - **Alerting**: Better information about why an alert triggered [#7035](https://github.com/grafana/grafana/issues/7035)
 - **Orgs**: Sharing dashboards using Grafana share feature will now redirect to correct org. [#6948](https://github.com/grafana/grafana/issues/6948)

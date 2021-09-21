@@ -10,9 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DashboardAlertConditions turns dashboard alerting conditions into server side expression queries and a
@@ -34,7 +36,7 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
-	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond, time.Unix(500, 0))
+	backendReq, err := eval.GetExprRequest(eval.AlertExecCtx{ExpressionsEnabled: true, Log: log.New("translate")}, ngCond.Data, time.Unix(500, 0))
 
 	if err != nil {
 		return nil, err
@@ -191,7 +193,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 			}
 
 			queryObj["datasource"] = getDsInfo.Result.Name
-			queryObj["datasourceUid"] = getDsInfo.Result.Uid
 			queryObj["refId"] = refID
 
 			encodedObj, err := json.Marshal(queryObj)
@@ -211,7 +212,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     getDsInfo.Uid,
+				DatasourceUID:     getDsInfo.Result.Uid,
 			}
 			ngCond.Data = append(ngCond.Data, alertQuery)
 		}
@@ -240,14 +241,12 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ngCond.OrgID = orgID
 
 	exprModel := struct {
-		Type          string                         `json:"type"`
-		RefID         string                         `json:"refId"`
-		DatasourceUID string                         `json:"datasourceUid"`
-		Conditions    []classic.ClassicConditionJSON `json:"conditions"`
+		Type       string                         `json:"type"`
+		RefID      string                         `json:"refId"`
+		Conditions []classic.ClassicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		expr.DatasourceUID,
 		conditions,
 	}
 
@@ -257,8 +256,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	}
 
 	ccAlertQuery := ngmodels.AlertQuery{
-		RefID: ccRefID,
-		Model: exprModelJSON,
+		RefID:         ccRefID,
+		Model:         exprModelJSON,
+		DatasourceUID: expr.DatasourceUID,
 	}
 
 	ngCond.Data = append(ngCond.Data, ccAlertQuery)
@@ -281,10 +281,6 @@ const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // getNewRefID finds first capital letter in the alphabet not in use
 // to use for a new RefID. It errors if it runs out of letters.
-//
-// TODO: Research if there is a limit. If so enforce is by
-// number of queries not letters. If no limit generate more types
-// of refIDs.
 func getNewRefID(refIDs map[string][]int) (string, error) {
 	for _, r := range alpha {
 		sR := string(r)
@@ -293,7 +289,14 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 		}
 		return sR, nil
 	}
-	return "", fmt.Errorf("ran out of letters when creating expression")
+	for i := 0; i < 20; i++ {
+		sR := util.GenerateShortUID()
+		if _, ok := refIDs[sR]; ok {
+			continue
+		}
+		return sR, nil
+	}
+	return "", fmt.Errorf("failed to generate unique RefID")
 }
 
 // getRelativeDuration turns the alerting durations for dashboard conditions

@@ -27,16 +27,17 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
   useEffect(() => {
     if (state.value) {
       dashboard.version = state.value.version;
+      dashboard.clearUnsavedChanges();
+
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard saved']);
 
-      // Using global locationService because save modals are rendered as a separate React tree
       const currentPath = locationService.getLocation().pathname;
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
 
       if (newUrl !== currentPath) {
-        locationService.replace(newUrl);
+        setTimeout(() => locationService.replace(newUrl));
       }
     }
   }, [dashboard, state]);

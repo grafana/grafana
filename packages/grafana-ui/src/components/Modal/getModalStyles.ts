@@ -1,19 +1,18 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
-export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  // rgba(1,4,9,0.8)
-  const backdropBackground = 'rgba(0, 0, 0, 0.5)';
-  const borderRadius = theme.v2.shape.borderRadius(2);
+export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const borderRadius = theme.shape.borderRadius(1);
 
   return {
     modal: css`
       position: fixed;
-      z-index: ${theme.v2.zIndex.modal};
-      background: ${theme.v2.palette.background.primary};
-      box-shadow: ${theme.v2.shadows.z4};
+      z-index: ${theme.zIndex.modal};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
       border-radius: ${borderRadius};
+      border: 1px solid ${theme.colors.border.weak};
       background-clip: padding-box;
       outline: none;
       width: 750px;
@@ -23,6 +22,9 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-left: auto;
       margin-right: auto;
       top: 10%;
+      max-height: 80%;
+      display: flex;
+      flex-direction: column;
     `,
     modalBackdrop: css`
       position: fixed;
@@ -30,26 +32,29 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       left: 0;
-      z-index: ${theme.v2.zIndex.modalBackdrop};
-      background-color: ${backdropBackground};
+      background-color: ${theme.components.overlay.background};
+      backdrop-filter: blur(1px);
     `,
     modalHeader: css`
       label: modalHeader;
-      background: ${theme.colors.bg2};
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
-      border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
-      height: 42px;
+      align-items: center;
+      min-height: 42px;
+      margin: ${theme.spacing(1, 2, 0, 2)};
+    `,
+    modalHeaderWithTabs: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.size.lg};
-      margin: 0 ${theme.spacing.md};
+      margin: ${theme.spacing(0, 4, 0, 1)};
       display: flex;
       align-items: center;
-      line-height: 42px;
+      position: relative;
+      top: 2px;
     `,
     modalHeaderIcon: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing(2)};
       font-size: inherit;
       &:before {
         vertical-align: baseline;
@@ -59,15 +64,17 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 100%;
       display: flex;
       align-items: center;
+      color: ${theme.colors.text.secondary};
       flex-grow: 1;
       justify-content: flex-end;
-      padding-right: ${theme.spacing.sm};
     `,
     modalContent: css`
-      padding: calc(${theme.spacing.d} * 2);
       overflow: auto;
+      padding: ${theme.spacing(3)};
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing.d} * 2);
+    `,
+    modalButtonRow: css`
+      padding-top: ${theme.spacing(3)};
     `,
   };
 });

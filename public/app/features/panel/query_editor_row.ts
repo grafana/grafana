@@ -5,7 +5,7 @@ export class QueryRowCtrl {
   queryCtrl: any;
   panelCtrl: any;
   panel: any;
-  hasTextEditMode: boolean;
+  hasTextEditMode = false;
 
   $onInit() {
     this.panelCtrl = this.queryCtrl.panelCtrl;

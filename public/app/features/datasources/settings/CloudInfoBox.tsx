@@ -1,6 +1,5 @@
-import { DataSourceSettings, GrafanaTheme } from '@grafana/data';
-import { FeatureInfoBox, useStyles } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { DataSourceSettings } from '@grafana/data';
+import { Alert } from '@grafana/ui';
 import React, { FC } from 'react';
 import { config } from 'app/core/config';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
@@ -13,7 +12,6 @@ export interface Props {
 }
 
 export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
-  const styles = useStyles(getStyles);
   let mainDS = '';
   let extraDS = '';
 
@@ -47,46 +45,29 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
           return null;
         }
         return (
-          <FeatureInfoBox
+          <Alert
             title={`Configure your ${mainDS} data source below`}
-            className={styles.box}
-            branded={false}
-            onDismiss={() => {
+            severity="info"
+            bottomSpacing={4}
+            onRemove={() => {
               onDismiss(true);
             }}
           >
-            <div className={styles.text}>
-              Or skip the effort and get {mainDS} (and {extraDS}) as fully-managed, scalable, and hosted data sources
-              from Grafana Labs with the{' '}
-              <a
-                className="external-link"
-                href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
-                target="_blank"
-                rel="noreferrer"
-                title="The free plan includes 10k active metrics and 50gb storage."
-              >
-                free-forever Grafana Cloud plan
-              </a>
-              .
-            </div>
-          </FeatureInfoBox>
+            Or skip the effort and get {mainDS} (and {extraDS}) as fully-managed, scalable, and hosted data sources from
+            Grafana Labs with the{' '}
+            <a
+              className="external-link"
+              href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
+              target="_blank"
+              rel="noreferrer"
+              title="The free plan includes 10k active metrics and 50gb storage."
+            >
+              free-forever Grafana Cloud plan
+            </a>
+            .
+          </Alert>
         );
       }}
     </LocalStorageValueProvider>
   );
-};
-
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    box: css`
-      margin: 0 0 ${theme.spacing.lg} 0;
-    `,
-    text: css`
-      color: ${theme.colors.textSemiWeak};
-      padding: ${theme.spacing.sm} 0;
-      a {
-        text-decoration: underline;
-      }
-    `,
-  };
 };

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
+import { LineStyle } from '@grafana/schema';
 import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
-import { HorizontalGroup, IconButton, LineStyle, RadioButtonGroup, Select } from '@grafana/ui';
+import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 
 type LineFill = 'solid' | 'dash' | 'dot';
 
@@ -89,6 +90,7 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
       {value?.fill && value?.fill !== 'solid' && (
         <>
           <Select
+            menuShouldPortal
             allowCustomValue={true}
             options={options}
             value={current}

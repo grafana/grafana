@@ -18,11 +18,6 @@ jest.mock('@grafana/ui', () => ({
   },
 }));
 
-const variableOptionGroup = {
-  label: 'Template variables',
-  options: [],
-};
-
 describe('Azure Monitor QueryEditor', () => {
   it('renders the Metrics query editor when the query type is Metrics', async () => {
     const mockDatasource = createMockDatasource();
@@ -31,51 +26,58 @@ describe('Azure Monitor QueryEditor', () => {
       queryType: AzureQueryType.AzureMonitor,
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
   });
 
-  it('renders the Metrics query editor when the query type is Metrics', async () => {
+  it('renders the Logs query editor when the query type is Logs', async () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = {
       ...createMockQuery(),
       queryType: AzureQueryType.LogAnalytics,
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.queryByTestId('azure-monitor-logs-query-editor')).toBeInTheDocument());
+  });
+
+  it('renders the ApplicationInsights query editor when the query type is Application Insights and renders values in disabled inputs', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.ApplicationInsights,
+      appInsights: {
+        metricName: 'requests/count',
+        timeGrain: 'PT1H',
+        timeGrainCount: '1',
+        timeGrainType: 'specific',
+        timeGrainUnit: 'hour',
+        aggregation: 'average',
+        dimension: ['request/name'],
+        dimensionFilter: "request/name eq 'GET Home/Index'",
+        alias: '{{ request/name }}',
+      },
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() =>
+      expect(screen.queryByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+    );
+
+    const metricInput = await screen.getByLabelText('Metric');
+    expect(metricInput).toBeDisabled();
+    expect(metricInput).toHaveValue('requests/count');
   });
 
   it('changes the query type when selected', async () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = createMockQuery();
     const onChange = jest.fn();
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={onChange}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={onChange} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Service');
-    await selectEvent.select(metrics, 'Logs');
+    await ui.selectOptionInTest(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -87,15 +89,46 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
     render(
-      <QueryEditor
-        query={createMockQuery()}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
+      <QueryEditor query={createMockQuery()} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
     expect(screen.getByText("The resource namespace 'grafanadev' is invalid.")).toBeInTheDocument();
+  });
+
+  it('hides deprecated services', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const metrics = await screen.findByLabelText('Service');
+    selectEvent.openMenu(metrics);
+
+    expect(screen.queryByText('Application Insights')).not.toBeInTheDocument();
+  });
+
+  it("shows deprecated services when they're selected", async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.ApplicationInsights,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+    );
+
+    expect(screen.queryByText('Application Insights')).toBeInTheDocument();
+
+    const metrics = await screen.findByLabelText('Service');
+    await ui.selectOptionInTest(metrics, 'Logs');
+
+    expect(screen.queryByText('Application Insights')).toBeInTheDocument();
   });
 });

@@ -12,8 +12,10 @@ import {
   cancelVariables,
   changeVariableMultiValue,
   cleanUpVariables,
+  fixSelectedInconsistency,
   initDashboardTemplating,
   initVariablesTransaction,
+  isVariableUrlValueDifferentFromCurrent,
   processVariables,
   validateVariableSelectionState,
 } from './actions';
@@ -61,6 +63,8 @@ import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
+import { LoadingState } from '@grafana/data';
+import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -148,6 +152,13 @@ describe('shared actions', () => {
       };
       const locationService: any = { getSearchObject: () => ({}) };
       setLocationService(locationService);
+      const variableQueryRunner: any = {
+        cancelRequest: jest.fn(),
+        queueRequest: jest.fn(),
+        getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: toVariableIdentifier(query) }),
+        destroy: jest.fn(),
+      };
+      setVariableQueryRunner(variableQueryRunner);
 
       const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
         .givenRootReducer(getTemplatingRootReducer())
@@ -156,10 +167,10 @@ describe('shared actions', () => {
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        expect(dispatchedActions.length).toEqual(4);
+        expect(dispatchedActions.length).toEqual(5);
 
         expect(dispatchedActions[0]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          variableStateFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
 
         expect(dispatchedActions[1]).toEqual(
@@ -172,6 +183,10 @@ describe('shared actions', () => {
 
         expect(dispatchedActions[3]).toEqual(
           variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
+        );
+
+        expect(dispatchedActions[4]).toEqual(
+          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
         );
 
         return true;
@@ -670,6 +685,154 @@ describe('shared actions', () => {
           );
 
         expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('fixSelectedInconsistency', () => {
+    describe('when called for a single value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
+      });
+    });
+
+    describe('when called for a multi value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: true },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
+      });
+    });
+  });
+
+  describe('isVariableUrlValueDifferentFromCurrent', () => {
+    describe('when called with a single valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'A';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'B';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+      });
+    });
+
+    describe('when called with a multi valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['A'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return false', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'A';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+          });
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['C'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return true', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'C';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+          });
+        });
       });
     });
   });

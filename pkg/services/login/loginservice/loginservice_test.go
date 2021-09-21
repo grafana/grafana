@@ -76,10 +76,22 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
 }
 
+type authInfoServiceMock struct {
+	user *models.User
+	err  error
+}
+
+func (a *authInfoServiceMock) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+	return a.user, a.err
+}
+
 func Test_teamSync(t *testing.T) {
+	b := bus.New()
+	authInfoMock := &authInfoServiceMock{}
 	login := Implementation{
-		Bus:          bus.New(),
-		QuotaService: &quota.QuotaService{},
+		Bus:             b,
+		QuotaService:    &quota.QuotaService{},
+		AuthInfoService: authInfoMock,
 	}
 
 	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
@@ -89,13 +101,9 @@ func Test_teamSync(t *testing.T) {
 		Name:  "test_user",
 		Login: "test_user",
 	}
-
+	authInfoMock.user = expectedUser
 	bus.ClearBusHandlers()
 	t.Cleanup(func() { bus.ClearBusHandlers() })
-	bus.AddHandler("test", func(query *models.GetUserByAuthInfoQuery) error {
-		query.Result = expectedUser
-		return nil
-	})
 
 	var actualUser *models.User
 	var actualExternalUser *models.ExternalUserInfo

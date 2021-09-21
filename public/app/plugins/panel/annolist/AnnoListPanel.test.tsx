@@ -55,10 +55,14 @@ async function setupTestContext({
   const props: Props = {
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     eventBus: {
-      getStream: jest.fn(),
+      subscribe: jest.fn(),
+      getStream: () =>
+        ({
+          subscribe: jest.fn(),
+        } as any),
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
-      subscribe: jest.fn(),
+      newScopedBus: jest.fn(),
     },
     fieldConfig: ({} as unknown) as FieldConfigSource,
     height: 400,

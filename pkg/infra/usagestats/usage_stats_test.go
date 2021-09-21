@@ -5,25 +5,26 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"runtime"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/stretchr/testify/require"
-
-	"net/http"
-	"net/http/httptest"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // This is to ensure that the interface contract is held by the implementation
@@ -45,23 +46,42 @@ func TestMetrics(t *testing.T) {
 		var getSystemStatsQuery *models.GetSystemStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{
-				Dashboards:            1,
-				Datasources:           2,
-				Users:                 3,
-				ActiveUsers:           4,
-				Orgs:                  5,
-				Playlists:             6,
-				Alerts:                7,
-				Stars:                 8,
-				Folders:               9,
-				DashboardPermissions:  10,
-				FolderPermissions:     11,
-				ProvisionedDashboards: 12,
-				Snapshots:             13,
-				Teams:                 14,
-				AuthTokens:            15,
-				DashboardVersions:     16,
-				Annotations:           17,
+				Dashboards:                1,
+				Datasources:               2,
+				Users:                     3,
+				Admins:                    31,
+				Editors:                   32,
+				Viewers:                   33,
+				ActiveUsers:               4,
+				ActiveAdmins:              21,
+				ActiveEditors:             22,
+				ActiveViewers:             23,
+				ActiveSessions:            24,
+				DailyActiveUsers:          25,
+				DailyActiveAdmins:         26,
+				DailyActiveEditors:        27,
+				DailyActiveViewers:        28,
+				DailyActiveSessions:       29,
+				Orgs:                      5,
+				Playlists:                 6,
+				Alerts:                    7,
+				Stars:                     8,
+				Folders:                   9,
+				DashboardPermissions:      10,
+				FolderPermissions:         11,
+				ProvisionedDashboards:     12,
+				Snapshots:                 13,
+				Teams:                     14,
+				AuthTokens:                15,
+				DashboardVersions:         16,
+				Annotations:               17,
+				AlertRules:                18,
+				LibraryPanels:             19,
+				LibraryVariables:          20,
+				DashboardsViewersCanAdmin: 3,
+				DashboardsViewersCanEdit:  2,
+				FoldersViewersCanAdmin:    1,
+				FoldersViewersCanEdit:     5,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -201,7 +221,7 @@ func TestMetrics(t *testing.T) {
 				sendUsageStats = origSendUsageStats
 			})
 			statsSent := false
-			sendUsageStats = func(*bytes.Buffer) {
+			sendUsageStats = func(uss *UsageStatsService, b *bytes.Buffer) {
 				statsSent = true
 			}
 
@@ -289,9 +309,16 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, runtime.GOOS, j.Get("os").MustString())
 			assert.Equal(t, runtime.GOARCH, j.Get("arch").MustString())
 
+			usageId := uss.GetUsageStatsId(context.Background())
+			assert.NotEmpty(t, usageId)
+			assert.Equal(t, usageId, j.Get("usageStatsId").MustString())
+
 			metrics := j.Get("metrics")
 			assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Admins, metrics.Get("stats.admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Editors, metrics.Get("stats.editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.Viewers, metrics.Get("stats.viewers.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
 			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
@@ -299,6 +326,15 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveAdmins, metrics.Get("stats.active_admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveEditors, metrics.Get("stats.active_editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveViewers, metrics.Get("stats.active_viewers.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.ActiveSessions, metrics.Get("stats.active_sessions.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveUsers, metrics.Get("stats.daily_active_users.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveAdmins, metrics.Get("stats.daily_active_admins.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveEditors, metrics.Get("stats.daily_active_editors.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveViewers, metrics.Get("stats.daily_active_viewers.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveSessions, metrics.Get("stats.daily_active_sessions.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Stars, metrics.Get("stats.stars.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Folders, metrics.Get("stats.folders.count").MustInt64())
@@ -307,10 +343,19 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.ProvisionedDashboards, metrics.Get("stats.provisioned_dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Snapshots, metrics.Get("stats.snapshots.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Teams, metrics.Get("stats.teams.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DashboardsViewersCanEdit, metrics.Get("stats.dashboards_viewers_can_edit.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DashboardsViewersCanAdmin, metrics.Get("stats.dashboards_viewers_can_admin.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanEdit, metrics.Get("stats.folders_viewers_can_edit.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanAdmin, metrics.Get("stats.folders_viewers_can_admin.count").MustInt64())
 			assert.Equal(t, 15, metrics.Get("stats.total_auth_token.count").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
+			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
+			assert.Equal(t, 19, metrics.Get("stats.library_panels.count").MustInt())
+			assert.Equal(t, 20, metrics.Get("stats.library_variables.count").MustInt())
+			assert.Equal(t, 0, metrics.Get("stats.live_users.count").MustInt())
+			assert.Equal(t, 0, metrics.Get("stats.live_clients.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
@@ -354,6 +399,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
 			assert.Equal(t, 6, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
+
+			assert.LessOrEqual(t, 60, metrics.Get("stats.uptime").MustInt())
+			assert.Greater(t, 70, metrics.Get("stats.uptime").MustInt())
 		})
 	})
 
@@ -409,30 +457,13 @@ func TestMetrics(t *testing.T) {
 		metricName := "stats.test_metric.count"
 
 		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 1, nil
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				return map[string]interface{}{metricName: 1}, nil
 			})
 
-			metric, err := uss.externalMetrics[metricName]()
+			metrics, err := uss.externalMetrics[0]()
 			require.NoError(t, err)
-			assert.Equal(t, 1, metric)
-		})
-
-		t.Run("When metric already exists, the metric should be overridden", func(t *testing.T) {
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 1, nil
-			})
-
-			metric, err := uss.externalMetrics[metricName]()
-			require.NoError(t, err)
-			assert.Equal(t, 1, metric)
-
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 2, nil
-			})
-			newMetric, err := uss.externalMetrics[metricName]()
-			require.NoError(t, err)
-			assert.Equal(t, 2, newMetric)
+			assert.Equal(t, map[string]interface{}{metricName: 1}, metrics)
 		})
 	})
 
@@ -480,8 +511,8 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 1, nil
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				return map[string]interface{}{metricName: 1}, nil
 			})
 
 			report, err := uss.GetUsageReport(context.Background())
@@ -497,8 +528,8 @@ func TestMetrics(t *testing.T) {
 		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 		extMetricName := "stats.test_external_metric.count"
 
-		uss.RegisterMetric(extMetricName, func() (interface{}, error) {
-			return 1, nil
+		uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+			return map[string]interface{}{extMetricName: 1}, nil
 		})
 
 		uss.registerExternalMetrics(metrics)
@@ -506,14 +537,14 @@ func TestMetrics(t *testing.T) {
 		assert.Equal(t, 1, metrics[extMetricName])
 
 		t.Run("When loading a metric results to an error", func(t *testing.T) {
-			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
-				return 1, nil
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				return map[string]interface{}{extMetricName: 1}, nil
 			})
 			extErrorMetricName := "stats.test_external_metric_error.count"
 
 			t.Run("Should not add it to metrics", func(t *testing.T) {
-				uss.RegisterMetric(extErrorMetricName, func() (interface{}, error) {
-					return 1, errors.New("some error")
+				uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+					return map[string]interface{}{extErrorMetricName: 1}, errors.New("some error")
 				})
 
 				uss.registerExternalMetrics(metrics)
@@ -549,15 +580,15 @@ type fakePluginManager struct {
 	panels      map[string]*plugins.PanelPlugin
 }
 
-func (pm fakePluginManager) DataSourceCount() int {
+func (pm *fakePluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
 }
 
-func (pm fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
+func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	return pm.dataSources[id]
 }
 
-func (pm fakePluginManager) PanelCount() int {
+func (pm *fakePluginManager) PanelCount() int {
 	return len(pm.panels)
 }
 
@@ -607,13 +638,25 @@ type httpResp struct {
 func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 	t.Helper()
 
+	sqlStore := sqlstore.InitTestDB(t)
+
 	return &UsageStatsService{
 		Bus:                bus.New(),
 		Cfg:                &cfg,
-		SQLStore:           sqlstore.InitTestDB(t),
-		License:            &licensing.OSSLicensingService{},
+		SQLStore:           sqlStore,
 		AlertingUsageStats: &alertingUsageMock{},
-		externalMetrics:    make(map[string]MetricFunc),
+		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
+		grafanaLive:        newTestLive(t),
+		kvStore:            kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
+		log:                log.New("infra.usagestats"),
+		startTime:          time.Now().Add(-1 * time.Minute),
 	}
+}
+
+func newTestLive(t *testing.T) *live.GrafanaLive {
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
+	require.NoError(t, err)
+	return gLive
 }

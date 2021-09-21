@@ -23,12 +23,12 @@ func (e DashboardInputMissingError) Error() string {
 
 func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
-	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, error) {
+	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, *models.Dashboard, error) {
 	var dashboard *models.Dashboard
 	if pluginID != "" {
 		var err error
 		if dashboard, err = pm.LoadPluginDashboard(pluginID, path); err != nil {
-			return plugins.PluginDashboardInfoDTO{}, err
+			return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 		}
 	} else {
 		dashboard = models.NewDashboardFromJson(dashboardModel)
@@ -41,7 +41,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 
 	generatedDash, err := evaluator.Eval()
 	if err != nil {
-		return plugins.PluginDashboardInfoDTO{}, err
+		return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 	}
 
 	saveCmd := models.SaveDashboardCommand{
@@ -62,7 +62,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 
 	savedDash, err := dashboards.NewService(pm.SQLStore).ImportDashboard(dto)
 	if err != nil {
-		return plugins.PluginDashboardInfoDTO{}, err
+		return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 	}
 
 	return plugins.PluginDashboardInfoDTO{
@@ -77,7 +77,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 		Imported:         true,
 		DashboardId:      savedDash.Id,
 		Slug:             savedDash.Slug,
-	}, nil
+	}, savedDash, nil
 }
 
 type DashTemplateEvaluator struct {

@@ -5,11 +5,9 @@ import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from '../../core/components/Page/Page';
-import { LibraryPanelsView } from './components/LibraryPanelsView/LibraryPanelsView';
-import { useAsync } from 'react-use';
-import { getLibraryPanels } from './state/api';
-import PageActionBar from '../../core/components/PageActionBar/PageActionBar';
-import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
+import { LibraryPanelsSearch } from './components/LibraryPanelsSearch/LibraryPanelsSearch';
+import { LibraryElementDTO } from './types';
+import { OpenLibraryPanelModal } from './components/OpenLibraryPanelModal/OpenLibraryPanelModal';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'library-panels'),
@@ -22,25 +20,13 @@ interface OwnProps extends GrafanaRouteComponentProps {}
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { value: searchResult, loading } = useAsync(async () => {
-    return getLibraryPanels();
-  });
-  const hasLibraryPanels = Boolean(searchResult?.libraryPanels.length);
+  const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={loading}>
-        {hasLibraryPanels && (
-          <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder={'Search by name'} />
-        )}
-        <LibraryPanelsView
-          onClickCard={() => undefined}
-          searchString={searchQuery}
-          currentPanelId={undefined}
-          showSecondaryActions={true}
-          perPage={DEFAULT_PER_PAGE_PAGINATION}
-        />
+      <Page.Contents>
+        <LibraryPanelsSearch onClick={setSelected} showSecondaryActions showSort showPanelFilter showFolderFilter />
+        {selected ? <OpenLibraryPanelModal onDismiss={() => setSelected(undefined)} libraryPanel={selected} /> : null}
       </Page.Contents>
     </Page>
   );

@@ -1,18 +1,20 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '../../themes';
 import { MenuItemProps } from './MenuItem';
+import { uniqueId } from 'lodash';
 
 /** @internal */
-export interface MenuItemsGroup {
+export interface MenuItemsGroup<T = any> {
   /** Label for the menu items group */
   label?: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
   /** Items of the group */
-  items: MenuItemProps[];
+  items: Array<MenuItemProps<T>>;
 }
+
 /** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {
   /** special children prop to pass children elements */
@@ -20,15 +22,16 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 }
 
 /** @internal */
-export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel }) => {
-  const styles = useStyles(getStyles);
+export const MenuGroup: React.FC<MenuGroupProps> = ({ label, ariaLabel, children }) => {
+  const styles = useStyles2(getStyles);
+  const labelID = `group-label-${uniqueId()}`;
 
   return (
-    <div>
+    <div role="group" aria-labelledby={!ariaLabel && label ? labelID : undefined} aria-label={ariaLabel}>
       {label && (
-        <div className={styles.groupLabel} aria-label={ariaLabel}>
+        <label id={labelID} className={styles.groupLabel} aria-hidden>
           {label}
-        </div>
+        </label>
       )}
       {children}
     </div>
@@ -37,12 +40,12 @@ export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel
 MenuGroup.displayName = 'MenuGroup';
 
 /** @internal */
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     groupLabel: css`
-      color: ${theme.v2.palette.text.secondary};
-      font-size: ${theme.v2.typography.size.sm};
-      padding: ${theme.v2.spacing(0.5, 1)};
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.size.sm};
+      padding: ${theme.spacing(0.5, 1)};
     `,
   };
 };

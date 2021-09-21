@@ -1,23 +1,26 @@
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { preparePlotFrame } from './utils';
+import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
+  createTheme,
+  DashboardCursorSync,
   DefaultTimeZone,
+  EventBusSrv,
   FieldConfig,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
   getDefaultTimeRange,
-  GrafanaTheme,
   MutableDataFrame,
 } from '@grafana/data';
 import {
   BarAlignment,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  PointVisibility,
+  VisibilityMode,
   StackingMode,
-} from '..';
+} from '@grafana/schema';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -33,7 +36,7 @@ function mockDataFrame() {
     displayName: 'Metric 1',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -45,7 +48,7 @@ function mockDataFrame() {
       spanNulls: false,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'A',
         mode: StackingMode.Normal,
@@ -57,7 +60,7 @@ function mockDataFrame() {
     displayName: 'Metric 2',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -69,7 +72,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'A',
         mode: StackingMode.Normal,
@@ -81,7 +84,7 @@ function mockDataFrame() {
     displayName: 'Metric 3',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -93,7 +96,7 @@ function mockDataFrame() {
       spanNulls: false,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.Normal,
@@ -104,7 +107,7 @@ function mockDataFrame() {
     displayName: 'Metric 4',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -116,7 +119,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.Normal,
@@ -127,7 +130,7 @@ function mockDataFrame() {
     displayName: 'Metric 4',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -139,7 +142,7 @@ function mockDataFrame() {
       barAlignment: BarAlignment.Before,
       fillColor: '#ff0000',
       fillOpacity: 0.1,
-      showPoints: PointVisibility.Always,
+      showPoints: VisibilityMode.Always,
       stacking: {
         group: 'B',
         mode: StackingMode.None,
@@ -188,13 +191,15 @@ jest.mock('@grafana/data', () => ({
 describe('GraphNG utils', () => {
   test('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();
-    expect(
-      preparePlotConfigBuilder(
-        frame!,
-        { colors: { panelBg: '#000000' } } as GrafanaTheme,
-        getDefaultTimeRange,
-        () => DefaultTimeZone
-      )
-    ).toMatchSnapshot();
+    const result = preparePlotConfigBuilder({
+      frame: frame!,
+      theme: createTheme(),
+      timeZone: DefaultTimeZone,
+      getTimeRange: getDefaultTimeRange,
+      eventBus: new EventBusSrv(),
+      sync: DashboardCursorSync.Tooltip,
+      allFrames: [frame!],
+    }).getConfig();
+    expect(result).toMatchSnapshot();
   });
 });

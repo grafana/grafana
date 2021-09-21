@@ -1,15 +1,15 @@
 import React, { FC, useEffect, useMemo, useReducer } from 'react';
-import { Button, HorizontalGroup, Modal, useStyles } from '@grafana/ui';
+import { Button, Modal, useStyles } from '@grafana/ui';
 import { LoadingState } from '@grafana/data';
 
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { asyncDispatcher } from '../LibraryPanelsView/actions';
 import { deleteLibraryPanelModalReducer, initialDeleteLibraryPanelModalState } from './reducer';
 import { getConnectedDashboards } from './actions';
 import { getModalStyles } from '../../styles';
 
 interface Props {
-  libraryPanel: LibraryPanelDTO;
+  libraryPanel: LibraryElementDTO;
   onConfirm: () => void;
   onDismiss: () => void;
 }
@@ -35,14 +35,14 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
           {connected ? <HasConnectedDashboards dashboardTitles={dashboardTitles} /> : null}
           {!connected ? <Confirm /> : null}
 
-          <HorizontalGroup>
+          <Modal.ButtonRow>
+            <Button variant="secondary" onClick={onDismiss} fill="outline">
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={onConfirm} disabled={connected}>
               Delete
             </Button>
-            <Button variant="secondary" onClick={onDismiss}>
-              Cancel
-            </Button>
-          </HorizontalGroup>
+          </Modal.ButtonRow>
         </div>
       ) : null}
     </Modal>

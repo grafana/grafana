@@ -10,7 +10,7 @@ import { SearchFunctionType } from '@grafana/ui';
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
     metadataRequest: () => ({ data: { data: [] as any[] } }),
-    getTimeRange: () => ({ start: 0, end: 1 }),
+    getTimeRangeParams: () => ({ start: '0', end: '1' }),
   } as any) as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -61,6 +61,21 @@ describe('Language completion provider', () => {
 
     it('removes range syntax', () => {
       expect(cleanText('[1m')).toBe('1m');
+    });
+  });
+
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {},
+        { end: '1', 'match[]': '{job="grafana"}', start: '0' }
+      );
     });
   });
 
@@ -124,8 +139,9 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '$__interval', sortValue: '$__interval' }, // TODO: figure out why this row and sortValue is needed
+            { label: '$__interval', sortValue: '$__interval' },
             { label: '$__rate_interval', sortValue: '$__rate_interval' },
+            { label: '$__range', sortValue: '$__range' },
             { label: '1m', sortValue: '00:01:00' },
             { label: '5m', sortValue: '00:05:00' },
             { label: '10m', sortValue: '00:10:00' },
@@ -249,7 +265,7 @@ describe('Language completion provider', () => {
     it('returns label suggestions on label context and metric', async () => {
       const datasources: PrometheusDatasource = ({
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
-        getTimeRange: () => ({ start: 0, end: 1 }),
+        getTimeRangeParams: () => ({ start: '0', end: '1' }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
@@ -282,7 +298,7 @@ describe('Language completion provider', () => {
             ],
           },
         }),
-        getTimeRange: () => ({ start: 0, end: 1 }),
+        getTimeRangeParams: () => ({ start: '0', end: '1' }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
@@ -519,7 +535,7 @@ describe('Language completion provider', () => {
     it('does not re-fetch default labels', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
       } as any) as PrometheusDatasource;
 
       const instance = new LanguageProvider(datasource);
@@ -545,7 +561,7 @@ describe('Language completion provider', () => {
     it('does not issue any metadata requests when lookup is disabled', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: true,
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
@@ -568,7 +584,7 @@ describe('Language completion provider', () => {
     it('issues metadata requests when lookup is not disabled', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: false,
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);

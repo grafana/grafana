@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -134,6 +136,11 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		if err != nil {
 			return plugins.PluginSignatureState{}, err
 		}
+		appSubURL, err := url.Parse(setting.AppSubUrl)
+		if err != nil {
+			return plugins.PluginSignatureState{}, err
+		}
+		appURLPath := path.Join(appSubURL.RequestURI(), appURL.RequestURI())
 
 		foundMatch := false
 		for _, u := range manifest.RootURLs {
@@ -142,11 +149,14 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 				log.Warn("Could not parse plugin root URL", "plugin", plugin.Id, "rootUrl", rootURL)
 				return plugins.PluginSignatureState{}, err
 			}
+
 			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host &&
-				rootURL.RequestURI() == appURL.RequestURI() {
-				foundMatch = true
-				break
+				rootURL.Host == appURL.Host {
+				foundMatch = path.Clean(rootURL.RequestURI()) == appURLPath
+
+				if foundMatch {
+					break
+				}
 			}
 		}
 
@@ -159,51 +169,33 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		}
 	}
 
-	manifestFiles := make(map[string]bool, len(manifest.Files))
+	manifestFiles := make(map[string]struct{}, len(manifest.Files))
 
 	// Verify the manifest contents
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
-	for p, hash := range manifest.Files {
-		// Open the file
-		fp := filepath.Join(plugin.PluginDir, p)
-
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fp` is based
-		// on the manifest file for a plugin and not user input.
-		f, err := os.Open(fp)
+	for fp, hash := range manifest.Files {
+		err = verifyHash(plugin.Id, filepath.Join(plugin.PluginDir, fp), hash)
 		if err != nil {
-			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.Id, "filename", p, "dir", plugin.PluginDir)
 			return plugins.PluginSignatureState{
 				Status: plugins.PluginSignatureModified,
 			}, nil
 		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Warn("Failed to close plugin file", "path", fp, "err", err)
-			}
-		}()
 
-		h := sha256.New()
-		if _, err := io.Copy(h, f); err != nil {
-			log.Warn("Couldn't read plugin file", "plugin", plugin.Id, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		sum := hex.EncodeToString(h.Sum(nil))
-		if sum != hash {
-			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		manifestFiles[p] = true
+		manifestFiles[fp] = struct{}{}
 	}
 
 	if manifest.isV2() {
+		pluginFiles, err := pluginFilesRequiringVerification(plugin)
+		if err != nil {
+			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureInvalid,
+			}, err
+		}
+
 		// Track files missing from the manifest
 		var unsignedFiles []string
-		for _, f := range plugin.Files {
+		for _, f := range pluginFiles {
 			if _, exists := manifestFiles[f]; !exists {
 				unsignedFiles = append(unsignedFiles, f)
 			}
@@ -223,5 +215,91 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		Status:     plugins.PluginSignatureValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
+		Files:      manifestFiles,
 	}, nil
+}
+
+func verifyHash(pluginID string, path string, hash string) error {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` is based
+	// on the path provided in a manifest file for a plugin and not user input.
+	f, err := os.Open(path)
+	if err != nil {
+		log.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
+		return fmt.Errorf("plugin file listed in the manifest was not found")
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warn("Failed to close plugin file", "path", path, "err", err)
+		}
+	}()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("could not calculate plugin file checksum")
+	}
+	sum := hex.EncodeToString(h.Sum(nil))
+	if sum != hash {
+		log.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
+		return fmt.Errorf("plugin file checksum does not match signature checksum")
+	}
+
+	return nil
+}
+
+// gets plugin filenames that require verification for plugin signing
+// returns filenames as a slice of posix style paths relative to plugin directory
+func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, error) {
+	var files []string
+	err := filepath.Walk(plugin.PluginDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			symlinkPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+
+			symlink, err := os.Stat(symlinkPath)
+			if err != nil {
+				return err
+			}
+
+			// skip symlink directories
+			if symlink.IsDir() {
+				return nil
+			}
+
+			// verify that symlinked file is within plugin directory
+			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
+			if err != nil {
+				return err
+			}
+			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("file '%s' not inside of plugin directory", p)
+			}
+		}
+
+		// skip directories and MANIFEST.txt
+		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// verify that file is within plugin directory
+		file, err := filepath.Rel(plugin.PluginDir, path)
+		if err != nil {
+			return err
+		}
+		if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("file '%s' not inside of plugin directory", file)
+		}
+
+		files = append(files, filepath.ToSlash(file))
+
+		return nil
+	})
+
+	return files, err
 }

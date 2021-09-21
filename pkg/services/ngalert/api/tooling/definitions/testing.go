@@ -3,26 +3,14 @@ package definitions
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
 )
-
-// swagger:route Post /api/v1/receiver/test/{Recipient} testing RouteTestReceiverConfig
-//
-// Test receiver
-//
-//     Consumes:
-//     - application/json
-//
-//     Produces:
-//     - application/json
-//
-//     Responses:
-//       200: Success
-//		 412: SmtpNotEnabled
-//		 500: Failure
 
 // swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
 //
@@ -36,6 +24,19 @@ import (
 //
 //     Responses:
 //       200: TestRuleResponse
+
+// swagger:route Post /api/v1/eval testing RouteEvalQueries
+//
+// Test rule
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: EvalQueriesResponse
 
 // swagger:parameters RouteTestReceiverConfig
 type TestReceiverRequest struct {
@@ -55,6 +56,18 @@ type TestRulePayload struct {
 	Expr string `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
 	GrafanaManagedCondition *models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+}
+
+// swagger:parameters RouteEvalQueries
+type EvalQueriesRequest struct {
+	// in:body
+	Body EvalQueriesPayload
+}
+
+// swagger:model
+type EvalQueriesPayload struct {
+	Data []models.AlertQuery `json:"data"`
+	Now  time.Time           `json:"now"`
 }
 
 func (p *TestRulePayload) UnmarshalJSON(b []byte) error {
@@ -95,6 +108,9 @@ type TestRuleResponse struct {
 	Alerts                promql.Vector          `json:"alerts"`
 	GrafanaAlertInstances AlertInstancesResponse `json:"grafana_alert_instances"`
 }
+
+// swagger:model
+type EvalQueriesResponse = backend.QueryDataResponse
 
 // swagger:model
 type AlertInstancesResponse struct {

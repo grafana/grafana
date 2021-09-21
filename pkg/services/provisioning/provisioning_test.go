@@ -7,7 +7,6 @@ import (
 	"time"
 
 	dboards "github.com/grafana/grafana/pkg/dashboards"
-	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +48,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.waitForPollChanges()
 		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
-		serviceTest.mock.ProvisionFunc = func() error {
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return errors.New("Test error")
 		}
 		err = serviceTest.service.ProvisionDashboards()
@@ -77,7 +76,7 @@ type serviceTestStruct struct {
 	cancel       func()
 
 	mock    *dashboards.ProvisionerMock
-	service *provisioningServiceImpl
+	service *ProvisioningServiceImpl
 }
 
 func setup() *serviceTestStruct {
@@ -93,7 +92,7 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = newProvisioningServiceImpl(
-		func(string, dboards.Store, plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
+		func(string, dboards.Store) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,

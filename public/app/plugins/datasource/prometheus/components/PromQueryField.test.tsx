@@ -2,10 +2,10 @@
 import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider from '../language_provider';
-import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import PromQueryField from './PromQueryField';
+import { DataSourceInstanceSettings, PanelData, LoadingState, DataFrame } from '@grafana/data';
 import { PromOptions } from '../types';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 describe('PromQueryField', () => {
   beforeAll(() => {
@@ -18,7 +18,10 @@ describe('PromQueryField', () => {
       languageProvider: {
         start: () => Promise.resolve([]),
         syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
       },
+      getInitHints: () => [],
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
     const queryField = render(
@@ -40,7 +43,10 @@ describe('PromQueryField', () => {
       languageProvider: {
         start: () => Promise.resolve([]),
         syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
       },
+      getInitHints: () => [],
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
     const queryField = render(
       <PromQueryField
@@ -57,6 +63,60 @@ describe('PromQueryField', () => {
     expect(bcButton).toBeDisabled();
   });
 
+  it('renders an initial hint if no data and initial hint provided', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+        syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
+      },
+      getInitHints: () => [{ label: 'Initial hint', type: 'INFO' }],
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ ...datasource, lookupsDisabled: true }}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
+    expect(screen.getByText('Initial hint')).toBeInTheDocument();
+  });
+
+  it('renders query hint if data, query hint and initial hint provided', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+        syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
+      },
+      getInitHints: () => [{ label: 'Initial hint', type: 'INFO' }],
+      getQueryHints: () => [{ label: 'Query hint', type: 'INFO' }],
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ ...datasource }}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+        data={
+          {
+            series: [{ name: 'test name' }] as DataFrame[],
+            state: LoadingState.Done,
+          } as PanelData
+        }
+      />
+    );
+    expect(screen.getByText('Query hint')).toBeInTheDocument();
+    expect(screen.queryByText('Initial hint')).not.toBeInTheDocument();
+  });
+
   it('refreshes metrics when the data source changes', async () => {
     const defaultProps = {
       query: { expr: '', refId: '' },
@@ -70,12 +130,11 @@ describe('PromQueryField', () => {
         // @ts-ignore
         datasource={{
           languageProvider: makeLanguageProvider({ metrics: [metrics] }),
+          getInitHints: () => [],
         }}
         {...defaultProps}
       />
     );
-
-    checkMetricsInCascader(await screen.findByRole('button'), metrics);
 
     const changedMetrics = ['baz', 'moo'];
     queryField.rerender(
@@ -88,162 +147,9 @@ describe('PromQueryField', () => {
       />
     );
 
-    // If we check the cascader right away it should be in loading state
-    let cascader = screen.getByRole('button');
-    expect(cascader.textContent).toContain('Loading');
-    checkMetricsInCascader(await screen.findByRole('button'), changedMetrics);
-  });
-
-  it('does not refreshes metrics when after rounding to minute time range does not change', async () => {
-    const defaultProps = {
-      query: { expr: '', refId: '' },
-      onRunQuery: () => {},
-      onChange: () => {},
-      history: [],
-    };
-    const metrics = ['foo', 'bar'];
-    const changedMetrics = ['foo', 'baz'];
-    const range = {
-      from: dateTime('2020-10-28T00:00:00Z'),
-      to: dateTime('2020-10-28T01:00:00Z'),
-    };
-
-    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
-    const queryField = render(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...range,
-          raw: range,
-        }}
-        {...defaultProps}
-      />
-    );
-    checkMetricsInCascader(await screen.findByRole('button'), metrics);
-
-    const newRange = {
-      from: dateTime('2020-10-28T00:00:01Z'),
-      to: dateTime('2020-10-28T01:00:01Z'),
-    };
-    queryField.rerender(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...newRange,
-          raw: newRange,
-        }}
-        {...defaultProps}
-      />
-    );
-    let cascader = screen.getByRole('button');
-    // Should not show loading
-    expect(cascader.textContent).toContain('Metrics');
-    checkMetricsInCascader(await screen.findByRole('button'), metrics);
-  });
-
-  it('refreshes metrics when time range changes but dont show loading state', async () => {
-    const defaultProps = {
-      query: { expr: '', refId: '' },
-      onRunQuery: () => {},
-      onChange: () => {},
-      history: [],
-    };
-    const metrics = ['foo', 'bar'];
-    const changedMetrics = ['baz', 'moo'];
-    const range = {
-      from: dateTime('2020-10-28T00:00:00Z'),
-      to: dateTime('2020-10-28T01:00:00Z'),
-    };
-
-    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
-    const queryField = render(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...range,
-          raw: range,
-        }}
-        {...defaultProps}
-      />
-    );
-    checkMetricsInCascader(await screen.findByRole('button'), metrics);
-
-    const newRange = {
-      from: dateTime('2020-10-28T01:00:00Z'),
-      to: dateTime('2020-10-28T02:00:00Z'),
-    };
-    queryField.rerender(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...newRange,
-          raw: newRange,
-        }}
-        {...defaultProps}
-      />
-    );
-    let cascader = screen.getByRole('button');
-    // Should not show loading
-    expect(cascader.textContent).toContain('Metrics');
-    checkMetricsInCascader(cascader, metrics);
-  });
-});
-
-describe('groupMetricsByPrefix()', () => {
-  it('returns an empty group for no metrics', () => {
-    expect(groupMetricsByPrefix([])).toEqual([]);
-  });
-
-  it('returns options grouped by prefix', () => {
-    expect(groupMetricsByPrefix(['foo_metric'])).toMatchObject([
-      {
-        value: 'foo',
-        children: [
-          {
-            value: 'foo_metric',
-          },
-        ],
-      },
-    ]);
-  });
-
-  it('returns options grouped by prefix with metadata', () => {
-    expect(groupMetricsByPrefix(['foo_metric'], { foo_metric: [{ type: 'TYPE', help: 'my help' }] })).toMatchObject([
-      {
-        value: 'foo',
-        children: [
-          {
-            value: 'foo_metric',
-            title: 'foo_metric\nTYPE\nmy help',
-          },
-        ],
-      },
-    ]);
-  });
-
-  it('returns options without prefix as toplevel option', () => {
-    expect(groupMetricsByPrefix(['metric'])).toMatchObject([
-      {
-        value: 'metric',
-      },
-    ]);
-  });
-
-  it('returns recording rules grouped separately', () => {
-    expect(groupMetricsByPrefix([':foo_metric:'])).toMatchObject([
-      {
-        value: RECORDING_RULES_GROUP,
-        children: [
-          {
-            value: ':foo_metric:',
-          },
-        ],
-      },
-    ]);
+    // If we check the label browser right away it should be in loading state
+    let labelBrowser = screen.getByRole('button');
+    expect(labelBrowser.textContent).toContain('Loading');
   });
 });
 
@@ -254,17 +160,10 @@ function makeLanguageProvider(options: { metrics: string[][] }) {
     metrics: [],
     metricsMetadata: {},
     lookupsDisabled: false,
+    getLabelKeys: () => [],
     start() {
       this.metrics = metricsStack.shift();
       return Promise.resolve([]);
     },
   } as any) as PromQlLanguageProvider;
-}
-
-function checkMetricsInCascader(cascader: HTMLElement, metrics: string[]) {
-  fireEvent.keyDown(cascader, { keyCode: 40 });
-  let listNodes = screen.getAllByRole('menuitem');
-  for (const node of listNodes) {
-    expect(metrics).toContain(node.innerHTML);
-  }
 }

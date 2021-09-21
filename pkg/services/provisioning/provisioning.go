@@ -17,7 +17,24 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager plugifaces.Manager) (
+	*ProvisioningServiceImpl, error) {
+	s := &ProvisioningServiceImpl{
+		Cfg:                     cfg,
+		SQLStore:                sqlStore,
+		PluginManager:           pluginManager,
+		log:                     log.New("provisioning"),
+		newDashboardProvisioner: dashboards.New,
+		provisionNotifiers:      notifiers.Provision,
+		provisionDatasources:    datasources.Provision,
+		provisionPlugins:        plugins.Provision,
+	}
+	return s, nil
+}
+
 type ProvisioningService interface {
+	registry.BackgroundService
+	RunInitProvisioners() error
 	ProvisionDatasources() error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
@@ -26,26 +43,25 @@ type ProvisioningService interface {
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name: "ProvisioningService",
-		Instance: newProvisioningServiceImpl(
-			dashboards.New,
-			notifiers.Provision,
-			datasources.Provision,
-			plugins.Provision,
-		),
-		InitPriority: registry.Low,
-	})
+// Add a public constructor for overriding service to be able to instantiate OSS as fallback
+func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
+	return &ProvisioningServiceImpl{
+		log:                     log.New("provisioning"),
+		newDashboardProvisioner: dashboards.New,
+		provisionNotifiers:      notifiers.Provision,
+		provisionDatasources:    datasources.Provision,
+		provisionPlugins:        plugins.Provision,
+	}
 }
 
+// Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 	provisionPlugins func(string, plugifaces.Manager) error,
-) *provisioningServiceImpl {
-	return &provisioningServiceImpl{
+) *ProvisioningServiceImpl {
+	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
@@ -54,11 +70,10 @@ func newProvisioningServiceImpl(
 	}
 }
 
-type provisioningServiceImpl struct {
-	Cfg                     *setting.Cfg                  `inject:""`
-	RequestHandler          plugifaces.DataRequestHandler `inject:""`
-	SQLStore                *sqlstore.SQLStore            `inject:""`
-	PluginManager           plugifaces.Manager            `inject:""`
+type ProvisioningServiceImpl struct {
+	Cfg                     *setting.Cfg
+	SQLStore                *sqlstore.SQLStore
+	PluginManager           plugifaces.Manager
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
@@ -69,7 +84,7 @@ type provisioningServiceImpl struct {
 	mutex                   sync.Mutex
 }
 
-func (ps *provisioningServiceImpl) Init() error {
+func (ps *ProvisioningServiceImpl) RunInitProvisioners() error {
 	err := ps.ProvisionDatasources()
 	if err != nil {
 		return err
@@ -88,7 +103,7 @@ func (ps *provisioningServiceImpl) Init() error {
 	return nil
 }
 
-func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
+func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards()
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
@@ -117,27 +132,27 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	}
 }
 
-func (ps *provisioningServiceImpl) ProvisionDatasources() error {
+func (ps *ProvisioningServiceImpl) ProvisionDatasources() error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
 	err := ps.provisionDatasources(datasourcePath)
 	return errutil.Wrap("Datasource provisioning error", err)
 }
 
-func (ps *provisioningServiceImpl) ProvisionPlugins() error {
+func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
 	err := ps.provisionPlugins(appPath, ps.PluginManager)
 	return errutil.Wrap("app provisioning error", err)
 }
 
-func (ps *provisioningServiceImpl) ProvisionNotifications() error {
+func (ps *ProvisioningServiceImpl) ProvisionNotifications() error {
 	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
 	err := ps.provisionNotifiers(alertNotificationsPath)
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
 
-func (ps *provisioningServiceImpl) ProvisionDashboards() error {
+func (ps *ProvisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore, ps.RequestHandler)
+	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}
@@ -148,7 +163,7 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	ps.cancelPolling()
 	dashProvisioner.CleanUpOrphanedDashboards()
 
-	err = dashProvisioner.Provision()
+	err = dashProvisioner.Provision(context.TODO())
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
@@ -158,15 +173,15 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	return nil
 }
 
-func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
+func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
-func (ps *provisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
+func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
 	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
 }
 
-func (ps *provisioningServiceImpl) cancelPolling() {
+func (ps *ProvisioningServiceImpl) cancelPolling() {
 	if ps.pollingCtxCancel != nil {
 		ps.log.Debug("Stop polling for dashboard changes")
 		ps.pollingCtxCancel()

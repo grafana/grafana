@@ -31,7 +31,7 @@ Use data source plugins when you want to import data from external systems.
 
 ## App plugins
 
-Applications, or _app plugins_, bundle data sources and panels to provide a cohesive experience, such as the [Zabbix](https://grafana.com/grafana/plugins/alexanderzobnin-zabbix-app) and [Kubernetes](https://grafana.com/grafana/plugins/grafana-kubernetes-app) apps.
+Applications, or _app plugins_, bundle data sources and panels to provide a cohesive experience, such as the [Zabbix](https://grafana.com/grafana/plugins/alexanderzobnin-zabbix-app) app.
 
 Apps can also add custom pages for things like control panels.
 
@@ -42,5 +42,3 @@ Use app plugins when you want to create an custom out-of-the-box monitoring expe
 - [Install plugins]({{< relref "./installation.md" >}})
 - [Plugin signatures]({{< relref "./plugin-signatures.md" >}})
 - Browse the available [Plugins](https://grafana.com/grafana/plugins)
-
-

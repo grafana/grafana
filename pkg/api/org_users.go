@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -70,15 +71,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	isAdmin, err := isOrgAdminFolderAdminOrTeamAdmin(c)
-	if err != nil {
-		return response.Error(500, "Failed to get users for current organization", err)
-	}
-
-	if !isAdmin {
-		return response.Error(403, "Permission denied", nil)
-	}
-
 	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
@@ -102,28 +94,6 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	return response.JSON(200, result)
 }
 
-func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
-	if c.OrgRole == models.ROLE_ADMIN {
-		return true, nil
-	}
-
-	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&hasAdminPermissionInFoldersQuery); err != nil {
-		return false, err
-	}
-
-	if hasAdminPermissionInFoldersQuery.Result {
-		return true, nil
-	}
-
-	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&isAdminOfTeamsQuery); err != nil {
-		return false, err
-	}
-
-	return isAdminOfTeamsQuery.Result, nil
-}
-
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
@@ -140,7 +110,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
-	if err := bus.Dispatch(query); err != nil {
+	if err := sqlstore.GetOrgUsers(query); err != nil {
 		return nil, err
 	}
 
@@ -155,6 +125,47 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 	}
 
 	return filteredUsers, nil
+}
+
+// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
+// GET /api/org/users/search
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	query := &models.SearchOrgUsersQuery{
+		OrgID: c.OrgId,
+		Query: c.Query("query"),
+		Limit: perPage,
+		Page:  page,
+	}
+
+	if err := hs.SQLStore.SearchOrgUsers(query); err != nil {
+		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
+	for _, user := range query.Result.OrgUsers {
+		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+
+		filteredUsers = append(filteredUsers, user)
+	}
+
+	query.Result.OrgUsers = filteredUsers
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return response.JSON(200, query.Result)
 }
 
 // PATCH /api/org/users/:userId
@@ -175,7 +186,6 @@ func updateOrgUserHelper(cmd models.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)

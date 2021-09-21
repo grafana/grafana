@@ -13,38 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-// Returns a disjunction of structs representing each panel schema version
-// (post-mapping from on-disk #PanelModel form) from each scuemata in the map.
-func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Value, error) {
-	partsi, err := rt.Compile("panelDisjunction", `
-	allPanels: [Name=_]: {}
-	parts: or([for v in allPanels { v }])
-	`)
-	if err != nil {
-		return cue.Value{}, err
-	}
-
-	parts := partsi.Value()
-	for id, sch := range scuemap {
-		for sch != nil {
-			cv := mapPanelModel(id, sch)
-
-			mjv, miv := sch.Version()
-			parts = parts.Fill(cv, "allPanels", fmt.Sprintf("%s@%v.%v", id, mjv, miv))
-			sch = sch.Successor()
-		}
-	}
-
-	return parts.LookupPath(cue.MakePath(cue.Str("parts"))), nil
-}
-
 // mapPanelModel maps a schema from the #PanelModel form in which it's declared
 // in a plugin's model.cue to the structure in which it actually appears in the
 // dashboard schema.
+// TODO remove, this is old sloppy hacks
 func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	maj, min := vcs.Version()
 	// Ignore err return, this can't fail to compile
-	inter, _ := rt.Compile("typedPanel", fmt.Sprintf(`
+	inter, _ := rt.Compile(fmt.Sprintf("%s-glue-panelComposition", id), fmt.Sprintf(`
 	in: {
 		type: %q
 		v: {
@@ -58,20 +34,24 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 		panelSchema: maj: in.v.maj
 		panelSchema: min: in.v.min
 		options: in.model.PanelOptions
-		fieldConfig: defaults: custom: in.model.PanelFieldConfig
+		fieldConfig: defaults: custom: {}
+		if in.model.PanelFieldConfig != _|_ {
+			fieldConfig: defaults: custom: in.model.PanelFieldConfig
+		}
 	}
 	`, id, maj, min))
 
 	// TODO validate, especially with #PanelModel
-	return inter.Value().Fill(vcs.CUE(), "in", "model").LookupPath(cue.MakePath(cue.Str(("result"))))
+	return inter.Value().FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
 }
 
-func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
+func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
+
+	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
+	if err := toOverlay(prefix, p.DistPluginCueFS, overlay); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +65,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		return nil, errors.New("could not locate #PanelFamily definition")
 	}
 
-	all := make(map[string]schema.VersionedCueSchema)
+	all := make(map[string]cue.Value)
 	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -134,23 +114,19 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		}
 
 		// Get the Family declaration in the models.cue file...
-		pmod := imod.Value().LookupPath(cue.MakePath(cue.Str("Family")))
+		pmod := imod.Value().LookupPath(cue.MakePath(cue.Str("Panel")))
 		if !pmod.Exists() {
 			return fmt.Errorf("%s does not contain a declaration of its models at path 'Family'", path)
 		}
 
 		// Ensure the declared value is subsumed by/correct wrt #PanelFamily
-		if err := pmf.Subsume(pmod); err != nil {
+		// TODO not actually sure that Final is what we want here.
+		if err := pmf.Subsume(pmod, cue.Final()); err != nil {
 			return err
 		}
 
-		// Create a generic schema family to represent the whole of the
-		fam, err := buildGenericScuemata(pmod)
-		if err != nil {
-			return err
-		}
+		all[id] = pmod
 
-		all[id] = fam
 		return nil
 	})
 	if err != nil {

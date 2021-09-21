@@ -9,6 +9,14 @@ import { screen, render } from '@testing-library/react';
 import { selectors } from '@grafana/e2e-selectors';
 import { PluginState } from '@grafana/data';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 const getMockNode = () => ({
   text: 'text',
   subTitle: 'subtitle',
@@ -23,7 +31,7 @@ const getProps = (): Props => ({
   },
   dataSource: getMockDataSource(),
   dataSourceMeta: getMockPlugin(),
-  dataSourceId: 1,
+  dataSourceId: 'x',
   deleteDataSource: jest.fn(),
   loadDataSource: jest.fn(),
   setDataSourceName,
@@ -61,9 +69,7 @@ describe('Render', () => {
 
     render(<DataSourceSettingsPage {...mockProps} />);
 
-    expect(
-      screen.getByTitle('Beta Plugin: There could be bugs and minor breaking changes to this plugin')
-    ).toBeInTheDocument();
+    expect(screen.getByTitle('This feature is close to complete but not fully tested')).toBeInTheDocument();
   });
 
   it('should render alpha info text if plugin state is alpha', () => {
@@ -73,7 +79,7 @@ describe('Render', () => {
     render(<DataSourceSettingsPage {...mockProps} />);
 
     expect(
-      screen.getByTitle('Alpha Plugin: This plugin is a work in progress and updates may include breaking changes')
+      screen.getByTitle('This feature is experimental and future updates might not be backward compatible')
     ).toBeInTheDocument();
   });
 
@@ -138,5 +144,20 @@ describe('Render', () => {
     render(<DataSourceSettingsPage {...mockProps} />);
 
     expect(screen.getByText(mockProps.testingStatus.message)).toBeInTheDocument();
+  });
+
+  it('should render verbose error message with detailed verbose error message', () => {
+    const mockProps = {
+      ...getProps(),
+      testingStatus: {
+        message: 'message',
+        status: 'error',
+        details: { message: 'detailed message', verboseMessage: 'verbose message' },
+      },
+    };
+
+    render(<DataSourceSettingsPage {...mockProps} />);
+
+    expect(screen.getByText(mockProps.testingStatus.details.verboseMessage)).toBeInTheDocument();
   });
 });

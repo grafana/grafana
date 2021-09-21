@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find } from 'lodash';
 import {
   createChangeHandler,
   createResetHandler,
@@ -55,7 +55,7 @@ export class PostgresConfigCtrl {
         if (version < 1000) {
           name = String(major) + '.' + String(minor);
         }
-        if (!_.find(this.postgresVersions, (p: any) => p.value === version)) {
+        if (!find(this.postgresVersions, (p: any) => p.value === version)) {
           this.postgresVersions.push({ name: name, value: version });
         }
         this.current.jsonData.postgresVersion = version;
@@ -87,6 +87,6 @@ export class PostgresConfigCtrl {
     { name: '9.6', value: 906 },
     { name: '10', value: 1000 },
     { name: '11', value: 1100 },
-    { name: '12', value: 1200 },
+    { name: '12+', value: 1200 },
   ];
 }

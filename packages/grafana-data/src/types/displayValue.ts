@@ -16,17 +16,11 @@ export interface DisplayValue extends FormattedValue {
    */
   color?: string;
   title?: string;
-}
 
-/**
- * Explicit control for text settings
- */
-export interface TextDisplayOptions {
-  /* Explicit text size */
-  titleSize?: number;
-
-  /* Explicit text size */
-  valueSize?: number;
+  /**
+   * Used in limited scenarios like legend reducer calculations
+   */
+  description?: string;
 }
 
 /**

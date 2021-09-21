@@ -37,6 +37,7 @@ exports[`Render should disable access key id field 1`] = `
         "type": "cloudwatch",
         "typeLogoUrl": "",
         "typeName": "Cloudwatch",
+        "uid": "z",
         "url": "",
         "user": "",
         "withCredentials": false,
@@ -61,6 +62,9 @@ exports[`Render should disable access key id field 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <XrayLinkConfig
+    onChange={[Function]}
+  />
 </Fragment>
 `;
 
@@ -101,6 +105,7 @@ exports[`Render should render component 1`] = `
         "type": "cloudwatch",
         "typeLogoUrl": "",
         "typeName": "Cloudwatch",
+        "uid": "z",
         "url": "",
         "user": "",
         "withCredentials": false,
@@ -120,6 +125,9 @@ exports[`Render should render component 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <XrayLinkConfig
+    onChange={[Function]}
+  />
 </Fragment>
 `;
 
@@ -165,6 +173,7 @@ exports[`Render should show access key and secret access key fields 1`] = `
         "type": "cloudwatch",
         "typeLogoUrl": "",
         "typeName": "Cloudwatch",
+        "uid": "z",
         "url": "",
         "user": "",
         "withCredentials": false,
@@ -184,6 +193,9 @@ exports[`Render should show access key and secret access key fields 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <XrayLinkConfig
+    onChange={[Function]}
+  />
 </Fragment>
 `;
 
@@ -229,6 +241,7 @@ exports[`Render should show arn role field 1`] = `
         "type": "cloudwatch",
         "typeLogoUrl": "",
         "typeName": "Cloudwatch",
+        "uid": "z",
         "url": "",
         "user": "",
         "withCredentials": false,
@@ -248,6 +261,9 @@ exports[`Render should show arn role field 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <XrayLinkConfig
+    onChange={[Function]}
+  />
 </Fragment>
 `;
 
@@ -293,6 +309,7 @@ exports[`Render should show credentials profile name field 1`] = `
         "type": "cloudwatch",
         "typeLogoUrl": "",
         "typeName": "Cloudwatch",
+        "uid": "z",
         "url": "",
         "user": "",
         "withCredentials": false,
@@ -312,5 +329,8 @@ exports[`Render should show credentials profile name field 1`] = `
       />
     </InlineField>
   </ConnectionConfig>
+  <XrayLinkConfig
+    onChange={[Function]}
+  />
 </Fragment>
 `;

@@ -5,9 +5,12 @@ import (
 	"time"
 )
 
-var ErrInvalidApiKey = errors.New("invalid API key")
-var ErrInvalidApiKeyExpiration = errors.New("negative value for SecondsToLive")
-var ErrDuplicateApiKey = errors.New("API key, organization ID and name must be unique")
+var (
+	ErrApiKeyNotFound          = errors.New("API key not found")
+	ErrInvalidApiKey           = errors.New("invalid API key")
+	ErrInvalidApiKeyExpiration = errors.New("negative value for SecondsToLive")
+	ErrDuplicateApiKey         = errors.New("API key, organization ID and name must be unique")
+)
 
 type ApiKey struct {
 	Id      int64

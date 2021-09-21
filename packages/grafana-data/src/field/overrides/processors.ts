@@ -1,4 +1,5 @@
-import { DataLink, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import { ComponentType } from 'react';
+import { DataLink, Field, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -22,6 +23,16 @@ export const numberOverrideProcessor = (
   }
 
   return parseFloat(value);
+};
+
+export const displayNameOverrideProcessor = (
+  value: any,
+  context: FieldOverrideContext,
+  settings?: StringFieldConfigSettings
+) => {
+  // clear the cached display name
+  delete context.field?.state?.displayName;
+  return stringOverrideProcessor(value, context, settings);
 };
 
 export interface SliderFieldConfigSettings {
@@ -147,4 +158,38 @@ export interface StatsPickerConfigSettings {
    * Default stats to be use in the stats picker
    */
   defaultStat?: string;
+}
+
+interface FieldNamePickerInfoProps {
+  name?: string;
+  field?: Field;
+}
+
+export interface FieldNamePickerConfigSettings {
+  /**
+   * Function is a predicate, to test each element of the array.
+   * Return a value that coerces to true to keep the field, or to false otherwise.
+   */
+  filter?: (field: Field) => boolean;
+
+  /**
+   * Show this text when no values are found
+   */
+  noFieldsMessage?: string;
+
+  /**
+   * When a field is selected, this component can show aditional
+   * information, including validation etc
+   */
+  info?: ComponentType<FieldNamePickerInfoProps> | null;
+
+  /**
+   * Sets the width to a pixel value.
+   */
+  width?: number;
+
+  /**
+   * Placeholder text to display when nothing is selected.
+   */
+  placeholderText?: string;
 }

@@ -1,5 +1,4 @@
-import { FieldColorModeId, FieldType, PreferredVisualisationType } from '@grafana/data';
-import { NodeGraphDataFrameFieldNames } from '@grafana/ui';
+import { FieldColorModeId, FieldType, PreferredVisualisationType, NodeGraphDataFrameFieldNames } from '@grafana/data';
 
 export const nodes = {
   fields: [
@@ -173,7 +172,7 @@ export const nodes = {
     {
       name: NodeGraphDataFrameFieldNames.arc + 'faults',
       type: FieldType.number,
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' }, displayName: 'faults' },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' }, displayName: 'Faults' },
       values: [
         0,
         0,

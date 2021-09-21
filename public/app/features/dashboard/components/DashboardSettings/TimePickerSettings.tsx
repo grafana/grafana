@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Input, TimeZonePicker, Field, Switch, CollapsableSection } from '@grafana/ui';
 import { rangeUtil, TimeZone } from '@grafana/data';
-import isEmpty from 'lodash/isEmpty';
+import { isEmpty } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
@@ -10,10 +10,12 @@ interface Props {
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
+  onLiveNowChange: (liveNow: boolean) => void;
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
   timezone: TimeZone;
+  liveNow: boolean;
 }
 
 interface State {
@@ -43,7 +45,11 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onHideTimePickerChange(!this.props.timePickerHidden);
   };
 
-  onTimeZoneChange = (timeZone: string) => {
+  onLiveNowChange = () => {
+    this.props.onLiveNowChange(!this.props.liveNow);
+  };
+
+  onTimeZoneChange = (timeZone?: string) => {
     if (typeof timeZone !== 'string') {
       return;
     }
@@ -78,6 +84,12 @@ export class TimePickerSettings extends PureComponent<Props, State> {
         </Field>
         <Field label="Hide time picker">
           <Switch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
+        </Field>
+        <Field
+          label="Refresh live dashboards"
+          description="Continuously re-draw panels where the time range references 'now'"
+        >
+          <Switch value={!!this.props.liveNow} onChange={this.onLiveNowChange} />
         </Field>
       </CollapsableSection>
     );

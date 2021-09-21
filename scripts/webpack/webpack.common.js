@@ -1,8 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
+const webpack = require('webpack');
 
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
-const getBabelConfig = require('./babel.config');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 class CopyUniconsPlugin {
   apply(compiler) {
@@ -17,31 +17,15 @@ class CopyUniconsPlugin {
   }
 }
 
-// https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
-function shouldExclude(filename) {
-  // There is external js code inside this which needs to be processed by babel.
-  if (filename.indexOf(`jaeger-ui-components`) > 0) {
-    return false;
-  }
-
-  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
-  for (const package of packagesToProcessbyBabel) {
-    if (filename.indexOf(`node_modules/${package}`) > 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-console.log(path.resolve());
 module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
   },
   output: {
+    clean: true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[hash].js',
+    filename: '[name].[fullhash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
@@ -64,94 +48,50 @@ module.exports = {
       // we need full path to root node_modules for grafana-enterprise symlink to work
       path.resolve('node_modules'),
     ],
+    fallback: {
+      fs: false,
+      stream: false,
+      http: false,
+      https: false,
+    },
   },
+  ignoreWarnings: [/export .* was not found in/],
   stats: {
     children: false,
-    warningsFilter: /export .* was not found in/,
     source: false,
   },
-  node: {
-    fs: 'empty',
-  },
   plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
     new CopyUniconsPlugin(),
-    new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
-      features: [
-        '!accessibilityHelp',
-        'bracketMatching',
-        'caretOperations',
-        '!clipboard',
-        '!codeAction',
-        '!codelens',
-        '!colorDetector',
-        '!comment',
-        '!contextmenu',
-        '!coreCommands',
-        '!cursorUndo',
-        '!dnd',
-        '!find',
-        'folding',
-        '!fontZoom',
-        '!format',
-        '!gotoError',
-        '!gotoLine',
-        '!gotoSymbol',
-        '!hover',
-        '!iPadShowKeyboard',
-        '!inPlaceReplace',
-        '!inspectTokens',
-        '!linesOperations',
-        '!links',
-        '!multicursor',
-        'parameterHints',
-        '!quickCommand',
-        '!quickOutline',
-        '!referenceSearch',
-        '!rename',
-        '!smartSelect',
-        '!snippets',
-        'suggest',
-        '!toggleHighContrast',
-        '!toggleTabFocusMode',
-        '!transpose',
-        '!wordHighlighter',
-        '!wordOperations',
-        '!wordPartOperations',
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
+          from: 'min/vs/**',
+          to: '../lib/monaco/', // inside the public/build folder
+          globOptions: {
+            ignore: [
+              '**/*.map', // debug files
+            ],
+          },
+        },
+        {
+          from: './node_modules/@kusto/monaco-kusto/release/min/',
+          to: '../lib/monaco/min/vs/language/kusto/',
+        },
       ],
     }),
   ],
   module: {
     rules: [
-      /**
-       * Some npm packages are bundled with es2015 syntax, ie. debug
-       * To make them work with PhantomJS we need to transpile them
-       * to get rid of unsupported syntax.
-       */
-      {
-        test: /\.js$/,
-        exclude: shouldExclude,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: getBabelConfig(),
-          },
-        ],
-      },
       {
         test: require.resolve('jquery'),
-        use: [
-          {
-            loader: 'expose-loader',
-            query: 'jQuery',
-          },
-          {
-            loader: 'expose-loader',
-            query: '$',
-          },
-        ],
+        loader: 'expose-loader',
+        options: {
+          exposes: ['$', 'jQuery'],
+        },
       },
       {
         test: /\.html$/,
@@ -163,17 +103,17 @@ module.exports = {
           {
             loader: 'html-loader',
             options: {
-              attrs: [],
-              minimize: true,
-              removeComments: false,
-              collapseWhitespace: false,
+              sources: false,
+              minimize: {
+                removeComments: false,
+                collapseWhitespace: false,
+              },
             },
           },
         ],
       },
       {
         test: /\.css$/,
-        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
       },
       // for pre-caching SVGs as part of the JS bundles
@@ -186,11 +126,20 @@ module.exports = {
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
       },
+      {
+        test: /\.worker\.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            inline: 'fallback',
+          },
+        },
+      },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
   optimization: {
-    moduleIds: 'hashed',
+    moduleIds: 'named',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
@@ -214,7 +163,7 @@ module.exports = {
           priority: 50,
           enforce: true,
         },
-        vendors: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: -10,

@@ -11,7 +11,7 @@ This page lists the minimum hardware and software requirements to install Grafan
 
 To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser.
 
-Grafana uses other open source software. Refer to [package.json](https://github.com/grafana/grafana/blob/master/package.json) for a complete list.
+Grafana uses other open source software. Refer to [package.json](https://github.com/grafana/grafana/blob/main/package.json) for a complete list.
 
 ## Supported operating systems
 
@@ -33,7 +33,7 @@ Minimum recommended CPU: 1
 
 Some features might require more memory or CPUs. Features require more resources include:
 
-- [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
+- [Server side rendering of images](https://grafana.com/grafana/plugins/grafana-image-renderer#requirements)
 - [Alerting]({{< relref "../alerting" >}})
 - [Data source proxy]({{< relref "../http_api/data_source" >}})
 

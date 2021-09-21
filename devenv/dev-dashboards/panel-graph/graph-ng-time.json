@@ -80,13 +80,12 @@
       "id": 2,
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -151,13 +150,12 @@
       "id": 3,
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -222,13 +220,12 @@
       "id": 4,
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -293,13 +290,12 @@
       "id": 5,
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -364,13 +360,12 @@
       "id": 6,
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -435,13 +430,12 @@
       "id": 7,
       "maxDataPoints": 50,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },

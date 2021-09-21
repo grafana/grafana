@@ -17,6 +17,7 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery plugins.DataQuery,
 	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesFilter.RefID}
@@ -79,6 +80,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	return queryResult, data, req.URL.RawQuery, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
@@ -93,6 +95,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		frame.RefID = timeSeriesFilter.RefID
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
+			Custom: map[string]interface{}{
+				"alignmentPeriod":  timeSeriesFilter.Params.Get("aggregation.alignmentPeriod"),
+				"perSeriesAligner": timeSeriesFilter.Params.Get("aggregation.perSeriesAligner"),
+			},
 		}
 
 		for key, value := range series.Metric.Labels {
@@ -241,6 +247,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 	return nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries,
 	defaultMetricName string, seriesLabels map[string]string, queryRes *plugins.DataQueryResult,
 	frame *data.Frame) {
@@ -272,6 +279,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, title string, text string, tags string) error {
 	frames := data.Frames{}

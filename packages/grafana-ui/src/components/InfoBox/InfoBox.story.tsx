@@ -1,6 +1,6 @@
 import React from 'react';
 import { FeatureState } from '@grafana/data';
-import { InfoBox, FeatureInfoBox } from '@grafana/ui';
+import { InfoBox, FeatureInfoBox, VerticalGroup } from '@grafana/ui';
 import mdx from './InfoBox.mdx';
 import { Story } from '@storybook/react';
 import { FeatureInfoBoxProps } from './FeatureInfoBox';
@@ -14,16 +14,16 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['onDismiss', 'children'],
+    },
   },
   argTypes: {
-    onDismiss: { action: 'Dismissed' },
     featureState: {
       control: { type: 'select', options: ['alpha', 'beta', undefined] },
-    },
-    children: {
-      table: {
-        disable: true,
-      },
     },
   },
 };
@@ -44,10 +44,25 @@ const defaultProps: FeatureInfoBoxProps = {
   ),
 };
 
-const InfoBoxTemplate: Story<InfoBoxProps> = (args) => <InfoBox {...args} />;
+const InfoBoxTemplate: Story<InfoBoxProps> = (args) => {
+  return (
+    <VerticalGroup>
+      <div>Deprecrated component, use Alert with info severity</div>
+      <InfoBox {...args} />;
+    </VerticalGroup>
+  );
+};
 export const infoBox = InfoBoxTemplate.bind({});
 infoBox.args = defaultProps;
 
-const FeatureInfoBoxTemplate: Story<FeatureInfoBoxProps> = (args) => <FeatureInfoBox {...args}></FeatureInfoBox>;
+const FeatureInfoBoxTemplate: Story<FeatureInfoBoxProps> = (args) => {
+  return (
+    <VerticalGroup>
+      <div>Deprecrated component, use Alert with info severity</div>
+      <FeatureInfoBox {...args} />
+    </VerticalGroup>
+  );
+};
+
 export const featureInfoBox = FeatureInfoBoxTemplate.bind({});
 featureInfoBox.args = defaultProps;

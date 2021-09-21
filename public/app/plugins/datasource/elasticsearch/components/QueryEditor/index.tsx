@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { getDefaultTimeRange, QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
@@ -9,16 +9,11 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useNextId } from '../../hooks/useNextId';
+import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
-  query,
-  onChange,
-  onRunQuery,
-  datasource,
-  range,
-}) => (
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => (
   <ElasticsearchProvider
     datasource={datasource}
     onChange={onChange}
@@ -34,12 +29,16 @@ interface Props {
   value: ElasticsearchQuery;
 }
 
-const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
+const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
 
   // To be considered a time series query, the last bucked aggregation must be a Date Histogram
   const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+
+  const showBucketAggregationsEditor = value.metrics?.every(
+    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
+  );
 
   return (
     <>
@@ -71,7 +70,7 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
       </InlineFieldRow>
 
       <MetricAggregationsEditor nextId={nextId} />
-      <BucketAggregationsEditor nextId={nextId} />
+      {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
     </>
   );
 };

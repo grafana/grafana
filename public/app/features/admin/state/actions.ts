@@ -1,7 +1,7 @@
 import config from 'app/core/config';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { ThunkResult, LdapUser, UserSession, UserDTO } from 'app/types';
+import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction } from 'app/types';
 
 import {
   userAdminPageLoadedAction,
@@ -19,8 +19,12 @@ import {
   usersFetched,
   queryChanged,
   pageChanged,
+  filterChanged,
+  usersFetchBegin,
+  usersFetchEnd,
 } from './reducers';
 import { debounce } from 'lodash';
+import { contextSrv } from 'app/core/core';
 
 // UserAdminPage
 
@@ -134,6 +138,10 @@ export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> 
 
 export function loadUserSessions(userId: number): ThunkResult<void> {
   return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
+      return;
+    }
+
     const tokens = await getBackendSrv().get(`/api/admin/users/${userId}/auth-tokens`);
     tokens.reverse();
     const sessions = tokens.map((session: UserSession) => {
@@ -174,7 +182,8 @@ export function revokeAllSessions(userId: number): ThunkResult<void> {
 export function loadLdapSyncStatus(): ThunkResult<void> {
   return async (dispatch) => {
     // Available only in enterprise
-    if (config.licenseInfo.hasLicense) {
+    const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
+    if (config.licenseInfo.hasLicense && canReadLDAPStatus) {
       const syncStatus = await getBackendSrv().get(`/api/admin/ldap-sync-status`);
       dispatch(ldapSyncStatusLoadedAction(syncStatus));
     }
@@ -192,6 +201,10 @@ export function syncLdapUser(userId: number): ThunkResult<void> {
 
 export function loadLdapState(): ThunkResult<void> {
   return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.LDAPStatusRead)) {
+      return;
+    }
+
     try {
       const connectionInfo = await getBackendSrv().get(`/api/admin/ldap/status`);
       dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
@@ -248,10 +261,13 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const { perPage, page, query } = getState().userListAdmin;
-      const result = await getBackendSrv().get(`/api/users/search?perpage=${perPage}&page=${page}&query=${query}`);
+      const { perPage, page, query, filter } = getState().userListAdmin;
+      const result = await getBackendSrv().get(
+        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&filter=${filter}`
+      );
       dispatch(usersFetched(result));
     } catch (error) {
+      usersFetchEnd();
       console.error(error);
     }
   };
@@ -261,13 +277,23 @@ const fetchUsersWithDebounce = debounce((dispatch) => dispatch(fetchUsers()), 50
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(queryChanged(query));
+    fetchUsersWithDebounce(dispatch);
+  };
+}
+
+export function changeFilter(filter: string): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(usersFetchBegin());
+    dispatch(filterChanged(filter));
     fetchUsersWithDebounce(dispatch);
   };
 }
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchUsers());
   };

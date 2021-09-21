@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _range from 'lodash/range';
+import { range as _range } from 'lodash';
 
 import renderIntoCanvas, {
   BG_COLOR,

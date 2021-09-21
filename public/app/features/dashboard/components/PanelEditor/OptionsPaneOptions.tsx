@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
@@ -12,6 +12,9 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
+
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
@@ -19,26 +22,33 @@ interface Props {
   data?: PanelData;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
-  onPanelConfigChange: (configKey: string, value: any) => void;
+  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
 }
 
 export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const { plugin, dashboard, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
-  const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
-    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
+  const [panelFrameOptions, vizOptions, justOverrides, libraryPanelOptions] = useMemo(
+    () => [
+      getPanelFrameCategory(props),
+      getVizualizationOptions(props),
+      getFieldOverrideCategories(props),
+      getLibraryPanelOptionsCategory(props),
+    ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev]
+    [panel.configRev, props.data]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
   const optionRadioFilters = useMemo(getOptionRadioFilters, []);
-  const allOptions = [panelFrameOptions, ...vizOptions];
+  const allOptions = isPanelModelLibraryPanel(panel)
+    ? [libraryPanelOptions, panelFrameOptions, ...vizOptions]
+    : [panelFrameOptions, ...vizOptions];
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
@@ -54,7 +64,11 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   } else {
     switch (listMode) {
       case OptionFilter.All:
-        // Panel frame options first
+        if (isPanelModelLibraryPanel(panel)) {
+          // Library Panel options first
+          mainBoxElements.push(libraryPanelOptions.render());
+        }
+        // Panel frame options second
         mainBoxElements.push(panelFrameOptions.render());
         // If angular add those options next
         if (props.plugin.angularPanelCtrl) {
@@ -66,6 +80,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }
+
         for (const item of justOverrides) {
           mainBoxElements.push(item.render());
         }
@@ -85,13 +100,16 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     }
   }
 
+  // only show radio buttons if we are searching or if the plugin has field config
+  const showSearchRadioButtons = !isSearching && !plugin.fieldConfigRegistry.isEmpty();
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
-        {!isSearching && (
+        {showSearchRadioButtons && (
           <div className={styles.formRow}>
             <RadioButtonGroup options={optionRadioFilters} value={listMode} fullWidth onChange={setListMode} />
           </div>
@@ -109,7 +127,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
   return [
     { label: OptionFilter.All, value: OptionFilter.All },
-    { label: OptionFilter.Recent, value: OptionFilter.Recent },
     { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
   ];
 }
@@ -136,19 +153,24 @@ function renderSearchHits(
         key="Normal options"
         forceOpen={1}
       >
-        {optionHits.map((hit) => hit.render(true))}
+        {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => override.render(true))}
+      {overrideHits.map((override) => override.render(searchQuery))}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     height: 100%;
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
+
+    .search-fragment-highlight {
+      color: ${theme.colors.warning.text};
+      background: transparent;
+    }
   `,
   searchBox: css`
     display: flex;
@@ -156,19 +178,19 @@ const getStyles = (theme: GrafanaTheme) => ({
     min-height: 0;
   `,
   formRow: css`
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
   formBox: css`
-    padding: ${theme.spacing.sm};
-    background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
+    padding: ${theme.spacing(1)};
+    background: ${theme.colors.background.primary};
+    border: 1px solid ${theme.components.panel.borderColor};
     border-bottom: none;
   `,
   closeButton: css`
-    margin-left: ${theme.spacing.sm};
+    margin-left: ${theme.spacing(1)};
   `,
   searchHits: css`
-    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
+    padding: ${theme.spacing(1, 1, 0, 1)};
   `,
   scrollWrapper: css`
     flex-grow: 1;
@@ -176,13 +198,13 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   searchNotice: css`
     font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.textWeak};
-    padding: ${theme.spacing.sm};
+    color: ${theme.colors.text.secondary};
+    padding: ${theme.spacing(1)};
     text-align: center;
   `,
   mainBox: css`
-    background: ${theme.colors.bg1};
-    border: 1px solid ${theme.v2.components.panel.border};
+    background: ${theme.colors.background.primary};
+    border: 1px solid ${theme.components.panel.borderColor};
     border-top: none;
     flex-grow: 1;
   `,

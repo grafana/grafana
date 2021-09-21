@@ -16,7 +16,7 @@ import {
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
-import { perf } from '@grafana/runtime/src/utils/perf'; // not exported
+import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -105,14 +105,14 @@ export function runSignalStream(
     const pushNextEvent = () => {
       addNextRow(Date.now());
 
-      const elapsed = perf.last - lastSent;
-      if (elapsed > 1000 || perf.ok) {
+      const elapsed = liveTimer.lastUpdate - lastSent;
+      if (elapsed > 1000 || liveTimer.ok) {
         subscriber.next({
           data: [frame],
           key: streamId,
           state: LoadingState.Streaming,
         });
-        lastSent = perf.last;
+        lastSent = liveTimer.lastUpdate;
       }
 
       timeoutId = setTimeout(pushNextEvent, speed);
@@ -212,7 +212,7 @@ export function runFetchStream(
       },
     });
 
-    const processChunk = (value: ReadableStreamReadResult<Uint8Array>): any => {
+    const processChunk = (value: ReadableStreamDefaultReadResult<Uint8Array>): any => {
       if (value.value) {
         const text = new TextDecoder().decode(value.value);
         csv.readCSV(text);

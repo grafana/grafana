@@ -10,6 +10,5 @@ list = false
 
 ### Bug fixes
 
-* **Security**: Fix API permissions issues related to team-sync CVE-2021-28146, CVE-2021-28147. (Enterprise)
-* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
- 
+- **Security**: Fix API permissions issues related to team-sync CVE-2021-28146, CVE-2021-28147. (Enterprise)
+- **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)

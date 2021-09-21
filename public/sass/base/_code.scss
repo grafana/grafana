@@ -39,6 +39,12 @@ pre {
   background-color: $code-tag-bg;
   padding: 10px;
 
+  &.pre--no-style {
+    background: transparent;
+    border: none;
+    padding: 0px;
+  }
+
   // Make prettyprint styles more spaced out for readability
   &.prettyprint {
     margin-bottom: $line-height-base;

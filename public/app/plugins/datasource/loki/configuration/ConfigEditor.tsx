@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
 import { LokiOptions } from '../types';
 import { MaxLinesField } from './MaxLinesField';
 import { DerivedFields } from './DerivedFields';
@@ -34,6 +34,8 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={false}
         onChange={onOptionsChange}
       />
+
+      <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
       <div className="gf-form-group">
         <div className="gf-form-inline">

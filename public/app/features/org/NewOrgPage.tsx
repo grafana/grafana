@@ -4,7 +4,6 @@ import Page from 'app/core/components/Page/Page';
 import { Button, Input, Field, Form } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -56,8 +55,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                 <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
                   <Input
                     placeholder="Org name"
-                    name="name"
-                    ref={register({
+                    {...register('name', {
                       required: 'Organization name is required',
                       validate: async (orgName) => await validateOrg(orgName),
                     })}
@@ -77,4 +75,4 @@ const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };
 };
 
-export default hot(module)(connect(mapStateToProps)(NewOrgPage));
+export default connect(mapStateToProps)(NewOrgPage);

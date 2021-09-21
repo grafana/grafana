@@ -4,7 +4,7 @@ import { getColorModes } from './time_region_manager';
 export class TimeRegionFormCtrl {
   panelCtrl: any;
   panel: any;
-  disabled: boolean;
+  disabled = false;
   colorModes: any;
 
   /** @ngInject */

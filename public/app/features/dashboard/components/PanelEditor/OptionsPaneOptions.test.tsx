@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import {
   FieldConfigSource,
   LoadingState,
@@ -32,6 +32,7 @@ class OptionsPaneOptionsTestScenario {
     state: LoadingState.Done,
     timeRange: {} as any,
   };
+
   plugin = getPanelPlugin({
     id: 'TestPanel',
   }).useFieldConfig({
@@ -56,6 +57,7 @@ class OptionsPaneOptionsTestScenario {
         });
     },
   });
+
   panel = new PanelModel({
     title: 'Test title',
     type: this.plugin.meta.id,
@@ -195,5 +197,41 @@ describe('OptionsPaneOptions', () => {
 
     expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).not.toBeInTheDocument();
     expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Axis TextPropWithCategory'))).toBeInTheDocument();
+  });
+
+  it('should not render field override options non data panel', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    });
+
+    scenario.render();
+
+    expect(
+      screen.queryByLabelText(selectors.components.ValuePicker.button('Add field override'))
+    ).not.toBeInTheDocument();
+  });
+
+  it('should allow standard properties extension', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    }).useFieldConfig({
+      useCustomConfig: (b) => {
+        b.addBooleanSwitch({
+          name: 'CustomThresholdOption',
+          path: 'CustomThresholdOption',
+          category: ['Thresholds'],
+        });
+      },
+    });
+
+    scenario.render();
+
+    const thresholdsSection = screen.getByLabelText(selectors.components.OptionsGroup.group('Thresholds'));
+    expect(
+      within(thresholdsSection).getByLabelText(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
+    ).toBeInTheDocument();
   });
 });

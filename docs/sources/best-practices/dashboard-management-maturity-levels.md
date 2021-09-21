@@ -38,11 +38,11 @@ How can you tell you are here?
 - Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies.md" >}}).
 - Hierarchical dashboards with drill-downs to the next level.
 
-  {{< imgbox max-width="100%" img="/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
+  {{< figure class="float-right"  max-width="100%" src="/static/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
 
 - Dashboard design reflects service hierarchies. The example shown below uses the RED method (request and error rate on the left, latency duration on the right) with one row per service. The row order reflects the data flow.
 
-  {{< imgbox max-width="100%" img="/img/docs/best-practices/service-hierarchy-example.png" caption="Example of a service hierarchy" >}}
+  {{< figure class="float-right"  max-width="100%" src="/static/img/docs/best-practices/service-hierarchy-example.png" caption="Example of a service hierarchy" >}}
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can.

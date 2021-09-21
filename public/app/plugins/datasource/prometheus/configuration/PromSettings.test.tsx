@@ -88,7 +88,7 @@ describe('PromSettings', () => {
   describe('PromSettings component', () => {
     const defaultProps = createDefaultConfigOptions();
 
-    it('should show POST httpMethod if no httpMethod and no url', () => {
+    it('should show POST httpMethod if no httpMethod', () => {
       const options = defaultProps;
       options.url = '';
       options.jsonData.httpMethod = '';
@@ -99,18 +99,6 @@ describe('PromSettings', () => {
         </div>
       );
       expect(screen.getByText('POST')).toBeInTheDocument();
-    });
-    it('should show GET httpMethod if no httpMethod and url', () => {
-      const options = defaultProps;
-      options.url = 'test_url';
-      options.jsonData.httpMethod = '';
-
-      render(
-        <div>
-          <PromSettings onOptionsChange={() => {}} options={options} />
-        </div>
-      );
-      expect(screen.getByText('GET')).toBeInTheDocument();
     });
     it('should show POST httpMethod if POST httpMethod is configured', () => {
       const options = defaultProps;

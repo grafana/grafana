@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
@@ -203,8 +202,8 @@ func (b *Bridge) Push() error {
 		return err
 	}
 	defer func() {
-		if err := conn.Close(); err != nil {
-			logger.Warn("Failed to close connection", "err", err)
+		if err := conn.Close(); err != nil && b.logger != nil {
+			b.logger.Println("Failed to close connection", "err", err)
 		}
 	}()
 

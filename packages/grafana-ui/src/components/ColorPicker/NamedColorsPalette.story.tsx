@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NamedColorsPalette, NamedColorsPaletteProps } from './NamedColorsPalette';
 import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import { UseState } from '../../utils/storybook/UseState';
 import mdx from './ColorPicker.mdx';
 
 export default {
@@ -13,9 +11,6 @@ export default {
   parameters: {
     docs: {
       page: mdx,
-    },
-    knobs: {
-      disable: true,
     },
     controls: {
       exclude: ['theme', 'color'],
@@ -31,17 +26,10 @@ interface StoryProps extends Partial<NamedColorsPaletteProps> {
 }
 
 export const NamedColors: Story<StoryProps> = ({ selectedColor }) => {
-  return (
-    <UseState initialState={selectedColor}>
-      {(selectedColor, updateSelectedColor) => {
-        return renderComponentWithTheme(NamedColorsPalette, {
-          color: selectedColor,
-          onChange: updateSelectedColor,
-        });
-      }}
-    </UseState>
-  );
+  const [color, setColor] = useState('green');
+  return <NamedColorsPalette color={color} onChange={setColor} />;
 };
+
 NamedColors.args = {
-  selectedColor: 'red',
+  color: 'green',
 };

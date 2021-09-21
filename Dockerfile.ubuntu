@@ -5,6 +5,7 @@ WORKDIR /usr/src/app/
 COPY package.json yarn.lock ./
 COPY packages packages
 
+RUN apt-get update && apt-get install -yq git
 RUN yarn install --pure-lockfile
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
@@ -16,17 +17,19 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.15.1 AS go-builder
+FROM golang:1.17.0 AS go-builder
 
 WORKDIR /src/grafana
 
-COPY go.mod go.sum ./
-
-RUN go mod verify
-
+COPY go.mod go.sum embed.go ./
 COPY build.go package.json ./
 COPY pkg pkg/
+COPY cue cue/
+COPY cue.mod cue.mod/
+COPY packages/grafana-schema packages/grafana-schema/
+COPY public/app/plugins public/app/plugins/
 
+RUN go mod verify
 RUN go run build.go build
 
 FROM ubuntu:20.04
@@ -59,6 +62,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_PROVISIONING/plugins" \
+             "$GF_PATHS_PROVISIONING/access-control" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \
@@ -67,7 +71,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /src/grafana/bin/linux-amd64/grafana-server /src/grafana/bin/linux-amd64/grafana-cli bin/
+COPY --from=go-builder /src/grafana/bin/*/grafana-server /src/grafana/bin/*/grafana-cli bin/
 COPY --from=js-builder /usr/src/app/public public
 COPY --from=js-builder /usr/src/app/tools tools
 

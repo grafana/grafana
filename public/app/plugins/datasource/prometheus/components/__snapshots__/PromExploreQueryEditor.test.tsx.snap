@@ -7,6 +7,8 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       datasource={
         Object {
           "languageProvider": Object {
+            "getLabelKeys": [Function],
+            "metrics": Array [],
             "syntax": [Function],
           },
         }
@@ -63,6 +65,8 @@ exports[`PromExploreQueryEditor should render component 1`] = `
   datasource={
     Object {
       "languageProvider": Object {
+        "getLabelKeys": [Function],
+        "metrics": Array [],
         "syntax": [Function],
       },
     }

@@ -8,7 +8,8 @@ import { setSearchQuery } from './state/reducers';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { locationService } from '@grafana/runtime';
-import { ShowModalEvent } from '../../types/events';
+import { ShowModalReactEvent } from '../../types/events';
+import { AlertHowToModal } from './AlertHowToModal';
 
 jest.mock('../../core/app_events', () => ({
   publish: jest.fn(),
@@ -24,7 +25,6 @@ const setup = (propOverrides?: object) => {
     togglePauseAlertRule: jest.fn(),
     search: '',
     isLoading: false,
-    ngAlertDefinitions: [],
   };
 
   Object.assign(props, propOverrides);
@@ -92,13 +92,7 @@ describe('Functions', () => {
 
       instance.onOpenHowTo();
 
-      expect(appEvents.publish).toHaveBeenCalledWith(
-        new ShowModalEvent({
-          src: 'public/app/features/alerting/partials/alert_howto.html',
-          modalClass: 'confirm-modal',
-          model: {},
-        })
-      );
+      expect(appEvents.publish).toHaveBeenCalledWith(new ShowModalReactEvent({ component: AlertHowToModal }));
     });
   });
 

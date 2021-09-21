@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { cx } from '@emotion/css';
-import _ from 'lodash';
+import { isObject } from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
@@ -13,32 +13,45 @@ import { useStyles } from '../../themes';
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
+  /**
+   *  If true options will be reloaded when user changes the value in the input,
+   *  otherwise, options will be loaded when the segment is clicked
+   */
+  reloadOptionsOnChange?: boolean;
   onChange: (item: SelectableValue<T>) => void;
   noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
+  inputMinWidth?: number;
 }
 
 export function SegmentAsync<T>({
   value,
   onChange,
   loadOptions,
+  reloadOptionsOnChange = false,
   Component,
   className,
   allowCustomValue,
+  allowEmptyValue,
   disabled,
   placeholder,
+  inputMinWidth,
+  inputPlaceholder,
+  autofocus = false,
+  onExpandedChange,
   noOptionMessageHandler = mapStateToNoOptionsMessage,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
-  const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
+  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
+  const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
-    const label = _.isObject(value) ? value.label : value;
+    const label = isObject(value) ? value.label : value;
 
     return (
       <Label
-        onClick={fetchOptions}
+        onClick={reloadOptionsOnChange ? undefined : fetchOptions}
         disabled={disabled}
         Component={
           Component || (
@@ -63,11 +76,14 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !_.isObject(value) ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
+      placeholder={inputPlaceholder}
       options={state.value ?? []}
+      loadOptions={reloadOptionsOnChange ? fetchOptions : undefined}
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}
       allowCustomValue={allowCustomValue}
+      allowEmptyValue={allowEmptyValue}
       onClickOutside={() => {
         setExpanded(false);
       }}

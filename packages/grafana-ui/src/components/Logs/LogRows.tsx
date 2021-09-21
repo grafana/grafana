@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
 import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
-import { Themeable } from '../../types/theme';
-import { withTheme } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { withTheme2 } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
@@ -12,21 +12,18 @@ import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
-  highlighterExpressions?: string[];
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   timeZone: TimeZone;
+  enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
-  allowDetails?: boolean;
   previewLimit?: number;
-  // Passed to fix problems with inactive scrolling in Logs Panel
-  // Can be removed when we unify scrolling for Panel and Explore
-  disableCustomHorizontalScroll?: boolean;
   forceEscape?: boolean;
   showDetectedFields?: string[];
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -87,17 +84,16 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       showLabels,
       showTime,
       wrapLogMessage,
+      prettifyLogMessage,
       logRows,
       deduplicatedRows,
-      highlighterExpressions,
       timeZone,
       onClickFilterLabel,
       onClickFilterOutLabel,
       theme,
-      allowDetails,
+      enableLogDetails,
       previewLimit,
       getFieldLinks,
-      disableCustomHorizontalScroll,
       logsSortOrder,
       showDetectedFields,
       onClickShowDetectedField,
@@ -105,18 +101,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
+    const { logsRowsTable } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-
-    // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
-    // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.
-    const horizontalScrollWindow = wrapLogMessage || disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
-
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
@@ -128,70 +119,69 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <div className={horizontalScrollWindow}>
-        <table className={logsRowsTable}>
-          <tbody>
-            {hasData &&
-              firstRows.map((row, index) => (
-                <LogRow
-                  key={row.uid}
-                  getRows={getRows}
-                  getRowContext={getRowContext}
-                  highlighterExpressions={highlighterExpressions}
-                  row={row}
-                  showContextToggle={showContextToggle}
-                  showDuplicates={showDuplicates}
-                  showLabels={showLabels}
-                  showTime={showTime}
-                  showDetectedFields={showDetectedFields}
-                  wrapLogMessage={wrapLogMessage}
-                  timeZone={timeZone}
-                  allowDetails={allowDetails}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowDetectedField={onClickShowDetectedField}
-                  onClickHideDetectedField={onClickHideDetectedField}
-                  getFieldLinks={getFieldLinks}
-                  logsSortOrder={logsSortOrder}
-                  forceEscape={forceEscape}
-                />
-              ))}
-            {hasData &&
-              renderAll &&
-              lastRows.map((row, index) => (
-                <LogRow
-                  key={row.uid}
-                  getRows={getRows}
-                  getRowContext={getRowContext}
-                  row={row}
-                  showContextToggle={showContextToggle}
-                  showDuplicates={showDuplicates}
-                  showLabels={showLabels}
-                  showTime={showTime}
-                  showDetectedFields={showDetectedFields}
-                  wrapLogMessage={wrapLogMessage}
-                  timeZone={timeZone}
-                  allowDetails={allowDetails}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowDetectedField={onClickShowDetectedField}
-                  onClickHideDetectedField={onClickHideDetectedField}
-                  getFieldLinks={getFieldLinks}
-                  logsSortOrder={logsSortOrder}
-                  forceEscape={forceEscape}
-                />
-              ))}
-            {hasData && !renderAll && (
-              <tr>
-                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <table className={logsRowsTable}>
+        <tbody>
+          {hasData &&
+            firstRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                getRowContext={getRowContext}
+                row={row}
+                showContextToggle={showContextToggle}
+                showDuplicates={showDuplicates}
+                showLabels={showLabels}
+                showTime={showTime}
+                showDetectedFields={showDetectedFields}
+                wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
+                timeZone={timeZone}
+                enableLogDetails={enableLogDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowDetectedField={onClickShowDetectedField}
+                onClickHideDetectedField={onClickHideDetectedField}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                forceEscape={forceEscape}
+              />
+            ))}
+          {hasData &&
+            renderAll &&
+            lastRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                getRowContext={getRowContext}
+                row={row}
+                showContextToggle={showContextToggle}
+                showDuplicates={showDuplicates}
+                showLabels={showLabels}
+                showTime={showTime}
+                showDetectedFields={showDetectedFields}
+                wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
+                timeZone={timeZone}
+                enableLogDetails={enableLogDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowDetectedField={onClickShowDetectedField}
+                onClickHideDetectedField={onClickHideDetectedField}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                forceEscape={forceEscape}
+              />
+            ))}
+          {hasData && !renderAll && (
+            <tr>
+              <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     );
   }
 }
 
-export const LogRows = withTheme(UnThemedLogRows);
+export const LogRows = withTheme2(UnThemedLogRows);
 LogRows.displayName = 'LogsRows';

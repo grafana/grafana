@@ -32,13 +32,15 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 ### Use a JSON file as the home dashboard
 
 1. Save your JSON file somewhere that Grafana can access it. For example, in the Grafana `data` folder of Grafana.
-1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "../configuration.md">}}) for more information about modifying the Grafana configuration files.
+1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "../configuration.md#default_home_dashboard_path">}}) for more information about modifying the Grafana configuration files.
 
 ```ini
 [dashboards]
 # Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
 default_home_dashboard_path = data/main-dashboard.json
 ```
+
+> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 ## Set the home dashboard for your organization
 
@@ -57,9 +59,10 @@ Organization administrators and Team Admins can choose a home dashboard for a te
 {{< docs/list >}}
 {{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
 {{< docs/shared "manage-users/view-team-list.md" >}}
+
 1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
-{{< /docs/list >}}
+   {{< docs/shared "preferences/select-home-dashboard-list.md" >}}
+   {{< /docs/list >}}
 
 ## Set your personal home dashboard
 

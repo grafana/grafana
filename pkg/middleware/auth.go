@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -111,9 +112,8 @@ func Auth(options *AuthOptions) macaron.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
 			var revokedErr *models.TokenRevokedError
-			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
+			if errors.As(c.LookupTokenErr, &revokedErr) {
 				tokenRevoked(c, revokedErr)
 				return
 			}
@@ -161,6 +161,12 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	}
 }
 
+func ReqNotSignedIn(c *models.ReqContext) {
+	if c.IsSignedIn {
+		c.Redirect(setting.AppSubUrl + "/")
+	}
+}
+
 // NoAuth creates a middleware that doesn't require any authentication.
 // If forceLogin param is set it will redirect the user to the login page.
 func NoAuth() macaron.Handler {
@@ -182,4 +188,30 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	}
 
 	return forceLogin
+}
+
+func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
+	if c.OrgRole == models.ROLE_ADMIN {
+		return
+	}
+
+	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	if err := sqlstore.HasAdminPermissionInFolders(&hasAdminPermissionInFoldersQuery); err != nil {
+		c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
+	}
+
+	if hasAdminPermissionInFoldersQuery.Result {
+		return
+	}
+
+	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+	if err := sqlstore.IsAdminOfTeams(&isAdminOfTeamsQuery); err != nil {
+		c.JsonApiErr(500, "Failed to check if user is a team admin", err)
+	}
+
+	if isAdminOfTeamsQuery.Result {
+		return
+	}
+
+	accessForbidden(c)
 }

@@ -35,12 +35,12 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
  */
 export function changeDatasource(
   exploreId: ExploreId,
-  datasourceName: string,
+  datasourceUid: string,
   options?: { importQueries: boolean }
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, datasourceName);
+    const { history, instance } = await loadAndInitDatasource(orgId, datasourceUid);
     const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
     dispatch(
@@ -51,9 +51,8 @@ export function changeDatasource(
       })
     );
 
-    const queries = getState().explore[exploreId]!.queries;
-
     if (options?.importQueries) {
+      const queries = getState().explore[exploreId]!.queries;
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
@@ -93,13 +92,11 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      latency: 0,
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],
       history,
       datasourceMissing: false,
-      logsHighlighterExpressions: undefined,
     };
   }
 

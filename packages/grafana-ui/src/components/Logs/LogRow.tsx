@@ -6,10 +6,10 @@ import {
   LogsSortOrder,
   TimeZone,
   DataQueryResponse,
-  GrafanaTheme,
   dateTimeFormat,
   checkLogsError,
   escapeUnescapedString,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -22,10 +22,9 @@ import {
   LogRowContextProvider,
   RowContextOptions,
 } from './LogRowContextProvider';
-import { Themeable } from '../../types/theme';
-import { styleMixins, withTheme } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { styleMixins, withTheme2 } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogDetails } from './LogDetails';
@@ -33,15 +32,15 @@ import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
 import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
-interface Props extends Themeable {
-  highlighterExpressions?: string[];
+interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   timeZone: TimeZone;
-  allowDetails?: boolean;
+  enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
@@ -61,25 +60,25 @@ interface State {
   showDetails: boolean;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
       vertical-align: top;
-      margin-top: -${theme.spacing.xs};
-      margin-left: -${theme.spacing.xxs};
+      margin-top: -${theme.spacing(0.5)};
+      margin-left: -${theme.spacing(0.25)};
     `,
     detailsOpen: css`
       &:hover {
-        background-color: ${styleMixins.hoverColor(theme.colors.panelBg, theme)};
+        background-color: ${styleMixins.hoverColor(theme.colors.background.primary, theme)};
       }
     `,
     errorLogRow: css`
       label: erroredLogRow;
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
   };
-});
+};
 /**
  * Renders a log line.
  *
@@ -102,7 +101,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleDetails = () => {
-    if (this.props.allowDetails) {
+    if (!this.props.enableLogDetails) {
       return;
     }
     this.setState((state) => {
@@ -130,8 +129,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       onClickShowDetectedField,
       onClickHideDetectedField,
-      highlighterExpressions,
-      allowDetails,
+      enableLogDetails,
       row,
       showDuplicates,
       showContextToggle,
@@ -139,6 +137,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showTime,
       showDetectedFields,
       wrapLogMessage,
+      prettifyLogMessage,
       theme,
       getFieldLinks,
       forceEscape,
@@ -171,7 +170,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               </Tooltip>
             )}
           </td>
-          {!allowDetails && (
+          {enableLogDetails && (
             <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
@@ -191,7 +190,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             />
           ) : (
             <LogRowMessage
-              highlighterExpressions={highlighterExpressions}
               row={processedRow}
               getRows={getRows}
               errors={errors}
@@ -201,6 +199,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               contextIsOpen={showContext}
               showContextToggle={showContextToggle}
               wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
             />
           )}
@@ -245,5 +244,5 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 }
 
-export const LogRow = withTheme(UnThemedLogRow);
+export const LogRow = withTheme2(UnThemedLogRow);
 LogRow.displayName = 'LogRow';

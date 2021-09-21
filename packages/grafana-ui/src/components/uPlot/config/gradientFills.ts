@@ -1,7 +1,13 @@
-import { FieldColorMode, getColorForTheme, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
+import {
+  colorManipulator,
+  FieldColorMode,
+  FieldColorModeId,
+  GrafanaTheme2,
+  ThresholdsConfig,
+  ThresholdsMode,
+} from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
-import darkTheme from '../../../themes/dark';
 import { getCanvasContext } from '../../../utils/measureText';
 
 export function getOpacityGradientFn(
@@ -12,8 +18,8 @@ export function getOpacityGradientFn(
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
 
-    gradient.addColorStop(0, tinycolor(color).setAlpha(opacity).toRgbString());
-    gradient.addColorStop(1, tinycolor(color).setAlpha(0).toRgbString());
+    gradient.addColorStop(0, colorManipulator.alpha(color, opacity));
+    gradient.addColorStop(1, colorManipulator.alpha(color, 0));
 
     return gradient;
   };
@@ -21,7 +27,7 @@ export function getOpacityGradientFn(
 export function getHueGradientFn(
   color: string,
   opacity: number,
-  theme: GrafanaTheme
+  theme: GrafanaTheme2
 ): (self: uPlot, seriesIdx: number) => CanvasGradient {
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
@@ -40,15 +46,163 @@ export function getHueGradientFn(
     return gradient;
   };
 }
-/**
- * Experimental & quick and dirty test
- * Not being used
- */
+
+export enum GradientDirection {
+  'Right' = 0,
+  'Up' = 1,
+}
+
+type ValueStop = [value: number, color: string];
+
+type ScaleValueStops = ValueStop[];
+
+export function scaleGradient(
+  u: uPlot,
+  scaleKey: string,
+  dir: GradientDirection,
+  scaleStops: ScaleValueStops,
+  discrete = false
+) {
+  let scale = u.scales[scaleKey];
+
+  // we want the stop below or at the scaleMax
+  // and the stop below or at the scaleMin, else the stop above scaleMin
+  let minStopIdx: number | null = null;
+  let maxStopIdx: number | null = null;
+
+  for (let i = 0; i < scaleStops.length; i++) {
+    let stopVal = scaleStops[i][0];
+
+    if (stopVal <= scale.min! || minStopIdx == null) {
+      minStopIdx = i;
+    }
+
+    maxStopIdx = i;
+
+    if (stopVal >= scale.max!) {
+      break;
+    }
+  }
+
+  if (minStopIdx === maxStopIdx) {
+    return scaleStops[minStopIdx!][1];
+  }
+
+  let minStopVal = scaleStops[minStopIdx!][0];
+  let maxStopVal = scaleStops[maxStopIdx!][0];
+
+  if (minStopVal === -Infinity) {
+    minStopVal = scale.min!;
+  }
+
+  if (maxStopVal === Infinity) {
+    maxStopVal = scale.max!;
+  }
+
+  let minStopPos = Math.round(u.valToPos(minStopVal, scaleKey, true));
+  let maxStopPos = Math.round(u.valToPos(maxStopVal, scaleKey, true));
+
+  let range = minStopPos - maxStopPos;
+
+  let x0, y0, x1, y1;
+
+  if (dir === GradientDirection.Up) {
+    x0 = x1 = 0;
+    y0 = minStopPos;
+    y1 = maxStopPos;
+  } else {
+    y0 = y1 = 0;
+    x0 = minStopPos;
+    x1 = maxStopPos;
+  }
+
+  let ctx = getCanvasContext();
+
+  let grd = ctx.createLinearGradient(x0, y0, x1, y1);
+
+  let prevColor: string;
+
+  for (let i = minStopIdx!; i <= maxStopIdx!; i++) {
+    let s = scaleStops[i];
+
+    let stopPos =
+      i === minStopIdx ? minStopPos : i === maxStopIdx ? maxStopPos : Math.round(u.valToPos(s[0], scaleKey, true));
+
+    let pct = (minStopPos - stopPos) / range;
+
+    if (discrete && i > minStopIdx!) {
+      grd.addColorStop(pct, prevColor!);
+    }
+
+    grd.addColorStop(pct, (prevColor = s[1]));
+  }
+
+  return grd;
+}
+
+export function getDataRange(plot: uPlot, scaleKey: string) {
+  let sc = plot.scales[scaleKey];
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  plot.series.forEach((ser, seriesIdx) => {
+    if (ser.show && ser.scale === scaleKey) {
+      // uPlot skips finding data min/max when a scale has a pre-defined range
+      if (ser.min == null) {
+        let data = plot.data[seriesIdx];
+        for (let i = 0; i < data.length; i++) {
+          if (data[i] != null) {
+            min = Math.min(min, data[i]!);
+            max = Math.max(max, data[i]!);
+          }
+        }
+      } else {
+        min = Math.min(min, ser.min!);
+        max = Math.max(max, ser.max!);
+      }
+    }
+  });
+
+  if (max === min) {
+    min = sc.min!;
+    max = sc.max!;
+  }
+
+  return [min, max];
+}
+
+export function getGradientRange(
+  u: uPlot,
+  scaleKey: string,
+  hardMin?: number | null,
+  hardMax?: number | null,
+  softMin?: number | null,
+  softMax?: number | null
+) {
+  let min = hardMin ?? softMin ?? null;
+  let max = hardMax ?? softMax ?? null;
+
+  if (min == null || max == null) {
+    let [dataMin, dataMax] = getDataRange(u, scaleKey);
+
+    min = min ?? dataMin ?? 0;
+    max = max ?? dataMax ?? 100;
+  }
+
+  return [min, max];
+}
+
 export function getScaleGradientFn(
   opacity: number,
+  theme: GrafanaTheme2,
   colorMode?: FieldColorMode,
-  thresholds?: ThresholdsConfig
-): (self: uPlot, seriesIdx: number) => CanvasGradient {
+  thresholds?: ThresholdsConfig,
+  hardMin?: number | null,
+  hardMax?: number | null,
+  softMin?: number | null,
+  softMax?: number | null
+): (self: uPlot, seriesIdx: number) => CanvasGradient | string {
   if (!colorMode) {
     throw Error('Missing colorMode required for color scheme gradients');
   }
@@ -58,36 +212,41 @@ export function getScaleGradientFn(
   }
 
   return (plot: uPlot, seriesIdx: number) => {
-    const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-    const series = plot.series[seriesIdx];
-    const scale = plot.scales[series.scale!];
-    const range = plot.bbox.height;
+    let scaleKey = plot.series[seriesIdx].scale!;
 
-    console.log('scale', scale);
-    console.log('series.min', series.min);
-    console.log('series.max', series.max);
+    let gradient: CanvasGradient | string = '';
 
-    const getColorWithAlpha = (color: string) => {
-      return tinycolor(getColorForTheme(color, darkTheme)).setAlpha(opacity).toString();
-    };
-
-    const addColorStop = (value: number, color: string) => {
-      const pos = plot.valToPos(value, series.scale!);
-      const percent = pos / range;
-      console.log(`addColorStop(value = ${value}, xPos=${pos})`);
-      gradient.addColorStop(Math.min(percent, 1), getColorWithAlpha(color));
-    };
-
-    for (let idx = 0; idx < thresholds.steps.length; idx++) {
-      const step = thresholds.steps[idx];
-      const value = step.value === -Infinity ? 0 : step.value;
-      addColorStop(value, step.color);
-
-      // to make the gradient discrete
-      if (thresholds.steps.length > idx + 1) {
-        addColorStop(thresholds.steps[idx + 1].value - 0.0000001, step.color);
+    if (colorMode.id === FieldColorModeId.Thresholds) {
+      if (thresholds.mode === ThresholdsMode.Absolute) {
+        const valueStops = thresholds.steps.map(
+          (step) =>
+            [step.value, colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity)] as ValueStop
+        );
+        gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
+      } else {
+        const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+        const range = max - min;
+        const valueStops = thresholds.steps.map(
+          (step) =>
+            [
+              min + range * (step.value / 100),
+              colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
+            ] as ValueStop
+        );
+        gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
       }
+    } else if (colorMode.getColors) {
+      const colors = colorMode.getColors(theme);
+      const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+      const range = max - min;
+      const valueStops = colors.map(
+        (color, i) =>
+          [
+            min + range * (i / (colors.length - 1)),
+            colorManipulator.alpha(theme.visualization.getColorByName(color), opacity),
+          ] as ValueStop
+      );
+      gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, false);
     }
 
     return gradient;

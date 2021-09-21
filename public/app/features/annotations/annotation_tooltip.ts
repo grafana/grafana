@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isString, escape } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import alertDef from '../alerting/state/alertDef';
@@ -17,7 +17,7 @@ export function annotationTooltipDirective(
       return $sanitize(str);
     } catch (err) {
       console.log('Could not sanitize annotation string, html escaping instead');
-      return _.escape(str);
+      return escape(str);
     }
   }
 
@@ -36,7 +36,7 @@ export function annotationTooltipDirective(
       let tooltip = '<div class="graph-annotation">';
       let titleStateClass = '';
 
-      if (event.alertId) {
+      if (event.alertId !== undefined) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="${stateModel.iconClass}"></i> ${stateModel.text}`;
@@ -45,7 +45,7 @@ export function annotationTooltipDirective(
           text = text + '<br />' + event.text;
         }
       } else if (title) {
-        text = title + '<br />' + (_.isString(text) ? text : '');
+        text = title + '<br />' + (isString(text) ? text : '');
         title = '';
       }
 

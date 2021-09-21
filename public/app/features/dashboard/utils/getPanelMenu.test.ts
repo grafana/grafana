@@ -72,7 +72,7 @@ describe('getPanelMenu', () => {
             },
             Object {
               "onClick": [Function],
-              "text": "To global panel",
+              "text": "Create library panel",
             },
           ],
           "text": "More...",

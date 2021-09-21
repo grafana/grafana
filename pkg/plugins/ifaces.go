@@ -13,8 +13,6 @@ type Manager interface {
 	Renderer() *RendererPlugin
 	// GetDataSource gets a data source plugin with a certain ID.
 	GetDataSource(id string) *DataSourcePlugin
-	// GetDataPlugin gets a data plugin with a certain ID.
-	GetDataPlugin(id string) DataPlugin
 	// GetPlugin gets a plugin with a certain ID.
 	GetPlugin(id string) *PluginBase
 	// GetApp gets an app plugin with a certain ID.
@@ -29,7 +27,6 @@ type Manager interface {
 	PanelCount() int
 	// AppCount gets the number of apps.
 	AppCount() int
-	// GetEnabledPlugins gets enabled plugins.
 	// GetEnabledPlugins gets enabled plugins.
 	GetEnabledPlugins(orgID int64) (*EnabledPlugins, error)
 	// GrafanaLatestVersion gets the latest Grafana version.
@@ -49,13 +46,17 @@ type Manager interface {
 	// ImportDashboard imports a dashboard.
 	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
-		requestHandler DataRequestHandler) (PluginDashboardInfoDTO, error)
+		requestHandler DataRequestHandler) (PluginDashboardInfoDTO, *models.Dashboard, error)
 	// ScanningErrors returns plugin scanning errors encountered.
 	ScanningErrors() []PluginError
 	// LoadPluginDashboard loads a plugin dashboard.
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 	// IsAppInstalled returns whether an app is installed.
 	IsAppInstalled(id string) bool
+	// Install installs a plugin.
+	Install(ctx context.Context, pluginID, version string) error
+	// Uninstall uninstalls a plugin.
+	Uninstall(ctx context.Context, pluginID string) error
 }
 
 type ImportDashboardInput struct {
@@ -69,4 +70,27 @@ type ImportDashboardInput struct {
 type DataRequestHandler interface {
 	// HandleRequest handles a data request.
 	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
+}
+
+type PluginInstaller interface {
+	// Install finds the plugin given the provided information and installs in the provided plugins directory.
+	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
+	// Uninstall removes the specified plugin from the provided plugins directory.
+	Uninstall(ctx context.Context, pluginPath string) error
+	// GetUpdateInfo returns update information if the requested plugin is supported on the running system.
+	GetUpdateInfo(pluginID, version, pluginRepoURL string) (UpdateInfo, error)
+}
+
+type PluginInstallerLogger interface {
+	Successf(format string, args ...interface{})
+	Failuref(format string, args ...interface{})
+
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
+	Debug(args ...interface{})
+	Debugf(format string, args ...interface{})
+	Warn(args ...interface{})
+	Warnf(format string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
 }

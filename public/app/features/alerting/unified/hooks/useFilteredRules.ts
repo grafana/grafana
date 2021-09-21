@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleFilterState } from 'app/types/unified-alerting';
-import { isCloudRulesSource, isGrafanaRulesSource } from '../utils/datasource';
-import { isAlertingRule } from '../utils/rules';
+import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
+import { isCloudRulesSource } from '../utils/datasource';
+import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();
@@ -26,7 +29,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   }, [namespaces, filters]);
 };
 
-const reduceNamespaces = (filters: RuleFilterState) => {
+const reduceNamespaces = (filters: FilterState) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groups = namespace.groups.reduce(reduceGroups(filters), [] as CombinedRuleGroup[]);
 
@@ -42,27 +45,26 @@ const reduceNamespaces = (filters: RuleFilterState) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filters: RuleFilterState) => {
+const reduceGroups = (filters: FilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      if (
-        filters.dataSource &&
-        isGrafanaRulesSource(rule.namespace.rulesSource) &&
-        !rule.queries?.find(({ datasource }) => datasource === filters.dataSource)
-      ) {
+      if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {
         return false;
       }
       // Query strings can match alert name, label keys, and label values
       if (filters.queryString) {
         const normalizedQueryString = filters.queryString.toLocaleLowerCase();
         const doesNameContainsQueryString = rule.name?.toLocaleLowerCase().includes(normalizedQueryString);
+        const matchers = parseMatchers(filters.queryString);
 
-        const doLabelsContainQueryString = Object.entries(rule.labels || {}).some(
-          ([key, value]) =>
-            key.toLocaleLowerCase().includes(normalizedQueryString) ||
-            value.toLocaleLowerCase().includes(normalizedQueryString)
-        );
-        if (!(doesNameContainsQueryString || doLabelsContainQueryString)) {
+        const doRuleLabelsMatchQuery = labelsMatchMatchers(rule.labels, matchers);
+        const doAlertsContainMatchingLabels =
+          rule.promRule &&
+          rule.promRule.type === PromRuleType.Alerting &&
+          rule.promRule.alerts &&
+          rule.promRule.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
+
+        if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
           return false;
         }
       }
@@ -83,4 +85,18 @@ const reduceGroups = (filters: RuleFilterState) => {
     }
     return groupAcc;
   };
+};
+
+const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: FilterState): boolean => {
+  if (!filter.dataSource) {
+    return true;
+  }
+
+  return !!rulerRule.grafana_alert.data.find((query) => {
+    if (!query.datasourceUid) {
+      return false;
+    }
+    const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    return ds?.name === filter.dataSource;
+  });
 };

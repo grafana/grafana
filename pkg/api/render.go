@@ -4,14 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
@@ -57,10 +56,10 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		Width:             width,
 		Height:            height,
 		Timeout:           time.Duration(timeout) * time.Second,
-		OrgId:             c.OrgId,
-		UserId:            c.UserId,
+		OrgID:             c.OrgId,
+		UserID:            c.UserId,
 		OrgRole:           c.OrgRole,
-		Path:              c.Params("*") + queryParams,
+		Path:              macaron.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
@@ -72,19 +71,11 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 			c.Handle(hs.Cfg, 500, err.Error(), err)
 			return
 		}
-		if errors.Is(err, rendering.ErrPhantomJSNotInstalled) {
-			if strings.HasPrefix(runtime.GOARCH, "arm") {
-				c.Handle(hs.Cfg, 500, "Rendering failed - PhantomJS isn't included in arm build per default", err)
-			} else {
-				c.Handle(hs.Cfg, 500, "Rendering failed - PhantomJS isn't installed correctly", err)
-			}
-			return
-		}
 
 		c.Handle(hs.Cfg, 500, "Rendering failed.", err)
 		return
 	}
 
 	c.Resp.Header().Set("Content-Type", "image/png")
-	http.ServeFile(c.Resp, c.Req.Request, result.FilePath)
+	http.ServeFile(c.Resp, c.Req, result.FilePath)
 }

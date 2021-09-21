@@ -44,7 +44,7 @@ type CurrentUser struct {
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 }
 
-type UserPermissionsMap map[string]map[string]string
+type UserPermissionsMap map[string]bool
 
 type MetricRequest struct {
 	From    string             `json:"from"`

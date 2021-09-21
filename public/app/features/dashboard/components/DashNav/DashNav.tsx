@@ -1,34 +1,38 @@
 // Libaries
 import React, { PureComponent, FC, ReactNode } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 // Utils & Services
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
-import { textUtil } from '@grafana/data';
+import { locationUtil, textUtil } from '@grafana/data';
 // State
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
+const mapDispatchToProps = {
+  updateTimeZoneForSession,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
   kioskMode: KioskMode;
   hideTimePicker: boolean;
+  folderTitle?: string;
+  title: string;
   onAddPanel: () => void;
-}
-
-interface DispatchProps {
-  updateTimeZoneForSession: typeof updateTimeZoneForSession;
 }
 
 interface DashNavButtonModel {
@@ -48,16 +52,12 @@ export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
 
-type Props = OwnProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class DashNav extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
   }
-
-  onFolderNameClick = () => {
-    locationService.partial({ search: 'open', folder: 'current' });
-  };
 
   onClose = () => {
     locationService.partial({ viewPanel: null });
@@ -94,10 +94,6 @@ class DashNav extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDashboardNameClick = () => {
-    locationService.partial({ search: 'open' });
-  };
-
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
     actions.map((action, index) => {
       const Component = action.component;
@@ -120,9 +116,10 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canStar) {
+      let desc = isStarred ? 'Unmark as favorite' : 'Mark as favorite';
       buttons.push(
         <DashNavButton
-          tooltip="Mark as favorite"
+          tooltip={desc}
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
           iconSize="lg"
@@ -133,11 +130,12 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canShare) {
+      let desc = 'Share dashboard or panel';
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Share dashboard or panel"
+              tooltip={desc}
               icon="share-alt"
               iconSize="lg"
               onClick={() => {
@@ -245,16 +243,19 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, isFullscreen } = this.props;
+    const { isFullscreen, title, folderTitle } = this.props;
     const onGoBack = isFullscreen ? this.onClose : undefined;
+
+    const titleHref = locationUtil.updateSearchParams(window.location.href, '?search=open');
+    const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
 
     return (
       <PageToolbar
         pageIcon={isFullscreen ? undefined : 'apps'}
-        title={dashboard.title}
-        parent={dashboard.meta.folderTitle}
-        onClickTitle={this.onDashboardNameClick}
-        onClickParent={this.onFolderNameClick}
+        title={title}
+        parent={folderTitle}
+        titleHref={titleHref}
+        parentHref={parentHref}
         onGoBack={onGoBack}
         leftItems={this.renderLeftActionsButton()}
       >
@@ -264,10 +265,4 @@ class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateTimeZoneForSession,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(DashNav);
+export default connector(DashNav);

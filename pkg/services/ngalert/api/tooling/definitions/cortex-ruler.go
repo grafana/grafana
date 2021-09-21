@@ -279,23 +279,20 @@ func (n *GettableExtendedRuleNode) validate() error {
 type NoDataState string
 
 const (
-	Alerting      NoDataState = "Alerting"
-	NoData        NoDataState = "NoData"
-	KeepLastState NoDataState = "KeepLastState"
-	OK            NoDataState = "OK"
+	Alerting NoDataState = "Alerting"
+	NoData   NoDataState = "NoData"
+	OK       NoDataState = "OK"
 )
 
 // swagger:enum ExecutionErrorState
 type ExecutionErrorState string
 
 const (
-	AlertingErrState      ExecutionErrorState = "Alerting"
-	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+	AlertingErrState ExecutionErrorState = "Alerting"
 )
 
 // swagger:model
 type PostableGrafanaRule struct {
-	OrgID        int64               `json:"-" yaml:"-"`
 	Title        string              `json:"title" yaml:"title"`
 	Condition    string              `json:"condition" yaml:"condition"`
 	Data         []models.AlertQuery `json:"data" yaml:"data"`

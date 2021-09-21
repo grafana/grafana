@@ -1,6 +1,5 @@
-import React, { Fragment, FunctionComponent, useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
-import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
 import { css } from '@emotion/css';
 import { AddRemove } from '../../../../AddRemove';
@@ -22,11 +21,12 @@ interface Props {
   previousMetrics: MetricAggregation[];
 }
 
-export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, previousMetrics }) => {
-  const upperStateDispatch = useDispatch<MetricAggregationAction<BucketScript>>();
+export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) => {
+  const upperStateDispatch = useDispatch();
 
   const dispatch = useStatelessReducer(
-    (newState) => upperStateDispatch(changeMetricAttribute(value, 'pipelineVariables', newState)),
+    (newValue) =>
+      upperStateDispatch(changeMetricAttribute({ metric: value, attribute: 'pipelineVariables', newValue })),
     value.pipelineVariables,
     reducer
   );
@@ -74,10 +74,10 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
                 <Input
                   defaultValue={pipelineVar.name}
                   placeholder="Variable Name"
-                  onBlur={(e) => dispatch(renamePipelineVariable(e.target.value, index))}
+                  onBlur={(e) => dispatch(renamePipelineVariable({ newName: e.target.value, index }))}
                 />
                 <MetricPicker
-                  onChange={(e) => dispatch(changePipelineVariableMetric(e.value!.id, index))}
+                  onChange={(e) => dispatch(changePipelineVariableMetric({ newMetric: e.value!.id, index }))}
                   options={previousMetrics}
                   value={pipelineVar.pipelineAgg}
                 />

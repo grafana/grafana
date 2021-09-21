@@ -12,3 +12,5 @@ export {
 export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 export { outerJoinDataFrames } from './transformers/joinDataFrames';
+export * from './transformers/histogram';
+export { ensureTimeField } from './transformers/convertFieldType';

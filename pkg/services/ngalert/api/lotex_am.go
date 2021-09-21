@@ -10,12 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
 
 const (
 	amSilencesPath    = "/alertmanager/api/v2/silences"
 	amSilencePath     = "/alertmanager/api/v2/silence/%s"
+	amStatusPath      = "/alertmanager/api/v2/status"
 	amAlertGroupsPath = "/alertmanager/api/v2/alerts/groups"
 	amAlertsPath      = "/alertmanager/api/v2/alerts"
 	amConfigPath      = "/api/v1/alerts"
@@ -33,10 +35,24 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 	}
 }
 
+func (am *LotexAM) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
+	return am.withReq(
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			amStatusPath,
+		),
+		nil,
+		jsonExtractor(&apimodels.GettableStatus{}),
+		nil,
+	)
+}
+
 func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.PostableSilence) response.Response {
 	blob, err := json.Marshal(silenceBody)
 	if err != nil {
-		return response.Error(500, "Failed marshal silence", err)
+		return ErrResp(500, err, "Failed marshal silence")
 	}
 	return am.withReq(
 		ctx,
@@ -68,7 +84,7 @@ func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response 
 		http.MethodDelete,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf(amSilencePath, ctx.Params(":SilenceId")),
+			fmt.Sprintf(amSilencePath, macaron.Params(ctx.Req)[":SilenceId"]),
 		),
 		nil,
 		messageExtractor,
@@ -124,7 +140,7 @@ func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
 		http.MethodGet,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf(amSilencePath, ctx.Params(":SilenceId")),
+			fmt.Sprintf(amSilencePath, macaron.Params(ctx.Req)[":SilenceId"]),
 		),
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
@@ -149,7 +165,7 @@ func (am *LotexAM) RouteGetSilences(ctx *models.ReqContext) response.Response {
 func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimodels.PostableUserConfig) response.Response {
 	yml, err := yaml.Marshal(&config)
 	if err != nil {
-		return response.Error(500, "Failed marshal alert manager configuration ", err)
+		return ErrResp(500, err, "Failed marshal alert manager configuration ")
 	}
 
 	return am.withReq(
@@ -165,7 +181,7 @@ func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimod
 func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.PostableAlerts) response.Response {
 	yml, err := yaml.Marshal(alerts)
 	if err != nil {
-		return response.Error(500, "Failed marshal postable alerts", err)
+		return ErrResp(500, err, "Failed marshal postable alerts")
 	}
 
 	return am.withReq(
@@ -176,4 +192,8 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 		messageExtractor,
 		nil,
 	)
+}
+
+func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigParams) response.Response {
+	return NotImplementedResp
 }

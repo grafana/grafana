@@ -10,6 +10,8 @@ import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
+import { AlertStateInfo } from './alerts';
+import { PanelModel } from './dashboard';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -37,6 +39,12 @@ export interface PanelData {
 
   /** A list of annotation items */
   annotations?: DataFrame[];
+
+  /**
+   * @internal
+   * @deprecated alertState is deprecated and will be removed when the next generation Alerting is in place
+   */
+  alertState?: AlertStateInfo;
 
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;
@@ -114,18 +122,6 @@ export interface PanelEditorProps<T = any> {
   data?: PanelData;
 }
 
-export interface PanelModel<TOptions = any> {
-  /** ID of the panel within the current dashboard */
-  id: number;
-  /** Panel options */
-  options: TOptions;
-  /** Field options configuration */
-  fieldConfig: FieldConfigSource;
-  /** Version of the panel plugin */
-  pluginVersion?: string;
-  scopedVars?: ScopedVars;
-}
-
 /**
  * Called when a panel is first loaded with current panel model
  */
@@ -181,4 +177,9 @@ export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',
   Horizontal = 'horizontal',
+}
+
+export interface PanelPluginDataSupport {
+  annotations: boolean;
+  alertStates: boolean;
 }

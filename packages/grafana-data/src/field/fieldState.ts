@@ -10,7 +10,13 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // Single field with tags
-  const valuesWithLabels = frame.fields.filter((f) => f.labels !== undefined);
+  const valuesWithLabels: Field[] = [];
+  for (const field of frame.fields) {
+    if (field.labels && Object.keys(field.labels).length > 0) {
+      valuesWithLabels.push(field);
+    }
+  }
+
   if (valuesWithLabels.length === 1) {
     return formatLabels(valuesWithLabels[0].labels!);
   }
@@ -45,7 +51,7 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
 }
 
 /**
- * Get an appropriate display name. If the 'displayName' field config is set, use that
+ * Get an appropriate display name. If the 'displayName' field config is set, use that.
  */
 function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;

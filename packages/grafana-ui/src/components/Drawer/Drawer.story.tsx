@@ -17,6 +17,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['onClose'],
+    },
   },
   args: {
     closeOnMaskClick: true,

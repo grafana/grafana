@@ -49,7 +49,6 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
 }
-
 export interface ClassicCondition {
   evaluator: {
     params: number[];

@@ -5,8 +5,8 @@ import { css } from '@emotion/css';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import { VizLegendItem, SeriesColorChangeHandler } from '../VizLegend/types';
-import { LegendDisplayMode, LegendPlacement } from '../VizLegend/models.gen';
+import { VizLegendItem } from '../VizLegend/types';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
@@ -18,7 +18,6 @@ export interface GraphWithLegendProps extends GraphProps {
   hideZero?: boolean;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
-  onSeriesColorChange?: SeriesColorChangeHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
 }
@@ -58,7 +57,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     sortLegendDesc,
     legendDisplayMode,
     placement,
-    onSeriesColorChange,
     onSeriesToggle,
     onToggleSort,
     hideEmpty,
@@ -120,7 +118,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
                   onSeriesToggle(item.label, event);
                 }
               }}
-              onSeriesColorChange={onSeriesColorChange}
               onToggleSort={onToggleSort}
             />
           </CustomScrollbar>

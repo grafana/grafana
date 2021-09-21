@@ -30,6 +30,9 @@ import {
   TimeZone,
   transformDataFrame,
 } from '@grafana/data';
+import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import { mergePanelAndDashData } from './mergePanelAndDashData';
+import { PanelModel } from '../../dashboard/state';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -96,6 +99,7 @@ export class PanelQueryRunner {
 
           // If the shape is the same, we can skip field overrides
           if (
+            data.state === LoadingState.Streaming &&
             processFields &&
             processedCount > 0 &&
             lastData.length &&
@@ -108,9 +112,16 @@ export class PanelQueryRunner {
                 ...processedData,
                 series: lastData.map((frame, frameIndex) => ({
                   ...frame,
+                  length: data.series[frameIndex].length,
                   fields: frame.fields.map((field, fieldIndex) => ({
                     ...field,
                     values: data.series[frameIndex].fields[fieldIndex].values,
+                    state: {
+                      ...field.state,
+                      calcs: undefined,
+                      // add global range calculation here? (not optimal for streaming)
+                      range: undefined,
+                    },
                   })),
                 })),
               };
@@ -182,7 +193,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options));
+      this.pipeToSubject(runSharedRequest(options), panelId);
       return;
     }
 
@@ -230,18 +241,27 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.pipeToSubject(runRequest(ds, request));
+      this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
 
-    this.subscription = observable.subscribe({
+    let panelData = observable;
+    const dataSupport = this.dataConfigSource.getDataSupport();
+
+    if (dataSupport.alertStates || dataSupport.annotations) {
+      const panel = (this.dataConfigSource as unknown) as PanelModel;
+      const id = panel.editSourceId ?? panel.id;
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
+    }
+
+    this.subscription = panelData.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline

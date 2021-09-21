@@ -11,7 +11,7 @@ This API can be used to create/update/delete Teams and to add/remove users to Te
 
 ## Team Search With Paging
 
-`GET /api/teams/search?perpage=50&page=1&query=mytea`
+`GET /api/teams/search?perpage=50&page=1&query=myteam`
 
 or
 
@@ -360,9 +360,9 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body Schema:
 
-- **theme** - One of: ``light``, ``dark``, or an empty string for the default theme
-- **homeDashboardId** - The numerical ``:id`` of a dashboard, default: ``0``
-- **timezone** - One of: ``utc``, ``browser``, or an empty string for the default
+- **theme** - One of: `light`, `dark`, or an empty string for the default theme
+- **homeDashboardId** - The numerical `:id` of a dashboard, default: `0`
+- **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
 Omitting a key will cause the current value to be replaced with the system default value.
 
