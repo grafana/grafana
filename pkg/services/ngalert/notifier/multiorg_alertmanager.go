@@ -143,9 +143,10 @@ func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int6
 func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
 	moa.alertmanagersMtx.Lock()
 
-	orgsFound, err := moa.addOrUpdateAlertManagerConfigurations(ctx, orgIDs)
+	orgsFound, err := moa.addOrUpdateAlertmanagerConfigurations(ctx, orgIDs)
 	if err != nil {
 		moa.alertmanagersMtx.Unlock()
+		moa.logger.Error("failed to update Alertmanager configurations", "err", err)
 		return
 	}
 
@@ -169,15 +170,14 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 }
 
-// addOrUpdateAlertManagerConfigurations retrieves the latest configurations for all organizations and then calls addOrUpdateAlertmanager for every organization in orgIDs.
+// addOrUpdateAlertmanagerConfigurations retrieves the latest configurations for all organizations and then calls addOrUpdateAlertmanager for every organization in orgIDs.
 //The result is either a map that contains ID of all organizations updated or created or error in the case something happened while fetching configurations from database
 //NOTE this is an internal method, and it is not supposed to be called without locked mutex alertmanagersMtx
-func (moa *MultiOrgAlertmanager) addOrUpdateAlertManagerConfigurations(ctx context.Context, orgIDs []int64) (map[int64]struct{}, error) {
+func (moa *MultiOrgAlertmanager) addOrUpdateAlertmanagerConfigurations(ctx context.Context, orgIDs []int64) (map[int64]struct{}, error) {
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
 	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
-		moa.logger.Error("failed to load Alertmanager configurations", "err", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to load Alertmanager configurations: %w", err)
 	}
 	for _, orgID := range orgIDs {
 		orgsFound[orgID] = struct{}{}
@@ -202,7 +202,7 @@ func (moa *MultiOrgAlertmanager) addOrUpdateAlertmanager(orgID int64, maybeDbCon
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
 		am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, m)
 		if err != nil {
-			return fmt.Errorf("failed to create a new Alertmanager: %w", err)
+			return fmt.Errorf(" to create a new Alertmanager: %w", err)
 		}
 		alertmanager = am
 	}
