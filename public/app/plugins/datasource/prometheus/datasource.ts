@@ -295,7 +295,12 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
 
     if (shouldRunBackendQuery) {
-      return super.query(options).pipe(map((response) => transformV2(response, options)));
+      const targets = options.targets.map((target) => ({
+        ...target,
+        // We need to pass utcOffsetSec to backend to calculate aligned range
+        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      }));
+      return super.query({ ...options, targets }).pipe(map((response) => transformV2(response, options)));
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(options.range.from, false);
