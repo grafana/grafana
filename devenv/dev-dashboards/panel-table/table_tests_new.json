@@ -8,6 +8,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -15,7 +21,9 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 185,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "datasource": null,
@@ -124,6 +132,13 @@
       },
       "id": 4,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showFooter": false,
         "showHeader": true,
         "sortBy": [
           {
@@ -132,7 +147,7 @@
           }
         ]
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -167,6 +182,7 @@
           },
           "custom": {
             "align": null,
+            "displayMode": "auto",
             "filterable": false
           },
           "mappings": [],
@@ -255,6 +271,13 @@
       },
       "id": 2,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showFooter": false,
         "showHeader": true,
         "sortBy": [
           {
@@ -263,7 +286,7 @@
           }
         ]
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -304,6 +327,7 @@
           },
           "custom": {
             "align": null,
+            "displayMode": "auto",
             "filterable": false
           },
           "mappings": [],
@@ -348,10 +372,17 @@
       },
       "id": 5,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showFooter": false,
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -477,9 +508,16 @@
       "id": 3,
       "maxDataPoints": "10",
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showFooter": false,
         "showHeader": true
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "alias": "S1",
@@ -563,6 +601,13 @@
       },
       "id": 10,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showFooter": false,
         "showHeader": false,
         "sortBy": [
           {
@@ -571,7 +616,7 @@
           }
         ]
       },
-      "pluginVersion": "7.5.0-pre",
+      "pluginVersion": "",
       "targets": [
         {
           "refId": "A",
@@ -604,9 +649,58 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "datasource": "-- Grafana --",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 12,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ]
+        },
+        "showFooter": true,
+        "showHeader": true
+      },
+      "pluginVersion": "",
+      "title": "Footer",
+      "type": "table"
     }
   ],
-  "schemaVersion": 27,
+  "schemaVersion": 31,
   "style": "dark",
   "tags": [
     "gdev",
@@ -635,5 +729,5 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 1
+  "version": 5
 }
