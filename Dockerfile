@@ -32,6 +32,7 @@ COPY pkg pkg
 COPY build.go package.json ./
 
 RUN go mod verify
+RUN make gen-go
 RUN go run build.go build
 
 # Final stage
