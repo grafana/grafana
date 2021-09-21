@@ -9,7 +9,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { CatalogPlugin } from '../types';
 import * as api from '../api';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
-import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 // Mock the config to enable the plugin catalog
