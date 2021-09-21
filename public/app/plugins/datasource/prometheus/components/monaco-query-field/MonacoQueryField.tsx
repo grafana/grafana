@@ -86,7 +86,7 @@ const MonacoQueryField = (props: Props) => {
           const getAllMetricNames = () => {
             const { metrics, metricsMetadata } = lpRef.current;
             const result = metrics.map((m) => {
-              const metaItem = metricsMetadata?.[m]?.[0];
+              const metaItem = metricsMetadata?.[m];
               return {
                 name: m,
                 help: metaItem?.help ?? '',

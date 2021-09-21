@@ -1,4 +1,4 @@
-package usagestats
+package service
 
 type concurrentUsersStats struct {
 	BucketLE3   int32 `xorm:"bucket_le_3"`

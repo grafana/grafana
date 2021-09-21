@@ -438,6 +438,7 @@ func (hs *HTTPServer) registerRoutes() {
 				// POST Live data to be processed according to channel rules.
 				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
 				liveRoute.Get("/channel-rules", routing.Wrap(hs.Live.HandleChannelRulesListHTTP), reqOrgAdmin)
+				liveRoute.Get("/pipeline-entities", routing.Wrap(hs.Live.HandlePipelineEntitiesListHTTP), reqOrgAdmin)
 				liveRoute.Get("/remote-write-backends", routing.Wrap(hs.Live.HandleRemoteWriteBackendsListHTTP), reqOrgAdmin)
 			}
 		})
