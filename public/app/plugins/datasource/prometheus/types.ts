@@ -11,7 +11,7 @@ export interface PromQuery extends DataQuery {
   interval?: string;
   intervalFactor?: number;
   // Timezone offset to align start & end time on backend
-  offsetSec?: number;
+  utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
@@ -50,7 +50,7 @@ export interface PromMetricsMetadataItem {
 }
 
 export interface PromMetricsMetadata {
-  [metric: string]: PromMetricsMetadataItem[];
+  [metric: string]: PromMetricsMetadataItem;
 }
 
 export interface PromDataSuccessResponse<T = PromData> {

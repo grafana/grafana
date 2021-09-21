@@ -23,8 +23,14 @@ func NewDropFieldsProcessor(config DropFieldsProcessorConfig) *DropFieldsProcess
 	return &DropFieldsProcessor{config: config}
 }
 
-func (d DropFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
-	for _, f := range d.config.FieldNames {
+const ProcessorTypeDropFields = "dropFields"
+
+func (p *DropFieldsProcessor) Type() string {
+	return ProcessorTypeDropFields
+}
+
+func (p *DropFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+	for _, f := range p.config.FieldNames {
 	inner:
 		for i, field := range frame.Fields {
 			if f == field.Name {

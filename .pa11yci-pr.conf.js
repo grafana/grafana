@@ -16,7 +16,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 2,
+      threshold: 3,
     },
     {
       url: '${HOST}/?orgId=1',
