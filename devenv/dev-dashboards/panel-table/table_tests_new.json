@@ -132,13 +132,6 @@
       },
       "id": 4,
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ]
-        },
-        "showFooter": false,
         "showHeader": true,
         "sortBy": [
           {
@@ -182,7 +175,6 @@
           },
           "custom": {
             "align": null,
-            "displayMode": "auto",
             "filterable": false
           },
           "mappings": [],
@@ -271,13 +263,6 @@
       },
       "id": 2,
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ]
-        },
-        "showFooter": false,
         "showHeader": true,
         "sortBy": [
           {
@@ -327,7 +312,6 @@
           },
           "custom": {
             "align": null,
-            "displayMode": "auto",
             "filterable": false
           },
           "mappings": [],
@@ -372,13 +356,6 @@
       },
       "id": 5,
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ]
-        },
-        "showFooter": false,
         "showHeader": true,
         "sortBy": []
       },
@@ -418,7 +395,7 @@
     },
     {
       "collapsed": false,
-      "datasource": null,
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -508,13 +485,6 @@
       "id": 3,
       "maxDataPoints": "10",
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ]
-        },
-        "showFooter": false,
         "showHeader": true
       },
       "pluginVersion": "",
@@ -651,7 +621,7 @@
       "type": "table"
     },
     {
-      "datasource": "-- Grafana --",
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -700,7 +670,7 @@
       "type": "table"
     }
   ],
-  "schemaVersion": 31,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [
     "gdev",
@@ -729,5 +699,5 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 5
+  "version": 6
 }
