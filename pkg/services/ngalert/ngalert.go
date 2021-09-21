@@ -122,7 +122,7 @@ func (ng *AlertNG) init() error {
 		OrgStore:                store,
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
+		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
 	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)

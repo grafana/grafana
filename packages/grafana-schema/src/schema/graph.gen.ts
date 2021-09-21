@@ -3,8 +3,6 @@
 // It is currently hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { VisibilityMode } from './general.gen';
-
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
@@ -12,6 +10,11 @@ export enum AxisPlacement {
   Left = 'left',
   Right = 'right',
   Top = 'top',
+}
+export enum VisibilityMode {
+  Auto = 'auto',
+  Always = 'always',
+  Never = 'never',
 }
 export enum GraphDrawStyle {
   Bars = 'bars',
@@ -42,7 +45,6 @@ export interface LineStyle {
   dash?: number[];
   fill?: 'solid' | 'dash' | 'dot' | 'square';
 }
-
 export interface PointsConfig {
   pointColor?: string;
   pointSize?: number;

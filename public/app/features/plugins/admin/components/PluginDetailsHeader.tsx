@@ -8,6 +8,7 @@ import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
 import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependencies';
 import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
+import { PluginDisabledBadge } from './Badges';
 
 type Props = {
   currentUrl: string;
@@ -72,6 +73,8 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
 
           {/* Signature information */}
           <PluginDetailsHeaderSignature plugin={plugin} />
+
+          {plugin.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
         </div>
 
         <PluginDetailsHeaderDependencies
