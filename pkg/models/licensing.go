@@ -16,7 +16,7 @@ type Licensing interface {
 	// Used to build content delivery URL
 	ContentDeliveryPrefix() string
 
-	LicenseURL(user *SignedInUser) string
+	LicenseURL(c *ReqContext) string
 
 	StateInfo() string
 }

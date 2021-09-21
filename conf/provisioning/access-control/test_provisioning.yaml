@@ -1,0 +1,75 @@
+---
+apiVersion: 1
+
+deleteRoles:
+# - name: "custom:datasources:viewer"
+#   global: true
+#   force: true
+# - name: "custom:datasources:creator"
+#   global: true
+#   force: true
+# - name: "custom:datasources:remover"
+#   global: true
+#   force: true
+# - name: "custom:datasources:editor"
+#   global: true
+#   force: true
+# - name: "custom:datasources:explorer"
+#   global: true
+#   force: true
+
+roles:
+  - name: "custom:licensing:viewer"
+    description: "Role to allow users to read licensing"
+    version: 7
+    global: true
+    permissions:
+      - action: "licensing:read"
+      - action: "licensing:delete"
+      - action: "licensing:update"
+      - action: "licensing:reports:read"
+    builtInRoles:
+      - name: "Admin"
+
+#  - name: "custom:datasources:creator"
+#    description: "Role to allow users to create datasources"
+#    version: 1
+#    global: true
+#    permissions:
+#      - action: "datasources:create"
+#    builtInRoles:
+#      - name: "Viewer"
+#        global: true
+#
+#  - name: "custom:datasources:remover"
+#    description: "Role to allow users to remove datasources"
+#    version: 1
+#    global: true
+#    permissions:
+#      - action: "datasources:delete"
+#        scope: "datasources:*"
+#    builtInRoles:
+#      - name: "Viewer"
+#        global: true
+#
+#  - name: "custom:datasources:editor"
+#    description: "Role to allow users to modify datasources"
+#    version: 1
+#    global: true
+#    permissions:
+#      - action: "datasources:write"
+#        scope: "datasources:*"
+#    builtInRoles:
+#      - name: "Viewer"
+#        global: true
+#
+#  - name: "custom:datasources:explorer"
+#    description: "Role to allow users to modify datasources"
+#    version: 1
+#    global: true
+#    permissions:
+#      - action: "datasources:explore"
+#        scope: "datasources:*"
+#    builtInRoles:
+#      - name: "Viewer"
+#        global: true

@@ -357,16 +357,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:         "Server Admin",
-			SubTitle:     "Manage all users and orgs",
-			HideFromTabs: true,
-			Id:           "admin",
-			Icon:         "shield",
-			Url:          adminNavLinks[0].Url,
-			SortWeight:   dtos.WeightAdmin,
-			Children:     adminNavLinks,
-		})
+		serverAdminNode := getServerAdminNode(adminNavLinks)
+		navTree = append(navTree, serverAdminNode)
 	}
 
 	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
@@ -386,6 +378,34 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	})
 
 	return navTree, nil
+}
+
+func AppendToServerAdminNode(indexData *dtos.IndexViewData, child *dtos.NavLink) {
+	foundServerAdminNode := false
+	for _, node := range indexData.NavTree {
+		if node.Id == "admin" {
+			foundServerAdminNode = true
+			node.Children = append(node.Children, child)
+			break
+		}
+	}
+	if !foundServerAdminNode {
+		serverAdminNode := getServerAdminNode([]*dtos.NavLink{child})
+		indexData.NavTree = append(indexData.NavTree, serverAdminNode)
+	}
+}
+
+func getServerAdminNode(children []*dtos.NavLink) *dtos.NavLink {
+	return &dtos.NavLink{
+		Text:         "Server Admin",
+		SubTitle:     "Manage all users and orgs",
+		HideFromTabs: true,
+		Id:           "admin",
+		Icon:         "shield",
+		Url:          children[0].Url,
+		SortWeight:   dtos.WeightAdmin,
+		Children:     children,
+	}
 }
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {

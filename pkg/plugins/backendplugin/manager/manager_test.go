@@ -493,7 +493,7 @@ func (t *testLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
+func (t *testLicensingService) LicenseURL(c *models.ReqContext) string {
 	return ""
 }
 
