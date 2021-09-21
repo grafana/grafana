@@ -68,54 +68,6 @@ type Provider interface {
 	Decrypt(blob []byte) ([]byte, error)
 }
 
-// newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
-	// 1. Create new DEK
-	dataKey, err := newRandomDataKey()
-	if err != nil {
-		return nil, err
-	}
-	provider, exists := s.providers[s.defaultProvider]
-	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
-	}
-
-	// 2. Encrypt it
-	encrypted, err := provider.Encrypt(dataKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. Store its encrypted value in db
-	err = s.store.CreateDataKey(ctx, types.DataKey{
-		Active:        true, // TODO: right now we do never mark a key as deactivated
-		Name:          name,
-		Provider:      s.defaultProvider,
-		EncryptedData: encrypted,
-		Scope:         scope,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// 4. Cache its unencrypted value and return it
-	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
-		dataKey: dataKey,
-	}
-
-	return dataKey, nil
-}
-
-func newRandomDataKey() ([]byte, error) {
-	rawDataKey := make([]byte, 16)
-	_, err := rand.Read(rawDataKey)
-	if err != nil {
-		return nil, err
-	}
-	return rawDataKey, nil
-}
-
 var b64 = base64.RawStdEncoding
 
 type EncryptionOptions func() string
@@ -202,42 +154,6 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 	return s.enc.Decrypt(payload, string(dataKey))
 }
 
-// dataKey looks up DEK in cache or database, and decrypts it
-func (s *SecretsService) dataKey(name string) ([]byte, error) {
-	if item, exists := s.dataKeyCache[name]; exists {
-		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
-			delete(s.dataKeyCache, name)
-		} else {
-			return item.dataKey, nil
-		}
-	}
-
-	// 1. get encrypted data key from database
-	dataKey, err := s.store.GetDataKey(context.Background(), name)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. decrypt data key
-	provider, exists := s.providers[dataKey.Provider]
-	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
-	}
-
-	decrypted, err := provider.Decrypt(dataKey.EncryptedData)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. cache data key
-	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
-		dataKey: decrypted,
-	}
-
-	return decrypted, nil
-}
-
 func (s *SecretsService) EncryptJsonData(kv map[string]string, opt EncryptionOptions) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
@@ -275,4 +191,88 @@ func (s *SecretsService) GetDecryptedValue(sjd map[string][]byte, key, fallback 
 	}
 
 	return fallback
+}
+
+func newRandomDataKey() ([]byte, error) {
+	rawDataKey := make([]byte, 16)
+	_, err := rand.Read(rawDataKey)
+	if err != nil {
+		return nil, err
+	}
+	return rawDataKey, nil
+}
+
+// newDataKey creates a new random DEK, caches it and returns its value
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
+	// 1. Create new DEK
+	dataKey, err := newRandomDataKey()
+	if err != nil {
+		return nil, err
+	}
+	provider, exists := s.providers[s.defaultProvider]
+	if !exists {
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
+	}
+
+	// 2. Encrypt it
+	encrypted, err := provider.Encrypt(dataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Store its encrypted value in db
+	err = s.store.CreateDataKey(ctx, types.DataKey{
+		Active:        true, // TODO: right now we do never mark a key as deactivated
+		Name:          name,
+		Provider:      s.defaultProvider,
+		EncryptedData: encrypted,
+		Scope:         scope,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Cache its unencrypted value and return it
+	s.dataKeyCache[name] = dataKeyCacheItem{
+		expiry:  time.Now().Add(15 * time.Minute),
+		dataKey: dataKey,
+	}
+
+	return dataKey, nil
+}
+
+// dataKey looks up DEK in cache or database, and decrypts it
+func (s *SecretsService) dataKey(name string) ([]byte, error) {
+	if item, exists := s.dataKeyCache[name]; exists {
+		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
+			delete(s.dataKeyCache, name)
+		} else {
+			return item.dataKey, nil
+		}
+	}
+
+	// 1. get encrypted data key from database
+	dataKey, err := s.store.GetDataKey(context.Background(), name)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. decrypt data key
+	provider, exists := s.providers[dataKey.Provider]
+	if !exists {
+		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
+	}
+
+	decrypted, err := provider.Decrypt(dataKey.EncryptedData)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. cache data key
+	s.dataKeyCache[name] = dataKeyCacheItem{
+		expiry:  time.Now().Add(15 * time.Minute),
+		dataKey: decrypted,
+	}
+
+	return decrypted, nil
 }
