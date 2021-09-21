@@ -312,17 +312,15 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const targets: PromQuery[] = [];
 
     options.targets.forEach((target) => {
-      //This is currently only preparing options for Explore queries where we know the format of data we want to receive
-      if (target.instant && target.range) {
-        const targetInstant = this.createTargetV2(target, 'instant', 'table', true);
-        const targetRange = this.createTargetV2(target, 'range', 'time_series', true);
-        targets.push(targetInstant, targetRange);
-      } else if (target.instant) {
-        const targetInstant = this.createTargetV2(target, 'instant', 'table', false);
-        targets.push(targetInstant);
-      } else {
-        const targetRange = this.createTargetV2(target, 'range', 'time_series', false);
+      if (target.range) {
+        const targetRange = this.createTargetV2(target, 'range', 'time_series');
         targets.push(targetRange);
+      }
+
+      if (target.instant) {
+        const multipleQueryTypes = target.range && target.instant;
+        const targetInstant = this.createTargetV2(target, 'instant', 'table', multipleQueryTypes);
+        targets.push(targetInstant);
       }
     });
 
