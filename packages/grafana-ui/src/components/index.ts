@@ -42,6 +42,9 @@ export { QueryField } from './QueryField/QueryField';
 
 // Code editor
 export { CodeEditor } from './Monaco/CodeEditor';
+
+export { ReactMonacoEditorLazy as ReactMonacoEditor } from './Monaco/ReactMonacoEditorLazy';
+
 export {
   Monaco,
   monacoTypes,
