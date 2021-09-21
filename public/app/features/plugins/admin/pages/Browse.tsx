@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
@@ -8,18 +8,17 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { useHistory } from '../hooks/useHistory';
-import { PluginAdminRoutes } from '../types';
+import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useGetAll, useGetAllWithFilters, useIsRemotePluginsAvailable } from '../state/hooks';
+import { useGetAllWithFilters, useIsRemotePluginsAvailable } from '../state/hooks';
 import { Sorters } from '../helpers';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
-  useGetAll();
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
   const navModelId = getNavModelId(route.routeName);
@@ -31,6 +30,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const filterBy = (locationSearch.filterBy as string) || 'installed';
   const filterByType = (locationSearch.filterByType as string) || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
+  const displayMode = toDisplayMode(locationSearch.displayAs);
   const { isLoading, error, plugins } = useGetAllWithFilters({
     query,
     filterBy,
@@ -56,6 +56,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 
   const onSearch = (q: any) => {
     history.push({ query: { filterBy: 'all', filterByType: 'all', q } });
+  };
+
+  const onDisplayMode = (value: string) => {
+    history.push({ query: { displayAs: value } });
   };
 
   // How should we handle errors?
@@ -118,6 +122,17 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   ]}
                 />
               </div>
+              <div>
+                <RadioButtonGroup
+                  className={styles.displayAs}
+                  value={displayMode}
+                  onChange={onDisplayMode}
+                  options={[
+                    { value: 'table', icon: 'table', description: 'Display plugins in table' },
+                    { value: 'list', icon: 'list-ul', description: 'Display plugins in list' },
+                  ]}
+                />
+              </div>
             </HorizontalGroup>
           </HorizontalGroup>
           <div className={styles.listWrap}>
@@ -129,7 +144,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 text="Loading results"
               />
             ) : (
-              <PluginList plugins={plugins} />
+              <PluginList plugins={plugins} display={displayMode} />
             )}
           </div>
         </PluginPage>
@@ -147,6 +162,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listWrap: css`
     margin-top: ${theme.spacing(2)};
   `,
+  displayAs: css`
+    svg {
+      margin-right: 0;
+    }
+  `,
 });
 
 // Because the component is used under multiple paths (/plugins and /admin/plugins) we need to get
@@ -158,3 +178,12 @@ const getNavModelId = (routeName?: string) => {
 
   return 'plugins';
 };
+
+function toDisplayMode(value: UrlQueryValue): PluginListDisplayMode {
+  switch (value) {
+    case PluginListDisplayMode.List:
+      return PluginListDisplayMode.List;
+    default:
+      return PluginListDisplayMode.Table;
+  }
+}

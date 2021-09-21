@@ -11,6 +11,11 @@ import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
+export enum PluginListDisplayMode {
+  Table = 'table',
+  List = 'list',
+}
+
 export enum PluginAdminRoutes {
   Home = 'plugins-home',
   Browse = 'plugins-browse',
