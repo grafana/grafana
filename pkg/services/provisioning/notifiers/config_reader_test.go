@@ -33,6 +33,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 	Convey("Testing notification as configuration", t, func() {
 		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secrets.SetupTestService(t)
 		setupBusHandlers(sqlStore)
 
 		for i := 1; i < 5; i++ {
@@ -56,7 +57,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		Convey("Can read correct properties", func() {
 			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{
-				secretsService: secrets.SetupTestService(t),
+				secretsService: secretsService,
 				log:            log.New("test logger"),
 			}
 
@@ -132,7 +133,6 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("One configured notification", func() {
 			Convey("no notification in database", func() {
-				secretsService := secrets.SetupTestService(t)
 				dc := newNotificationProvisioner(secretsService, logger)
 
 				err := dc.applyChanges(twoNotificationsConfig)
@@ -163,7 +163,6 @@ func TestNotificationAsConfig(t *testing.T) {
 				So(len(notificationsQuery.Result), ShouldEqual, 1)
 
 				Convey("should update one notification", func() {
-					secretsService := secrets.SetupTestService(t)
 					dc := newNotificationProvisioner(secretsService, logger)
 					err = dc.applyChanges(twoNotificationsConfig)
 					if err != nil {
@@ -187,7 +186,6 @@ func TestNotificationAsConfig(t *testing.T) {
 				})
 			})
 			Convey("Two notifications with is_default", func() {
-				secretsService := secrets.SetupTestService(t)
 				dc := newNotificationProvisioner(secretsService, logger)
 				err := dc.applyChanges(doubleNotificationsConfig)
 				Convey("should both be inserted", func() {
@@ -230,7 +228,6 @@ func TestNotificationAsConfig(t *testing.T) {
 				So(len(notificationsQuery.Result), ShouldEqual, 2)
 
 				Convey("should have two new notifications", func() {
-					secretsService := secrets.SetupTestService(t)
 					dc := newNotificationProvisioner(secretsService, logger)
 					err := dc.applyChanges(twoNotificationsConfig)
 					if err != nil {
@@ -264,7 +261,6 @@ func TestNotificationAsConfig(t *testing.T) {
 			err = sqlStore.CreateAlertNotificationCommand(&existingNotificationCmd)
 			So(err, ShouldBeNil)
 
-			secretsService := secrets.SetupTestService(t)
 			dc := newNotificationProvisioner(secretsService, logger)
 			err = dc.applyChanges(correctPropertiesWithOrgName)
 			if err != nil {
@@ -283,7 +279,6 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Config doesn't contain required field", func() {
-			secretsService := secrets.SetupTestService(t)
 			dc := newNotificationProvisioner(secretsService, logger)
 			err := dc.applyChanges(noRequiredFields)
 			So(err, ShouldNotBeNil)
@@ -297,7 +292,6 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Empty yaml file", func() {
 			Convey("should have not changed repo", func() {
-				secretsService := secrets.SetupTestService(t)
 				dc := newNotificationProvisioner(secretsService, logger)
 				err := dc.applyChanges(emptyFile)
 				if err != nil {
@@ -311,7 +305,6 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Broken yaml should return error", func() {
-			secretsService := secrets.SetupTestService(t)
 			reader := &configReader{
 				secretsService: secretsService,
 				log:            log.New("test logger"),
@@ -322,7 +315,6 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Skip invalid directory", func() {
-			secretsService := secrets.SetupTestService(t)
 			cfgProvider := &configReader{
 				secretsService: secretsService,
 				log:            log.New("test logger"),
@@ -336,7 +328,6 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Unknown notifier should return error", func() {
-			secretsService := secrets.SetupTestService(t)
 			cfgProvider := &configReader{
 				secretsService: secretsService,
 				log:            log.New("test logger"),
@@ -347,7 +338,6 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Read incorrect properties", func() {
-			secretsService := secrets.SetupTestService(t)
 			cfgProvider := &configReader{
 				secretsService: secretsService,
 				log:            log.New("test logger"),
