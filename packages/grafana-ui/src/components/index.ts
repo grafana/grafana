@@ -41,7 +41,7 @@ export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
-export { CodeEditor } from './Monaco/CodeEditorLazy';
+export { CodeEditor } from './Monaco/CodeEditor';
 export {
   Monaco,
   monacoTypes,

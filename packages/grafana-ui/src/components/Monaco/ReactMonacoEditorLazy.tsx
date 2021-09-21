@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack, LoadingPlaceholder } from '..';
-import { CodeEditorProps } from './types';
+// we only use import type so it will not load in the dependency
+import type { EditorProps } from '@monaco-editor/react';
 
-export const CodeEditor: React.FC<CodeEditorProps> = (props) => {
+export const ReactMonacoEditorLazy = (props: EditorProps) => {
   const { loading, error, dependency } = useAsyncDependency(
-    import(/* webpackChunkName: "code-editor" */ './CodeEditor')
+    import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
   );
 
   if (loading) {
@@ -15,13 +16,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   if (error) {
     return (
       <ErrorWithStack
-        title="Code editor failed to load"
+        title="React Monaco Editor failed to load"
         error={error}
         errorInfo={{ componentStack: error?.stack || '' }}
       />
     );
   }
 
-  const CodeEditor = dependency.default;
-  return <CodeEditor {...props} />;
+  const ReactMonacoEditor = dependency.ReactMonacoEditor;
+  return <ReactMonacoEditor {...props} />;
 };
