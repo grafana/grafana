@@ -289,52 +289,13 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
-  createTargetV2 = (
-    target: PromQuery,
-    type: 'instant' | 'range',
-    format?: 'table' | 'time_series',
-    multipleQueryTypes?: boolean
-  ): PromQuery => {
-    const refId = multipleQueryTypes && type !== 'range' ? `${target.refId}_${type}` : target.refId;
-    const resultFormat = format ?? target.format;
-
-    return {
-      ...target,
-      range: type === 'range' ? true : false,
-      instant: type === 'instant' ? true : false,
-      utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
-      format: resultFormat,
-      refId,
-    };
-  };
-
-  prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
-    const targets: PromQuery[] = [];
-
-    options.targets.forEach((target) => {
-      if (target.range) {
-        const targetRange = this.createTargetV2(target, 'range', 'time_series');
-        targets.push(targetRange);
-      }
-
-      if (target.instant) {
-        const multipleQueryTypes = target.range && target.instant;
-        const targetInstant = this.createTargetV2(target, 'instant', 'table', multipleQueryTypes);
-        targets.push(targetInstant);
-      }
-    });
-
-    return { ...options, targets };
-  };
-
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
     const shouldRunBackendQuery =
       this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
 
     if (shouldRunBackendQuery) {
-      const newOptions = this.prepareOptionsV2(options);
-      return super.query(newOptions).pipe(map((response) => transformV2(response, newOptions)));
+      return super.query(options).pipe(map((response) => transformV2(response, options)));
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(options.range.from, false);
