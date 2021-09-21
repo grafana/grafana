@@ -10,6 +10,6 @@ import (
 // updateDashboardACL updates a dashboard's ACL items.
 //
 // Stubbable by tests.
-var updateDashboardACL = func(s dashboards.Store, ctx context.Context, dashID int64, items []*models.DashboardAcl) error {
+var updateDashboardACL = func(ctx context.Context, s dashboards.Store, dashID int64, items []*models.DashboardAcl) error {
 	return s.UpdateDashboardACLCtx(ctx, dashID, items)
 }

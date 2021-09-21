@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	macaron "gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -12,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
@@ -113,7 +114,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := updateDashboardACL(hs.SQLStore, context.Background(), folder.Id, items); err != nil {
+	if err := updateDashboardACL(context.Background(), hs.SQLStore, folder.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
 			err = models.ErrFolderAclInfoMissing
 		}

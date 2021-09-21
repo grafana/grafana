@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
@@ -362,7 +363,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 					updateDashboardACL = origUpdateDashboardACL
 				})
 				var gotItems []*models.DashboardAcl
-				updateDashboardACL = func(_ dashboardifaces.Store, _ context.Context, _ int64, items []*models.DashboardAcl) error {
+				updateDashboardACL = func(_ context.Context, _ dashboardifaces.Store, _ int64, items []*models.DashboardAcl) error {
 					gotItems = items
 					return nil
 				}
@@ -387,7 +388,7 @@ func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 	t.Cleanup(func() {
 		updateDashboardACL = origUpdateDashboardACL
 	})
-	updateDashboardACL = func(_ dashboardifaces.Store, _ context.Context, dashID int64, items []*models.DashboardAcl) error {
+	updateDashboardACL = func(_ context.Context, _ dashboardifaces.Store, dashID int64, items []*models.DashboardAcl) error {
 		return nil
 	}
 
