@@ -107,7 +107,7 @@ func (srv AlertmanagerSrv) getDecryptedSecret(r *apimodels.PostableGrafanaReceiv
 		return "", err
 	}
 
-	decryptedValue, err := srv.secrets.Decrypt(decodeValue)
+	decryptedValue, err := srv.secrets.Decrypt(context.Background(), decodeValue)
 	if err != nil {
 		return "", err
 	}

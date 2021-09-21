@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -35,25 +36,28 @@ func TestService(t *testing.T) {
 	var ds *models.DataSource
 
 	t.Run("create datasource should encrypt the secure json data", func(t *testing.T) {
+		ctx := context.Background()
+
 		sjd := map[string]string{"password": "12345"}
 		cmd := models.AddDataSourceCommand{SecureJsonData: sjd}
 
-		err := s.AddDataSource(&cmd)
+		err := s.AddDataSource(ctx, &cmd)
 		require.NoError(t, err)
 
 		ds = cmd.Result
-		decrypted, err := s.SecretsService.DecryptJsonData(ds.SecureJsonData)
+		decrypted, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
 
 	t.Run("update datasource should encrypt the secure json data", func(t *testing.T) {
+		ctx := context.Background()
 		sjd := map[string]string{"password": "678910"}
 		cmd := models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, SecureJsonData: sjd}
-		err := s.UpdateDataSource(&cmd)
+		err := s.UpdateDataSource(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.SecretsService.DecryptJsonData(cmd.Result.SecureJsonData)
+		decrypted, err := s.SecretsService.DecryptJsonData(ctx, cmd.Result.SecureJsonData)
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
@@ -109,7 +113,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secrets.SetupTestService(t)
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		tlsCaCert, err := secretsService.Encrypt([]byte(caCert), secrets.WithoutScope())
+		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -151,16 +155,18 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
+		setting.SecretKey = "password"
+
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
 		secretsService := secrets.SetupTestService(t)
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		tlsClientCert, err := secretsService.Encrypt([]byte(clientCert), secrets.WithoutScope())
+		tlsClientCert, err := secretsService.Encrypt(context.Background(), []byte(clientCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
-		tlsClientKey, err := secretsService.Encrypt([]byte(clientKey), secrets.WithoutScope())
+		tlsClientKey, err := secretsService.Encrypt(context.Background(), []byte(clientKey), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -191,6 +197,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
+		setting.SecretKey = "password"
+
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
@@ -198,7 +206,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secrets.SetupTestService(t)
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		tlsCaCert, err := secretsService.Encrypt([]byte(caCert), secrets.WithoutScope())
+		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -266,7 +274,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secrets.SetupTestService(t)
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		encryptedData, err := secretsService.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
+		encryptedData, err := secretsService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -405,9 +413,11 @@ func TestService_DecryptedValue(t *testing.T) {
 		secretsService := secrets.SetupTestService(t)
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
-		encryptedJsonData, err := secretsService.EncryptJsonData(map[string]string{
-			"password": "password",
-		}, secrets.WithoutScope())
+		encryptedJsonData, err := secretsService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"password": "password",
+			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -423,9 +433,11 @@ func TestService_DecryptedValue(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		encryptedJsonData, err = secretsService.EncryptJsonData(map[string]string{
-			"password": "",
-		}, secrets.WithoutScope())
+		encryptedJsonData, err = secretsService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"password": "",
+			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds.SecureJsonData = encryptedJsonData
@@ -438,9 +450,11 @@ func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
 		secretsService := secrets.SetupTestService(t)
 
-		encryptedJsonData, err := secretsService.EncryptJsonData(map[string]string{
-			"password": "password",
-		}, secrets.WithoutScope())
+		encryptedJsonData, err := secretsService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"password": "password",
+			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -458,9 +472,11 @@ func TestService_DecryptedValue(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		ds.SecureJsonData, err = secretsService.EncryptJsonData(map[string]string{
-			"password": "",
-		}, secrets.WithoutScope())
+		ds.SecureJsonData, err = secretsService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"password": "",
+			}, secrets.WithoutScope())
 		ds.Updated = time.Now()
 		require.NoError(t, err)
 

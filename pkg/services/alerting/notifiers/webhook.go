@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -64,7 +65,7 @@ func NewWebHookNotifier(model *models.AlertNotification, fn alerting.GetDecrypte
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	password := fn(model.SecureSettings, "password", model.Settings.Get("password").MustString())
+	password := fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString())
 
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),

@@ -1,6 +1,7 @@
 package plugincontext
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"time"
@@ -119,7 +120,7 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 
 func (p *Provider) decryptSecureJsonData() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, _ := p.SecretsService.DecryptJsonData(m)
+		decryptedJsonData, _ := p.SecretsService.DecryptJsonData(context.Background(), m)
 		return decryptedJsonData
 	}
 }

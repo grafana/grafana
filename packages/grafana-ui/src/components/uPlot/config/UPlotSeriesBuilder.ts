@@ -17,7 +17,7 @@ import {
   LineConfig,
   LineInterpolation,
   PointsConfig,
-  PointVisibility,
+  VisibilityMode,
 } from '@grafana/schema';
 import { PlotConfigBuilder } from '../types';
 import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
@@ -118,13 +118,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       if (drawStyle === GraphDrawStyle.Points) {
         pointsConfig.points!.show = true;
       } else {
-        if (showPoints === PointVisibility.Auto) {
+        if (showPoints === VisibilityMode.Auto) {
           if (drawStyle === GraphDrawStyle.Bars) {
             pointsConfig.points!.show = false;
           }
-        } else if (showPoints === PointVisibility.Never) {
+        } else if (showPoints === VisibilityMode.Never) {
           pointsConfig.points!.show = false;
-        } else if (showPoints === PointVisibility.Always) {
+        } else if (showPoints === VisibilityMode.Always) {
           pointsConfig.points!.show = true;
         }
       }

@@ -46,7 +46,7 @@ type OpsgenieNotifier struct {
 func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template, fn alerting.GetDecryptedValueFn) (*OpsgenieNotifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := fn(model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
+	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}

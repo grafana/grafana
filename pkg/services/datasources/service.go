@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -64,9 +65,9 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	s.Bus.AddHandler(s.GetDataSources)
 	s.Bus.AddHandler(s.GetDataSourcesByType)
 	s.Bus.AddHandler(s.GetDataSource)
-	s.Bus.AddHandler(s.AddDataSource)
+	s.Bus.AddHandlerCtx(s.AddDataSource)
 	s.Bus.AddHandler(s.DeleteDataSource)
-	s.Bus.AddHandler(s.UpdateDataSource)
+	s.Bus.AddHandlerCtx(s.UpdateDataSource)
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	return s
@@ -84,9 +85,9 @@ func (s *Service) GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) 
 	return s.SQLStore.GetDataSourcesByType(query)
 }
 
-func (s *Service) AddDataSource(cmd *models.AddDataSourceCommand) error {
+func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(cmd.SecureJsonData, secrets.WithoutScope())
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -98,9 +99,9 @@ func (s *Service) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 	return s.SQLStore.DeleteDataSource(cmd)
 }
 
-func (s *Service) UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(cmd.SecureJsonData, secrets.WithoutScope())
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -169,7 +170,7 @@ func (s *Service) DecryptedValues(ds *models.DataSource) map[string]string {
 		return item.json
 	}
 
-	json, err := s.SecretsService.DecryptJsonData(ds.SecureJsonData)
+	json, err := s.SecretsService.DecryptJsonData(context.Background(), ds.SecureJsonData)
 	if err != nil {
 		return map[string]string{}
 	}

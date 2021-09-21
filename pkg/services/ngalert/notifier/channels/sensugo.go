@@ -42,7 +42,7 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, 
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
 	}
 
-	apikey := fn(model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
+	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
 	if apikey == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
 	}

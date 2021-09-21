@@ -6,13 +6,12 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 // NotificationTestCommand initiates an test
@@ -31,7 +30,7 @@ var (
 	logger = log.New("alerting.testnotification")
 )
 
-func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Context, cmd *NotificationTestCommand) error {
+func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
 	notifier := newNotificationService(nil, nil)
 
 	model := &models.AlertNotification{
@@ -53,7 +52,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Conte
 
 		if query.Result.SecureSettings != nil {
 			var err error
-			secureSettingsMap, err = s.SecretsService.DecryptJsonData(query.Result.SecureSettings)
+			secureSettingsMap, err = s.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
 			if err != nil {
 				return err
 			}
@@ -65,7 +64,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(_ context.Conte
 	}
 
 	var err error
-	model.SecureSettings, err = s.SecretsService.EncryptJsonData(secureSettingsMap, secrets.WithoutScope())
+	model.SecureSettings, err = s.SecretsService.EncryptJsonData(ctx, secureSettingsMap, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}

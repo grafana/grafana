@@ -12,8 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
-
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -22,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,7 +86,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		setting.SecretKey = "password" //nolint:goconst
 
 		secretsService := secrets.SetupTestService(t)
-		key, err := secretsService.Encrypt([]byte("123"), secrets.WithoutScope())
+		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -230,7 +229,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 		secretsService := secrets.SetupTestService(t)
-		key, err := secretsService.Encrypt([]byte("123"), secrets.WithoutScope())
+		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -819,6 +818,8 @@ const (
 )
 
 func createAuthTest(t *testing.T, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+	ctx := context.Background()
+
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -837,9 +838,11 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 		message = fmt.Sprintf("%v should add username and password", dsType)
 		test.datasource.User = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(map[string]string{
-				"password": "password",
-			}, secrets.WithoutScope())
+			test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(
+				ctx,
+				map[string]string{
+					"password": "password",
+				}, secrets.WithoutScope())
 		} else {
 			test.datasource.Password = "password"
 		}
@@ -848,9 +851,11 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 		test.datasource.BasicAuth = true
 		test.datasource.BasicAuthUser = "user"
 		if useSecureJsonData {
-			test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(map[string]string{
-				"basicAuthPassword": "password",
-			}, secrets.WithoutScope())
+			test.datasource.SecureJsonData, err = secretsService.EncryptJsonData(
+				ctx,
+				map[string]string{
+					"basicAuthPassword": "password",
+				}, secrets.WithoutScope())
 		} else {
 			test.datasource.BasicAuthPassword = "password"
 		}

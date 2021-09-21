@@ -63,7 +63,7 @@ func NewAlertmanagerNotifier(model *models.AlertNotification, fn alerting.GetDec
 		}
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := fn(model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
+	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
 
 	return &AlertmanagerNotifier{
 		NotifierBase:      NewNotifierBase(model),

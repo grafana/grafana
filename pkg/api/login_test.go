@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -123,7 +124,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	setting.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, err := hs.SecretsService.Encrypt([]byte(oauthError.Error()), secrets.WithoutScope())
+	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
 	require.NoError(t, err)
 	expCookiePath := "/"
 	if len(setting.AppSubUrl) > 0 {

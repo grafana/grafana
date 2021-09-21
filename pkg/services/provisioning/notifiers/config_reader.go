@@ -1,18 +1,18 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"gopkg.in/yaml.v2"
 )
 
@@ -160,6 +160,7 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 
 		for _, notification := range notifications[i].Notifications {
 			encryptedSecureSettings, err := cr.secretsService.EncryptJsonData(
+				context.Background(),
 				notification.SecureSettings,
 				secrets.WithoutScope(),
 			)

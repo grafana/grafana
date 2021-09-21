@@ -310,12 +310,12 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return "", false
 	}
 
-	decryptedError, err := hs.SecretsService.Decrypt(decoded)
+	decryptedError, err := hs.SecretsService.Decrypt(ctx.Req.Context(), decoded)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.SecretsService.Encrypt([]byte(value), secrets.WithoutScope())
+	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return err
 	}

@@ -6,11 +6,10 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -31,7 +30,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			return
 		}
 
-		secureJsonData, err := secretsService.DecryptJsonData(query.Result.SecureJsonData)
+		secureJsonData, err := secretsService.DecryptJsonData(ctx.Req.Context(), query.Result.SecureJsonData)
 		if err != nil {
 			ctx.JsonApiErr(500, "Failed to decrypt plugin settings", err)
 			return

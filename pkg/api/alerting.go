@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -290,7 +291,7 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) response.Response {
 	cmd.OrgId = c.OrgId
 
-	err := hs.fillWithSecureSettingsData(&cmd)
+	err := hs.fillWithSecureSettingsData(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update alert notification", err)
 	}
@@ -318,7 +319,7 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext, cmd mod
 	cmd.OrgId = c.OrgId
 	cmd.Uid = macaron.Params(c.Req)[":uid"]
 
-	err := hs.fillWithSecureSettingsDataByUID(&cmd)
+	err := hs.fillWithSecureSettingsDataByUID(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update alert notification", err)
 	}
@@ -342,7 +343,7 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext, cmd mod
 	return response.JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
-func (hs *HTTPServer) fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) error {
+func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
@@ -352,11 +353,11 @@ func (hs *HTTPServer) fillWithSecureSettingsData(cmd *models.UpdateAlertNotifica
 		Id:    cmd.Id,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(ctx, query); err != nil {
 		return err
 	}
 
-	secureSettings, err := hs.SecretsService.DecryptJsonData(query.Result.SecureSettings)
+	secureSettings, err := hs.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
 	if err != nil {
 		return err
 	}
@@ -370,7 +371,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(cmd *models.UpdateAlertNotifica
 	return nil
 }
 
-func (hs *HTTPServer) fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
@@ -380,11 +381,11 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNot
 		Uid:   cmd.Uid,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(ctx, query); err != nil {
 		return err
 	}
 
-	secureSettings, err := hs.SecretsService.DecryptJsonData(query.Result.SecureSettings)
+	secureSettings, err := hs.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
 	if err != nil {
 		return err
 	}

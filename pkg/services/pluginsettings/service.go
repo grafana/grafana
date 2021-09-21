@@ -1,13 +1,13 @@
 package pluginsettings
 
 import (
+	"context"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -40,7 +40,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	}
 
 	s.Bus.AddHandler(s.GetPluginSettingById)
-	s.Bus.AddHandler(s.UpdatePluginSetting)
+	s.Bus.AddHandlerCtx(s.UpdatePluginSetting)
 	s.Bus.AddHandler(s.UpdatePluginSettingVersion)
 
 	return s
@@ -50,9 +50,9 @@ func (s *Service) GetPluginSettingById(query *models.GetPluginSettingByIdQuery) 
 	return s.SQLStore.GetPluginSettingById(query)
 }
 
-func (s *Service) UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
+func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(cmd.SecureJsonData, secrets.WithoutScope())
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
 		return item.json
 	}
 
-	json, err := s.SecretsService.DecryptJsonData(ps.SecureJsonData)
+	json, err := s.SecretsService.DecryptJsonData(context.Background(), ps.SecureJsonData)
 	if err != nil {
 		return map[string]string{}
 	}

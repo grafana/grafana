@@ -51,7 +51,7 @@ type QueryModel struct {
 	RangeQuery     bool   `json:"range"`
 	InstantQuery   bool   `json:"instant"`
 	IntervalFactor int64  `json:"intervalFactor"`
-	OffsetSec      int64  `json:"offsetSec"`
+	UtcOffsetSec   int64  `json:"utcOffsetSec"`
 }
 
 type Service struct {
@@ -163,23 +163,28 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		var results model.Value
+		var response model.Value
 
 		switch query.QueryType {
 		case Range:
-			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
+			response, _, err = client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
-
+		case Instant:
+			response, _, err = client.Query(ctx, query.Expr, query.End)
+			if err != nil {
+				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+			}
 		default:
 			return &result, fmt.Errorf("unknown Query type detected %#v", query.QueryType)
 		}
 
-		frame, err := parseResponse(results, query)
+		frame, err := parseResponse(response, query)
 		if err != nil {
 			return &result, err
 		}
+
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frame,
 		}
@@ -228,21 +233,29 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, e
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
+	var legend string
+
 	if query.LegendFormat == "" {
-		return metric.String()
+		legend = metric.String()
+	} else {
+		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+			labelName := strings.Replace(string(in), "{{", "", 1)
+			labelName = strings.Replace(labelName, "}}", "", 1)
+			labelName = strings.TrimSpace(labelName)
+			if val, exists := metric[model.LabelName(labelName)]; exists {
+				return []byte(val)
+			}
+			return []byte{}
+		})
+		legend = string(result)
 	}
 
-	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
-		if val, exists := metric[model.LabelName(labelName)]; exists {
-			return []byte(val)
-		}
-		return []byte{}
-	})
+	// If legend is empty brackets, use query expression
+	if legend == "{}" {
+		legend = query.Expr
+	}
 
-	return string(result)
+	return legend
 }
 
 func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *DatasourceInfo) ([]*PrometheusQuery, error) {
@@ -291,18 +304,31 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
 		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
-		queryType := Range
+		if model.RangeQuery && model.InstantQuery {
+			return nil, fmt.Errorf("the provided query is not valid, expected only one of `range` and `instant` to be true")
+		}
 
-		// Align query range to step. It rounds start and end down to a multiple of step.
-		start := int64(math.Floor((float64(query.TimeRange.From.Unix()+model.OffsetSec)/interval.Seconds()))*interval.Seconds() - float64(model.OffsetSec))
-		end := int64(math.Floor((float64(query.TimeRange.To.Unix()+model.OffsetSec)/interval.Seconds()))*interval.Seconds() - float64(model.OffsetSec))
+		var queryType PrometheusQueryType
+		var start time.Time
+		var end time.Time
+
+		if model.InstantQuery {
+			queryType = Instant
+			start = query.TimeRange.From
+			end = query.TimeRange.To
+		} else {
+			queryType = Range
+			// Align query range to step. It rounds start and end down to a multiple of step.
+			start = time.Unix(int64(math.Floor((float64(query.TimeRange.From.Unix()+model.UtcOffsetSec)/interval.Seconds()))*interval.Seconds()-float64(model.UtcOffsetSec)), 0)
+			end = time.Unix(int64(math.Floor((float64(query.TimeRange.To.Unix()+model.UtcOffsetSec)/interval.Seconds()))*interval.Seconds()-float64(model.UtcOffsetSec)), 0)
+		}
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
 			Step:         interval,
 			LegendFormat: model.LegendFormat,
-			Start:        time.Unix(start, 0),
-			End:          time.Unix(end, 0),
+			Start:        start,
+			End:          end,
 			RefId:        query.RefID,
 			QueryType:    queryType,
 		})
@@ -315,27 +341,21 @@ func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, erro
 	frames := data.Frames{}
 
 	matrix, ok := value.(model.Matrix)
-	if !ok {
-		return frames, fmt.Errorf("unsupported result format: %q", value.Type().String())
+	if ok {
+		matrixFrames := matrixToDataFrames(matrix, query)
+		frames = append(frames, matrixFrames...)
 	}
 
-	for _, v := range matrix {
-		name := formatLegend(v.Metric, query)
-		tags := make(map[string]string, len(v.Metric))
-		timeVector := make([]time.Time, 0, len(v.Values))
-		values := make([]float64, 0, len(v.Values))
+	vector, ok := value.(model.Vector)
+	if ok {
+		vectorFrames := vectorToDataFrames(vector, query)
+		frames = append(frames, vectorFrames...)
+	}
 
-		for k, v := range v.Metric {
-			tags[string(k)] = string(v)
-		}
-
-		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
-			values = append(values, float64(k.Value))
-		}
-		frames = append(frames, data.NewFrame(name,
-			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+	scalar, ok := value.(*model.Scalar)
+	if ok {
+		scalarFrames := scalarToDataFrames(scalar)
+		frames = append(frames, scalarFrames...)
 	}
 
 	return frames, nil
@@ -369,4 +389,56 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 
 	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
 	return rateInterval
+}
+
+func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames {
+	frames := data.Frames{}
+
+	for _, v := range matrix {
+		tags := make(map[string]string, len(v.Metric))
+		timeVector := make([]time.Time, 0, len(v.Values))
+		values := make([]float64, 0, len(v.Values))
+		for k, v := range v.Metric {
+			tags[string(k)] = string(v)
+		}
+		for _, k := range v.Values {
+			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			values = append(values, float64(k.Value))
+		}
+		name := formatLegend(v.Metric, query)
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("Time", nil, timeVector),
+			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+	}
+
+	return frames
+}
+
+func scalarToDataFrames(scalar *model.Scalar) data.Frames {
+	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
+	values := []float64{float64(scalar.Value)}
+	name := fmt.Sprintf("%g", values[0])
+	frames := data.Frames{data.NewFrame(name,
+		data.NewField("Time", nil, timeVector),
+		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))}
+
+	return frames
+}
+
+func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
+	frames := data.Frames{}
+	for _, v := range vector {
+		name := formatLegend(v.Metric, query)
+		tags := make(map[string]string, len(v.Metric))
+		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
+		values := []float64{float64(v.Value)}
+		for k, v := range v.Metric {
+			tags[string(k)] = string(v)
+		}
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("Time", nil, timeVector),
+			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+	}
+
+	return frames
 }
