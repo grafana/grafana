@@ -404,7 +404,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         const value: FacettableValue = { name: labelValue };
         // Adding type/help text to metrics
         if (name === METRIC_LABEL && metricsMetadata) {
-          const meta = metricsMetadata[labelValue]?.[0];
+          const meta = metricsMetadata[labelValue];
           if (meta) {
             value.details = `(${meta.type}) ${meta.help}`;
           }
