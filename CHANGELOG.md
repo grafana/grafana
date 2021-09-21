@@ -132,6 +132,17 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Grafana UI:** Fix TS error property `css` is missing in type. [#38078](https://github.com/grafana/grafana/pull/38078), [@jackw](https://github.com/jackw)
 
 <!-- 8.2.0-beta1 END -->
+
+<!-- 8.1.5 START -->
+
+# 8.1.5 (2021-09-21)
+
+### Bug fixes
+
+- **BarChart:** Fixes panel error that happens on second refresh. [#39304](https://github.com/grafana/grafana/pull/39304), [@DanCech](https://github.com/DanCech)
+
+<!-- 8.1.5 END -->
+
 <!-- 8.1.4 START -->
 
 # 8.1.4 (2021-09-16)
