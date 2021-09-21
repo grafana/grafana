@@ -90,14 +90,12 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
-        category: ['Table footer'],
         path: 'showFooter',
         name: 'Show Footer',
         description: "To display table's footer or not to display",
         defaultValue: defaultPanelOptions.showFooter,
       })
       .addCustomEditor({
-        category: ['Table footer'],
         id: 'footer.reducer',
         path: 'footer.reducer',
         name: 'Calculation',
@@ -110,7 +108,6 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         path: 'footer.fields',
         name: 'Fields',
         description: 'Select the fields that should be calculated',
-        category: ['Table footer'],
         settings: {
           allowCustomValue: false,
           options: [],
