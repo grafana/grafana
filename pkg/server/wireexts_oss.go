@@ -49,6 +49,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	ossencryption.ProvideService,
 	wire.Bind(new(encryption.Service), new(*ossencryption.Service)),
+	models.ProvideOSSSearchUserFilter,
+	wire.Bind(new(models.SearchUserFilter), new(*models.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 )

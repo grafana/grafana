@@ -608,14 +608,17 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 		whereParams = append(whereParams, query.AuthModule)
 	}
 
-	if query.Filter == models.ActiveLast30Days {
-		activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
-		whereConditions = append(whereConditions, `last_seen_at > ?`)
-		whereParams = append(whereParams, activeUserDeadlineDate)
-	}
-
 	if len(whereConditions) > 0 {
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+	}
+
+	for _, filter := range query.Filters {
+		if jc := filter.JoinCondition(); jc != nil {
+			sess.Join(jc.Operator, jc.Table, jc.Params)
+		}
+		if wc := filter.WhereCondition(); wc != nil {
+			sess.Where(wc.Condition, wc.Params)
+		}
 	}
 
 	if query.Limit > 0 {
