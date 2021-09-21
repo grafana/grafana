@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { StoreState } from '../../../../types';
 
-export function useExternalAmSelector() {
+export function useExternalAmSelector(): Array<{ url: string; status: string }> {
   const activeAlertmanagers = useSelector(
     (state: StoreState) => state.unifiedAlerting.externalAlertManagers.activeAlertmanagers.result?.data
   );
@@ -10,20 +10,24 @@ export function useExternalAmSelector() {
   );
 
   if (!activeAlertmanagers || !alertmanagerConfig) {
-    return [[], []];
+    return [{ url: '', status: '' }];
   }
 
-  const enabledAlertmanagers: string[] = [];
-  const pendingAlertmanagers: string[] = [];
-  const droppedAlertmanagers: string[] = activeAlertmanagers?.droppedAlertManagers.map((am) => am.url);
+  const enabledAlertmanagers: Array<{ url: string; status: string }> = [];
+  const droppedAlertmanagers: Array<{ url: string; status: string }> = activeAlertmanagers?.droppedAlertManagers.map(
+    (am) => ({
+      url: am.url,
+      status: 'dropped',
+    })
+  );
 
-  for (const alertmanager in activeAlertmanagers.result.data.activeAlertManagers) {
-    if (alertmanagerConfig.includes(alertmanager)) {
-      enabledAlertmanagers.push(alertmanager);
+  for (const alertmanager of activeAlertmanagers.activeAlertManagers) {
+    if (alertmanagerConfig.includes(alertmanager.url)) {
+      enabledAlertmanagers.push({ url: alertmanager.url, status: 'active' });
     } else {
-      pendingAlertmanagers.push(alertmanager);
+      enabledAlertmanagers.push({ url: alertmanager.url, status: 'pending' });
     }
   }
 
-  return [enabledAlertmanagers, pendingAlertmanagers, droppedAlertmanagers];
+  return [...enabledAlertmanagers, ...droppedAlertmanagers];
 }
