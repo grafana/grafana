@@ -16,8 +16,14 @@ func NewManagedStreamOutput(managedStream *managedstream.Runner) *ManagedStreamO
 	return &ManagedStreamOutput{managedStream: managedStream}
 }
 
-func (l *ManagedStreamOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
-	stream, err := l.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
+const OutputTypeManagedStream = "managedStream"
+
+func (out *ManagedStreamOutput) Type() string {
+	return OutputTypeManagedStream
+}
+
+func (out *ManagedStreamOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+	stream, err := out.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		return nil, err
