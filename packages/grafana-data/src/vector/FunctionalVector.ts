@@ -27,7 +27,7 @@ export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T
     return vectorator(this).map(transform);
   }
 
-  filter<V>(predicate: (item: T) => V) {
+  filter(predicate: (item: T) => boolean): T[] {
     return vectorator(this).filter(predicate);
   }
 
@@ -65,7 +65,8 @@ export function vectorator<T>(vector: Vector<T>) {
       return result;
     },
 
-    filter<V>(predicate: (item: T) => V) {
+    /** Add a predicate where you return true if it should *keep* the value */
+    filter(predicate: (item: T) => boolean): T[] {
       const result: T[] = [];
       for (const val of this) {
         if (predicate(val)) {

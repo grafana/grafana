@@ -471,9 +471,10 @@ Google Tag Manager ID, only enabled if you enter an ID here.
 ### application_insights_connection_string
 
 If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
-		
+
 ### application_insights_endpoint_url
-		Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details,  refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
+
+    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -1118,9 +1119,51 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
-### admin_config_poll_interval_seconds
+### admin_config_poll_interval
 
-Specify the frequency of polling for admin config changes. The default value is `60`.
+Specify the frequency of polling for admin config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### alertmanager_config_poll_interval
+
+Specify the frequency of polling for Alertmanager config changes. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_listen_address
+
+Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+
+### ha_advertise_address
+
+Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+
+### ha_peers
+
+Comma-separated list of initial instances (in a format of host:port) that will form the HA cluster. Configuring this setting will enable High Availability mode for alerting.
+
+### ha_peer_timeout
+
+Time to wait for an instance to send a notification via the Alertmanager. In HA, each Grafana instance will
+be assigned a position (e.g. 0, 1). We then multiply this position with the timeout to indicate how long should
+each instance wait before sending the notification to take into account replication lag. The default value is `15s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_gossip_interval
+
+The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated
+across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_push_pull_interval
+
+The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds
+across larger clusters at the expense of increased bandwidth usage. The default value is `60s`.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
 <hr>
 
@@ -1582,7 +1625,7 @@ ha_engine_address = 127.0.0.1:6379
 
 ## [plugin.grafana-image-renderer]
 
-For more information, refer to [Image rendering]({{< relref "image_rendering.md" >}}).
+For more information, refer to [Image rendering]({{< relref "../image-rendering/" >}}).
 
 ### rendering_timezone
 
@@ -1618,7 +1661,7 @@ It can be useful to set this to `true` when troubleshooting.
 
 ### rendering_args
 
-Additional arguments to pass to the headless browser instance. Default is --no-sandbox. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
+Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found at (https://peter.sh/experiments/chromium-command-line-switches/). Separate multiple arguments with commas.
 
 ### rendering_chrome_bin
 

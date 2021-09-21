@@ -357,7 +357,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         value,
         ...(condition && { condition }),
       }))
-      .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
+      .filter((item) => item.value);
 
     const filterArray = flatten(
       completeFilter.map(({ key, operator, value, condition }: Filter) => [

@@ -25,7 +25,7 @@ Panel: {
                 PanelOptions: {
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
-                    showValue: ui.BarValueVisibility
+                    showValue: ui.VisibilityMode
                     rowHeight: number
                     colWidth?: number
                     alignValue: "center" | *"left" | "right"
