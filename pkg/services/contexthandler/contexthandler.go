@@ -229,10 +229,11 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		)
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
 		return true
+	} else {
+		reqContext.SignedInUser = query.Result
 	}
 
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = query.Result
 	return true
 }
 
