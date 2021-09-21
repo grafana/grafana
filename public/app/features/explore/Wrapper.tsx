@@ -40,7 +40,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
   static contextType = ReactReduxContext;
-  private unsubscribe: () => void;
+  private unsubscribe = () => {};
 
   componentWillUnmount() {
     this.props.resetExploreAction({});
