@@ -101,6 +101,73 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	}
 }
 
+func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	migrationID := "update dashboard_uid and panel_id from existing annotations"
+	_, migrationRun := logs[migrationID]
+	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
+	undoMigrationID := "undo " + migrationID
+
+	if ngEnabled && !migrationRun {
+		// If ngalert is enabled and the migration has not been run then run it.
+		mg.AddMigration(migrationID, &updateDashboardUIDPanelIDMigration{})
+	} else if !ngEnabled && migrationRun {
+		// If ngalert is disabled and the migration has been run then remove it
+		// from the migration log so it will run if ngalert is re-enabled.
+		mg.AddMigration(undoMigrationID, &clearMigrationEntry{
+			migrationID: migrationID,
+		})
+	}
+}
+
+// updateDashboardUIDPanelIDMigration sets the dashboard_uid and panel_id columns
+// from the __dashboardUid__ and __panelId__ annotations.
+type updateDashboardUIDPanelIDMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *updateDashboardUIDPanelIDMigration) SQL(_ migrator.Dialect) string {
+	return "set dashboard_uid and panel_id migration"
+}
+
+func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var results []struct {
+		ID          int64             `xorm:"id"`
+		Annotations map[string]string `xorm:"annotations"`
+	}
+	if err := sess.SQL(`SELECT id, annotations FROM alert_rule`).Find(&results); err != nil {
+		return fmt.Errorf("failed to get annotations for all alert rules: %w", err)
+	}
+	for _, next := range results {
+		var (
+			dashboardUID *string
+			panelID      *int64
+		)
+		if s, ok := next.Annotations["__dashboardUid__"]; ok {
+			dashboardUID = &s
+		}
+		if s, ok := next.Annotations["__panelId__"]; ok {
+			i, err := strconv.ParseInt(s, 10, 64)
+			if err != nil {
+				return fmt.Errorf("the __panelId__ annotation does not contain a valid Panel ID: %w", err)
+			}
+			panelID = &i
+		}
+		if _, err := sess.Exec(`UPDATE alert_rule SET dashboard_uid = ?, panel_id = ? WHERE id = ?`,
+			dashboardUID,
+			panelID,
+			next.ID); err != nil {
+			return fmt.Errorf("failed to set dashboard_uid and panel_id for alert rule: %w", err)
+		}
+	}
+	return nil
+}
+
 // clearMigrationEntry removes an entry fromt the migration_log table.
 // This migration is not recorded in the migration_log so that it can re-run several times.
 type clearMigrationEntry struct {
