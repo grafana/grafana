@@ -868,41 +868,90 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	})
 }
 
+type configInfo struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Example     interface{} `json:"example,omitempty"`
+}
+
 // HandlePipelineEntitiesListHTTP ...
 func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"outputs": []struct {
-			Type string `json:"type"`
-		}{
-			{Type: pipeline.OutputTypeManagedStream},
-			{Type: pipeline.OutputTypeMultiple},
-			{Type: pipeline.OutputTypeConditional},
-			{Type: pipeline.OutputTypeRedirect},
-			{Type: pipeline.OutputTypeThreshold},
-			{Type: pipeline.OutputTypeChangeLog},
-			{Type: pipeline.OutputTypeRemoteWrite},
+		"subscribers": []configInfo{
+			{
+				Type:        pipeline.SubscriberTypeBuiltin,
+				Description: "list the fields that should be removed",
+				// Example:     pipeline.Bu{},
+			},
+			{
+				Type:        pipeline.SubscriberTypeManagedStream,
+				Description: "list the fields that should be removed",
+			},
+			{
+				Type: pipeline.SubscriberTypeMultiple,
+			},
 		},
-		"converters": []struct {
-			Type string `json:"type"`
-		}{
-			{Type: pipeline.ConverterTypeJsonAuto},
-			{Type: pipeline.ConverterTypeJsonExact},
-			{Type: pipeline.ConverterTypeInfluxAuto},
-			{Type: pipeline.ConverterTypeJsonFrame},
+		"outputs": []configInfo{
+			{
+				Type:        pipeline.OutputTypeManagedStream,
+				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+				Example:     pipeline.ManagedStreamOutputConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeMultiple,
+				Description: "Send the output to multiple destinations",
+				Example:     pipeline.MultipleOutputterConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeConditional,
+				Description: "send to an output depending on frame values",
+				Example:     pipeline.ConditionalOutputConfig{},
+			},
+			{
+				Type: pipeline.OutputTypeRedirect,
+			},
+			{
+				Type: pipeline.OutputTypeThreshold,
+			},
+			{
+				Type: pipeline.OutputTypeChangeLog,
+			},
+			{
+				Type: pipeline.OutputTypeRemoteWrite,
+			},
 		},
-		"processors": []struct {
-			Type string `json:"type"`
-		}{
-			{Type: pipeline.ProcessorTypeKeepFields},
-			{Type: pipeline.ProcessorTypeDropFields},
-			{Type: pipeline.ProcessorTypeMultiple},
+		"converters": []configInfo{
+			{
+				Type: pipeline.ConverterTypeJsonAuto,
+			},
+			{
+				Type: pipeline.ConverterTypeJsonExact,
+			},
+			{
+				Type:        pipeline.ConverterTypeInfluxAuto,
+				Description: "accept influx line protocol",
+				Example:     pipeline.AutoInfluxConverterConfig{},
+			},
+			{
+				Type: pipeline.ConverterTypeJsonFrame,
+			},
 		},
-		"subscribers": []struct {
-			Type string `json:"type"`
-		}{
-			{Type: pipeline.SubscriberTypeBuiltin},
-			{Type: pipeline.SubscriberTypeManagedStream},
-			{Type: pipeline.SubscriberTypeMultiple},
+		"processors": []configInfo{
+			{
+				Type:        pipeline.ProcessorTypeKeepFields,
+				Description: "list the fields that should stay",
+				Example:     pipeline.KeepFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeDropFields,
+				Description: "list the fields that should be removed",
+				Example:     pipeline.DropFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeMultiple,
+				Description: "apply multiplie processors",
+				Example:     pipeline.MultipleProcessorConfig{},
+			},
 		},
 	})
 }
