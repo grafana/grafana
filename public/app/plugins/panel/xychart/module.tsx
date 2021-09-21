@@ -3,7 +3,6 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { defaultScatterConfig, XYChartOptions, ScatterFieldConfig } from './models.gen';
 import { getScatterFieldConfig } from './config';
-import { XYDimsEditor } from './XYDimsEditor';
 import { ExplicitEditor } from './ExplicitEditor';
 // import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 
@@ -21,13 +20,6 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
             { value: 'explicit', label: 'Explicit' },
           ],
         },
-      })
-      .addCustomEditor({
-        id: 'xyPlotConfig',
-        path: 'dims',
-        name: 'Series',
-        editor: XYDimsEditor,
-        showIf: (cfg) => cfg.mode === 'xy',
       })
       .addCustomEditor({
         id: 'yyExplicit',
