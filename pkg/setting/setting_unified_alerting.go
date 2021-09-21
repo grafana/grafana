@@ -11,12 +11,17 @@ import (
 )
 
 const (
-	AlertmanagerDefaultClusterAddr          = "0.0.0.0:9094"
-	AlertmanagerDefaultPeerTimeout          = 15 * time.Second
-	AlertmanagerDefaultGossipInterval       = cluster.DefaultGossipInterval
-	AlertmanagerDefaultPushPullInterval     = cluster.DefaultPushPullInterval
-	SchedulerDefaultAdminConfigPollInterval = 60 * time.Second
-	AlertmanagerDefaultConfigPollInterval   = 60 * time.Second
+	alertmanagerDefaultClusterAddr                = "0.0.0.0:9094"
+	alertmanagerDefaultPeerTimeout                = 15 * time.Second
+	alertmanagerDefaultGossipInterval             = cluster.DefaultGossipInterval
+	alertmanagerDefaultPushPullInterval           = cluster.DefaultPushPullInterval
+	schedulerDefaultAdminConfigPollInterval       = 60 * time.Second
+	alertmanagerDefaultConfigPollInterval         = 60 * time.Second
+	schedulerDefaultMaxAttempts             int64 = 3
+	schedulerDefaultLegacyMinInterval       int64 = 1
+	schedulerDefaultMinInterval             int64 = 10
+	evaluatorDefaultEvaluationTimeoutSec    int64 = 30
+	schedulereDefaultExecuteAlerts          bool  = true
 )
 
 type UnifiedAlertingSettings struct {
@@ -38,27 +43,27 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
 	var err error
-	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (SchedulerDefaultAdminConfigPollInterval).String()))
+	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
 	if err != nil {
 		return err
 	}
-	uaCfg.AlertmanagerConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "alertmanager_config_poll_interval", (AlertmanagerDefaultConfigPollInterval).String()))
+	uaCfg.AlertmanagerConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "alertmanager_config_poll_interval", (alertmanagerDefaultConfigPollInterval).String()))
 	if err != nil {
 		return err
 	}
-	uaCfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (AlertmanagerDefaultPeerTimeout).String()))
+	uaCfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (alertmanagerDefaultPeerTimeout).String()))
 	if err != nil {
 		return err
 	}
-	uaCfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (AlertmanagerDefaultGossipInterval).String()))
+	uaCfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (alertmanagerDefaultGossipInterval).String()))
 	if err != nil {
 		return err
 	}
-	uaCfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (AlertmanagerDefaultPushPullInterval).String()))
+	uaCfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (alertmanagerDefaultPushPullInterval).String()))
 	if err != nil {
 		return err
 	}
-	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(AlertmanagerDefaultClusterAddr)
+	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(alertmanagerDefaultClusterAddr)
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
@@ -71,29 +76,29 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	alerting := iniFile.Section("alerting")
 
-	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(defaultAlertingExecuteAlerts)
+	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
 	if uaExecuteAlerts { // true by default
-		uaExecuteAlerts = alerting.Key("execute_alerts").MustBool(defaultAlertingExecuteAlerts)
+		uaExecuteAlerts = alerting.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
 	}
 	uaCfg.ExecuteAlerts = uaExecuteAlerts
 
 	// if the unified alerting options equal the defaults, apply the respective legacy one
-	uaEvaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(defaultAlertingEvaluationTimeoutSec)
-	if uaEvaluationTimeoutSeconds == defaultAlertingEvaluationTimeoutSec {
-		uaEvaluationTimeoutSeconds = alerting.Key("evaluation_timeout_seconds").MustInt64(defaultAlertingEvaluationTimeoutSec)
+	uaEvaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(evaluatorDefaultEvaluationTimeoutSec)
+	if uaEvaluationTimeoutSeconds == evaluatorDefaultEvaluationTimeoutSec {
+		uaEvaluationTimeoutSeconds = alerting.Key("evaluation_timeout_seconds").MustInt64(evaluatorDefaultEvaluationTimeoutSec)
 	}
 	uaCfg.EvaluationTimeout = time.Second * time.Duration(uaEvaluationTimeoutSeconds)
 
-	uaMaxAttempts := ua.Key("max_attempts").MustInt64(defaultAlertingMaxAttempts)
-	if uaMaxAttempts == defaultAlertingMaxAttempts {
-		uaMaxAttempts = alerting.Key("max_attempts").MustInt64(defaultAlertingMaxAttempts)
+	uaMaxAttempts := ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
+	if uaMaxAttempts == schedulerDefaultMaxAttempts {
+		uaMaxAttempts = alerting.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaMinInterval := ua.Key("min_interval_seconds").MustInt64(defaultUnifiedAlertingMinInterval)
-	if uaMinInterval == defaultUnifiedAlertingMinInterval {
+	uaMinInterval := ua.Key("min_interval_seconds").MustInt64(schedulerDefaultMinInterval)
+	if uaMinInterval == schedulerDefaultMinInterval {
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		uaMinInterval = alerting.Key("min_interval_seconds").MustInt64(defaultUnifiedAlertingMinInterval)
+		uaMinInterval = alerting.Key("min_interval_seconds").MustInt64(schedulerDefaultMinInterval)
 	}
 	uaCfg.MinInterval = uaMinInterval
 

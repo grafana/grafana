@@ -46,15 +46,6 @@ const (
 	ApplicationName  = "Grafana"
 )
 
-const (
-	defaultAdminConfigPollIntervalSec   int64 = 60
-	defaultAlertingMaxAttempts          int64 = 3
-	defaultAlertingMinInterval          int64 = 1
-	defaultUnifiedAlertingMinInterval   int64 = 10
-	defaultAlertingEvaluationTimeoutSec int64 = 30
-	defaultAlertingExecuteAlerts        bool  = true
-)
-
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
 // it is used for comparison and has to be kept in sync
 const (
