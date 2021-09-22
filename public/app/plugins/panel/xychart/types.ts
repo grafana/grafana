@@ -1,21 +1,7 @@
 import { DataFrame, Field } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
-import { DimensionValues, FrameFieldMap, VizLegendItem } from '@grafana/ui';
+import { DimensionValues, VizLegendItem } from '@grafana/ui';
 import { ScatterLineMode } from './models.gen';
-
-export interface ScatterFrameFieldMap extends FrameFieldMap {
-  line: ScatterLineMode[];
-  lineWidth: number[];
-  lineStyle: LineStyle[];
-  lineColor: Array<CanvasRenderingContext2D['strokeStyle']>;
-
-  point: VisibilityMode[];
-  pointSize: Array<DimensionValues<number>>;
-  pointColor: Array<DimensionValues<string>>;
-
-  label: VisibilityMode[];
-  labelValue: Array<DimensionValues<string>>;
-}
 
 export interface LegendInfo {
   color: CanvasRenderingContext2D['strokeStyle'];
@@ -40,7 +26,7 @@ export interface ScatterSeries {
   line: ScatterLineMode;
   lineWidth: number;
   lineStyle: LineStyle;
-  lineColor: DimensionValues<CanvasRenderingContext2D['strokeStyle']>;
+  lineColor: (frame: DataFrame) => CanvasRenderingContext2D['strokeStyle'];
 
   point: VisibilityMode;
   pointSize: DimensionValues<number>;
