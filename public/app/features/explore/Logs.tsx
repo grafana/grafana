@@ -63,9 +63,6 @@ interface Props extends Themeable2 {
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
-  autoLoadLogsVolume: boolean;
-  onChangeAutoLogsVolume: (value: boolean) => void;
-  loadingLogsVolumeAvailable: boolean;
 }
 
 interface State {
@@ -177,13 +174,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  handleOnChangeAutoLogsVolume = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { target } = event;
-    if (target) {
-      this.props.onChangeAutoLogsVolume(target.checked);
-    }
-  };
-
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
     const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
     this.setState({ hiddenLogLevels });
@@ -269,8 +259,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
-      autoLoadLogsVolume,
-      loadingLogsVolumeAvailable,
     } = this.props;
 
     const {
@@ -311,11 +299,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Prettify JSON" transparent>
               <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
             </InlineField>
-            {loadingLogsVolumeAvailable && (
-              <InlineField label="Auto-load logs volume" transparent>
-                <InlineSwitch value={autoLoadLogsVolume} onChange={this.handleOnChangeAutoLogsVolume} transparent />
-              </InlineField>
-            )}
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
                 options={Object.values(LogsDedupStrategy).map((dedupType) => ({

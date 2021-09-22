@@ -1,7 +1,7 @@
 import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Button, Collapse, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, InlineField, InlineFieldRow, InlineSwitch, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ExploreId } from '../../types';
 import { css } from '@emotion/css';
 
@@ -14,6 +14,8 @@ type Props = {
   splitOpen: SplitOpen;
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
+  autoLoadLogsVolume: boolean;
+  onChangeAutoLogsVolume: (value: boolean) => void;
 };
 
 export function LogsVolumePanel(props: Props) {
@@ -26,6 +28,8 @@ export function LogsVolumePanel(props: Props) {
     timeZone,
     splitOpen,
     onUpdateTimeRange,
+    autoLoadLogsVolume,
+    onChangeAutoLogsVolume,
   } = props;
   const theme = useTheme2();
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -71,6 +75,16 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
+  const handleOnChangeAutoLogsVolume = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const { target } = event;
+      if (target) {
+        onChangeAutoLogsVolume(target.checked);
+      }
+    },
+    [onChangeAutoLogsVolume]
+  );
+
   return (
     <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div
@@ -82,6 +96,18 @@ export function LogsVolumePanel(props: Props) {
         })}
       >
         {LogsVolumePanelContent}
+      </div>
+      <div
+        className={css({
+          display: 'flex',
+          justifyContent: 'end',
+        })}
+      >
+        <InlineFieldRow>
+          <InlineField label="Auto-load logs volume" transparent>
+            <InlineSwitch value={autoLoadLogsVolume} onChange={handleOnChangeAutoLogsVolume} transparent />
+          </InlineField>
+        </InlineFieldRow>
       </div>
     </Collapse>
   );

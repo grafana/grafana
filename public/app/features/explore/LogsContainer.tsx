@@ -6,7 +6,7 @@ import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/da
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
-import { addResultsToCache, clearCache, changeAutoLogsVolume } from './state/query';
+import { addResultsToCache, clearCache } from './state/query';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -77,9 +77,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
-      autoLoadLogsVolume,
-      changeAutoLogsVolume,
-      loadingLogsVolumeAvailable,
     } = this.props;
 
     if (!logRows) {
@@ -137,11 +134,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               getFieldLinks={this.getFieldLinks}
               addResultsToCache={() => addResultsToCache(exploreId)}
               clearCache={() => clearCache(exploreId)}
-              autoLoadLogsVolume={autoLoadLogsVolume}
-              onChangeAutoLogsVolume={(autoLoadLogsVolume) => {
-                changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
-              }}
-              loadingLogsVolumeAvailable={loadingLogsVolumeAvailable}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -154,18 +146,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const autoLoadLogsVolume = explore.autoLoadLogsVolume;
-  const {
-    logsResult,
-    loading,
-    scanning,
-    datasourceInstance,
-    isLive,
-    isPaused,
-    range,
-    absoluteRange,
-    logsVolumeDataProvider,
-  } = item;
+  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
@@ -174,7 +155,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsMeta: logsResult?.meta,
     logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
-    loadingLogsVolumeAvailable: !!logsVolumeDataProvider,
     scanning,
     timeZone,
     datasourceInstance,
@@ -182,7 +162,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    autoLoadLogsVolume,
   };
 }
 
@@ -191,7 +170,6 @@ const mapDispatchToProps = {
   splitOpen,
   addResultsToCache,
   clearCache,
-  changeAutoLogsVolume,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
