@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -648,16 +646,8 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]usagestats.MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
-		grafanaLive:        newTestLive(t),
 		kvStore:            kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:                log.New("infra.usagestats"),
 		startTime:          time.Now().Add(-1 * time.Minute),
 	}
-}
-
-func newTestLive(t *testing.T) *live.GrafanaLive {
-	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
-	require.NoError(t, err)
-	return gLive
 }
