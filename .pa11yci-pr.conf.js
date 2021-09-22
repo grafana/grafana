@@ -24,7 +24,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 2,
+      threshold: 1,
       rootElement: '.main-view',
     },
     {
@@ -48,25 +48,25 @@ var config = {
       url: '${HOST}/?orgId=1&search=open',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 15,
+      threshold: 14,
     },
     {
       url: '${HOST}/alerting/list',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 7,
+      threshold: 6,
     },
     {
       url: '${HOST}/datasources',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 36,
+      threshold: 35,
     },
     {
       url: '${HOST}/org/users',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 4,
+      threshold: 3,
     },
     {
       url: '${HOST}/org/teams',
@@ -78,7 +78,7 @@ var config = {
       url: '${HOST}/plugins',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 41,
+      threshold: 40,
     },
     {
       url: '${HOST}/org',
@@ -90,13 +90,13 @@ var config = {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 5,
+      threshold: 3,
     },
     {
       url: '${HOST}/dashboards',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 11,
+      threshold: 7,
     },
   ],
 };
