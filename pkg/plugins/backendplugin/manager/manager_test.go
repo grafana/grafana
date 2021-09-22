@@ -492,7 +492,7 @@ func (t *testLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *testLicensingService) LicenseURL(b bool) string {
+func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return ""
 }
 

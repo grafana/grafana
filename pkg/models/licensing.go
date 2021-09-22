@@ -16,7 +16,7 @@ type Licensing interface {
 	// Used to build content delivery URL
 	ContentDeliveryPrefix() string
 
-	LicenseURL(b bool) string
+	LicenseURL(showAdminLicensingPage bool) string
 
 	StateInfo() string
 }
