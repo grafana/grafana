@@ -12,7 +12,7 @@ Requests from a Grafana plugin to AWS is made on behalf of an [IAM role](https:/
 
 All requests to AWS api:s are done server side by the Grafana backend using the official AWS SDK.
 
-# Authentication methods
+## Authentication methods
 
 You can use one of the following authentication methods. Currently, `AWS SDK Default`, `Credentials file` and `Access and secret key` are enabled by default in open source Grafana. You can enable/disable them if necessary if you have server configuration access. For more information, refer to [allowed_auth_providers]({{< relref "../../administration/configuration.md#allowed_auth_providers" >}}) documentation.
 
