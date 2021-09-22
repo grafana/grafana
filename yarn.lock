@@ -2344,7 +2344,7 @@ __metadata:
     rxjs: 7.3.0
     sinon: 8.1.1
     tinycolor2: 1.4.1
-    tslib: 2.2.0
+    tslib: 2.3.1
     typescript: 4.4.3
     xss: 1.0.6
   languageName: unknown
@@ -2401,7 +2401,7 @@ __metadata:
     rollup-plugin-typescript2: 0.29.0
     rollup-plugin-visualizer: 4.2.0
     ts-loader: 6.2.1
-    tslib: 2.2.0
+    tslib: 2.3.1
     typescript: 4.4.3
     yaml: ^1.8.3
   bin:
@@ -2452,7 +2452,7 @@ __metadata:
     rollup-plugin-visualizer: 4.2.0
     systemjs: 0.20.19
     systemjs-plugin-css: 0.1.37
-    tslib: 2.2.0
+    tslib: 2.3.1
     typescript: 4.4.3
   languageName: unknown
   linkType: soft
@@ -2687,7 +2687,7 @@ __metadata:
     slate: 0.47.8
     storybook-dark-mode: 1.0.8
     tinycolor2: 1.4.1
-    tslib: 2.2.0
+    tslib: 2.3.1
     typescript: 4.4.3
     uplot: 1.6.16
     webpack-filter-warnings-plugin: 1.2.1
@@ -2782,7 +2782,7 @@ __metadata:
     react-icons: 2.2.7
     recompose: ^0.25.0
     tinycolor2: 1.4.1
-    tslib: 2.2.0
+    tslib: 2.3.1
     tween-functions: ^1.2.0
     typescript: 4.4.3
   peerDependencies:
@@ -32152,13 +32152,6 @@ fsevents@^1.2.7:
   version: 2.0.1
   resolution: "tslib@npm:2.0.1"
   checksum: 507f32fc24a614c5097d414b622373b6cbb99e305413517e7fd49bef1e63570c0dd15b417ae68152088c3496218e82a5d8c7cd6b48c7a32dcee1a3f7191fff74
-  languageName: node
-  linkType: hard
-
-"tslib@npm:2.2.0":
-  version: 2.2.0
-  resolution: "tslib@npm:2.2.0"
-  checksum: a48c9639f7496fa701ea8ffe0561070fcb44c104a59632f7f845c0af00825c99b6373575ec59b2b5cdbfd7505875086dbe5dc83312304d8979f22ce571218ca3
   languageName: node
   linkType: hard
 
