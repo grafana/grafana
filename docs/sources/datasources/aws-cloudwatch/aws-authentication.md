@@ -8,7 +8,7 @@ weight = 205
 
 # AWS authentication
 
-Requests from a Grafana plugin to AWS is made on behalf of an [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) or an [IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html). The IAM user or IAM role needs to have the permission policies needed in order to perform a certain api action. The policies needed are specific to each data source, so please refer to the specific data source documentation for details.
+Requests from a Grafana plugin to AWS are made by an IAM role or an IAM user. The IAM user or IAM role must have the associated permission and associated policies to perform certain API actions. Since these policies are specific to each data source, refer to the data source documentation for details.
 
 All requests to AWS api:s are done server side by the Grafana backend using the official AWS SDK.
 
