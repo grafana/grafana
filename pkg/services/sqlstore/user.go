@@ -616,6 +616,9 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 		if jc := filter.JoinCondition(); jc != nil {
 			sess.Join(jc.Operator, jc.Table, jc.Params)
 		}
+		if ic := filter.InCondition(); ic != nil {
+			sess.In(ic.Condition, ic.Params)
+		}
 		if wc := filter.WhereCondition(); wc != nil {
 			sess.Where(wc.Condition, wc.Params)
 		}

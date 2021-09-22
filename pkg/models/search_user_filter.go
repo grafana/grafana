@@ -2,15 +2,19 @@ package models
 
 import (
 	"strings"
-	"time"
 )
 
 type SearchUserFilter interface {
-	GetFilters(filter string) []Filter
+	GetFilters(filters string) []Filter
 	GetFilterList() map[string]Filter
 }
 
 type WhereCondition struct {
+	Condition string
+	Params    interface{}
+}
+
+type InCondition struct {
 	Condition string
 	Params    interface{}
 }
@@ -23,53 +27,37 @@ type JoinCondition struct {
 
 type Filter interface {
 	WhereCondition() *WhereCondition
+	InCondition() *InCondition
 	JoinCondition() *JoinCondition
+	SetParams(params []string)
 }
-
-type ActiveLast30DaysFilter struct {
-}
-
-func (a ActiveLast30DaysFilter) WhereCondition() *WhereCondition {
-	return &WhereCondition{
-		Condition: "last_seen_at > ?",
-		Params:    a.whereParams(),
-	}
-}
-
-func (a ActiveLast30DaysFilter) JoinCondition() *JoinCondition {
-	return nil
-}
-
-func (a ActiveLast30DaysFilter) whereParams() interface{} {
-	activeUserTimeLimit := time.Hour * 24 * 30
-	return time.Now().Add(-activeUserTimeLimit)
-}
-
-const (
-	activeLast30Days = "activeLast30Days"
-)
 
 type OSSSearchUserFilter struct {
 	filters map[string]Filter
 }
 
 func ProvideOSSSearchUserFilter() *OSSSearchUserFilter {
-	filters := make(map[string]Filter, 0)
-	filters[activeLast30Days] = ActiveLast30DaysFilter{}
 	return &OSSSearchUserFilter{
-		filters: filters,
+		filters: make(map[string]Filter, 0),
 	}
 }
 
 func (o *OSSSearchUserFilter) GetFilters(filters string) []Filter {
-	filterSplit := strings.Split(filters, ",")
-	filterList := make([]Filter, 0)
-	for _, fs := range filterSplit {
-		if f, ok := o.filters[fs]; ok {
-			filterList = append(filterList, f)
+	filtersRequested := strings.Split(filters, ",")
+	filtersFound := make([]Filter, 0)
+	filterWithParams := make(map[Filter][]string)
+	for _, fr := range filtersRequested {
+		if f, ok := o.filters[fr]; ok {
+			if _, ok = filterWithParams[f]; !ok {
+				filtersFound = append(filtersFound, f)
+			}
+			filterWithParams[f] = append(filterWithParams[f], fr)
 		}
 	}
-	return filterList
+	for f, p := range filterWithParams {
+		f.SetParams(p)
+	}
+	return filtersFound
 }
 
 func (o *OSSSearchUserFilter) GetFilterList() map[string]Filter {
