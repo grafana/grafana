@@ -50,6 +50,11 @@ func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.Subs
 		}
 	}
 
+	if p.livePipelineEnabled {
+		// While developing Live pipeline avoid sending initial data.
+		initialData = nil
+	}
+
 	return &backend.SubscribeStreamResponse{
 		Status:      backend.SubscribeStreamStatusOK,
 		InitialData: initialData,

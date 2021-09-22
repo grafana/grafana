@@ -2,7 +2,7 @@ import React, { FC, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, styleMixins, useTheme2 } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.components.sidemenu.width}px;
     z-index: ${theme.zIndex.sidemenu};
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       background-color: ${theme.colors.background.primary};
       position: relative;
     }
@@ -77,15 +77,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
     min-height: ${theme.components.sidemenu.width}px;
 
+    &:focus-visible,
     &:hover {
       background-color: ${theme.colors.action.hover};
+    }
+
+    &:focus-visible {
+      box-shadow: none;
+      color: ${theme.colors.text.primary};
+      outline: 2px solid ${theme.colors.primary.main};
+      outline-offset: -2px;
+      transition: none;
     }
 
     img {
       width: ${theme.spacing(3.5)};
     }
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       align-items: center;
       display: flex;
       justify-content: center;
@@ -107,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     padding: ${theme.spacing(2)};
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       display: none;
     }
   `,

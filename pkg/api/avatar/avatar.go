@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 
 	gocache "github.com/patrickmn/go-cache"
 )
@@ -77,7 +78,7 @@ type CacheServer struct {
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
 
 func (a *CacheServer) Handler(ctx *models.ReqContext) {
-	hash := ctx.Params("hash")
+	hash := macaron.Params(ctx.Req)[":hash"]
 
 	if len(hash) != 32 || !validMD5.MatchString(hash) {
 		ctx.JsonApiErr(404, "Avatar not found", nil)
