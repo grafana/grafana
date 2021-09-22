@@ -28,7 +28,8 @@
     "@grafana/ui": "8.3.0-pre",
     "history": "4.10.1",
     "systemjs": "0.20.19",
-    "systemjs-plugin-css": "0.1.37"
+    "systemjs-plugin-css": "0.1.37",
+    "tslib": "2.2.0"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
