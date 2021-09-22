@@ -24,13 +24,19 @@ func NewChangeLogOutput(frameStorage FrameGetSetter, config ChangeLogOutputConfi
 	return &ChangeLogOutput{frameStorage: frameStorage, config: config}
 }
 
-func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
-	previousFrame, previousFrameOK, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
+const OutputTypeChangeLog = "changeLog"
+
+func (out *ChangeLogOutput) Type() string {
+	return OutputTypeChangeLog
+}
+
+func (out *ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+	previousFrame, previousFrameOK, err := out.frameStorage.Get(vars.OrgID, out.config.Channel)
 	if err != nil {
 		return nil, err
 	}
 
-	fieldName := l.config.FieldName
+	fieldName := out.config.FieldName
 
 	previousFrameFieldIndex := -1
 	if previousFrameOK {
@@ -78,15 +84,15 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 
 	if fTime.Len() > 0 {
 		changeFrame := data.NewFrame("change", fTime, f1, f2)
-		err := l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
+		err := out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
 		if err != nil {
 			return nil, err
 		}
 		return []*ChannelFrame{{
-			Channel: l.config.Channel,
+			Channel: out.config.Channel,
 			Frame:   changeFrame,
 		}}, nil
 	}
 
-	return nil, l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
+	return nil, out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
 }
