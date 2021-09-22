@@ -180,6 +180,7 @@ func TestCueErrorWrapper(t *testing.T) {
 	require.Contains(t, err.Error(), "line: ")
 }
 
+<<<<<<< HEAD
 func TestAllPluginsInDist(t *testing.T) {
 	overlay, err := defaultOverlay(p)
 	require.NoError(t, err)
@@ -220,4 +221,63 @@ func TestAllPluginsInDist(t *testing.T) {
 	sort.Strings(loadedPanelTypes)
 
 	require.Equal(t, loadedPanelTypes, importedPanelTypes, "%s/family.cue needs updating, it must compose the same set of panel plugin models that are found by the plugin loader", cfg.Dir)
+=======
+func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
+	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
+
+	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Parallel()
+			require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
+				require.NoError(t, err)
+
+				if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
+					return nil
+				}
+
+				// Ignore gosec warning G304 since it's a test
+				// nolint:gosec
+				b, err := os.Open(path)
+				require.NoError(t, err, "failed to open dashboard file")
+
+				// Only try to validate dashboards with schemaVersion >= 30
+				jtree := make(map[string]interface{})
+				byt, err := io.ReadAll(b)
+				if err != nil {
+					t.Fatal(err)
+				}
+				require.NoError(t, json.Unmarshal(byt, &jtree))
+				if oldschemav, has := jtree["schemaVersion"]; !has {
+					t.Logf("no schemaVersion in %s", path)
+					return nil
+				} else {
+					if !(oldschemav.(float64) > 29) {
+						if testing.Verbose() {
+							t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						}
+						return nil
+					}
+				}
+				t.Run(filepath.Base(path), func(t *testing.T) {
+					dsSchema, err := schema.SearchAndValidate(sch, byt)
+					require.NoError(t, err)
+
+					trimmed, err := schema.TrimDefaults(schema.Resource{Value: byt}, dsSchema.CUE())
+					require.NoError(t, err)
+
+					out, err := schema.ApplyDefaults(schema.Resource{Value: trimmed.Value.(string)}, dsSchema.CUE())
+					require.NoError(t, err)
+					require.JSONEq(t, string(byt), out.Value.(string))
+				})
+				return nil
+			}))
+		}
+	}
+
+	// TODO will need to expand this appropriately when the scuemata contain
+	// more than one schema
+	ddash, err := DistDashboardFamily(p)
+	require.NoError(t, err, "error while loading dist dashboard scuemata")
+	t.Run("dist", doTest(ddash))
+>>>>>>> 2921077fae (commit the test regarding all devenvs)
 }
