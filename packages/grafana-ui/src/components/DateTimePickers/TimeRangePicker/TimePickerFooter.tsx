@@ -9,6 +9,7 @@ import { Button } from '../../Button';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
+import { RadioButtonGroup, Select } from '../..';
 
 interface Props {
   timeZone?: TimeZone;
@@ -19,8 +20,9 @@ interface Props {
 export const TimePickerFooter: FC<Props> = (props) => {
   const { timeZone, timestamp = Date.now(), onChangeTimeZone } = props;
   const [isEditing, setEditing] = useState(false);
+  const [editMode, setEditMode] = useState('tz');
 
-  const onToggleChangeTz = useCallback(
+  const onToggleChangeTimeSettings = useCallback(
     (event?: React.MouseEvent) => {
       if (event) {
         event.stopPropagation();
@@ -43,42 +45,54 @@ export const TimePickerFooter: FC<Props> = (props) => {
     return null;
   }
 
-  if (isEditing) {
-    return (
-      <div className={cx(style.container, style.editContainer)}>
-        <section aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
-          <TimeZonePicker
-            includeInternal={true}
-            onChange={(timeZone) => {
-              onToggleChangeTz();
-
-              if (isString(timeZone)) {
-                onChangeTimeZone(timeZone);
-              }
-            }}
-            autoFocus={true}
-            onBlur={onToggleChangeTz}
-          />
-        </section>
-      </div>
-    );
-  }
-
   return (
-    <section aria-label="Time zone selection" className={style.container}>
-      <div className={style.timeZoneContainer}>
-        <div className={style.timeZone}>
-          <TimeZoneTitle title={info.name} />
-          <div className={style.spacer} />
-          <TimeZoneDescription info={info} />
+    <div>
+      <section aria-label="Time zone selection" className={style.container}>
+        <div className={style.timeZoneContainer}>
+          <div className={style.timeZone}>
+            <TimeZoneTitle title={info.name} />
+            <div className={style.spacer} />
+            <TimeZoneDescription info={info} />
+          </div>
+          <TimeZoneOffset timeZone={timeZone} timestamp={timestamp} />
         </div>
-        <TimeZoneOffset timeZone={timeZone} timestamp={timestamp} />
-      </div>
-      <div className={style.spacer} />
-      <Button variant="secondary" onClick={onToggleChangeTz} size="sm">
-        Change time zone
-      </Button>
-    </section>
+        <div className={style.spacer} />
+        <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
+          Change time settings
+        </Button>
+      </section>
+      {isEditing ? (
+        <div className={cx(style.editContainer)}>
+          <div>
+            <RadioButtonGroup
+              value={editMode}
+              options={[
+                { label: 'Time Zone', value: 'tz' },
+                { label: 'Fiscal year', value: 'fy' },
+              ]}
+              onChange={setEditMode}
+            ></RadioButtonGroup>
+          </div>
+          {editMode === 'tz' ? (
+            <div onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}>
+              <section aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
+                <TimeZonePicker
+                  includeInternal={true}
+                  onChange={(timeZone) => {
+                    onToggleChangeTimeSettings();
+
+                    if (isString(timeZone)) {
+                      onChangeTimeZone(timeZone);
+                    }
+                  }}
+                  onBlur={onToggleChangeTimeSettings}
+                />
+              </section>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 };
 
@@ -93,6 +107,10 @@ const getStyle = stylesFactory((theme: GrafanaTheme2) => {
       align-items: center;
     `,
     editContainer: css`
+      border-top: 1px solid ${theme.colors.border.weak};
+      padding: 11px;
+      justify-content: space-between;
+      align-items: center;
       padding: 7px;
     `,
     spacer: css`
