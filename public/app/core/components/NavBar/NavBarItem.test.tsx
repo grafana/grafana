@@ -2,16 +2,16 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import SideMenuItem from './SideMenuItem';
+import NavBarItem from './NavBarItem';
 
-describe('SideMenuItem', () => {
+describe('NavBarItem', () => {
   it('renders the children', () => {
     const mockLabel = 'Hello';
     render(
       <BrowserRouter>
-        <SideMenuItem label={mockLabel}>
+        <NavBarItem label={mockLabel}>
           <div data-testid="mockChild" />
-        </SideMenuItem>
+        </NavBarItem>
       </BrowserRouter>
     );
 
@@ -24,9 +24,9 @@ describe('SideMenuItem', () => {
     const mockUrl = '/route';
     render(
       <BrowserRouter>
-        <SideMenuItem label={mockLabel} url={mockUrl}>
+        <NavBarItem label={mockLabel} url={mockUrl}>
           <div data-testid="mockChild" />
-        </SideMenuItem>
+        </NavBarItem>
       </BrowserRouter>
     );
 
@@ -41,9 +41,9 @@ describe('SideMenuItem', () => {
     const mockOnClick = jest.fn();
     render(
       <BrowserRouter>
-        <SideMenuItem label={mockLabel} onClick={mockOnClick}>
+        <NavBarItem label={mockLabel} onClick={mockOnClick}>
           <div data-testid="mockChild" />
-        </SideMenuItem>
+        </NavBarItem>
       </BrowserRouter>
     );
 

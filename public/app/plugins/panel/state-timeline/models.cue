@@ -29,7 +29,7 @@ Panel: {
                     mode?: #TimelineMode
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
-                    showValue: ui.BarValueVisibility | *"auto"
+                    showValue: ui.VisibilityMode | *"auto"
                     rowHeight: number | *0.9
                     colWidth?: number
                     mergeValues?: bool | *true
