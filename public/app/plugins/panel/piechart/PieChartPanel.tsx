@@ -87,9 +87,15 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
 
   const legendItems = displayValues
     // Since the pie chart is always sorted, let's sort the legend as well.
-    .sort((a, b) =>
-      isNaN(a.display.numeric) ? 1 : isNaN(b.display.numeric) ? -1 : b.display.numeric - a.display.numeric
-    )
+    .sort((a, b) => {
+      if (isNaN(a.display.numeric)) {
+        return 1;
+      } else if (isNaN(b.display.numeric)) {
+        return -1;
+      } else {
+        return b.display.numeric - a.display.numeric;
+      }
+    })
     .map<VizLegendItem>((value, idx) => {
       const hidden = value.field.custom.hideFrom.viz;
       const display = value.display;
