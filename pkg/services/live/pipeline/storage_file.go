@@ -75,7 +75,6 @@ func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule Cha
 	index := -1
 
 	for i, existingRule := range channelRules.Rules {
-		println(orgID, rule.Pattern, existingRule.Pattern)
 		if patternMatch(orgID, rule.Pattern, existingRule) {
 			index = i
 			break
