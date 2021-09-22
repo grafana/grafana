@@ -12,14 +12,14 @@ import BottomSection from './BottomSection';
 
 const homeUrl = config.appSubUrl || '/';
 
-export const SideMenu: FC = React.memo(() => {
+export const NavBar: FC = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
 
-  const toggleSideMenuSmallBreakpoint = useCallback(() => {
+  const toggleNavBarSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
 
@@ -32,7 +32,7 @@ export const SideMenu: FC = React.memo(() => {
       <a href={homeUrl} className={styles.homeLogo}>
         <Branding.MenuLogo />
       </a>
-      <div className={styles.mobileSidemenuLogo} onClick={toggleSideMenuSmallBreakpoint} key="hamburger">
+      <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
         <Icon name="bars" size="xl" />
         <span className={styles.closeButton}>
           <Icon name="times" />
@@ -45,7 +45,7 @@ export const SideMenu: FC = React.memo(() => {
   );
 });
 
-SideMenu.displayName = 'SideMenu';
+NavBar.displayName = 'NavBar';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sidemenu: css`
