@@ -3,9 +3,10 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
-import { Style, Stroke, Fill } from 'ol/style'; 
-import { ColorDimensionConfig } from 'app/features/dimensions';
-
+import { Feature } from 'ol';
+import { Geometry } from 'ol/geom';
+import { GeoMapStyle, getGeoMapStyle } from '../../utils/getGeoMapStyle';
+import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -18,27 +19,11 @@ export interface GeoJSONMapperConfig {
 
   // Styles that can be applied
   styles?: GeoMapStyle[];
-
-  // Rule specific to feature property to apply style
-  featureStyleRules?: GeoJSONMapperRule[];
-}
-interface GeoJSONMapperRule {
-  property: string;
-  comparisonType: string;
-  comparisonValue: string;
-  styleIndex: string;
-}
-interface GeoMapStyle {
-  shape?: string;
-  fill?: ColorDimensionConfig;
-  stroke?: ColorDimensionConfig;
-  strokeWidth?: number;
 }
 
 const defaultOptions: GeoJSONMapperConfig = {
   src: 'public/maps/countries.geojson',
   styles: [],
-  featureStyleRules: [],
 };
 
 export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
@@ -60,54 +45,21 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
-    const customStyles: Style[] = [];
-    if (config?.styles) {
-      const configStyles = config.styles;
-      for (let s = 0; s < configStyles.length; s++) {
-        customStyles[s] = new Style({
-          fill: configStyles[s].fill && new Fill({
-            color: `${configStyles[s].fill}`,
-          }),
-          stroke: configStyles[s].stroke && new Stroke({
-            color: `${configStyles[s].stroke}`,
-            width: Number(configStyles[s].strokeWidth)
-          })
-        }) 
-      }
-      //add shape
-    }
-
     const vectorLayer = new VectorLayer({
       source,
-      style: function (feature) {
+      style: (feature: Feature<Geometry>) => {
         if (!feature) {
           return undefined;
         }
-        let style = undefined;
-        const styleRules = config?.featureStyleRules;
-        if (styleRules?.length) {
-          const featProps = feature.getProperties();
-          for (let rule = 0; rule < styleRules.length; rule++) {
-            switch (styleRules[rule].comparisonType) {
-              case "equals":
-                if (featProps[styleRules[rule].property] === styleRules[rule].comparisonValue) {
-                  style = customStyles[Number(styleRules[rule].styleIndex)];
-                }
-                break;
-              case "greater":
-                if (featProps[styleRules[rule].property] > styleRules[rule].comparisonValue) {
-                  style = customStyles[Number(styleRules[rule].styleIndex)];
-                }
-                break;
-              case "lesser":
-                if (featProps[styleRules[rule].property] < styleRules[rule].comparisonValue) {
-                  style = customStyles[Number(styleRules[rule].styleIndex)];
-                }
-                break; 
+        if (config?.styles?.length) {
+          for (const style of config.styles) {
+            //check if there is no style rule or if the rule matches feature property
+            if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature)) {
+              return getGeoMapStyle(style, feature);
             }
           }
         }
-        return style;
+        return undefined;
       }
     });
 
