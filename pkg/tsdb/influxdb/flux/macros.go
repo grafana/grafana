@@ -16,8 +16,8 @@ func interpolate(query queryModel) (string, error) {
 	matches := variableFilterExp.FindAllStringSubmatch(flux, -1)
 	if matches != nil {
 		timeRange := query.TimeRange
-		from := timeRange.From.UTC().Format(time.RFC3339)
-		to := timeRange.To.UTC().Format(time.RFC3339)
+		from := timeRange.From.UTC().Format(time.RFC3339Nano)
+		to := timeRange.To.UTC().Format(time.RFC3339Nano)
 		for _, match := range matches {
 			switch match[2] {
 			case "timeRangeStart":

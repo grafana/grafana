@@ -13,6 +13,14 @@ type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
 }
 
+func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
+	result := make([]*models.AlertConfiguration, 0, len(f.configs))
+	for _, configuration := range f.configs {
+		result = append(result, configuration)
+	}
+	return result, nil
+}
+
 func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
 	var ok bool
 	query.Result, ok = f.configs[query.OrgID]

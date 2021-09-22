@@ -9,7 +9,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { CatalogPlugin } from '../types';
 import * as api from '../api';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
-import { PluginErrorCode } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 // Mock the config to enable the plugin catalog
@@ -81,6 +81,51 @@ describe('Plugin details page', () => {
     const { queryByText } = renderPluginDetails({ id });
 
     await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
+  });
+
+  it('should display the number of downloads in the header', async () => {
+    const downloads = 24324;
+    const { queryByText } = renderPluginDetails({ id, downloads });
+
+    await waitFor(() => expect(queryByText(new Intl.NumberFormat().format(downloads))).toBeInTheDocument());
+  });
+
+  it('should display the version in the header', async () => {
+    const version = '1.3.443';
+    const { queryByText } = renderPluginDetails({ id, version });
+
+    await waitFor(() => expect(queryByText(version)).toBeInTheDocument());
+  });
+
+  it('should display description in the header', async () => {
+    const description = 'This is my description';
+    const { queryByText } = renderPluginDetails({ id, description });
+
+    await waitFor(() => expect(queryByText(description)).toBeInTheDocument());
+  });
+
+  it('should display a "Signed" badge if the plugin signature is verified', async () => {
+    const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.valid });
+
+    await waitFor(() => expect(queryByText('Signed')).toBeInTheDocument());
+  });
+
+  it('should display a "Missing signature" badge if the plugin signature is missing', async () => {
+    const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.missing });
+
+    await waitFor(() => expect(queryByText('Missing signature')).toBeInTheDocument());
+  });
+
+  it('should display a "Modified signature" badge if the plugin signature is modified', async () => {
+    const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.modified });
+
+    await waitFor(() => expect(queryByText('Modified signature')).toBeInTheDocument());
+  });
+
+  it('should display a "Invalid signature" badge if the plugin signature is invalid', async () => {
+    const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.invalid });
+
+    await waitFor(() => expect(queryByText('Invalid signature')).toBeInTheDocument());
   });
 
   it('should display version history in case it is available', async () => {
