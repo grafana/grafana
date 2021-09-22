@@ -64,42 +64,35 @@ func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGitlab) GetGroups(client *http.Client) ([]string, []Group) {
-	groupFullNames := make([]string, 0)
+func (s *SocialGitlab) GetGroups(client *http.Client) []Group {
 	groups := make([]Group, 0)
-	for page, url, groupsJson := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url, groupsJson = s.GetGroupsPage(client, url) {
-		groupFullNames = append(groupFullNames, page...)
-		groups = append(groups, groupsJson...)
+	for page, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(client, url) {
+		groups = append(groups, page...)
 	}
 
-	return groupFullNames, groups
+	return groups
 }
 
 // GetGroupsPage returns groups and link to the next page if response is paginated
-func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string, string, []Group) {
+func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]Group, string) {
 	var (
 		groups []Group
 		next   string
 	)
 
 	if url == "" {
-		return nil, next, nil
+		return nil, next
 	}
 
 	response, err := s.httpGet(client, url)
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
-		return nil, next, nil
+		return nil, next
 	}
 
 	if err := json.Unmarshal(response.Body, &groups); err != nil {
 		s.log.Error("Error parsing JSON from GitLab API", "err", err)
-		return nil, next, nil
-	}
-
-	fullPaths := make([]string, len(groups))
-	for i, group := range groups {
-		fullPaths[i] = group.FullPath
+		return nil, next
 	}
 
 	// GitLab uses Link header with "rel" set to prev/next/first/last page. We need "next".
@@ -110,7 +103,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 		}
 	}
 
-	return fullPaths, next, groups
+	return groups, next
 }
 
 func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -136,7 +129,12 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("user %s is inactive", data.Username)
 	}
 
-	groupFullNames, groups := s.GetGroups(client)
+	groups := s.GetGroups(client)
+
+	groupFullNames := make([]string, len(groups))
+	for i, group := range groups {
+		groupFullNames[i] = group.FullPath
+	}
 
 	role, err := s.extractRole(response.Body)
 	if err != nil {
