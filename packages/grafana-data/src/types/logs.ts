@@ -144,33 +144,6 @@ export enum LogsDedupDescription {
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
 
-// export interface DataSourceWithLogsContextSupport<
-//   TQuery extends DataQuery = DataQuery,
-//   TOptions extends DataSourceJsonData = DataSourceJsonData
-// > extends DataSourceApi<TQuery, TOptions> {
-//   /**
-//    * Retrieve context for a given log row
-//    */
-//   getLogRowContext: <TContextQueryOptions extends {}>(
-//     row: LogRowModel,
-//     options?: TContextQueryOptions
-//   ) => Promise<DataQueryResponse>;
-//
-//   showContextToggle(row?: LogRowModel): boolean;
-// }
-//
-// export const hasLogsContextSupport = <
-//   TQuery extends DataQuery = DataQuery,
-//   TOptions extends DataSourceJsonData = DataSourceJsonData
-// >(
-//   datasource: DataSourceApi<TQuery, TOptions>
-// ): datasource is DataSourceWithLogsContextSupport<TQuery, TOptions> => {
-//   return (
-//     (datasource as DataSourceWithLogsContextSupport).getLogRowContext !== undefined &&
-//     (datasource as DataSourceWithLogsContextSupport).showContextToggle !== undefined
-//   );
-// };
-
 export interface DataSourceWithLogsContextSupport {
   /**
    * Retrieve context for a given log row
