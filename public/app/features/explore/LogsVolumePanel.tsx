@@ -1,5 +1,5 @@
 import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Button, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { ExploreId } from '../../types';
@@ -29,7 +29,6 @@ export function LogsVolumePanel(props: Props) {
   } = props;
   const theme = useTheme2();
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-  const styles = useStyles2(getStyles);
   const height = 150;
 
   let LogsVolumePanelContent;
@@ -74,19 +73,16 @@ export function LogsVolumePanel(props: Props) {
 
   return (
     <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
-      <div style={{ height }} className={styles.logsVolumeContainer}>
+      <div
+        style={{ height }}
+        className={css({
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        })}
+      >
         {LogsVolumePanelContent}
       </div>
     </Collapse>
   );
-}
-
-function getStyles() {
-  return {
-    logsVolumeContainer: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
-  };
 }
