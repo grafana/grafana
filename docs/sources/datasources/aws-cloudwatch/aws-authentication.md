@@ -32,7 +32,7 @@ It's possible to disable this feature in the Grafana configuration. For more inf
 
 ### External ID
 
-If you are assuming a role in another account that has been created with an external ID, specify the external ID in this field. For more information, please refer to the [AWS documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
+If you are assuming a role in another account that was created with an external ID, then specify the external ID in this field. For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
 ## Endpoint
 
