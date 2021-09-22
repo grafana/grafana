@@ -2,6 +2,7 @@ import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+import { DataQueryResponse } from './datasource';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -142,3 +143,49 @@ export enum LogsDedupDescription {
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
+
+// export interface DataSourceWithLogsContextSupport<
+//   TQuery extends DataQuery = DataQuery,
+//   TOptions extends DataSourceJsonData = DataSourceJsonData
+// > extends DataSourceApi<TQuery, TOptions> {
+//   /**
+//    * Retrieve context for a given log row
+//    */
+//   getLogRowContext: <TContextQueryOptions extends {}>(
+//     row: LogRowModel,
+//     options?: TContextQueryOptions
+//   ) => Promise<DataQueryResponse>;
+//
+//   showContextToggle(row?: LogRowModel): boolean;
+// }
+//
+// export const hasLogsContextSupport = <
+//   TQuery extends DataQuery = DataQuery,
+//   TOptions extends DataSourceJsonData = DataSourceJsonData
+// >(
+//   datasource: DataSourceApi<TQuery, TOptions>
+// ): datasource is DataSourceWithLogsContextSupport<TQuery, TOptions> => {
+//   return (
+//     (datasource as DataSourceWithLogsContextSupport).getLogRowContext !== undefined &&
+//     (datasource as DataSourceWithLogsContextSupport).showContextToggle !== undefined
+//   );
+// };
+
+export interface DataSourceWithLogsContextSupport {
+  /**
+   * Retrieve context for a given log row
+   */
+  getLogRowContext: <TContextQueryOptions extends {}>(
+    row: LogRowModel,
+    options?: TContextQueryOptions
+  ) => Promise<DataQueryResponse>;
+
+  showContextToggle(row?: LogRowModel): boolean;
+}
+
+export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+  return (
+    (datasource as DataSourceWithLogsContextSupport).getLogRowContext !== undefined &&
+    (datasource as DataSourceWithLogsContextSupport).showContextToggle !== undefined
+  );
+};

@@ -11,6 +11,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceWithLogsContextSupport,
   dateMath,
   LoadingState,
   LogRowModel,
@@ -73,7 +74,9 @@ const displayCustomError = (title: string, message: string) =>
 
 export const MAX_ATTEMPTS = 5;
 
-export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData> {
+export class CloudWatchDatasource
+  extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
+  implements DataSourceWithLogsContextSupport {
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;

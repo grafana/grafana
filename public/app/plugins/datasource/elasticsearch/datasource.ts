@@ -11,6 +11,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceWithLogsContextSupport,
   DateTime,
   dateTime,
   Field,
@@ -56,7 +57,9 @@ const ELASTIC_META_FIELDS = [
   '_meta',
 ];
 
-export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
+export class ElasticDatasource
+  extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions>
+  implements DataSourceWithLogsContextSupport {
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;

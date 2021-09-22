@@ -2,7 +2,6 @@ import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
-import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
@@ -251,14 +250,6 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * Retrieve context for a given log row
-   */
-  getLogRowContext?: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions
-  ) => Promise<DataQueryResponse>;
-
-  /**
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
@@ -306,8 +297,6 @@ abstract class DataSourceApi<
   languageProvider?: any;
 
   getVersion?(optionalOptions?: any): Promise<string>;
-
-  showContextToggle?(row?: LogRowModel): boolean;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 

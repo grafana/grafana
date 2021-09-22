@@ -16,6 +16,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceWithLogsContextSupport,
   dateMath,
   DateTime,
   FieldCache,
@@ -67,7 +68,7 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   query: '',
 };
 
-export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
+export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> implements DataSourceWithLogsContextSupport {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
