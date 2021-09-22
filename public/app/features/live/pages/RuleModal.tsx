@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, TabContent, TabsBar, Tab, CodeEditor } from '@grafana/ui';
+import { Modal, TabContent, TabsBar, Tab, CodeEditor, Button, Alert } from '@grafana/ui';
 import { Rule } from './types';
+import { getBackendSrv } from '@grafana/runtime';
+import { css } from '@emotion/css';
 
 interface Props {
   rule: Rule;
@@ -18,7 +20,23 @@ const height = 600;
 export const RuleModal: React.FC<Props> = (props) => {
   const { rule, isOpen, onClose } = props;
   const [activeTab, setActiveTab] = useState<string>('converter');
+  const [success, setSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
+  const onSave = (text: string) => {
+    getBackendSrv()
+      .put(`api/live/channel-rules`, {
+        ...rule,
+        settings: {
+          ...rule.settings,
+          convertor: text,
+        },
+      })
+      .then(() => setSuccess(true))
+      .catch(() => setError(true));
+  };
+
+  const onRemoveAlert = () => setSuccess(false);
   return (
     <Modal isOpen={isOpen} title={rule.pattern} onDismiss={onClose} closeOnEscape>
       <TabsBar>
@@ -36,29 +54,36 @@ export const RuleModal: React.FC<Props> = (props) => {
         })}
       </TabsBar>
       <TabContent>
-        {activeTab === 'converter' && <ConverterEditor {...props} />}
+        {success && <Alert title="Saved successfully" severity="success" onRemove={onRemoveAlert} />}
+        {error && <Alert title="Failed to save" severity="error" onRemove={onRemoveAlert} />}
+        {activeTab === 'converter' && <ConverterEditor {...props} onSave={onSave} />}
         {activeTab === 'processor' && <ProcessorEditor {...props} />}
         {activeTab === 'output' && <OutputEditor {...props} />}
+        <Button onClick={onSave}>Save</Button>
       </TabContent>
     </Modal>
   );
 };
 
-export const ConverterEditor: React.FC<Props> = ({ rule }) => {
+export const ConverterEditor: React.FC<Props> = ({ rule, onSave }) => {
   const { converter } = rule.settings;
+
   if (!converter) {
-    return <div>No converter defined</div>;
+    return <div>Hello</div>;
   }
 
   return (
-    <CodeEditor
-      height={height}
-      value={JSON.stringify(converter, null, '\t')}
-      showLineNumbers={true}
-      readOnly={true}
-      language="json"
-      showMiniMap={false}
-    />
+    <>
+      <CodeEditor
+        height={height}
+        value={JSON.stringify(converter, null, '\t')}
+        showLineNumbers={true}
+        readOnly={false}
+        language="json"
+        showMiniMap={false}
+        onSave={(text: string) => onSave(text)}
+      />
+    </>
   );
 };
 

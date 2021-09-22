@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, Tag, useStyles } from '@grafana/ui';
+import { Input, Tag, useStyles, Button } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
@@ -24,6 +24,7 @@ export default function PipelineAdminPage() {
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live-pipeline');
+  const [openEditor, setOpenEditor] = useState<boolean>(false);
   const [error, setError] = useState<string>();
   const styles = useStyles(getStyles);
 
@@ -44,7 +45,6 @@ export default function PipelineAdminPage() {
   const onRowClick = (event: any) => {
     const pattern = event.target.getAttribute('data-pattern');
     const column = event.target.getAttribute('data-column');
-    console.log('show:', column);
     // setActiveTab(column);
     setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
     setOpen(true);
@@ -59,6 +59,7 @@ export default function PipelineAdminPage() {
     }
   };
 
+  const onAdd = () => {};
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -66,6 +67,9 @@ export default function PipelineAdminPage() {
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <Input placeholder="Search pattern..." onChange={onSearchQueryChange} />
+            <Button className={styles.addNew} onClick={() => setOpenEditor(true)}>
+              Add Rule
+            </Button>
           </div>
         </div>
         <div className="admin-list-table">
@@ -98,6 +102,7 @@ export default function PipelineAdminPage() {
             </tbody>
           </table>
         </div>
+        {openEditor && <Input />}
         {isOpen && selectedRule && <RuleModal rule={selectedRule} isOpen={isOpen} onClose={() => setOpen(false)} />}
       </Page.Contents>
     </Page>
@@ -108,6 +113,9 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     row: css`
       cursor: pointer;
+    `,
+    addNew: css`
+      margin-left: 10px;
     `,
   };
 };
