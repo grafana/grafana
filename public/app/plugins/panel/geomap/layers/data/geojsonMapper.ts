@@ -46,8 +46,8 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       stroke: new Stroke({
         color: '#1F60C4',
         width: 1,
-      })
-    })
+      }),
+    });
 
     const vectorLayer = new VectorLayer({
       source,
@@ -61,7 +61,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           }
         }
         return defaultStyle;
-      }
+      },
     });
 
     return {
@@ -90,9 +90,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         allowCustomValue: true,
       },
       defaultValue: defaultOptions.src,
-    })
-
-    ;
+    });
   },
 
   // fill in the default values
