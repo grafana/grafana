@@ -9,7 +9,7 @@ import { getAppRoutes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
-import { SideMenu } from './core/components/sidemenu/SideMenu';
+import { NavBar } from './core/components/NavBar/NavBar';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
@@ -96,7 +96,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 <GlobalStyles />
                 <div className="grafana-app">
                   <Router history={locationService.getHistory()}>
-                    <SideMenu />
+                    <NavBar />
                     <main className="main-view">
                       <div
                         ref={this.container}
