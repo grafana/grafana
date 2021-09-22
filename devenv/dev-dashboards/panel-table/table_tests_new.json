@@ -642,12 +642,12 @@
       "id": 12,
       "options": {
         "footer": {
+          "show": true,
           "fields": "",
           "reducer": [
             "sum"
           ]
         },
-        "showFooter": true,
         "showHeader": true
       },
       "pluginVersion": "",

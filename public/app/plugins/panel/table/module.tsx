@@ -90,10 +90,10 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
-        path: 'showFooter',
+        path: 'footer.show',
         name: 'Show Footer',
         description: "To display table's footer or not to display",
-        defaultValue: defaultPanelOptions.showFooter,
+        defaultValue: defaultPanelOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
@@ -102,7 +102,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         description: 'Choose a reducer function / calculation',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
         defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.showFooter,
+        showIf: (cfg) => cfg.footer?.show,
       })
       .addMultiSelect({
         path: 'footer.fields',
@@ -128,6 +128,6 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
           },
         },
         defaultValue: '',
-        showIf: (cfg) => cfg.showFooter,
+        showIf: (cfg) => cfg.footer?.show,
       });
   });
