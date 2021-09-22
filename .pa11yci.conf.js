@@ -5,7 +5,6 @@ var config = {
     useIncognitoBrowserContext: false,
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
-      headless: false,
     },
   },
 

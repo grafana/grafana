@@ -136,6 +136,16 @@ steps:
   depends_on:
   - end-to-end-tests-server
 
+- name: build-storybook
+  image: grafana/build-container:1.4.2
+  commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  depends_on:
+  - package
+
 - name: test-a11y-frontend-pr
   image: buildkite/puppeteer
   commands:
@@ -150,16 +160,6 @@ steps:
   failure: ignore
   depends_on:
   - end-to-end-tests-server
-
-- name: build-storybook
-  image: grafana/build-container:1.4.2
-  commands:
-  - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
-  depends_on:
-  - package
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.2
@@ -3493,6 +3493,6 @@ get:
 
 ---
 kind: signature
-hmac: 2155b5b9f16ad6c6e3eb115b0d2b954db609508b56bd9d461f775ea8a5cd329c
+hmac: 2719d1bb9b769766f34eaca09ef6cf91e2999483962e74f0dcd01b3dd320ca93
 
 ...
