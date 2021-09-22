@@ -10,6 +10,7 @@ import { Portal } from '../../Portal/Portal';
 import { selectors } from '@grafana/e2e-selectors';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {

@@ -12,6 +12,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { Button } from '../../Button';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { TimePickerCalendar } from './TimePickerCalendar';
@@ -93,46 +94,46 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [timeZone]
   );
 
-  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
-    <div aria-label="Absolute time ranges">
-      <Field label="From" invalid={from.invalid} error={from.errorMessage}>
-        <Input
-          onClick={onFocus}
-          onKeyPress={onFocus}
-          onChange={(event) => onChange(event.currentTarget.value, to.value)}
-          addonAfter={icon}
-          aria-label={selectors.components.TimePicker.fromField}
-          value={from.value}
-        />
-      </Field>
-      <Field label="To" invalid={to.invalid} error={to.errorMessage}>
-        <Input
-          onClick={onFocus}
-          onKeyPress={onFocus}
-          onChange={(event) => onChange(from.value, event.currentTarget.value)}
-          addonAfter={icon}
-          aria-label={selectors.components.TimePicker.toField}
-          value={to.value}
-        />
-      </Field>
-      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
-        Apply time range
-      </Button>
+    <ClickOutsideWrapper onClick={() => setOpen(false)}>
+      <div aria-label="Absolute time ranges">
+        <Field label="From" invalid={from.invalid} error={from.errorMessage}>
+          <Input
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onChange(event.currentTarget.value, to.value)}
+            addonAfter={icon}
+            aria-label={selectors.components.TimePicker.fromField}
+            value={from.value}
+          />
+        </Field>
+        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
+          <Input
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onChange(from.value, event.currentTarget.value)}
+            addonAfter={icon}
+            aria-label={selectors.components.TimePicker.toField}
+            value={to.value}
+          />
+        </Field>
+        <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
+          Apply time range
+        </Button>
 
-      <TimePickerCalendar
-        isFullscreen={isFullscreen}
-        isOpen={isOpen}
-        from={dateTimeParse(from.value)}
-        to={dateTimeParse(to.value)}
-        onApply={onApply}
-        onClose={() => setOpen(false)}
-        onChange={onChange}
-        timeZone={timeZone}
-        isReversed={isReversed}
-      />
-    </div>
+        <TimePickerCalendar
+          isFullscreen={isFullscreen}
+          isOpen={isOpen}
+          from={dateTimeParse(from.value)}
+          to={dateTimeParse(to.value)}
+          onApply={onApply}
+          onClose={() => setOpen(false)}
+          onChange={onChange}
+          timeZone={timeZone}
+          isReversed={isReversed}
+        />
+      </div>
+    </ClickOutsideWrapper>
   );
 };
 
