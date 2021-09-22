@@ -13,7 +13,7 @@ import {
   scanStopAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { interval, of } from 'rxjs';
+import { interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
@@ -26,6 +26,7 @@ import {
   MutableDataFrame,
   PanelData,
   RawTimeRange,
+  RelatedDataProvider,
   toUtc,
 } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
@@ -311,9 +312,19 @@ describe('reducer', () => {
   });
 
   describe('logs volume', () => {
-    let dispatch: ThunkDispatch, getState: () => StoreState;
+    let dispatch: ThunkDispatch, getState: () => StoreState, mockLogsVolumeDataProvider: () => RelatedDataProvider;
 
     beforeEach(() => {
+      mockLogsVolumeDataProvider = () => {
+        return {
+          getData: () =>
+            of(
+              { state: LoadingState.Loading, error: undefined, data: [] },
+              { state: LoadingState.Done, error: undefined, data: [{}] }
+            ),
+        };
+      };
+
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
@@ -326,13 +337,7 @@ describe('reducer', () => {
                 id: 'something',
               },
               getLogsVolumeDataProvider: () => {
-                return {
-                  getData: () =>
-                    of(
-                      { state: LoadingState.Loading, error: undefined, data: [] },
-                      { state: LoadingState.Done, error: undefined, data: [{}] }
-                    ),
-                };
+                return mockLogsVolumeDataProvider();
               },
             },
           },
@@ -398,6 +403,48 @@ describe('reducer', () => {
         error: undefined,
         data: [{}],
       });
+    });
+
+    it('should cancel any unfinished logs volume queries', async () => {
+      setupQueryResponse(getState());
+      let unsubscribes: Function[] = [];
+
+      mockLogsVolumeDataProvider = () => {
+        return {
+          getData: () => {
+            return ({
+              subscribe: () => {
+                const unsubscribe = jest.fn();
+                unsubscribes.push(unsubscribe);
+                return {
+                  unsubscribe,
+                };
+              },
+            } as unknown) as Observable<DataQueryResponse>;
+          },
+        };
+      };
+
+      await dispatch(runQueries(ExploreId.left));
+      // no subscriptions created yet
+      expect(unsubscribes).toHaveLength(0);
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // loading in progress - one subscription created, not cleaned up yet
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).not.toBeCalled();
+
+      setupQueryResponse(getState());
+      await dispatch(runQueries(ExploreId.left));
+      // new query was run - first subscription is cleaned up, no new subscriptions yet
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).toBeCalled();
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // new subscription is created, only the old was was cleaned up
+      expect(unsubscribes).toHaveLength(2);
+      expect(unsubscribes[0]).toBeCalled();
+      expect(unsubscribes[1]).not.toBeCalled();
     });
   });
 });
