@@ -123,9 +123,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 				labels[key][strVal] = true
 				seriesLabels[key] = strVal
 			case "INT64":
-				intVal := strconv.FormatInt(labelValue.Int64Value, 10)
-				labels[key][intVal] = true
-				seriesLabels[key] = intVal
+				labels[key][labelValue.Int64Value] = true
+				seriesLabels[key] = labelValue.Int64Value
 			default:
 				labels[key][labelValue.StringValue] = true
 				seriesLabels[key] = labelValue.StringValue
@@ -285,8 +284,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 				strVal := strconv.FormatBool(labelValue.BoolValue)
 				value = strVal
 			case "INT64":
-				intVal := strconv.FormatInt(labelValue.Int64Value, 10)
-				value = intVal
+				value = labelValue.Int64Value
 			default:
 				value = labelValue.StringValue
 			}
