@@ -17687,6 +17687,7 @@ fsevents@^1.2.7:
     core-js: 3.10.0
     css-loader: 6.2.0
     css-minimizer-webpack-plugin: ^3.0.2
+    cypress: 7.5.0
     d3: 5.15.0
     d3-force: ^2.1.1
     d3-scale-chromatic: 1.5.0

@@ -129,7 +129,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
@@ -406,7 +406,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
@@ -876,7 +876,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1280,7 +1280,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1430,7 +1430,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
@@ -1822,7 +1822,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2215,7 +2215,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2359,7 +2359,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
@@ -2747,7 +2747,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3108,7 +3108,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3262,7 +3262,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
@@ -3492,6 +3492,6 @@ get:
 
 ---
 kind: signature
-hmac: f8caab169f0a4698a7f460752af3cf685dd4bd7e2201ba3a19ac691d5aae4235
+hmac: 0f35fc2038b63b8365278d90441e045544d384575839cf227ae054e1479c4e40
 
 ...
