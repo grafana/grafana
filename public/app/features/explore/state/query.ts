@@ -5,6 +5,7 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  hasLogsVolumeSupportSupport,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -106,7 +107,7 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
 
 export interface StoreLogsVolumeDataProvider {
   exploreId: ExploreId;
-  logsVolumeDataProvider: Observable<DataQueryResponse>;
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
 }
 
 /**
@@ -438,21 +439,17 @@ export const runQueries = (
           }
         );
 
-      // @ts-ignore
-      const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider
-        ? // @ts-ignore
-          datasourceInstance.getLogsVolumeDataProvider(transaction.request)
-        : undefined;
-
-      dispatch(
-        storeLogsVolumeDataProviderAction({
-          exploreId,
-          logsVolumeDataProvider,
-        })
-      );
-
-      if (autoLoadLogsVolume && logsVolumeDataProvider) {
-        dispatch(loadLogsVolumeData(exploreId));
+      if (hasLogsVolumeSupportSupport(datasourceInstance)) {
+        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
+        dispatch(
+          storeLogsVolumeDataProviderAction({
+            exploreId,
+            logsVolumeDataProvider,
+          })
+        );
+        if (autoLoadLogsVolume && logsVolumeDataProvider) {
+          dispatch(loadLogsVolumeData(exploreId));
+        }
       }
     }
 

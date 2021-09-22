@@ -2,6 +2,8 @@ import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceJsonData } from './datasource';
+import { Observable } from 'rxjs';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -142,3 +144,27 @@ export enum LogsDedupDescription {
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
+
+/**
+ * TODO: This is for internal use only may change. In the future should be made more
+ * generic if new types of providers are introduced or it should be made a part of
+ * DataSourceApi if more data sources implement it.
+ *
+ * @internal
+ */
+export interface DataSourceWithLogsVolumeSupport<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> extends DataSourceApi<TQuery, TOptions> {
+  getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
+}
+
+export const hasLogsVolumeSupportSupport = <
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+>(
+  datasource: DataSourceApi<TQuery, TOptions>
+): datasource is DataSourceWithLogsVolumeSupport<TQuery, TOptions> => {
+  // @ts-ignore
+  return Boolean(datasource.getLogsVolumeDataProvider);
+};
