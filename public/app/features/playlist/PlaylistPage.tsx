@@ -1,11 +1,11 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useAsync, useDebounce } from 'react-use';
+import { useDebounce } from 'react-use';
 import { PlaylistDTO } from './types';
 import { ConfirmModal } from '@grafana/ui';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -28,17 +28,20 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
-  const { value: playlists, loading } = useAsync(async () => {
-    return await getAllPlaylist(searchQuery);
-  }, [forcePlaylistsFetch, debouncedSearchQuery]);
+  const [playlists, setPlaylists] = useState<PlaylistDTO[]>([]);
 
-  useEffect(() => {
-    if (!hasFetched && !loading) {
-      setHasFetched(true);
-    }
-  }, [loading, hasFetched]);
-
-  useDebounce(() => setDebouncedSearchQuery(searchQuery), 350, [searchQuery]);
+  useDebounce(
+    async () => {
+      const playlists = await getAllPlaylist(searchQuery);
+      if (!hasFetched) {
+        setHasFetched(true);
+      }
+      setPlaylists(playlists);
+      setDebouncedSearchQuery(searchQuery);
+    },
+    350,
+    [forcePlaylistsFetch, searchQuery]
+  );
 
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
@@ -65,14 +68,19 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     />
   );
 
+  const showSearch = playlists.length > 0 || searchQuery.length > 0 || debouncedSearchQuery.length > 0;
+
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={!hasFetched}>
-        <PageActionBar
-          searchQuery={searchQuery}
-          linkButton={{ title: 'New playlist', href: '/playlists/new' }}
-          setSearchQuery={setSearchQuery}
-        />
+        {showSearch && (
+          <PageActionBar
+            searchQuery={searchQuery}
+            linkButton={{ title: 'New playlist', href: '/playlists/new' }}
+            setSearchQuery={setSearchQuery}
+          />
+        )}
+
         {!hasPlaylists && searchQuery ? (
           <EmptyQueryListBanner />
         ) : (
@@ -82,7 +90,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
             setPlaylistToDelete={setPlaylistToDelete}
           />
         )}
-        {!hasPlaylists && !loading && debouncedSearchQuery.length < 1 && emptyListBanner}
+        {!showSearch && emptyListBanner}
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
