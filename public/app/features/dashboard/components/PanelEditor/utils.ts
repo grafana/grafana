@@ -72,9 +72,15 @@ export function setOptionImmutably<T extends object>(options: T, path: string | 
     let idx = key.lastIndexOf('[');
     const index = +key.substring(idx + 1, key.length - 1);
     const propKey = key.substr(0, idx);
-    const current = (options as Record<string, any>)[propKey];
+    let current = (options as Record<string, any>)[propKey];
     const arr = Array.isArray(current) ? [...current] : []; // note spread behavior for missing values is preferable
-    arr[index] = splat.length ? setOptionImmutably(current, splat, value) : value;
+    if (splat.length) {
+      if (current == null || typeof current !== 'object') {
+        current = {};
+      }
+      value = setOptionImmutably(current, splat, value);
+    }
+    arr[index] = value;
     return { ...options, [propKey]: arr };
   }
 
