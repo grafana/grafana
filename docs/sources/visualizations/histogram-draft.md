@@ -49,6 +49,18 @@ For the example, there is a log-normal distribution generated between the bucket
 
 {{< figure src="/static/assets/img/blog/prometheus_histograms_grafana_data.png" max-width="800px" caption="Prometheus histograms on Grafana: the data" >}}
 
+## **How to use query based on file size**
+
+| Size                      | Query                                                                                                                                                                                                                                                       | Parameter| Description
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `less than (or equal to) 1MB`                    | `
+uploaded_image_bytes_bucket{le="1048576"}
+`
+| `smaller than 1MB`                 | Default data source that is pre-selected for new panels.                                                                                                                                                                                                          |
+| `larger than 1MB`                     | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                             |
+| `between 256KB and 1MB`                  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release.                                    |
+| `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                        |
+
 ## **Query for files less than (or equal to) 1MB**
 
 The number of files less than (or equal to) 1MB that have been uploaded is stored in the time series database. There is no need for additional functions.
@@ -60,6 +72,8 @@ uploaded_image_bytes_bucket{le="1048576"}
 {{< figure src="/static/assets/img/blog/prometheus_histograms_grafana_1MB.gif" max-width="800px" caption="Prometheus histograms on Grafana: files less than or equal to 1MB" >}}
 
 Due to Prometheus storing buckets cumulatively, users do not need to use helper functions. The operation then only needs to look at one number when doing a simple query rather than being error-prone and complex if users needed to add the sum of buckets manually.
+
+Procedure
 
 Users can use one of the following **panels** to visualize their query:
 
@@ -154,9 +168,5 @@ Since a bar gauge does not contain any temporal data, users must use a **Heatmap
 
 Users can use either, selecting the one that makes the most sense for their application. To know *how fast* something is happening, use `rate`. To know *how much* something is happening, use `increase`.
 
-## Additional Resources
 
-- [Grafana Community Forum](https://community.grafana.com/)
-- [Sign Up for Grafana Cloud](https://grafana.com/products/cloud/)
 - [Prometheus Best Practices: Histograms and summaries](https://prometheus.io/docs/practices/histograms/#apdex-score)
-- ["How to visualize Prometheus histograms in Grafana" (Blog Post by Emil Tullstedt)](https://grafana.com/blog/2020/06/23/how-to-visualize-prometheus-histograms-in-grafana/)
