@@ -906,7 +906,7 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 	}
 	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
 		"rule": rule,
@@ -929,7 +929,7 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 	}
 	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{})
 }
