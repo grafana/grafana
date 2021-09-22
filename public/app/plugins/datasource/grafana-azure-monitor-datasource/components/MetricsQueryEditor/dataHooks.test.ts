@@ -1,13 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 
-import {
-  DataHook,
-  useAsyncState,
-  useMetricNames,
-  useResourceGroups,
-  useResourceNames,
-  useResourceTypes,
-} from './dataHooks';
+import { DataHook, useAsyncState, useMetricNames } from './dataHooks';
 import { AzureMetricQuery, AzureMonitorOption, AzureQueryType } from '../../types';
 import createMockDatasource from '../../__mocks__/datasource';
 import { MockedObjectDeep } from 'ts-jest/dist/utils/testing';
@@ -104,107 +97,6 @@ describe('AzureMonitor: metrics dataHooks', () => {
   };
 
   const testTable: TestScenario[] = [
-    {
-      name: 'useResourceGroups',
-      hook: useResourceGroups,
-      emptyQueryPartial: {},
-      validQueryPartial: {
-        resourceGroup: 'web-app-development',
-      },
-      invalidQueryPartial: {
-        resourceGroup: 'wrong-resource-group`',
-      },
-      templateVariableQueryPartial: {
-        resourceGroup: '$rg',
-      },
-      expectedOptions: [
-        {
-          label: 'Web App - Production',
-          value: 'web-app-production',
-        },
-        {
-          label: 'Web App - Development',
-          value: 'web-app-development',
-        },
-      ],
-      expectedClearedQueryPartial: {
-        resourceGroup: undefined,
-      },
-    },
-
-    {
-      name: 'useResourceTypes',
-      hook: useResourceTypes,
-      emptyQueryPartial: {
-        resourceGroup: 'web-app-development',
-      },
-      validQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/vm',
-      },
-      invalidQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/invalid-resource-type',
-      },
-      templateVariableQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: '$rt',
-      },
-      expectedOptions: [
-        {
-          label: 'Virtual Machine',
-          value: 'azure/vm',
-        },
-        {
-          label: 'Database',
-          value: 'azure/db',
-        },
-      ],
-      expectedClearedQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: undefined,
-      },
-    },
-
-    {
-      name: 'useResourceNames',
-      hook: useResourceNames,
-      emptyQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/vm',
-      },
-      validQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/vm',
-        resourceName: 'web-server',
-      },
-      invalidQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/vm',
-        resourceName: 'resource-that-doesnt-exist',
-      },
-      templateVariableQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/vm',
-        resourceName: '$variable',
-      },
-      expectedOptions: [
-        {
-          label: 'Web server',
-          value: 'web-server',
-        },
-        {
-          label: 'Job server',
-          value: 'job-server',
-        },
-      ],
-      expectedClearedQueryPartial: {
-        resourceGroup: 'web-app-development',
-        metricDefinition: 'azure/vm',
-        resourceName: undefined,
-      },
-    },
-
     {
       name: 'useMetricNames',
       hook: useMetricNames,

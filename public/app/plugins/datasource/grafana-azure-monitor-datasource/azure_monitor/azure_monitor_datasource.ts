@@ -65,8 +65,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       hasValue(item.azureMonitor.aggregation)
     );
 
-    console.log('filterQuery', item, { result, hasResource });
-
     return result;
   }
 
@@ -355,7 +353,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   getMetricNamespaces(resourceURI: string) {
     const url = `${this.resourcePath}${resourceURI}/providers/microsoft.insights/metricNamespaces?api-version=${this.apiPreviewVersion}`;
 
-    console.log('getMetricNamespaces', url);
     return this.getResource(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });

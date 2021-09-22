@@ -55,9 +55,10 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
           resourcePickerData={datasource.resourcePickerData}
           resourceURI={resource}
           templateVariables={templateVariables}
+          onlyResources={true}
+          datasource={datasource}
           onApply={handleApply}
           onCancel={closePicker}
-          onlyResources={true}
         />
       </Modal>
 
