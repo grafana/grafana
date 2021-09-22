@@ -3,6 +3,7 @@ import {
   GrafanaPlugin,
   PanelEditorProps,
   PanelMigrationHandler,
+  PanelOptionEditorsRegistry,
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
@@ -98,7 +99,8 @@ export class PanelPlugin<
     return new FieldConfigOptionsRegistry();
   };
 
-  registerOptionEditors: (builder: PanelOptionsEditorBuilder<TOptions>) => void = () => {};
+  private _optionEditors?: PanelOptionEditorsRegistry;
+  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -124,12 +126,15 @@ export class PanelPlugin<
     let result = this._defaults || {};
 
     if (!this._defaults) {
-      const builder = new PanelOptionsEditorBuilder<TOptions>();
-      this.initPanelEditor(builder);
+      const editors = this.optionEditors;
 
-      builder.getItems().forEach((item) => {
-        set(result, item.path, item.defaultValue);
-      });
+      if (!editors || editors.list().length === 0) {
+        return null;
+      }
+
+      for (const editor of editors.list()) {
+        set(result, editor.id, editor.defaultValue);
+      }
     }
 
     return result;
@@ -172,10 +177,17 @@ export class PanelPlugin<
     return this._fieldConfigRegistry;
   }
 
-  initPanelEditor(builder: PanelOptionsEditorBuilder<TOptions>) {
-    if (this.registerOptionEditors) {
-      this.registerOptionEditors(builder);
+  get optionEditors(): PanelOptionEditorsRegistry {
+    if (!this._optionEditors) {
+      const builder = new PanelOptionsEditorBuilder<TOptions>();
+      this._optionEditors = builder.getRegistry();
+
+      if (this.registerOptionEditors) {
+        this.registerOptionEditors(builder);
+      }
     }
+
+    return this._optionEditors;
   }
 
   /**
