@@ -24,7 +24,6 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 export class LokiLogsVolumeProvider implements RelatedDataProvider {
   private readonly datasource: LokiDatasource;
   private readonly dataQueryRequest: DataQueryRequest<LokiQuery>;
-  private rawLogsVolume: DataFrame[] = [];
 
   constructor(datasource: LokiDatasource, dataQueryRequest: DataQueryRequest<LokiQuery>) {
     this.datasource = datasource;
@@ -43,6 +42,7 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
       });
 
     return new Observable((observer) => {
+      let rawLogsVolume: DataFrame[] = [];
       observer.next({
         state: LoadingState.Loading,
         error: undefined,
@@ -51,7 +51,7 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
 
       const subscription = this.datasource.query(logsVolumeRequest).subscribe({
         complete: () => {
-          const aggregatedLogsVolume = this.aggregateRawLogsVolume();
+          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume);
           observer.next({
             state: LoadingState.Done,
             error: undefined,
@@ -60,7 +60,7 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
           observer.complete();
         },
         next: (dataQueryResponse: DataQueryResponse) => {
-          this.rawLogsVolume = this.rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
         },
         error: (error) => {
           observer.next({
@@ -76,27 +76,27 @@ export class LokiLogsVolumeProvider implements RelatedDataProvider {
       };
     });
   }
+}
 
-  /**
-   * Add up values for the same level and create a single data frame for each level
-   */
-  private aggregateRawLogsVolume(): DataFrame[] {
-    const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
-    let levels = 0;
-    this.rawLogsVolume.forEach((dataFrame) => {
-      const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
-      const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
-      if (!logsVolumeByLevelMap[level]) {
-        logsVolumeByLevelMap[level] = [];
-        levels++;
-      }
-      logsVolumeByLevelMap[level]!.push(dataFrame);
-    });
+/**
+ * Add up values for the same level and create a single data frame for each level
+ */
+function aggregateRawLogsVolume(rawLogsVolume: DataFrame[]): DataFrame[] {
+  const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
+  let levels = 0;
+  rawLogsVolume.forEach((dataFrame) => {
+    const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
+    const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+    if (!logsVolumeByLevelMap[level]) {
+      logsVolumeByLevelMap[level] = [];
+      levels++;
+    }
+    logsVolumeByLevelMap[level]!.push(dataFrame);
+  });
 
-    return Object.keys(logsVolumeByLevelMap).map((level: string) => {
-      return aggregateFields(logsVolumeByLevelMap[level as LogLevel]!, getFieldConfig(level as LogLevel, levels));
-    });
-  }
+  return Object.keys(logsVolumeByLevelMap).map((level: string) => {
+    return aggregateFields(logsVolumeByLevelMap[level as LogLevel]!, getFieldConfig(level as LogLevel, levels));
+  });
 }
 
 function getFieldConfig(level: LogLevel, levels: number) {
