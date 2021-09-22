@@ -78,6 +78,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
 	if uaExecuteAlerts { // true by default
+		cfg.Logger.Warn("falling back to legacy setting of 'execute_alerts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		uaExecuteAlerts = alerting.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
 	}
 	uaCfg.ExecuteAlerts = uaExecuteAlerts
@@ -85,18 +86,21 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	// if the unified alerting options equal the defaults, apply the respective legacy one
 	uaEvaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(evaluatorDefaultEvaluationTimeoutSec)
 	if uaEvaluationTimeoutSeconds == evaluatorDefaultEvaluationTimeoutSec {
+		cfg.Logger.Warn("falling back to legacy setting of 'evaluation_timeout_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		uaEvaluationTimeoutSeconds = alerting.Key("evaluation_timeout_seconds").MustInt64(evaluatorDefaultEvaluationTimeoutSec)
 	}
 	uaCfg.EvaluationTimeout = time.Second * time.Duration(uaEvaluationTimeoutSeconds)
 
 	uaMaxAttempts := ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 	if uaMaxAttempts == schedulerDefaultMaxAttempts {
+		cfg.Logger.Warn("falling back to legacy setting of 'max_attempts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		uaMaxAttempts = alerting.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
 	uaMinInterval := ua.Key("min_interval_seconds").MustInt64(schedulerDefaultMinInterval)
 	if uaMinInterval == schedulerDefaultMinInterval {
+		cfg.Logger.Warn("falling back legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
 		uaMinInterval = alerting.Key("min_interval_seconds").MustInt64(schedulerDefaultMinInterval)
 	}
