@@ -2687,7 +2687,6 @@ __metadata:
     slate: 0.47.8
     storybook-dark-mode: 1.0.8
     tinycolor2: 1.4.1
-    ts-loader: 8.0.11
     tslib: 2.2.0
     typescript: 4.3.4
     uplot: 1.6.16
@@ -2700,6 +2699,7 @@ __metadata:
     react-dom: 17.0.1
     react-hook-form: 7.5.3
     react-router-dom: ^5.2.0
+    ts-loader: 8.0.11
   peerDependenciesMeta:
     "@wojtekmaj/enzyme-adapter-react-17":
       optional: true
@@ -17817,6 +17817,7 @@ fsevents@^1.2.7:
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.4.1
     ts-jest: 26.4.4
+    ts-loader: 8.0.11
     ts-node: 9.0.0
     tslib: 2.2.0
     typescript: 4.3.4

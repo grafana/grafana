@@ -120,7 +120,6 @@
     "rollup-plugin-typescript2": "0.29.0",
     "rollup-plugin-visualizer": "4.2.0",
     "storybook-dark-mode": "1.0.8",
-    "ts-loader": "8.0.11",
     "typescript": "4.3.4",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
@@ -131,7 +130,8 @@
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-hook-form": "7.5.3",
-    "react-router-dom": "^5.2.0"
+    "react-router-dom": "^5.2.0",
+    "ts-loader": "8.0.11"
   },
   "peerDependenciesMeta": {
     "@wojtekmaj/enzyme-adapter-react-17": {
