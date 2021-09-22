@@ -170,6 +170,7 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
   });
+
   describe('when searching', () => {
     it('should only list plugins matching search', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [
