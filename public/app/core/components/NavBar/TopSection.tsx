@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import config from '../../config';
 import { isLinkActive, isSearchActive } from './utils';
-import SideMenuItem from './SideMenuItem';
+import NavBarItem from './NavBarItem';
 
 const TopSection = () => {
   const location = useLocation();
@@ -23,12 +23,12 @@ const TopSection = () => {
 
   return (
     <div data-testid="top-section-items" className={styles.container}>
-      <SideMenuItem isActive={isSearchActive(location)} label="Search dashboards" onClick={onOpenSearch}>
+      <NavBarItem isActive={isSearchActive(location)} label="Search dashboards" onClick={onOpenSearch}>
         <Icon name="search" size="xl" />
-      </SideMenuItem>
+      </NavBarItem>
       {mainLinks.map((link, index) => {
         return (
-          <SideMenuItem
+          <NavBarItem
             key={`${link.id}-${index}`}
             isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
@@ -38,7 +38,7 @@ const TopSection = () => {
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-          </SideMenuItem>
+          </NavBarItem>
         );
       })}
     </div>

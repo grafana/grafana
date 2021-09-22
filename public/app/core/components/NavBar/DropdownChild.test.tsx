@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import DropDownChild from './DropDownChild';
+import DropdownChild from './DropdownChild';
 
-describe('DropDownChild', () => {
+describe('DropdownChild', () => {
   const mockText = 'MyChildItem';
   const mockUrl = '/route';
   const mockIcon = 'home-alt';
 
   it('displays the text', () => {
-    render(<DropDownChild text={mockText} />);
+    render(<DropdownChild text={mockText} />);
     const text = screen.getByText(mockText);
     expect(text).toBeInTheDocument();
   });
@@ -17,7 +17,7 @@ describe('DropDownChild', () => {
   it('attaches the url to the text if provided', () => {
     render(
       <BrowserRouter>
-        <DropDownChild text={mockText} url={mockUrl} />
+        <DropdownChild text={mockText} url={mockUrl} />
       </BrowserRouter>
     );
     const link = screen.getByRole('link', { name: mockText });
@@ -26,13 +26,13 @@ describe('DropDownChild', () => {
   });
 
   it('displays an icon if a valid icon is provided', () => {
-    render(<DropDownChild text={mockText} icon={mockIcon} />);
+    render(<DropdownChild text={mockText} icon={mockIcon} />);
     const icon = screen.getByTestId('dropdown-child-icon');
     expect(icon).toBeInTheDocument();
   });
 
   it('displays a divider instead when isDivider is true', () => {
-    render(<DropDownChild text={mockText} icon={mockIcon} url={mockUrl} isDivider />);
+    render(<DropdownChild text={mockText} icon={mockIcon} url={mockUrl} isDivider />);
 
     // Check the divider is shown
     const divider = screen.getByTestId('dropdown-child-divider');
