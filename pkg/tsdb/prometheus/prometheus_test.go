@@ -318,7 +318,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 			"intervalFactor": 1,
 			"refId": "A",
 			"range": true,
-			"instant": true,
+			"instant": true
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
