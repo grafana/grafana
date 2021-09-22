@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
+import { mergeLocalAndRemote } from './helpers';
 import { PluginError } from '@grafana/data';
 import {
   PluginDetails,
@@ -12,16 +12,6 @@ import {
   Version,
   PluginVersion,
 } from './types';
-
-export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
-  const [localPlugins, remotePlugins, pluginErrors] = await Promise.all([
-    getLocalPlugins(),
-    getRemotePlugins(),
-    getPluginErrors(),
-  ]);
-
-  return mergeLocalsAndRemotes(localPlugins, remotePlugins, pluginErrors);
-}
 
 export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
   const { local, remote } = await getPlugin(id);
@@ -52,7 +42,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   };
 }
 
-async function getRemotePlugins(): Promise<RemotePlugin[]> {
+export async function getRemotePlugins(): Promise<RemotePlugin[]> {
   const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
   return res.items;
 }
@@ -73,7 +63,7 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
   };
 }
 
-async function getPluginErrors(): Promise<PluginError[]> {
+export async function getPluginErrors(): Promise<PluginError[]> {
   try {
     return await getBackendSrv().get(`${API_ROOT}/errors`);
   } catch (error) {
@@ -103,7 +93,7 @@ async function getPluginVersions(id: string): Promise<Version[]> {
   }
 }
 
-async function getLocalPlugins(): Promise<LocalPlugin[]> {
+export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
   return installed;
 }
