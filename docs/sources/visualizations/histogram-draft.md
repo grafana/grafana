@@ -2,18 +2,14 @@
 title = "Histogram"
 description = "Histogram visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/histogram/"]
 weight = 605
 +++
 
-# Visualize Prometheus data in Grafana histogram
+## Visualize Prometheus data in Grafana
 
-Grafana has a histogram visualization which allows you to do <such and such things>. To review basic information, check out the Grafana's "[Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)." This topic discusses how to visualize a Premetheus histogram in Grafana.
+This topic describes how to visualize Prometheus data as a histogram in Grafana. The histogram visualization is a graphical representation of the distribution of numerical data. For in-depth information, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)."
 
-List what users need here
--list of things
-
-Assuming users have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana, this documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/). There are later versions of Grafana.
+Before you begin, we assume that you have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana, this documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/). There are later versions of Grafana.
 
 For the purposes of this topic, the data sample is from a fictional image hosting service.
 
@@ -53,7 +49,7 @@ For the example, there is a log-normal distribution generated between the bucket
 
 {{< figure src="/static/assets/img/blog/prometheus_histograms_grafana_data.png" max-width="800px" caption="Prometheus histograms on Grafana: the data" >}}
 
-## **How many files less than (or equal to) 1MB have been uploaded?**
+## **Query for files less than (or equal to) 1MB**
 
 The number of files less than (or equal to) 1MB that have been uploaded is stored in the time series database. There is no need for additional functions.
 
@@ -71,9 +67,9 @@ Users can use one of the following **panels** to visualize their query:
 2. **Gauge** - also known as a speedometer; best used when the data had defined boundary limits to warn users when they are falling under the normal range
 3. **Graph** - time charts that display data points over a time axis allowing users to overlap metrics to compare them overtime; easily modified and good for tracking outliers, state changes, or triggers
 
-This sample query is best represented using a stat if users want to see files they have currently as opposed to overtime (by using a graph). A gauge would not be feasible because there is not a defined range.
+This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible because there is no defined range.
 
-## **Querying the number of files *smaller* than 1MB**
+## **Query for files *smaller* than 1MB**
 
 This question addresses the total count of files.
 
@@ -90,7 +86,7 @@ uploaded_image_bytes_bucket{le="1048576"} / ignoring (le) uploaded_image_bytes_c
 
 Since the normal way of displaying ratios is as percentages, set the unit to `Percent (0.0-1.0)`.
 
-## **Querying the number of files *larger* than 1MB?**
+## **Query for files *larger* than 1MB?**
 
 Subtract the number of smaller files from the number of total files to get the number of larger files.
 
@@ -98,7 +94,7 @@ Subtract the number of smaller files from the number of total files to get the n
 uploaded_image_bytes_count - ignoring(le) uploaded_image_bytes_bucket{le="1048576"}
 ```
 
-## **Querying the number of files *between 256KB and 1MB*?**
+## **Query for files *between 256KB and 1MB**
 
 Using the same logic as for the previous query, get the number of files between any two bucket boundaries by subtracting the smaller boundary from the larger.
 
