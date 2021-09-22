@@ -1,20 +1,11 @@
 import { Style, Stroke, Fill } from 'ol/style';
-import { ColorDimensionConfig } from 'app/features/dimensions';
-import { GeoJSONMapperRule } from './checkFeatureMatchesStyleRule';
-
-export interface GeoMapStyle {
-  shape?: string;
-  fill?: ColorDimensionConfig;
-  stroke?: ColorDimensionConfig;
-  strokeWidth?: number;
-  rule?: GeoJSONMapperRule;
-}
+import { FeatureStyleConfig } from '../types';
 
 /**
  * Gets a geomap style based on fill, stroke, and stroke width
  * @returns ol style
  */
-export const getGeoMapStyle = (config: GeoMapStyle, property: any) => {
+export const getGeoMapStyle = (config: FeatureStyleConfig, property: any) => {
   return new Style({
     fill:
       config.fill &&
@@ -25,7 +16,7 @@ export const getGeoMapStyle = (config: GeoMapStyle, property: any) => {
       config.stroke &&
       new Stroke({
         color: `${config.stroke}`,
-        width: config.strokeWidth,
+        width: config.strokeWidth ?? 1,
       }),
     //handle a shape/marker too?
   });

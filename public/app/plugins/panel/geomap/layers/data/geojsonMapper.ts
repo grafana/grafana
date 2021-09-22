@@ -5,20 +5,17 @@ import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
-import { GeoMapStyle, getGeoMapStyle } from '../../utils/getGeoMapStyle';
+import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
+import { FeatureStyleConfig } from '../../types';
+import { Stroke, Style } from 'ol/style';
+import RenderFeature from 'ol/render/Feature';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
 
-  // Field name that will map to each featureId
-  idField?: string;
-
-  // Field to use that will set color
-  valueField?: string;
-
   // Styles that can be applied
-  styles?: GeoMapStyle[];
+  styles?: FeatureStyleConfig[];
 }
 
 const defaultOptions: GeoJSONMapperConfig = {
@@ -45,21 +42,25 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       format: new GeoJSON(),
     });
 
+    const defaultStyle = new Style({
+      stroke: new Stroke({
+        color: '#1F60C4',
+        width: 1,
+      })
+    })
+
     const vectorLayer = new VectorLayer({
       source,
-      style: (feature: Feature<Geometry>) => {
-        if (!feature) {
-          return undefined;
-        }
+      style: (feature: RenderFeature | Feature<Geometry>) => {
         if (config?.styles?.length) {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
-            if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature)) {
+            if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {
               return getGeoMapStyle(style, feature);
             }
           }
         }
-        return undefined;
+        return defaultStyle;
       }
     });
 

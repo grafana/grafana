@@ -1,31 +1,32 @@
 import { Feature } from 'ol';
 import { Polygon } from 'ol/geom';
+import { ComparisonOperations } from '../types';
 import { checkFeatureMatchesStyleRule } from './checkFeatureMatchesStyleRule';
 
 describe('check if feature matches style rule', () => {
   it('can compare with numbers', () => {
     const rule1 = {
-      operation: 'eq',
+      operations: ComparisonOperations.EQ,
       property: 'number',
       value: 3,
     };
     const rule2 = {
-      operation: 'lt',
+      operations: ComparisonOperations.LT,
       property: 'number',
       value: 2,
     };
     const rule3 = {
-      operation: 'lte',
+      operations: ComparisonOperations.LTE,
       property: 'number',
       value: 3,
     };
     const rule4 = {
-      operation: 'gt',
+      operations: ComparisonOperations.GT,
       property: 'number',
       value: 3,
     };
     const rule5 = {
-      operation: 'gte',
+      operations: ComparisonOperations.GTE,
       property: 'number',
       value: 3,
     };
@@ -45,27 +46,27 @@ describe('check if feature matches style rule', () => {
   });
   it('can compare with strings', () => {
     const rule1 = {
-      operation: 'eq',
+      operations: ComparisonOperations.EQ,
       property: 'string',
       value: 'B',
     };
     const rule2 = {
-      operation: 'lt',
+      operations: ComparisonOperations.LT,
       property: 'string',
       value: 'c',
     };
     const rule3 = {
-      operation: 'lte',
+      operations: ComparisonOperations.LTE,
       property: 'string',
       value: 'bc',
     };
     const rule4 = {
-      operation: 'gt',
+      operations: ComparisonOperations.GT,
       property: 'string',
       value: 'ab',
     };
     const rule5 = {
-      operation: 'gte',
+      operations: ComparisonOperations.GTE,
       property: 'string',
       value: 'abc',
     };
@@ -85,27 +86,27 @@ describe('check if feature matches style rule', () => {
   });
   it('can compare with booleans', () => {
     const rule1 = {
-      operation: 'eq',
+      operations: ComparisonOperations.EQ,
       property: 'boolean',
       value: false,
     };
     const rule2 = {
-      operation: 'lt',
+      operations: ComparisonOperations.LT,
       property: 'boolean',
       value: true,
     };
     const rule3 = {
-      operation: 'lte',
+      operations: ComparisonOperations.LTE,
       property: 'boolean',
       value: true,
     };
     const rule4 = {
-      operation: 'gt',
+      operations: ComparisonOperations.GT,
       property: 'boolean',
       value: false,
     };
     const rule5 = {
-      operation: 'gte',
+      operations: ComparisonOperations.GTE,
       property: 'boolean',
       value: false,
     };
