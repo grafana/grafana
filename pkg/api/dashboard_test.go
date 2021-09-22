@@ -115,7 +115,7 @@ func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), &usageStatsMock{})
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), &usageStatsMock{t: t})
 	require.NoError(t, err)
 	return gLive
 }

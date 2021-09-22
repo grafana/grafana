@@ -397,7 +397,6 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 			select {
 			case <-updateStatsTicker.C:
 				g.sampleLiveStats()
-			case <-updateStatsTicker.C:
 			case <-ctx.Done():
 				return ctx.Err()
 			}
