@@ -16,7 +16,7 @@ import { tokenizer } from './syntax';
 import Prism from 'prismjs';
 import { Node } from 'slate';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
 import { TempoDatasource, TempoQuery } from './datasource';
 import { debounce } from 'lodash';
@@ -56,6 +56,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     spanNameOptions: [],
   });
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
 
   const fetchServiceNameOptions = useMemo(
     () =>
@@ -139,6 +140,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               placeholder="Select a service"
               onOpenMenu={fetchServiceNameOptions}
               isClearable
+              onKeyDown={onKeyDown}
             />
           </InlineField>
         </InlineFieldRow>
@@ -157,6 +159,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               placeholder="Select a span"
               onOpenMenu={fetchSpanNameOptions}
               isClearable
+              onKeyDown={onKeyDown}
             />
           </InlineField>
         </InlineFieldRow>
@@ -182,10 +185,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Min Duration" labelWidth={14} grow>
+          <InlineField label="Min Duration" invalid={!!errors.minDuration} labelWidth={14} grow>
             <Input
               value={query.minDuration || ''}
               placeholder={durationPlaceholder}
+              onBlur={() => {
+                if (query.minDuration && !isValidGoDuration(query.minDuration)) {
+                  setErrors({ ...errors, minDuration: true });
+                } else {
+                  setErrors({ ...errors, minDuration: false });
+                }
+              }}
               onChange={(v) =>
                 onChange({
                   ...query,
@@ -197,10 +207,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Max Duration" labelWidth={14} grow>
+          <InlineField label="Max Duration" invalid={!!errors.maxDuration} labelWidth={14} grow>
             <Input
               value={query.maxDuration || ''}
               placeholder={durationPlaceholder}
+              onBlur={() => {
+                if (query.maxDuration && !isValidGoDuration(query.maxDuration)) {
+                  setErrors({ ...errors, maxDuration: true });
+                } else {
+                  setErrors({ ...errors, maxDuration: false });
+                }
+              }}
               onChange={(v) =>
                 onChange({
                   ...query,
@@ -212,16 +229,29 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum numbers of returned results">
+          <InlineField
+            label="Limit"
+            invalid={!!errors.limit}
+            labelWidth={14}
+            grow
+            tooltip="Maximum numbers of returned results"
+          >
             <Input
               value={query.limit || ''}
               type="number"
-              onChange={(v) =>
+              onChange={(v) => {
+                let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;
+                if (limit && (!Number.isInteger(limit) || limit <= 0)) {
+                  setErrors({ ...errors, limit: true });
+                } else {
+                  setErrors({ ...errors, limit: false });
+                }
+
                 onChange({
                   ...query,
                   limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
-                })
-              }
+                });
+              }}
               onKeyDown={onKeyDown}
             />
           </InlineField>
