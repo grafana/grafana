@@ -150,7 +150,7 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn -s test:accessibility-pr
+  - yarn run --silent test:accessibility-pr
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -440,7 +440,7 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn -s test:accessibility --json > pa11y-ci-results.json
+  - yarn run --silent test:accessibility --json > pa11y-ci-results.json
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3492,6 +3492,6 @@ get:
 
 ---
 kind: signature
-hmac: 0f35fc2038b63b8365278d90441e045544d384575839cf227ae054e1479c4e40
+hmac: 7aff8432ab9444544b4690d1e5af35f94c0bd36a5ec707bad60b91fec529eac9
 
 ...
