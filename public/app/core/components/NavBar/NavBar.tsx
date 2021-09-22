@@ -2,7 +2,7 @@ import React, { FC, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, styleMixins, useTheme2 } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
@@ -12,14 +12,14 @@ import BottomSection from './BottomSection';
 
 const homeUrl = config.appSubUrl || '/';
 
-export const SideMenu: FC = React.memo(() => {
+export const NavBar: FC = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
 
-  const toggleSideMenuSmallBreakpoint = useCallback(() => {
+  const toggleNavBarSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
 
@@ -32,7 +32,7 @@ export const SideMenu: FC = React.memo(() => {
       <a href={homeUrl} className={styles.homeLogo}>
         <Branding.MenuLogo />
       </a>
-      <div className={styles.mobileSidemenuLogo} onClick={toggleSideMenuSmallBreakpoint} key="hamburger">
+      <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
         <Icon name="bars" size="xl" />
         <span className={styles.closeButton}>
           <Icon name="times" />
@@ -45,7 +45,7 @@ export const SideMenu: FC = React.memo(() => {
   );
 });
 
-SideMenu.displayName = 'SideMenu';
+NavBar.displayName = 'NavBar';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sidemenu: css`
@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.components.sidemenu.width}px;
     z-index: ${theme.zIndex.sidemenu};
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    @media ${theme.breakpoints.up('md')} {
       background-color: ${theme.colors.background.primary};
       position: relative;
     }
@@ -94,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       width: ${theme.spacing(3.5)};
     }
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    @media ${theme.breakpoints.up('md')} {
       align-items: center;
       display: flex;
       justify-content: center;
@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     padding: ${theme.spacing(2)};
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    @media ${theme.breakpoints.up('md')} {
       display: none;
     }
   `,
