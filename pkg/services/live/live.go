@@ -868,6 +868,94 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	})
 }
 
+type configInfo struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Example     interface{} `json:"example,omitempty"`
+}
+
+// HandlePipelineEntitiesListHTTP ...
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"subscribers": []configInfo{
+			{
+				Type:        pipeline.SubscriberTypeBuiltin,
+				Description: "list the fields that should be removed",
+				// Example:     pipeline.Bu{},
+			},
+			{
+				Type:        pipeline.SubscriberTypeManagedStream,
+				Description: "list the fields that should be removed",
+			},
+			{
+				Type: pipeline.SubscriberTypeMultiple,
+			},
+		},
+		"outputs": []configInfo{
+			{
+				Type:        pipeline.OutputTypeManagedStream,
+				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+				Example:     pipeline.ManagedStreamOutputConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeMultiple,
+				Description: "Send the output to multiple destinations",
+				Example:     pipeline.MultipleOutputterConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeConditional,
+				Description: "send to an output depending on frame values",
+				Example:     pipeline.ConditionalOutputConfig{},
+			},
+			{
+				Type: pipeline.OutputTypeRedirect,
+			},
+			{
+				Type: pipeline.OutputTypeThreshold,
+			},
+			{
+				Type: pipeline.OutputTypeChangeLog,
+			},
+			{
+				Type: pipeline.OutputTypeRemoteWrite,
+			},
+		},
+		"converters": []configInfo{
+			{
+				Type: pipeline.ConverterTypeJsonAuto,
+			},
+			{
+				Type: pipeline.ConverterTypeJsonExact,
+			},
+			{
+				Type:        pipeline.ConverterTypeInfluxAuto,
+				Description: "accept influx line protocol",
+				Example:     pipeline.AutoInfluxConverterConfig{},
+			},
+			{
+				Type: pipeline.ConverterTypeJsonFrame,
+			},
+		},
+		"processors": []configInfo{
+			{
+				Type:        pipeline.ProcessorTypeKeepFields,
+				Description: "list the fields that should stay",
+				Example:     pipeline.KeepFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeDropFields,
+				Description: "list the fields that should be removed",
+				Example:     pipeline.DropFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeMultiple,
+				Description: "apply multiplie processors",
+				Example:     pipeline.MultipleProcessorConfig{},
+			},
+		},
+	})
+}
+
 // HandleRemoteWriteBackendsListHTTP ...
 func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
 	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
