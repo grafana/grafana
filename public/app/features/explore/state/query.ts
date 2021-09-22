@@ -5,7 +5,7 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  hasLogsVolumeSupportSupport,
+  hasLogsVolumeSupport,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -439,7 +439,7 @@ export const runQueries = (
           }
         );
 
-      if (hasLogsVolumeSupportSupport(datasourceInstance)) {
+      if (hasLogsVolumeSupport(datasourceInstance)) {
         const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
         dispatch(
           storeLogsVolumeDataProviderAction({
