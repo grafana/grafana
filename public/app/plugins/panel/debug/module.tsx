@@ -41,5 +41,10 @@ export const plugin = new PanelPlugin<DebugPanelOptions>(DebugPanel).useFieldCon
         placeholder: 'Select dashboard',
         isClearable: true,
       },
+    })
+    .addBooleanSwitch({
+      path: 'sample[1]',
+      name: 'Sample array index 1',
+      defaultValue: true,
     });
 });
