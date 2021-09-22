@@ -133,8 +133,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ dedupStrategy });
   };
 
-  onChangeLabels = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const showLabels = target.checked;
       this.setState({
@@ -144,8 +144,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangeTime = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangeTime = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const showTime = target.checked;
       this.setState({
@@ -155,8 +155,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
       this.setState({
@@ -166,8 +166,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangePrettifyLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangePrettifyLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const prettifyLogMessage = target.checked;
       this.setState({
@@ -177,8 +177,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  handleOnChangeAutoLogsVolume = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  handleOnChangeAutoLogsVolume = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       this.props.onChangeAutoLogsVolume(target.checked);
     }
