@@ -22,7 +22,7 @@ You can use one of the following authentication methods. Currently, `AWS SDK Def
 
 - `Access and secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
 
-- `Workspace IAM role` corresponds to the [EC2RoleProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/ec2rolecreds/#EC2RoleProvider). The `EC2RoleProvider` attempts to pull credentials for the role that is attached to the EC2 instance that Grafana runs on. This can also be achieved by using the authentication method `AWS SDK Default`, but this option is different in the sense that it doesn't have any fallbacks. This option is currently only enabled by default in Amazon Managed Grafana.
+- `Workspace IAM role` corresponds to the [EC2RoleProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/ec2rolecreds/#EC2RoleProvider). The EC2RoleProvider pulls credentials for a role attached to the EC2 instance that Grafana runs on. You can also achieve this by using the authentication method AWS SDK Default, but this option is different as it doesn’t have any fallbacks. This option is currently only enabled by default in Amazon Managed Grafana.
 
 ## Assuming a role
 
