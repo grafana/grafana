@@ -2,63 +2,83 @@ var config = {
   defaults: {
     concurrency: 1,
     runners: ['axe'],
+    useIncognitoBrowserContext: false,
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
+      headless: false,
     },
   },
 
   urls: [
     {
       url: '${HOST}/login',
+      wait: 500,
+      rootElement: '.main-view',
+    },
+    {
+      url: '${HOST}/login', //skip password and login
       actions: [
+        "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
       wait: 500,
+      rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1',
+      wait: 500,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
-      hideElements: '.sidemenu',
+      wait: 500,
+      rootElement: '.main-view',
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
-      rootElement: '.dashboard-settings',
+      wait: 500,
+      rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1&search=open',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/alerting/list',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/datasources',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/org/users',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/org/teams',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/plugins',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/org',
+      wait: 500,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/org/apikeys',
+      wait: 500,
       rootElement: '.main-view',
     },
     {

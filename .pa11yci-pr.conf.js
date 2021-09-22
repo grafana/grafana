@@ -2,12 +2,18 @@ var config = {
   defaults: {
     concurrency: 1,
     runners: ['axe'],
+    useIncognitoBrowserContext: false,
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },
   },
 
   urls: [
+    {
+      url: '${HOST}/login',
+      wait: 500,
+      rootElement: '.main-view',
+    },
     {
       url: '${HOST}/login',
       wait: 500,
@@ -19,33 +25,23 @@ var config = {
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
       threshold: 2,
-      log: {
-        debug: console.log,
-        error: console.error,
-        info: console.info,
-      },
+      rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1',
       wait: 500,
       threshold: 7,
-      log: {
-        debug: console.log,
-        error: console.error,
-        info: console.info,
-      },
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
       wait: 500,
-      hideElements: '.sidemenu',
+      rootElement: '.main-view',
       threshold: 2,
-      screenCapture: 'myDir/test-gauge.png',
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
       wait: 500,
-      rootElement: '.dashboard-settings',
+      rootElement: '.main-view',
       threshold: 10,
     },
     {
