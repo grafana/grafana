@@ -149,7 +149,7 @@ steps:
     PORT: 3001
   failure: ignore
   depends_on:
-  - end-to-end-tests
+  - end-to-end-tests-server
 
 - name: build-storybook
   image: grafana/build-container:1.4.2
@@ -3493,6 +3493,6 @@ get:
 
 ---
 kind: signature
-hmac: 4b42ea8b7645bcaba66d1539701449027dc4ff5c750fbf4c8c345534b3f648e6
+hmac: 2155b5b9f16ad6c6e3eb115b0d2b954db609508b56bd9d461f775ea8a5cd329c
 
 ...

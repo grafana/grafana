@@ -428,7 +428,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'name': 'test-a11y-frontend-pr' + enterprise2_suffix(edition),
         'image': 'buildkite/puppeteer',
         'depends_on': [
-          'end-to-end-tests' + enterprise2_suffix(edition),
+          'end-to-end-tests-server' + enterprise2_suffix(edition),
         ],
          'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),

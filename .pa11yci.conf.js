@@ -75,7 +75,6 @@ function myPa11yCiConfiguration(urls, defaults) {
   for (var idx = 0; idx < urls.length; idx++) {
     urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
   }
-
   return {
     defaults: defaults,
     urls: urls,
