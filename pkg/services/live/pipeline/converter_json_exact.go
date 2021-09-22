@@ -27,6 +27,12 @@ func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
 	return &ExactJsonConverter{config: c}
 }
 
+const ConverterTypeJsonExact = "jsonExact"
+
+func (c *ExactJsonConverter) Type() string {
+	return ConverterTypeJsonExact
+}
+
 func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
 	//obj, err := oj.Parse(body)
 	//if err != nil {

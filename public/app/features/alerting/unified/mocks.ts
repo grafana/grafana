@@ -11,7 +11,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -19,6 +19,8 @@ import {
   AlertmanagerStatus,
   AlertState,
   GrafanaManagedReceiverConfig,
+  Silence,
+  SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 
 let nextDataSourceId = 1;
@@ -204,6 +206,21 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
   };
 };
 
+export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
+  return {
+    id: '1a2b3c4d5e6f',
+    matchers: [{ name: 'foo', value: 'bar', isEqual: true, isRegex: false }],
+    startsAt: new Date().toISOString(),
+    endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: config.bootData.user.name || 'admin',
+    comment: 'Silence noisy alerts',
+    status: {
+      state: SilenceState.Active,
+    },
+    ...partial,
+  };
+};
 export class MockDataSourceSrv implements DataSourceSrv {
   datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore

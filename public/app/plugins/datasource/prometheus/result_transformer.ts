@@ -50,8 +50,9 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
   );
 
   // For table results, we need to transform data frames to table data frames
+  const responseLength = options.targets.filter((target) => !target.hide).length;
   const tableFrames = tableResults.map((dataFrame) => {
-    const df = transformDFoTable(dataFrame, options.targets.length);
+    const df = transformDFoTable(dataFrame, responseLength);
     return df;
   });
 

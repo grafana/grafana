@@ -1,7 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { StatusHistoryPanel } from './StatusHistoryPanel';
 import { StatusPanelOptions, StatusFieldConfig, defaultStatusFieldConfig } from './types';
-import { BarValueVisibility } from '@grafana/schema';
+import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusHistoryPanel)
@@ -47,12 +47,12 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
         name: 'Show values',
         settings: {
           options: [
-            { value: BarValueVisibility.Auto, label: 'Auto' },
-            { value: BarValueVisibility.Always, label: 'Always' },
-            { value: BarValueVisibility.Never, label: 'Never' },
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
-        defaultValue: BarValueVisibility.Auto,
+        defaultValue: VisibilityMode.Auto,
       })
       .addSliderInput({
         path: 'rowHeight',

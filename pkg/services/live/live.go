@@ -37,11 +37,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"gopkg.in/macaron.v1"
-	"gopkg.in/redis.v5"
 )
 
 var (
@@ -146,7 +146,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		redisClient := redis.NewClient(&redis.Options{
 			Addr: g.Cfg.LiveHAEngineAddress,
 		})
-		cmd := redisClient.Ping()
+		cmd := redisClient.Ping(context.TODO())
 		if _, err := cmd.Result(); err != nil {
 			return nil, fmt.Errorf("error pinging Redis: %v", err)
 		}
@@ -865,6 +865,94 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
 		"rules": result,
+	})
+}
+
+type configInfo struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Example     interface{} `json:"example,omitempty"`
+}
+
+// HandlePipelineEntitiesListHTTP ...
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"subscribers": []configInfo{
+			{
+				Type:        pipeline.SubscriberTypeBuiltin,
+				Description: "list the fields that should be removed",
+				// Example:     pipeline.Bu{},
+			},
+			{
+				Type:        pipeline.SubscriberTypeManagedStream,
+				Description: "list the fields that should be removed",
+			},
+			{
+				Type: pipeline.SubscriberTypeMultiple,
+			},
+		},
+		"outputs": []configInfo{
+			{
+				Type:        pipeline.OutputTypeManagedStream,
+				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+				Example:     pipeline.ManagedStreamOutputConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeMultiple,
+				Description: "Send the output to multiple destinations",
+				Example:     pipeline.MultipleOutputterConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeConditional,
+				Description: "send to an output depending on frame values",
+				Example:     pipeline.ConditionalOutputConfig{},
+			},
+			{
+				Type: pipeline.OutputTypeRedirect,
+			},
+			{
+				Type: pipeline.OutputTypeThreshold,
+			},
+			{
+				Type: pipeline.OutputTypeChangeLog,
+			},
+			{
+				Type: pipeline.OutputTypeRemoteWrite,
+			},
+		},
+		"converters": []configInfo{
+			{
+				Type: pipeline.ConverterTypeJsonAuto,
+			},
+			{
+				Type: pipeline.ConverterTypeJsonExact,
+			},
+			{
+				Type:        pipeline.ConverterTypeInfluxAuto,
+				Description: "accept influx line protocol",
+				Example:     pipeline.AutoInfluxConverterConfig{},
+			},
+			{
+				Type: pipeline.ConverterTypeJsonFrame,
+			},
+		},
+		"processors": []configInfo{
+			{
+				Type:        pipeline.ProcessorTypeKeepFields,
+				Description: "list the fields that should stay",
+				Example:     pipeline.KeepFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeDropFields,
+				Description: "list the fields that should be removed",
+				Example:     pipeline.DropFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeMultiple,
+				Description: "apply multiplie processors",
+				Example:     pipeline.MultipleProcessorConfig{},
+			},
+		},
 	})
 }
 

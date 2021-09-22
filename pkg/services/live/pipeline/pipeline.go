@@ -47,22 +47,26 @@ type OutputVars struct {
 // of resulting slice will be then individually processed and outputted
 // according configured channel rules.
 type Converter interface {
+	Type() string
 	Convert(ctx context.Context, vars Vars, body []byte) ([]*ChannelFrame, error)
 }
 
 // Processor can modify data.Frame in a custom way before it will be outputted.
 type Processor interface {
+	Type() string
 	Process(ctx context.Context, vars ProcessorVars, frame *data.Frame) (*data.Frame, error)
 }
 
 // Outputter outputs data.Frame to a custom destination. Or simply
 // do nothing if some conditions not met.
 type Outputter interface {
+	Type() string
 	Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error)
 }
 
 // Subscriber can handle channel subscribe events.
 type Subscriber interface {
+	Type() string
 	Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error)
 }
 
