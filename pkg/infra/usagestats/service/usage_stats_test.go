@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -202,7 +201,6 @@ func TestMetrics(t *testing.T) {
 		})
 
 		createConcurrentTokens(t, uss.SQLStore)
-		uss.AlertingUsageStats = &alertingUsageMock{}
 
 		uss.oauthProviders = map[string]bool{
 			"github":        true,
@@ -371,11 +369,6 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 3, metrics.Get("stats.ds_access."+models.DS_PROMETHEUS+".proxy.count").MustInt())
 			assert.Equal(t, 6+7, metrics.Get("stats.ds_access.other.direct.count").MustInt())
 			assert.Equal(t, 4+8, metrics.Get("stats.ds_access.other.proxy.count").MustInt())
-
-			assert.Equal(t, 1, metrics.Get("stats.alerting.ds.prometheus.count").MustInt())
-			assert.Equal(t, 2, metrics.Get("stats.alerting.ds.graphite.count").MustInt())
-			assert.Equal(t, 5, metrics.Get("stats.alerting.ds.mysql.count").MustInt())
-			assert.Equal(t, 90, metrics.Get("stats.alerting.ds.other.count").MustInt())
 
 			assert.Equal(t, 1, metrics.Get("stats.alert_notifiers.slack.count").MustInt())
 			assert.Equal(t, 2, metrics.Get("stats.alert_notifiers.webhook.count").MustInt())
@@ -561,19 +554,6 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
-type alertingUsageMock struct{}
-
-func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
-	return &alerting.UsageStats{
-		DatasourceUsage: map[string]int{
-			"prometheus":         1,
-			"graphite":           2,
-			"mysql":              5,
-			"unknown-datasource": 90,
-		},
-	}, nil
-}
-
 type fakePluginManager struct {
 	manager.PluginManager
 
@@ -642,16 +622,15 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 	sqlStore := sqlstore.InitTestDB(t)
 
 	return &UsageStats{
-		Bus:                bus.New(),
-		Cfg:                &cfg,
-		SQLStore:           sqlStore,
-		AlertingUsageStats: &alertingUsageMock{},
-		externalMetrics:    make([]usagestats.MetricsFunc, 0),
-		PluginManager:      &fakePluginManager{},
-		grafanaLive:        newTestLive(t),
-		kvStore:            kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
-		log:                log.New("infra.usagestats"),
-		startTime:          time.Now().Add(-1 * time.Minute),
+		Bus:             bus.New(),
+		Cfg:             &cfg,
+		SQLStore:        sqlStore,
+		externalMetrics: make([]usagestats.MetricsFunc, 0),
+		PluginManager:   &fakePluginManager{},
+		grafanaLive:     newTestLive(t),
+		kvStore:         kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
+		log:             log.New("infra.usagestats"),
+		startTime:       time.Now().Add(-1 * time.Minute),
 	}
 }
 
