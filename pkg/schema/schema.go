@@ -2,9 +2,11 @@ package schema
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/bits"
+	"os"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -396,6 +398,10 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 		return r, err
 	}
 	re, err := convertCUEValueToString(rv)
+
+	v, _ := json.MarshalIndent(re, "", "    ")
+	_ = os.WriteFile("/tmp/dat1", v, 0644)
+
 	if err != nil {
 		return r, err
 	}
@@ -403,9 +409,33 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 }
 
 func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
-	val, exist := inputdef.Default()
+	d, exist := inputdef.Default()
+	if exist && d.Kind() == cue.ListKind {
+		len, err := d.Len().Int64()
+		if err != nil {
+			return false
+		}
+		var defaultExist bool
+		if len <= 0 {
+			op, vals := inputdef.Expr()
+			if op == cue.OrOp {
+				for _, val := range vals {
+					vallen, _ := val.Len().Int64()
+					if val.Kind() == cue.ListKind && vallen <= 0 {
+						defaultExist = true
+						break
+					}
+				}
+				if !defaultExist {
+					exist = false
+				}
+			} else {
+				exist = false
+			}
+		}
+	}
 	if exist {
-		return input.Subsume(val) == nil && val.Subsume(input) == nil
+		return input.Subsume(d) == nil && d.Subsume(input) == nil
 	}
 	return false
 }
@@ -432,7 +462,7 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 			keySet[lable] = true
 			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
 			if err != nil {
-				continue
+				return rv, false, err
 			}
 			if lv.Exists() {
 				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
@@ -460,6 +490,7 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 
 		// take every element of the list
 		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
+
 		// if input is not a concrete list, we must have list elements exist to be used to trim defaults
 		if ele.Exists() {
 			if ele.IncompleteKind() == cue.BottomKind {
@@ -474,13 +505,21 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 			for iter.Next() {
 				ref, err := getBranch(ele, iter.Value())
 				if err != nil {
-					return rv, true, nil
+					reString, err := iter.Value().String()
+					if err == nil {
+						iterlist = append(iterlist, reString)
+					}
+					continue
 				}
 				re, isEqual, err := removeDefaultHelper(ref, iter.Value())
 				if err == nil && !isEqual {
 					reString, err := convertCUEValueToString(re)
 					if err != nil {
-						return rv, true, nil
+						reString, err := iter.Value().String()
+						if err == nil {
+							iterlist = append(iterlist, reString)
+						}
+						continue
 					}
 					iterlist = append(iterlist, reString)
 				}

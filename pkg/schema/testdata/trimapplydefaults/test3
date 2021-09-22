@@ -20,27 +20,27 @@ Verifies common usecases for trimdefault/applydefault functions:
 -- Full --
 {
   "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "name": "Annotations & Alerts",
-        "type": "dashboard",
-        "showIn": 0
-      }
-    ]
+      "list": [
+          {
+              "builtIn": 1,
+              "datasource": "-- Grafana --",
+              "name": "Annotations & Alerts",
+              "showIn": 0,
+              "type": "dashboard"
+          }
+      ]
   }
 }
 
 -- Trimed --
 {
   "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "name": "Annotations & Alerts"
-      }
-    ]
+      "list": [
+          {
+              "builtIn": 1,
+              "datasource": "-- Grafana --",
+              "name": "Annotations & Alerts"
+          }
+      ]
   }
 }
