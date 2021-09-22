@@ -203,6 +203,13 @@ export enum PluginTabLabels {
   DASHBOARDS = 'Dashboards',
 }
 
+export enum PluginTabIds {
+  OVERVIEW = 'overview',
+  VERSIONS = 'version-history',
+  CONFIG = 'config',
+  DASHBOARDS = 'dashboards',
+}
+
 export enum RequestStatus {
   Pending = 'Pending',
   Fulfilled = 'Fulfilled',
@@ -219,6 +226,8 @@ export type RequestInfo = {
 
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
+  id: PluginTabIds | string;
+  href?: string;
 };
 
 // TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>
