@@ -1,12 +1,11 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
   LoadingState,
-  RelatedDataProvider,
   PanelData,
   PanelEvents,
   QueryFixAction,
@@ -107,7 +106,7 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
 
 export interface StoreLogsVolumeDataProvider {
   exploreId: ExploreId;
-  logsVolumeDataProvider: RelatedDataProvider;
+  logsVolumeDataProvider: Observable<DataQueryResponse>;
 }
 
 /**
@@ -448,7 +447,7 @@ export const runQueries = (
       dispatch(
         storeLogsVolumeDataProviderAction({
           exploreId,
-          logsVolumeDataProvider: logsVolumeDataProvider,
+          logsVolumeDataProvider,
         })
       );
 
@@ -533,14 +532,15 @@ export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: b
  */
 export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    const state = getState().explore[exploreId]!;
-    const logsVolumeDataProvider = state.logsVolumeDataProvider;
-    const logsVolumeDataSubscription = logsVolumeDataProvider?.getData().subscribe({
-      next: (logsVolumeData: DataQueryResponse) => {
-        dispatch(updateLogsVolumeDataAction({ exploreId, logsVolumeData }));
-      },
-    });
-    dispatch(storeLogsVolumeDataSubscriptionAction({ exploreId, logsVolumeDataSubscription }));
+    const { logsVolumeDataProvider } = getState().explore[exploreId]!;
+    if (logsVolumeDataProvider) {
+      const logsVolumeDataSubscription = logsVolumeDataProvider.subscribe({
+        next: (logsVolumeData: DataQueryResponse) => {
+          dispatch(updateLogsVolumeDataAction({ exploreId, logsVolumeData }));
+        },
+      });
+      dispatch(storeLogsVolumeDataSubscriptionAction({ exploreId, logsVolumeDataSubscription }));
+    }
   };
 }
 

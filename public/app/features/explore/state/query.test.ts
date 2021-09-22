@@ -26,7 +26,6 @@ import {
   MutableDataFrame,
   PanelData,
   RawTimeRange,
-  RelatedDataProvider,
   toUtc,
 } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
@@ -312,17 +311,16 @@ describe('reducer', () => {
   });
 
   describe('logs volume', () => {
-    let dispatch: ThunkDispatch, getState: () => StoreState, mockLogsVolumeDataProvider: () => RelatedDataProvider;
+    let dispatch: ThunkDispatch,
+      getState: () => StoreState,
+      mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
       mockLogsVolumeDataProvider = () => {
-        return {
-          getData: () =>
-            of(
-              { state: LoadingState.Loading, error: undefined, data: [] },
-              { state: LoadingState.Done, error: undefined, data: [{}] }
-            ),
-        };
+        return of(
+          { state: LoadingState.Loading, error: undefined, data: [] },
+          { state: LoadingState.Done, error: undefined, data: [{}] }
+        );
       };
 
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
@@ -410,19 +408,15 @@ describe('reducer', () => {
       let unsubscribes: Function[] = [];
 
       mockLogsVolumeDataProvider = () => {
-        return {
-          getData: () => {
-            return ({
-              subscribe: () => {
-                const unsubscribe = jest.fn();
-                unsubscribes.push(unsubscribe);
-                return {
-                  unsubscribe,
-                };
-              },
-            } as unknown) as Observable<DataQueryResponse>;
+        return ({
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
           },
-        };
+        } as unknown) as Observable<DataQueryResponse>;
       };
 
       await dispatch(runQueries(ExploreId.left));

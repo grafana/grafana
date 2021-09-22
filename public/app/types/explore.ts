@@ -1,4 +1,4 @@
-import { SubscriptionLike, Unsubscribable } from 'rxjs';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -13,7 +13,6 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
-  RelatedDataProvider,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -157,7 +156,7 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: PanelData }>;
 
-  logsVolumeDataProvider?: RelatedDataProvider;
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
 }

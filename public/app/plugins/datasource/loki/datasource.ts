@@ -21,7 +21,6 @@ import {
   FieldCache,
   LoadingState,
   LogRowModel,
-  RelatedDataProvider,
   QueryResultMeta,
   ScopedVars,
   TimeRange,
@@ -53,7 +52,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { LokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
+import { createLokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -104,9 +103,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return getBackendSrv().fetch<Record<string, any>>(req);
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): RelatedDataProvider | undefined {
+  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
-    return isLogsVolumeAvailable ? new LokiLogsVolumeProvider(this, request) : undefined;
+    return isLogsVolumeAvailable ? createLokiLogsVolumeProvider(this, request) : undefined;
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {

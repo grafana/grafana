@@ -1,5 +1,5 @@
 import { MockObservableDataSourceApi } from '../../../../../test/mocks/datasource_srv';
-import { LokiLogsVolumeProvider } from './logsVolumeProvider';
+import { createLokiLogsVolumeProvider } from './logsVolumeProvider';
 import LokiDatasource from '../datasource';
 import { DataQueryRequest, DataQueryResponse, FieldType, LoadingState, toDataFrame } from '@grafana/data';
 import { LokiQuery } from '../types';
@@ -31,19 +31,16 @@ function createExpectedFields(levelName: string, timestamps: number[], values: n
 }
 
 describe('LokiLogsVolumeProvider', () => {
-  let volumeProvider: LokiLogsVolumeProvider,
+  let volumeProvider: Observable<DataQueryResponse>,
     datasource: MockObservableDataSourceApi,
-    request: DataQueryRequest<LokiQuery>,
-    observable: Observable<DataQueryResponse>;
+    request: DataQueryRequest<LokiQuery>;
 
   function setup(datasourceSetup: () => void) {
     datasourceSetup();
     request = ({
       targets: [{ expr: '{app="app01"}' }, { expr: '{app="app02"}' }],
     } as unknown) as DataQueryRequest<LokiQuery>;
-    volumeProvider = new LokiLogsVolumeProvider((datasource as unknown) as LokiDatasource, request);
-
-    observable = volumeProvider.getData();
+    volumeProvider = createLokiLogsVolumeProvider((datasource as unknown) as LokiDatasource, request);
   }
 
   function setupMultipleResults() {
@@ -73,7 +70,7 @@ describe('LokiLogsVolumeProvider', () => {
   it('aggregates data frames by level', async () => {
     setup(setupMultipleResults);
 
-    await expect(observable).toEmitValuesWith((received) => {
+    await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toMatchObject([
         { state: LoadingState.Loading, error: undefined, data: [] },
         {
@@ -95,7 +92,7 @@ describe('LokiLogsVolumeProvider', () => {
   it('returns error', async () => {
     setup(setupErrorResponse);
 
-    await expect(observable).toEmitValuesWith((received) => {
+    await expect(volumeProvider).toEmitValuesWith((received) => {
       expect(received).toMatchObject([
         { state: LoadingState.Loading, error: undefined, data: [] },
         {

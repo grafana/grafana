@@ -11,7 +11,6 @@ import {
   LoadingState,
   LogLevel,
   MutableDataFrame,
-  RelatedDataProvider,
   toDataFrame,
 } from '@grafana/data';
 import { LokiQuery } from '../types';
@@ -21,61 +20,54 @@ import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
-export class LokiLogsVolumeProvider implements RelatedDataProvider {
-  private readonly datasource: LokiDatasource;
-  private readonly dataQueryRequest: DataQueryRequest<LokiQuery>;
-
-  constructor(datasource: LokiDatasource, dataQueryRequest: DataQueryRequest<LokiQuery>) {
-    this.datasource = datasource;
-    this.dataQueryRequest = dataQueryRequest;
-  }
-
-  getData(): Observable<DataQueryResponse> {
-    const logsVolumeRequest = cloneDeep(this.dataQueryRequest);
-    logsVolumeRequest.targets = logsVolumeRequest.targets
-      .filter((target) => target.expr && !isMetricsQuery(target.expr))
-      .map((target) => {
-        return {
-          ...target,
-          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
-        };
-      });
-
-    return new Observable((observer) => {
-      let rawLogsVolume: DataFrame[] = [];
-      observer.next({
-        state: LoadingState.Loading,
-        error: undefined,
-        data: [],
-      });
-
-      const subscription = this.datasource.query(logsVolumeRequest).subscribe({
-        complete: () => {
-          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume);
-          observer.next({
-            state: LoadingState.Done,
-            error: undefined,
-            data: aggregatedLogsVolume,
-          });
-          observer.complete();
-        },
-        next: (dataQueryResponse: DataQueryResponse) => {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
-        },
-        error: (error) => {
-          observer.next({
-            state: LoadingState.Error,
-            error: error,
-            data: [],
-          });
-          observer.error(error);
-        },
-      });
-      return () => {
-        subscription?.unsubscribe();
+export function createLokiLogsVolumeProvider(
+  datasource: LokiDatasource,
+  dataQueryRequest: DataQueryRequest<LokiQuery>
+): Observable<DataQueryResponse> {
+  const logsVolumeRequest = cloneDeep(dataQueryRequest);
+  logsVolumeRequest.targets = logsVolumeRequest.targets
+    .filter((target) => target.expr && !isMetricsQuery(target.expr))
+    .map((target) => {
+      return {
+        ...target,
+        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
       };
     });
-  }
+
+  return new Observable((observer) => {
+    let rawLogsVolume: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    const subscription = datasource.query(logsVolumeRequest).subscribe({
+      complete: () => {
+        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume);
+        observer.next({
+          state: LoadingState.Done,
+          error: undefined,
+          data: aggregatedLogsVolume,
+        });
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
 }
 
 /**
