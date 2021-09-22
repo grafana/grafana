@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"xorm.io/xorm"
@@ -28,13 +26,7 @@ func (m *migrateRoutes) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	spew.Dump(configs)
-
-	// TODO: Secure Data?
-
-	for _, aCfg := range configs {
-		spew.Dump("**IN**", aCfg.AlertmanagerConfiguration)
-
+	for i, aCfg := range configs {
 		var oldUserConfig OldPostableUserConfig
 		err = json.Unmarshal([]byte(aCfg.AlertmanagerConfiguration), &oldUserConfig)
 		if err != nil {
@@ -56,14 +48,18 @@ func (m *migrateRoutes) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		if err != nil {
 			return err
 		}
-		spew.Dump("**OUT**", string(b))
-		spew.Dump("**Diff**", cmp.Diff(aCfg.AlertmanagerConfiguration, b))
-		spew.Dump("*** ***")
 
+		configs[i].AlertmanagerConfiguration = string(b)
 	}
 
-	return fmt.Errorf("migration not implemented")
+	for _, cfg := range configs {
+		_, err = sess.ID(cfg.ID).Update(&cfg)
+		if err != nil {
+			return err
+		}
+	}
 
+	return nil
 }
 
 func oldRouteToNewRoute(topRoute *OldRoute) *NewRoute {
@@ -75,6 +71,7 @@ func oldRouteToNewRoute(topRoute *OldRoute) *NewRoute {
 		newRoute := &NewRoute{
 			Receiver:       oR.Receiver,
 			GroupByStr:     oR.GroupByStr,
+			Matchers:       oR.Matchers, // Kept for downgrades
 			ObjectMatchers: ObjectMatchers(oR.Matchers),
 			Routes:         make([]*NewRoute, 0, len(oR.Routes)),
 		}
