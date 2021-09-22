@@ -48,6 +48,11 @@ export class GroupState extends ElementState {
     for (const elem of this.elements) {
       elem.updateSize(this.width, this.height);
     }
+
+    // The group forced to full width (for now)
+    this.sizeStyle.width = width;
+    this.sizeStyle.height = height;
+    this.sizeStyle.position = 'absolute';
   }
 
   updateData(ctx: DimensionContext) {
@@ -59,7 +64,7 @@ export class GroupState extends ElementState {
 
   render() {
     return (
-      <div key={`${this.UID}/${this.revId}`} style={this.style}>
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
         {this.elements.map((v) => v.render())}
       </div>
     );

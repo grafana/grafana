@@ -15,7 +15,8 @@ export class ElementState {
   readonly UID = counter++;
 
   revId = 0;
-  style: CSSProperties = {};
+  sizeStyle: CSSProperties = {};
+  dataStyle: CSSProperties = {};
 
   // Calculated
   width = 100;
@@ -34,10 +35,11 @@ export class ElementState {
     this.height = height;
 
     // Update the CSS position
-    this.style = {
-      ...this.style,
-      width,
-      height,
+    this.sizeStyle = {
+      // width,
+      // height,
+      ...this.options.placement,
+      position: 'relative', // leaf nodes are relative
     };
   }
 
@@ -96,10 +98,7 @@ export class ElementState {
       }
     }
 
-    css.width = this.width;
-    css.height = this.height;
-
-    this.style = css;
+    this.dataStyle = css;
   }
 
   /** Recursivly visit all nodes */
@@ -129,7 +128,7 @@ export class ElementState {
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={this.style}>
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );
