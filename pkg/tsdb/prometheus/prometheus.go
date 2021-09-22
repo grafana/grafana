@@ -137,16 +137,16 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		response := make(map[PrometheusQueryType]model.Value)
+		response := make(map[PrometheusQueryType]interface{})
+
+		timeRange := apiv1.Range{
+			Step: query.Step,
+			// Align query range to step. It rounds start and end down to a multiple of step.
+			Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
+			End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
+		}
 
 		if query.RangeQuery {
-			timeRange := apiv1.Range{
-				Step: query.Step,
-				// Align query range to step. It rounds start and end down to a multiple of step.
-				Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
-				End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
-			}
-
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
@@ -160,6 +160,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
 			response[Instant] = instantResponse
+		}
+
+		if query.ExemplarQuery {
+			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
+			if err != nil {
+				//If we get error here, exemplars are not supported and we want to return nil response
+				exemplarResponse = nil
+			}
+			response[Exemplar] = exemplarResponse
 		}
 
 		frames, err := parseResponse(response, query)
@@ -293,21 +302,22 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		}
 
 		qs = append(qs, &PrometheusQuery{
-			Expr:         expr,
-			Step:         interval,
-			LegendFormat: model.LegendFormat,
-			Start:        query.TimeRange.From,
-			End:          query.TimeRange.To,
-			RefId:        query.RefID,
-			InstantQuery: model.InstantQuery,
-			RangeQuery:   rangeQuery,
-			UtcOffsetSec: model.UtcOffsetSec,
+			Expr:          expr,
+			Step:          interval,
+			LegendFormat:  model.LegendFormat,
+			Start:         query.TimeRange.From,
+			End:           query.TimeRange.To,
+			RefId:         query.RefID,
+			InstantQuery:  model.InstantQuery,
+			RangeQuery:    rangeQuery,
+			ExemplarQuery: model.ExemplarQuery,
+			UtcOffsetSec:  model.UtcOffsetSec,
 		})
 	}
 	return qs, nil
 }
 
-func parseResponse(value map[PrometheusQueryType]model.Value, query *PrometheusQuery) (data.Frames, error) {
+func parseResponse(value map[PrometheusQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
 	frames := data.Frames{}
 
 	for queryType, value := range value {
@@ -327,6 +337,12 @@ func parseResponse(value map[PrometheusQueryType]model.Value, query *PrometheusQ
 		if ok {
 			scalarFrames := scalarToDataFrames(scalar, query, queryType)
 			frames = append(frames, scalarFrames...)
+		}
+
+		exemplar, ok := value.([]apiv1.ExemplarQueryResult)
+		if ok {
+			exemplarFrames := exemplarToDataFrames(exemplar, query, queryType)
+			frames = append(frames, exemplarFrames...)
 		}
 	}
 	return frames, nil
@@ -428,5 +444,70 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, queryType P
 		frames = append(frames, frame)
 	}
 
+	return frames
+}
+
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
+	frames := data.Frames{}
+	events := make([]map[string]interface{}, len(response))
+	for _, exemplarData := range response {
+		for _, exemplar := range exemplarData.Exemplars {
+			event := make(map[string]interface{})
+			event["Time"] = time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
+			event["Value"] = exemplar.Value
+			for k, v := range exemplar.Labels {
+				event[string(k)] = string(v)
+			}
+			for k, v := range exemplarData.SeriesLabels {
+				event[string(k)] = string(v)
+			}
+
+			events = append(events, event)
+		}
+	}
+
+	//TODO: Sampling of exemplars
+	timeVector := make([]time.Time, 0, len(events))
+	valuesVector := make([]float64, 0, len(events))
+	labelsVector := make(map[string][]string, len(events))
+
+	for _, event := range events {
+		for key, value := range event {
+			l, ok := value.(string)
+			if ok {
+				if labelsVector[key] == nil {
+					labelsVector[key] = make([]string, 0)
+				}
+				labelsVector[key] = append(labelsVector[key], l)
+			}
+
+			t, ok := value.(time.Time)
+			if ok {
+				timeVector = append(timeVector, t)
+			}
+
+			v, ok := value.(model.SampleValue)
+			if ok {
+				valuesVector = append(valuesVector, float64(v))
+			}
+
+		}
+	}
+
+	frame := data.NewFrame("exemplars",
+		data.NewField("Time", nil, timeVector),
+		data.NewField("Value", nil, valuesVector))
+
+	for label, vector := range labelsVector {
+		frame.Fields = append(frame.Fields, data.NewField(label, nil, vector))
+	}
+
+	frame.Meta = &data.FrameMeta{
+		Custom: map[string]PrometheusQueryType{
+			"queryType": queryType,
+		},
+	}
+
+	frames = append(frames, frame)
 	return frames
 }

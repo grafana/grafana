@@ -289,23 +289,28 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
-  query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
-    const shouldRunBackendQuery =
-      this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
+    const shouldRunBackendQuery = this.access === 'proxy' && request.app === CoreApp.Explore;
 
     if (shouldRunBackendQuery) {
-      const targets = options.targets.map((target) => ({
+      const targets = request.targets.map((target) => ({
         ...target,
         // We need to pass utcOffsetSec to backend to calculate aligned range
         utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
       }));
-      return super.query({ ...options, targets }).pipe(map((response) => transformV2(response, options)));
+      return super
+        .query({ ...request, targets })
+        .pipe(
+          map((response) =>
+            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+          )
+        );
       // Run queries trough browser/proxy
     } else {
-      const start = this.getPrometheusTime(options.range.from, false);
-      const end = this.getPrometheusTime(options.range.to, true);
-      const { queries, activeTargets } = this.prepareTargets(options, start, end);
+      const start = this.getPrometheusTime(request.range.from, false);
+      const end = this.getPrometheusTime(request.range.to, true);
+      const { queries, activeTargets } = this.prepareTargets(request, start, end);
 
       // No valid targets, return the empty result to save a round trip.
       if (!queries || !queries.length) {
@@ -315,11 +320,11 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         });
       }
 
-      if (options.app === CoreApp.Explore) {
+      if (request.app === CoreApp.Explore) {
         return this.exploreQuery(queries, activeTargets, end);
       }
 
-      return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
+      return this.panelsQuery(queries, activeTargets, end, request.requestId, request.scopedVars);
     }
   }
 
