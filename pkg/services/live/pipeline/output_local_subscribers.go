@@ -20,7 +20,13 @@ func NewLocalSubscribersOutput(node *centrifuge.Node) *LocalSubscribersOutput {
 	return &LocalSubscribersOutput{node: node}
 }
 
-func (l *LocalSubscribersOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+const OutputTypeLocalSubscribers = "localSubscribers"
+
+func (out *LocalSubscribersOutput) Type() string {
+	return OutputTypeLocalSubscribers
+}
+
+func (out *LocalSubscribersOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
 	channelID := vars.Channel
 	channel := orgchannel.PrependOrgID(vars.OrgID, channelID)
 	frameJSON, err := json.Marshal(frame)
@@ -30,7 +36,7 @@ func (l *LocalSubscribersOutput) Output(_ context.Context, vars OutputVars, fram
 	pub := &centrifuge.Publication{
 		Data: frameJSON,
 	}
-	err = l.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
+	err = out.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
 	if err != nil {
 		return nil, fmt.Errorf("error publishing %s: %w", string(frameJSON), err)
 	}

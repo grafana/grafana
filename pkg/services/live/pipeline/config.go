@@ -128,11 +128,11 @@ func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscr
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "builtin":
+	case SubscriberTypeBuiltin:
 		return NewBuiltinSubscriber(f.ChannelHandlerGetter), nil
-	case "managedStream":
+	case SubscriberTypeManagedStream:
 		return NewManagedStreamSubscriber(f.ManagedStream), nil
-	case "multiple":
+	case SubscriberTypeMultiple:
 		if config.MultipleSubscriberConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -157,22 +157,22 @@ func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converte
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "jsonAuto":
+	case ConverterTypeJsonAuto:
 		if config.AutoJsonConverterConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewAutoJsonConverter(*config.AutoJsonConverterConfig), nil
-	case "jsonExact":
+	case ConverterTypeJsonExact:
 		if config.ExactJsonConverterConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewExactJsonConverter(*config.ExactJsonConverterConfig), nil
-	case "jsonFrame":
+	case ConverterTypeJsonFrame:
 		if config.JsonFrameConverterConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewJsonFrameConverter(*config.JsonFrameConverterConfig), nil
-	case "influxAuto":
+	case ConverterTypeInfluxAuto:
 		if config.AutoInfluxConverterConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -188,17 +188,17 @@ func (f *StorageRuleBuilder) extractProcessor(config *ProcessorConfig) (Processo
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "dropFields":
+	case ProcessorTypeDropFields:
 		if config.DropFieldsProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewDropFieldsProcessor(*config.DropFieldsProcessorConfig), nil
-	case "keepFields":
+	case ProcessorTypeKeepFields:
 		if config.KeepFieldsProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewKeepFieldsProcessor(*config.KeepFieldsProcessorConfig), nil
-	case "multiple":
+	case ProcessorTypeMultiple:
 		if config.MultipleProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -223,13 +223,13 @@ func (f *StorageRuleBuilder) extractConditionChecker(config *ConditionCheckerCon
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "numberCompare":
+	case ConditionCheckerTypeNumberCompare:
 		if config.NumberCompareConditionConfig == nil {
 			return nil, missingConfiguration
 		}
 		c := *config.NumberCompareConditionConfig
 		return NewNumberCompareCondition(c.FieldName, c.Op, c.Value), nil
-	case "multiple":
+	case ConditionCheckerTypeMultiple:
 		var conditions []ConditionChecker
 		if config.MultipleConditionCheckerConfig == nil {
 			return nil, missingConfiguration
@@ -254,12 +254,12 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "redirect":
+	case OutputTypeRedirect:
 		if config.RedirectOutputConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewRedirectOutput(*config.RedirectOutputConfig), nil
-	case "multiple":
+	case OutputTypeMultiple:
 		if config.MultipleOutputterConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -273,11 +273,11 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 			outputters = append(outputters, outputter)
 		}
 		return NewMultipleOutput(outputters...), nil
-	case "managedStream":
+	case OutputTypeManagedStream:
 		return NewManagedStreamOutput(f.ManagedStream), nil
-	case "localSubscribers":
+	case OutputTypeLocalSubscribers:
 		return NewLocalSubscribersOutput(f.Node), nil
-	case "conditional":
+	case OutputTypeConditional:
 		if config.ConditionalOutputConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -290,12 +290,12 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 			return nil, err
 		}
 		return NewConditionalOutput(condition, outputter), nil
-	case "threshold":
+	case OutputTypeThreshold:
 		if config.ThresholdOutputConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewThresholdOutput(f.FrameStorage, *config.ThresholdOutputConfig), nil
-	case "remoteWrite":
+	case OutputTypeRemoteWrite:
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -304,7 +304,7 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
 		return NewRemoteWriteOutput(*remoteWriteConfig), nil
-	case "changeLog":
+	case OutputTypeChangeLog:
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
 		}
