@@ -8,7 +8,7 @@ weight = 605
 
 # Visualize Prometheus data in Grafana histogram
 
-Grafana has a histogram visualization which allows you to do <such and such things>. To review basic information, check out the Grafana's "[Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)." This topic discusses how to visualize a Premetheus histogram in Grafana.
+This topic describes how to visualize Prometheus data as a histogram in Grafana. The histogram visualization is a graphical representation of the distribution of numerical data. For in-depth information, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/)." 
 
 List what users need here
 
