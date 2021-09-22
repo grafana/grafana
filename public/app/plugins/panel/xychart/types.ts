@@ -1,6 +1,6 @@
 import { DataFrame, Field } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
-import { DimensionValues, FrameFieldMap } from '@grafana/ui';
+import { DimensionValues, FrameFieldMap, VizLegendItem } from '@grafana/ui';
 import { ScatterLineMode } from './models.gen';
 
 export interface ScatterFrameFieldMap extends FrameFieldMap {
@@ -24,20 +24,23 @@ export interface LegendInfo {
   openEditor?: (evt: any) => void;
 }
 
+// Using field where we will need formatting/scale/axis info
+// Use raw or DimensionValues when the values can be used directly
 export interface ScatterSeries {
   name: string;
 
-  frame: (raw: DataFrame[]) => DataFrame;
+  /** Finds the relevant frame from the raw panel data */
+  frame: (frames: DataFrame[]) => DataFrame;
 
   x: (frame: DataFrame) => Field;
   y: (frame: DataFrame) => Field;
-  tooltip: (frame: DataFrame) => Field[];
-  legend: (frame: DataFrame) => LegendInfo[]; // could be single if symbol is constant
+  //tooltip: (frame: DataFrame) => Field[];
+  legend: (frame: DataFrame) => VizLegendItem[]; // could be single if symbol is constant
 
   line: ScatterLineMode;
   lineWidth: number;
   lineStyle: LineStyle;
-  lineColor: (frame: DataFrame) => CanvasRenderingContext2D['strokeStyle']; // gradients may need dynamic min/max
+  lineColor: DimensionValues<CanvasRenderingContext2D['strokeStyle']>;
 
   point: VisibilityMode;
   pointSize: DimensionValues<number>;

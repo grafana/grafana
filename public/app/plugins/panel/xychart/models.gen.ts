@@ -8,6 +8,7 @@ import {
   AxisPlacement,
 } from '@grafana/schema';
 import { ColorDimensionConfig, TextDimensionConfig, ScaleDimensionConfig } from 'app/features/dimensions';
+import { ScatterSeries } from './types';
 
 export enum ScatterLineMode {
   None = 'none',
@@ -54,21 +55,12 @@ export interface XYDimensionConfig {
   exclude?: string[]; // all other numbers except
 }
 
-// Runtime processed type send to render
-export interface ScatterSeries extends ScatterFieldConfig {
-  frameIndex: number;
-  xIndex: number;
-  yIndex: number;
-}
-
 export interface SingleSeries {
   x?: string;
   y?: string;
 }
 
 export interface XYChartOptions extends OptionsWithLegend, OptionsWithTooltip {
-  dims: XYDimensionConfig; // <<< OLD!!
-
   mode?: 'single' | 'explicit' | 'xy';
 
   single?: SingleSeries;

@@ -1,28 +1,33 @@
 import React, { useMemo } from 'react';
-import { LegendDisplayMode, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
+import { LegendDisplayMode, UPlotChart, useTheme2, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { XYChartOptions } from './models.gen';
-import { prepareScatterData, prepareScatterPlot } from './scatter';
+import { prepData, prepScatter } from './scatter';
 
 interface XYChartPanelProps extends PanelProps<XYChartOptions> {}
 
 export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   data,
-  timeZone,
   width,
   height,
   options,
   fieldConfig,
+  timeRange,
   //onFieldConfigChange,
 }) => {
-  const info = useMemo(() => {
-    return prepareScatterPlot(options, data, timeZone);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.structureRev, options, timeZone]);
+  const theme = useTheme2();
 
-  // enumerates field.state.seriesIdx based on internal lookup
+  const info = useMemo(() => {
+    console.log('prepScatter!');
+    return prepScatter(options, data, theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.structureRev, options]);
+
   // preps data in various shapes...aligned, stacked, merged, interpolated, etc..
-  const scatterData = useMemo(() => prepareScatterData(info, data.series), [info, data.series]);
+  const scatterData = useMemo(() => {
+    console.log('prepData!');
+    return prepData(info, data.series);
+  }, [info, data.series]);
 
   const legend = useMemo(() => {
     const items: VizLegendItem[] = [];
@@ -54,12 +59,12 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   return (
     <VizLayout width={width} height={height} legend={legend}>
       {(vizWidth: number, vizHeight: number) => (
-        <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
-          {JSON.stringify(scatterData, null, 2)}
-        </pre>
-        // <UPlotChart config={config} data={preparedData} width={vizWidth} height={vizHeight} timeRange={timeRange}>
-        //   {/*children ? children(config, alignedFrame) : null*/}
-        // </UPlotChart>
+        // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
+        //   {JSON.stringify(scatterData, null, 2)}
+        // </pre>
+        <UPlotChart config={info.builder!} data={scatterData} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+          {/*children ? children(config, alignedFrame) : null*/}
+        </UPlotChart>
       )}
     </VizLayout>
   );
