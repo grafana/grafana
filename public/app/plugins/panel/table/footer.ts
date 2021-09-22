@@ -1,4 +1,12 @@
-import { DataFrame, Field, FieldType, formattedValueToString, getDisplayProcessor, reduceField } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  reduceField,
+  fieldReducers,
+} from '@grafana/data';
 import { FooterItem } from '@grafana/ui/src/components/Table/types';
 import { TableFooterCalc } from './models.gen';
 import { config } from 'app/core/config';
@@ -8,9 +16,8 @@ export function getFooterCells(frame: DataFrame, options?: TableFooterCalc): Foo
     if (field.type !== FieldType.number) {
       // show the reducer in the first column
       if (i === 0 && options && options.reducer.length > 0) {
-        const reducer = options.reducer[0];
-        const formatted = capitalizeFirstLetter(reducer.replace(/([A-Z])/g, ' $1').trim());
-        return formatted;
+        const reducer = fieldReducers.get(options.reducer[0]);
+        return reducer.name;
       }
       return undefined;
     }
@@ -30,8 +37,4 @@ function getFormattedValue(field: Field, reducer: string[]) {
   const calc = reducer[0];
   const v = reduceField({ field, reducers: reducer })[calc];
   return formattedValueToString(fmt(v));
-}
-
-function capitalizeFirstLetter(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
