@@ -8,7 +8,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
@@ -17,7 +16,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -26,7 +25,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
+import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   isFetchErrorResponse,
@@ -47,12 +46,13 @@ export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this query are not available.';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
-export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
+export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
   url: string;
   directUrl: string;
+  access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
@@ -75,6 +75,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.url = instanceSettings.url!;
+    this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
@@ -288,24 +289,56 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
+  prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
+    const targets = options.targets.map((target) => {
+      //This is currently only preparing options for Explore queries where we know the format of data we want to receive
+      if (target.instant) {
+        return { ...target, instant: true, range: false, format: 'table' };
+      }
+      return {
+        ...target,
+        instant: false,
+        range: true,
+        format: 'time_series',
+        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      };
+    });
+
+    return { ...options, targets };
+  };
+
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    const start = this.getPrometheusTime(options.range.from, false);
-    const end = this.getPrometheusTime(options.range.to, true);
-    const { queries, activeTargets } = this.prepareTargets(options, start, end);
+    // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
+    const shouldRunBackendQuery =
+      this.access === 'proxy' &&
+      options.app === CoreApp.Explore &&
+      !options.targets.some((query) => query.exemplar) &&
+      // When running both queries, run through proxy
+      !options.targets.some((query) => query.instant && query.range);
 
-    // No valid targets, return the empty result to save a round trip.
-    if (!queries || !queries.length) {
-      return of({
-        data: [],
-        state: LoadingState.Done,
-      });
+    if (shouldRunBackendQuery) {
+      const newOptions = this.prepareOptionsV2(options);
+      return super.query(newOptions).pipe(map((response) => transformV2(response, newOptions)));
+      // Run queries trough browser/proxy
+    } else {
+      const start = this.getPrometheusTime(options.range.from, false);
+      const end = this.getPrometheusTime(options.range.to, true);
+      const { queries, activeTargets } = this.prepareTargets(options, start, end);
+
+      // No valid targets, return the empty result to save a round trip.
+      if (!queries || !queries.length) {
+        return of({
+          data: [],
+          state: LoadingState.Done,
+        });
+      }
+
+      if (options.app === CoreApp.Explore) {
+        return this.exploreQuery(queries, activeTargets, end);
+      }
+
+      return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
     }
-
-    if (options.app === CoreApp.Explore) {
-      return this.exploreQuery(queries, activeTargets, end);
-    }
-
-    return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
@@ -823,6 +856,27 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   getOriginalMetricName(labelData: { [key: string]: string }) {
     return getOriginalMetricName(labelData);
+  }
+
+  // Used when running queries trough backend
+  filterQuery(query: PromQuery): boolean {
+    if (query.hide || !query.expr) {
+      return false;
+    }
+    return true;
+  }
+
+  // Used when running queries trough backend
+  applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
+    const variables = cloneDeep(scopedVars);
+    // We want to interpolate these variables on backend
+    delete variables.__interval;
+    delete variables.__interval_ms;
+
+    return {
+      ...target,
+      expr: this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+    };
   }
 }
 

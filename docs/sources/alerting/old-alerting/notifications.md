@@ -50,8 +50,8 @@ These examples show how often and when reminders are sent for a triggered alert.
 
 ## List of supported notifiers
 
-| Name                                          | Type                      | Supports images    | Support alert rule tags |
-| --------------------------------------------- | ------------------------- | ------------------ | ----------------------- | --- |
+| Name                                          | Type                      | Supports images    | Supports alert rule tags |
+| --------------------------------------------- | ------------------------- | ------------------ | ----------------------- |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                      |
 | [Discord](#discord)                           | `discord`                 | yes                | no                      |
 | [Email](#email)                               | `email`                   | yes                | no                      |
@@ -70,7 +70,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Telegram                                      | `telegram`                | yes                | no                      |
 | Threema                                       | `threema`                 | yes, external only | no                      |
 | VictorOps                                     | `victorops`               | yes, external only | yes                     |
-| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |     |
+| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |
 
 ### Email
 
@@ -263,7 +263,7 @@ Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as e
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
-[image rendering]({{< relref "../../administration/image_rendering/" >}}).
+[image rendering]({{< relref "../../image-rendering/" >}}).
 
 You must configure an [external image storage provider]({{< relref "../../administration/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 

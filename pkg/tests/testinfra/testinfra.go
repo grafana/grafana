@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -204,13 +205,18 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = featureSection.NewKey("enable", strings.Join(o.EnableFeatureToggles, " "))
 			require.NoError(t, err)
 		}
-		if o.NGAlertAdminConfigIntervalSeconds != 0 {
-			ngalertingSection, err := cfg.NewSection("ngalerting")
+		if o.NGAlertAdminConfigPollInterval != 0 {
+			ngalertingSection, err := cfg.NewSection("unified_alerting")
 			require.NoError(t, err)
-			_, err = ngalertingSection.NewKey("admin_config_poll_interval_seconds", fmt.Sprintf("%d", o.NGAlertAdminConfigIntervalSeconds))
+			_, err = ngalertingSection.NewKey("admin_config_poll_interval", o.NGAlertAdminConfigPollInterval.String())
 			require.NoError(t, err)
 		}
-
+		if o.NGAlertAlertmanagerConfigPollInterval != 0 {
+			ngalertingSection, err := cfg.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", o.NGAlertAlertmanagerConfigPollInterval.String())
+			require.NoError(t, err)
+		}
 		if o.AnonymousUserRole != "" {
 			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
 			require.NoError(t, err)
@@ -252,13 +258,14 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP                         bool
-	EnableFeatureToggles              []string
-	NGAlertAdminConfigIntervalSeconds int
-	AnonymousUserRole                 models.RoleType
-	EnableQuota                       bool
-	DisableAnonymous                  bool
-	CatalogAppEnabled                 bool
-	ViewersCanEdit                    bool
-	PluginAdminEnabled                bool
+	EnableCSP                             bool
+	EnableFeatureToggles                  []string
+	NGAlertAdminConfigPollInterval        time.Duration
+	NGAlertAlertmanagerConfigPollInterval time.Duration
+	AnonymousUserRole                     models.RoleType
+	EnableQuota                           bool
+	DisableAnonymous                      bool
+	CatalogAppEnabled                     bool
+	ViewersCanEdit                        bool
+	PluginAdminEnabled                    bool
 }

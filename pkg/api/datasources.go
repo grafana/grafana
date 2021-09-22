@@ -430,7 +430,7 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
 func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Response {
-	datasourceID := c.ParamsInt64("id")
+	datasourceID := c.ParamsInt64(":id")
 
 	ds, err := hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {

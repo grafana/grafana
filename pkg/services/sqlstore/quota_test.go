@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 )
 
 func TestQuotaCommandsAndQueries(t *testing.T) {
-	InitTestDB(t)
+	sqlStore := InitTestDB(t)
 	userId := int64(1)
 	orgId := int64(0)
 
@@ -58,12 +59,12 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: "org_user",
 			Limit:  10,
 		}
-		err := UpdateOrgQuota(&orgCmd)
+		err := sqlStore.UpdateOrgQuota(context.Background(), &orgCmd)
 		require.NoError(t, err)
 
 		t.Run("Should be able to get saved quota by org id and target", func(t *testing.T) {
 			query := models.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
-			err = GetOrgQuotaByTarget(&query)
+			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(10), query.Result.Limit)
@@ -71,7 +72,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get default quota by org id and target", func(t *testing.T) {
 			query := models.GetOrgQuotaByTargetQuery{OrgId: 123, Target: "org_user", Default: 11}
-			err = GetOrgQuotaByTarget(&query)
+			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(11), query.Result.Limit)
@@ -79,7 +80,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get used org quota when rows exist", func(t *testing.T) {
 			query := models.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 11}
-			err = GetOrgQuotaByTarget(&query)
+			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(1), query.Result.Used)
@@ -87,7 +88,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get used org quota when no rows exist", func(t *testing.T) {
 			query := models.GetOrgQuotaByTargetQuery{OrgId: 2, Target: "org_user", Default: 11}
-			err = GetOrgQuotaByTarget(&query)
+			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(0), query.Result.Used)
@@ -95,7 +96,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func(t *testing.T) {
 			query := models.GetOrgQuotaByTargetQuery{OrgId: 2, Target: "alert", Default: 11}
-			err = GetOrgQuotaByTarget(&query)
+			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(0), query.Result.Used)
@@ -103,7 +104,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to quota list for org", func(t *testing.T) {
 			query := models.GetOrgQuotasQuery{OrgId: orgId}
-			err = GetOrgQuotas(&query)
+			err = sqlStore.GetOrgQuotas(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Len(t, query.Result, 5)
@@ -126,12 +127,12 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: dashboardTarget,
 			Limit:  10,
 		}
-		err := UpdateOrgQuota(&orgCmd)
+		err := sqlStore.UpdateOrgQuota(context.Background(), &orgCmd)
 		require.NoError(t, err)
 
 		t.Run("Should be able to get saved quota by org id and target", func(t *testing.T) {
 			query := models.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: dashboardTarget, Default: 1}
-			err = GetOrgQuotaByTarget(&query)
+			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(10), query.Result.Limit)
@@ -145,12 +146,12 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: "org_user",
 			Limit:  10,
 		}
-		err := UpdateUserQuota(&userQuotaCmd)
+		err := sqlStore.UpdateUserQuota(context.Background(), &userQuotaCmd)
 		require.NoError(t, err)
 
 		t.Run("Should be able to get saved quota by user id and target", func(t *testing.T) {
 			query := models.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
-			err = GetUserQuotaByTarget(&query)
+			err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(10), query.Result.Limit)
@@ -158,7 +159,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get default quota by user id and target", func(t *testing.T) {
 			query := models.GetUserQuotaByTargetQuery{UserId: 9, Target: "org_user", Default: 11}
-			err = GetUserQuotaByTarget(&query)
+			err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(11), query.Result.Limit)
@@ -166,7 +167,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get used user quota when rows exist", func(t *testing.T) {
 			query := models.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 11}
-			err = GetUserQuotaByTarget(&query)
+			err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(1), query.Result.Used)
@@ -174,7 +175,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to get used user quota when no rows exist", func(t *testing.T) {
 			query := models.GetUserQuotaByTargetQuery{UserId: 2, Target: "org_user", Default: 11}
-			err = GetUserQuotaByTarget(&query)
+			err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, int64(0), query.Result.Used)
@@ -182,7 +183,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		t.Run("Should be able to quota list for user", func(t *testing.T) {
 			query := models.GetUserQuotasQuery{UserId: userId}
-			err = GetUserQuotas(&query)
+			err = sqlStore.GetUserQuotas(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Len(t, query.Result, 1)
@@ -193,7 +194,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 	t.Run("Should be able to global user quota", func(t *testing.T) {
 		query := models.GetGlobalQuotaByTargetQuery{Target: "user", Default: 5}
-		err = GetGlobalQuotaByTarget(&query)
+		err = sqlStore.GetGlobalQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
@@ -202,7 +203,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 	t.Run("Should be able to global org quota", func(t *testing.T) {
 		query := models.GetGlobalQuotaByTargetQuery{Target: "org", Default: 5}
-		err = GetGlobalQuotaByTarget(&query)
+		err = sqlStore.GetGlobalQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
@@ -211,7 +212,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 	t.Run("Should be able to get zero used global alert quota when table does not exist (ngalert is not enabled - default case)", func(t *testing.T) {
 		query := models.GetGlobalQuotaByTargetQuery{Target: "alert_rule", Default: 5}
-		err = GetGlobalQuotaByTarget(&query)
+		err = sqlStore.GetGlobalQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
@@ -220,7 +221,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 	t.Run("Should be able to global dashboard quota", func(t *testing.T) {
 		query := models.GetGlobalQuotaByTargetQuery{Target: dashboardTarget, Default: 5}
-		err = GetGlobalQuotaByTarget(&query)
+		err = sqlStore.GetGlobalQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
@@ -234,11 +235,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: "org_user",
 			Limit:  5,
 		}
-		err := UpdateOrgQuota(&orgCmd)
+		err := sqlStore.UpdateOrgQuota(context.Background(), &orgCmd)
 		require.NoError(t, err)
 
 		query := models.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
-		err = GetOrgQuotaByTarget(&query)
+		err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, int64(5), query.Result.Limit)
 
@@ -250,11 +251,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: "org_user",
 			Limit:  10,
 		}
-		err = UpdateOrgQuota(&orgCmd)
+		err = sqlStore.UpdateOrgQuota(context.Background(), &orgCmd)
 		require.NoError(t, err)
 
 		query = models.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
-		err = GetOrgQuotaByTarget(&query)
+		err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, int64(10), query.Result.Limit)
 	})
@@ -266,11 +267,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: "org_user",
 			Limit:  5,
 		}
-		err := UpdateUserQuota(&userQuotaCmd)
+		err := sqlStore.UpdateUserQuota(context.Background(), &userQuotaCmd)
 		require.NoError(t, err)
 
 		query := models.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
-		err = GetUserQuotaByTarget(&query)
+		err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, int64(5), query.Result.Limit)
 
@@ -282,11 +283,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Target: "org_user",
 			Limit:  10,
 		}
-		err = UpdateUserQuota(&userQuotaCmd)
+		err = sqlStore.UpdateUserQuota(context.Background(), &userQuotaCmd)
 		require.NoError(t, err)
 
 		query = models.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
-		err = GetUserQuotaByTarget(&query)
+		err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, int64(10), query.Result.Limit)
 	})

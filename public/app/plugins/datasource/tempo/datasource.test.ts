@@ -168,6 +168,25 @@ describe('Tempo data source', () => {
       'root.http.status_code': '500',
     });
   });
+
+  it('formats native search query history correctly', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'nativeSearch',
+      refId: 'A',
+      query: '',
+      serviceName: 'frontend',
+      spanName: '/config',
+      search: 'root.http.status_code=500',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    };
+    const result = ds.getQueryDisplayText(tempoQuery);
+    expect(result).toBe(
+      'Service Name: frontend, Span Name: /config, Search: root.http.status_code=500, Min Duration: 1ms, Max Duration: 100s, Limit: 10'
+    );
+  });
 });
 
 const backendSrvWithPrometheus = {
