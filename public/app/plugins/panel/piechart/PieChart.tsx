@@ -63,7 +63,7 @@ export const PieChart: FC<PieChartProps> = ({
   });
 
   const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
-    return !dv.field.custom.hideFrom.viz;
+    return !dv.field.custom.hideFrom.viz && !isNaN(dv.display.numeric);
   });
 
   const getValue = (d: FieldDisplay) => d.display.numeric;

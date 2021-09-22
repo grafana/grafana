@@ -84,7 +84,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   }
   const total = displayValues
     .filter((item) => {
-      return !item.field.custom?.hideFrom?.viz;
+      return !item.field.custom?.hideFrom?.viz && !isNaN(item.display.numeric);
     })
     .reduce((acc, item) => item.display.numeric + acc, 0);
 
@@ -115,7 +115,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
             displayValues.push({
               numeric: fractionOfTotal,
               percent: percentOfTotal,
-              text: hidden ? '-' : percentOfTotal.toFixed(0) + '%',
+              text: hidden || isNaN(fractionOfTotal) ? '-' : percentOfTotal.toFixed(0) + '%',
               title: valuesToShow.length > 1 ? 'Percent' : undefined,
             });
           }
