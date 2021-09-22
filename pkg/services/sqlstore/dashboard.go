@@ -234,7 +234,7 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 
 // TODO: Remove me
 func GetDashboard(query *models.GetDashboardQuery) error {
-	return GetDashboardCtx(context.Background(), query)
+	return GetDashboardCtx(context.TODO(), query)
 }
 
 func GetDashboardCtx(ctx context.Context, query *models.GetDashboardQuery) error {

@@ -11,12 +11,9 @@ import (
 )
 
 func TestInterpolate(t *testing.T) {
-	// Unix sec: 1500376552
-	// Unix ms:  1500376552001
-
 	timeRange := backend.TimeRange{
-		From: time.Unix(0, 0),
-		To:   time.Unix(0, 0),
+		From: time.Unix(1632305571, 310985041),
+		To:   time.Unix(1632309171, 310985042),
 	}
 
 	options := queryOptions{
@@ -33,7 +30,7 @@ func TestInterpolate(t *testing.T) {
 		{
 			name:   "interpolate flux variables",
 			before: `v.timeRangeStart, something.timeRangeStop, XYZ.bucket, uuUUu.defaultBucket, aBcDefG.organization, window.windowPeriod, a91{}.bucket`,
-			after:  `1970-01-01T00:00:00Z, 1970-01-01T00:00:00Z, "grafana2", "grafana3", "grafana1", 1s, a91{}.bucket`,
+			after:  `2021-09-22T10:12:51.310985041Z, 2021-09-22T11:12:51.310985042Z, "grafana2", "grafana3", "grafana1", 1s, a91{}.bucket`,
 		},
 	}
 	for _, tt := range tests {

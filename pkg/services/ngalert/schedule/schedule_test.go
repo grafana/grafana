@@ -8,9 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/benbjohnson/clock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -19,12 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+
+	"github.com/benbjohnson/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var nilMetrics = metrics.NewMetrics(nil)
+var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 
 type evalAppliedInfo struct {
 	alertDefKey models.AlertRuleKey
@@ -98,10 +99,10 @@ func TestWarmStateCache(t *testing.T) {
 
 		RuleStore:               dbstore,
 		InstanceStore:           dbstore,
-		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), dbstore, dbstore)
 	st.Warm()
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -143,10 +144,10 @@ func TestAlertingTicker(t *testing.T) {
 		RuleStore:               dbstore,
 		InstanceStore:           dbstore,
 		Logger:                  log.New("ngalert schedule test"),
-		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), dbstore, dbstore)
 	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
 
 	ctx := context.Background()

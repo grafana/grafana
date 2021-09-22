@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "8.2.0-pre",
+  "version": "8.3.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
@@ -14,6 +14,8 @@
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "test": "jest --notify --watch",
     "test:accessibility": "pa11y-ci --config .pa11yci.conf.js",
+    "test:accessibility-pr": "pa11y-ci --config .pa11yci-pr.conf.js",
+    "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
     "lint:sass": "yarn run sass-lint -c public/sass/.sass-lint.yml 'public/sass/**/*.scss, packages/**/*.scss' -v -i '**/node_modules/**/*.scss'",
@@ -49,7 +51,7 @@
     "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-1/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-2/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "husky": {
@@ -174,6 +176,7 @@
     "html-loader": "2.1.2",
     "html-webpack-harddisk-plugin": "2.0.0",
     "html-webpack-plugin": "5.3.2",
+    "http-server": "13.0.1",
     "husky": "4.2.1",
     "iconscout-unicons-tarball": "https://github.com/grafana/icons/tarball/9728be621a4e7d891611149c9cd179e793f790a7",
     "jest": "26.6.3",
@@ -190,7 +193,6 @@
     "nodemon": "2.0.2",
     "pa11y-ci": "2.4.2",
     "postcss": "8.3.6",
-    "postcss-browser-reporter": "0.6.0",
     "postcss-loader": "6.1.1",
     "postcss-reporter": "7.0.2",
     "prettier": "2.2.1",

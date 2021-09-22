@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { pick } from 'lodash';
-import { ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
+import { QueryEditorProps, ExploreMode } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
@@ -8,7 +8,7 @@ import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
 
-export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
 const apiModes = {
   Metrics: { label: 'CloudWatch Metrics', value: 'Metrics' },
