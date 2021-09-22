@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/grafana/grafana/pkg/api/navlinks"
 	"sort"
 	"strings"
 
@@ -357,7 +358,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode := getServerAdminNode(adminNavLinks)
+		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
 		navTree = append(navTree, serverAdminNode)
 	}
 
@@ -378,34 +379,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	})
 
 	return navTree, nil
-}
-
-func AppendToServerAdminNode(indexData *dtos.IndexViewData, child *dtos.NavLink) {
-	foundServerAdminNode := false
-	for _, node := range indexData.NavTree {
-		if node.Id == "admin" {
-			foundServerAdminNode = true
-			node.Children = append(node.Children, child)
-			break
-		}
-	}
-	if !foundServerAdminNode {
-		serverAdminNode := getServerAdminNode([]*dtos.NavLink{child})
-		indexData.NavTree = append(indexData.NavTree, serverAdminNode)
-	}
-}
-
-func getServerAdminNode(children []*dtos.NavLink) *dtos.NavLink {
-	return &dtos.NavLink{
-		Text:         "Server Admin",
-		SubTitle:     "Manage all users and orgs",
-		HideFromTabs: true,
-		Id:           "admin",
-		Icon:         "shield",
-		Url:          children[0].Url,
-		SortWeight:   dtos.WeightAdmin,
-		Children:     children,
-	}
 }
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
