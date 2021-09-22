@@ -90,6 +90,7 @@ A log query consists of two parts: log stream selector, and a log pipeline. For 
 #### Logs volume
 
 You can display logs volume histogram after running a log query. By default, the histogram is loaded only after clicking the "Load logs volume" option. Select the "Auto-load logs volume" option in the log options row to load it automatically after each query. This feature is available only in Explore.
+
 ### Log context
 
 When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.

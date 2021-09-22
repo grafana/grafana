@@ -156,6 +156,8 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: PanelData }>;
 
+  // properties below should be more generic if we add more providers
+  // see also: DataSourceWithLogsVolumeSupport
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
