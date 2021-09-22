@@ -31,6 +31,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import { RowActionComponents } from './QueryActionComponent';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -301,6 +302,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
+  renderExtraActions = () => {
+    const { query, queries, data, onAddQuery } = this.props;
+    return RowActionComponents.getAllExtraRenderAction().map((c) => {
+      return React.createElement(c, {
+        query,
+        queries,
+        timeRange: data.timeRange,
+        onAddQuery: onAddQuery as (query: DataQuery) => void,
+      });
+    });
+  };
+
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
@@ -327,6 +340,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             }}
           />
         )}
+        {this.renderExtraActions()}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery ? (
           <QueryOperationAction

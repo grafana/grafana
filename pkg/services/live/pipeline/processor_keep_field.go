@@ -28,10 +28,16 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (d KeepFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+const ProcessorTypeKeepFields = "keepFields"
+
+func (p *KeepFieldsProcessor) Type() string {
+	return ProcessorTypeKeepFields
+}
+
+func (p *KeepFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
 	var fieldsToKeep []*data.Field
 	for _, field := range frame.Fields {
-		if stringInSlice(field.Name, d.config.FieldNames) {
+		if stringInSlice(field.Name, p.config.FieldNames) {
 			fieldsToKeep = append(fieldsToKeep, field)
 		}
 	}
