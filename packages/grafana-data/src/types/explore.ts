@@ -26,7 +26,7 @@ export type SplitOpen = <T extends DataQuery = any>(
  * if such method is implemented in an DataSourceApi object.
  *
  * It's used internally in Explore only at the moment but could be moved to
- * @grafana/data and DataSourceApi if it's implemented in other datasources
+ * @grafana/data and DataSourceApi if it's implemented in other data sources.
  *
  * @internal
  */
