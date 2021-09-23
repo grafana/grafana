@@ -17,7 +17,7 @@ SUITE=${SUITE:-$DEFAULT_SUITE}
 if [ "$1" == "debug" ]; then
     echo -e "Debug mode"
     SLOWMO=1
-    PARAMS="--headless --no-exit"
+    PARAMS="--no-exit"
 fi
 
 if [ "$1" == "dev" ]; then

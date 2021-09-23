@@ -1891,7 +1891,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/request@npm:^2.88.5":
+"@cypress/request@npm:^2.88.5, @cypress/request@npm:^2.88.6":
   version: 2.88.6
   resolution: "@cypress/request@npm:2.88.6"
   dependencies:
@@ -1918,9 +1918,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/webpack-preprocessor@npm:5.9.0":
-  version: 5.9.0
-  resolution: "@cypress/webpack-preprocessor@npm:5.9.0"
+"@cypress/webpack-preprocessor@npm:5.9.1":
+  version: 5.9.1
+  resolution: "@cypress/webpack-preprocessor@npm:5.9.1"
   dependencies:
     bluebird: ^3.7.1
     debug: 4.3.2
@@ -1929,8 +1929,8 @@ __metadata:
     "@babel/core": ^7.0.1
     "@babel/preset-env": ^7.0.0
     babel-loader: ^8.0.2
-    webpack: ^4.18.1
-  checksum: 2cb335722b51ffe5eb0a3337875532067ab1d4141804269d29c601499378ceebede05a8b0c36fd45327a7c10c65767113e6ded59265671bb6adf15dfd64c00e1
+    webpack: ^4 || ^5
+  checksum: 60f0e4482d6ffbeca81e29586535ec7e854594ba9bcb2be8ede00de8a26a6016d0a9801bb4a3863c636fcaa6f603b5909f0241f8abedb9e8c7a50c8e23fd4491
   languageName: node
   linkType: hard
 
@@ -2379,7 +2379,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
   dependencies:
-    "@cypress/webpack-preprocessor": 5.9.0
+    "@cypress/webpack-preprocessor": 5.9.1
     "@grafana/e2e-selectors": 8.3.0-pre
     "@grafana/tsconfig": ^1.0.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
@@ -2389,8 +2389,8 @@ __metadata:
     "@types/rollup-plugin-visualizer": 2.6.0
     blink-diff: 1.0.13
     commander: 5.0.0
-    cypress: 7.5.0
-    cypress-file-upload: 5.0.7
+    cypress: 8.4.1
+    cypress-file-upload: 5.0.8
     date-fns: 2.21.3
     execa: 4.0.0
     resolve-as-bin: 2.1.0
@@ -11269,9 +11269,11 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30000981, caniuse-lite@npm:^1.0.30001109, caniuse-lite@npm:^1.0.30001125, caniuse-lite@npm:^1.0.30001230, caniuse-lite@npm:^1.0.30001259":
-  version: 1.0.30001259
-  resolution: "caniuse-lite@npm:1.0.30001259"
-  checksum: 4b0423693616a62d3a9beaa35ab5a414a9e4398df7361915ca2b6f24142f1f55909e014d5f0c14c034c0fd5084524116ab46bcdfae5c3b8620f11f2822a1c4ba
+  version: 1.0.30001260
+  resolution: "caniuse-lite@npm:1.0.30001260"
+  dependencies:
+    nanocolors: ^0.1.0
+  checksum: a3a61073204636e02bc3972bfdcd8b3c3a2fb56f29b5ffa95fad7e5a01e2eece2ed92f1246728185992618a04f9221cbd83ddd96d2ef68083353d55ffe660e29
   languageName: node
   linkType: hard
 
@@ -12263,13 +12265,6 @@ __metadata:
   dependencies:
     safe-buffer: 5.1.2
   checksum: 95bf164c0b0b8199d3f44b7631e51b37f683c6a90b9baa4315bd3d405a6d1bc81b7346f0981046aa004331fb3d7a28b629514d01fc209a5251573fc7e4d33380
-  languageName: node
-  linkType: hard
-
-"content-type-parser@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "content-type-parser@npm:1.0.2"
-  checksum: a9afe2c02059b2b44257f073856c5a44b178fcb67b8a4d1b03046711ff7bb13bfa0c7629e70905c226faf8c0b0e13ade824717a4c974c7c6cdb0ae13774752df
   languageName: node
   linkType: hard
 
@@ -13276,12 +13271,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress-file-upload@npm:5.0.7":
-  version: 5.0.7
-  resolution: "cypress-file-upload@npm:5.0.7"
+"cypress-file-upload@npm:5.0.8":
+  version: 5.0.8
+  resolution: "cypress-file-upload@npm:5.0.8"
   peerDependencies:
     cypress: ">3.0.0"
-  checksum: d45994dfbddbbb571fb66be3d91dfee6e72cbda347427249445ec481ab060ee485fe4df1fb9d200a90ac733e7f4f381c65721ab67dfbecc953ef444a0c026792
+  checksum: 9c70ca7e0bb137d0ec0b8d38987219ce15b26ac3a40e3ed4e78e6ad4690392eab905586848eec6ad8edd42ee480e68ccc63007b2ebd0a02f4b3eca116ff017e3
   languageName: node
   linkType: hard
 
@@ -13331,6 +13326,57 @@ __metadata:
   bin:
     cypress: bin/cypress
   checksum: b2a67c93b4e4e280e5d5b819c082ae7c160d9abac6675b96202f142dd67c480504770d86d23651cf46becf7e0f53d0cfc52fcbb7a2c6f1fdd3820ebb826fe710
+  languageName: node
+  linkType: hard
+
+"cypress@npm:8.4.1":
+  version: 8.4.1
+  resolution: "cypress@npm:8.4.1"
+  dependencies:
+    "@cypress/request": ^2.88.6
+    "@cypress/xvfb": ^1.2.4
+    "@types/node": ^14.14.31
+    "@types/sinonjs__fake-timers": ^6.0.2
+    "@types/sizzle": ^2.3.2
+    arch: ^2.2.0
+    blob-util: ^2.0.2
+    bluebird: ^3.7.2
+    cachedir: ^2.3.0
+    chalk: ^4.1.0
+    check-more-types: ^2.24.0
+    cli-cursor: ^3.1.0
+    cli-table3: ~0.6.0
+    commander: ^5.1.0
+    common-tags: ^1.8.0
+    dayjs: ^1.10.4
+    debug: ^4.3.2
+    enquirer: ^2.3.6
+    eventemitter2: ^6.4.3
+    execa: 4.1.0
+    executable: ^4.1.1
+    extract-zip: 2.0.1
+    figures: ^3.2.0
+    fs-extra: ^9.1.0
+    getos: ^3.2.1
+    is-ci: ^3.0.0
+    is-installed-globally: ~0.4.0
+    lazy-ass: ^1.6.0
+    listr2: ^3.8.3
+    lodash: ^4.17.21
+    log-symbols: ^4.0.0
+    minimist: ^1.2.5
+    ospath: ^1.2.2
+    pretty-bytes: ^5.6.0
+    ramda: ~0.27.1
+    request-progress: ^3.0.0
+    supports-color: ^8.1.1
+    tmp: ~0.2.1
+    untildify: ^4.0.0
+    url: ^0.11.0
+    yauzl: ^2.10.0
+  bin:
+    cypress: bin/cypress
+  checksum: d06e91df458d8052971a6992c0d0e74451bf916ceba0599e9bf0287022b60e831a2ef0b9be64af03894101d06c3fc21b98fed9a3e9f6a0818ee75f0b7358d033
   languageName: node
   linkType: hard
 
@@ -13877,7 +13923,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:4.3.2, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.2.0, debug@npm:^4.3.1":
+"debug@npm:4, debug@npm:4.3.2, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.2.0, debug@npm:^4.3.1, debug@npm:^4.3.2":
   version: 4.3.2
   resolution: "debug@npm:4.3.2"
   dependencies:
@@ -14641,9 +14687,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.3.564, electron-to-chromium@npm:^1.3.846":
-  version: 1.3.846
-  resolution: "electron-to-chromium@npm:1.3.846"
-  checksum: 823cc3ffeb4a8c0ca8ce50df8730780ee0dbba1cbaa25e0afea7f68b02f0fd142a8ee93a45ec506a84f5aa97d908fd3906b2506dc74a8c2ebe96ce0ea416d0aa
+  version: 1.3.848
+  resolution: "electron-to-chromium@npm:1.3.848"
+  checksum: 2296ca25b31fcf6ab013652ab18b53772921ed0969ef19073d93da23bb18294069aea404dbcba3abffbadff9ad82159051e179e1b68715267d24a02fc269172b
   languageName: node
   linkType: hard
 
@@ -14821,7 +14867,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enquirer@npm:^2.3.5":
+"enquirer@npm:^2.3.5, enquirer@npm:^2.3.6":
   version: 2.3.6
   resolution: "enquirer@npm:2.3.6"
   dependencies:
@@ -16234,7 +16280,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"figures@npm:^3.0.0":
+"figures@npm:^3.0.0, figures@npm:^3.2.0":
   version: 3.2.0
   resolution: "figures@npm:3.2.0"
   dependencies:
@@ -16959,18 +17005,17 @@ fsevents@^1.2.7:
   linkType: hard
 
 "geotiff@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "geotiff@npm:1.0.5"
+  version: 1.0.6
+  resolution: "geotiff@npm:1.0.6"
   dependencies:
     "@petamoriken/float16": ^1.0.7
-    content-type-parser: ^1.0.2
     lerc: ^3.0.0
     lru-cache: ^6.0.0
-    pako: ^1.0.11
+    pako: ^2.0.4
     parse-headers: ^2.0.2
     threads: ^1.3.1
-    txml: ^3.1.2
-  checksum: 7a8bed474b7cc7083a30fd0b4c905726b9c950b330c6a0c594d902e854ef8d6c8cc4468f821bcd88b983e86f2bf334548b0d1971f20279b4a0c89a0f6859a747
+    txml: ^5.0.0
+  checksum: 1ba5fc7fb2d15f82d497c74be15324bc3d264bbe6b465edf839a41974851271c9dd07785b1d69383ec546eb91d3902368a53f7c2c1776ac948932b876113570e
   languageName: node
   linkType: hard
 
@@ -17298,7 +17343,21 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"glob@npm:^7.0.0, glob@npm:^7.0.3, glob@npm:^7.1.1, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6, glob@npm:~7.1.1, glob@npm:~7.1.6":
+"glob@npm:^7.0.0, glob@npm:^7.0.3, glob@npm:^7.1.1, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6":
+  version: 7.2.0
+  resolution: "glob@npm:7.2.0"
+  dependencies:
+    fs.realpath: ^1.0.0
+    inflight: ^1.0.4
+    inherits: 2
+    minimatch: ^3.0.4
+    once: ^1.3.0
+    path-is-absolute: ^1.0.0
+  checksum: 78a8ea942331f08ed2e055cb5b9e40fe6f46f579d7fd3d694f3412fe5db23223d29b7fee1575440202e9a7ff9a72ab106a39fee39934c7bedafe5e5f8ae20134
+  languageName: node
+  linkType: hard
+
+"glob@npm:~7.1.1, glob@npm:~7.1.6":
   version: 7.1.7
   resolution: "glob@npm:7.1.7"
   dependencies:
@@ -20053,9 +20112,9 @@ fsevents@^1.2.7:
   linkType: hard
 
 "istanbul-lib-coverage@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "istanbul-lib-coverage@npm:3.0.0"
-  checksum: ea57c2428858cc5d1e04c0e28b362950bbf6415e8ba1235cdd6f4c8dc3c57cb950db8b4e8a4f7e33abc240aa1eb816dba0d7285bdb8b70bda22bb2082492dbfc
+  version: 3.0.1
+  resolution: "istanbul-lib-coverage@npm:3.0.1"
+  checksum: abb09e725179b60fd76208b10e467ec0796f8a0ee4c9f5a9250b2894d873997346907951e70b7fe1162cd609f9e1da62d54243d671b5b5c8083440f8f93cd050
   languageName: node
   linkType: hard
 
@@ -23176,10 +23235,10 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"nanocolors@npm:^0.1.5":
-  version: 0.1.6
-  resolution: "nanocolors@npm:0.1.6"
-  checksum: 3e748505531f5b21b98275cc8012efa92394ae1b6132d80e96646c20f0ca46442e82ab4b11ad57edccb8bf40433ade6e16d1ce535bc536bde6c009396467c887
+"nanocolors@npm:^0.1.0, nanocolors@npm:^0.1.5":
+  version: 0.1.12
+  resolution: "nanocolors@npm:0.1.12"
+  checksum: 2ce58f57006ddd1d2680d05fe21f54d858db8ba81bd13381598ddc546f7637e33c4407da2ea7da40ea1c96794250e7c14a4d00358b48eeae4d917d6a92bafe4c
   languageName: node
   linkType: hard
 
@@ -24576,7 +24635,14 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"pako@npm:^1.0.11, pako@npm:~1.0.5":
+"pako@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "pako@npm:2.0.4"
+  checksum: 82b9b0b99dd830c9103856a6dbd10f0cb2c8c32b9768184727ea381a99666de9a47a069d2e6efe6acf09336f363956b50835c196ef9311b34b7274d420eb0d88
+  languageName: node
+  linkType: hard
+
+"pako@npm:~1.0.5":
   version: 1.0.11
   resolution: "pako@npm:1.0.11"
   checksum: 1be2bfa1f807608c7538afa15d6f25baa523c30ec870a3228a89579e474a4d992f4293859524e46d5d87fd30fa17c5edf34dbef0671251d9749820b488660b16
@@ -32217,12 +32283,12 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"txml@npm:^3.1.2":
-  version: 3.2.5
-  resolution: "txml@npm:3.2.5"
+"txml@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "txml@npm:5.0.1"
   dependencies:
     through2: ^3.0.1
-  checksum: a8357d90dd725f66a9868f02eb6d95dd6bcf682d6cc6e699007c9b2ede7ebdcbffe40373fe1e83c11657edc5beb9dea47828f39cce8d81375d15a87116e66cc2
+  checksum: 27d04b005d2bb49058826cc10f3cdb48081affb80b84656b208d8c5365306286b191d8f6fcc4db04b9427ec788685d117dc90b42c512456a67f4995182795293
   languageName: node
   linkType: hard
 

@@ -150,28 +150,6 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
 	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
 
-	// Alerting stats
-	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
-	if err != nil {
-		uss.log.Error("Failed to get alerting usage stats", "error", err)
-		return report, err
-	}
-
-	var addAlertingUsageStats = func(dsType string, usageCount int) {
-		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
-	}
-
-	alertingOtherCount := 0
-	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if uss.ShouldBeReported(dsType) {
-			addAlertingUsageStats(dsType, usageCount)
-		} else {
-			alertingOtherCount += usageCount
-		}
-	}
-
-	addAlertingUsageStats("other", alertingOtherCount)
-
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
