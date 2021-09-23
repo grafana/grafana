@@ -465,6 +465,13 @@ export const runQueries = (
         if (autoLoadLogsVolume && logsVolumeDataProvider) {
           dispatch(loadLogsVolumeData(exploreId));
         }
+      } else {
+        dispatch(
+          storeLogsVolumeDataProviderAction({
+            exploreId,
+            logsVolumeDataProvider: undefined,
+          })
+        );
       }
     }
 
