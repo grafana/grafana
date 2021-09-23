@@ -11,9 +11,10 @@ weight = 600
 You can install and run Grafana using the official Docker images. Our docker images come in two editions:
 
 **Grafana Enterprise**: `grafana/grafana-ent`
+
 **Grafana Open Source**: `grafana/grafana-oss`
 
-These editions are additionally available in two variants: Alpine and Ubuntu.
+Each edition is available in two variants: Alpine and Ubuntu. See below.
 
 This page also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 
@@ -37,11 +38,9 @@ The Alpine variant is highly recommended when security and final image size bein
 
 **Grafana Enterprise edition**: `grafana/grafana-ent:<version>-ubuntu`
 
-**Grafana Open Source edition**: `grafana/grafana-oss:<version>-ubuntu
+**Grafana Open Source edition**: `grafana/grafana-oss:<version>-ubuntu`
 
-This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or are dependent on certain tooling not available for Alpine.
-
-> **Note:** The `grafana/grafana-ent:<version>-ubuntu` and `grafana/grafana-oss:<version>-ubuntu` images are available for Grafana version 6.5.0 and later.
+These images are based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or are dependent on certain tooling not available for Alpine.
 
 ## Run Grafana
 
@@ -66,7 +65,7 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana-ent:<version number>
 **Example:**
 
 ```bash
-docker run -d -p 3000:3000 --name grafana grafana/grafana-ent:6.5.0
+docker run -d -p 3000:3000 --name grafana grafana/grafana-ent:8.2.0
 ```
 
 ### Run the Grafana main branch
