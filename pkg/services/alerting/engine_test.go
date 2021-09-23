@@ -67,6 +67,8 @@ func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
 	return true
 }
 
+func (usm *usageStatsMock) RegisterSendReportCallback(_ usagestats.SendReportCallbackFunc) {}
+
 func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
 		bus := bus.New()
