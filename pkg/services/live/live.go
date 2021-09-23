@@ -906,12 +906,8 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 				Description: "apply multiple subscribers",
 			},
 			{
-				Type:        pipeline.SubscriberTypeUserRole,
-				Description: "check user role",
-			},
-			{
-				Type:        pipeline.SubscriberTypeUserTeam,
-				Description: "check user team",
+				Type:        pipeline.SubscriberTypeAuthorizeRole,
+				Description: "authorize user role",
 			},
 		},
 		"outputs": []configInfo{
