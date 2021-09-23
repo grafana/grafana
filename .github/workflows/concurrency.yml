@@ -5,6 +5,10 @@ on:
     types:
       - opened
       - synchronize
+  push:
+    branches-ignore:
+      - main
+      - v*.*.*
 
 concurrency:
   group: ${{ github.head_ref }}
