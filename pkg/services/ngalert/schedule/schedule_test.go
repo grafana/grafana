@@ -102,7 +102,7 @@ func TestWarmStateCache(t *testing.T) {
 		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), dbstore, dbstore)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
 	st.Warm()
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestAlertingTicker(t *testing.T) {
 		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), dbstore, dbstore)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
 	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
 
 	ctx := context.Background()

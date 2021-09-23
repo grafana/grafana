@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -124,7 +125,13 @@ func (ng *AlertNG) init() error {
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 	}
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
+
+	externalURL, err := url.Parse(ng.Cfg.AppURL)
+	if err != nil {
+		return err
+	}
+
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), externalURL, store, store)
 	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
 
 	ng.stateManager = stateManager

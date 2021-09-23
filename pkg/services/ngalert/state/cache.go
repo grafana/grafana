@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 
@@ -15,17 +16,19 @@ import (
 )
 
 type cache struct {
-	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
-	mtxStates sync.RWMutex
-	log       log.Logger
-	metrics   *metrics.State
+	states      map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
+	mtxStates   sync.RWMutex
+	log         log.Logger
+	metrics     *metrics.State
+	externalURL *url.URL
 }
 
-func newCache(logger log.Logger, metrics *metrics.State) *cache {
+func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *cache {
 	return &cache{
-		states:  make(map[int64]map[string]map[string]*State),
-		log:     logger,
-		metrics: metrics,
+		states:      make(map[int64]map[string]map[string]*State),
+		log:         logger,
+		metrics:     metrics,
+		externalURL: externalURL,
 	}
 }
 
@@ -89,7 +92,7 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, la
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, labels, alertInstance)
+			ev, err := expandTemplate(alertRule.Title, v, labels, alertInstance, c.externalURL)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())

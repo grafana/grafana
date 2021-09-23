@@ -128,7 +128,16 @@ The following template functions are available when expanding annotations and la
 | toLower            | string                     | string                 | strings.ToLower, converts all characters to lower case.                                                                            |
 | match              | pattern, text              | boolean                | regexp.MatchString Tests for a unanchored regexp match.                                                                            |
 | reReplaceAll       | pattern, replacement, text | string                 | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                           |
+| graphLink          | expr                       | string                 | Not supported                                                                                                                      |
+| tableLink          | expr                       | string                 | Not supported                                                                                                                      |
 | args               | []interface{}              | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates. |
+| tmpl               | string, []interface{}      | nothing                | Not supported.                                                                                                                     |
+| safeHtml           | string                     | string                 | Not supported.                                                                                                                     |
+| query              | query string               | []sample               | Not supported.                                                                                                                     |
+| first              | []sample                   | sample                 | Not supported.                                                                                                                     |
+| label              | label, sample              | string                 | Not supported.                                                                                                                     |
+| value              | sample                     | float64                | Not supported.                                                                                                                     |
+| sortByLabel        | label, []samples           | []sample               | Not supported.                                                                                                                     |
 
 ## Preview alerts
 

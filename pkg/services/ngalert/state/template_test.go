@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -38,6 +39,10 @@ func TestTemplateCaptureValueStringer(t *testing.T) {
 }
 
 func TestExpandTemplate(t *testing.T) {
+	pathPrefix := "/path/prefix"
+	externalURL, err := url.Parse("http://localhost" + pathPrefix)
+	assert.NoError(t, err)
+
 	cases := []struct {
 		name          string
 		text          string
@@ -337,12 +342,44 @@ func TestExpandTemplate(t *testing.T) {
 		name:     "pass multiple arguments to templates",
 		text:     `{{define "x"}}{{.arg0}} {{.arg1}}{{end}}{{template "x" (args 1 "2")}}`,
 		expected: "1 2",
+	}, {
+		name:     "pathPrefix",
+		text:     "{{ pathPrefix }}",
+		expected: pathPrefix,
+	}, {
+		name:     "externalURL",
+		text:     "{{ externalURL }}",
+		expected: externalURL.String(),
+	}, {
+		name:     "check that query, first and value don't error or panic",
+		text:     "{{ query \"1.5\" | first | value }}",
+		expected: "",
+	}, {
+		name:     "check that label doesn't error or panic",
+		text:     "{{ query \"metric{instance='a'}\" | first | label \"instance\" }}",
+		expected: "",
+	}, {
+		name:     "check that graphLink returns an empty string",
+		text:     "{{ graphLink \"up\" }}",
+		expected: "",
+	}, {
+		name:     "check that tableLink returns an empty string",
+		text:     "{{ tableLink \"up\" }}",
+		expected: "",
+	}, {
+		name:     "check that sortByLabel or strvalue don't error or panic",
+		text:     "{{ query \"metric{__value__='a'}\" | sortByLabel | strvalue }}",
+		expected: "",
+	}, {
+		name:     "check that safeHtml doesn't error or panic",
+		text:     "{{ \"<b>\" | safeHtml }}",
+		expected: "<b>",
 	},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			v, err := expandTemplate("test", c.text, c.labels, c.alertInstance)
+			v, err := expandTemplate("test", c.text, c.labels, c.alertInstance, externalURL)
 			if c.expectedError != nil {
 				require.NotNil(t, err)
 				require.EqualError(t, c.expectedError, err.Error())
