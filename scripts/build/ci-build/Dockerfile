@@ -108,7 +108,7 @@ FROM debian:stretch-20210208
 ENV GOVERSION=1.17 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.17.5-1nodesource1 \
+    NODEVERSION=14.17.6-1nodesource1 \
     YARNVERSION=1.22.5-1
 
 # Use ARG so as not to persist environment variable in image
@@ -118,6 +118,7 @@ COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz 
 COPY --from=toolchain /tmp/golangci-lint /usr/local/bin/
 COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
 COPY --from=toolchain /tmp/cue /usr/local/bin/
+COPY --from=toolchain /tmp/dockerize /usr/local/bin/
 
 RUN apt-get update && \
     apt-get install -yq  \
