@@ -12,7 +12,7 @@ import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
-import { useGetSingle, useFetchStatus } from '../state/hooks';
+import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { AppNotificationSeverity } from 'app/types';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
@@ -33,7 +33,8 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   const [activeTabIndex, setActiveTabIndex] = useState(Object.values(PluginTabIds).indexOf(pageId));
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
   const { tabs } = usePluginDetailsTabs(plugin, defaultTabs);
-  const { isLoading } = useFetchStatus();
+  const { isLoading: isFetchLoading } = useFetchStatus();
+  const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
 
   // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
@@ -44,7 +45,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     }
   }, [url, activeTabIndex, tabs]);
 
-  if (isLoading) {
+  if (isFetchLoading || isFetchDetailsLoading) {
     return (
       <Page>
         <Loader />
