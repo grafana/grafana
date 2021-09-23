@@ -10,7 +10,7 @@ import (
 )
 
 type UserRoleSubscriberConfig struct {
-	AllowedRoles []models.RoleType `json:"allowedRoles,omitempty"`
+	AllowedRole models.RoleType `json:"allowedRole,omitempty"`
 }
 
 type UserRoleSubscriber struct {
@@ -32,10 +32,8 @@ func (s *UserRoleSubscriber) Subscribe(ctx context.Context, _ Vars) (models.Subs
 	if !ok {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 	}
-	for _, allowedRole := range s.config.AllowedRoles {
-		if u.OrgRole == allowedRole {
-			return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
-		}
+	if u.HasRole(s.config.AllowedRole) {
+		return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 	}
 	return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 }
