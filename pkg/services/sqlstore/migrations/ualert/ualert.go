@@ -61,6 +61,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			seenChannelUIDs:           make(map[string]struct{}),
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
+			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
@@ -101,6 +102,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 			seenChannelUIDs:           make(map[string]struct{}),
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
+			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
 
 	case !ngEnabled && migrationRun:
@@ -150,7 +152,7 @@ type migration struct {
 
 	seenChannelUIDs           map[string]struct{}
 	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
-	silences                  []*pb.MeshSilence
+	silences                  map[int64][]*pb.MeshSilence
 	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
 	lastReceiverID            int                         // For the auto generated receivers.
 }
