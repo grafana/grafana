@@ -10,12 +10,13 @@ import {
   TypeaheadOutput,
   Select,
   Alert,
+  useStyles2,
 } from '@grafana/ui';
 import { tokenizer } from './syntax';
 import Prism from 'prismjs';
 import { Node } from 'slate';
 import { css } from '@emotion/css';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
 import { TempoDatasource, TempoQuery } from './datasource';
 import { debounce } from 'lodash';
@@ -44,18 +45,15 @@ const plugins = [
 Prism.languages[PRISM_LANGUAGE] = tokenizer;
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
+  const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
   const [autocomplete, setAutocomplete] = useState<{
     serviceNameOptions: Array<SelectableValue<string>>;
-    selectedServiceName: SelectableValue<string> | undefined;
     spanNameOptions: Array<SelectableValue<string>>;
-    selectedSpanName: SelectableValue<string> | undefined;
   }>({
     serviceNameOptions: [],
-    selectedServiceName: undefined,
     spanNameOptions: [],
-    selectedSpanName: undefined,
   });
   const [error, setError] = useState(null);
 
@@ -125,7 +123,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 
   return (
     <>
-      <div className={css({ maxWidth: '500px' })}>
+      <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Service Name" labelWidth={14} grow>
             <Select
@@ -230,7 +228,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         </InlineFieldRow>
       </div>
       {error ? (
-        <Alert title="Unable to connect to Tempo search" severity="info" className={css({ maxWidth: '75ch' })}>
+        <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
           configure it in the <a href={`/datasources/${datasource.uid}`}>datasource settings</a>.
         </Alert>
@@ -240,3 +238,13 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 };
 
 export default NativeSearch;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    max-width: 500px;
+  `,
+  alert: css`
+    max-width: 75ch;
+    margin-top: ${theme.spacing(2)};
+  `,
+});

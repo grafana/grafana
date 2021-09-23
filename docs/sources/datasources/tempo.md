@@ -38,6 +38,12 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 ![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
 
+### Search
+
+This is a configuration for the Tempo search feature. To use search, ensure that Tempo is configured with search enabled. If you would like to hide the search query tab in Explore, you can do so with this configuration.
+
+- **Hide search -** Toggle to hide the search query tab in Explore.
+
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
