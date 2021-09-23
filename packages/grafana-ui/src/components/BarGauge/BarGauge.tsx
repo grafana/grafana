@@ -135,7 +135,7 @@ export class BarGauge extends PureComponent<Props> {
 
     if (color) {
       // if we are past real value the cell is not "on"
-      if (value === null || (positionValue !== null && positionValue > value.numeric)) {
+      if (value === null || isNaN(value.numeric) || (positionValue !== null && positionValue > value.numeric)) {
         return {
           background: tinycolor(color).setAlpha(0.18).toRgbString(),
           border: 'transparent',
