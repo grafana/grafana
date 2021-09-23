@@ -895,15 +895,23 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 		"subscribers": []configInfo{
 			{
 				Type:        pipeline.SubscriberTypeBuiltin,
-				Description: "list the fields that should be removed",
-				// Example:     pipeline.Bu{},
+				Description: "apply builtin feature subscribe logic",
 			},
 			{
 				Type:        pipeline.SubscriberTypeManagedStream,
-				Description: "list the fields that should be removed",
+				Description: "apply managed stream subscribe logic",
 			},
 			{
-				Type: pipeline.SubscriberTypeMultiple,
+				Type:        pipeline.SubscriberTypeMultiple,
+				Description: "apply multiple subscribers",
+			},
+			{
+				Type:        pipeline.SubscriberTypeUserRole,
+				Description: "check user role",
+			},
+			{
+				Type:        pipeline.SubscriberTypeUserTeam,
+				Description: "check user team",
 			},
 		},
 		"outputs": []configInfo{
@@ -964,7 +972,7 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 			},
 			{
 				Type:        pipeline.ProcessorTypeMultiple,
-				Description: "apply multiplie processors",
+				Description: "apply multiple processors",
 				Example:     pipeline.MultipleProcessorConfig{},
 			},
 		},
