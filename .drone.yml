@@ -150,7 +150,6 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn wait-on http://$HOST:$PORT/login
   - yarn -s test:accessibility-pr
   environment:
     GRAFANA_MISC_STATS_API_KEY:
@@ -3493,6 +3492,6 @@ get:
 
 ---
 kind: signature
-hmac: 2719d1bb9b769766f34eaca09ef6cf91e2999483962e74f0dcd01b3dd320ca93
+hmac: 9211e316cd24660667ba57b860129d2f06b0a4a669aa4d5c1f13156667ae027f
 
 ...
