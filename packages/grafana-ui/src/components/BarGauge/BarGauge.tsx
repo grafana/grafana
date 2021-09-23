@@ -122,43 +122,8 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 
-  getCellColor(positionValue: TimeSeriesValue): CellColors {
-    const { value, display } = this.props;
-    if (positionValue === null) {
-      return {
-        background: FALLBACK_COLOR,
-        border: FALLBACK_COLOR,
-      };
-    }
-
-    const color = display ? display(positionValue).color : null;
-
-    if (color) {
-      // if we are past real value the cell is not "on"
-      if (value === null || (positionValue !== null && positionValue > value.numeric)) {
-        return {
-          background: tinycolor(color).setAlpha(0.18).toRgbString(),
-          border: 'transparent',
-          isLit: false,
-        };
-      } else {
-        return {
-          background: tinycolor(color).setAlpha(0.95).toRgbString(),
-          backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
-          border: tinycolor(color).setAlpha(0.9).toRgbString(),
-          isLit: true,
-        };
-      }
-    }
-
-    return {
-      background: FALLBACK_COLOR,
-      border: FALLBACK_COLOR,
-    };
-  }
-
   renderRetroBars(): ReactNode {
-    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
+    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -200,7 +165,7 @@ export class BarGauge extends PureComponent<Props> {
 
     for (let i = 0; i < cellCount; i++) {
       const currentValue = minValue + (valueRange / cellCount) * i;
-      const cellColor = this.getCellColor(currentValue);
+      const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
         borderRadius: '2px',
       };
@@ -422,6 +387,44 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
     maxBarHeight,
     wrapperHeight,
     wrapperWidth,
+  };
+}
+
+export function getCellColor(
+  positionValue: TimeSeriesValue,
+  value: Props['value'],
+  display: Props['display']
+): CellColors {
+  if (positionValue === null) {
+    return {
+      background: FALLBACK_COLOR,
+      border: FALLBACK_COLOR,
+    };
+  }
+
+  const color = display ? display(positionValue).color : null;
+
+  if (color) {
+    // if we are past real value the cell is not "on"
+    if (value === null || isNaN(value.numeric) || (positionValue !== null && positionValue > value.numeric)) {
+      return {
+        background: tinycolor(color).setAlpha(0.18).toRgbString(),
+        border: 'transparent',
+        isLit: false,
+      };
+    } else {
+      return {
+        background: tinycolor(color).setAlpha(0.95).toRgbString(),
+        backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
+        border: tinycolor(color).setAlpha(0.9).toRgbString(),
+        isLit: true,
+      };
+    }
+  }
+
+  return {
+    background: FALLBACK_COLOR,
+    border: FALLBACK_COLOR,
   };
 }
 

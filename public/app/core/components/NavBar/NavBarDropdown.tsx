@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconName, Link, useTheme2 } from '@grafana/ui';
-import DropDownChild from './DropDownChild';
+import DropdownChild from './DropdownChild';
 
 interface Props {
   headerTarget?: HTMLAnchorElement['target'];
@@ -14,7 +14,7 @@ interface Props {
   subtitleText?: string;
 }
 
-const SideMenuDropDown = ({
+const NavBarDropdown = ({
   headerTarget,
   headerText,
   headerUrl,
@@ -50,7 +50,7 @@ const SideMenuDropDown = ({
       {items
         .filter((item) => !item.hideFromMenu)
         .map((child, index) => (
-          <DropDownChild
+          <DropdownChild
             key={`${child.url}-${index}`}
             isDivider={child.divider}
             icon={child.icon as IconName}
@@ -65,7 +65,7 @@ const SideMenuDropDown = ({
   );
 };
 
-export default SideMenuDropDown;
+export default NavBarDropdown;
 
 const getStyles = (theme: GrafanaTheme2, reverseDirection: Props['reverseDirection']) => ({
   header: css`
