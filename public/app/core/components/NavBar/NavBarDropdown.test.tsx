@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import SideMenuDropDown from './SideMenuDropDown';
+import NavBarDropdown from './NavBarDropdown';
 
-describe('SideMenuDropDown', () => {
+describe('NavBarDropdown', () => {
   const mockHeaderText = 'MyHeaderText';
   const mockHeaderUrl = '/route';
   const mockOnHeaderClick = jest.fn();
@@ -18,7 +18,7 @@ describe('SideMenuDropDown', () => {
   ];
 
   it('displays the header text', () => {
-    render(<SideMenuDropDown headerText={mockHeaderText} />);
+    render(<NavBarDropdown headerText={mockHeaderText} />);
     const text = screen.getByText(mockHeaderText);
     expect(text).toBeInTheDocument();
   });
@@ -26,7 +26,7 @@ describe('SideMenuDropDown', () => {
   it('attaches the header url to the header text if provided', () => {
     render(
       <BrowserRouter>
-        <SideMenuDropDown headerText={mockHeaderText} headerUrl={mockHeaderUrl} />
+        <NavBarDropdown headerText={mockHeaderText} headerUrl={mockHeaderUrl} />
       </BrowserRouter>
     );
     const link = screen.getByRole('link', { name: mockHeaderText });
@@ -35,7 +35,7 @@ describe('SideMenuDropDown', () => {
   });
 
   it('calls the onHeaderClick function when the header is clicked', () => {
-    render(<SideMenuDropDown headerText={mockHeaderText} onHeaderClick={mockOnHeaderClick} />);
+    render(<NavBarDropdown headerText={mockHeaderText} onHeaderClick={mockOnHeaderClick} />);
     const text = screen.getByText(mockHeaderText);
     expect(text).toBeInTheDocument();
     userEvent.click(text);
@@ -43,7 +43,7 @@ describe('SideMenuDropDown', () => {
   });
 
   it('displays the items', () => {
-    render(<SideMenuDropDown headerText={mockHeaderText} items={mockItems} />);
+    render(<NavBarDropdown headerText={mockHeaderText} items={mockItems} />);
     mockItems.forEach(({ text }) => {
       const childItem = screen.getByText(text);
       expect(childItem).toBeInTheDocument();

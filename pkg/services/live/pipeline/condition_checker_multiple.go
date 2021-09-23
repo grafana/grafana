@@ -16,24 +16,30 @@ const (
 
 // MultipleConditionChecker can check multiple conditions according to ConditionType.
 type MultipleConditionChecker struct {
-	Type       ConditionType
-	Conditions []ConditionChecker
+	ConditionType ConditionType
+	Conditions    []ConditionChecker
 }
 
-func (m MultipleConditionChecker) CheckCondition(ctx context.Context, frame *data.Frame) (bool, error) {
-	for _, c := range m.Conditions {
-		ok, err := c.CheckCondition(ctx, frame)
+const ConditionCheckerTypeMultiple = "multiple"
+
+func (c *MultipleConditionChecker) Type() string {
+	return ConditionCheckerTypeMultiple
+}
+
+func (c *MultipleConditionChecker) CheckCondition(ctx context.Context, frame *data.Frame) (bool, error) {
+	for _, cond := range c.Conditions {
+		ok, err := cond.CheckCondition(ctx, frame)
 		if err != nil {
 			return false, err
 		}
-		if ok && m.Type == ConditionAny {
+		if ok && c.ConditionType == ConditionAny {
 			return true, nil
 		}
-		if !ok && m.Type == ConditionAll {
+		if !ok && c.ConditionType == ConditionAll {
 			return false, nil
 		}
 	}
-	if m.Type == ConditionAny {
+	if c.ConditionType == ConditionAny {
 		return false, nil
 	}
 	return true, nil
@@ -41,5 +47,5 @@ func (m MultipleConditionChecker) CheckCondition(ctx context.Context, frame *dat
 
 // NewMultipleConditionChecker creates new MultipleConditionChecker.
 func NewMultipleConditionChecker(conditionType ConditionType, conditions ...ConditionChecker) *MultipleConditionChecker {
-	return &MultipleConditionChecker{Type: conditionType, Conditions: conditions}
+	return &MultipleConditionChecker{ConditionType: conditionType, Conditions: conditions}
 }
