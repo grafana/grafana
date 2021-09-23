@@ -132,7 +132,9 @@ interface Props {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  onChangeFiscalYearStartMonth?: (month: Number) => void;
   timeZone?: TimeZone;
+  fiscalYearStartMonth?: Number;
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
   history?: TimeRange[];
@@ -160,6 +162,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
     isFullscreen,
     hideQuickRanges,
     timeZone,
+    fiscalYearStartMonth,
     value,
     onChange,
     history,
@@ -167,6 +170,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
     className,
     hideTimeZone,
     onChangeTimeZone,
+    onChangeFiscalYearStartMonth,
   } = props;
   const isHistoryEmpty = !history?.length;
   const isContainerTall =
@@ -232,7 +236,14 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
           </div>
         )}
       </div>
-      {!hideTimeZone && isFullscreen && <TimePickerFooter timeZone={timeZone} onChangeTimeZone={onChangeTimeZone} />}
+      {!hideTimeZone && isFullscreen && (
+        <TimePickerFooter
+          timeZone={timeZone}
+          fiscalYearStartMonth={fiscalYearStartMonth}
+          onChangeTimeZone={onChangeTimeZone}
+          onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+        />
+      )}
     </div>
   );
 };

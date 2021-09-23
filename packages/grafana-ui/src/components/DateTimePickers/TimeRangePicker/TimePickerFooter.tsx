@@ -9,16 +9,24 @@ import { Button } from '../../Button';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
-import { RadioButtonGroup, Select } from '../..';
+import { Field, RadioButtonGroup, Select } from '../..';
 
 interface Props {
   timeZone?: TimeZone;
+  fiscalYearStartMonth?: Number;
   timestamp?: number;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  onChangeFiscalYearStartMonth?: (month: Number) => void;
 }
 
 export const TimePickerFooter: FC<Props> = (props) => {
-  const { timeZone, timestamp = Date.now(), onChangeTimeZone } = props;
+  const {
+    timeZone,
+    fiscalYearStartMonth,
+    timestamp = Date.now(),
+    onChangeTimeZone,
+    onChangeFiscalYearStartMonth,
+  } = props;
   const [isEditing, setEditing] = useState(false);
   const [editMode, setEditMode] = useState('tz');
 
@@ -62,7 +70,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
         </Button>
       </section>
       {isEditing ? (
-        <div className={cx(style.editContainer)}>
+        <div className={style.editContainer}>
           <div>
             <RadioButtonGroup
               value={editMode}
@@ -74,22 +82,45 @@ export const TimePickerFooter: FC<Props> = (props) => {
             ></RadioButtonGroup>
           </div>
           {editMode === 'tz' ? (
-            <div onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}>
-              <section aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
-                <TimeZonePicker
-                  includeInternal={true}
-                  onChange={(timeZone) => {
-                    onToggleChangeTimeSettings();
+            <section
+              aria-label={selectors.components.TimeZonePicker.container}
+              className={cx(style.timeZoneContainer, style.timeSettingContainer)}
+            >
+              <TimeZonePicker
+                includeInternal={true}
+                onChange={(timeZone) => {
+                  onToggleChangeTimeSettings();
 
-                    if (isString(timeZone)) {
-                      onChangeTimeZone(timeZone);
+                  if (isString(timeZone)) {
+                    onChangeTimeZone(timeZone);
+                  }
+                }}
+                onBlur={onToggleChangeTimeSettings}
+              />
+            </section>
+          ) : (
+            <section
+              aria-label={selectors.components.TimeZonePicker.container}
+              className={cx(style.timeZoneContainer, style.timeSettingContainer)}
+            >
+              <Field className={style.fiscalYearField} label={'Fiscal year start month'}>
+                <Select
+                  value={fiscalYearStartMonth}
+                  options={[
+                    { label: 'January', value: 0 },
+                    { label: 'February', value: 1 },
+                    { label: 'March', value: 2 },
+                    { label: 'April', value: 3 },
+                  ]}
+                  onChange={(value) => {
+                    if (onChangeFiscalYearStartMonth) {
+                      onChangeFiscalYearStartMonth(value.value ?? 0);
                     }
                   }}
-                  onBlur={onToggleChangeTimeSettings}
                 />
-              </section>
-            </div>
-          ) : null}
+              </Field>
+            </section>
+          )}
         </div>
       ) : null}
     </div>
@@ -115,6 +146,12 @@ const getStyle = stylesFactory((theme: GrafanaTheme2) => {
     `,
     spacer: css`
       margin-left: 7px;
+    `,
+    timeSettingContainer: css`
+      padding-top: ${theme.spacing(1)};
+    `,
+    fiscalYearField: css`
+      margin-bottom: 0px;
     `,
     timeZoneContainer: css`
       display: flex;

@@ -43,7 +43,6 @@ export const TimeZonePicker: React.FC<Props> = (props) => {
 
   return (
     <Select
-      menuShouldPortal
       value={selected}
       placeholder="Type to search (country, city, abbreviation)"
       autoFocus={autoFocus}

@@ -96,6 +96,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  fiscalYearStartMonth?: Number;
   private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
@@ -147,6 +148,7 @@ export class DashboardModel {
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion || 0;
+    this.fiscalYearStartMonth = data.fiscalYearStartMonth || 0;
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
