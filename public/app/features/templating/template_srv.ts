@@ -278,7 +278,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         return match;
       }
 
-      if (variable.type === 'adhoc') {
+      if (isAdHoc(variable)) {
         const value = variable.filters;
         const text = variable.id;
 
