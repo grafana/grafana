@@ -22,12 +22,18 @@ func NewRedirectOutput(config RedirectOutputConfig) *RedirectOutput {
 	return &RedirectOutput{config: config}
 }
 
-func (l *RedirectOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
-	if vars.Channel == l.config.Channel {
-		return nil, fmt.Errorf("redirect to the same channel: %s", l.config.Channel)
+const OutputTypeRedirect = "redirect"
+
+func (out *RedirectOutput) Type() string {
+	return OutputTypeRedirect
+}
+
+func (out *RedirectOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+	if vars.Channel == out.config.Channel {
+		return nil, fmt.Errorf("redirect to the same channel: %s", out.config.Channel)
 	}
 	return []*ChannelFrame{{
-		Channel: l.config.Channel,
+		Channel: out.config.Channel,
 		Frame:   frame,
 	}}, nil
 }
