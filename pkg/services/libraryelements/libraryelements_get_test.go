@@ -120,7 +120,7 @@ func TestGetLibraryElement(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
 			require.NoError(t, err)
 
 			expected := func(res libraryElementResult) libraryElementResult {

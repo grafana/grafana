@@ -90,7 +90,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c, macaron.Params(c.Req)[":uid"])
+	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, macaron.Params(c.Req)[":uid"])
 	if err != nil {
 		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
 			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
