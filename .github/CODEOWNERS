@@ -40,13 +40,13 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/zipkin @grafana/observability-squad
 /pkg/tsdb/tempo @grafana/observability-squad
 
-# Unified Alerting
-/pkg/services/ngalert @grafana/alerting-squad
-/pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad
-
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
+
+# Unified Alerting
+/pkg/services/ngalert @grafana/alerting-squad
+/pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
