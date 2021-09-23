@@ -7,6 +7,7 @@ import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
+import { safeStringifyValue } from '../../core/utils/explore';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -115,7 +116,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return '';
     }
 
-    if (isAdHoc(variable) && format !== FormatRegistryID.queryparam) {
+    if (isAdHoc(variable) && format !== FormatRegistryID.queryParam) {
       return '';
     }
 
@@ -146,10 +147,6 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!formatItem) {
       console.error(`Variable format ${format} not found. Using glob format as fallback.`);
       formatItem = formatRegistry.get(FormatRegistryID.glob);
-    }
-
-    if (!formatItem.canHandle(variable)) {
-      return '';
     }
 
     const options: FormatOptions = { value, args, text: text ?? value };
@@ -279,7 +276,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
 
       if (isAdHoc(variable)) {
-        const value = variable.filters;
+        const value = safeStringifyValue(variable.filters);
         const text = variable.id;
 
         return this.formatValue(value, fmt, variable, text);
@@ -297,7 +294,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
-        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.queryparam) {
+        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.queryParam) {
           return this.replace(value);
         }
       }

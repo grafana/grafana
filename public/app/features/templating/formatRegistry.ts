@@ -5,7 +5,6 @@ import { formatVariableLabel } from '../variables/shared/formatVariable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 import { variableAdapters } from '../variables/adapters';
 import { VariableModel as ExtendedVariableModel } from '../variables/types';
-import { isAdHoc } from '../variables/guard';
 
 export interface FormatOptions {
   value: any;
@@ -14,7 +13,6 @@ export interface FormatOptions {
 }
 
 export interface FormatRegistryItem extends RegistryItem {
-  canHandle(variable: VariableModel): boolean;
   formatter(options: FormatOptions, variable: VariableModel): string;
 }
 
@@ -27,14 +25,14 @@ export enum FormatRegistryID {
   csv = 'csv',
   html = 'html',
   json = 'json',
-  percentencode = 'percentencode',
-  singlequote = 'singlequote',
-  doublequote = 'doublequote',
-  sqlstring = 'sqlstring',
+  percentEncode = 'percentencode',
+  singleQuote = 'singlequote',
+  doubleQuote = 'doublequote',
+  sqlString = 'sqlstring',
   date = 'date',
   glob = 'glob',
   text = 'text',
-  queryparam = 'queryparam',
+  queryParam = 'queryparam',
 }
 
 export const formatRegistry = new Registry<FormatRegistryItem>(() => {
@@ -43,7 +41,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.lucene,
       name: 'Lucene',
       description: 'Values are lucene escaped and multi-valued variables generate an OR expression',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         if (typeof value === 'string') {
           return luceneEscape(value);
@@ -64,14 +61,12 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.raw,
       name: 'raw',
       description: 'Keep value as is',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => value,
     },
     {
       id: FormatRegistryID.regex,
       name: 'Regex',
       description: 'Values are regex escaped and multi-valued variables generate a (<value>|<value>) expression',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         if (typeof value === 'string') {
           return kbn.regexEscape(value);
@@ -88,7 +83,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.pipe,
       name: 'Pipe',
       description: 'Values are separated by | character',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         if (typeof value === 'string') {
           return value;
@@ -100,7 +94,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.distributed,
       name: 'Distributed',
       description: 'Multiple values are formatted like variable=value',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }, variable) => {
         if (typeof value === 'string') {
           return value;
@@ -120,7 +113,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.csv,
       name: 'Csv',
       description: 'Comma-separated values',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         if (isArray(value)) {
           return value.join(',');
@@ -132,7 +124,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.html,
       name: 'HTML',
       description: 'HTML escaping of values',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         if (isArray(value)) {
           return textUtil.escapeHtml(value.join(', '));
@@ -144,16 +135,14 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.json,
       name: 'JSON',
       description: 'JSON stringify valu',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         return JSON.stringify(value);
       },
     },
     {
-      id: FormatRegistryID.percentencode,
+      id: FormatRegistryID.percentEncode,
       name: 'Percent encode',
       description: 'Useful for URL escaping values',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         // like glob, but url escaped
         if (isArray(value)) {
@@ -163,10 +152,9 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       },
     },
     {
-      id: FormatRegistryID.singlequote,
+      id: FormatRegistryID.singleQuote,
       name: 'Single quote',
       description: 'Single quoted values',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         // escape single quotes with backslash
         const regExp = new RegExp(`'`, 'g');
@@ -177,10 +165,9 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       },
     },
     {
-      id: FormatRegistryID.doublequote,
+      id: FormatRegistryID.doubleQuote,
       name: 'Double quote',
       description: 'Double quoted values',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         // escape double quotes with backslash
         const regExp = new RegExp('"', 'g');
@@ -191,10 +178,9 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       },
     },
     {
-      id: FormatRegistryID.sqlstring,
+      id: FormatRegistryID.sqlString,
       name: 'SQL string',
       description: 'SQL string quoting and commas for use in IN statements and other scenarios',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         // escape single quotes by pairing them
         const regExp = new RegExp(`'`, 'g');
@@ -208,7 +194,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.date,
       name: 'Date',
       description: 'Format date in different ways',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value, args }) => {
         const arg = args[0] ?? 'iso';
 
@@ -228,7 +213,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.glob,
       name: 'Glob',
       description: 'Format multi-valued variables using glob syntax, example {value1,value2}',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: ({ value }) => {
         if (isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
@@ -240,7 +224,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: FormatRegistryID.text,
       name: 'Text',
       description: 'Format variables in their text representation. Example in multi-variable scenario A + B + C.',
-      canHandle: (variable) => !isAdHoc(variable),
       formatter: (options, variable) => {
         if (typeof options.text === 'string') {
           return options.value === ALL_VARIABLE_VALUE ? ALL_VARIABLE_TEXT : options.text;
@@ -256,11 +239,10 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       },
     },
     {
-      id: FormatRegistryID.queryparam,
+      id: FormatRegistryID.queryParam,
       name: 'Query parameter',
       description:
         'Format variables as URL parameters. Example in multi-variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.',
-      canHandle: () => true,
       formatter: (options, variable) => {
         const { name, type } = variable;
         const adapter = variableAdapters.get(type);

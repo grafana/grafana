@@ -685,10 +685,10 @@ describe('templateSrv', () => {
       ]);
     });
 
-    it(`should not be handled by any registry items except for ${FormatRegistryID.queryparam}`, () => {
+    it(`should not be handled by any registry items except for queryparam`, () => {
       const registryItems = Object.values(FormatRegistryID);
       for (const registryItem of registryItems) {
-        if (registryItem === FormatRegistryID.queryparam) {
+        if (registryItem === FormatRegistryID.queryParam) {
           continue;
         }
 
@@ -701,7 +701,7 @@ describe('templateSrv', () => {
     });
   });
 
-  describe(`${FormatRegistryID.queryparam}`, () => {
+  describe('queryparam', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv([
         {
@@ -737,33 +737,33 @@ describe('templateSrv', () => {
       ]);
     });
 
-    it(`query variable with single value with queryparam format should return correct ${FormatRegistryID.queryparam}`, () => {
-      const target = _templateSrv.replace(`\${single:${FormatRegistryID.queryparam}}`, {});
+    it('query variable with single value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${single:queryparam}`, {});
       expect(target).toBe('var-single=value1');
     });
 
-    it(`query variable with single value and queryparam format should return correct ${FormatRegistryID.queryparam}`, () => {
-      const target = _templateSrv.replace('${single}', {}, FormatRegistryID.queryparam);
+    it('query variable with single value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${single}', {}, 'queryparam');
       expect(target).toBe('var-single=value1');
     });
 
-    it(`query variable with multi value with queryparam format should return correct ${FormatRegistryID.queryparam}`, () => {
-      const target = _templateSrv.replace(`\${multi:${FormatRegistryID.queryparam}}`, {});
+    it('query variable with multi value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${multi:queryparam}`, {});
       expect(target).toBe('var-multi=value1&var-multi=value2');
     });
 
-    it(`query variable with multi value and queryparam format should return correct ${FormatRegistryID.queryparam}`, () => {
-      const target = _templateSrv.replace('${multi}', {}, FormatRegistryID.queryparam);
+    it('query variable with multi value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${multi}', {}, 'queryparam');
       expect(target).toBe('var-multi=value1&var-multi=value2');
     });
 
-    it(`query variable with adhoc value with queryparam format should return correct ${FormatRegistryID.queryparam}`, () => {
-      const target = _templateSrv.replace(`\${adhoc:${FormatRegistryID.queryparam}}`, {});
+    it('query variable with adhoc value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${adhoc:queryparam}`, {});
       expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
     });
 
-    it(`query variable with multi value and queryparam format should return correct ${FormatRegistryID.queryparam}`, () => {
-      const target = _templateSrv.replace('${adhoc}', {}, FormatRegistryID.queryparam);
+    it('query variable with multi value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${adhoc}', {}, 'queryparam');
       expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
     });
   });
