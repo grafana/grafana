@@ -51,15 +51,13 @@ For the example, there is a log-normal distribution generated between the bucket
 
 ## **How to use query based on file size**
 
-| Size                      | Query                                                                                                                                                                                                                                                       | Parameter| Description
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `less than (or equal to) 1MB`                    | `
-uploaded_image_bytes_bucket{le="1048576"}
-`
-| `smaller than 1MB`                 | Default data source that is pre-selected for new panels.                                                                                                                                                                                                          |
-| `larger than 1MB`                     | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                             |
-| `between 256KB and 1MB`                  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release.                                    |
-| `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                        |
+| Size                          | Query                                                                                                 |       Parameter       | Description  |
+|-------------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------------------------|--------------|
+| `less than (or equal to) 1MB` |   `uploaded_image_bytes_bucket{le="1048576"}`                                                         |       Parameter       | Description  |
+| `smaller than 1MB`            |   `uploaded_image_bytes_bucket{le="1048576"} / ignoring (le) uploaded_image_bytes_count`              |       Parameter       | Description  |  
+| `larger than 1MB`             |   `uploaded_image_bytes_count - ignoring(le) uploaded_image_bytes_bucket{le="1048576"}`               |       Parameter       | Description  |  
+| `between 256KB and 1MB`       |   `uploaded_image_bytes_bucket{le="1048576"} - ignoring(le) uploaded_image_bytes_bucket{le="262144"}` |       Parameter       | Description  |
+| `european question`           |   `histogram_quantile(0.75, uploaded_image_bytes_bucket)`                                             |       Parameter       | Description  |
 
 ## **Query for files less than (or equal to) 1MB**
 
