@@ -578,7 +578,6 @@ type Config struct {
 }
 
 // A Route is a node that contains definitions of how to handle alerts.
-// A Route is a node that contains definitions of how to handle alerts.
 type Route struct {
 	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
 
