@@ -1,12 +1,12 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { XYChartPanel } from './XYChartPanel';
 import { defaultScatterConfig, XYChartOptions, ScatterFieldConfig } from './models.gen';
 import { getScatterFieldConfig } from './config';
 import { ExplicitEditor } from './ExplicitEditor';
 import { XYDimsEditor } from './XYDimsEditor';
+import { XYChartPanel2 } from './XYChartPanel2';
 
-export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChartPanel)
+export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChartPanel2)
   .useFieldConfig(getScatterFieldConfig(defaultScatterConfig))
   .setPanelOptions((builder) => {
     builder

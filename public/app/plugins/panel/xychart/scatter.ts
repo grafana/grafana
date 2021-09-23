@@ -1,6 +1,5 @@
 import {
   DataFrame,
-  getFieldColorMode,
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
@@ -36,6 +35,7 @@ export function prepScatter(options: XYChartOptions, data: PanelData, theme: Gra
     series = prepSeries(options, data.series);
     builder = prepConfig(data.series, series, theme);
   } catch (e) {
+    console.log('prepScatter ERROR', e);
     return {
       error: e.message,
       series: [],
@@ -122,7 +122,7 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
   }
 
   if (options.mode === 'xy') {
-    const { dims } = options;
+    const dims = options.dims ?? {};
     const frameIndex = dims.frame ?? 0;
     const frame = frames[frameIndex];
     const numericIndicies: number[] = [];
