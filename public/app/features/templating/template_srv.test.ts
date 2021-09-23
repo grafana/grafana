@@ -5,6 +5,7 @@ import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { VariableModel } from '../variables/types';
+import { FormatRegistryID } from './formatRegistry';
 
 variableAdapters.setInit(() => [
   (createQueryVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
@@ -660,6 +661,46 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('adhoc variables', () => {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv([
+        {
+          type: 'adhoc',
+          name: 'adhoc',
+          filters: [
+            {
+              condition: '',
+              key: 'alertstate',
+              operator: '=',
+              value: 'firing',
+            },
+            {
+              condition: '',
+              key: 'alertname',
+              operator: '=',
+              value: 'ExampleAlertAlwaysFiring',
+            },
+          ],
+        },
+      ]);
+    });
+
+    it(`should not be handled by any registry items except for queryparam`, () => {
+      const registryItems = Object.values(FormatRegistryID);
+      for (const registryItem of registryItems) {
+        if (registryItem === FormatRegistryID.queryParam) {
+          continue;
+        }
+
+        const firstTarget = _templateSrv.replace(`\${adhoc:${registryItem}}`, {});
+        expect(firstTarget).toBe('');
+
+        const secondTarget = _templateSrv.replace('${adhoc}', {}, registryItem);
+        expect(secondTarget).toBe('');
+      }
+    });
+  });
+
   describe('queryparam', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv([
@@ -675,11 +716,29 @@ describe('templateSrv', () => {
           current: { value: ['value1', 'value2'] },
           options: [{ value: 'value1' }, { value: 'value2' }],
         },
+        {
+          type: 'adhoc',
+          name: 'adhoc',
+          filters: [
+            {
+              condition: '',
+              key: 'alertstate',
+              operator: '=',
+              value: 'firing',
+            },
+            {
+              condition: '',
+              key: 'alertname',
+              operator: '=',
+              value: 'ExampleAlertAlwaysFiring',
+            },
+          ],
+        },
       ]);
     });
 
     it('query variable with single value with queryparam format should return correct queryparam', () => {
-      const target = _templateSrv.replace('${single:queryparam}', {});
+      const target = _templateSrv.replace(`\${single:queryparam}`, {});
       expect(target).toBe('var-single=value1');
     });
 
@@ -689,13 +748,23 @@ describe('templateSrv', () => {
     });
 
     it('query variable with multi value with queryparam format should return correct queryparam', () => {
-      const target = _templateSrv.replace('${multi:queryparam}', {});
+      const target = _templateSrv.replace(`\${multi:queryparam}`, {});
       expect(target).toBe('var-multi=value1&var-multi=value2');
     });
 
     it('query variable with multi value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${multi}', {}, 'queryparam');
       expect(target).toBe('var-multi=value1&var-multi=value2');
+    });
+
+    it('query variable with adhoc value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${adhoc:queryparam}`, {});
+      expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
+    });
+
+    it('query variable with multi value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${adhoc}', {}, 'queryparam');
+      expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
     });
   });
 });

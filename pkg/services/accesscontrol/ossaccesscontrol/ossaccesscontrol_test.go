@@ -71,6 +71,8 @@ func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
 	return true
 }
 
+func (usm *usageStatsMock) RegisterSendReportCallback(_ usagestats.SendReportCallbackFunc) {}
+
 type evaluatingPermissionsTestCase struct {
 	desc       string
 	user       userTestCase
