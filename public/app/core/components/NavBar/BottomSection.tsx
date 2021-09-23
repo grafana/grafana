@@ -11,7 +11,7 @@ import config from '../../config';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
-import SideMenuItem from './SideMenuItem';
+import NavBarItem from './NavBarItem';
 import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
 
 export default function BottomSection() {
@@ -45,9 +45,9 @@ export default function BottomSection() {
   return (
     <div data-testid="bottom-section-items" className={styles.container}>
       {!isSignedIn && (
-        <SideMenuItem label="Sign In" target="_self" url={forcedLoginUrl}>
+        <NavBarItem label="Sign In" target="_self" url={forcedLoginUrl}>
           <Icon name="signout" size="xl" />
-        </SideMenuItem>
+        </NavBarItem>
       )}
       {bottomNav.map((link, index) => {
         let menuItems = link.children || [];
@@ -75,7 +75,7 @@ export default function BottomSection() {
         }
 
         return (
-          <SideMenuItem
+          <NavBarItem
             key={`${link.url}-${index}`}
             isActive={!isSearchActive(location) && activeItemId === link.id}
             label={link.text}
@@ -88,7 +88,7 @@ export default function BottomSection() {
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-          </SideMenuItem>
+          </NavBarItem>
         );
       })}
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}

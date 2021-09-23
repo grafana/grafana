@@ -1,4 +1,3 @@
-
 <!-- 8.2.0-beta1 START -->
 
 # 8.2.0-beta1 (2021-09-16)
@@ -58,19 +57,16 @@
 
 ### Breaking changes
 
-
 The `monaco-editor` dependency in `grafana-ui` has been updated to a newer version (`0.27.0`), which is not completely backward compatible with the old version (`0.21.2`). The backward incompatible changes are fairly small, but they do exist, so if your code accesses the raw monaco-objects through the `grafana-ui` package, please check the [monaco-editor changelog](https://github.com/microsoft/monaco-editor/blob/main/CHANGELOG.md) and apply any necessary changes. Issue [#39027](https://github.com/grafana/grafana/issues/39027)
 
-
-The mandatory `css`  prop in `grafana/ui` components has been removed. 
+The mandatory `css` prop in `grafana/ui` components has been removed.
 
 Previous versions of `grafana/ui` components were typed incorrectly due to a dependency mismatch between emotion 10 and 11 causing a `css` prop to be added to components that extended react types.
- Issue [#38078](https://github.com/grafana/grafana/issues/38078)
+Issue [#38078](https://github.com/grafana/grafana/issues/38078)
 
-Panel queries and/or annotation queries that used more than one statistic will be converted into one query/annotation per statistic. In case an alerting rule was based on a query row that had more than one statistic, it would now be based only on the first statistic for that query row. New alerting rules will not be created for migrated queries. Please note that in most cases it would not make sense to have an alerting rule that is based on multiple statistics anyway.  Issue [#36925](https://github.com/grafana/grafana/issues/36925)
+Panel and annotation queries using more than one statistic now converts into one query/annotation per statistic. Alerting rules based on a query row with multiple statistics now considers only the first statistic from that query row. New alerting rules are not created for migrated queries. Usually, it does not make sense to have an alerting rule based on multiple statistics. Issue [#36925](https://github.com/grafana/grafana/issues/36925)
 
 ### Deprecations
-
 
 `getHighlighterExpressions` in datasource APIs ( used to highlight logs while editing queries) has been deprecated and will be removed in a future release.
 

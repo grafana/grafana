@@ -19,7 +19,8 @@ import (
 
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
-		engine := ProvideAlertEngine(nil, nil, nil, nil, ossencryption.ProvideService(), setting.NewCfg())
+		usMock := &usageStatsMock{t: t}
+		engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}

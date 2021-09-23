@@ -12,7 +12,7 @@ export interface Props {
   url?: string;
 }
 
-const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: Props) => {
+const DropdownChild = ({ isDivider = false, icon, onClick, target, text, url }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -44,7 +44,7 @@ const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
   return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{element}</li>;
 };
 
-export default DropDownChild;
+export default DropdownChild;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   element: css`
