@@ -46,7 +46,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
           defaultValue: cfg.pointSize?.fixed,
           settings: {
             min: 1,
-            max: 10,
+            max: 100,
             step: 1,
           },
           showIf: (c) => c.point !== VisibilityMode.Never,

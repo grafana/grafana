@@ -1,6 +1,7 @@
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame, Field, FieldColorMode } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
 import { DimensionValues, VizLegendItem } from '@grafana/ui';
+import { ScaleDimensionConfig } from 'app/features/dimensions';
 import { ScatterLineMode } from './models.gen';
 
 export interface LegendInfo {
@@ -35,6 +36,13 @@ export interface ScatterSeries {
 
   label: VisibilityMode;
   labelValue: DimensionValues<string>;
+
+  hints: {
+    pointSize: ScaleDimensionConfig;
+    pointColor: {
+      mode: FieldColorMode;
+    };
+  };
 }
 
 /*

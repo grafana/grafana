@@ -1,4 +1,12 @@
-import { DataFrame, getFieldDisplayName, getFieldSeriesColor, GrafanaTheme2, PanelData } from '@grafana/data';
+import {
+  DataFrame,
+  getFieldColorMode,
+  getFieldColorModeForField,
+  getFieldDisplayName,
+  getFieldSeriesColor,
+  GrafanaTheme2,
+  PanelData,
+} from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
@@ -97,6 +105,13 @@ function getScatterSeries(
 
     label: VisibilityMode.Never,
     labelValue: () => '',
+
+    hints: {
+      pointSize: fieldConfig.pointSize!,
+      pointColor: {
+        mode: getFieldColorModeForField(y),
+      },
+    },
   };
 }
 
@@ -169,23 +184,9 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
 }
 
 //const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
-const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: GrafanaTheme2) => {
+const prepConfig = (frames: DataFrame[], scatterSeries: ScatterSeries[], theme: GrafanaTheme2) => {
   let qt: Quadtree;
   let hRect: Rect | null;
-
-  // size range in pixels (diameter)
-  let minSize = 6;
-  let maxSize = 60;
-
-  // let maxArea = maxSize ** 2;
-  // let minArea = minSize ** 2;
-
-  // // quadratic scaling (px area)
-  // function getSize(value: number, minValue: number, maxValue: number) {
-  //   let pct = value / (maxValue - minValue);
-  //   let area = minArea + pct * (maxArea - minArea);
-  //   return Math.sqrt(area);
-  // }
 
   const drawBubbles: uPlot.Series.PathBuilder = (u, seriesIdx, idx0, idx1) => {
     uPlot.orient(
@@ -229,6 +230,10 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
         let xKey = series.facets![0].scale;
         let yKey = series.facets![1].scale;
 
+        let pointHints = scatterSeries[seriesIdx - 1].hints.pointSize;
+
+        let maxSize = (pointHints.max ?? pointHints.fixed) * devicePixelRatio;
+
         // todo: this depends on direction & orientation
         // todo: calc once per redraw, not per path
         let filtLft = u.posToVal(-maxSize / 2, xKey);
@@ -236,21 +241,10 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
         let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, yKey);
         let filtTop = u.posToVal(-maxSize / 2, yKey);
 
-        // todo only re-calc during data changes
-        let minValue = Infinity;
-        let maxValue = -Infinity;
-
-        for (let i = 0; i < d[2].length; i++) {
-          let size = d[2][i];
-
-          minValue = Math.min(minValue, size);
-          maxValue = Math.max(minValue, size);
-        }
-
         for (let i = 0; i < d[0].length; i++) {
           let xVal = d[0][i];
           let yVal = d[1][i];
-          let size = 20; // ??? // getSize(d[2][i], minValue, maxValue);
+          let size = d[2][i] * devicePixelRatio;
 
           if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
             let cx = valToPosX(xVal, scaleX, xDim, xOff);
@@ -337,6 +331,8 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
 
   builder.setMode(2);
 
+  let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
+
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
@@ -349,9 +345,10 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
     scaleKey: 'x',
     placement: AxisPlacement.Bottom,
     theme,
+    label: xField.config.custom.axisLabel,
   });
 
-  series.forEach((s) => {
+  scatterSeries.forEach((s) => {
     let frame = s.frame(frames);
     let field = s.y(frame);
 
@@ -372,6 +369,8 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
     builder.addAxis({
       scaleKey,
       theme,
+      label: field.config.custom.axisLabel,
+      values: (u, splits) => splits.map((s) => field.display!(s).text),
     });
 
     builder.addSeries({
