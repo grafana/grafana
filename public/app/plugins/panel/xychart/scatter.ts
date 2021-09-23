@@ -339,22 +339,9 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
     range: (u, min, max) => [min, max],
   });
 
-  builder.addScale({
-    scaleKey: 'y',
-    orientation: ScaleOrientation.Vertical,
-    direction: ScaleDirection.Up,
-    range: (u, min, max) => [min, max],
-  });
-
   builder.addAxis({
     scaleKey: 'x',
     placement: AxisPlacement.Bottom,
-    theme,
-  });
-
-  builder.addAxis({
-    scaleKey: 'y',
-    placement: AxisPlacement.Left,
     theme,
   });
 
@@ -367,12 +354,34 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
     //const lineColor = s.lineColor(frame);
     //const lineWidth = s.lineWidth;
 
-    console.log('addSeries!');
+    let scaleKey = field.config.unit ?? 'y';
+
+    builder.addScale({
+      scaleKey,
+      orientation: ScaleOrientation.Vertical,
+      direction: ScaleDirection.Up,
+      range: (u, min, max) => [min, max],
+    });
+
+    builder.addAxis({
+      scaleKey,
+      theme,
+    });
 
     builder.addSeries({
+      facets: [
+        {
+          scale: 'x',
+          auto: true,
+        },
+        {
+          scale: scaleKey,
+          auto: true,
+        },
+      ],
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
-      scaleKey: '', // facets' scales used internally (x/y)
+      scaleKey: '', // facets' scales used (above)
       lineColor: lineColor,
       fillColor: alpha(fillColor, 0.5),
     });
