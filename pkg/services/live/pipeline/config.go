@@ -61,10 +61,9 @@ type MultipleSubscriberConfig struct {
 }
 
 type SubscriberConfig struct {
-	Type                     string                    `json:"type"`
-	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
-	UserRoleSubscriberConfig *UserRoleSubscriberConfig `json:"userRole,omitempty"`
-	UserTeamSubscriberConfig *UserTeamSubscriberConfig `json:"userTeam,omitempty"`
+	Type                          string                         `json:"type"`
+	MultipleSubscriberConfig      *MultipleSubscriberConfig      `json:"multiple,omitempty"`
+	AuthorizeRoleSubscriberConfig *AuthorizeRoleSubscriberConfig `json:"authorizeRole,omitempty"`
 }
 
 type ChannelRuleSettings struct {
@@ -134,16 +133,11 @@ func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscr
 		return NewBuiltinSubscriber(f.ChannelHandlerGetter), nil
 	case SubscriberTypeManagedStream:
 		return NewManagedStreamSubscriber(f.ManagedStream), nil
-	case SubscriberTypeUserRole:
-		if config.UserRoleSubscriberConfig == nil {
+	case SubscriberTypeAuthorizeRole:
+		if config.AuthorizeRoleSubscriberConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewUserRoleSubscriber(*config.UserRoleSubscriberConfig), nil
-	case SubscriberTypeUserTeam:
-		if config.UserTeamSubscriberConfig == nil {
-			return nil, missingConfiguration
-		}
-		return NewUserTeamSubscriber(*config.UserTeamSubscriberConfig), nil
+		return NewAuthorizeRoleSubscriber(*config.AuthorizeRoleSubscriberConfig), nil
 	case SubscriberTypeMultiple:
 		if config.MultipleSubscriberConfig == nil {
 			return nil, missingConfiguration
