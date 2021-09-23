@@ -3,11 +3,17 @@ title = "Run Grafana Docker image"
 description = "Guide for running Grafana using Docker"
 keywords = ["grafana", "configuration", "documentation", "docker"]
 weight = 600
+
 +++
 
 # Run Grafana Docker image
 
-You can install and run Grafana using the official Docker image. It comes in two variants: Alpine and Ubuntu.
+You can install and run Grafana using the official Docker images. Our docker images come in two editions:
+
+**Grafana Enterprise**: `grafana/grafana-ent`
+**Grafana Open Source**: `grafana/grafana-oss`
+
+These editions are additionally available in two variants: Alpine and Ubuntu.
 
 This page also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 
@@ -17,21 +23,25 @@ You can run Grafana on your own hardware or use [Grafana Cloud](https://grafana.
 
 ## Alpine image (recommended)
 
-`grafana/grafana-oss:<version>`
+**Grafana Enterprise edition**: `grafana/grafana-ent:<version>` 
 
-This is the default image. It's based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
+**Grafana Open Source edition**: `grafana/grafana-oss:<version>`
 
-This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
+The default images are based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
 
-> **Note:** The `grafana/grafana-oss:<version>` image was based on [Ubuntu](https://ubuntu.com/) before version 6.4.0.
+The Alpine variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
+
+> **Note:** Grafana docker images were based on [Ubuntu](https://ubuntu.com/) prior to version 6.4.0.
 
 ## Ubuntu image
 
-`grafana/grafana-oss:<version>-ubuntu`
+**Grafana Enterprise edition**: `grafana/grafana-ent:<version>-ubuntu`
+
+**Grafana Open Source edition**: `grafana/grafana-oss:<version>-ubuntu
 
 This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or are dependent on certain tooling not available for Alpine.
 
-> **Note:** The `grafana/grafana-oss:<version>-ubuntu` image is available for Grafana version 6.5.0 and later.
+> **Note:** The `grafana/grafana-ent:<version>-ubuntu` and `grafana/grafana-oss:<version>-ubuntu` images are available for Grafana version 6.5.0 and later.
 
 ## Run Grafana
 
@@ -42,7 +52,7 @@ You can run the latest Grafana version, run a specific version, or run an unstab
 > **Note:** If you are on a Linux system, you might need to add `sudo` before the command.
 
 ```bash
-docker run -d -p 3000:3000 grafana/grafana-oss
+docker run -d -p 3000:3000 grafana/grafana-ent
 ```
 
 ### Run a specific version of Grafana
@@ -50,13 +60,13 @@ docker run -d -p 3000:3000 grafana/grafana-oss
 > **Note:** If you are on a Linux system, you might need to add `sudo` before the command.
 
 ```bash
-docker run -d -p 3000:3000 --name grafana grafana/grafana-oss:<version number>
+docker run -d -p 3000:3000 --name grafana grafana/grafana-ent:<version number>
 ```
 
 **Example:**
 
 ```bash
-docker run -d -p 3000:3000 --name grafana grafana-oss/grafana:6.5.0
+docker run -d -p 3000:3000 --name grafana grafana/grafana-ent:6.5.0
 ```
 
 ### Run the Grafana main branch
@@ -80,7 +90,7 @@ docker run -d \
   -p 3000:3000 \
   --name=grafana \
   -e "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
-  grafana/grafana-oss
+  grafana/grafana-ent
 ```
 
 > **Note:** If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
@@ -96,7 +106,7 @@ docker run -d \
   -p 3000:3000 \
   --name=grafana \
   -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
-  grafana/grafana-oss
+  grafana/grafana-ent
 ```
 
 ## Build and run a Docker image with pre-installed plugins
@@ -209,7 +219,7 @@ There are two possible solutions to this problem. Either you start the new conta
 ##### Run Docker as a different user
 
 ```bash
-docker run --user 104 --volume "<your volume mapping here>" grafana/grafana-oss:5.1.0
+docker run --user 104 --volume "<your volume mapping here>" grafana/grafana-ent:8.2.0
 ```
 
 ##### Specify a user in docker-compose.yml
@@ -219,7 +229,7 @@ version: '2'
 
 services:
   grafana:
-    image: grafana/grafana-oss:5.1.0
+    image: grafana/grafana-ent:8.2.0
     ports:
       - 3000:3000
     user: '104'
@@ -230,7 +240,7 @@ services:
 The commands below run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions.
 
 ```bash
-$ docker run -ti --user root --volume "<your volume mapping here>" --entrypoint bash grafana/grafana-oss:5.1.0
+$ docker run -ti --user root --volume "<your volume mapping here>" --entrypoint bash grafana/grafana-ent:8.2.0
 
 # in the container you just started:
 chown -R root:root /etc/grafana && \
@@ -250,3 +260,4 @@ Refer to [Configure a Grafana Docker image]({{< relref "../administration/config
 ## Configure Grafana
 
 Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+
