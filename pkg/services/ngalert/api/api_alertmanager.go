@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -179,8 +178,6 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
 	}
 
-	spew.Dump(query.Result.AlertmanagerConfiguration)
-
 	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
@@ -224,7 +221,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		gettableApiReceiver.Name = recv.Name
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
-	spew.Dump(result)
+
 	return response.JSON(http.StatusOK, result)
 }
 
