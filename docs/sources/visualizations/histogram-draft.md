@@ -1,7 +1,7 @@
 +++
 title = "Histogram"
 description = "Histogram visualization"
-keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
+keywords = ["grafana", "docs", "bar chart", "panel", "barchart", "prometheus"]
 weight = 605
 +++
 
