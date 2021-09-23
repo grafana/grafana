@@ -1,11 +1,11 @@
-import { isString, property, escape } from 'lodash';
+import { escape, isString, property } from 'lodash';
 import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { FormatOptions, formatRegistry } from './formatRegistry';
+import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 
 interface FieldAccessorCache {
@@ -115,6 +115,10 @@ export class TemplateSrv implements BaseTemplateSrv {
       return '';
     }
 
+    if (isAdHoc(variable) && format !== FormatRegistryID.queryparam) {
+      return '';
+    }
+
     // if it's an object transform value to string
     if (!Array.isArray(value) && typeof value === 'object') {
       value = `${value}`;
@@ -125,7 +129,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     if (!format) {
-      format = 'glob';
+      format = FormatRegistryID.glob;
     }
 
     // some formats have arguments that come after ':' character
@@ -141,7 +145,11 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     if (!formatItem) {
       console.error(`Variable format ${format} not found. Using glob format as fallback.`);
-      formatItem = formatRegistry.get('glob');
+      formatItem = formatRegistry.get(FormatRegistryID.glob);
+    }
+
+    if (!formatItem.canHandle(variable)) {
+      return '';
     }
 
     const options: FormatOptions = { value, args, text: text ?? value };
@@ -270,6 +278,13 @@ export class TemplateSrv implements BaseTemplateSrv {
         return match;
       }
 
+      if (variable.type === 'adhoc') {
+        const value = variable.filters;
+        const text = variable.id;
+
+        return this.formatValue(value, fmt, variable, text);
+      }
+
       const systemValue = this.grafanaVariables[variable.current.value];
       if (systemValue) {
         return this.formatValue(systemValue, fmt, variable);
@@ -282,7 +297,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
-        if (variable.allValue && fmt !== 'text' && fmt !== 'queryparam') {
+        if (variable.allValue && fmt !== FormatRegistryID.text && fmt !== FormatRegistryID.queryparam) {
           return this.replace(value);
         }
       }
