@@ -8,19 +8,18 @@ weight = 150
 
 # Configuration
 
-Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
+You can specify several configuration options in a `.ini` configuration file or by using environment variables. To see all settings currently applied to a Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
-> **Note:** You must restart Grafana for any configuration changes to take effect.
+## Configuration file locations
 
-To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
+Grafana defaults are stored in the `defaults.ini` file. _Do not_ change the location in this file. Depending on your OS, custom configurations are made in either the `custom.ini` or the `grafana.ini` file.
 
-## Config file locations
+- Default configurations in `$WORKING_DIR/conf/defaults.ini`
+- Custom configurations in `$WORKING_DIR/conf/custom.ini`
 
-_Do not_ change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+The custom configuration file path can be overridden using the `--config` parameter.
 
-- Default configuration from `$WORKING_DIR/conf/defaults.ini`
-- Custom configuration from `$WORKING_DIR/conf/custom.ini`
-- The custom configuration file path can be overridden using the `--config` parameter
+> **Note:** TIn the custom configurations file, uncomment each line you want to update by removing `;` from the beginning of that line. Restart Grafana for the configuration changes to take effect.
 
 ### Linux
 
