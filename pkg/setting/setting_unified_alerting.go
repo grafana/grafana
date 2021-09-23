@@ -87,7 +87,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
-	//TODO load from ini file
+	// TODO load from ini file
 	uaCfg.DefaultConfiguration = AlertmanagerDefaultConfiguration
 	cfg.UnifiedAlerting = uaCfg
 	return nil
