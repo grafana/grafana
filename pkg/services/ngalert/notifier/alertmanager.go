@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 )
 
 const (
@@ -80,6 +82,24 @@ const (
 }
 `
 )
+
+func init() {
+	silence.ValidateMatcher = func(m *pb.Matcher) error {
+		switch m.Type {
+		case pb.Matcher_EQUAL, pb.Matcher_NOT_EQUAL:
+			if !model.LabelValue(m.Pattern).IsValid() {
+				return fmt.Errorf("invalid label value %q", m.Pattern)
+			}
+		case pb.Matcher_REGEXP, pb.Matcher_NOT_REGEXP:
+			if _, err := regexp.Compile(m.Pattern); err != nil {
+				return fmt.Errorf("invalid regular expression %q: %s", m.Pattern, err)
+			}
+		default:
+			return fmt.Errorf("unknown matcher type %q", m.Type)
+		}
+		return nil
+	}
+}
 
 type ClusterPeer interface {
 	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
