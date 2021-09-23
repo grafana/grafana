@@ -1031,7 +1031,13 @@ func (g *GrafanaLive) sampleLiveStats() {
 	}
 }
 
+func (g *GrafanaLive) resetLiveStats() {
+	g.usageStats = usageStats{}
+}
+
 func (g *GrafanaLive) registerUsageMetrics() {
+	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
+
 	g.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
 		liveUsersAvg := 0
 		liveClientsAvg := 0
@@ -1050,8 +1056,6 @@ func (g *GrafanaLive) registerUsageMetrics() {
 			"stats.live_clients_min.count": g.usageStats.numClientsMin,
 			"stats.live_clients_avg.count": liveClientsAvg,
 		}
-
-		g.usageStats = usageStats{}
 
 		return metrics, nil
 	})

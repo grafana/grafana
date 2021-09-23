@@ -12,7 +12,7 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release. Additionally, not all features listed here may be present in all the beta releases.
 
-Grafana 8.2 continues to build on the foundation laid out in Grafana 8.0 & 8.1. We’ve continued to extend the GeoMap panel and bring new features to the Time Series panel. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics *for everyone*. 
+Grafana 8.2 continues to build on the foundation laid out in Grafana 8.0 & 8.1. We’ve continued to extend the GeoMap panel and bring new features to the Time Series panel. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics _for everyone_.
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can checkout the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -34,7 +34,7 @@ A number of new visualizations and features are included in Grafana 8.2 includin
 
 ### XY Chart [beta]
 
-The XY Chart panel, aka. scatter panel, is available in beta form. This chart is all about first-class support for data where x does not equate to time. 
+The XY Chart panel, aka. scatter panel, is available in beta form. This chart is all about first-class support for data where x does not equate to time.
 
 {{< figure src="/static/img/docs/scatter-panel/scatter-placeholder.png" max-width="1200px" caption="Scatter Panel" >}}
 
@@ -62,8 +62,6 @@ Usage Insights Logs contain valuable information about user dashboard visits, qu
 
 Reports are a powerful way to deliver insights directly to people’s email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. Learn more about Reporting in the [docs](​​https://grafana.com/docs/grafana/latest/enterprise/reporting/).
 
-
 ## Image Renderer performance improvements and measurement
 
 You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. These images are used for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and included guidance in our documentation to help you configure it for the best mix of performance and resource usage. In our tests, we were able to reduce image load time from a 95th percentile of 10 seconds to less than 3 seconds under normal load.
-
