@@ -1,12 +1,13 @@
 import { find } from 'lodash';
 import config from 'app/core/config';
-import { DashboardExporter } from './DashboardExporter';
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelPluginMeta } from '@grafana/data';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
+import { LibraryElementKind } from '../../../library-panels/types';
 
 function getStub(arg: string) {
   return Promise.resolve(stubs[arg || 'gfdb']);
@@ -85,6 +86,15 @@ describe('given dashboard with repeated panels', () => {
         },
         { id: 9, datasource: '$ds' },
         {
+          id: 17,
+          datasource: '$ds',
+          type: 'graph',
+          libraryPanel: {
+            name: 'Library Panel 2',
+            uid: 'ah8NqyDPs',
+          },
+        },
+        {
           id: 2,
           repeat: 'apps',
           datasource: 'gfdb',
@@ -110,6 +120,15 @@ describe('given dashboard with repeated panels', () => {
               type: 'heatmap',
             },
             { id: 15, repeat: null, repeatPanelId: 14 },
+            {
+              id: 16,
+              datasource: 'gfdb',
+              type: 'graph',
+              libraryPanel: {
+                name: 'Library Panel',
+                uid: 'jL6MrxCMz',
+              },
+            },
           ],
         },
       ],
@@ -149,7 +168,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should replace datasource refs in collapsed row', () => {
-    const panel = exported.panels[5].panels[0];
+    const panel = exported.panels[6].panels[0];
     expect(panel.datasource).toBe('${DS_GFDB}');
   });
 
@@ -235,6 +254,36 @@ describe('given dashboard with repeated panels', () => {
   it('should add datasources only use via datasource variable to requires', () => {
     const require: any = find(exported.__requires, { name: 'OtherDB_2' });
     expect(require.id).toBe('other2');
+  });
+
+  it('should add library panels as elements', () => {
+    const element: LibraryElementExport = exported.__elements.find(
+      (element: LibraryElementExport) => element.uid === 'ah8NqyDPs'
+    );
+    expect(element.name).toBe('Library Panel 2');
+    expect(element.kind).toBe(LibraryElementKind.Panel);
+    expect(element.model).toEqual({
+      id: 17,
+      datasource: '$ds',
+      type: 'graph',
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+    });
+  });
+
+  it('should add library panels in collapsed rows as elements', () => {
+    const element: LibraryElementExport = exported.__elements.find(
+      (element: LibraryElementExport) => element.uid === 'jL6MrxCMz'
+    );
+    expect(element.name).toBe('Library Panel');
+    expect(element.kind).toBe(LibraryElementKind.Panel);
+    expect(element.model).toEqual({
+      id: 16,
+      datasource: '${DS_GFDB}',
+      type: 'graph',
+    });
   });
 });
 

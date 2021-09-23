@@ -16,7 +16,7 @@ type testRuleGetter struct {
 	rules map[string]*LiveChannelRule
 }
 
-func (t *testRuleGetter) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
+func (t *testRuleGetter) Get(_ int64, channel string) (*LiveChannelRule, bool, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	rule, ok := t.rules[channel]
@@ -48,11 +48,19 @@ type testConverter struct {
 	frame   *data.Frame
 }
 
+func (t *testConverter) Type() string {
+	return "test"
+}
+
 func (t *testConverter) Convert(_ context.Context, _ Vars, _ []byte) ([]*ChannelFrame, error) {
 	return []*ChannelFrame{{Channel: t.channel, Frame: t.frame}}, nil
 }
 
 type testProcessor struct{}
+
+func (t *testProcessor) Type() string {
+	return "test"
+}
 
 func (t *testProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
 	return frame, nil
@@ -61,6 +69,10 @@ func (t *testProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.
 type testOutputter struct {
 	err   error
 	frame *data.Frame
+}
+
+func (t *testOutputter) Type() string {
+	return "test"
 }
 
 func (t *testOutputter) Output(_ context.Context, _ OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
@@ -104,4 +116,26 @@ func TestPipeline_OutputError(t *testing.T) {
 	require.NoError(t, err)
 	_, err = p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
 	require.ErrorIs(t, err, boomErr)
+}
+
+func TestPipeline_Recursion(t *testing.T) {
+	p, err := New(&testRuleGetter{
+		rules: map[string]*LiveChannelRule{
+			"stream/test/xxx": {
+				Converter: &testConverter{"", data.NewFrame("test")},
+				Outputter: NewRedirectOutput(RedirectOutputConfig{
+					Channel: "stream/test/yyy",
+				}),
+			},
+			"stream/test/yyy": {
+				Converter: &testConverter{"", data.NewFrame("test")},
+				Outputter: NewRedirectOutput(RedirectOutputConfig{
+					Channel: "stream/test/xxx",
+				}),
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
+	require.ErrorIs(t, err, errChannelRecursion)
 }

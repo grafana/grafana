@@ -156,6 +156,7 @@ steps:
       from_secret: grafana_misc_stats_api_key
     HOST: end-to-end-tests-server
     PORT: 3001
+  failure: ignore
   depends_on:
   - end-to-end-tests-server
 
@@ -3491,6 +3492,6 @@ get:
 
 ---
 kind: signature
-hmac: 974d6cc07d690099a1e1ac4581c6ccafc6c6c2998289c09655c70932088dce40
+hmac: 9211e316cd24660667ba57b860129d2f06b0a4a669aa4d5c1f13156667ae027f
 
 ...

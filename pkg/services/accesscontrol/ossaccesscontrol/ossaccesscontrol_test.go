@@ -54,7 +54,7 @@ func (usm *usageStatsMock) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
 	usm.metricsFuncs = append(usm.metricsFuncs, fn)
 }
 
-func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.UsageReport, error) {
+func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.Report, error) {
 	all := make(map[string]interface{})
 	for _, fn := range usm.metricsFuncs {
 		fnMetrics, err := fn()
@@ -64,7 +64,7 @@ func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.UsageRe
 			all[name] = value
 		}
 	}
-	return usagestats.UsageReport{Metrics: all}, nil
+	return usagestats.Report{Metrics: all}, nil
 }
 
 func (usm *usageStatsMock) ShouldBeReported(_ string) bool {

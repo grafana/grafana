@@ -83,6 +83,37 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
     });
 
+    it('should list all plugins (including disabled plugins) when filtering by all', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
+    });
+
+    it('should list installed plugins (including disabled plugins) when filtering by installed', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=installed', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
+
+      // Not showing not installed plugins
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+    });
+
     it('should list enterprise plugins when querying for them', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&q=wavefront', [
         getCatalogPluginMock({ id: 'wavefront', name: 'Wavefront', isInstalled: true, isEnterprise: true }),
@@ -139,6 +170,7 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
   });
+
   describe('when searching', () => {
     it('should only list plugins matching search', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [

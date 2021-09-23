@@ -18,6 +18,12 @@ func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
 	return &AutoJsonConverter{config: c}
 }
 
+const ConverterTypeJsonAuto = "jsonAuto"
+
+func (c *AutoJsonConverter) Type() string {
+	return ConverterTypeJsonAuto
+}
+
 // Automatic conversion works this way:
 // * Time added automatically
 // * Nulls dropped

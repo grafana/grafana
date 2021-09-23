@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dboards "github.com/grafana/grafana/pkg/dashboards"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -86,9 +87,35 @@ type testState struct {
 	dashQueries []*models.GetDashboardQuery
 }
 
+type usageStatsMock struct {
+	t            *testing.T
+	metricsFuncs []usagestats.MetricsFunc
+}
+
+func (usm *usageStatsMock) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
+	usm.metricsFuncs = append(usm.metricsFuncs, fn)
+}
+
+func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.Report, error) {
+	all := make(map[string]interface{})
+	for _, fn := range usm.metricsFuncs {
+		fnMetrics, err := fn()
+		require.NoError(usm.t, err)
+
+		for name, value := range fnMetrics {
+			all[name] = value
+		}
+	}
+	return usagestats.Report{Metrics: all}, nil
+}
+
+func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
+	return true
+}
+
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), &usageStatsMock{t: t})
 	require.NoError(t, err)
 	return gLive
 }
@@ -1245,10 +1272,19 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.Req
 	return nil
 }
 
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard, folderID int64) error {
+	return nil
+}
+
 type mockLibraryElementService struct {
 }
 
 func (l *mockLibraryElementService) CreateElement(c *models.ReqContext, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+	return libraryelements.LibraryElementDTO{}, nil
+}
+
+// GetElement gets an element from a UID.
+func (l *mockLibraryElementService) GetElement(c *models.ReqContext, UID string) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 

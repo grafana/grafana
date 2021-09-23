@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -11,9 +12,12 @@ type RoleRegistration struct {
 	Grants []string
 }
 
+// Role is the model for Role in RBAC.
 type Role struct {
+	ID          int64  `json:"-" xorm:"pk autoincr 'id'"`
+	OrgID       int64  `json:"-" xorm:"org_id"`
 	Version     int64  `json:"version"`
-	UID         string `json:"uid"`
+	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 
@@ -23,25 +27,80 @@ type Role struct {
 
 type RoleDTO struct {
 	Version     int64        `json:"version"`
-	UID         string       `json:"uid"`
+	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions,omitempty"`
+
+	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
+	OrgID int64 `json:"-" xorm:"org_id"`
+
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
+func (r RoleDTO) Role() Role {
+	return Role{
+		ID:          r.ID,
+		OrgID:       r.OrgID,
+		UID:         r.UID,
+		Name:        r.Name,
+		Description: r.Description,
+		Updated:     r.Updated,
+		Created:     r.Created,
+	}
+}
+
+func (r RoleDTO) Global() bool {
+	return r.OrgID == GlobalOrgID
+}
+
+func (r Role) Global() bool {
+	return r.OrgID == GlobalOrgID
+}
+
+func (r RoleDTO) MarshalJSON() ([]byte, error) {
+	type Alias RoleDTO
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
+		Global: r.Global(),
+	})
+}
+
+func (r Role) MarshalJSON() ([]byte, error) {
+	type Alias Role
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
+		Global: r.Global(),
+	})
+}
+
+// Permission is the model for access control permissions.
 type Permission struct {
+	ID     int64  `json:"-" xorm:"pk autoincr 'id'"`
+	RoleID int64  `json:"-" xorm:"role_id"`
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
+
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
-func (p RoleDTO) Role() Role {
-	return Role{
-		Name:        p.Name,
-		Description: p.Description,
+func (p Permission) OSSPermission() Permission {
+	return Permission{
+		Action: p.Action,
+		Scope:  p.Scope,
 	}
 }
 
 const (
+	GlobalOrgID = 0
 	// Permission actions
 
 	// Users actions
