@@ -13,7 +13,7 @@ import (
 
 func TestUserStarsDataAccess(t *testing.T) {
 	Convey("Testing User Stars Data Access", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		Convey("Given saved star", func() {
 			cmd := models.StarDashboardCommand{
@@ -21,12 +21,12 @@ func TestUserStarsDataAccess(t *testing.T) {
 				UserId:      12,
 			}
 
-			err := StarDashboard(context.Background(), &cmd)
+			err := sqlStore.StarDashboard(context.Background(), &cmd)
 			So(err, ShouldBeNil)
 
 			Convey("IsStarredByUser should return true when starred", func() {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 10}
-				err := IsStarredByUserCtx(context.Background(), &query)
+				err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldBeTrue)
@@ -34,7 +34,7 @@ func TestUserStarsDataAccess(t *testing.T) {
 
 			Convey("IsStarredByUser should return false when not starred", func() {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 12}
-				err := IsStarredByUserCtx(context.Background(), &query)
+				err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldBeFalse)

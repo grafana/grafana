@@ -7,17 +7,17 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandlerCtx("sql", StarDashboard)
-	bus.AddHandlerCtx("sql", UnstarDashboard)
-	bus.AddHandlerCtx("sql", GetUserStars)
-	bus.AddHandlerCtx("sql", IsStarredByUserCtx)
+func (ss *SQLStore) addOrgUSersQueryAndCommandHandlers() {
+	bus.AddHandlerCtx("sql", ss.StarDashboard)
+	bus.AddHandlerCtx("sql", ss.UnstarDashboard)
+	bus.AddHandlerCtx("sql", ss.GetUserStars)
+	bus.AddHandlerCtx("sql", ss.IsStarredByUserCtx)
 }
 
-func IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+func (ss *SQLStore) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
-		results, err := dbSession.Query(rawSQL, query.UserId, query.DashboardId)
+		results, err := sess.Query(rawSQL, query.UserId, query.DashboardId)
 
 		if err != nil {
 			return err
@@ -33,12 +33,12 @@ func IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery)
 	})
 }
 
-func StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
+func (ss *SQLStore) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		entity := models.Star{
 			UserId:      cmd.UserId,
 			DashboardId: cmd.DashboardId,
@@ -49,19 +49,19 @@ func StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error 
 	})
 }
 
-func UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
+func (ss *SQLStore) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
 		_, err := sess.Exec(rawSQL, cmd.UserId, cmd.DashboardId)
 		return err
 	})
 }
 
-func GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
+func (ss *SQLStore) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
 	var stars = make([]models.Star, 0)
 	err := x.Where("user_id=?", query.UserId).Find(&stars)
 
