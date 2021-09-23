@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -60,8 +60,10 @@
         "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "mergeValues": true,
@@ -71,7 +73,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.5.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -197,6 +204,8 @@
         }
       ],
       "title": "State timeline",
+      "transformations": [],
+      "transparent": false,
       "type": "state-timeline"
     },
     {
@@ -236,8 +245,10 @@
         "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "mergeValues": true,
@@ -247,7 +258,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.5.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -268,6 +284,8 @@
         }
       ],
       "title": "State timeline (strings & booleans)",
+      "transformations": [],
+      "transparent": false,
       "type": "state-timeline"
     },
     {
@@ -310,10 +328,13 @@
       "id": 4,
       "maxDataPoints": 20,
       "options": {
+        "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "rowHeight": 0.9,
@@ -322,7 +343,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.5.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -354,6 +380,8 @@
         }
       ],
       "title": "Status grid",
+      "transformations": [],
+      "transparent": false,
       "type": "status-history"
     }
   ],
@@ -371,7 +399,23 @@
     "from": "2021-03-24T03:00:00.000Z",
     "to": "2021-03-24T07:00:00.000Z"
   },
-  "timepicker": {},
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",

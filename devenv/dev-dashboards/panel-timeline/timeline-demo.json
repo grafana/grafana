@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -81,8 +81,10 @@
         "alignValue": "center",
         "colWidth": 0.9,
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "mergeValues": true,
@@ -92,7 +94,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.5.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "SensorA",
@@ -116,6 +123,8 @@
         }
       ],
       "title": "State changes strings",
+      "transformations": [],
+      "transparent": false,
       "type": "state-timeline"
     },
     {
@@ -178,7 +187,10 @@
         "alignValue": "center",
         "colWidth": 1,
         "legend": {
+          "asTable": false,
+          "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "mergeValues": true,
@@ -189,6 +201,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -216,6 +233,8 @@
         }
       ],
       "title": "State changes with boolean values",
+      "transformations": [],
+      "transparent": false,
       "type": "state-timeline"
     },
     {
@@ -279,7 +298,10 @@
         "alignValue": "center",
         "colWidth": 1,
         "legend": {
+          "asTable": false,
+          "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "mergeValues": true,
@@ -290,6 +312,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "refId": "A",
@@ -316,6 +343,8 @@
         }
       ],
       "title": "State changes with nulls",
+      "transformations": [],
+      "transparent": false,
       "type": "state-timeline"
     },
     {
@@ -360,8 +389,10 @@
         "alignValue": "center",
         "colWidth": 0.96,
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "rowHeight": 0.98,
@@ -370,7 +401,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.5.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -406,6 +442,8 @@
         }
       ],
       "title": "Status map",
+      "transformations": [],
+      "transparent": false,
       "type": "status-history"
     }
   ],
@@ -423,7 +461,23 @@
     "from": "now-1h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "utc",
   "title": "Timeline Demo",
   "uid": "mIJjFy8Kz",

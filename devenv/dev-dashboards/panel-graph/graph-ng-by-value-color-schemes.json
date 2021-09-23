@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -90,14 +90,21 @@
       "maxDataPoints": 45,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "hidden",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "refId": "A",
@@ -106,6 +113,8 @@
         }
       ],
       "title": "15 orange, 30 red",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -176,14 +185,21 @@
       "maxDataPoints": 45,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "refId": "A",
@@ -192,6 +208,8 @@
         }
       ],
       "title": "15 orange, 30 red",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -261,14 +279,21 @@
       "maxDataPoints": 45,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "refId": "A",
@@ -277,6 +302,8 @@
         }
       ],
       "title": "15 orange, 50 red",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -347,14 +374,21 @@
       "maxDataPoints": 45,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "panelId": 4,
@@ -362,6 +396,8 @@
         }
       ],
       "title": "Color line by discrete tresholds",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -432,14 +468,21 @@
       "maxDataPoints": 42,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "max": 40,
@@ -452,6 +495,8 @@
         }
       ],
       "title": "Color bars by discrete thresholds",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -526,14 +571,21 @@
       "maxDataPoints": 50,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "panelId": 4,
@@ -541,6 +593,8 @@
         }
       ],
       "title": "Color line by color scale",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -615,14 +669,21 @@
       "maxDataPoints": 45,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "panelId": 4,
@@ -630,6 +691,8 @@
         }
       ],
       "title": "Color bars by color scale",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -704,14 +767,21 @@
       "maxDataPoints": 50,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "panelId": 4,
@@ -719,6 +789,8 @@
         }
       ],
       "title": "Color line by color scale",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -792,14 +864,21 @@
       "maxDataPoints": 250,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "max": 45,
@@ -821,6 +900,8 @@
         }
       ],
       "title": "Color line by color scale",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     }
   ],
@@ -838,7 +919,23 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "",
   "title": "Panel Tests - Graph NG - By value color schemes",
   "uid": "aBXrJ0R7z",

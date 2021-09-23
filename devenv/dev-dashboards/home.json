@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -23,6 +23,12 @@
   "links": [],
   "panels": [
     {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -40,12 +46,25 @@
         "showStarred": true,
         "tags": []
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "8.1.0-pre",
+      "repeatDirection": "h",
       "tags": [],
       "title": "Starred",
+      "transformations": [],
+      "transparent": false,
       "type": "dashlist"
     },
     {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -65,14 +84,27 @@
           "panel-tests"
         ]
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "8.1.0-pre",
+      "repeatDirection": "h",
       "tags": [
         "panel-tests"
       ],
       "title": "tag: panel-tests",
+      "transformations": [],
+      "transparent": false,
       "type": "dashlist"
     },
     {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -93,15 +125,28 @@
           "demo"
         ]
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "8.1.0-pre",
+      "repeatDirection": "h",
       "tags": [
         "gdev",
         "demo"
       ],
       "title": "tag: dashboard-demo",
+      "transformations": [],
+      "transparent": false,
       "type": "dashlist"
     },
     {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -122,15 +167,28 @@
           "datasource-test"
         ]
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "8.1.0-pre",
+      "repeatDirection": "h",
       "tags": [
         "gdev",
         "datasource-test"
       ],
       "title": "Data source tests",
+      "transformations": [],
+      "transparent": false,
       "type": "dashlist"
     },
     {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -151,15 +209,28 @@
           "gdev"
         ]
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "8.1.0-pre",
+      "repeatDirection": "h",
       "tags": [
         "templating",
         "gdev"
       ],
       "title": "tag: templating ",
+      "transformations": [],
+      "transparent": false,
       "type": "dashlist"
     },
     {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -180,12 +251,19 @@
           "transform"
         ]
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "8.1.0-pre",
+      "repeatDirection": "h",
       "tags": [
         "gdev",
         "demo"
       ],
       "title": "tag: transforms",
+      "transformations": [],
+      "transparent": false,
       "type": "dashlist"
     }
   ],
@@ -200,6 +278,9 @@
     "to": "now"
   },
   "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
     "refresh_intervals": [
       "5s",
       "10s",

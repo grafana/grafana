@@ -50,7 +50,7 @@ Verifies common usecases for trimdefault/applydefault functions:
   }
 }
 
--- Trimed --
+-- Trimmed --
 {
   "templating": {
     "list": [

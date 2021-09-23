@@ -44,8 +44,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fill": 1,
           "fillGradient": 0,
@@ -142,8 +142,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fill": 1,
           "fillGradient": 0,
@@ -240,8 +240,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fill": 1,
           "fillGradient": 0,
@@ -337,8 +337,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fill": 1,
           "fillGradient": 0,
@@ -434,8 +434,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fill": 1,
           "fillGradient": 0,
@@ -532,8 +532,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fill": 1,
           "fillGradient": 0,
@@ -644,8 +644,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fill": 1,
           "fillGradient": 0,
@@ -701,8 +701,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "avg"
                 }
               ],
@@ -744,8 +743,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fill": 1,
           "fillGradient": 0,
@@ -801,8 +800,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "avg"
                 }
               ],
@@ -844,8 +842,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fill": 1,
           "fillGradient": 0,
@@ -901,8 +899,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "sum"
                 }
               ],
@@ -944,8 +941,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fill": 1,
           "fillGradient": 0,
@@ -1001,8 +998,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "sum"
                 }
               ],
@@ -1044,8 +1040,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "decimals": 3,
           "fill": 1,
@@ -1145,8 +1141,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "decimals": 3,
           "fill": 1,
@@ -1246,8 +1242,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "decimals": 3,
           "fill": 1,
@@ -1347,8 +1343,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "decimals": 3,
           "fill": 1,
@@ -1448,8 +1444,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "decimals": 3,
           "fill": 1,
@@ -1561,8 +1557,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "decimals": 3,
           "fill": 1,
@@ -1674,8 +1670,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "decimals": 3,
           "fill": 1,
@@ -1784,8 +1780,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "decimals": 3,
           "fill": 1,
@@ -1894,8 +1890,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "decimals": 3,
           "fill": 1,
@@ -1996,8 +1992,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "decimals": 3,
           "fill": 1,
@@ -2112,8 +2108,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -2232,8 +2228,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -2352,8 +2348,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -2472,8 +2468,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -2592,8 +2588,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -2712,8 +2708,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -2832,8 +2828,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -2952,8 +2948,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -3072,8 +3068,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -3192,8 +3188,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -3312,8 +3308,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -3432,8 +3428,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -3566,8 +3562,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -3681,8 +3677,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -3796,8 +3792,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -3911,8 +3907,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -4026,8 +4022,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -4141,8 +4137,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -4256,8 +4252,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -4371,8 +4367,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -4486,8 +4482,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -4601,8 +4597,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -4716,8 +4712,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -4831,8 +4827,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -4960,8 +4956,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -5079,8 +5075,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -5198,8 +5194,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -5317,8 +5313,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -5436,8 +5432,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -5555,8 +5551,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -5674,8 +5670,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -5793,8 +5789,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -5912,8 +5908,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -6031,8 +6027,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -6150,8 +6146,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -6269,8 +6265,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -6402,8 +6398,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -6521,8 +6517,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -6640,8 +6636,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "fieldConfig": {
             "defaults": {
@@ -6771,8 +6767,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "fieldConfig": {
             "defaults": {
@@ -6916,8 +6912,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_one",
           "decimals": 3,
           "fieldConfig": {
@@ -7069,8 +7065,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "$version_two",
           "decimals": 3,
           "fieldConfig": {
@@ -7236,8 +7232,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fieldConfig": {
             "defaults": {
@@ -7347,8 +7343,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fieldConfig": {
             "defaults": {
@@ -7458,8 +7454,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fieldConfig": {
             "defaults": {
@@ -7569,8 +7565,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fieldConfig": {
             "defaults": {
@@ -7680,8 +7676,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fieldConfig": {
             "defaults": {
@@ -7792,8 +7788,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fieldConfig": {
             "defaults": {
@@ -7904,8 +7900,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fieldConfig": {
             "defaults": {
@@ -8016,8 +8012,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fieldConfig": {
             "defaults": {
@@ -8142,8 +8138,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -8258,8 +8254,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -8374,8 +8370,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -8490,8 +8486,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -8606,8 +8602,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -8722,8 +8718,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -8838,8 +8834,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -8954,8 +8950,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -9070,8 +9066,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -9186,8 +9182,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -9302,8 +9298,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -9418,8 +9414,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -9534,8 +9530,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -9650,8 +9646,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -9766,8 +9762,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -9882,8 +9878,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -10012,8 +10008,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -10123,8 +10119,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -10234,8 +10230,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_one}",
           "fill": 1,
           "fillGradient": 0,
@@ -10345,8 +10341,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
           "dashes": false,
+          "dashLength": 10,
           "datasource": "${version_two}",
           "fill": 1,
           "fillGradient": 0,
@@ -10485,9 +10481,9 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -10530,14 +10526,21 @@
       "id": 121,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "New Script Format",
@@ -10583,8 +10586,8 @@
               "field": "@value",
               "id": "1",
               "settings": {
-                "script": { 
-                  "inline": "_value * 1.5" 
+                "script": {
+                  "inline": "_value * 1.5"
                 }
               },
               "type": "avg"
@@ -10596,6 +10599,8 @@
         }
       ],
       "title": "Old & new script format",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -10613,9 +10618,9 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
             "lineInterpolation": "linear",
             "lineWidth": 1,
@@ -10658,14 +10663,21 @@
       "id": 122,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "New Script Format",
@@ -10711,8 +10723,8 @@
               "field": "@value",
               "id": "1",
               "settings": {
-                "script": { 
-                  "inline": "_value * 1.5" 
+                "script": {
+                  "inline": "_value * 1.5"
                 }
               },
               "type": "avg"
@@ -10724,6 +10736,8 @@
         }
       ],
       "title": "Old & new script format",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     }
   ],
@@ -10782,6 +10796,9 @@
     "to": "now"
   },
   "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
     "refresh_intervals": [
       "5s",
       "10s",

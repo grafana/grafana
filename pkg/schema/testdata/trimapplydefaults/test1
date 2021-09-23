@@ -26,7 +26,7 @@ Verifies common usecases for trimdefault/applydefault functions:
   "version": 2
 }
 
--- Trimed --
+-- Trimmed --
 {
   "id": 42,
   "schemaVersion": 27,

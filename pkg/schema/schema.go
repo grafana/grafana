@@ -2,17 +2,14 @@ package schema
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/bits"
-	"os"
 	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	errs "cuelang.org/go/cue/errors"
-	"cuelang.org/go/cue/format"
 	cuejson "cuelang.org/go/pkg/encoding/json"
 )
 
@@ -290,7 +287,7 @@ func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
 		return r, rv.Err()
 	}
 
-	rvUnified, err := applyDefaultHelper(rv.Value(), scue)
+	rvUnified, err := applyDefaultHelper(rv, scue)
 	if err != nil {
 		return r, err
 	}
@@ -307,6 +304,7 @@ func applyDefaultHelper(input cue.Value, scue cue.Value) (cue.Value, error) {
 	case cue.ListKind:
 		// if list element exist
 		ele := scue.LookupPath(cue.MakePath(cue.AnyIndex))
+
 		// if input is not a concrete list, we must have list elements exist to be used to trim defaults
 		if ele.Exists() {
 			if ele.IncompleteKind() == cue.BottomKind {
@@ -322,7 +320,7 @@ func applyDefaultHelper(input cue.Value, scue cue.Value) (cue.Value, error) {
 				if err != nil {
 					return input, err
 				}
-				re, err := applyDefaultHelper(ref, iter.Value())
+				re, err := applyDefaultHelper(iter.Value(), ref)
 				if err == nil {
 					reString, err := convertCUEValueToString(re)
 					if err != nil {
@@ -393,14 +391,12 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if rvInstance.Err() != nil {
 		return r, rvInstance.Err()
 	}
+
 	rv, _, err := removeDefaultHelper(scue, rvInstance)
 	if err != nil {
 		return r, err
 	}
 	re, err := convertCUEValueToString(rv)
-
-	v, _ := json.MarshalIndent(re, "", "    ")
-	_ = os.WriteFile("/tmp/dat1", v, 0644)
 
 	if err != nil {
 		return r, err
@@ -408,16 +404,16 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 	return Resource{Value: re}, nil
 }
 
-func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
-	d, exist := inputdef.Default()
+func getDefault(icue cue.Value) (cue.Value, bool) {
+	d, exist := icue.Default()
 	if exist && d.Kind() == cue.ListKind {
 		len, err := d.Len().Int64()
 		if err != nil {
-			return false
+			return d, false
 		}
 		var defaultExist bool
 		if len <= 0 {
-			op, vals := inputdef.Expr()
+			op, vals := icue.Expr()
 			if op == cue.OrOp {
 				for _, val := range vals {
 					vallen, _ := val.Len().Int64()
@@ -434,6 +430,11 @@ func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 			}
 		}
 	}
+	return d, exist
+}
+
+func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
+	d, exist := getDefault(inputdef)
 	if exist {
 		return input.Subsume(d) == nil && d.Subsume(input) == nil
 	}
@@ -443,11 +444,10 @@ func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
 	// To include all optional fields, we need to use inputdef for iteration,
 	// since the lookuppath with optional field doesn't work very well
-	rvInstance := ctx.CompileString("", cue.Filename("helper"))
-	if rvInstance.Err() != nil {
-		return input, false, rvInstance.Err()
+	rv := ctx.CompileString("", cue.Filename("helper"))
+	if rv.Err() != nil {
+		return input, false, rv.Err()
 	}
-	rv := rvInstance.Value()
 
 	switch inputdef.IncompleteKind() {
 	case cue.StructKind:
@@ -542,38 +542,19 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 	}
 }
 
-func getBranch(def cue.Value, input cue.Value) (cue.Value, error) {
-	op, defs := def.Expr()
+func getBranch(schemaObj cue.Value, concretObj cue.Value) (cue.Value, error) {
+	op, defs := schemaObj.Expr()
 	if op == cue.OrOp {
 		for _, def := range defs {
-			err := def.Unify(input).Validate(cue.Concrete(true))
+			err := def.Unify(concretObj).Validate(cue.Concrete(true))
 			if err == nil {
 				return def, nil
 			}
 		}
 		// no matching branches? wtf
-		return def, errors.New("no branch is found for list")
+		return schemaObj, errors.New("no branch is found for list")
 	}
-	return def, nil
-}
-
-func PrintCUE(v cue.Value) string {
-	syn := v.Syntax(
-		cue.Final(),         // close structs and lists
-		cue.Concrete(false), // allow incomplete values
-		cue.Definitions(false),
-		cue.Optional(true),
-		cue.Attributes(true),
-		cue.Docs(true),
-	)
-
-	bs, _ := format.Node(
-		syn,
-		format.TabIndent(false),
-		format.UseSpaces(2),
-	)
-
-	return string(bs)
+	return schemaObj, nil
 }
 
 // A Resource represents a concrete data object - e.g., JSON

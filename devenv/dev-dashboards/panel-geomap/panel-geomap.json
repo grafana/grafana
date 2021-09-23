@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -29,6 +29,7 @@
           "color": {
             "mode": "continuous-GrYlRd"
           },
+          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -97,6 +98,7 @@
           "zoom": 3.98
         }
       },
+      "repeatDirection": "h",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -105,6 +107,8 @@
         }
       ],
       "title": "Size, color mapped to different fields + share view",
+      "transformations": [],
+      "transparent": false,
       "type": "geomap"
     },
     {
@@ -113,6 +117,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -185,6 +190,7 @@
           "zoom": 3.98
         }
       },
+      "repeatDirection": "h",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -193,6 +199,8 @@
         }
       ],
       "title": "Thresholds legend",
+      "transformations": [],
+      "transparent": false,
       "type": "geomap"
     },
     {
@@ -201,6 +209,7 @@
           "color": {
             "mode": "continuous-BlYlRd"
           },
+          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -264,6 +273,7 @@
           "zoom": 4.15
         }
       },
+      "repeatDirection": "h",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -273,6 +283,7 @@
       ],
       "title": "Heatmap data layer",
       "transformations": [],
+      "transparent": false,
       "type": "geomap"
     },
     {
@@ -281,6 +292,7 @@
           "color": {
             "mode": "continuous-GrYlRd"
           },
+          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -350,6 +362,7 @@
           "zoom": 3.83
         }
       },
+      "repeatDirection": "h",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -358,6 +371,8 @@
         }
       ],
       "title": "Base layer ArcGIS wold imagery + star shape + share view",
+      "transformations": [],
+      "transparent": false,
       "type": "geomap"
     }
   ],
@@ -376,6 +391,9 @@
     "to": "now"
   },
   "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
     "refresh_intervals": [
       "10s",
       "30s",

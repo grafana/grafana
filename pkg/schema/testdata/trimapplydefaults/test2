@@ -33,7 +33,7 @@ Verifies common usecases for trimdefault/applydefault functions:
   }
 }
 
--- Trimed --
+-- Trimmed --
 {
   "timepicker": {
     "collapse": true

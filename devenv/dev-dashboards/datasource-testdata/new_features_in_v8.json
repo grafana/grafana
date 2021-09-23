@@ -4,10 +4,10 @@
         {
           "builtIn": 1,
           "datasource": "-- Grafana --",
-          "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
           "name": "Annotations & Alerts",
+          "showIn": 0,
           "type": "dashboard"
         }
       ]
@@ -18,6 +18,12 @@
     "links": [],
     "panels": [
       {
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 4,
           "w": 24,
@@ -29,18 +35,30 @@
           "content": "\n# Welcome to Grafana 8.0\n\nGrafana v8.0 adds many visualizations and improvements to panel edit, tracing and security. This dashboard highlights \nsome of the new visualization capabilities. There are so many new visualizations and display options so be sure to scroll down\nto see everything. \n\n[Read the what's new article](https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-0/) &nbsp; | &nbsp;\n[Download](https://grafana.com/grafana/download/beta) &nbsp; | &nbsp;\n[Grafana Cloud now free with 50gb logs, 10K metric series](https://grafana.com/signup/cloud/connect-account?pg=play&plcmt=whatnew)",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "refId": "A",
             "target": ""
           }
         ],
+        "transformations": [],
         "transparent": true,
         "type": "text"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 8,
           "w": 6,
@@ -53,7 +71,12 @@
           "content": "## State timeline\n\nThe new state timeline panel is one of the new core visualizations. \nIt adds unique state over time visualization for string or boolean states. \n\n### Map strings to colors\n\nWith the new revamped value mapping feature you \ncan now easily map strings, booleans, nulls & NaN values\nto a color or new display text. \n\nThis mapping and coloring support will work in all new core panels.",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -62,6 +85,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -124,8 +149,10 @@
           "alignValue": "center",
           "colWidth": 0.9,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "right"
           },
           "mergeValues": true,
@@ -133,7 +160,12 @@
           "rowHeight": 0.97,
           "showValue": "always"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.5.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "Level A",
@@ -157,10 +189,18 @@
           }
         ],
         "title": "State timeline strings",
+        "transformations": [],
+        "transparent": false,
         "type": "state-timeline"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 15,
           "w": 6,
@@ -173,7 +213,12 @@
           "content": "### Discrete time series\n\nIt can also transform any numerical time series into discrete states trough \nthresholds. This allow you to quickly gauge health over time and visualize\nthe duration spent in each threshold bracket. \n",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -182,6 +227,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -227,13 +274,21 @@
         "options": {
           "alignValue": "left",
           "legend": {
+            "asTable": false,
+            "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "mergeValues": true,
           "rowHeight": 0.96,
           "showValue": "never"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "refId": "A",
@@ -241,6 +296,8 @@
           }
         ],
         "title": "State timeline with time series + thresholds",
+        "transformations": [],
+        "transparent": false,
         "type": "state-timeline"
       },
       {
@@ -259,9 +316,9 @@
               "fillOpacity": 0,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineWidth": 1,
@@ -314,15 +371,22 @@
         "maxDataPoints": 200,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.0.0-beta2",
+        "repeatDirection": "h",
         "targets": [
           {
             "refId": "A",
@@ -330,10 +394,18 @@
           }
         ],
         "title": "Same query/data as above",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 13,
           "w": 6,
@@ -346,7 +418,12 @@
           "content": "## Status history\n\nA sister panel to the state timeline is the new Status history panel. It can visualize periodic state in a \ngrid. Works with both numerical, string or boolean state.  ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -355,6 +432,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -396,14 +475,23 @@
         "id": 68,
         "maxDataPoints": 10,
         "options": {
+          "alignValue": "left",
           "colWidth": 0.95,
           "legend": {
+            "asTable": false,
+            "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "rowHeight": 0.9,
           "showValue": "auto"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__house_locations",
@@ -418,6 +506,8 @@
           }
         ],
         "title": "State timeline with time series + thresholds",
+        "transformations": [],
+        "transparent": false,
         "type": "status-history"
       },
       {
@@ -482,14 +572,23 @@
         "id": 69,
         "maxDataPoints": 10,
         "options": {
+          "alignValue": "left",
           "colWidth": 0.95,
           "legend": {
+            "asTable": false,
+            "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "rowHeight": 0.9,
           "showValue": "auto"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "SensorA",
@@ -506,10 +605,18 @@
           }
         ],
         "title": "Status history - boolean values",
+        "transformations": [],
+        "transparent": false,
         "type": "status-history"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 3,
           "w": 24,
@@ -522,7 +629,12 @@
           "content": "## Bar chart \n\nA new bar chart panel adds new graphing capabilities to Grafana, especially for non\ntime series based data. It supports a categorical x or y field, grouped bars, horizontal \nand vertical layout. ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -531,6 +643,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -548,9 +662,9 @@
               "fillOpacity": 74,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -597,17 +711,25 @@
           "barWidth": 0.81,
           "groupWidth": 0.7,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "right"
           },
           "orientation": "horizontal",
           "showValue": "auto",
+          "stacking": "none",
           "text": {},
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "csvFileName": "browser_marketshare.csv",
@@ -648,6 +770,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "barchart"
       },
       {
@@ -664,9 +787,9 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -718,17 +841,25 @@
           "barWidth": 0.97,
           "groupWidth": 0.7,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "right"
           },
           "orientation": "auto",
           "showValue": "auto",
+          "stacking": "none",
           "text": {},
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "SensorA",
@@ -738,10 +869,18 @@
           }
         ],
         "title": "Popular JS Frameworks",
+        "transformations": [],
+        "transparent": false,
         "type": "barchart"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 3,
           "w": 24,
@@ -754,7 +893,12 @@
           "content": "## Next-gen Graph\n\nThe new next-gen graphing visualization named `Time series` is now the default\nvisualization in v8. It supports many new options as well as improved performance.\nBelow we highlight some new features. ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -763,10 +907,18 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 6,
           "w": 6,
@@ -779,7 +931,12 @@
           "content": "### Interpolation modes\n\nThe new time series panel brings a new interpolation mode\nwhere you can choose between.\n* Linear\n* Smooth\n* Step before\n* Step after (same as old staircase option)",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -788,6 +945,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -805,9 +964,9 @@
               "fillOpacity": 50,
               "gradientMode": "hue",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "smooth",
               "lineWidth": 2,
@@ -867,15 +1026,22 @@
         "maxDataPoints": 80,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "Requests/s",
@@ -906,6 +1072,8 @@
           }
         ],
         "title": "Interpolation mode: smooth",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -923,9 +1091,9 @@
               "fillOpacity": 40,
               "gradientMode": "hue",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "stepBefore",
               "lineWidth": 2,
@@ -985,15 +1153,22 @@
         "maxDataPoints": 80,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "Requests/s",
@@ -1024,6 +1199,8 @@
           }
         ],
         "title": "Interpolation mode: Step before",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -1041,9 +1218,9 @@
               "fillOpacity": 40,
               "gradientMode": "hue",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "stepAfter",
               "lineWidth": 2,
@@ -1103,15 +1280,22 @@
         "maxDataPoints": 80,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "Requests/s",
@@ -1142,10 +1326,18 @@
           }
         ],
         "title": "Interpolation mode: Step after",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 8,
           "w": 6,
@@ -1158,7 +1350,12 @@
           "content": "### Soft min and max\n\nAuto **Min** and **Max** can make small variations look much bigger than they  are. This can be fixed by setting **Min** & **Max**. \nThis creates a new problem when spikes in the data occur. Because the \n**Min** and **Max** are hard the full spike cannot be seen. The **Soft min** and **Soft max** options give control over the default range of the axis but also allow going beyond this range when the data does. \n\nYou can combine both the existing standard option **Min** and **Max** and the new **Soft min**\n and **Soft max** to define both soft and hard limits. ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -1167,6 +1364,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -1184,9 +1383,9 @@
               "fillOpacity": 10,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineWidth": 1,
@@ -1230,15 +1429,22 @@
         "id": 41,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -1268,6 +1474,8 @@
           }
         ],
         "title": "Auto min max",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -1286,9 +1494,9 @@
               "fillOpacity": 10,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineWidth": 1,
@@ -1334,15 +1542,22 @@
         "id": 32,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -1372,6 +1587,8 @@
           }
         ],
         "title": "Hard min 0, max 30",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -1392,9 +1609,9 @@
               "fillOpacity": 10,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineWidth": 1,
@@ -1438,15 +1655,22 @@
         "id": 44,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -1476,10 +1700,18 @@
           }
         ],
         "title": "Soft min 0, soft max 30",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 5,
           "w": 6,
@@ -1492,7 +1724,12 @@
           "content": "### Multiple Y-Axes\n\nWith the new panel you can have more than 2 y-axes! ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -1501,6 +1738,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -1520,9 +1759,9 @@
               "fillOpacity": 0,
               "gradientMode": "opacity",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineWidth": 2,
@@ -1616,17 +1855,24 @@
         "maxDataPoints": 50,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [
               "last"
             ],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "multi"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "Temperature",
@@ -1715,10 +1961,18 @@
           }
         ],
         "title": "Multiple Y-Axes (more than 2!)",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 5,
           "w": 6,
@@ -1731,7 +1985,12 @@
           "content": "### Richer display options\n\nThe new time series panel supports more control over lines, fill gradients that \nwork for both line, area graphs & bars.    ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -1740,6 +1999,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -1757,9 +2018,9 @@
               "fillOpacity": 0,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineStyle": {
@@ -1894,15 +2155,22 @@
         "id": 48,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -2062,6 +2330,8 @@
           }
         ],
         "title": "Advanced dashed line settings",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -2079,9 +2349,9 @@
               "fillOpacity": 0,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineStyle": {
@@ -2216,15 +2486,22 @@
         "id": 76,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -2384,6 +2661,8 @@
           }
         ],
         "title": "Advanced dashed line settings",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -2401,9 +2680,9 @@
               "fillOpacity": 82,
               "gradientMode": "hue",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineInterpolation": "linear",
               "lineStyle": {
@@ -2470,15 +2749,22 @@
         "maxDataPoints": 6,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -2509,10 +2795,18 @@
           }
         ],
         "title": "Bars with hue gradient",
+        "transformations": [],
+        "transparent": false,
         "type": "timeseries"
       },
       {
         "datasource": "gdev-testdata",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {}
+          },
+          "overrides": []
+        },
         "gridPos": {
           "h": 3,
           "w": 24,
@@ -2525,7 +2819,12 @@
           "content": "## Histogram\n\nThis hidden feature of the old Graph panel is now a standalone visualization. It combines a histogram \ntransformation and bar chart visualization into single integrated easy to use panel. There is also a new standalone histogram \ntransformation that can be paired with any visualization. ",
           "mode": "markdown"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "__server_names",
@@ -2534,6 +2833,8 @@
             "seriesCount": 6
           }
         ],
+        "transformations": [],
+        "transparent": false,
         "type": "text"
       },
       {
@@ -2547,9 +2848,9 @@
               "fillOpacity": 80,
               "gradientMode": "hue",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -2596,12 +2897,19 @@
           "bucketOffset": 0,
           "bucketSize": 10,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "7.4.0-beta1",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -2637,6 +2945,8 @@
           }
         ],
         "title": "Histogram visualization",
+        "transformations": [],
+        "transparent": false,
         "type": "histogram"
       },
       {
@@ -2690,9 +3000,16 @@
         },
         "id": 77,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "alias": "",
@@ -2738,6 +3055,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       }
     ],
@@ -2756,6 +3074,9 @@
       "to": "now"
     },
     "timepicker": {
+      "collapse": false,
+      "enable": true,
+      "hidden": false,
       "refresh_intervals": [
         "10s",
         "30s",
@@ -2772,4 +3093,4 @@
     "title": "New Features in v8.0",
     "uid": "8mux8PqGz",
     "version": 17
-  }
+}

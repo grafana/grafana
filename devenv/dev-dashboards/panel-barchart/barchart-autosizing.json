@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -68,10 +68,12 @@
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
+          "asTable": false,
           "calcs": [
             "max"
           ],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "right"
         },
         "orientation": "auto",
@@ -82,6 +84,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "csvContent": "Time,Name,Stat1,Stat2\n2020-01-01T00:00:00Z,Stockholm, 10, 15\n2020-01-01T00:00:00Z,New York, 19, 5\n2020-01-01T00:00:00Z,London, 10, 1\n2020-01-01T00:00:00Z,Negative, 15, -5\n2020-01-01T00:00:00Z,Long value, 15,10",
@@ -90,6 +97,8 @@
         }
       ],
       "title": "Auto  sizing & auto show values",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     },
     {
@@ -140,10 +149,12 @@
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
+          "asTable": false,
           "calcs": [
             "max"
           ],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "right"
         },
         "orientation": "auto",
@@ -154,6 +165,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
@@ -162,6 +178,8 @@
         }
       ],
       "title": "Auto sizing & auto show values",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     },
     {
@@ -210,10 +228,12 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
+          "asTable": false,
           "calcs": [
             "max"
           ],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "right"
         },
         "orientation": "auto",
@@ -224,6 +244,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
@@ -232,6 +257,8 @@
         }
       ],
       "title": "auto show values & No room for value",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     },
     {
@@ -280,10 +307,12 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
+          "asTable": false,
           "calcs": [
             "max"
           ],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "right"
         },
         "orientation": "auto",
@@ -294,6 +323,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
@@ -302,6 +336,8 @@
         }
       ],
       "title": "auto show values & Always show value",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     },
     {
@@ -351,8 +387,10 @@
         "barWidth": 1,
         "groupWidth": 1,
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "orientation": "auto",
@@ -366,6 +404,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "panelId": 9,
@@ -373,6 +416,8 @@
         }
       ],
       "title": "Fixed value sizing",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     },
     {
@@ -422,10 +467,12 @@
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
+          "asTable": false,
           "calcs": [
             "max"
           ],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "right"
         },
         "orientation": "horizontal",
@@ -436,6 +483,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, -5\nLondon, 10, 1\nLong value, 15,10",
@@ -444,6 +496,8 @@
         }
       ],
       "title": "Auto  sizing & auto show values",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     },
     {
@@ -493,10 +547,12 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
+          "asTable": false,
           "calcs": [
             "max"
           ],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "right"
         },
         "orientation": "horizontal",
@@ -507,6 +563,11 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
@@ -515,6 +576,8 @@
         }
       ],
       "title": "auto show values & little room",
+      "transformations": [],
+      "transparent": false,
       "type": "barchart"
     }
   ],
@@ -533,7 +596,23 @@
     "from": "now-5m",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "",
   "title": "BarChart - Panel Tests - Value sizing",
   "uid": "WFlOM-jM1",

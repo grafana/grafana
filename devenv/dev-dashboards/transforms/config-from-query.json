@@ -4,10 +4,10 @@
         {
           "builtIn": 1,
           "datasource": "-- Grafana --",
-          "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
           "name": "Annotations & Alerts",
+          "showIn": 0,
           "target": {
             "limit": 100,
             "matchAny": false,
@@ -78,14 +78,21 @@
         "id": 2,
         "options": {
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "hide": false,
@@ -112,6 +119,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "timeseries"
       },
       {
@@ -161,9 +169,16 @@
         },
         "id": 5,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Name, Value, SensorA, MyUnit, MyColor\nGoogle, 10, 50, km/h, blue\nGoogle, 100, 100,km/h, orange\n",
@@ -197,6 +212,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -246,9 +262,16 @@
         },
         "id": 7,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "ID, DisplayText\n21412312312, Homer\n12421412413, Simpsons \n12321312313, Bart",
@@ -277,6 +300,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -326,9 +350,16 @@
         },
         "id": 6,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Value, Color\nOK, blue\nPretty bad, red\nYay it's green, green\nSomething is off, orange\nNo idea, #88AA00\nAm I purple?, purple",
@@ -361,6 +392,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -397,9 +429,16 @@
         },
         "id": 8,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "ID, Value\n21412312312, 100\n12421412413, 20\n12321312313, 10",
@@ -428,6 +467,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -476,18 +516,26 @@
           "barWidth": 0.97,
           "groupWidth": 0.7,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "list",
+            "isVisible": false,
             "placement": "bottom"
           },
           "orientation": "horizontal",
           "showValue": "auto",
+          "stacking": "none",
           "text": {},
           "tooltip": {
             "mode": "single"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "ID, Value\nA21412312312, 100\nA12421412413, 20\nA12321312313, 10\n",
@@ -502,7 +550,7 @@
             "scenarioId": "csv_content"
           }
         ],
-        "title": "Value mapping ID -> DisplayText from separate query",
+        "title": "Value mapping ID -\u003e DisplayText from separate query",
         "transformations": [
           {
             "id": "configFromData",
@@ -526,6 +574,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "barchart"
       }
     ],
@@ -543,9 +592,25 @@
       "from": "now-6h",
       "to": "now"
     },
-    "timepicker": {},
+    "timepicker": {
+      "collapse": false,
+      "enable": true,
+      "hidden": false,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
     "timezone": "",
     "title": "Transforms - Config from query",
     "uid": "Juj4_7ink",
     "version": 1
-  }
+}

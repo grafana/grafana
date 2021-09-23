@@ -4,10 +4,10 @@
       {
         "builtIn": 1,
         "datasource": "-- Grafana --",
-        "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "showIn": 0,
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -95,15 +95,22 @@
       "links": [],
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.4.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -135,6 +142,8 @@
         }
       ],
       "title": "Show gaps",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -201,15 +210,22 @@
       "links": [],
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.4.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -249,6 +265,8 @@
         }
       ],
       "title": "Gaps & null between every point for series B",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -315,15 +333,22 @@
       "links": [],
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.4.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -383,6 +408,8 @@
         }
       ],
       "title": "No nulls but unaligned series",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -447,15 +474,22 @@
       "links": [],
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.4.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -487,6 +521,8 @@
         }
       ],
       "title": "Connected",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -553,15 +589,22 @@
       "links": [],
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.4.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -601,6 +644,8 @@
         }
       ],
       "title": "Same as above but connected",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -667,15 +712,22 @@
       "links": [],
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.4.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -735,6 +787,8 @@
         }
       ],
       "title": "Same as above but connected",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -839,7 +893,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.2.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "refId": "A",
@@ -875,6 +934,7 @@
       ],
       "title": "Null values in first series & show gaps ",
       "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -979,7 +1039,12 @@
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.2.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -1015,6 +1080,7 @@
       ],
       "title": "Null values in second series show gaps (bugged)",
       "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -1077,15 +1143,22 @@
       "id": 13,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
       "pluginVersion": "7.5.0-pre",
+      "repeatDirection": "h",
       "targets": [
         {
           "alias": "",
@@ -1115,6 +1188,8 @@
         }
       ],
       "title": "Span nulls below 1hr",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     },
     {
@@ -1179,14 +1254,21 @@
       "id": 15,
       "options": {
         "legend": {
+          "asTable": false,
           "calcs": [],
           "displayMode": "list",
+          "isVisible": false,
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "single"
         }
       },
+      "panelSchema": [
+        0,
+        0
+      ],
+      "repeatDirection": "h",
       "targets": [
         {
           "refId": "A",
@@ -1195,6 +1277,8 @@
         }
       ],
       "title": "Always show points between gaps",
+      "transformations": [],
+      "transparent": false,
       "type": "timeseries"
     }
   ],
@@ -1212,7 +1296,23 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gaps and Connected",
   "uid": "8mmCAF1Mz",

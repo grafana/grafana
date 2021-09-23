@@ -32,7 +32,7 @@ Verifies common usecases for trimdefault/applydefault functions:
   }
 }
 
--- Trimed --
+-- Trimmed --
 {
   "annotations": {
       "list": [

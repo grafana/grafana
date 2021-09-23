@@ -4,10 +4,10 @@
         {
           "builtIn": 1,
           "datasource": "-- Grafana --",
-          "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
           "name": "Annotations & Alerts",
+          "showIn": 0,
           "type": "dashboard"
         }
       ]
@@ -27,9 +27,9 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -60,11 +60,18 @@
           "bucketOffset": 0,
           "combine": false,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "refId": "A",
@@ -73,6 +80,8 @@
           }
         ],
         "title": "Time series + Auto buckets",
+        "transformations": [],
+        "transparent": false,
         "type": "histogram"
       },
       {
@@ -86,9 +95,9 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -120,11 +129,18 @@
           "bucketSize": 3,
           "combine": false,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "panelId": 4,
@@ -132,6 +148,8 @@
           }
         ],
         "title": "Time series + bucket size 3",
+        "transformations": [],
+        "transparent": false,
         "type": "histogram"
       },
       {
@@ -144,9 +162,9 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -178,11 +196,18 @@
           "bucketSize": 1,
           "combine": false,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "csvFileName": "weight_height.csv",
@@ -203,6 +228,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "histogram"
       },
       {
@@ -215,9 +241,9 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "viz": false,
                 "legend": false,
-                "tooltip": false
+                "tooltip": false,
+                "viz": false
               },
               "lineWidth": 1
             },
@@ -249,11 +275,18 @@
           "bucketSize": 5,
           "combine": false,
           "legend": {
+            "asTable": false,
             "calcs": [],
             "displayMode": "hidden",
+            "isVisible": false,
             "placement": "bottom"
           }
         },
+        "panelSchema": [
+          0,
+          0
+        ],
+        "repeatDirection": "h",
         "targets": [
           {
             "csvFileName": "weight_height.csv",
@@ -274,6 +307,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "histogram"
       },
       {
@@ -310,9 +344,16 @@
         },
         "id": 8,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvFileName": "weight_height.csv",
@@ -340,6 +381,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -376,9 +418,16 @@
         },
         "id": 9,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvFileName": "weight_height.csv",
@@ -406,6 +455,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "table"
       }
     ],
@@ -422,9 +472,25 @@
       "from": "now-6h",
       "to": "now"
     },
-    "timepicker": {},
+    "timepicker": {
+      "collapse": false,
+      "enable": true,
+      "hidden": false,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
     "timezone": "",
     "title": "Panel Tests - Histogram",
     "uid": "UTv--wqMk",
     "version": 4
-  }
+}

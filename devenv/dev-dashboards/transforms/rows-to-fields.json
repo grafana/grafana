@@ -4,10 +4,10 @@
         {
           "builtIn": 1,
           "datasource": "-- Grafana --",
-          "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
           "name": "Annotations & Alerts",
+          "showIn": 0,
           "target": {
             "limit": 100,
             "matchAny": false,
@@ -57,9 +57,16 @@
         },
         "id": 8,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "panelId": 2,
@@ -67,6 +74,8 @@
           }
         ],
         "title": "Raw data",
+        "transformations": [],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -129,10 +138,17 @@
         },
         "id": 7,
         "options": {
+          "frameIndex": 0,
           "showHeader": true,
+          "showTypeIcons": false,
           "sortBy": []
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "panelId": 3,
@@ -140,6 +156,8 @@
           }
         ],
         "title": "Raw data",
+        "transformations": [],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -148,6 +166,7 @@
             "color": {
               "mode": "thresholds"
             },
+            "custom": {},
             "mappings": [],
             "thresholds": {
               "mode": "absolute",
@@ -186,7 +205,12 @@
           "text": {},
           "textMode": "auto"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Name,Value,Unit,Color\nTemperature,10,degree,green\nPressure,100,bar,blue\nSpeed,30,km/h,red",
@@ -201,6 +225,7 @@
             "options": {}
           }
         ],
+        "transparent": false,
         "type": "stat"
       },
       {
@@ -209,6 +234,7 @@
             "color": {
               "mode": "thresholds"
             },
+            "custom": {},
             "mappings": [],
             "min": 0,
             "thresholds": {
@@ -246,7 +272,12 @@
           "showThresholdMarkers": true,
           "text": {}
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Name,Value,Unit,min,max, threshold1\nTemperature,10,degree,0,50,30\nPressure,100,Pa,0,300,200\nSpeed,30,km/h,0,150,110",
@@ -261,6 +292,7 @@
             "options": {}
           }
         ],
+        "transparent": false,
         "type": "gauge"
       },
       {
@@ -298,9 +330,16 @@
         },
         "id": 10,
         "options": {
-          "showHeader": true
+          "frameIndex": 0,
+          "showHeader": true,
+          "showTypeIcons": false
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "panelId": 9,
@@ -308,6 +347,8 @@
           }
         ],
         "title": "Raw data",
+        "transformations": [],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -370,10 +411,17 @@
         },
         "id": 12,
         "options": {
+          "frameIndex": 0,
           "showHeader": true,
+          "showTypeIcons": false,
           "sortBy": []
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "panelId": 11,
@@ -381,6 +429,8 @@
           }
         ],
         "title": "Raw data (Custom mapping)",
+        "transformations": [],
+        "transparent": false,
         "type": "table"
       },
       {
@@ -389,6 +439,7 @@
             "color": {
               "mode": "continuous-GrYlRd"
             },
+            "custom": {},
             "mappings": [],
             "thresholds": {
               "mode": "absolute",
@@ -425,7 +476,12 @@
           "showUnfilled": true,
           "text": {}
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Name,Value,Unit,Min,Max\nTemperature,20,degree,0,50\nPressure,150,Pa,0,300\nSpeed,100,km/h,0,110",
@@ -440,6 +496,7 @@
             "options": {}
           }
         ],
+        "transparent": false,
         "type": "bargauge"
       },
       {
@@ -448,6 +505,7 @@
             "color": {
               "mode": "thresholds"
             },
+            "custom": {},
             "mappings": [],
             "min": 0,
             "thresholds": {
@@ -481,7 +539,12 @@
           "showThresholdMarkers": true,
           "text": {}
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Name,Value,Type,Quota, Warning\nTemperature,25,degree,50,30\nPressure,100,Pa,300,200\nSpeed,30,km/h,150,130",
@@ -514,6 +577,7 @@
             }
           }
         ],
+        "transparent": false,
         "type": "gauge"
       },
       {
@@ -522,6 +586,7 @@
             "color": {
               "mode": "thresholds"
             },
+            "custom": {},
             "mappings": [],
             "thresholds": {
               "mode": "absolute",
@@ -560,7 +625,12 @@
           "text": {},
           "textMode": "auto"
         },
+        "panelSchema": [
+          0,
+          0
+        ],
         "pluginVersion": "8.1.0-pre",
+        "repeatDirection": "h",
         "targets": [
           {
             "csvContent": "Name, City, Country, Value\nSensorA, Stockholm, Sweden, 20\nSensorB, London, England, 50\nSensorC, New York, USA,100",
@@ -575,6 +645,7 @@
             "options": {}
           }
         ],
+        "transparent": false,
         "type": "stat"
       }
     ],
@@ -592,9 +663,25 @@
       "from": "now-6h",
       "to": "now"
     },
-    "timepicker": {},
+    "timepicker": {
+      "collapse": false,
+      "enable": true,
+      "hidden": false,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
     "timezone": "",
     "title": "Transforms - Rows to fields",
     "uid": "PMtIInink",
     "version": 1
-  }
+}
