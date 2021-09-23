@@ -8,9 +8,9 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", StarDashboard)
-	bus.AddHandler("sql", UnstarDashboard)
-	bus.AddHandler("sql", GetUserStars)
+	bus.AddHandlerCtx("sql", StarDashboard)
+	bus.AddHandlerCtx("sql", UnstarDashboard)
+	bus.AddHandlerCtx("sql", GetUserStars)
 	bus.AddHandlerCtx("sql", IsStarredByUserCtx)
 }
 
@@ -33,7 +33,7 @@ func IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery)
 	})
 }
 
-func StarDashboard(cmd *models.StarDashboardCommand) error {
+func StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
 		return models.ErrCommandValidationFailed
 	}
@@ -49,7 +49,7 @@ func StarDashboard(cmd *models.StarDashboardCommand) error {
 	})
 }
 
-func UnstarDashboard(cmd *models.UnstarDashboardCommand) error {
+func UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
 	if cmd.DashboardId == 0 || cmd.UserId == 0 {
 		return models.ErrCommandValidationFailed
 	}
@@ -61,7 +61,7 @@ func UnstarDashboard(cmd *models.UnstarDashboardCommand) error {
 	})
 }
 
-func GetUserStars(query *models.GetUserStarsQuery) error {
+func GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
 	var stars = make([]models.Star, 0)
 	err := x.Where("user_id=?", query.UserId).Find(&stars)
 

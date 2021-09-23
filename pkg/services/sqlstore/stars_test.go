@@ -21,7 +21,7 @@ func TestUserStarsDataAccess(t *testing.T) {
 				UserId:      12,
 			}
 
-			err := StarDashboard(&cmd)
+			err := StarDashboard(context.Background(), &cmd)
 			So(err, ShouldBeNil)
 
 			Convey("IsStarredByUser should return true when starred", func() {
