@@ -1,0 +1,22 @@
+name: Concurrent Workflows Checker
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  main:
+    name: Check for concurrent workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d-%h-%M-%s')"
+      - name: Test with environment variables
+        run: echo "Job running on ${{ steps.date.outputs.date }}"
