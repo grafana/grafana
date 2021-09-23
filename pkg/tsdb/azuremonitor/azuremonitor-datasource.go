@@ -201,7 +201,12 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 		return dataResponse
 	}
 
-	dataResponse.Frames = e.parseResponse(data, query, azurePortalUrl)
+	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
+
 	return dataResponse
 }
 
@@ -238,9 +243,9 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery, azurePortalUrl string) data.Frames {
+func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
 	if len(amr.Value) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	frames := data.Frames{}
@@ -297,15 +302,19 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		frameWithLink := addConfigData(*frame, getQueryUrl(query, azurePortalUrl))
+		queryUrl, err := getQueryUrl(query, azurePortalUrl)
+		if err != nil {
+			return nil, err
+		}
+		frameWithLink := addConfigLinks(*frame, queryUrl)
 		frames = append(frames, &frameWithLink)
 	}
 
-	return frames
+	return frames, nil
 }
 
 // Gets the deep link for the given query
-func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) string {
+func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) (string, error) {
 	aggregationType := aggregationTypeMap["Average"]
 	aggregation := query.Params.Get("aggregation")
 	if aggregation != "" {
@@ -314,10 +323,19 @@ func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) string {
 		}
 	}
 
-	timeFrom := query.TimeRange.From.Format(time.RFC3339Nano)
-	timeTo := query.TimeRange.To.Format(time.RFC3339Nano)
-	timespan := fmt.Sprintf("{\"absolute\":{\"startTime\":%q,\"endTime\":%q}}", timeFrom, timeTo)
-	timespan = url.QueryEscape(timespan)
+	timespan, err := json.Marshal(map[string]interface{}{
+		"absolute": struct {
+			Start string `json:"startTime"`
+			End   string `json:"endTime"`
+		}{
+			Start: query.TimeRange.From.UTC().Format(time.RFC3339Nano),
+			End:   query.TimeRange.To.UTC().Format(time.RFC3339Nano),
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	escapedTime := url.QueryEscape(string(timespan))
 
 	id := fmt.Sprintf("/subscriptions/%v/resourceGroups/%v/providers/%v/%v",
 		query.UrlComponents["subscription"],
@@ -325,18 +343,41 @@ func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) string {
 		query.UrlComponents["metricDefinition"],
 		query.UrlComponents["resourceName"],
 	)
-	chartDef := fmt.Sprintf(
-		"{\"v2charts\":[{\"metrics\":[{\"resourceMetadata\":{\"id\":%q},\"name\":%q,\"aggregationType\":%v,\"namespace\":%q,\"metricVisualization\":{\"displayName\":%q,\"resourceDisplayName\":%q}}]}]}",
-		id,
-		query.Params.Get("metricnames"),
-		aggregationType,
-		query.Params.Get("metricnamespace"),
-		query.Params.Get("metricnames"),
-		query.UrlComponents["resourceName"],
-	)
-	chartDef = url.QueryEscape(chartDef)
+	chartDef, err := json.Marshal(map[string]interface{}{
+		"v2charts": []interface{}{
+			map[string]interface{}{
+				"metrics": []interface{}{
+					struct {
+						ResourceMetadata    map[string]string `json:"resourceMetadata"`
+						Name                string            `json:"name"`
+						AggregationType     int               `json:"aggregationType"`
+						Namespace           string            `json:"namespace"`
+						MetricVisualization interface{}       `json:"metricVisualization"`
+					}{
+						ResourceMetadata: map[string]string{
+							"id": id,
+						},
+						Name:            query.Params.Get("metricnames"),
+						AggregationType: aggregationType,
+						Namespace:       query.Params.Get("metricnamespace"),
+						MetricVisualization: struct {
+							DisplayName         string `json:"displayName"`
+							ResourceDisplayName string `json:"resourceDisplayName"`
+						}{
+							DisplayName:         query.Params.Get("metricnames"),
+							ResourceDisplayName: query.UrlComponents["resourceName"],
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	escapedChart := url.QueryEscape(string(chartDef))
 
-	return fmt.Sprintf("%s/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%s/ChartDefinition/%s", azurePortalUrl, timespan, chartDef)
+	return fmt.Sprintf("%s/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%s/ChartDefinition/%s", azurePortalUrl, escapedTime, escapedChart), nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
