@@ -257,11 +257,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme } = this.props;
+    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
         exploreId={exploreId}
+        loadingState={queryResponse.state}
         syncedTimes={syncedTimes}
         width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}
