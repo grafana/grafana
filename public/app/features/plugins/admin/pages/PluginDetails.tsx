@@ -77,7 +77,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   return (
     <Page>
       <PluginPage>
-        <PluginDetailsHeader currentUrl={url} parentUrl={parentUrl} plugin={plugin} />
+        <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
 
         {/* Tab navigation */}
         <TabsBar>
