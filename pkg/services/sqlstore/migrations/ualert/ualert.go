@@ -19,6 +19,8 @@ const DASHBOARD_FOLDER = "Migrated %s"
 // during alert migration cleanup.
 const FOLDER_CREATED_BY = -8
 
+const KV_NAMESPACE = "alertmanager"
+
 var migTitle = "move dashboard alerts to unified alerting"
 
 var rmMigTitle = "remove unified alerting data"
@@ -415,6 +417,18 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	_, err = sess.Exec("delete from alert_instance")
 	if err != nil {
 		return err
+	}
+
+	exists, err := sess.IsTableExist("kv_store")
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		_, err = sess.Exec("delete from kv_store where namespace = ?", KV_NAMESPACE)
+		if err != nil {
+			return err
+		}
 	}
 
 	files, err := getSilenceFileNamesForAllOrgs(mg)
