@@ -58,7 +58,7 @@ ldd chrome-linux/chrome
 On Ubuntu 18.10 the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1
+libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1 libxshmfence1
 ```
 
 **Debian:**
