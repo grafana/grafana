@@ -17,6 +17,28 @@ const (
 	AlertmanagerDefaultPushPullInterval     = cluster.DefaultPushPullInterval
 	SchedulerDefaultAdminConfigPollInterval = 60 * time.Second
 	AlertmanagerDefaultConfigPollInterval   = 60 * time.Second
+	// To start, the alertmanager needs at least one route defined.
+	// TODO: we should move this to Grafana settings and define this as the default.
+	AlertmanagerDefaultConfiguration = `{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
 )
 
 type UnifiedAlertingSettings struct {
@@ -28,6 +50,7 @@ type UnifiedAlertingSettings struct {
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
 	HAPushPullInterval             time.Duration
+	DefaultConfiguration           string
 }
 
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
@@ -64,6 +87,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
+	// TODO load from ini file
+	uaCfg.DefaultConfiguration = AlertmanagerDefaultConfiguration
 	cfg.UnifiedAlerting = uaCfg
 	return nil
 }
