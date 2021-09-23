@@ -133,6 +133,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -410,6 +411,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -880,6 +882,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -1284,6 +1287,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -1434,6 +1438,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server-enterprise2
 
@@ -1826,6 +1831,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -2219,6 +2225,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -2363,6 +2370,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server-enterprise2
 
@@ -2751,6 +2759,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -3112,6 +3121,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server
 
@@ -3266,6 +3276,7 @@ steps:
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - end-to-end-tests-server-enterprise2
 
@@ -3492,6 +3503,6 @@ get:
 
 ---
 kind: signature
-hmac: 7aff8432ab9444544b4690d1e5af35f94c0bd36a5ec707bad60b91fec529eac9
+hmac: c7f37dc92ac6b80bcd6800a00221f12ede0f43959f62d5beaeeb9ee011cd5711
 
 ...

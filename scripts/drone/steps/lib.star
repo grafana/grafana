@@ -619,6 +619,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
         ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'NODE_OPTIONS': '--max_old_space_size=4096',
         },
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
