@@ -223,12 +223,18 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
 
         let deg360 = 2 * Math.PI;
 
+        // leon forgot to add these to the uPlot's Scale interface, but they exist!
+        //let xKey = scaleX.key as string;
+        //let yKey = scaleY.key as string;
+        let xKey = series.facets![0].scale;
+        let yKey = series.facets![1].scale;
+
         // todo: this depends on direction & orientation
         // todo: calc once per redraw, not per path
-        let filtLft = u.posToVal(-maxSize / 2, 'x');
-        let filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + maxSize / 2, 'x');
-        let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, 'y');
-        let filtTop = u.posToVal(-maxSize / 2, 'y');
+        let filtLft = u.posToVal(-maxSize / 2, xKey);
+        let filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + maxSize / 2, xKey);
+        let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, yKey);
+        let filtTop = u.posToVal(-maxSize / 2, yKey);
 
         // todo only re-calc during data changes
         let minValue = Infinity;
