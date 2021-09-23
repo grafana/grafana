@@ -439,96 +439,102 @@ type upgradeNgAlerting struct {
 var _ migrator.CodeMigration = &upgradeNgAlerting{}
 
 func (u *upgradeNgAlerting) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-	dbMigrationError := func() error {
-		// if there are records with org_id == 0 then the feature flag was enabled before 8.2 that introduced org separation.
-		// if feature is enabled in 8.2 the migration "AddDashAlertMigration", which is effectively different from what was run in 8.1.x and earlier versions,
-		// will handle organizations correctly, and, therefore, nothing needs to be fixed
-		count, err := sess.Table(&AlertConfiguration{}).Where("org_id = 0").Count()
-		if err != nil {
-			return fmt.Errorf("failed to query table alert_configuration: %w", err)
-		}
-		if count == 0 {
-			return nil // NOTHING TO DO
-		}
+	err := u.updateAlertConfigurations(sess, migrator)
+	if err != nil {
+		return err
+	}
+	u.removeAlertmanagerFiles(migrator)
+	return nil
+}
 
-		orgs := make([]int64, 0)
-		// get all org IDs sorted in ascending order
-		if err = sess.Table("org").OrderBy("id").Cols("id").Find(&orgs); err != nil {
-			return fmt.Errorf("failed to query table org: %w", err)
-		}
-		if len(orgs) == 0 { // should not really happen
-			migrator.Logger.Info("No organizations are found. Nothing to migrate")
-			return nil
-		}
-
-		firstOrg := orgs[0]
-
-		// assigning all configurations to the first org because 0 does not usually point to any
-		migrator.Logger.Info("Assigning all existing records from alert_configuration to the first organization", "org", firstOrg)
-		_, err = sess.Cols("org_id").Update(&AlertConfiguration{OrgID: firstOrg})
-		if err != nil {
-			return fmt.Errorf("failed to update org_id for all rows in the table alert_configuration: %w", err)
-		}
-
-		// if there is a single organization it is safe to assume that all configurations belong to it.
-		if len(orgs) == 1 {
-			return nil
-		}
-		// if there are many organizations we cannot safely assume what organization an alert_configuration belongs to.
-		// Therefore, we apply the default configuration to all organizations. The previous version could
-		migrator.Logger.Warn("Detected many organizations. The current alertmanager configuration will be replaced by the default one")
-		configs := make([]*AlertConfiguration, 0, len(orgs))
-		for _, org := range orgs {
-			configs = append(configs, &AlertConfiguration{
-				AlertmanagerConfiguration: migrator.Cfg.UnifiedAlerting.DefaultConfiguration,
-				// Since we are migration for a snapshot of the code, it is always going to migrate to
-				// the v1 config.
-				ConfigurationVersion: "v1",
-				OrgID:                org,
-			})
-		}
-
-		_, err = sess.InsertMulti(configs)
-		if err != nil {
-			return fmt.Errorf("failed to add default alertmanager configurations to every organization: %w", err)
-		}
-		return nil
-	}()
-
-	if dbMigrationError != nil {
-		return dbMigrationError
+// updateAlertConfigurations updates records in table alert_configuration that have the default org_id=0, and assigns existing records to the first organization.
+// if there are many organizations, it inserts the default configuration for every organization.
+func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrator *migrator.Migrator) error {
+	// if there are records with org_id == 0 then the feature flag was enabled before 8.2 that introduced org separation.
+	// if feature is enabled in 8.2 the migration "AddDashAlertMigration", which is effectively different from what was run in 8.1.x and earlier versions,
+	// will handle organizations correctly, and, therefore, nothing needs to be fixed
+	count, err := sess.Table(&AlertConfiguration{}).Where("org_id = 0").Count()
+	if err != nil {
+		return fmt.Errorf("failed to query table alert_configuration: %w", err)
+	}
+	if count == 0 {
+		return nil // NOTHING TO DO
 	}
 
-	// the layout of alerting directory in 8.1 where silence files were placed by path "alerting/silences" is different from 8.2 "alerting/<org_id>/silences
-	// therefore the existing files are not really needed
-	func() {
-		// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
-		filesToDelete := map[string]interface{}{"__default__.tmpl": nil, "silences": nil}
+	orgs := make([]int64, 0)
+	// get all org IDs sorted in ascending order
+	if err = sess.Table("org").OrderBy("id").Cols("id").Find(&orgs); err != nil {
+		return fmt.Errorf("failed to query table org: %w", err)
+	}
+	if len(orgs) == 0 { // should not really happen
+		migrator.Logger.Info("No organizations are found. Nothing to migrate")
+		return nil
+	}
 
-		alertingPath := filepath.Join(migrator.Cfg.DataPath, "alerting")
-		entries, err := os.ReadDir(alertingPath)
-		if err != nil {
-			if !os.IsNotExist(err) {
-				keys := make([]string, 0, len(filesToDelete))
-				for key := range filesToDelete {
-					keys = append(keys, key)
-				}
-				migrator.Logger.Warn("Failed to clean up alerting directory. There may be files that are not used anymore.", "path", alertingPath, "files_to_delete", keys, "error", err)
-			}
-		}
-		for _, entry := range entries {
-			_, toDelete := filesToDelete[entry.Name()]
-			if toDelete {
-				path := filepath.Join(alertingPath, entry.Name())
-				migrator.Logger.Info("Deleting unused alerting files", "path", path)
-				err := os.Remove(path)
-				if err != nil {
-					migrator.Logger.Warn("Unable to remove unused alerting file", "path", path, "error", err)
-				}
-			}
-		}
-	}()
+	firstOrg := orgs[0]
+
+	// assigning all configurations to the first org because 0 does not usually point to any
+	migrator.Logger.Info("Assigning all existing records from alert_configuration to the first organization", "org", firstOrg)
+	_, err = sess.Cols("org_id").Update(&AlertConfiguration{OrgID: firstOrg})
+	if err != nil {
+		return fmt.Errorf("failed to update org_id for all rows in the table alert_configuration: %w", err)
+	}
+
+	// if there is a single organization it is safe to assume that all configurations belong to it.
+	if len(orgs) == 1 {
+		return nil
+	}
+	// if there are many organizations we cannot safely assume what organization an alert_configuration belongs to.
+	// Therefore, we apply the default configuration to all organizations. The previous version could
+	migrator.Logger.Warn("Detected many organizations. The current alertmanager configuration will be replaced by the default one")
+	configs := make([]*AlertConfiguration, 0, len(orgs))
+	for _, org := range orgs {
+		configs = append(configs, &AlertConfiguration{
+			AlertmanagerConfiguration: migrator.Cfg.UnifiedAlerting.DefaultConfiguration,
+			// Since we are migration for a snapshot of the code, it is always going to migrate to
+			// the v1 config.
+			ConfigurationVersion: "v1",
+			OrgID:                org,
+		})
+	}
+
+	_, err = sess.InsertMulti(configs)
+	if err != nil {
+		return fmt.Errorf("failed to add default alertmanager configurations to every organization: %w", err)
+	}
 	return nil
+}
+
+// removeAlertmanagerFiles scans the existing alerting directory '<data_dir>/alerting' for known files.
+// If argument 'orgId' is not 0 removeAlertmanagerFiles moves all known files to the directory <data_dir>/alerting/<orgId>.
+// Otherwise, it deletes those files.
+// pre-8.2 version put all configuration files into the root of alerting directory. Since 8.2 configuration files are put in organization specific directory
+func (u *upgradeNgAlerting) removeAlertmanagerFiles(migrator *migrator.Migrator) {
+	// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
+	filesToDelete := map[string]interface{}{"__default__.tmpl": nil, "silences": nil}
+
+	alertingPath := filepath.Join(migrator.Cfg.DataPath, "alerting")
+	entries, err := os.ReadDir(alertingPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			keys := make([]string, 0, len(filesToDelete))
+			for key := range filesToDelete {
+				keys = append(keys, key)
+			}
+			migrator.Logger.Warn("Failed to clean up alerting directory. There may be files that are not used anymore.", "path", alertingPath, "files_to_delete", keys, "error", err)
+		}
+	}
+	for _, entry := range entries {
+		_, toDelete := filesToDelete[entry.Name()]
+		if toDelete {
+			path := filepath.Join(alertingPath, entry.Name())
+			migrator.Logger.Info("Deleting unused alerting files", "path", path)
+			err := os.Remove(path)
+			if err != nil {
+				migrator.Logger.Warn("Unable to remove unused alerting file", "path", path, "error", err)
+			}
+		}
+	}
 }
 
 func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
