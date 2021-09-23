@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
+import { usePrevious } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
@@ -40,20 +41,22 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
       href: `${url}?page=${PluginTabIds.VERSIONS}`,
     },
   ];
-  const [activeTabIndex, setActiveTabIndex] = useState(Object.values(PluginTabIds).indexOf(pageId));
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
   const { tabs } = usePluginDetailsTabs(plugin, defaultTabs);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
+  const prevTabs = usePrevious(tabs);
 
   // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
   useEffect(() => {
-    if (activeTabIndex > tabs.length - 1) {
-      setActiveTabIndex(0);
+    const hasUninstalledWithConfigPages = prevTabs && prevTabs.length > tabs.length;
+    const isViewingAConfigPage = pageId !== PluginTabIds.OVERVIEW && pageId !== PluginTabIds.VERSIONS;
+
+    if (hasUninstalledWithConfigPages && isViewingAConfigPage) {
       locationService.replace(`${url}?page=${PluginTabIds.OVERVIEW}`);
     }
-  }, [url, activeTabIndex, tabs]);
+  }, [pageId, url, tabs, prevTabs]);
 
   if (isFetchLoading || isFetchDetailsLoading) {
     return (
@@ -81,7 +84,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
         {/* Tab navigation */}
         <TabsBar>
-          {tabs.map((tab: PluginDetailsTab, idx) => {
+          {tabs.map((tab: PluginDetailsTab) => {
             return (
               <Tab
                 key={tab.label}
@@ -89,7 +92,6 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
                 href={tab.href}
                 icon={tab.icon as IconName}
                 active={tab.id === pageId}
-                onChangeTab={() => setActiveTabIndex(idx)}
               />
             );
           })}

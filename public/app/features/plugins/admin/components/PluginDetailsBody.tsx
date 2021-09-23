@@ -15,7 +15,7 @@ type Props = {
   queryParams: UrlQueryMap;
 };
 
-export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element | null {
+export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
   const pageId = queryParams.page;
@@ -67,7 +67,11 @@ export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element |
     );
   }
 
-  return null;
+  return (
+    <div className={styles.container}>
+      <p>Page not found.</p>
+    </div>
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
