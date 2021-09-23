@@ -8,13 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // GET /api/org
-func GetOrgCurrent(c *models.ReqContext) response.Response {
+func GetCurrentOrg(c *models.ReqContext) response.Response {
 	return getOrgHelper(c.OrgId)
 }
 
@@ -52,7 +53,7 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 func getOrgHelper(orgID int64) response.Response {
 	query := models.GetOrgByIdQuery{Id: orgID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := sqlstore.GetOrgById(&query); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)
 		}

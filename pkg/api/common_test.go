@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -244,4 +246,74 @@ type accessControlTestCase struct {
 	url          string
 	method       string
 	permissions  []*accesscontrol.Permission
+}
+
+func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission) {
+	acmock.GetUserPermissionsFunc = func(_ context.Context, _ *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+		return perms, nil
+	}
+}
+
+func setupHTTPServer(t *testing.T, enableAccessControl bool, signedInUser *models.SignedInUser) (*macaron.Macaron, *HTTPServer, *accesscontrolmock.Mock) {
+	t.Helper()
+
+	// Use an accesscontrol mock
+	acmock := accesscontrolmock.New()
+	if !enableAccessControl {
+		acmock = acmock.WithDisabled()
+	}
+
+	// Use a new conf
+	cfg := setting.NewCfg()
+	cfg.FeatureToggles = make(map[string]bool)
+	cfg.FeatureToggles["accesscontrol"] = enableAccessControl
+
+	// Use a test DB
+	db := sqlstore.InitTestDB(t)
+	db.Cfg = cfg
+
+	bus := bus.GetBus()
+
+	// Create minimal HTTP Server
+	hs := &HTTPServer{
+		Cfg:                cfg,
+		Bus:                bus,
+		Live:               newTestLive(t),
+		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		RouteRegister:      routing.NewRouteRegister(),
+		AccessControl:      acmock,
+		SQLStore:           db,
+		searchUsersService: searchusers.ProvideUsersService(bus),
+	}
+
+	// Instantiate a new Server
+	m := macaron.New()
+
+	// Pretend middleware to sign the user in
+	if signedInUser != nil {
+		m.Use(func(c *macaron.Context) {
+			ctx := &models.ReqContext{
+				Context:      c,
+				IsSignedIn:   true,
+				SignedInUser: signedInUser,
+				Logger:       log.New("api-test"),
+			}
+			c.Map(ctx)
+		})
+	}
+
+	// Register all routes
+	hs.registerRoutes()
+	hs.RouteRegister.Register(m.Router)
+
+	return m, hs, acmock
+}
+
+func callAPI(server *macaron.Macaron, method, path string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {
+	req, err := http.NewRequest(method, path, body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, req)
+	return recorder
 }
