@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
@@ -498,6 +499,35 @@ func (u *upgradeNgAlerting) Exec(sess *xorm.Session, migrator *migrator.Migrator
 		return dbMigrationError
 	}
 
+	// the layout of alerting directory in 8.1 where silence files were placed by path "alerting/silences" is different from 8.2 "alerting/<org_id>/silences
+	// therefore the existing files are not really needed
+	func() {
+		// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
+		filesToDelete := map[string]interface{}{"__default__.tmpl": nil, "silences": nil}
+
+		alertingPath := filepath.Join(migrator.Cfg.DataPath, "alerting")
+		entries, err := os.ReadDir(alertingPath)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				keys := make([]string, 0, len(filesToDelete))
+				for key := range filesToDelete {
+					keys = append(keys, key)
+				}
+				migrator.Logger.Warn("Failed to clean up alerting directory. There may be files that are not used anymore.", "path", alertingPath, "files_to_delete", keys, "error", err)
+			}
+		}
+		for _, entry := range entries {
+			_, toDelete := filesToDelete[entry.Name()]
+			if toDelete {
+				path := filepath.Join(alertingPath, entry.Name())
+				migrator.Logger.Info("Deleting unused alerting files", "path", path)
+				err := os.Remove(path)
+				if err != nil {
+					migrator.Logger.Warn("Unable to remove unused alerting file", "path", path, "error", err)
+				}
+			}
+		}
+	}()
 	return nil
 }
 
