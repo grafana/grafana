@@ -8,7 +8,6 @@ import {
 import { LineStyle, VisibilityMode } from '@grafana/schema';
 
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
-import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 import { ScatterFieldConfig, ScatterLineMode } from './models.gen';
 
@@ -31,6 +30,27 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
 
     useCustomConfig: (builder) => {
       builder
+        .addRadio({
+          path: 'point',
+          name: 'Points',
+          category: categoryStyles,
+          defaultValue: cfg.point,
+          settings: {
+            options: graphFieldOptions.showPoints,
+          },
+        })
+        .addSliderInput({
+          path: 'pointSize.fixed',
+          name: 'Point size',
+          category: categoryStyles,
+          defaultValue: cfg.pointSize?.fixed,
+          settings: {
+            min: 1,
+            max: 10,
+            step: 1,
+          },
+          showIf: (c) => c.point !== VisibilityMode.Never,
+        })
         .addRadio({
           path: 'line',
           name: 'Lines',
@@ -65,87 +85,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
             step: 1,
           },
           showIf: (c) => c.line !== ScatterLineMode.None,
-        })
-        .addCustomEditor({
-          id: 'lineColor',
-          path: 'lineColor',
-          name: 'Line color',
-          category: categoryStyles,
-          editor: ColorDimensionEditor as any,
-          override: ColorDimensionEditor as any,
-          settings: {},
-          defaultValue: {
-            // Configured values
-            fixed: 'grey',
-          },
-          showIf: (c) => c.line !== ScatterLineMode.None,
-          process: identityOverrideProcessor,
-          shouldApply: (f) => true,
-        })
-        .addRadio({
-          path: 'point',
-          name: 'Points',
-          category: categoryStyles,
-          defaultValue: cfg.point,
-          settings: {
-            options: graphFieldOptions.showPoints,
-          },
-        })
-        .addCustomEditor({
-          id: 'pointSize',
-          path: 'pointSize',
-          name: 'Point size',
-          category: categoryStyles,
-          editor: ScaleDimensionEditor as any,
-          override: ScaleDimensionEditor as any,
-          settings: {},
-          defaultValue: {
-            // Configured values
-            fixed: 'grey',
-          },
-          showIf: (c) => c.point !== VisibilityMode.Never,
-          process: identityOverrideProcessor,
-          shouldApply: (f) => true,
-        })
-        .addCustomEditor({
-          id: 'pointColor',
-          path: 'pointColor',
-          name: 'Point color',
-          category: categoryStyles,
-          editor: ColorDimensionEditor as any,
-          override: ColorDimensionEditor as any,
-          settings: {},
-          defaultValue: {
-            // Configured values
-            fixed: 'grey',
-          },
-          showIf: (c) => c.point !== VisibilityMode.Never,
-          process: identityOverrideProcessor,
-          shouldApply: (f) => true,
-        })
-        .addRadio({
-          path: 'label',
-          name: 'Labels',
-          category: categoryStyles,
-          defaultValue: cfg.label,
-          settings: {
-            options: graphFieldOptions.showPoints,
-          },
-        })
-        .addCustomEditor({
-          id: 'labelText',
-          path: 'labelText',
-          name: 'Label text',
-          category: categoryStyles,
-          editor: TextDimensionEditor as any,
-          override: TextDimensionEditor as any,
-          settings: {},
-          defaultValue: {
-            placeholderText: 'Value',
-          },
-          showIf: (c) => c.label !== VisibilityMode.Never,
-          process: identityOverrideProcessor,
-          shouldApply: (f) => true,
         });
 
       commonOptionsBuilder.addAxisConfig(builder, cfg);

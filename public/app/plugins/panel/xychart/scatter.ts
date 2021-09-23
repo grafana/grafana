@@ -1,30 +1,20 @@
 import { DataFrame, getFieldDisplayName, getFieldSeriesColor, GrafanaTheme2, PanelData } from '@grafana/data';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
-import { DimensionValues, UPlotConfigBuilder } from '@grafana/ui';
+import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
+import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import {
-  ColorDimensionConfig,
-  findFieldIndex,
-  getColorDimensionForField,
-  getScaledDimensionForField,
-  getTextDimensionForField,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
-} from 'app/features/dimensions';
+import { findFieldIndex } from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
 import { defaultScatterConfig, ScatterFieldConfig, XYChartOptions } from './models.gen';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import uPlot from 'uplot';
 import { ScatterSeries } from './types';
+import { isGraphable } from './dims';
 
 export interface ScatterPanelInfo {
   error?: string;
-  series?: ScatterSeries[];
+  series: ScatterSeries[];
   builder?: UPlotConfigBuilder;
-
-  // Called whenever the data changes
-  //  prepare: (data: PanelData) => FacetedData | AlignedData;
 }
 
 /**
@@ -40,6 +30,7 @@ export function prepScatter(options: XYChartOptions, data: PanelData, theme: Gra
   } catch (e) {
     return {
       error: e.message,
+      series: [],
     };
   }
 
@@ -49,12 +40,102 @@ export function prepScatter(options: XYChartOptions, data: PanelData, theme: Gra
   };
 }
 
-function prepSeries(options: XYChartOptions, frames: DataFrame[]) {
+function getScatterSeries(
+  seriesIndex: number,
+  frames: DataFrame[],
+  frameIndex: number,
+  xIndex: number,
+  yIndex: number
+): ScatterSeries {
+  const frame = frames[frameIndex];
+  const y = frame.fields[yIndex];
+  let state = y.state ?? {};
+  state.seriesIndex = seriesIndex;
+  y.state = state;
+
+  // can be used to generate pointColor from thresholds, or text labels with formatting
+  // const disp =
+  //   y.display ??
+  //   getDisplayProcessor({
+  //     field: y,
+  //     theme: config.theme2,
+  //     timeZone: tz,
+  //   });
+
+  // Simple hack for now!
+  const seriesColor = getFieldSeriesColor(y, config.theme2).color;
+  const fieldConfig: ScatterFieldConfig = { ...defaultScatterConfig, ...y.config.custom };
+
+  const name = getFieldDisplayName(y, frame, frames);
+  return {
+    name,
+
+    frame: (frames) => frames[frameIndex],
+
+    x: (frame) => frame.fields[xIndex],
+    y: (frame) => frame.fields[yIndex],
+    legend: (frame) => {
+      return [
+        {
+          label: name,
+          color: seriesColor, // single color for series?
+          getItemKey: () => name,
+          yAxis: yIndex, // << but not used
+        },
+      ];
+    },
+
+    line: fieldConfig.line!,
+    lineWidth: fieldConfig.lineWidth!,
+    lineStyle: fieldConfig.lineStyle!,
+    lineColor: () => seriesColor,
+
+    point: fieldConfig.point!,
+    pointSize: () => fieldConfig.pointSize?.fixed ?? 3, // hardcoded for now
+    pointColor: () => seriesColor,
+    pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
+
+    label: VisibilityMode.Never,
+    labelValue: () => '',
+  };
+}
+
+function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
+  let seriesIndex = 0;
   if (!frames.length) {
     throw 'missing data';
   }
 
-  const series: ScatterSeries[] = [];
+  if (options.mode === 'xy') {
+    const { dims } = options;
+    const frameIndex = dims.frame ?? 0;
+    const frame = frames[frameIndex];
+    const numericIndicies: number[] = [];
+
+    let xIndex = findFieldIndex(frame, dims.x);
+    for (let i = 0; i < frame.fields.length; i++) {
+      if (isGraphable(frame.fields[i])) {
+        if (xIndex == null || i === xIndex) {
+          xIndex = i;
+          continue;
+        }
+        if (dims.exclude && dims.exclude.includes(getFieldDisplayName(frame.fields[i], frame, frames))) {
+          continue; // skip
+        }
+
+        numericIndicies.push(i);
+      }
+    }
+
+    if (xIndex == null) {
+      throw 'Missing X dimension';
+    }
+
+    if (!numericIndicies.length) {
+      throw 'No Y values';
+    }
+    return numericIndicies.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex));
+  }
 
   if (options.mode === 'single') {
     const { single } = options;
@@ -66,8 +147,6 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]) {
     if (!single?.y) {
       throw 'Select Y dimension';
     }
-
-    let seriesIndex = 0;
 
     for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
       const frame = frames[frameIndex];
@@ -81,61 +160,12 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]) {
           throw 'Y must be in the same frame as X';
         }
 
-        const y = frame.fields[yIndex];
-        let state = y.state ?? {};
-        state.seriesIndex = seriesIndex++;
-        y.state = state;
-
-        // can be used to generate pointColor from thresholds, or text labels with formatting
-        // const disp =
-        //   y.display ??
-        //   getDisplayProcessor({
-        //     field: y,
-        //     theme: config.theme2,
-        //     timeZone: tz,
-        //   });
-
-        const fieldConfig: ScatterFieldConfig = { ...defaultScatterConfig, ...y.config.custom };
-
-        const name = getFieldDisplayName(y, frame, frames);
-
-        series.push({
-          name,
-
-          frame: (frames) => frames[frameIndex],
-
-          x: (frame) => frame.fields[xIndex],
-          y: (frame) => frame.fields[yIndex],
-          legend: (frame) => {
-            return [
-              {
-                label: name,
-                color: '#f00', // single color for series?
-                getItemKey: () => name,
-                yAxis: yIndex, // << but not used
-              },
-            ];
-          },
-
-          line: fieldConfig.line!,
-          lineWidth: fieldConfig.lineWidth!,
-          lineStyle: fieldConfig.lineStyle!,
-          lineColor: getColorValues(frame, yIndex, fieldConfig.lineColor),
-
-          point: fieldConfig.point!,
-          pointSize: getScaledValues(frame, yIndex, fieldConfig.pointSize),
-          pointColor: getColorValues(frame, yIndex, fieldConfig.pointColor),
-          pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
-
-          label: fieldConfig.label!,
-          labelValue: getTextValues(frame, yIndex, fieldConfig.labelValue),
-        });
-        break; // only one for now
+        return [getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex)];
       }
     }
   }
 
-  return series;
+  return [];
 }
 
 //const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
@@ -147,25 +177,15 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
   let minSize = 6;
   let maxSize = 60;
 
-  let maxArea = maxSize ** 2;
-  let minArea = minSize ** 2;
+  // let maxArea = maxSize ** 2;
+  // let minArea = minSize ** 2;
 
-  // quadratic scaling (px area)
-  function getSize(value: number, minValue: number, maxValue: number) {
-    let pct = value / (maxValue - minValue);
-    let area = minArea + pct * (maxArea - minArea);
-    return Math.sqrt(area);
-  }
-
-  // TODO: maybe passed as pathbuilder option, similar to bars pathbuilder
-  /*
-  disp: {
-    size: {
-      unit: 3,
-      values: (u, seriesIdx) => u.series[seriesIdx][2].map(v => getSize(v)),
-    },
-  },
-  */
+  // // quadratic scaling (px area)
+  // function getSize(value: number, minValue: number, maxValue: number) {
+  //   let pct = value / (maxValue - minValue);
+  //   let area = minArea + pct * (maxArea - minArea);
+  //   return Math.sqrt(area);
+  // }
 
   const drawBubbles: uPlot.Series.PathBuilder = (u, seriesIdx, idx0, idx1) => {
     uPlot.orient(
@@ -224,7 +244,7 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
         for (let i = 0; i < d[0].length; i++) {
           let xVal = d[0][i];
           let yVal = d[1][i];
-          let size = getSize(d[2][i], minValue, maxValue);
+          let size = 20; // ??? // getSize(d[2][i], minValue, maxValue);
 
           if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
             let cx = valToPosX(xVal, scaleX, xDim, xOff);
@@ -342,9 +362,8 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
     let frame = s.frame(frames);
     let field = s.y(frame);
 
-    const scaleColor = getFieldSeriesColor(field, theme);
-    const seriesColor = scaleColor.color;
-
+    const lineColor = s.lineColor(frame) as string;
+    const fillColor = s.pointColor(frame) as string;
     //const lineColor = s.lineColor(frame);
     //const lineWidth = s.lineWidth;
 
@@ -354,8 +373,8 @@ const prepConfig = (frames: DataFrame[], series: ScatterSeries[], theme: Grafana
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used internally (x/y)
-      lineColor: seriesColor,
-      fillColor: alpha(seriesColor, 0.5),
+      lineColor: lineColor,
+      fillColor: alpha(fillColor, 0.5),
     });
   });
 
@@ -397,69 +416,15 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
     null,
     ...info.series.map((s, idx) => {
       const frame = s.frame(data);
+      const pointSize = Number(s.pointSize(frame)); // constant!
       // TODO obviously add color etc etc
       return [
         s.x(frame).values.toArray(), // X
         s.y(frame).values.toArray(), // Y
-        frame.fields[2].values.toArray(), // this should push raw values from which size is computed
+        Array(frame.length).fill(pointSize), // constant for now
         //s.pointSize(frame), // size
         //s.pointColor(frame), // color
       ];
     }),
   ];
-}
-
-function getColorValues(
-  frame: DataFrame,
-  yIndex: number,
-  cfg?: ColorDimensionConfig
-): DimensionValues<CanvasRenderingContext2D['strokeStyle']> {
-  let idx = findFieldIndex(frame, cfg?.field);
-  if (idx == null) {
-    if (cfg?.fixed) {
-      return (frame: DataFrame, from?: number) => cfg.fixed;
-    }
-    idx = yIndex; // << use the y field color
-  }
-
-  // TODO: could be better :)
-  return (frame: DataFrame, from?: number) => {
-    const field = frame.fields[idx!];
-    const dims = getColorDimensionForField(field, cfg!, config.theme2);
-    return field.values.toArray().map((v, idx) => dims.get(idx));
-  };
-}
-
-function getScaledValues(frame: DataFrame, yIndex: number, cfg?: ScaleDimensionConfig): DimensionValues<number> {
-  let idx = findFieldIndex(frame, cfg?.field);
-  if (idx == null) {
-    if (cfg?.fixed) {
-      return (frame: DataFrame, from?: number) => cfg.fixed;
-    }
-    idx = yIndex; // << use the y field color
-  }
-
-  // TODO: could be better :)
-  return (frame: DataFrame, from?: number) => {
-    const field = frame.fields[idx!];
-    const dims = getScaledDimensionForField(field, cfg!);
-    return field.values.toArray().map((v, idx) => dims.get(idx));
-  };
-}
-
-function getTextValues(frame: DataFrame, yIndex: number, cfg?: TextDimensionConfig): DimensionValues<string> {
-  let idx = findFieldIndex(frame, cfg?.field);
-  if (idx == null) {
-    if (cfg?.fixed) {
-      return (frame: DataFrame, from?: number) => cfg.fixed;
-    }
-    idx = yIndex; // << use the y field color
-  }
-
-  // TODO: could be better :)
-  return (frame: DataFrame, from?: number) => {
-    const field = frame.fields[idx!];
-    const dims = getTextDimensionForField(field, cfg!);
-    return field.values.toArray().map((v, idx) => dims.get(idx));
-  };
 }

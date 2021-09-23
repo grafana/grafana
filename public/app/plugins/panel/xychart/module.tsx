@@ -4,7 +4,7 @@ import { XYChartPanel } from './XYChartPanel';
 import { defaultScatterConfig, XYChartOptions, ScatterFieldConfig } from './models.gen';
 import { getScatterFieldConfig } from './config';
 import { ExplicitEditor } from './ExplicitEditor';
-// import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
+import { XYDimsEditor } from './XYDimsEditor';
 
 export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChartPanel)
   .useFieldConfig(getScatterFieldConfig(defaultScatterConfig))
@@ -16,10 +16,17 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         defaultValue: 'single',
         settings: {
           options: [
-            { value: 'single', label: 'Single' },
+            { value: 'xy', label: 'XY (old)' },
             { value: 'explicit', label: 'Explicit' },
           ],
         },
+      })
+      .addCustomEditor({
+        id: 'xyPlotConfig',
+        path: 'dims',
+        name: 'Data',
+        editor: XYDimsEditor,
+        showIf: (cfg) => cfg.mode === 'xy',
       })
       .addCustomEditor({
         id: 'yyExplicit',
@@ -27,22 +34,6 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         name: 'Series',
         editor: ExplicitEditor,
         showIf: (cfg) => cfg.mode === 'explicit',
-      })
-      .addFieldNamePicker({
-        path: 'single.x',
-        name: 'X field',
-        showIf: (cfg) => cfg.mode === 'single',
-        settings: {
-          placeholderText: 'select field',
-        },
-      })
-      .addFieldNamePicker({
-        path: 'single.y',
-        name: 'Y field',
-        showIf: (cfg) => cfg.mode === 'single',
-        settings: {
-          placeholderText: 'select field',
-        },
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
