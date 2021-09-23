@@ -38,6 +38,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := &HTTPServer{Cfg: settings}
 
 	sqlStore := sqlstore.InitTestDB(t)
+	hs.SQLStore = sqlStore
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
