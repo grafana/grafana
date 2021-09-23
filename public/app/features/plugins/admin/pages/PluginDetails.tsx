@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
@@ -26,9 +26,19 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   } = match;
   const pageId = (queryParams.page as PluginTabIds) || PluginTabIds.OVERVIEW;
   const parentUrl = url.substring(0, url.lastIndexOf('/'));
-  const defaultTabs = [
-    { label: PluginTabLabels.OVERVIEW, id: PluginTabIds.OVERVIEW, href: `${url}?page=${PluginTabIds.OVERVIEW}` },
-    { label: PluginTabLabels.VERSIONS, id: PluginTabIds.VERSIONS, href: `${url}?page=${PluginTabIds.VERSIONS}` },
+  const defaultTabs: PluginDetailsTab[] = [
+    {
+      label: PluginTabLabels.OVERVIEW,
+      icon: 'file-alt',
+      id: PluginTabIds.OVERVIEW,
+      href: `${url}?page=${PluginTabIds.OVERVIEW}`,
+    },
+    {
+      label: PluginTabLabels.VERSIONS,
+      icon: 'history',
+      id: PluginTabIds.VERSIONS,
+      href: `${url}?page=${PluginTabIds.VERSIONS}`,
+    },
   ];
   const [activeTabIndex, setActiveTabIndex] = useState(Object.values(PluginTabIds).indexOf(pageId));
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
@@ -67,7 +77,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   return (
     <Page>
       <PluginPage>
-        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} plugin={plugin} />
+        <PluginDetailsHeader currentUrl={url} parentUrl={parentUrl} plugin={plugin} />
 
         {/* Tab navigation */}
         <TabsBar>
@@ -77,6 +87,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
                 key={tab.label}
                 label={tab.label}
                 href={tab.href}
+                icon={tab.icon as IconName}
                 active={tab.id === pageId}
                 onChangeTab={() => setActiveTabIndex(idx)}
               />

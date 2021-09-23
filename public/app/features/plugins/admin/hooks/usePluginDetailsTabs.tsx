@@ -28,6 +28,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
         if (pluginConfig.angularConfigCtrl) {
           tabs.push({
             label: 'Config',
+            icon: 'cog',
             id: PluginTabIds.CONFIG,
             href: `${pathname}?page=${PluginTabIds.CONFIG}`,
           });
@@ -37,6 +38,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
           for (const page of pluginConfig.configPages) {
             tabs.push({
               label: page.title,
+              icon: page.icon,
               id: page.id,
               href: `${pathname}?page=${page.id}`,
             });
@@ -46,6 +48,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
         if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
           tabs.push({
             label: 'Dashboards',
+            icon: 'apps',
             id: PluginTabIds.DASHBOARDS,
             href: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
           });

@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Icon, useStyles2, CardContainer, HorizontalGroup, VerticalGroup, Tooltip } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { CatalogPlugin, IconName, PluginTabIds } from '../types';
+import { CatalogPlugin, PluginIconName, PluginTabIds } from '../types';
 import { PluginLogo } from './PluginLogo';
 import { PluginListBadges } from './PluginListBadges';
 
@@ -29,7 +29,7 @@ export function PluginListCard({ plugin, pathName }: PluginListCardProps) {
           <h2 className={styles.name}>{plugin.name}</h2>
           {plugin.type && (
             <div className={styles.icon} data-testid={`${plugin.type} plugin icon`}>
-              <Icon name={IconName[plugin.type]} />
+              <Icon name={PluginIconName[plugin.type]} />
             </div>
           )}
         </div>
