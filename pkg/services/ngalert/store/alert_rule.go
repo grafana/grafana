@@ -404,7 +404,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 	}
 
 	if withCanSave {
-		g := guardian.New(folder.Id, orgID, user)
+		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
 				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)

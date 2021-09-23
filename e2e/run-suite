@@ -17,7 +17,7 @@ SUITE=${SUITE:-$DEFAULT_SUITE}
 if [ "$1" == "debug" ]; then
     echo -e "Debug mode"
     SLOWMO=1
-    PARAMS="--headed --no-exit"
+    PARAMS="--no-exit"
 fi
 
 if [ "$1" == "dev" ]; then
@@ -28,5 +28,5 @@ fi
 cd packages/grafana-e2e
 
 yarn $CMD --env BASE_URL=$URL,SLOWMO=$SLOWMO \
-  --config defaultCommandTimeout=30000,integrationFolder=../../e2e/$SUITE/specs,screenshotsFolder=../../e2e/$SUITE/screenshots,videosFolder=../../e2e/$SUITE/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false \
+  --config defaultCommandTimeout=30000,integrationFolder=../../e2e/$SUITE/specs,screenshotsFolder=../../e2e/$SUITE/screenshots,videosFolder=../../e2e/$SUITE/videos,fileServerFolder=./cypress,viewportWidth=1920,viewportHeight=1080,trashAssetsBeforeRuns=false,videoUploadOnPasses=false \
   $PARAMS
