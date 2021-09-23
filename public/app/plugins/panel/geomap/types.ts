@@ -1,6 +1,5 @@
 import { MapLayerOptions } from '@grafana/data';
 import { Units } from 'ol/proj/Units';
-import { Fill, Stroke } from 'ol/style';
 import { MapCenterID } from './view';
 
 export interface ControlsOptions {
@@ -46,18 +45,17 @@ export interface GeomapPanelOptions {
 }
 export interface FeatureStyleConfig {
   shape?: string;
-  fill?: Fill; //eventually be ColorDimensionConfig
-  stroke?: Stroke; //eventually be ColorDimensionConfig
+  fillColor: string; //eventually be ColorDimensionConfig
   strokeWidth?: number;
   rule?: FeatureRuleConfig;
 }
 export interface FeatureRuleConfig {
   property: string;
-  operations: ComparisonOperations;
+  operation: ComparisonOperation;
   value: string | boolean | number;
 }
 
-export enum ComparisonOperations {
+export enum ComparisonOperation {
   EQ = 'eq',
   LT = 'lt',
   LTE = 'lte',

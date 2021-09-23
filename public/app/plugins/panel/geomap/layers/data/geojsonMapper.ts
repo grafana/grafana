@@ -9,7 +9,7 @@ import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { FeatureStyleConfig } from '../../types';
 import { Stroke, Style } from 'ol/style';
-import RenderFeature from 'ol/render/Feature';
+import { FeatureLike } from 'ol/Feature';
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -51,8 +51,8 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     const vectorLayer = new VectorLayer({
       source,
-      style: (feature: RenderFeature | Feature<Geometry>) => {
-        if (config?.styles?.length) {
+      style: (feature: FeatureLike) => {
+        if (feature && config?.styles?.length) {
           for (const style of config.styles) {
             //check if there is no style rule or if the rule matches feature property
             if (!style.rule || checkFeatureMatchesStyleRule(style.rule, feature as Feature<Geometry>)) {

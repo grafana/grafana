@@ -7,17 +7,15 @@ import { FeatureStyleConfig } from '../types';
  */
 export const getGeoMapStyle = (config: FeatureStyleConfig, property: any) => {
   return new Style({
-    fill:
-      config.fill &&
-      new Fill({
-        color: `${config.fill}`,
-      }),
-    stroke:
-      config.stroke &&
-      new Stroke({
-        color: `${config.stroke}`,
-        width: config.strokeWidth ?? 1,
-      }),
+    fill: new Fill({
+      color: `${config.fillColor ?? '#1F60C4'}`,
+    }),
+    stroke: config?.strokeWidth
+      ? new Stroke({
+          color: `${config.fillColor ?? '#1F60C4'}`,
+          width: config.strokeWidth,
+        })
+      : undefined,
     //handle a shape/marker too?
   });
 };

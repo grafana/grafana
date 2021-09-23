@@ -1,6 +1,5 @@
-import { Feature } from 'ol';
-import { Geometry } from 'ol/geom';
-import { FeatureRuleConfig, ComparisonOperations } from '../types';
+import { FeatureLike } from 'ol/Feature';
+import { FeatureRuleConfig, ComparisonOperation } from '../types';
 
 /**
  * Check whether feature has property value that matches rule
@@ -8,18 +7,19 @@ import { FeatureRuleConfig, ComparisonOperations } from '../types';
  * @param feature - feature with properties and values
  * @returns boolean
  */
-export const checkFeatureMatchesStyleRule = (rule: FeatureRuleConfig, feature: Feature<Geometry>) => {
-  switch (rule.operations) {
-    case ComparisonOperations.EQ:
+export const checkFeatureMatchesStyleRule = (rule: FeatureRuleConfig, feature: FeatureLike) => {
+  switch (rule.operation) {
+    case ComparisonOperation.EQ:
       return feature.get(rule.property) === rule.value;
-    case ComparisonOperations.GT:
+    case ComparisonOperation.GT:
       return feature.get(rule.property) > rule.value;
-    case ComparisonOperations.GTE:
+    case ComparisonOperation.GTE:
       return feature.get(rule.property) >= rule.value;
-    case ComparisonOperations.LT:
+    case ComparisonOperation.LT:
       return feature.get(rule.property) < rule.value;
-    case ComparisonOperations.LTE:
+    case ComparisonOperation.LTE:
       return feature.get(rule.property) <= rule.value;
+    default:
+      return false;
   }
-  return false;
 };
