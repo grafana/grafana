@@ -32,6 +32,10 @@ export function addResources(rows: ResourceRowGroup, targetResourceGroupID: stri
       throw new Error('Unable to find resource');
     }
 
-    draftRow.children = newResources;
+    if (draftRow.children) {
+      draftRow.children.unshift(...newResources);
+    } else {
+      draftRow.children = newResources;
+    }
   });
 }

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NestedResourceTable from './NestedResourceTable';
-import { ResourceRow, ResourceRowGroup } from './types';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
@@ -46,7 +46,119 @@ const ResourcePicker = ({
 
   const rows = useMemo(() => {
     const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
-    return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
+    let workingRows = templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
+
+    if (internalSelected) {
+      const parsedURI = parseResourceURI(internalSelected);
+      const resourceGroupURI = `/subscriptions/${parsedURI?.subscriptionID}/resourceGroups/${parsedURI?.resourceGroup}`;
+      const resourceGroupRow = findRow(workingRows, resourceGroupURI);
+
+      console.log({ parsedURI, resourceGroupURI, resourceGroupRow });
+
+      if (!resourceGroupRow && parsedURI) {
+        let workingRows = azureRows;
+        console.group('resource uri might contain template variables');
+
+        if (datasource.isTemplateVariable(parsedURI.subscriptionID)) {
+          console.group('subscription ID is a template variable');
+          const variableURI = `/subscriptions/${parsedURI.subscriptionID}`;
+          const interpolatedURI = datasource.replaceTemplateVariable(variableURI);
+
+          const variableRow = findRow(workingRows, variableURI);
+          const originalRow = findRow(workingRows, interpolatedURI);
+
+          // Find a row matching the value of the variable, and copy it to a new "variable"
+          // subscription
+          if (originalRow && !variableRow) {
+            const variableSubRow = { ...originalRow };
+            variableSubRow.name = parsedURI.subscriptionID;
+            variableSubRow.id = variableURI;
+            // TODO: change type to variable???
+            variableSubRow.children = variableSubRow.children?.map((v) => ({
+              ...v,
+              id: v.id.replace(interpolatedURI, variableURI),
+            }));
+
+            workingRows = [variableSubRow, ...workingRows];
+          }
+          console.groupEnd();
+        }
+
+        if (parsedURI.resourceGroup && datasource.isTemplateVariable(parsedURI.resourceGroup)) {
+          console.group('resource group is a template variable');
+
+          const resourceGroupURI = createResourceURI({
+            subscriptionID: parsedURI.subscriptionID,
+            resourceGroup: parsedURI.resourceGroup,
+          });
+          const interpolatedResourceGroupURI = datasource.replaceTemplateVariable(resourceGroupURI);
+
+          const existingRow = findRow(workingRows, resourceGroupURI);
+          const originalRow = findRow(workingRows, interpolatedResourceGroupURI);
+
+          console.log('resourceGroup', { existingRow, originalRow });
+
+          // TODO: if the original row doesnt exist, maybe we want to create a new one anyway??
+          if (originalRow && !existingRow) {
+            const parentURI = createResourceURI({
+              subscriptionID: parsedURI.subscriptionID,
+            });
+
+            const variableRow = { ...originalRow };
+            variableRow.name = parsedURI.resourceGroup;
+            variableRow.id = resourceGroupURI;
+            // TODO: change type to variable???
+            variableRow.children = variableRow.children?.map((v) => ({
+              ...v,
+              id: v.id.replace(interpolatedResourceGroupURI, resourceGroupURI),
+            }));
+
+            console.log('adding in resource group row', { parentURI, variableRow });
+            workingRows = addResources(workingRows, parentURI, [variableRow]);
+          }
+          console.groupEnd();
+        }
+
+        if (parsedURI.resource && parsedURI.resourceGroup && datasource.isTemplateVariable(parsedURI.resource)) {
+          console.group('resource name is a template variable');
+          console.log('workingRows at this point:', workingRows);
+          const variableRow = findRow(workingRows, internalSelected);
+          console.log('Resource URI:', internalSelected);
+          console.log('Found row for the resource:', variableRow);
+
+          const parentURI = createResourceURI({
+            subscriptionID: parsedURI.subscriptionID,
+            resourceGroup: parsedURI.resourceGroup,
+          });
+          const parentRow = findRow(workingRows, parentURI);
+          console.log("Resource's parent row (should be resource group)", { parentURI, parentRow });
+
+          if (!variableRow && parentRow) {
+            const variableRow = {
+              name: parsedURI.resource,
+              id: internalSelected,
+              // TODO: change type to variable???
+              type: ResourceRowType.Resource,
+              typeLabel: 'Resource',
+            };
+
+            console.log('adding in resource row', { parentURI, variableRow });
+
+            workingRows = addResources(workingRows, parentURI, [variableRow]);
+          }
+          console.groupEnd();
+        }
+
+        if (workingRows !== azureRows) {
+          console.log('Rows changed, setting state', workingRows);
+          setAzureRows(workingRows);
+        }
+
+        console.groupEnd();
+      }
+    }
+
+    return workingRows;
   }, [resourcePickerData, azureRows, templateVariables]);
 
   // Map the selected item into an array of rows
@@ -72,7 +184,9 @@ const ResourcePicker = ({
       }
 
       // fetch and set nested resources for the resourcegroup into the bigger state object
-      const resources = await resourcePickerData.getResourcesForResourceGroup(resourceGroup);
+      const resources = await resourcePickerData.getResourcesForResourceGroup(
+        datasource.replaceTemplateVariable(resourceGroup.id)
+      );
       const newRows = addResources(azureRows, resourceGroup.id, resources);
       setAzureRows(newRows);
     },
@@ -110,112 +224,6 @@ const ResourcePicker = ({
     const parsedURI = parseResourceURI(internalSelected);
     const resourceGroupURI = `/subscriptions/${parsedURI?.subscriptionID}/resourceGroups/${parsedURI?.resourceGroup}`;
     const resourceGroupRow = findRow(rows, resourceGroupURI);
-
-    console.log({ parsedURI, resourceGroupURI, resourceGroupRow });
-
-    if (!resourceGroupRow && parsedURI) {
-      let workingRows = azureRows;
-      console.group('resource uri might contain template variables');
-
-      if (datasource.isTemplateVariable(parsedURI.subscriptionID)) {
-        console.log('subscription ID is a template variable');
-        const variableURI = `/subscriptions/${parsedURI.subscriptionID}`;
-        const interpolatedURI = datasource.replaceTemplateVariable(variableURI);
-
-        const variableRow = findRow(workingRows, variableURI);
-        const originalRow = findRow(workingRows, interpolatedURI);
-
-        // Find a row matching the value of the variable, and copy it to a new "variable"
-        // subscription
-        if (originalRow && !variableRow) {
-          const variableSubRow = { ...originalRow };
-          variableSubRow.name = parsedURI.subscriptionID;
-          variableSubRow.id = variableURI;
-          // TODO: change type to variable???
-          variableSubRow.children = variableSubRow.children?.map((v) => ({
-            ...v,
-            id: v.id.replace(interpolatedURI, variableURI),
-          }));
-
-          workingRows = [variableSubRow, ...workingRows];
-        }
-      }
-
-      if (parsedURI.resourceGroup && datasource.isTemplateVariable(parsedURI.resourceGroup)) {
-        console.log('resource group is a template variable');
-
-        const variableURI = createResourceURI({
-          subscriptionID: datasource.replaceTemplateVariable(parsedURI.subscriptionID),
-          resourceGroup: parsedURI.resourceGroup,
-        });
-        const interpolatedURI = datasource.replaceTemplateVariable(variableURI);
-
-        const variableRow = findRow(workingRows, variableURI);
-        const originalRow = findRow(workingRows, interpolatedURI);
-
-        console.log('resourceGroup', { variableRow, originalRow });
-
-        if (originalRow && !variableRow) {
-          const parentURI = createResourceURI({
-            subscriptionID: parsedURI.subscriptionID,
-          });
-
-          const variableRow = { ...originalRow };
-          variableRow.name = parsedURI.resourceGroup;
-          variableRow.id = variableURI;
-          // TODO: change type to variable???
-          variableRow.children = variableRow.children?.map((v) => ({
-            ...v,
-            id: v.id.replace(interpolatedURI, variableURI),
-          }));
-
-          workingRows = addResources(workingRows, parentURI, [variableRow]);
-        }
-
-        if (parsedURI.resource && datasource.isTemplateVariable(parsedURI.resource)) {
-          console.log('resource name is a template variable');
-
-          const variableURI = createResourceURI({
-            subscriptionID: datasource.replaceTemplateVariable(parsedURI.subscriptionID),
-            resourceGroup: datasource.replaceTemplateVariable(parsedURI.resourceGroup),
-            resource: parsedURI.resource,
-          });
-          const interpolatedURI = datasource.replaceTemplateVariable(variableURI);
-
-          const variableRow = findRow(workingRows, variableURI);
-          const originalRow = findRow(workingRows, interpolatedURI);
-
-          console.log('resourceName', { variableURI, interpolatedURI, variableRow, originalRow });
-
-          if (originalRow && !variableRow) {
-            const parentURI = createResourceURI({
-              subscriptionID: parsedURI.subscriptionID,
-              resourceGroup: parsedURI.resourceGroup,
-            });
-
-            const variableRow = { ...originalRow };
-            variableRow.name = parsedURI.resource;
-            variableRow.id = variableURI;
-            // TODO: change type to variable???
-            variableRow.children = variableRow.children?.map((v) => ({
-              ...v,
-              id: v.id.replace(interpolatedURI, variableURI),
-            }));
-
-            workingRows = addResources(workingRows, parentURI, [variableRow]);
-          }
-        }
-      }
-
-      if (workingRows !== azureRows) {
-        console.log('Rows changed, setting state', workingRows);
-        setAzureRows(workingRows);
-      }
-
-      console.groupEnd();
-
-      return;
-    }
 
     if (!resourceGroupRow) {
       // We haven't loaded the data from Azure yet

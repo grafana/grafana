@@ -78,10 +78,10 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return formatResourceGroupData(resources);
   }
 
-  async getResourcesForResourceGroup(resourceGroup: ResourceRow) {
+  async getResourcesForResourceGroup(resourceGroupURI: string) {
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
-      | where id hasprefix "${resourceGroup.id}"
+      | where id hasprefix "${resourceGroupURI}"
       | where type in (${logsSupportedResourceTypesKusto}) and location in (${logsSupportedLocationsKusto})
     `);
 
