@@ -310,7 +310,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         queries,
         timeRange: data.timeRange,
         onAddQuery: onAddQuery as (query: DataQuery) => void,
-        dataSourceRef: dataSource.name,
+        dataSource: dataSource,
       });
     });
   };
