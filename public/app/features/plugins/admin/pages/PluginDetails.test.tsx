@@ -1,12 +1,13 @@
 import React from 'react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, PluginTabIds } from '../types';
 import * as api from '../api';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
@@ -24,10 +25,19 @@ jest.mock('@grafana/runtime', () => {
   return mockedRuntime;
 });
 
-const renderPluginDetails = (pluginOverride: Partial<CatalogPlugin>): RenderResult => {
+const renderPluginDetails = (pluginOverride: Partial<CatalogPlugin>, pageId = PluginTabIds.OVERVIEW): RenderResult => {
   const plugin = getCatalogPluginMock(pluginOverride);
   const { id } = plugin;
-  const props = getRouteComponentProps({ match: { params: { pluginId: id }, isExact: true, url: '', path: '' } });
+  const props = getRouteComponentProps({
+    match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
+    queryParams: { page: pageId },
+    location: {
+      hash: '',
+      pathname: `/plugins/${id}`,
+      search: `?page=${pageId}`,
+      state: undefined,
+    },
+  });
   const store = configureStore({
     plugins: getPluginsStateMock([plugin]),
   });
@@ -35,7 +45,8 @@ const renderPluginDetails = (pluginOverride: Partial<CatalogPlugin>): RenderResu
   return render(
     <Provider store={store}>
       <PluginDetailsPage {...props} />
-    </Provider>
+    </Provider>,
+    { wrapper: MemoryRouter }
   );
 };
 
@@ -66,12 +77,22 @@ describe('Plugin details page', () => {
       local: { id },
     });
 
-    const props = getRouteComponentProps({ match: { params: { pluginId: id }, isExact: true, url: '', path: '' } });
+    const props = getRouteComponentProps({
+      match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
+      queryParams: { page: PluginTabIds.OVERVIEW },
+      location: {
+        hash: '',
+        pathname: `/plugins/${id}`,
+        search: `?page=${PluginTabIds.OVERVIEW}`,
+        state: undefined,
+      },
+    });
     const store = configureStore();
     const { queryByText } = render(
       <Provider store={store}>
         <PluginDetailsPage {...props} />
-      </Provider>
+      </Provider>,
+      { wrapper: MemoryRouter }
     );
 
     await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
@@ -129,24 +150,25 @@ describe('Plugin details page', () => {
   });
 
   it('should display version history in case it is available', async () => {
-    const { queryByText, getByText, getByRole } = renderPluginDetails({
-      id,
-      details: {
-        links: [],
-        versions: [
-          {
-            version: '1.0.0',
-            createdAt: '2016-04-06T20:23:41.000Z',
-          },
-        ],
+    const { queryByText, getByRole } = renderPluginDetails(
+      {
+        id,
+        details: {
+          links: [],
+          versions: [
+            {
+              version: '1.0.0',
+              createdAt: '2016-04-06T20:23:41.000Z',
+            },
+          ],
+        },
       },
-    });
+      PluginTabIds.VERSIONS
+    );
 
     // Check if version information is available
     await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
 
-    // Go to the versions tab
-    userEvent.click(getByText(/version history/i));
     expect(
       getByRole('columnheader', {
         name: /version/i,
