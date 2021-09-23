@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LoadingState, LogRowModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
@@ -20,6 +20,7 @@ interface LogsContainerProps extends PropsFromRedux {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
+  loadingState: LoadingState;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -60,8 +61,10 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   render() {
     const {
       loading,
+      loadingState,
       logRows,
       logsMeta,
+      logsSeries,
       logsQueries,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -116,9 +119,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
             <Logs
               logRows={logRows}
               logsMeta={logsMeta}
+              logsSeries={logsSeries}
               logsQueries={logsQueries}
               width={width}
               loading={loading}
+              loadingState={loadingState}
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -153,6 +158,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     loading,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
+    logsSeries: logsResult?.series,
     logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
     scanning,

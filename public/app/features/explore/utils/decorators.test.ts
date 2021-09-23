@@ -1,5 +1,16 @@
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { lastValueFrom } from 'rxjs';
-import { DataFrame, DataQueryRequest, FieldType, LoadingState, PanelData, TimeRange, toDataFrame } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryRequest,
+  FieldColorModeId,
+  FieldType,
+  LoadingState,
+  PanelData,
+  TimeRange,
+  toDataFrame,
+} from '@grafana/data';
 
 import {
   decorateWithFrameTypeMetadata,
@@ -337,6 +348,42 @@ describe('decorateWithLogsResult', () => {
           timeUtc: 'format() jest mocked',
           uid: '1',
           uniqueLabels: {},
+        },
+      ],
+      series: [
+        {
+          name: 'unknown',
+          length: 1,
+          fields: [
+            { name: 'Time', type: 'time', values: new ArrayVector([0]), config: {} },
+            {
+              name: 'Value',
+              type: 'number',
+              labels: undefined,
+              values: new ArrayVector([3]),
+              config: {
+                color: {
+                  fixedColor: '#8e8e8e',
+                  mode: FieldColorModeId.Fixed,
+                },
+                min: 0,
+                decimals: 0,
+                unit: undefined,
+                custom: {
+                  drawStyle: GraphDrawStyle.Bars,
+                  barAlignment: 0,
+                  barMaxWidth: 5,
+                  barWidthFactor: 0.9,
+                  lineColor: '#8e8e8e',
+                  fillColor: '#8e8e8e',
+                  pointColor: '#8e8e8e',
+                  lineWidth: 0,
+                  fillOpacity: 100,
+                  stacking: { mode: StackingMode.Normal, group: 'A' },
+                },
+              },
+            },
+          ],
         },
       ],
       visibleRange: undefined,

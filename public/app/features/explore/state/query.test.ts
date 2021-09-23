@@ -35,6 +35,16 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
 
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  config: {
+    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
+    featureToggles: {
+      fullRangeLogsVolume: true,
+    },
+  },
+}));
+
 const t = toUtc();
 const testRange = {
   from: t,

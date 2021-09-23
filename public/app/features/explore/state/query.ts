@@ -37,6 +37,7 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
+import { config } from '@grafana/runtime';
 
 //
 // Actions and Payloads
@@ -332,6 +333,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
+      logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
 
@@ -340,7 +342,11 @@ export const runQueries = (
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
       newQuerySub = of(cachedValue)
-        .pipe(mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries)))
+        .pipe(
+          mergeMap((data: PanelData) =>
+            decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, !!logsVolumeDataProvider)
+          )
+        )
         .subscribe((data) => {
           if (!data.error) {
             dispatch(stateSave());
@@ -393,7 +399,16 @@ export const runQueries = (
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
           live ? throttleTime(500) : identity,
-          mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries))
+          mergeMap((data: PanelData) =>
+            decorateData(
+              data,
+              queryResponse,
+              absoluteRange,
+              refreshInterval,
+              queries,
+              !!getState().explore[exploreId]!.logsVolumeDataProvider
+            )
+          )
         )
         .subscribe(
           (data) => {
@@ -439,7 +454,7 @@ export const runQueries = (
           }
         );
 
-      if (hasLogsVolumeSupport(datasourceInstance)) {
+      if (config.featureToggles.fullRangeLogsVolume && hasLogsVolumeSupport(datasourceInstance)) {
         const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
         dispatch(
           storeLogsVolumeDataProviderAction({

@@ -2,6 +2,7 @@ import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   rangeUtil,
   RawTimeRange,
@@ -16,7 +17,9 @@ import {
   LinkModel,
   Field,
   DataQuery,
+  DataFrame,
   GrafanaTheme2,
+  LoadingState,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -33,6 +36,7 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { ExploreGraph } from './ExploreGraph';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -45,10 +49,12 @@ interface Props extends Themeable2 {
   width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
+  logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   theme: GrafanaTheme2;
   loading: boolean;
+  loadingState: LoadingState;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
@@ -242,10 +248,13 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   render() {
     const {
+      width,
       logRows,
       logsMeta,
+      logsSeries,
       visibleRange,
       loading = false,
+      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -285,6 +294,25 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
+        {logsSeries && logsSeries.length ? (
+          <>
+            <div className={styles.infoText}>
+              This datasource does not support full-range histograms. The graph is based on the logs seen in the
+              response.
+            </div>
+            <ExploreGraph
+              data={logsSeries}
+              height={150}
+              width={width}
+              tooltipDisplayMode={TooltipDisplayMode.Multi}
+              absoluteRange={visibleRange || absoluteRange}
+              timeZone={timeZone}
+              loadingState={loadingState}
+              onChangeTime={onChangeTime}
+              onHiddenSeriesChanged={this.onToggleLogLevel}
+            />
+          </>
+        ) : undefined}
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
