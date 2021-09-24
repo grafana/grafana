@@ -2,6 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 
 import { CanvasPanel, lastLoadedScene } from './CanvasPanel';
 import { PanelOptions } from './models.gen';
+import { CanvasElementOptions } from 'app/features/canvas';
 import { getElementEditor } from './editor/elementEditor';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
@@ -20,22 +21,16 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     if (lastLoadedScene) {
       const selected = lastLoadedScene.getSelectedItem();
       if (selected) {
+        const uid = selected.UID;
         builder.addNestedOptions(
           getElementEditor({
             category: ['Selected element'],
-            scene: lastLoadedScene,
-            element: selected,
+            getOptions: () => lastLoadedScene!.getElement(uid)!.options,
+            onChange: (v: CanvasElementOptions) => {
+              lastLoadedScene?.onChange(uid, v);
+            },
           })
         );
       }
     }
-
-    // builder.addCustomEditor({
-    //   category: ['Selected Element'],
-    //   id: 'root',
-    //   path: 'root', // multiple elements may edit root!
-    //   name: 'Selected Element',
-    //   editor: SelectedElementEditor,
-    //   defaultValue: defaultPanelOptions.root,
-    // });
   });

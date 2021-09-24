@@ -2,14 +2,12 @@ import { cloneDeep, get as lodashGet } from 'lodash';
 import { optionBuilder } from './options';
 import { CanvasElementOptions, canvasElementRegistry, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { Scene } from 'app/features/canvas/runtime/scene';
-import { ElementState } from 'app/features/canvas/runtime/element';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
 export interface CanvasEditorOptions {
   category: string[];
-  scene: Scene;
-  element: ElementState;
+  getOptions: () => CanvasElementOptions;
+  onChange: (v: CanvasElementOptions) => void;
 }
 
 export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<CanvasElementOptions> {
@@ -20,24 +18,25 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
     // Note that canvas editor writes things to the scene!
     values: (parent: NestedValueAccess) => ({
       getValue: (path: string) => {
-        return lodashGet(opts.element.item, path);
+        return lodashGet(opts.getOptions(), path);
       },
       onChange: (path: string, value: any) => {
-        const { element } = opts;
-        let newOptions = setOptionImmutably(element.options, path, value);
+        let options = opts.getOptions();
         if (path === 'type' && value) {
           const layer = canvasElementRegistry.getIfExists(value);
           if (!layer) {
             console.warn('layer does not exist', value);
             return;
           }
-          newOptions = {
-            ...element.options, // keep current options
+          options = {
+            ...options, // keep current options
             type: layer.id,
             config: cloneDeep(layer.defaultConfig ?? {}),
           };
+        } else {
+          options = setOptionImmutably(options, path, value);
         }
-        opts.scene.onChange(element.UID, newOptions);
+        opts.onChange(options);
       },
     }),
 

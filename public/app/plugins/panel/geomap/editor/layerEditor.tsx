@@ -130,20 +130,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           // TODO -- add opacity check
         }
       }
-
-      console.log('GET SUB OPTIONS', { ...context });
-      builder.addBooleanSwitch({
-        category: ['subsub'],
-        path: 'switchA',
-        name: 'Switch A',
-        defaultValue: true,
-      });
-      builder.addBooleanSwitch({
-        category: ['subsub'],
-        path: 'switchB',
-        name: 'Switch B',
-        defaultValue: true,
-      });
     },
   };
 }

@@ -74,6 +74,10 @@ export class Scene {
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
   };
 
+  getElement(uid: number) {
+    return this.lookup.get(uid);
+  }
+
   getSelectedItem() {
     return this.lookup.get(this.selectedUID);
   }
@@ -108,6 +112,7 @@ export class Scene {
     elem.onChange(cfg);
     elem.updateData(this.context); // Refresh any data that may have changed
     this.save();
+    console.log('SCENE ELEMENT CHANGED', uid, elem.revId, cfg);
   }
 
   save() {
