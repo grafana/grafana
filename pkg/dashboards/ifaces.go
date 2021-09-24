@@ -1,6 +1,10 @@
 package dashboards
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 // Store is a dashboard store.
 type Store interface {
@@ -12,7 +16,7 @@ type Store interface {
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
-	UpdateDashboardACL(uid int64, items []*models.DashboardAcl) error
+	UpdateDashboardACLCtx(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(dashID int64, alerts []*models.Alert) error
 }
