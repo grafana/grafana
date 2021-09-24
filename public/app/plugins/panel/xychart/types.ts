@@ -4,6 +4,16 @@ import { DimensionValues, VizLegendItem } from '@grafana/ui';
 import { ScaleDimensionConfig } from 'app/features/dimensions';
 import { ScatterLineMode } from './models.gen';
 
+export interface ScatterHoverEvent {
+  scatterIndex: number;
+  xIndex: number;
+  pageX: number;
+  pageY: number;
+  evt: any; // origin;
+}
+
+export type ScatterHoverCallback = (evt: ScatterHoverEvent) => void;
+
 export interface LegendInfo {
   color: CanvasRenderingContext2D['strokeStyle'];
   text: string;

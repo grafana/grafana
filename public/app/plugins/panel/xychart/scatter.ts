@@ -15,7 +15,7 @@ import { defaultScatterConfig, ScatterFieldConfig, XYChartOptions } from './mode
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import uPlot from 'uplot';
-import { ScatterSeries } from './types';
+import { ScatterHoverCallback, ScatterSeries } from './types';
 import { isGraphable } from './dims';
 
 export interface ScatterPanelInfo {
@@ -27,13 +27,18 @@ export interface ScatterPanelInfo {
 /**
  * This is called when options or structure rev changes
  */
-export function prepScatter(options: XYChartOptions, data: PanelData, theme: GrafanaTheme2): ScatterPanelInfo {
+export function prepScatter(
+  options: XYChartOptions,
+  data: PanelData,
+  theme: GrafanaTheme2,
+  ttip: ScatterHoverCallback
+): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
 
   try {
     series = prepSeries(options, data.series);
-    builder = prepConfig(data.series, series, theme);
+    builder = prepConfig(data.series, series, theme, ttip);
   } catch (e) {
     console.log('prepScatter ERROR', e);
     return {
@@ -184,7 +189,12 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
 }
 
 //const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
-const prepConfig = (frames: DataFrame[], scatterSeries: ScatterSeries[], theme: GrafanaTheme2) => {
+const prepConfig = (
+  frames: DataFrame[],
+  scatterSeries: ScatterSeries[],
+  theme: GrafanaTheme2,
+  ttip: ScatterHoverCallback
+) => {
   let qt: Quadtree;
   let hRect: Rect | null;
 
@@ -304,6 +314,9 @@ const prepConfig = (frames: DataFrame[], scatterSeries: ScatterSeries[], theme: 
             }
           }
         });
+
+        // TODO!!!
+        ttip({ scatterIndex: dist } as any);
       }
 
       return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;

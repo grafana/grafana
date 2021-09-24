@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/data';
 import { XYChartOptions } from './models.gen';
-import { ScatterSeries } from './types';
+import { ScatterHoverCallback, ScatterHoverEvent, ScatterSeries } from './types';
 import { LegendDisplayMode, UPlotChart, UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { prepData, prepScatter } from './scatter';
@@ -35,9 +35,13 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
     }
   }
 
+  scatterHoverCallback = (evt: ScatterHoverEvent) => {
+    console.log('SHOW TOOLTIP', { ...evt });
+  };
+
   initSeries = () => {
     const { options, data } = this.props;
-    const info: State = prepScatter(options, data, config.theme2);
+    const info: State = prepScatter(options, data, config.theme2, this.scatterHoverCallback);
     if (info.series.length && data.series) {
       info.facets = prepData(info, data.series);
       info.error = undefined;
