@@ -29,7 +29,7 @@ Panel: {
                     orientation: ui.VizOrientation
                     // TODO this default is a guess based on common devenv values
                     stacking: ui.StackingMode | *"none"
-                    showValue: ui.BarValueVisibility
+                    showValue: ui.VisibilityMode
                     barWidth: number
                     groupWidth: number
                 }

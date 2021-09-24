@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -19,16 +17,10 @@ import (
 )
 
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
-	// TODO: We need a reliable way to ensure Alertmanagers have synced correctly.
-	// For now, make them sync quicker.
-	p := notifier.SyncOrgsPollInterval
-	notifier.SyncOrgsPollInterval = 2 * time.Second
-	t.Cleanup(func() {
-		notifier.SyncOrgsPollInterval = p
-	})
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		EnableFeatureToggles:                  []string{"ngalert"},
+		NGAlertAlertmanagerConfigPollInterval: 2 * time.Second,
+		DisableAnonymous:                      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
