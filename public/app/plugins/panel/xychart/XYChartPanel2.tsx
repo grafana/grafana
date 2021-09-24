@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/data';
 import { XYChartOptions } from './models.gen';
-import { ScatterHoverCallback, ScatterHoverEvent, ScatterSeries } from './types';
+import { ScatterHoverEvent, ScatterSeries } from './types';
 import { LegendDisplayMode, UPlotChart, UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { prepData, prepScatter } from './scatter';
