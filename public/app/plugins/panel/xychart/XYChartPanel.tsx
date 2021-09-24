@@ -19,7 +19,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
 
   const info = useMemo(() => {
     console.log('prepScatter!');
-    return prepScatter(options, data, theme);
+    return prepScatter(options, data, theme, () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.structureRev, options]);
 
