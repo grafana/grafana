@@ -125,12 +125,12 @@ export function fillOptionsPaneItems(
     if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
       continue;
     }
+
     let category = parentCategory;
     if (!category) {
       category = getOptionsPaneCategory(pluginOption.category);
     } else if (pluginOption.category?.[0]?.length) {
       category = category.getCategory(pluginOption.category[0]);
-      console.log('TODO??? nested category?', pluginOption.category);
     }
 
     // Nested options get passed up one level
