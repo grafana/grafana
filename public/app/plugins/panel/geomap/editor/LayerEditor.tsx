@@ -1,29 +1,19 @@
-import React, { FC, useMemo } from 'react';
-import { Select } from '@grafana/ui';
 import {
   MapLayerOptions,
-  DataFrame,
-  MapLayerRegistryItem,
-  PanelOptionsEditorBuilder,
-  StandardEditorContext,
   FrameGeometrySourceMode,
   FieldType,
   Field,
+  MapLayerRegistryItem,
+  PluginState,
 } from '@grafana/data';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { GazetteerPathEditor } from './GazetteerPathEditor';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
-
-export interface LayerEditorProps<TConfig = any> {
-  options?: MapLayerOptions<TConfig>;
-  data: DataFrame[]; // All results
-  onChange: (options: MapLayerOptions<TConfig>) => void;
-  filter: (item: MapLayerRegistryItem) => boolean;
-}
+import { hasAlphaPanels } from 'app/core/config';
 
 export interface LayerEditorOptions {
+  category: string[];
   path: string;
   basemaps: boolean; // only basemaps
   current?: MapLayerOptions;
@@ -31,7 +21,7 @@ export interface LayerEditorOptions {
 
 export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<MapLayerOptions> {
   return {
-    category: ['Data layer XXXXX'],
+    category: opts.category,
     path: opts.path,
     defaultValue: opts.basemaps ? DEFAULT_BASEMAP_CONFIG : defaultMarkersConfig,
     values: (parent: NestedValueAccess) => ({
@@ -58,13 +48,13 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       const layerTypes = geomapLayerRegistry.selectOptions(
         options?.type // the selected value
           ? [options.type] // as an array
-          : [DEFAULT_BASEMAP_CONFIG.type]
-        //filter
+          : [DEFAULT_BASEMAP_CONFIG.type],
+        opts.basemaps ? baseMapFilter : dataLayerFilter
       );
 
       builder.addSelect({
         path: 'type',
-        name: 'Layer type',
+        name: undefined as any, // required, but hide space
         settings: {
           options: layerTypes.options,
         },
@@ -158,98 +148,22 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
   };
 }
 
-export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, filter }) => {
-  // all basemaps
-  const layerTypes = useMemo(() => {
-    return geomapLayerRegistry.selectOptions(
-      options?.type // the selected value
-        ? [options.type] // as an array
-        : [DEFAULT_BASEMAP_CONFIG.type],
-      filter
-    );
-  }, [options?.type, filter]);
+function baseMapFilter(layer: MapLayerRegistryItem): boolean {
+  if (!layer.isBaseMap) {
+    return false;
+  }
+  if (layer.state === PluginState.alpha) {
+    return hasAlphaPanels;
+  }
+  return true;
+}
 
-  // The options change with each layer type
-  const optionsEditorBuilder = useMemo(() => {
-    const layer = geomapLayerRegistry.getIfExists(options?.type);
-    if (!layer || !(layer.registerOptionsUI || layer.showLocation || layer.showOpacity)) {
-      return null;
-    }
-
-    const builder = new PanelOptionsEditorBuilder<MapLayerOptions>();
-    return builder;
-  }, [options?.type]);
-
-  // The react componnets
-  const layerOptions = useMemo(() => {
-    const layer = geomapLayerRegistry.getIfExists(options?.type);
-    if (!optionsEditorBuilder || !layer) {
-      return null;
-    }
-
-    const category = new OptionsPaneCategoryDescriptor({
-      id: 'Layer config',
-      title: 'Layer config',
-    });
-
-    const context: StandardEditorContext<any> = {
-      data,
-      options: options,
-    };
-
-    const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultOptions, ...options?.config } };
-
-    // Update the panel options if not set
-    if (!options || (layer.defaultOptions && !options.config)) {
-      onChange(currentOptions as any);
-    }
-
-    // const reg = optionsEditorBuilder.getRegistry();
-
-    // // Load the options into categories
-    // fillOptionsPaneItems(
-    //   reg.list(),
-
-    //   // Always use the same category
-    //   (categoryNames) => category,
-
-    //   // Custom upate function
-    //   (path: string, value: any) => {
-    //     onChange(setOptionImmutably(currentOptions, path, value) as any);
-    //   },
-    //   context
-    // );
-
-    return (
-      <>
-        <br />
-        {category.items.map((item) => item.render())}
-      </>
-    );
-  }, [optionsEditorBuilder, onChange, data, options]);
-
-  return (
-    <div>
-      <Select
-        menuShouldPortal
-        options={layerTypes.options}
-        value={layerTypes.current}
-        onChange={(v) => {
-          const layer = geomapLayerRegistry.getIfExists(v.value);
-          if (!layer) {
-            console.warn('layer does not exist', v);
-            return;
-          }
-
-          onChange({
-            ...options, // keep current options
-            type: layer.id,
-            config: { ...layer.defaultOptions }, // clone?
-          });
-        }}
-      />
-
-      {layerOptions}
-    </div>
-  );
-};
+function dataLayerFilter(layer: MapLayerRegistryItem): boolean {
+  if (layer.isBaseMap) {
+    return false;
+  }
+  if (layer.state === PluginState.alpha) {
+    return hasAlphaPanels;
+  }
+  return true;
+}

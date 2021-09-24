@@ -103,7 +103,7 @@ export class PanelPlugin<
     return new FieldConfigOptionsRegistry();
   };
 
-  private registerOptionEditors?: PanelOptionsSupplier<TOptions>;
+  private optionsSupplier?: PanelOptionsSupplier<TOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -128,14 +128,12 @@ export class PanelPlugin<
   get defaults() {
     let result = this._defaults || {};
 
-    if (!this._defaults) {
-      if (this.registerOptionEditors) {
-        const builder = new PanelOptionsEditorBuilder<TOptions>();
-        this.registerOptionEditors(builder, { data: [] });
-        for (const item of builder.getItems()) {
-          if (item.defaultValue != null) {
-            set(result, item.path, item.defaultValue);
-          }
+    if (!this._defaults && this.optionsSupplier) {
+      const builder = new PanelOptionsEditorBuilder<TOptions>();
+      this.optionsSupplier(builder, { data: [] });
+      for (const item of builder.getItems()) {
+        if (item.defaultValue != null) {
+          set(result, item.path, item.defaultValue);
         }
       }
     }
@@ -250,15 +248,17 @@ export class PanelPlugin<
    **/
   setPanelOptions(builder: PanelOptionsSupplier<TOptions>) {
     // builder is applied lazily when options UI is created
-    this.registerOptionEditors = builder;
+    this.optionsSupplier = builder;
     return this;
   }
 
   /**
+   * This is used while building the panel optione editor.
+   *
    * @internal
    */
   getPanelOptionsSupplier(): PanelOptionsSupplier<TOptions> {
-    return this.registerOptionEditors ?? ((() => {}) as PanelOptionsSupplier<TOptions>);
+    return this.optionsSupplier ?? ((() => {}) as PanelOptionsSupplier<TOptions>);
   }
 
   /**
