@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, Form, Field, Button, Alert } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
+import { Rule } from './types';
 
 export default function AddNewRule() {
   const [success, setSuccess] = useState<boolean>(false);
@@ -13,14 +14,13 @@ export default function AddNewRule() {
       isMounted.current = false;
     };
   }, []);
-  const onSubmit = (formData: any) => {
+  const onSubmit = (formData: Rule) => {
     getBackendSrv()
       .post(`api/live/channel-rules`, {
         pattern: formData.pattern,
         settings: {
-          subscriber: formData.subscriber,
-          output: formData.output,
-          converter: formData.converter,
+          output: formData.settings.output,
+          converter: formData.settings.converter,
         },
       })
       .then(() => {
@@ -35,11 +35,13 @@ export default function AddNewRule() {
     <Form
       defaultValues={{
         pattern: '',
-        converter: {
-          type: 'jsonAuto',
-        },
-        output: {
-          type: 'managedStream',
+        settings: {
+          converter: {
+            type: 'jsonAuto',
+          },
+          output: {
+            type: 'managedStream',
+          },
         },
       }}
       onSubmit={onSubmit}

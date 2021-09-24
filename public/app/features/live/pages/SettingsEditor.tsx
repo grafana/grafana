@@ -6,7 +6,7 @@ import { Rule, Setting, PipelineListOption } from './types';
 interface Props {
   rule: Rule;
   types: Array<SelectableValue<string>>;
-  onBlur: (text: string, setting: string | undefined, settingType: string | undefined) => void;
+  onBlur: (text: string, setting: Setting, settingType: string | undefined) => void;
   setting: Setting;
   pipelineEntitiesList: [];
 }
@@ -20,7 +20,9 @@ const SettingsEditor: React.FC<Props> = ({ rule, onBlur, types, setting, pipelin
   const [settingType, setSettingType] = useState<string | undefined>(type);
 
   useEffect(() => {
-    setSettingType(type);
+    if (type) {
+      setSettingType(type);
+    }
   }, [type]);
   // get the example body of the type out
   const example = pipelineEntitiesList?.filter((option: PipelineListOption) => option.type === settingType)?.[0]?.[
@@ -37,7 +39,9 @@ const SettingsEditor: React.FC<Props> = ({ rule, onBlur, types, setting, pipelin
         options={types}
         value={settingType}
         onChange={(value) => {
-          setSettingType(value.value);
+          if (value.value) {
+            setSettingType(value.value);
+          }
         }}
       />
       <CodeEditor

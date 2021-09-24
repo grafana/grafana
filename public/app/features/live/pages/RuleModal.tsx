@@ -32,11 +32,11 @@ export const RuleModal: React.FC<Props> = (props) => {
   const [pipelineEntitiesTypes, setPipelineEntitiesTypes] = useState<any>();
   const [hasChange, setChange] = useState<boolean>(false);
   const [currSetting, setCurrSetting] = useState<string>(clickColumn);
-  const [currSettingType, setCurrSettingType] = useState<string>('jsonAuto');
+  const [currSettingType, setCurrSettingType] = useState<any>('jsonAuto');
   const isMounted = useRef(false);
   const styles = useStyles(getStyles);
 
-  const onBlur = (text: string, setting: string, type: string) => {
+  const onBlur = (text: string, setting: Setting, type: string | undefined) => {
     setEditedBody(text ? JSON.parse(text) : undefined);
     setChange(true);
     setCurrSetting(setting);
