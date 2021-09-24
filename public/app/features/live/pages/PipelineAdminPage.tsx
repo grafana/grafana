@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, Tag, useStyles, Button, Modal } from '@grafana/ui';
+import { Input, Tag, useStyles, Button, Modal, IconButton } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
@@ -98,6 +98,9 @@ export default function PipelineAdminPage() {
                   </td>
                   <td data-pattern={rule.pattern} data-column="output">
                     {renderOutputTags('out', rule.settings?.output)}
+                  </td>
+                  <td>
+                    <IconButton name="trash-alt"></IconButton>
                   </td>
                 </tr>
               ))}
