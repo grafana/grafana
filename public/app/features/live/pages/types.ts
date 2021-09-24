@@ -35,3 +35,16 @@ export interface GrafanaCloudBackend {
   uid: string;
   settings: any;
 }
+
+export type Setting = 'converter' | 'processor' | 'output';
+export type SettingLabel = 'Converter' | 'Processor' | 'Output';
+export interface PipelineListOption {
+  type: string;
+  description: string;
+  example: object;
+}
+export interface EntitiesTypes {
+  converters: PipelineListOption[];
+  processors: PipelineListOption[];
+  outputs: PipelineListOption[];
+}

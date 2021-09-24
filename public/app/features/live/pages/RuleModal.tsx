@@ -1,19 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, TabContent, TabsBar, Tab, Button, Alert, useStyles } from '@grafana/ui';
-import { Rule } from './types';
+import { Rule, Setting, SettingLabel, PipelineListOption, EntitiesTypes } from './types';
 import { getBackendSrv } from '@grafana/runtime';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import SettingsEditor from './SettingsEditor';
-import { ta } from 'date-fns/locale';
 interface Props {
   rule: Rule;
   isOpen: boolean;
   onClose: () => void;
-  clickColumn: string;
+  clickColumn: Setting;
 }
-
-const tabs = [
+interface TabType {
+  label: SettingLabel;
+  value: Setting;
+}
+const tabs: TabType[] = [
   { label: 'Converter', value: 'converter' },
   { label: 'Processor', value: 'processor' },
   { label: 'Output', value: 'output' },
@@ -22,7 +24,7 @@ const tabs = [
 export const RuleModal: React.FC<Props> = (props) => {
   const { rule, isOpen, onClose, clickColumn } = props;
   // TODO: use reducer
-  const [activeTab, setActiveTab] = useState<string>(clickColumn);
+  const [activeTab, setActiveTab] = useState<Setting>(clickColumn);
   const [success, setSuccess] = useState<boolean>();
   const [error, setError] = useState<boolean>();
   const [editedBody, setEditedBody] = useState<object | undefined>();
@@ -34,7 +36,7 @@ export const RuleModal: React.FC<Props> = (props) => {
   const isMounted = useRef(false);
   const styles = useStyles(getStyles);
 
-  const onBlur = (text, setting, type) => {
+  const onBlur = (text: string, setting: string, type: string) => {
     setEditedBody(text ? JSON.parse(text) : undefined);
     setChange(true);
     setCurrSetting(setting);
@@ -49,11 +51,16 @@ export const RuleModal: React.FC<Props> = (props) => {
   useEffect(() => {
     getBackendSrv()
       .get(`api/live/pipeline-entities`)
-      .then((data) => {
+      .then((data: EntitiesTypes) => {
         if (isMounted) {
-          let options = {};
-          for (const key in data) {
-            options[key] = data[key].map((typeObj) => ({
+          let options = {
+            converters: [] as SelectableValue[],
+            processors: [] as SelectableValue[],
+            outputs: [] as SelectableValue[],
+          };
+          let key: keyof typeof data;
+          for (key in data) {
+            options[key] = data[key].map((typeObj: PipelineListOption) => ({
               label: typeObj.type,
               value: typeObj.type,
             }));

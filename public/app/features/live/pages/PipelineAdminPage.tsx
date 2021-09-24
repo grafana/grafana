@@ -5,7 +5,7 @@ import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Rule, Output } from './types';
+import { Rule, Output, Setting } from './types';
 import { RuleModal } from './RuleModal';
 import AddNewRule from './AddNewRule';
 
@@ -27,7 +27,7 @@ export default function PipelineAdminPage() {
   const navModel = useNavModel('live-pipeline');
   const [isOpenEditor, setOpenEditor] = useState<boolean>(false);
   const [error, setError] = useState<string>();
-  const [clickColumn, setClickColumn] = useState<string>();
+  const [clickColumn, setClickColumn] = useState<Setting>('converter');
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -47,7 +47,9 @@ export default function PipelineAdminPage() {
   const onRowClick = (event: any) => {
     const pattern = event.target.getAttribute('data-pattern');
     const column = event.target.getAttribute('data-column');
-    setClickColumn(column);
+    if (column) {
+      setClickColumn(column);
+    }
     setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
     setOpen(true);
   };

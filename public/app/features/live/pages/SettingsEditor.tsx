@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { CodeEditor, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { Rule } from './types';
+import { Rule, Setting, PipelineListOption } from './types';
 
 interface Props {
   rule: Rule;
   types: Array<SelectableValue<string>>;
-  onBlur: (text, setting, settingType) => void;
-  setting: 'converter' | 'processor' | 'output';
+  onBlur: (text: string, setting: string | undefined, settingType: string | undefined) => void;
+  setting: Setting;
   pipelineEntitiesList: [];
 }
-interface PipelineListOption {
-  type: string;
-  description: string;
-  example: object;
-}
+
 const height = 600;
 
 const SettingsEditor: React.FC<Props> = ({ rule, onBlur, types, setting, pipelineEntitiesList }) => {
@@ -33,7 +29,6 @@ const SettingsEditor: React.FC<Props> = ({ rule, onBlur, types, setting, pipelin
 
   if (settingBody && type) {
     settingValue = settingType === type ? settingBody[type] : example;
-    console.log(settingValue);
   }
 
   return (
