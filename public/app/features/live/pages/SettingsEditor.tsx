@@ -11,8 +11,6 @@ interface Props {
   pipelineEntitiesList: [];
 }
 
-const height = 600;
-
 const SettingsEditor: React.FC<Props> = ({ rule, onBlur, types, setting, pipelineEntitiesList }) => {
   const settingBody = rule.settings[setting];
   let type = settingBody?.type;
@@ -45,7 +43,7 @@ const SettingsEditor: React.FC<Props> = ({ rule, onBlur, types, setting, pipelin
         }}
       />
       <CodeEditor
-        height={height}
+        height={'50vh'}
         value={settingValue ? JSON.stringify(settingValue, null, '\t') : ''}
         showLineNumbers={true}
         readOnly={false}

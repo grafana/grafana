@@ -154,7 +154,7 @@ export const RuleModal: React.FC<Props> = (props) => {
           setting={activeTab}
           pipelineEntitiesList={pipelineEntitiesList?.[`${activeTab}s`]}
         />
-        <Button onClick={onSave} className={styles.save} disabled={hasChange ? false : true}>
+        <Button onClick={onSave} className={styles.save} variant={hasChange ? 'primary' : 'secondary'}>
           Save
         </Button>
       </TabContent>
