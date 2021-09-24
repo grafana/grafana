@@ -4,12 +4,13 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataFrame, InterpolateFunction, VariableSuggestionsScope, VariableSuggestion } from '../types';
 import { EventBus } from '../events';
 
-export interface StandardEditorContext<TOptions> {
+export interface StandardEditorContext<TOptions, TOptionsRoot = TOptions> {
   data: DataFrame[]; // All results
   replaceVariables?: InterpolateFunction;
   eventBus?: EventBus;
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
   options?: TOptions;
+  optionsRoot?: TOptionsRoot; // for nested options, this is the root original object
   isOverride?: boolean;
 }
 

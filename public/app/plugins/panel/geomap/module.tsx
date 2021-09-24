@@ -1,18 +1,17 @@
 import { PanelPlugin } from '@grafana/data';
 import { BaseLayerEditor } from './editor/BaseLayerEditor';
-import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
-import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
+import { getLayerEditor } from './editor/LayerEditor';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .useFieldConfig()
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
     let category = ['Map view'];
     builder.addCustomEditor({
       category,
@@ -41,14 +40,22 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: DEFAULT_BASEMAP_CONFIG,
     });
 
-    builder.addCustomEditor({
-      category: ['Data layer'],
-      id: 'layers',
-      path: 'layers',
-      name: 'Data layer',
-      editor: DataLayersEditor,
-      defaultValue: [defaultMarkersConfig],
-    });
+    builder.addNestedOptions(
+      getLayerEditor({
+        path: 'layers[0]', // only one for now
+        basemaps: false,
+        current: context.options?.layers?.[0],
+      })
+    );
+
+    // builder.addCustomEditor({
+    //   category: ['Data layer'],
+    //   id: 'layers',
+    //   path: 'layers',
+    //   name: 'Data layer',
+    //   editor: DataLayersEditor,
+    //   defaultValue: [defaultMarkersConfig],
+    // });
 
     // The controls section
     category = ['Map controls'];
