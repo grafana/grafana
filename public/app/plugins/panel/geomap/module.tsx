@@ -4,7 +4,7 @@ import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
-import { getLayerEditor } from './editor/LayerEditor';
+import { getLayerEditor } from './editor/layerEditor';
 import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)

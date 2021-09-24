@@ -14,6 +14,9 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
+import { useObservable } from 'react-use';
+import { PanelOptionsReloadEvent } from 'app/types/events';
+import { map } from 'rxjs';
 
 interface Props {
   plugin: PanelPlugin;
@@ -31,16 +34,21 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
 
+  const v = useObservable<number>(dashboard.events.getStream(PanelOptionsReloadEvent).pipe(map((v) => Date.now())));
+
   const [panelFrameOptions, vizOptions, justOverrides, libraryPanelOptions] = useMemo(
-    () => [
-      getPanelFrameCategory(props),
-      getVizualizationOptions(props),
-      getFieldOverrideCategories(props),
-      getLibraryPanelOptionsCategory(props),
-    ],
+    () => {
+      console.log('RELOAD options: ', v);
+      return [
+        getPanelFrameCategory(props),
+        getVizualizationOptions(props),
+        getFieldOverrideCategories(props),
+        getLibraryPanelOptionsCategory(props),
+      ];
+    },
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data]
+    [panel.configRev, props.data, v]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

@@ -126,6 +126,13 @@ export class PanelOptionsChangedEvent extends BusEventBase {
 }
 
 /**
+ * Used by panel panels to tell the otions editor to reload
+ */
+export class PanelOptionsReloadEvent extends BusEventBase {
+  static type = 'panels-options-reload';
+}
+
+/**
  * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {

@@ -1,10 +1,8 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Label, VerticalGroup } from '@grafana/ui';
-import { getFieldStyles } from '@grafana/ui/src/components/Forms/Field';
+import { Field, Label } from '@grafana/ui';
 import React, { ReactNode } from 'react';
 import Highlighter from 'react-highlight-words';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
-import { config } from '@grafana/runtime';
 
 export interface OptionsPaneItemProps {
   title: string;

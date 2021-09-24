@@ -1,8 +1,8 @@
 import { Component } from 'react';
 import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
-import { ReplaySubject, Subscription } from 'rxjs';
-import { PanelEditExitedEvent } from 'app/types/events';
+import { Subscription } from 'rxjs';
+import { PanelEditExitedEvent, PanelOptionsReloadEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
@@ -13,7 +13,7 @@ interface State {
 }
 
 // Used to pass the scene to the editor functions
-export const theScene = new ReplaySubject<Scene>(1);
+export let lastLoadedScene: Scene | undefined = undefined;
 
 export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
@@ -28,10 +28,9 @@ export class CanvasPanel extends Component<Props, State> {
 
     // Only the initial options are ever used.
     // later changs are all controled by the scene
-    this.scene = new Scene(this.props.options.root, this.onUpdateScene);
+    this.scene = lastLoadedScene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
-    theScene.next(this.scene); // used in the editors
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
@@ -43,7 +42,19 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    theScene.next(this.scene);
+    lastLoadedScene = this.scene;
+    if (window.location.href.indexOf('editPanel=') > 0) {
+      console.log('componentDidMount! trigger panel options change');
+      // Trigger reloading the editor... now pointing pointing to the loaded scene
+      this.props.eventBus.publish(new PanelOptionsReloadEvent());
+
+      // reload the settings when layer selection changes
+      this.subs.add(
+        this.scene.getSelected().subscribe({
+          next: () => this.props.eventBus.publish(new PanelOptionsReloadEvent()),
+        })
+      );
+    }
   }
 
   componentWillUnmount() {
@@ -81,6 +92,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.load(nextProps.options.root);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
+      lastLoadedScene = this.scene;
       changed = true;
     }
 
