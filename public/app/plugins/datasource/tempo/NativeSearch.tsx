@@ -4,11 +4,11 @@ import {
   InlineField,
   Input,
   QueryField,
-  Select,
   SlatePrism,
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
+  Select,
 } from '@grafana/ui';
 import { tokenizer } from './syntax';
 import Prism from 'prismjs';
@@ -17,6 +17,7 @@ import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
 import { TempoDatasource, TempoQuery } from './datasource';
+import { debounce } from 'lodash';
 
 interface Props {
   datasource: TempoDatasource;
@@ -43,22 +44,51 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
   const [autocomplete, setAutocomplete] = useState<{
     serviceNameOptions: Array<SelectableValue<string>>;
+    selectedServiceName: SelectableValue<string> | undefined;
     spanNameOptions: Array<SelectableValue<string>>;
+    selectedSpanName: SelectableValue<string> | undefined;
   }>({
     serviceNameOptions: [],
+    selectedServiceName: undefined,
     spanNameOptions: [],
+    selectedSpanName: undefined,
   });
+
+  const fetchServiceNameOptions = useMemo(
+    () =>
+      debounce(
+        async () => {
+          const res = await languageProvider.getOptions('service.name');
+          setAutocomplete((prev) => ({ ...prev, serviceNameOptions: res }));
+        },
+        500,
+        { leading: true, trailing: true }
+      ),
+    [languageProvider]
+  );
+
+  const fetchSpanNameOptions = useMemo(
+    () =>
+      debounce(
+        async () => {
+          const res = await languageProvider.getOptions('name');
+          setAutocomplete((prev) => ({ ...prev, spanNameOptions: res }));
+        },
+        500,
+        { leading: true, trailing: true }
+      ),
+    [languageProvider]
+  );
 
   useEffect(() => {
     const fetchAutocomplete = async () => {
       await languageProvider.start();
-      const serviceNameOptions = await languageProvider.getOptions('service.name');
-      const spanNameOptions = await languageProvider.getOptions('name');
+      await fetchServiceNameOptions();
+      await fetchSpanNameOptions();
       setHasSyntaxLoaded(true);
-      setAutocomplete({ serviceNameOptions, spanNameOptions });
     };
     fetchAutocomplete();
-  }, [languageProvider]);
+  }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
@@ -70,6 +100,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       return splittedText[splittedText.length - 1];
     }
     return text;
+  };
+
+  const onKeyDown = (keyEvent: React.KeyboardEvent) => {
+    if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
+      onRunQuery();
+    }
   };
 
   return (
@@ -87,6 +123,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               });
             }}
             placeholder="Select a service"
+            onOpenMenu={fetchServiceNameOptions}
             isClearable
           />
         </InlineField>
@@ -104,6 +141,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               });
             }}
             placeholder="Select a span"
+            onOpenMenu={fetchSpanNameOptions}
             isClearable
           />
         </InlineField>
@@ -140,6 +178,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 minDuration: v.currentTarget.value,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
@@ -154,6 +193,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 maxDuration: v.currentTarget.value,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>
@@ -168,6 +208,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
               })
             }
+            onKeyDown={onKeyDown}
           />
         </InlineField>
       </InlineFieldRow>

@@ -39,24 +39,29 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise
   }));
 }
 
-function getAllFunctionsCompletions(): Completion[] {
-  return FUNCTIONS.map((f) => ({
-    type: 'FUNCTION',
-    label: f.label,
-    insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
-    detail: f.detail,
-    documentation: f.documentation,
-  }));
-}
+const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
+  type: 'FUNCTION',
+  label: f.label,
+  insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
+  detail: f.detail,
+  documentation: f.documentation,
+}));
 
-function getAllDurationsCompletions(): Completion[] {
-  // FIXME: get a better list
-  return ['5m', '1m', '30s', '15s'].map((text) => ({
-    type: 'DURATION',
-    label: text,
-    insertText: text,
-  }));
-}
+const DURATION_COMPLETIONS: Completion[] = [
+  '$__interval',
+  '$__range',
+  '$__rate_interval',
+  '1m',
+  '5m',
+  '10m',
+  '30m',
+  '1h',
+  '1d',
+].map((text) => ({
+  type: 'DURATION',
+  label: text,
+  insertText: text,
+}));
 
 async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
   // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
@@ -137,17 +142,17 @@ async function getLabelValuesForMetricCompletions(
 export async function getCompletions(intent: Intent, dataProvider: DataProvider): Promise<Completion[]> {
   switch (intent.type) {
     case 'ALL_DURATIONS':
-      return getAllDurationsCompletions();
+      return DURATION_COMPLETIONS;
     case 'ALL_METRIC_NAMES':
       return getAllMetricNamesCompletions(dataProvider);
     case 'FUNCTIONS_AND_ALL_METRIC_NAMES': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
-      return [...getAllFunctionsCompletions(), ...metricNames];
+      return [...FUNCTION_COMPLETIONS, ...metricNames];
     }
     case 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...getAllFunctionsCompletions(), ...metricNames];
+      return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
     }
     case 'LABEL_NAMES_FOR_SELECTOR':
       return getLabelNamesForSelectorCompletions(intent.metricName, intent.otherLabels, dataProvider);
