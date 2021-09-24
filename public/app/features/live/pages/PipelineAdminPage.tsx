@@ -1,12 +1,13 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, Tag, useStyles, Button } from '@grafana/ui';
+import { Input, Tag, useStyles, Button, Modal } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Rule, Output } from './types';
 import { RuleModal } from './RuleModal';
+import AddNewRule from './AddNewRule';
 
 function renderOutputTags(key: string, output?: Output): React.ReactNode {
   if (!output?.type) {
@@ -24,8 +25,9 @@ export default function PipelineAdminPage() {
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live-pipeline');
-  const [openEditor, setOpenEditor] = useState<boolean>(false);
+  const [isOpenEditor, setOpenEditor] = useState<boolean>(false);
   const [error, setError] = useState<string>();
+  const [clickColumn, setClickColumn] = useState<string>();
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -40,12 +42,12 @@ export default function PipelineAdminPage() {
           setError(JSON.stringify(e.data, null, 2));
         }
       });
-  }, []);
+  }, [isOpenEditor, isOpen]);
 
   const onRowClick = (event: any) => {
     const pattern = event.target.getAttribute('data-pattern');
     const column = event.target.getAttribute('data-column');
-    // setActiveTab(column);
+    setClickColumn(column);
     setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
     setOpen(true);
   };
@@ -53,13 +55,11 @@ export default function PipelineAdminPage() {
   const onSearchQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
       setRules(rules.filter((rule) => rule.pattern.toLowerCase().includes(e.target.value.toLowerCase())));
-      console.log(e.target.value, rules);
     } else {
       setRules(defaultRules);
     }
   };
 
-  const onAdd = () => {};
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -102,8 +102,21 @@ export default function PipelineAdminPage() {
             </tbody>
           </table>
         </div>
-        {openEditor && <Input />}
-        {isOpen && selectedRule && <RuleModal rule={selectedRule} isOpen={isOpen} onClose={() => setOpen(false)} />}
+        {isOpenEditor && (
+          <Modal isOpen={isOpenEditor} onDismiss={() => setOpenEditor(false)} title="Add a new rule">
+            <AddNewRule />
+          </Modal>
+        )}
+        {isOpen && selectedRule && (
+          <RuleModal
+            rule={selectedRule}
+            isOpen={isOpen}
+            onClose={() => {
+              setOpen(false);
+            }}
+            clickColumn={clickColumn}
+          />
+        )}
       </Page.Contents>
     </Page>
   );

@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { Modal, TabContent, TabsBar, Tab, CodeEditor, Button, Alert } from '@grafana/ui';
+import React, { useState, useRef, useEffect } from 'react';
+import { Modal, TabContent, TabsBar, Tab, Button, Alert, useStyles } from '@grafana/ui';
 import { Rule } from './types';
 import { getBackendSrv } from '@grafana/runtime';
 import { css } from '@emotion/css';
-
+import { GrafanaTheme } from '@grafana/data';
+import SettingsEditor from './SettingsEditor';
+import { ta } from 'date-fns/locale';
 interface Props {
   rule: Rule;
   isOpen: boolean;
   onClose: () => void;
+  clickColumn: string;
 }
 
 const tabs = [
@@ -15,28 +18,109 @@ const tabs = [
   { label: 'Processor', value: 'processor' },
   { label: 'Output', value: 'output' },
 ];
-const height = 600;
 
 export const RuleModal: React.FC<Props> = (props) => {
-  const { rule, isOpen, onClose } = props;
-  const [activeTab, setActiveTab] = useState<string>('converter');
-  const [success, setSuccess] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
+  const { rule, isOpen, onClose, clickColumn } = props;
+  // TODO: use reducer
+  const [activeTab, setActiveTab] = useState<string>(clickColumn);
+  const [success, setSuccess] = useState<boolean>();
+  const [error, setError] = useState<boolean>();
+  const [editedBody, setEditedBody] = useState<object | undefined>();
+  const [pipelineEntitiesList, setPipelineEntitiesList] = useState<any>();
+  const [pipelineEntitiesTypes, setPipelineEntitiesTypes] = useState<any>();
+  const [hasChange, setChange] = useState<boolean>(false);
+  const [currSetting, setCurrSetting] = useState<string>(clickColumn);
+  const [currSettingType, setCurrSettingType] = useState<string>('jsonAuto');
+  const isMounted = useRef(false);
+  const styles = useStyles(getStyles);
 
-  const onSave = (text: string) => {
+  const onBlur = (text, setting, type) => {
+    setEditedBody(text ? JSON.parse(text) : undefined);
+    setChange(true);
+    setCurrSetting(setting);
+    setCurrSettingType(type);
+  };
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
     getBackendSrv()
-      .put(`api/live/channel-rules`, {
-        ...rule,
-        settings: {
-          ...rule.settings,
-          convertor: text,
-        },
+      .get(`api/live/pipeline-entities`)
+      .then((data) => {
+        if (isMounted) {
+          let options = {};
+          for (const key in data) {
+            options[key] = data[key].map((typeObj) => ({
+              label: typeObj.type,
+              value: typeObj.type,
+            }));
+          }
+          setPipelineEntitiesTypes(options);
+          setPipelineEntitiesList(data);
+        }
       })
-      .then(() => setSuccess(true))
+      .catch((e) => {
+        console.error(e);
+      });
+  }, []);
+  console.log(pipelineEntitiesList);
+  // make the success banner disappear in 2 secs
+  useEffect(() => {
+    if (success === null || isMounted.current === false) {
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      setSuccess(undefined);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [success, setSuccess]);
+
+  // make the error banner disappear in 2 secs
+  useEffect(() => {
+    if (error === null || isMounted.current === false) {
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      setError(undefined);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [error, setError]);
+
+  const onSave = () => {
+    const newRule = {
+      pattern: rule.pattern,
+      settings: {
+        ...rule.settings,
+        [currSetting]: {
+          type: currSettingType,
+          [currSettingType]: editedBody,
+        },
+      },
+    };
+    getBackendSrv()
+      .put(`api/live/channel-rules`, newRule)
+      .then((data) => {
+        if (isMounted) {
+          setSuccess(true);
+        }
+      })
       .catch(() => setError(true));
   };
 
-  const onRemoveAlert = () => setSuccess(false);
+  const onRemoveSuccessAlert = () => setSuccess(false);
+  const onRemoveErrorAlert = () => setError(false);
+
   return (
     <Modal isOpen={isOpen} title={rule.pattern} onDismiss={onClose} closeOnEscape>
       <TabsBar>
@@ -54,71 +138,27 @@ export const RuleModal: React.FC<Props> = (props) => {
         })}
       </TabsBar>
       <TabContent>
-        {success && <Alert title="Saved successfully" severity="success" onRemove={onRemoveAlert} />}
-        {error && <Alert title="Failed to save" severity="error" onRemove={onRemoveAlert} />}
-        {activeTab === 'converter' && <ConverterEditor {...props} onSave={onSave} />}
-        {activeTab === 'processor' && <ProcessorEditor {...props} />}
-        {activeTab === 'output' && <OutputEditor {...props} />}
-        <Button onClick={onSave}>Save</Button>
+        {success && <Alert title="Saved successfully" severity="success" onRemove={onRemoveSuccessAlert} />}
+        {error && <Alert title="Failed to save" severity="error" onRemove={onRemoveErrorAlert} />}
+        <SettingsEditor
+          {...props}
+          onBlur={onBlur}
+          types={pipelineEntitiesTypes?.[`${activeTab}s`]}
+          setting={activeTab}
+          pipelineEntitiesList={pipelineEntitiesList?.[`${activeTab}s`]}
+        />
+        <Button onClick={onSave} className={styles.save} disabled={hasChange ? false : true}>
+          Save
+        </Button>
       </TabContent>
     </Modal>
   );
 };
 
-export const ConverterEditor: React.FC<Props> = ({ rule, onSave }) => {
-  const { converter } = rule.settings;
-
-  if (!converter) {
-    return <div>Hello</div>;
-  }
-
-  return (
-    <>
-      <CodeEditor
-        height={height}
-        value={JSON.stringify(converter, null, '\t')}
-        showLineNumbers={true}
-        readOnly={false}
-        language="json"
-        showMiniMap={false}
-        onSave={(text: string) => onSave(text)}
-      />
-    </>
-  );
-};
-
-export const ProcessorEditor: React.FC<Props> = ({ rule }) => {
-  const { processor } = rule.settings;
-  if (!processor) {
-    return <div>No processor defined</div>;
-  }
-
-  return (
-    <CodeEditor
-      height={height}
-      value={JSON.stringify(processor, null, '\t')}
-      showLineNumbers={true}
-      readOnly={true}
-      language="json"
-      showMiniMap={false}
-    />
-  );
-};
-
-export const OutputEditor: React.FC<Props> = ({ rule }) => {
-  const { output } = rule.settings;
-  if (!output) {
-    return <div>No output defined</div>;
-  }
-
-  return (
-    <CodeEditor
-      height={height}
-      value={JSON.stringify(output, null, '\t')}
-      showLineNumbers={true}
-      readOnly={true}
-      language="json"
-      showMiniMap={false}
-    />
-  );
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    save: css`
+      margin-top: 5px;
+    `,
+  };
 };
