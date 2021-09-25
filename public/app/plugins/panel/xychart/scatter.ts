@@ -1,21 +1,23 @@
 import {
   DataFrame,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+  getDisplayProcessor,
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
-  PanelData,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { DimensionValues, UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import { findFieldIndex, ScaleDimensionConfig } from 'app/features/dimensions';
+import { findFieldIndex, getScaledDimensionForField, ScaleDimensionConfig } from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
 import { defaultScatterConfig, ScatterFieldConfig, XYChartOptions } from './models.gen';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import uPlot from 'uplot';
-import { ScatterHoverCallback, ScatterSeries } from './types';
+import { ScatterHoverCallback, ScatterHoverEvent, ScatterSeries } from './types';
 import { isGraphable } from './dims';
 
 export interface ScatterPanelInfo {
@@ -29,7 +31,7 @@ export interface ScatterPanelInfo {
  */
 export function prepScatter(
   options: XYChartOptions,
-  data: PanelData,
+  getData: () => DataFrame[],
   theme: GrafanaTheme2,
   ttip: ScatterHoverCallback
 ): ScatterPanelInfo {
@@ -37,8 +39,8 @@ export function prepScatter(
   let builder: UPlotConfigBuilder;
 
   try {
-    series = prepSeries(options, data.series);
-    builder = prepConfig(data.series, series, theme, ttip);
+    series = prepSeries(options, getData());
+    builder = prepConfig(getData, series, theme, ttip);
   } catch (e) {
     console.log('prepScatter ERROR', e);
     return {
@@ -75,21 +77,61 @@ function getScatterSeries(
   state.seriesIndex = seriesIndex;
   y.state = state;
 
-  // can be used to generate pointColor from thresholds, or text labels with formatting
-  // const disp =
-  //   y.display ??
-  //   getDisplayProcessor({
-  //     field: y,
-  //     theme: config.theme2,
-  //     timeZone: tz,
-  //   });
-
-  // Simple hack for now!
-  const seriesColor = getFieldSeriesColor(y, config.theme2).color;
+  // Color configs
+  //----------------
+  let seriesColor = dims.pointColorFixed
+    ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
+    : getFieldSeriesColor(y, config.theme2).color;
+  let pointColor: DimensionValues<string> = () => seriesColor;
   const fieldConfig: ScatterFieldConfig = { ...defaultScatterConfig, ...y.config.custom };
+  let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
+  if (dims.pointColorIndex) {
+    const f = frames[frameIndex].fields[dims.pointColorIndex];
+    if (f) {
+      const disp =
+        f.display ??
+        getDisplayProcessor({
+          field: f,
+          theme: config.theme2,
+        });
+      pointColorMode = getFieldColorModeForField(y);
+      if (pointColorMode.isByValue) {
+        const index = dims.pointColorIndex;
+        pointColor = (frame: DataFrame) => {
+          // Yes we can improve this later
+          return frame.fields[index].values.toArray().map((v) => disp(v).color!);
+        };
+      } else {
+        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values.get(0), 1);
+        pointColor = () => seriesColor;
+      }
+    }
+  }
 
-  console.log('TODO, use config', { ...dims });
+  // Size configs
+  //----------------
+  let pointSizeHints = dims.pointSizeConfig;
+  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSizeConfig?.fixed ?? 5;
+  let pointSize: DimensionValues<number> = () => pointSizeFixed;
+  if (dims.pointSizeIndex) {
+    pointSize = (frame) => {
+      const s = getScaledDimensionForField(frame.fields[dims.pointSizeIndex!], dims.pointSizeConfig!);
+      const vals = Array(frame.length);
+      for (let i = 0; i < frame.length; i++) {
+        vals[i] = s.get(i);
+      }
+      return vals;
+    };
+  } else {
+    pointSizeHints = {
+      fixed: pointSizeFixed,
+      min: pointSizeFixed,
+      max: pointSizeFixed,
+    };
+  }
 
+  // Series config
+  //----------------
   const name = getFieldDisplayName(y, frame, frames);
   return {
     name,
@@ -115,17 +157,17 @@ function getScatterSeries(
     lineColor: () => seriesColor,
 
     point: fieldConfig.point!,
-    pointSize: () => fieldConfig.pointSize?.fixed ?? 3, // hardcoded for now
-    pointColor: () => seriesColor,
+    pointSize,
+    pointColor,
     pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
 
     label: VisibilityMode.Never,
     labelValue: () => '',
 
     hints: {
-      pointSize: fieldConfig.pointSize!,
+      pointSize: pointSizeHints!,
       pointColor: {
-        mode: getFieldColorModeForField(y),
+        mode: pointColorMode,
       },
     },
   };
@@ -211,12 +253,15 @@ interface DrawBubblesOpts {
     size: {
       values: (u: uPlot, seriesIdx: number) => number[];
     };
+    color: {
+      values: (u: uPlot, seriesIdx: number) => string[];
+    };
   };
 }
 
 //const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
 const prepConfig = (
-  frames: DataFrame[],
+  getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],
   theme: GrafanaTheme2,
   ttip: ScatterHoverCallback
@@ -326,6 +371,12 @@ const prepConfig = (
           //return u.data[seriesIdx][2].map(v => getSize(v, minValue, maxValue));
         },
       },
+      color: {
+        // string values
+        values: (u, seriesIdx) => {
+          return u.data[seriesIdx][3] as any;
+        },
+      },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
       // we get back raw canvas coords (included axes & padding). translate to the plotting area origin
@@ -377,19 +428,40 @@ const prepConfig = (
     },
   });
 
+  const hoverEvent: ScatterHoverEvent = {
+    scatterIndex: -1,
+    xIndex: -1,
+    pageX: 0,
+    pageY: 0,
+  };
   let rect: DOMRect;
 
   // rect of .u-over (grid area)
   builder.addHook('syncRect', (u, r) => {
-    console.log(r);
     rect = r;
   });
 
-  builder.addHook('setCursor', (u) => {
-    // hovered value indices in each series
-    console.log(u.cursor.idxs);
-    // coords within .u-over rect
-    console.log(u.cursor.left, u.cursor.top);
+  builder.addHook('setLegend', (u) => {
+    // console.log('TTIP???', u.cursor.idxs);
+    if (u.cursor.idxs != null) {
+      for (let i = 0; i < u.cursor.idxs.length; i++) {
+        const sel = u.cursor.idxs[i];
+        if (sel != null) {
+          hoverEvent.scatterIndex = i - 1;
+          hoverEvent.xIndex = sel;
+
+          hoverEvent.pageX = rect.left + u.cursor.left!;
+          hoverEvent.pageY = rect.top + u.cursor.top!;
+          ttip(hoverEvent);
+          return; // only show the first one
+        }
+      }
+    }
+    hoverEvent.scatterIndex = -1;
+    hoverEvent.xIndex = -1;
+    hoverEvent.pageX = -1;
+    hoverEvent.pageY = -1;
+    ttip(hoverEvent);
   });
 
   builder.addHook('drawClear', (u) => {
@@ -408,6 +480,7 @@ const prepConfig = (
 
   builder.setMode(2);
 
+  const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
 
   builder.addScale({
@@ -429,8 +502,8 @@ const prepConfig = (
     let frame = s.frame(frames);
     let field = s.y(frame);
 
-    const lineColor = s.lineColor(frame) as string;
-    const fillColor = s.pointColor(frame) as string;
+    const lineColor = s.lineColor(frame);
+    //const fillColor = s.pointColor(frame) as string;
     //const lineColor = s.lineColor(frame);
     //const lineWidth = s.lineWidth;
 
@@ -464,8 +537,8 @@ const prepConfig = (
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: lineColor,
-      fillColor: alpha(fillColor, 0.5),
+      lineColor: lineColor as string,
+      // fillColor: alpha(fillColor, 0.5),
     });
   });
 
@@ -507,15 +580,21 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
     null,
     ...info.series.map((s, idx) => {
       const frame = s.frame(data);
-      const pointSize = Number(s.pointSize(frame)); // constant!
-      // TODO obviously add color etc etc
+
       return [
         s.x(frame).values.toArray(), // X
         s.y(frame).values.toArray(), // Y
-        Array(frame.length).fill(pointSize), // constant for now
-        //s.pointSize(frame), // size
-        //s.pointColor(frame), // color
+        asArray(frame, s.pointSize),
+        asArray(frame, s.pointColor),
       ];
     }),
   ];
+}
+
+function asArray<T>(frame: DataFrame, lookup: DimensionValues<T>): T[] {
+  const r = lookup(frame);
+  if (Array.isArray(r)) {
+    return r;
+  }
+  return Array(frame.length).fill(r);
 }

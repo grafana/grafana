@@ -39,9 +39,13 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
     console.log('SHOW TOOLTIP', { ...evt });
   };
 
+  getData = () => {
+    return this.props.data.series;
+  };
+
   initSeries = () => {
     const { options, data } = this.props;
-    const info: State = prepScatter(options, data, config.theme2, this.scatterHoverCallback);
+    const info: State = prepScatter(options, this.getData, config.theme2, this.scatterHoverCallback);
     if (info.series.length && data.series) {
       info.facets = prepData(info, data.series);
       info.error = undefined;

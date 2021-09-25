@@ -9,7 +9,6 @@ export interface ScatterHoverEvent {
   xIndex: number;
   pageX: number;
   pageY: number;
-  evt: any; // origin;
 }
 
 export type ScatterHoverCallback = (evt: ScatterHoverEvent) => void;

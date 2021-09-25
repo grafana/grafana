@@ -25,24 +25,21 @@ export interface ScatterFieldConfig extends HideableFieldConfig, AxisConfig {
   line?: ScatterLineMode;
   lineWidth?: number;
   lineStyle?: LineStyle;
+  lineColor?: ColorDimensionConfig;
 
   point?: VisibilityMode;
   pointSize?: ScaleDimensionConfig; // only 'fixed' is exposed in the UI
+  pointColor?: ColorDimensionConfig;
+  pointSymbol?: DimensionSupplier<string>;
+
+  label?: VisibilityMode;
+  labelValue?: TextDimensionConfig;
 }
 
 /** Configured in the panel level */
 export interface ScatterSeriesConfig extends ScatterFieldConfig {
   x?: string;
   y?: string;
-
-  pointSize?: ScaleDimensionConfig;
-  pointColor?: ColorDimensionConfig;
-  pointSymbol?: DimensionSupplier<string>;
-
-  lineColor?: ColorDimensionConfig;
-
-  label?: VisibilityMode;
-  labelValue?: TextDimensionConfig;
 }
 
 export const defaultScatterConfig: ScatterFieldConfig = {
