@@ -9,7 +9,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
-import { DimensionValues, UPlotConfigBuilder } from '@grafana/ui';
+import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import {
   findFieldIndex,
@@ -22,7 +22,7 @@ import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptio
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import uPlot from 'uplot';
-import { ScatterHoverCallback, ScatterSeries } from './types';
+import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 import { isGraphable } from './dims';
 
 export interface ScatterPanelInfo {

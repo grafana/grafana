@@ -1,8 +1,13 @@
 import { DataFrame, Field, FieldColorMode } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
-import { DimensionValues, VizLegendItem } from '@grafana/ui';
+import { VizLegendItem } from '@grafana/ui';
 import { ScaleDimensionConfig } from 'app/features/dimensions';
 import { ScatterLineMode } from './models.gen';
+
+/**
+ * @internal
+ */
+export type DimensionValues<T> = (frame: DataFrame, from?: number) => T | T[];
 
 export interface ScatterHoverEvent {
   scatterIndex: number;
@@ -30,7 +35,7 @@ export interface ScatterSeries {
 
   x: (frame: DataFrame) => Field;
   y: (frame: DataFrame) => Field;
-  //tooltip: (frame: DataFrame) => Field[];
+
   legend: (frame: DataFrame) => VizLegendItem[]; // could be single if symbol is constant
 
   line: ScatterLineMode;

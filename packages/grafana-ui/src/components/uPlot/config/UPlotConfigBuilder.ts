@@ -1,14 +1,6 @@
 import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 import { merge } from 'lodash';
-import {
-  DataFrame,
-  DefaultTimeZone,
-  EventBus,
-  getTimeZoneInfo,
-  GrafanaTheme2,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
@@ -16,7 +8,6 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '@grafana/schema';
 import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
-import { FieldLookup } from './types';
 
 const cursorDefaults: Cursor = {
   // prevent client-side zoom from triggering at the end of a selection
@@ -267,30 +258,3 @@ export class UPlotConfigBuilder {
     return axes;
   }
 }
-
-/** @alpha */
-type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
-  frame: DataFrame;
-  theme: GrafanaTheme2;
-  timeZone: TimeZone;
-  getTimeRange: () => TimeRange;
-  eventBus: EventBus;
-  allFrames: DataFrame[];
-} & T;
-
-/** @alpha */
-//type UPlotConfigPrepOptsXY = Omit<UPlotConfigPrepOpts, 'frame' | 'getTimeRange' | 'timeZone'>;
-
-/** @alpha */
-type UPlotConfigPrepOptsXY<T extends Record<string, any> = {}> = {
-  theme: GrafanaTheme2;
-  eventBus: EventBus;
-  frames: DataFrame[];
-  lookup: FieldLookup;
-} & T;
-
-/** @alpha */
-export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;
-
-/** @alpha */
-export type UPlotConfigPrepFnXY<T extends {} = {}> = (opts: UPlotConfigPrepOptsXY<T>) => UPlotConfigBuilder;
