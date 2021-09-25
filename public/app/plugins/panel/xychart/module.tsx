@@ -16,7 +16,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         defaultValue: 'single',
         settings: {
           options: [
-            { value: 'xy', label: 'XY (old)' },
+            { value: 'xy', label: 'XY', description: 'No changes to saved model since 8.0' },
             { value: 'explicit', label: 'Explicit' },
           ],
         },
@@ -45,6 +45,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
+        showIf: (cfg) => cfg.mode === 'explicit',
       })
       .addCustomEditor({
         id: 'series[0].pointSize',
@@ -60,6 +61,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
           min: 1,
           max: 50,
         },
+        showIf: (cfg) => cfg.mode === 'explicit',
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);

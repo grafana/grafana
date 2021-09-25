@@ -11,7 +11,7 @@ import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 import { ScatterFieldConfig, ScatterLineMode } from './models.gen';
 
-const categoryStyles = ['Scatter styles'];
+const categoryStyles = undefined; // ['Scatter styles'];
 
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {
