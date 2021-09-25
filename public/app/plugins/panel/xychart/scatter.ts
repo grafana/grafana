@@ -17,7 +17,7 @@ import { defaultScatterConfig, ScatterFieldConfig, XYChartOptions } from './mode
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import uPlot from 'uplot';
-import { ScatterHoverCallback, ScatterHoverEvent, ScatterSeries } from './types';
+import { ScatterHoverCallback, ScatterSeries } from './types';
 import { isGraphable } from './dims';
 
 export interface ScatterPanelInfo {
@@ -442,12 +442,6 @@ const prepConfig = (
     },
   });
 
-  const hoverEvent: ScatterHoverEvent = {
-    scatterIndex: -1,
-    xIndex: -1,
-    pageX: 0,
-    pageY: 0,
-  };
   let rect: DOMRect;
 
   // rect of .u-over (grid area)
@@ -461,21 +455,17 @@ const prepConfig = (
       for (let i = 0; i < u.cursor.idxs.length; i++) {
         const sel = u.cursor.idxs[i];
         if (sel != null) {
-          hoverEvent.scatterIndex = i - 1;
-          hoverEvent.xIndex = sel;
-
-          hoverEvent.pageX = rect.left + u.cursor.left!;
-          hoverEvent.pageY = rect.top + u.cursor.top!;
-          ttip(hoverEvent);
+          ttip({
+            scatterIndex: i - 1,
+            xIndex: sel,
+            pageX: rect.left + u.cursor.left!,
+            pageY: rect.top + u.cursor.top!,
+          });
           return; // only show the first one
         }
       }
     }
-    hoverEvent.scatterIndex = -1;
-    hoverEvent.xIndex = -1;
-    hoverEvent.pageX = -1;
-    hoverEvent.pageY = -1;
-    ttip(hoverEvent);
+    ttip(undefined);
   });
 
   builder.addHook('drawClear', (u) => {

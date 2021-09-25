@@ -11,7 +11,7 @@ export interface ScatterHoverEvent {
   pageY: number;
 }
 
-export type ScatterHoverCallback = (evt: ScatterHoverEvent) => void;
+export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
 
 export interface LegendInfo {
   color: CanvasRenderingContext2D['strokeStyle'];

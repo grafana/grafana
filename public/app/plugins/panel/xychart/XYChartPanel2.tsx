@@ -2,10 +2,20 @@ import React, { PureComponent } from 'react';
 import { PanelProps } from '@grafana/data';
 import { XYChartOptions } from './models.gen';
 import { ScatterHoverEvent, ScatterSeries } from './types';
-import { LegendDisplayMode, UPlotChart, UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
+import {
+  LegendDisplayMode,
+  Portal,
+  UPlotChart,
+  UPlotConfigBuilder,
+  VizLayout,
+  VizLegend,
+  VizLegendItem,
+  VizTooltipContainer,
+} from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { prepData, prepScatter } from './scatter';
 import { config } from '@grafana/runtime';
+import { TooltipView } from './TooltipView';
 
 type Props = PanelProps<XYChartOptions>;
 type State = {
@@ -13,6 +23,7 @@ type State = {
   series: ScatterSeries[];
   builder?: UPlotConfigBuilder;
   facets?: FacetedData;
+  hover?: ScatterHoverEvent;
 };
 
 export class XYChartPanel2 extends PureComponent<Props, State> {
@@ -35,8 +46,8 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
     }
   }
 
-  scatterHoverCallback = (evt: ScatterHoverEvent) => {
-    console.log('SHOW TOOLTIP', { ...evt });
+  scatterHoverCallback = (hover?: ScatterHoverEvent) => {
+    this.setState({ hover });
   };
 
   getData = () => {
@@ -80,8 +91,8 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
   };
 
   render() {
-    const { width, height, timeRange } = this.props;
-    const { error, facets, builder } = this.state;
+    const { width, height, timeRange, data } = this.props;
+    const { error, facets, builder, hover, series } = this.state;
     if (error || !builder) {
       return (
         <div className="panel-empty">
@@ -91,16 +102,25 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={this.renderLegend()}>
-        {(vizWidth: number, vizHeight: number) => (
-          // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
-          //   {JSON.stringify(scatterData, null, 2)}
-          // </pre>
-          <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={timeRange}>
-            {/*children ? children(config, alignedFrame) : null*/}
-          </UPlotChart>
-        )}
-      </VizLayout>
+      <>
+        <VizLayout width={width} height={height} legend={this.renderLegend()}>
+          {(vizWidth: number, vizHeight: number) => (
+            // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
+            //   {JSON.stringify(scatterData, null, 2)}
+            // </pre>
+            <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+              {/*children ? children(config, alignedFrame) : null*/}
+            </UPlotChart>
+          )}
+        </VizLayout>
+        <Portal>
+          {hover && (
+            <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
+              <TooltipView series={series[hover.scatterIndex]} rowIndex={hover.xIndex} data={data.series} />
+            </VizTooltipContainer>
+          )}
+        </Portal>
+      </>
     );
   }
 }
