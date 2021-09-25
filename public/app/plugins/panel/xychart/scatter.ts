@@ -255,6 +255,7 @@ interface DrawBubblesOpts {
     };
     color: {
       values: (u: uPlot, seriesIdx: number) => string[];
+      alpha: (u: uPlot, seriesIdx: number) => string[];
     };
   };
 }
@@ -291,6 +292,7 @@ const prepConfig = (
           rect,
           arc
         ) => {
+          const scatterInfo = scatterSeries[seriesIdx - 1];
           let d = (u.data[seriesIdx] as unknown) as FacetSeries;
 
           let strokeWidth = 1;
@@ -300,7 +302,7 @@ const prepConfig = (
           u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
           u.ctx.clip();
 
-          u.ctx.fillStyle = (series.fill as any)();
+          u.ctx.fillStyle = (series.fill as any)(); // assumes constant
           u.ctx.strokeStyle = (series.stroke as any)();
           u.ctx.lineWidth = strokeWidth;
 
@@ -312,7 +314,8 @@ const prepConfig = (
           let xKey = series.facets![0].scale;
           let yKey = series.facets![1].scale;
 
-          let pointHints = scatterSeries[seriesIdx - 1].hints.pointSize;
+          let pointHints = scatterInfo.hints.pointSize;
+          const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;
 
           let maxSize = (pointHints.max ?? pointHints.fixed) * devicePixelRatio;
 
@@ -324,6 +327,8 @@ const prepConfig = (
           let filtTop = u.posToVal(-maxSize / 2, yKey);
 
           let sizes = opts.disp.size.values(u, seriesIdx);
+          let pointColors = opts.disp.color.values(u, seriesIdx);
+          let pointAlpha = opts.disp.color.alpha(u, seriesIdx);
 
           for (let i = 0; i < d[0].length; i++) {
             let xVal = d[0][i];
@@ -337,6 +342,12 @@ const prepConfig = (
               u.ctx.moveTo(cx + size / 2, cy);
               u.ctx.beginPath();
               u.ctx.arc(cx, cy, size / 2, 0, deg360);
+
+              if (colorByValue) {
+                u.ctx.fillStyle = pointAlpha[i];
+                u.ctx.strokeStyle = pointColors[i];
+              }
+
               u.ctx.fill();
               u.ctx.stroke();
               opts.each(
@@ -375,6 +386,9 @@ const prepConfig = (
         // string values
         values: (u, seriesIdx) => {
           return u.data[seriesIdx][3] as any;
+        },
+        alpha: (u, seriesIdx) => {
+          return u.data[seriesIdx][4] as any;
         },
       },
     },
@@ -503,7 +517,7 @@ const prepConfig = (
     let field = s.y(frame);
 
     const lineColor = s.lineColor(frame);
-    //const fillColor = s.pointColor(frame) as string;
+    const pointColor = asSingleValue(frame, s.pointColor) as string;
     //const lineColor = s.lineColor(frame);
     //const lineWidth = s.lineWidth;
 
@@ -538,7 +552,7 @@ const prepConfig = (
       theme,
       scaleKey: '', // facets' scales used (above)
       lineColor: lineColor as string,
-      // fillColor: alpha(fillColor, 0.5),
+      fillColor: alpha(pointColor, 0.5),
     });
   });
 
@@ -581,11 +595,22 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
     ...info.series.map((s, idx) => {
       const frame = s.frame(data);
 
+      let colorValues;
+      let colorAlphaValues;
+      const r = s.pointColor(frame);
+      if (Array.isArray(r)) {
+        colorValues = r;
+        colorAlphaValues = r.map((c) => alpha(c as string, 0.5));
+      } else {
+        colorValues = Array(frame.length).fill(r);
+        colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
+      }
       return [
         s.x(frame).values.toArray(), // X
         s.y(frame).values.toArray(), // Y
         asArray(frame, s.pointSize),
-        asArray(frame, s.pointColor),
+        colorValues,
+        colorAlphaValues,
       ];
     }),
   ];
@@ -597,4 +622,12 @@ function asArray<T>(frame: DataFrame, lookup: DimensionValues<T>): T[] {
     return r;
   }
   return Array(frame.length).fill(r);
+}
+
+function asSingleValue<T>(frame: DataFrame, lookup: DimensionValues<T>): T {
+  const r = lookup(frame);
+  if (Array.isArray(r)) {
+    return r[0];
+  }
+  return r;
 }
