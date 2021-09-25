@@ -13,7 +13,7 @@ import { DimensionValues, UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import { findFieldIndex, getScaledDimensionForField, ScaleDimensionConfig } from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
-import { defaultScatterConfig, ScatterFieldConfig, XYChartOptions } from './models.gen';
+import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptions } from './models.gen';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import uPlot from 'uplot';
@@ -151,8 +151,8 @@ function getScatterSeries(
       ];
     },
 
-    line: fieldConfig.line!,
-    lineWidth: fieldConfig.lineWidth!,
+    line: fieldConfig.line ?? ScatterLineMode.None,
+    lineWidth: fieldConfig.lineWidth ?? 2,
     lineStyle: fieldConfig.lineStyle!,
     lineColor: () => seriesColor,
 
@@ -295,6 +295,19 @@ const prepConfig = (
           const scatterInfo = scatterSeries[seriesIdx - 1];
           let d = (u.data[seriesIdx] as unknown) as FacetSeries;
 
+          let showLine = scatterInfo.line !== ScatterLineMode.None;
+          let showPoints = scatterInfo.point === VisibilityMode.Always;
+          if (!showPoints && scatterInfo.point === VisibilityMode.Auto) {
+            showPoints = d[0].length < 1000;
+          }
+
+          // always show something
+          if (!showPoints && !showLine) {
+            showLine = true;
+          }
+
+          console.log('SHOW', showLine, showPoints, scatterInfo);
+
           let strokeWidth = 1;
 
           u.ctx.save();
@@ -339,26 +352,36 @@ const prepConfig = (
               let cx = valToPosX(xVal, scaleX, xDim, xOff);
               let cy = valToPosY(yVal, scaleY, yDim, yOff);
 
-              u.ctx.moveTo(cx + size / 2, cy);
-              u.ctx.beginPath();
-              u.ctx.arc(cx, cy, size / 2, 0, deg360);
-
-              if (colorByValue) {
-                u.ctx.fillStyle = pointAlpha[i];
-                u.ctx.strokeStyle = pointColors[i];
+              if (showLine) {
+                u.ctx.beginPath();
+                u.ctx.lineTo(cx + size / 2, cy);
+                u.ctx.stroke();
+                console.log('LINE!!');
+              } else {
+                u.ctx.moveTo(cx + size / 2, cy);
               }
 
-              u.ctx.fill();
-              u.ctx.stroke();
-              opts.each(
-                u,
-                seriesIdx,
-                i,
-                cx - size / 2 - strokeWidth / 2,
-                cy - size / 2 - strokeWidth / 2,
-                size + strokeWidth,
-                size + strokeWidth
-              );
+              if (showPoints) {
+                u.ctx.beginPath();
+                u.ctx.arc(cx, cy, size / 2, 0, deg360);
+
+                if (colorByValue) {
+                  u.ctx.fillStyle = pointAlpha[i];
+                  u.ctx.strokeStyle = pointColors[i];
+                }
+
+                u.ctx.fill();
+                u.ctx.stroke();
+                opts.each(
+                  u,
+                  seriesIdx,
+                  i,
+                  cx - size / 2 - strokeWidth / 2,
+                  cy - size / 2 - strokeWidth / 2,
+                  size + strokeWidth,
+                  size + strokeWidth
+                );
+              }
             }
           }
 
