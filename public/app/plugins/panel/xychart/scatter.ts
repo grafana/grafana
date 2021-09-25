@@ -204,6 +204,16 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
   return numericIndicies.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
 }
 
+interface DrawBubblesOpts {
+  each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
+  disp: {
+    //unit: 3,
+    size: {
+      values: (u: uPlot, seriesIdx: number) => number[];
+    };
+  };
+}
+
 //const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
 const prepConfig = (
   frames: DataFrame[],
@@ -214,90 +224,116 @@ const prepConfig = (
   let qt: Quadtree;
   let hRect: Rect | null;
 
-  const drawBubbles: uPlot.Series.PathBuilder = (u, seriesIdx, idx0, idx1) => {
-    uPlot.orient(
-      u,
-      seriesIdx,
-      (
-        series,
-        dataX,
-        dataY,
-        scaleX,
-        scaleY,
-        valToPosX,
-        valToPosY,
-        xOff,
-        yOff,
-        xDim,
-        yDim,
-        moveTo,
-        lineTo,
-        rect,
-        arc
-      ) => {
-        let d = (u.data[seriesIdx] as unknown) as FacetSeries;
+  function drawBubblesFactory(opts: DrawBubblesOpts) {
+    const drawBubbles: uPlot.Series.PathBuilder = (u, seriesIdx, idx0, idx1) => {
+      uPlot.orient(
+        u,
+        seriesIdx,
+        (
+          series,
+          dataX,
+          dataY,
+          scaleX,
+          scaleY,
+          valToPosX,
+          valToPosY,
+          xOff,
+          yOff,
+          xDim,
+          yDim,
+          moveTo,
+          lineTo,
+          rect,
+          arc
+        ) => {
+          let d = (u.data[seriesIdx] as unknown) as FacetSeries;
 
-        let strokeWidth = 1;
+          let strokeWidth = 1;
 
-        u.ctx.save();
+          u.ctx.save();
 
-        u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
-        u.ctx.clip();
+          u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+          u.ctx.clip();
 
-        u.ctx.fillStyle = (series.fill as any)();
-        u.ctx.strokeStyle = (series.stroke as any)();
-        u.ctx.lineWidth = strokeWidth;
+          u.ctx.fillStyle = (series.fill as any)();
+          u.ctx.strokeStyle = (series.stroke as any)();
+          u.ctx.lineWidth = strokeWidth;
 
-        let deg360 = 2 * Math.PI;
+          let deg360 = 2 * Math.PI;
 
-        // leon forgot to add these to the uPlot's Scale interface, but they exist!
-        //let xKey = scaleX.key as string;
-        //let yKey = scaleY.key as string;
-        let xKey = series.facets![0].scale;
-        let yKey = series.facets![1].scale;
+          // leon forgot to add these to the uPlot's Scale interface, but they exist!
+          //let xKey = scaleX.key as string;
+          //let yKey = scaleY.key as string;
+          let xKey = series.facets![0].scale;
+          let yKey = series.facets![1].scale;
 
-        let pointHints = scatterSeries[seriesIdx - 1].hints.pointSize;
+          let pointHints = scatterSeries[seriesIdx - 1].hints.pointSize;
 
-        let maxSize = (pointHints.max ?? pointHints.fixed) * devicePixelRatio;
+          let maxSize = (pointHints.max ?? pointHints.fixed) * devicePixelRatio;
 
-        // todo: this depends on direction & orientation
-        // todo: calc once per redraw, not per path
-        let filtLft = u.posToVal(-maxSize / 2, xKey);
-        let filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + maxSize / 2, xKey);
-        let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, yKey);
-        let filtTop = u.posToVal(-maxSize / 2, yKey);
+          // todo: this depends on direction & orientation
+          // todo: calc once per redraw, not per path
+          let filtLft = u.posToVal(-maxSize / 2, xKey);
+          let filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + maxSize / 2, xKey);
+          let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, yKey);
+          let filtTop = u.posToVal(-maxSize / 2, yKey);
 
-        for (let i = 0; i < d[0].length; i++) {
-          let xVal = d[0][i];
-          let yVal = d[1][i];
-          let size = d[2][i] * devicePixelRatio;
+          let sizes = opts.disp.size.values(u, seriesIdx);
 
-          if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
-            let cx = valToPosX(xVal, scaleX, xDim, xOff);
-            let cy = valToPosY(yVal, scaleY, yDim, yOff);
+          for (let i = 0; i < d[0].length; i++) {
+            let xVal = d[0][i];
+            let yVal = d[1][i];
+            let size = sizes[i] * devicePixelRatio;
 
-            u.ctx.moveTo(cx + size / 2, cy);
-            u.ctx.beginPath();
-            u.ctx.arc(cx, cy, size / 2, 0, deg360);
-            u.ctx.fill();
-            u.ctx.stroke();
-            qt.add({
-              x: cx - size / 2 - strokeWidth / 2 - u.bbox.left,
-              y: cy - size / 2 - strokeWidth / 2 - u.bbox.top,
-              w: size + strokeWidth,
-              h: size + strokeWidth,
-              sidx: seriesIdx,
-              didx: i,
-            });
+            if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
+              let cx = valToPosX(xVal, scaleX, xDim, xOff);
+              let cy = valToPosY(yVal, scaleY, yDim, yOff);
+
+              u.ctx.moveTo(cx + size / 2, cy);
+              u.ctx.beginPath();
+              u.ctx.arc(cx, cy, size / 2, 0, deg360);
+              u.ctx.fill();
+              u.ctx.stroke();
+              opts.each(
+                u,
+                seriesIdx,
+                i,
+                cx - size / 2 - strokeWidth / 2,
+                cy - size / 2 - strokeWidth / 2,
+                size + strokeWidth,
+                size + strokeWidth
+              );
+            }
           }
+
+          u.ctx.restore();
         }
+      );
 
-        u.ctx.restore();
-      }
-    );
+      return null;
+    };
 
-    return null;
-  };
+    return drawBubbles;
+  }
+
+  let drawBubbles = drawBubblesFactory({
+    disp: {
+      size: {
+        //unit: 3, // raw CSS pixels
+        values: (u, seriesIdx) => {
+          return u.data[seriesIdx][2] as any; // already contains final pixel geometry
+          //let [minValue, maxValue] = getSizeMinMax(u);
+          //return u.data[seriesIdx][2].map(v => getSize(v, minValue, maxValue));
+        },
+      },
+    },
+    each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
+      // we get back raw canvas coords (included axes & padding). translate to the plotting area origin
+      lft -= u.bbox.left;
+      top -= u.bbox.top;
+      qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
+    },
+  });
 
   const builder = new UPlotConfigBuilder();
 
@@ -330,9 +366,6 @@ const prepConfig = (
             }
           }
         });
-
-        // TODO!!!
-        ttip({ scatterIndex: dist } as any);
       }
 
       return hRect && seriesIdx === hRect.sidx ? hRect.didx : null;
@@ -342,6 +375,21 @@ const prepConfig = (
         return hRect && seriesIdx === hRect.sidx ? hRect.w / devicePixelRatio : 0;
       },
     },
+  });
+
+  let rect: DOMRect;
+
+  // rect of .u-over (grid area)
+  builder.addHook('syncRect', (u, r) => {
+    console.log(r);
+    rect = r;
+  });
+
+  builder.addHook('setCursor', (u) => {
+    // hovered value indices in each series
+    console.log(u.cursor.idxs);
+    // coords within .u-over rect
+    console.log(u.cursor.left, u.cursor.top);
   });
 
   builder.addHook('drawClear', (u) => {
