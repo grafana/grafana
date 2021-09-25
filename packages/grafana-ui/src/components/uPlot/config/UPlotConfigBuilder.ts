@@ -1,6 +1,14 @@
 import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 import { merge } from 'lodash';
-import { DataFrame, DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  DefaultTimeZone,
+  EventBus,
+  getTimeZoneInfo,
+  GrafanaTheme2,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
@@ -258,3 +266,16 @@ export class UPlotConfigBuilder {
     return axes;
   }
 }
+
+/** @alpha */
+type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
+  frame: DataFrame;
+  theme: GrafanaTheme2;
+  timeZone: TimeZone;
+  getTimeRange: () => TimeRange;
+  eventBus: EventBus;
+  allFrames: DataFrame[];
+} & T;
+
+/** @alpha */
+export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;
