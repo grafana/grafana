@@ -11,7 +11,12 @@ import {
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { DimensionValues, UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import { findFieldIndex, getScaledDimensionForField, ScaleDimensionConfig } from 'app/features/dimensions';
+import {
+  findFieldIndex,
+  getScaledDimensionForField,
+  ScaleDimensionConfig,
+  ScaleDimensionMode,
+} from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
 import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptions } from './models.gen';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -115,7 +120,11 @@ function getScatterSeries(
   let pointSize: DimensionValues<number> = () => pointSizeFixed;
   if (dims.pointSizeIndex) {
     pointSize = (frame) => {
-      const s = getScaledDimensionForField(frame.fields[dims.pointSizeIndex!], dims.pointSizeConfig!);
+      const s = getScaledDimensionForField(
+        frame.fields[dims.pointSizeIndex!],
+        dims.pointSizeConfig!,
+        ScaleDimensionMode.Quadratic
+      );
       const vals = Array(frame.length);
       for (let i = 0; i < frame.length; i++) {
         vals[i] = s.get(i);
