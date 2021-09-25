@@ -20,7 +20,7 @@ export class TooltipView extends PureComponent<Props> {
       return null;
     }
     const frame = series.frame(data);
-    const y = series.y(frame);
+    const y = undefined; // series.y(frame);
 
     return (
       <table className={this.style.infoWrap}>
