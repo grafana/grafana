@@ -7,8 +7,12 @@ import {
   AxisConfig,
   AxisPlacement,
 } from '@grafana/schema';
-import { ScaleDimensionConfig } from 'app/features/dimensions';
-import { ScatterSeries } from './types';
+import {
+  ColorDimensionConfig,
+  DimensionSupplier,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
+} from 'app/features/dimensions';
 
 export enum ScatterLineMode {
   None = 'none',
@@ -21,15 +25,24 @@ export interface ScatterFieldConfig extends HideableFieldConfig, AxisConfig {
   line?: ScatterLineMode;
   lineWidth?: number;
   lineStyle?: LineStyle;
-  // lineColor?: ColorDimensionConfig;
 
   point?: VisibilityMode;
   pointSize?: ScaleDimensionConfig; // only 'fixed' is exposed in the UI
-  // pointColor?: ColorDimensionConfig;
-  // // pointSymbol?: DimensionSupplier<string>;
+}
 
-  // label?: VisibilityMode;
-  // labelValue?: TextDimensionConfig;
+/** Configured in the panel level */
+export interface ScatterSeriesConfig extends ScatterFieldConfig {
+  x?: string;
+  y?: string;
+
+  pointSize?: ScaleDimensionConfig;
+  pointColor?: ColorDimensionConfig;
+  pointSymbol?: DimensionSupplier<string>;
+
+  lineColor?: ColorDimensionConfig;
+
+  label?: VisibilityMode;
+  labelValue?: TextDimensionConfig;
 }
 
 export const defaultScatterConfig: ScatterFieldConfig = {
@@ -54,15 +67,9 @@ export interface XYDimensionConfig {
   exclude?: string[]; // all other numbers except
 }
 
-export interface SingleSeries {
-  x?: string;
-  y?: string;
-}
-
 export interface XYChartOptions extends OptionsWithLegend, OptionsWithTooltip {
-  mode?: 'single' | 'explicit' | 'xy';
-  dims: XYDimensionConfig; // old
+  mode?: 'xy' | 'explicit';
+  dims: XYDimensionConfig;
 
-  single?: SingleSeries;
-  series?: ScatterSeries[];
+  series?: ScatterSeriesConfig[];
 }

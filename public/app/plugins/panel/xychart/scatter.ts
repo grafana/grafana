@@ -9,7 +9,7 @@ import {
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import { findFieldIndex } from 'app/features/dimensions';
+import { findFieldIndex, ScaleDimensionConfig } from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
 import { defaultScatterConfig, ScatterFieldConfig, XYChartOptions } from './models.gen';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -53,12 +53,21 @@ export function prepScatter(
   };
 }
 
+interface Dims {
+  pointColorIndex?: number;
+  pointColorFixed?: string;
+
+  pointSizeIndex?: number;
+  pointSizeConfig?: ScaleDimensionConfig;
+}
+
 function getScatterSeries(
   seriesIndex: number,
   frames: DataFrame[],
   frameIndex: number,
   xIndex: number,
-  yIndex: number
+  yIndex: number,
+  dims: Dims
 ): ScatterSeries {
   const frame = frames[frameIndex];
   const y = frame.fields[yIndex];
@@ -78,6 +87,8 @@ function getScatterSeries(
   // Simple hack for now!
   const seriesColor = getFieldSeriesColor(y, config.theme2).color;
   const fieldConfig: ScatterFieldConfig = { ...defaultScatterConfig, ...y.config.custom };
+
+  console.log('TODO, use config', { ...dims });
 
   const name = getFieldDisplayName(y, frame, frames);
   return {
@@ -126,66 +137,71 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
     throw 'missing data';
   }
 
-  if (options.mode === 'xy') {
-    const dims = options.dims ?? {};
-    const frameIndex = dims.frame ?? 0;
-    const frame = frames[frameIndex];
-    const numericIndicies: number[] = [];
-
-    let xIndex = findFieldIndex(frame, dims.x);
-    for (let i = 0; i < frame.fields.length; i++) {
-      if (isGraphable(frame.fields[i])) {
-        if (xIndex == null || i === xIndex) {
-          xIndex = i;
-          continue;
-        }
-        if (dims.exclude && dims.exclude.includes(getFieldDisplayName(frame.fields[i], frame, frames))) {
-          continue; // skip
+  if (options.mode === 'explicit') {
+    if (options.series?.length) {
+      for (const series of options.series) {
+        if (!series?.x) {
+          throw 'Select X dimension';
         }
 
-        numericIndicies.push(i);
-      }
-    }
-
-    if (xIndex == null) {
-      throw 'Missing X dimension';
-    }
-
-    if (!numericIndicies.length) {
-      throw 'No Y values';
-    }
-    return numericIndicies.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex));
-  }
-
-  if (options.mode === 'single') {
-    const { single } = options;
-
-    if (!single?.x) {
-      throw 'Select X dimension';
-    }
-
-    if (!single?.y) {
-      throw 'Select Y dimension';
-    }
-
-    for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-      const frame = frames[frameIndex];
-      const xIndex = findFieldIndex(frame, single.x);
-
-      if (xIndex != null) {
-        // TODO: this should find multiple y fields
-        const yIndex = findFieldIndex(frame, single.y);
-
-        if (yIndex == null) {
-          throw 'Y must be in the same frame as X';
+        if (!series?.y) {
+          throw 'Select Y dimension';
         }
 
-        return [getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex)];
+        for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+          const frame = frames[frameIndex];
+          const xIndex = findFieldIndex(frame, series.x);
+
+          if (xIndex != null) {
+            // TODO: this should find multiple y fields
+            const yIndex = findFieldIndex(frame, series.y);
+
+            if (yIndex == null) {
+              throw 'Y must be in the same frame as X';
+            }
+
+            const dims: Dims = {
+              pointColorFixed: series.pointColor?.fixed,
+              pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
+              pointSizeConfig: series.pointSize,
+              pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
+            };
+            return [getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims)];
+          }
+        }
       }
     }
   }
 
-  return [];
+  // Default behavior
+  const dims = options.dims ?? {};
+  const frameIndex = dims.frame ?? 0;
+  const frame = frames[frameIndex];
+  const numericIndicies: number[] = [];
+
+  let xIndex = findFieldIndex(frame, dims.x);
+  for (let i = 0; i < frame.fields.length; i++) {
+    if (isGraphable(frame.fields[i])) {
+      if (xIndex == null || i === xIndex) {
+        xIndex = i;
+        continue;
+      }
+      if (dims.exclude && dims.exclude.includes(getFieldDisplayName(frame.fields[i], frame, frames))) {
+        continue; // skip
+      }
+
+      numericIndicies.push(i);
+    }
+  }
+
+  if (xIndex == null) {
+    throw 'Missing X dimension';
+  }
+
+  if (!numericIndicies.length) {
+    throw 'No Y values';
+  }
+  return numericIndicies.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
 }
 
 //const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
