@@ -306,8 +306,6 @@ const prepConfig = (
             showLine = true;
           }
 
-          console.log('SHOW', showLine, showPoints, scatterInfo);
-
           let strokeWidth = 1;
 
           u.ctx.save();
