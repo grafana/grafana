@@ -246,7 +246,7 @@ export { LegacyForms, LegacyInputStatus };
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
 export { ScaleDistribution } from '@grafana/schema';
-export { UPlotConfigBuilder, UPlotConfigPrepFn, UPlotConfigPrepFnXY } from './uPlot/config/UPlotConfigBuilder';
+export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
