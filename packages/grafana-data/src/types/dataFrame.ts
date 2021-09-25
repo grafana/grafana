@@ -217,8 +217,6 @@ export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 
-type FieldIndex = number;
-
 /**
  * Describes where a specific data frame field is located within a
  * dataset of type DataFrame[]
@@ -227,7 +225,5 @@ type FieldIndex = number;
  */
 export interface DataFrameFieldIndex {
   frameIndex: number;
-  fieldIndex: FieldIndex;
-  seriesIndex?: number;
-  displayName?: string;
+  fieldIndex: number;
 }
