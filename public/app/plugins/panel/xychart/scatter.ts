@@ -433,6 +433,7 @@ const prepConfig = (
   const builder = new UPlotConfigBuilder();
 
   builder.setCursor({
+    drag: { setScale: true },
     dataIdx: (u, seriesIdx) => {
       if (seriesIdx === 1) {
         hRect = null;
