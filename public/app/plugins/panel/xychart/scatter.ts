@@ -469,7 +469,13 @@ const prepConfig = (
       size: (u, seriesIdx) => {
         return hRect && seriesIdx === hRect.sidx ? hRect.w / devicePixelRatio : 0;
       },
+      fill: (u, seriesIdx) => 'rgba(255,255,255,0.4)',
     },
+  });
+
+  // clip hover points/bubbles to plotting area
+  builder.addHook('init', (u, r) => {
+    u.over.style.overflow = 'hidden';
   });
 
   let rect: DOMRect;

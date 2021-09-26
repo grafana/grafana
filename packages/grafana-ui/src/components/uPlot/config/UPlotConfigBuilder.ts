@@ -208,12 +208,17 @@ export class UPlotConfigBuilder {
       return s + alphaHex;
     };
 
-    config.cursor = merge({}, cursorDefaults, this.cursor, {
-      points: {
-        stroke: pointColorFn('80'),
-        fill: pointColorFn(),
+    config.cursor = merge(
+      {},
+      cursorDefaults,
+      {
+        points: {
+          stroke: pointColorFn('80'),
+          fill: pointColorFn(),
+        },
       },
-    });
+      this.cursor
+    );
 
     config.tzDate = this.tzDate;
     config.padding = this.padding;
