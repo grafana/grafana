@@ -350,6 +350,8 @@ const prepConfig = (
           let pointColors = opts.disp.color.values(u, seriesIdx);
           let pointAlpha = opts.disp.color.alpha(u, seriesIdx);
 
+          let linePath: Path2D | null = showLine ? new Path2D() : null;
+
           for (let i = 0; i < d[0].length; i++) {
             let xVal = d[0][i];
             let yVal = d[1][i];
@@ -360,15 +362,11 @@ const prepConfig = (
               let cy = valToPosY(yVal, scaleY, yDim, yOff);
 
               if (showLine) {
-                u.ctx.beginPath();
-                u.ctx.lineTo(cx + size / 2, cy);
-                u.ctx.stroke();
-                console.log('LINE!!');
-              } else {
-                u.ctx.moveTo(cx + size / 2, cy);
+                linePath!.lineTo(cx, cy);
               }
 
               if (showPoints) {
+                u.ctx.moveTo(cx + size / 2, cy);
                 u.ctx.beginPath();
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
 
@@ -390,6 +388,13 @@ const prepConfig = (
                 );
               }
             }
+          }
+
+          if (showLine) {
+            let frame = scatterInfo.frame(getData());
+            u.ctx.strokeStyle = scatterInfo.lineColor(frame);
+            u.ctx.lineWidth = scatterInfo.lineWidth * devicePixelRatio;
+            u.ctx.stroke(linePath!);
           }
 
           u.ctx.restore();
