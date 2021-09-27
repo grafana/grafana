@@ -1,12 +1,10 @@
 package models
 
-import (
-	"strings"
-)
+import "github.com/grafana/grafana/pkg/infra/log"
 
 type SearchUserFilter interface {
-	GetFilters(filters string) []Filter
-	GetFilterList() map[string]Filter
+	GetFilter(filterName string, params []string) Filter
+	GetFilterList() map[string]FilterHandler
 }
 
 type WhereCondition struct {
@@ -25,41 +23,38 @@ type JoinCondition struct {
 	Params   string
 }
 
+type FilterHandler func(params []string) (Filter, error)
+
 type Filter interface {
 	WhereCondition() *WhereCondition
 	InCondition() *InCondition
 	JoinCondition() *JoinCondition
-	SetParams(params []string)
 }
 
 type OSSSearchUserFilter struct {
-	filters map[string]Filter
+	filterList []FilterHandler
+	filters    map[string]FilterHandler
 }
 
 func ProvideOSSSearchUserFilter() *OSSSearchUserFilter {
 	return &OSSSearchUserFilter{
-		filters: make(map[string]Filter, 0),
+		filters: make(map[string]FilterHandler, 0),
 	}
 }
 
-func (o *OSSSearchUserFilter) GetFilters(filters string) []Filter {
-	filtersRequested := strings.Split(filters, ",")
-	filtersFound := make([]Filter, 0)
-	filterWithParams := make(map[Filter][]string)
-	for _, fr := range filtersRequested {
-		if f, ok := o.filters[fr]; ok {
-			if _, ok = filterWithParams[f]; !ok {
-				filtersFound = append(filtersFound, f)
-			}
-			filterWithParams[f] = append(filterWithParams[f], fr)
+func (o *OSSSearchUserFilter) GetFilter(filterName string, params []string) Filter {
+	f, ok := o.filters[filterName]
+	if ok && len(params) > 0 {
+		filter, err := f(params)
+		if err != nil {
+			log.Warnf("Cannot initialise the filter %s: %s", filterName, err)
+			return nil
 		}
+		return filter
 	}
-	for f, p := range filterWithParams {
-		f.SetParams(p)
-	}
-	return filtersFound
+	return nil
 }
 
-func (o *OSSSearchUserFilter) GetFilterList() map[string]Filter {
+func (o *OSSSearchUserFilter) GetFilterList() map[string]FilterHandler {
 	return o.filters
 }

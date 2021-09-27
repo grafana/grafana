@@ -51,8 +51,13 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 	}
 
 	searchQuery := c.Query("query")
-	filtersQuery := c.Query("filters")
-	filters := s.searchUserFilter.GetFilters(filtersQuery)
+	filters := make([]models.Filter, 0)
+	for filterName := range s.searchUserFilter.GetFilterList() {
+		filter := s.searchUserFilter.GetFilter(filterName, c.QueryStrings(filterName))
+		if filter != nil {
+			filters = append(filters, filter)
+		}
+	}
 
 	query := &models.SearchUsersQuery{Query: searchQuery, Filters: filters, Page: page, Limit: perPage}
 	if err := s.bus.Dispatch(query); err != nil {
