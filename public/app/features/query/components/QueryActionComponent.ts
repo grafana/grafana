@@ -1,10 +1,11 @@
-import { DataQuery, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 
 interface ActionComponentProps {
   query?: DataQuery;
   queries?: Array<Partial<DataQuery>>;
   onAddQuery?: (q: DataQuery) => void;
   timeRange?: TimeRange;
+  dataSource?: DataSourceInstanceSettings;
 }
 
 type QueryActionComponent = React.ComponentType<ActionComponentProps>;

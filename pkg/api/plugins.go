@@ -224,12 +224,12 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
 
-	err = hs.LibraryPanelService.ImportLibraryPanelsForDashboard(c, dash, apiCmd.FolderId)
+	err = hs.LibraryPanelService.ImportLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash, apiCmd.FolderId)
 	if err != nil {
 		return response.Error(500, "Error while importing library panels", err)
 	}
 
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dash)
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
 		return response.Error(500, "Error while connecting library panels", err)
 	}
