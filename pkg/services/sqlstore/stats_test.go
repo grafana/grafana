@@ -88,7 +88,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		UserId: users[1].Id,
 		Role:   models.ROLE_EDITOR,
 	}
-	err = AddOrgUser(cmd)
+	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 3rd user as viewer
@@ -97,7 +97,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		UserId: users[2].Id,
 		Role:   models.ROLE_VIEWER,
 	}
-	err = AddOrgUser(cmd)
+	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// get 2nd user's organisation
@@ -112,7 +112,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		UserId: users[0].Id,
 		Role:   models.ROLE_ADMIN,
 	}
-	err = AddOrgUser(cmd)
+	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// update 1st user last seen at
