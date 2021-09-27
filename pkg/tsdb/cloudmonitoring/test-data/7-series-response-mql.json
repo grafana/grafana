@@ -9,6 +9,10 @@
       },
       {
         "key": "resource.instance_id"
+      },
+      {
+        "key": "metric.response_code_class",
+        "valueType": "INT64"
       }
     ],
     "pointDescriptors": [
@@ -30,6 +34,9 @@
         },
         {
           "stringValue": "6724404429462225363"
+        },
+        {
+          "int64Value": "200"
         }
       ],
       "pointData": [

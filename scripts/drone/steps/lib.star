@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.4.6'
-build_image = 'grafana/build-container:1.4.2'
+build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -60,9 +60,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition in ('enterprise', 'enterprise2'):
@@ -180,7 +177,7 @@ def benchmark_ldap_step():
 	  'LDAP_HOSTNAME': 'ldap',
         },
         'commands': [
-            './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
+            'dockerize -wait tcp://ldap:389 -timeout 120s',
             'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
     }
@@ -698,7 +695,7 @@ def postgres_integration_tests_step():
         'commands': [
             'apt-get update',
             'apt-get install -yq postgresql-client',
-            './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                 'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
@@ -722,7 +719,7 @@ def mysql_integration_tests_step():
         'commands': [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
-            './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
@@ -742,7 +739,7 @@ def redis_integration_tests_step():
             'REDIS_URL': 'redis://redis:6379/0',
         },
         'commands': [
-            './bin/dockerize -wait tcp://redis:6379/0 -timeout 120s',
+            'dockerize -wait tcp://redis:6379/0 -timeout 120s',
             './bin/grabpl integration-tests',
         ],
     }
@@ -759,7 +756,7 @@ def memcached_integration_tests_step():
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
         'commands': [
-            './bin/dockerize -wait tcp://memcached:11211 -timeout 120s',
+            'dockerize -wait tcp://memcached:11211 -timeout 120s',
             './bin/grabpl integration-tests',
         ],
     }

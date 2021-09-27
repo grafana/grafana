@@ -75,7 +75,7 @@ export async function signManifest(manifest: ManifestInfo): Promise<string> {
     }
 
     return info.data;
-  } catch (err) {
+  } catch (err: any) {
     if ((err.response && err.response.data) || err.response.data.message) {
       throw new Error('Error signing manifest: ' + err.response.data.message);
     }

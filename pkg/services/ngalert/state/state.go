@@ -158,7 +158,7 @@ func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
 func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 	ends := ResendDelay
 	if alertRule.IntervalSeconds > int64(ResendDelay.Seconds()) {
-		ends = time.Duration(alertRule.IntervalSeconds)
+		ends = time.Second * time.Duration(alertRule.IntervalSeconds)
 	}
 
 	a.EndsAt = result.EvaluatedAt.Add(ends * 3)

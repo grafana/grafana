@@ -22,6 +22,28 @@ const (
 	schedulerDefaultMinInterval             int64 = 10
 	evaluatorDefaultEvaluationTimeoutSec    int64 = 30
 	schedulereDefaultExecuteAlerts          bool  = true
+	// To start, the alertmanager needs at least one route defined.
+	// TODO: we should move this to Grafana settings and define this as the default.
+	alertmanagerDefaultConfiguration = `{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
 )
 
 type UnifiedAlertingSettings struct {
@@ -37,6 +59,7 @@ type UnifiedAlertingSettings struct {
 	MinInterval                    int64
 	EvaluationTimeout              time.Duration
 	ExecuteAlerts                  bool
+	DefaultConfiguration           string
 }
 
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
@@ -74,6 +97,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		}
 	}
 
+	// TODO load from ini file
+	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
+
 	alerting := iniFile.Section("alerting")
 
 	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
@@ -108,4 +134,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
+}
+
+func GetAlertmanagerDefaultConfiguration() string {
+	return alertmanagerDefaultConfiguration
 }
