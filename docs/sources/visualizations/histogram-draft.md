@@ -54,7 +54,7 @@ For the example, a log-normal distribution is generated between the buckets, whe
 
 | Size                         | Query                          |       Parameter       | Description  |
 |:----------------------------:|:-----------------------------------------------------------------|-------------------------------|------------------------------------------------:|
-| `less than (or equal to) 1MB` |   `uploaded_image_bytes_bucket{le="1048576"}`                                                         |       Parameter       | The number of files less than (or equal to) 1MB that have been uploaded is stored in the time series database. There is no need for additional functions. Due to Prometheus storing buckets cumulatively, you do not need to use helper functions. The operation then only needs to look at one number when doing a simple query rather than being error-prone and complex if you needed to add the sum of buckets manually.          |
+| `less than (or equal to) 1MB` |   `uploaded_image_bytes_bucket{le="1048576"}`                                                         |       Parameter       | The number of files less than (or equal to) 1MB that have been uploaded is stored in the time series database. Additional functions are not needed. Due to Prometheus storing buckets cumulatively, you do not need to use helper functions. The operation then only needs to look at one number when doing a simple query rather than being error-prone and complex if you needed to add the sum of buckets manually.          |
 | `smaller than 1MB`            |   `uploaded_image_bytes_bucket{le="1048576"} / ignoring (le) uploaded_image_bytes_count`              |       Parameter       | The total count of files. Total count for a histogram which can be found in two ways: 1. `uploaded_image_bytes_count` 2. `uploaded_image_bytes_bucket{le="+Inf"}` (i.e. How many events are smaller than positive infinity, which is by definition all events) Divide the number of files smaller than 1MB by the total number of files to get a ratio between the two. Since the normal way of displaying ratios is as percentages, set the unit to `Percent (0.0-1.0)`.|
 | `larger than 1MB`             |   `uploaded_image_bytes_count - ignoring(le) uploaded_image_bytes_bucket{le="1048576"}`               |       Parameter       | Subtract the number of smaller files from the number of total files to get the number of larger files.  |  
 | `between 256KB and 1MB`       |   `uploaded_image_bytes_bucket{le="1048576"} - ignoring(le) uploaded_image_bytes_bucket{le="262144"}` |       Parameter       | Using the same logic as for the previous query, get the number of files between any two bucket boundaries by subtracting the smaller boundary from the larger.  |
@@ -66,7 +66,7 @@ You can use one of the following **panels** to visualize their query:
 - **Gauge.** Also known as a speedometer; best used when the data had defined boundary limits to warn users when they are falling under the normal range
 - **Graph.** Time charts that display data points over a time axis allowing users to overlap metrics to compare them overtime; easily modified and good for tracking outliers, state changes, or triggers
 
-This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible because there is no defined range.
+This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible without a defined range.
 
 # What size is a quarter of the files smaller than?
 
@@ -102,9 +102,7 @@ When users create a **bar gauge** panel to visualize `uploaded_image_bytes_bu
 - The buckets are out of order because they are being ordered alphabetically rather than numerically (i.e. 10 is smaller than 2, since 1 is smaller than 2).
 - The cumulative nature of the histogram, as every bucket contains more elements than the previous.
 
-There is an option to change the **format** of the Prometheus data from `Time series` to `Heatmap`. This allows users to tell Grafana it is working with a histogram </em>and</em> they would like to sort the buckets and only show distinctive counts for each bucket.
-
-[comment]: <> (Do we like having two buckets sections?)
+The option to change the **format** of the Prometheus data from `Time series` to `Heatmap` allows users to tell Grafana it is working with a histogram </em>and</em> they would like to sort the buckets to only show distinctive counts for each bucket.
 
 # Buckets' distribution over time
 
