@@ -5,6 +5,7 @@ import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
 import { isUndefined, omitBy } from 'lodash';
 import { MatcherFieldValue } from '../types/silence-form';
+import { matcherToMatcherField, parseMatcher } from './alertmanager';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
@@ -87,18 +88,17 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
     Object.assign(id2route, subId2Route);
   });
 
+  // Frontend migration to use object_matchers instead of matchers
+  const matchers = route.matchers
+    ? route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []
+    : route.object_matchers?.map(
+        (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
+      ) ?? [];
+
   return [
     {
       id,
-      object_matchers: [
-        //...(route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []),
-        ...(route.object_matchers?.map(
-          (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
-        ) ?? []),
-
-        // ...matchersToArrayFieldMatchers(route.match, false),
-        // ...matchersToArrayFieldMatchers(route.match_re, true),
-      ],
+      object_matchers: matchers,
       continue: route.continue ?? false,
       receiver: route.receiver ?? '',
       groupBy: route.group_by ?? [],
