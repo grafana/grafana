@@ -385,7 +385,7 @@ The default is `0s` (disabled).
 
 ### write_timeout
 
-This setting defines the number of seconds to wait for the caching backend to store a result. To disable this timeout, set this value to `0`.
+This setting defines the number of seconds to wait for the caching backend to store a result. To disable this timeout, set this value to `0s`.
 
 The default is `0s` (disabled).
 
