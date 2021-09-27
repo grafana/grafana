@@ -14,7 +14,6 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { PageBanner } from './core/components/PageBanner/PageBanner';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -26,11 +25,15 @@ interface AppWrapperState {
 
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
+let pageBanners: ComponentType[] = [];
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
 }
 
+export function addPageBanner(fn: ComponentType) {
+  pageBanners.push(fn);
+}
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
@@ -99,7 +102,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <Router history={locationService.getHistory()}>
                     <NavBar />
                     <main className="main-view">
-                      <PageBanner />
+                      {pageBanners.map((Banner, index) => (
+                        <Banner key={index.toString()} />
+                      ))}
                       <div
                         ref={this.container}
                         dangerouslySetInnerHTML={{
