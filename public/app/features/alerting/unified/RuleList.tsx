@@ -19,6 +19,7 @@ import { useLocation } from 'react-router-dom';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleStats } from './components/rules/RuleStats';
 import { RuleListErrors } from './components/rules/RuleListErrors';
+import { getFiltersFromUrlParams } from './utils/misc';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -34,6 +35,8 @@ export const RuleList = withErrorBoundary(
     const [expandAll, setExpandAll] = useState(false);
 
     const [queryParams] = useQueryParams();
+    const filters = getFiltersFromUrlParams(queryParams);
+    const filtersActive = Object.values(filters).some((filter) => filter !== undefined);
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -78,7 +81,7 @@ export const RuleList = withErrorBoundary(
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
               <div className={styles.statsContainer}>
-                {view === 'groups' && (
+                {view === 'groups' && filtersActive && (
                   <Button
                     className={styles.expandAllButton}
                     icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
