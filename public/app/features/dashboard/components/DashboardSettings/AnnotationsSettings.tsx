@@ -16,7 +16,7 @@ export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
   };
 
   const onNew = () => {
-    dashboard.annotations.list = [...dashboard.annotations.list, { ...newAnnotation }];
+    dashboard.updateAnnotationQueries([...dashboard.annotations.list, { ...newAnnotation }]);
     setEditIdx(dashboard.annotations.list.length - 1);
   };
 

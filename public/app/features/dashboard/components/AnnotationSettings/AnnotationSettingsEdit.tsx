@@ -31,7 +31,8 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     const list = [...dashboard.annotations.list];
     list.splice(editIdx, 1, annotation);
     setAnnotation(annotation);
-    dashboard.annotations.list = list;
+
+    dashboard.updateAnnotationQueries(list);
   };
 
   const onNameChange = (ev: React.FocusEvent<HTMLInputElement>) => {

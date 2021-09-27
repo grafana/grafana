@@ -15,12 +15,12 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
   const [annotations, updateAnnotations] = useState(dashboard.annotations.list);
 
   const onMove = (idx: number, direction: number) => {
-    dashboard.annotations.list = arrayUtils.moveItemImmutably(annotations, idx, idx + direction);
+    dashboard.updateAnnotationQueries(arrayUtils.moveItemImmutably(annotations, idx, idx + direction));
     updateAnnotations(dashboard.annotations.list);
   };
 
   const onDelete = (idx: number) => {
-    dashboard.annotations.list = [...annotations.slice(0, idx), ...annotations.slice(idx + 1)];
+    dashboard.updateAnnotationQueries([...annotations.slice(0, idx), ...annotations.slice(idx + 1)]);
     updateAnnotations(dashboard.annotations.list);
   };
 

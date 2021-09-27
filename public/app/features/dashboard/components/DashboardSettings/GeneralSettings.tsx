@@ -33,44 +33,58 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
+    dashboard.incrementUnsavedUserChange();
   };
 
   const onTooltipChange = (graphTooltip: number) => {
     dashboard.graphTooltip = graphTooltip;
+    dashboard.incrementUnsavedUserChange();
+
     setRenderCounter(renderCounter + 1);
   };
 
   const onRefreshIntervalChange = (intervals: string[]) => {
     dashboard.timepicker.refresh_intervals = intervals.filter((i) => i.trim() !== '');
+    dashboard.incrementUnsavedUserChange();
   };
 
   const onNowDelayChange = (nowDelay: string) => {
     dashboard.timepicker.nowDelay = nowDelay;
+    dashboard.incrementUnsavedUserChange();
   };
 
   const onHideTimePickerChange = (hide: boolean) => {
     dashboard.timepicker.hidden = hide;
+    dashboard.incrementUnsavedUserChange();
     setRenderCounter(renderCounter + 1);
   };
 
   const onLiveNowChange = (v: boolean) => {
     dashboard.liveNow = v;
+    dashboard.incrementUnsavedUserChange();
+
     setRenderCounter(renderCounter + 1);
   };
 
   const onTimeZoneChange = (timeZone: TimeZone) => {
     dashboard.timezone = timeZone;
+    dashboard.incrementUnsavedUserChange();
+
     setRenderCounter(renderCounter + 1);
     updateTimeZone(timeZone);
   };
 
   const onTagsChange = (tags: string[]) => {
     dashboard.tags = tags;
+    dashboard.incrementUnsavedUserChange();
+
     setRenderCounter(renderCounter + 1);
   };
 
   const onEditableChange = (value: boolean) => {
     dashboard.editable = value;
+    dashboard.incrementUnsavedUserChange();
+
     setRenderCounter(renderCounter + 1);
   };
 

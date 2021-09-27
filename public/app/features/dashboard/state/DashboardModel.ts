@@ -508,6 +508,15 @@ export class DashboardModel {
     }
   }
 
+  updateAnnotationQueries(annotations: AnnotationQuery[]) {
+    this.annotations = { list: annotations };
+    this.incrementUnsavedUserChange();
+  }
+
+  incrementUnsavedUserChange() {
+    this.unsavedUserChanges++;
+  }
+
   hasUnsavedChanges() {
     if (this.unsavedUserChanges > 0) {
       return true;
