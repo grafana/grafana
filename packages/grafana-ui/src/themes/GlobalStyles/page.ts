@@ -26,10 +26,10 @@ export function getPageStyles(theme: GrafanaTheme2) {
     }
 
     .page-scrollbar-wrapper {
-      position: absolute;
-      top: 0;
-      bottom: 0;
       width: 100%;
+      flex-grow: 1;
+      width: 100%;
+      min-height: 0;
     }
 
     .page-scrollbar-content {
