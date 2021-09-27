@@ -110,7 +110,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return report, err
 	}
@@ -152,7 +152,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsAccessStats); err != nil {
 		uss.log.Error("Failed to get datasource access stats", "error", err)
 		return report, err
 	}
