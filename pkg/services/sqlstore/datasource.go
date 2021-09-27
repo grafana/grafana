@@ -120,42 +120,44 @@ func (ss *SQLStore) DeleteDataSource(uid string, id int64, name string, orgID in
 	return cmd.DeletedDatasourcesCount, nil
 }
 
-// DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
-// and is added to the bus.
+// DeleteDataSource removes a datasource by org_id as well as uid
 func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
-	params := make([]interface{}, 0)
-
-	makeQuery := func(sql string, p ...interface{}) {
-		params = append(params, sql)
-		params = append(params, p...)
-	}
-
-	switch {
-	case cmd.OrgID == 0:
-		return models.ErrDataSourceIdentifierNotSet
-	case cmd.UID != "":
-		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.UID, cmd.OrgID)
-	case cmd.ID != 0:
-		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.ID, cmd.OrgID)
-	case cmd.Name != "":
-		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgID)
-	default:
+	if cmd.OrgID == 0 {
 		return models.ErrDataSourceIdentifierNotSet
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		result, err := sess.Exec(params...)
-		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
+		query := &models.GetDataSourceQuery{
+			Id:    cmd.ID,
+			Uid:   cmd.UID,
+			Name:  cmd.Name,
+			OrgId: cmd.OrgID,
+		}
+
+		if err := GetDataSource(query); err != nil {
+			cmd.DeletedDatasourcesCount = 0
+			return nil
+		}
+
+		result, err := sess.Exec("DELETE FROM data_source WHERE uid=? and org_id=?", query.Result.Uid, query.Result.OrgId)
+		if err != nil {
+			return err
+		}
+
+		cmd.DeletedDatasourcesCount, err = result.RowsAffected()
+		if err != nil {
+			return err
+		}
 
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
-			Name:      cmd.Name,
-			ID:        cmd.ID,
-			UID:       cmd.UID,
-			OrgID:     cmd.OrgID,
+			Name:      query.Result.Name,
+			ID:        query.Result.Id,
+			UID:       query.Result.Uid,
+			OrgID:     query.Result.OrgId,
 		})
 
-		return err
+		return nil
 	})
 }
 
