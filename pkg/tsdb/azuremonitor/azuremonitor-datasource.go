@@ -248,6 +248,11 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 		return nil, nil
 	}
 
+	queryUrl, err := getQueryUrl(query, azurePortalUrl)
+	if err != nil {
+		return nil, err
+	}
+
 	frames := data.Frames{}
 	for _, series := range amr.Value[0].Timeseries {
 		labels := data.Labels{}
@@ -302,10 +307,6 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		queryUrl, err := getQueryUrl(query, azurePortalUrl)
-		if err != nil {
-			return nil, err
-		}
 		frameWithLink := addConfigLinks(*frame, queryUrl)
 		frames = append(frames, &frameWithLink)
 	}
@@ -346,24 +347,15 @@ func getQueryUrl(query *AzureMonitorQuery, azurePortalUrl string) (string, error
 	chartDef, err := json.Marshal(map[string]interface{}{
 		"v2charts": []interface{}{
 			map[string]interface{}{
-				"metrics": []interface{}{
-					struct {
-						ResourceMetadata    map[string]string `json:"resourceMetadata"`
-						Name                string            `json:"name"`
-						AggregationType     int               `json:"aggregationType"`
-						Namespace           string            `json:"namespace"`
-						MetricVisualization interface{}       `json:"metricVisualization"`
-					}{
+				"metrics": []metricChartDefinition{
+					{
 						ResourceMetadata: map[string]string{
 							"id": id,
 						},
 						Name:            query.Params.Get("metricnames"),
 						AggregationType: aggregationType,
 						Namespace:       query.Params.Get("metricnamespace"),
-						MetricVisualization: struct {
-							DisplayName         string `json:"displayName"`
-							ResourceDisplayName string `json:"resourceDisplayName"`
-						}{
+						MetricVisualization: metricVisualization{
 							DisplayName:         query.Params.Get("metricnames"),
 							ResourceDisplayName: query.UrlComponents["resourceName"],
 						},
