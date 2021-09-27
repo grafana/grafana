@@ -80,6 +80,11 @@ Panel and annotation queries using more than one statistic now converts into one
 
 <!-- 8.2.0-beta1 END -->
 
+<!-- v8.2.0-beta1 START -->
+
+
+<!-- v8.2.0-beta1 END -->
+
 <!-- 8.1.5 START -->
 
 # 8.1.5 (2021-09-21)
