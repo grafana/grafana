@@ -92,10 +92,10 @@ func (ng *AlertNG) init() error {
 	baseInterval *= time.Second
 
 	store := &store.DBstore{
-		BaseInterval:           baseInterval,
-		DefaultIntervalSeconds: ng.getRuleDefaultIntervalSeconds(),
-		SQLStore:               ng.SQLStore,
-		Logger:                 ng.Log,
+		BaseInterval:    baseInterval,
+		DefaultInterval: ng.getRuleDefaultInterval(),
+		SQLStore:        ng.SQLStore,
+		Logger:          ng.Log,
 	}
 
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
@@ -122,7 +122,7 @@ func (ng *AlertNG) init() error {
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
-		MinRuleIntervalSeconds:  ng.getRuleMinIntervalSeconds(),
+		MinRuleInterval:         ng.getRuleMinInterval(),
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
 	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
@@ -179,18 +179,18 @@ func (ng *AlertNG) IsDisabled() bool {
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.
 // If this constant (1 minute) is lower than the configured minimum evaluation interval then
 // this configuration is returned.
-func (ng *AlertNG) getRuleDefaultIntervalSeconds() int64 {
-	ruleMinIntervalSeconds := ng.getRuleMinIntervalSeconds()
-	if defaultIntervalSeconds < ruleMinIntervalSeconds {
-		return ruleMinIntervalSeconds
+func (ng *AlertNG) getRuleDefaultInterval() time.Duration {
+	ruleMinInterval := ng.getRuleMinInterval()
+	if defaultIntervalSeconds < int64(ruleMinInterval.Seconds()) {
+		return ruleMinInterval
 	}
-	return defaultIntervalSeconds
+	return time.Duration(defaultIntervalSeconds) * time.Second
 }
 
 // getRuleMinIntervalSeconds returns the configured minimum rule interval.
 // If this value is less or equal to zero or not divided exactly by the scheduler interval
 // the scheduler interval (10 seconds) is returned.
-func (ng *AlertNG) getRuleMinIntervalSeconds() int64 {
+func (ng *AlertNG) getRuleMinInterval() time.Duration {
 	if ng.Cfg.UnifiedAlerting.MinInterval <= 0 {
 		return defaultBaseIntervalSeconds // if it's not configured; apply default
 	}

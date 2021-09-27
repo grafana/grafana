@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,17 +12,11 @@ import (
 )
 
 const (
-	alertmanagerDefaultClusterAddr                = "0.0.0.0:9094"
-	alertmanagerDefaultPeerTimeout                = 15 * time.Second
-	alertmanagerDefaultGossipInterval             = cluster.DefaultGossipInterval
-	alertmanagerDefaultPushPullInterval           = cluster.DefaultPushPullInterval
-	schedulerDefaultAdminConfigPollInterval       = 60 * time.Second
-	alertmanagerDefaultConfigPollInterval         = 60 * time.Second
-	schedulerDefaultMaxAttempts             int64 = 3
-	schedulerDefaultLegacyMinInterval       int64 = 1
-	schedulerDefaultMinInterval             int64 = 10
-	evaluatorDefaultEvaluationTimeoutSec    int64 = 30
-	schedulereDefaultExecuteAlerts          bool  = true
+	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
+	alertmanagerDefaultPeerTimeout        = 15 * time.Second
+	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
+	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
+	alertmanagerDefaultConfigPollInterval = 60 * time.Second
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -44,6 +39,12 @@ const (
 	}
 }
 `
+	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
+	schedulerDefaultAdminConfigPollInterval = 60 * time.Second
+	schedulereDefaultExecuteAlerts          = true
+	schedulerDefaultMaxAttempts             = 3
+	schedulerDefaultLegacyMinInterval       = 1
+	schedulerDefaultMinInterval             = 10 * time.Second
 )
 
 type UnifiedAlertingSettings struct {
@@ -56,12 +57,14 @@ type UnifiedAlertingSettings struct {
 	HAGossipInterval               time.Duration
 	HAPushPullInterval             time.Duration
 	MaxAttempts                    int64
-	MinInterval                    int64
+	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
 }
 
+// ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
+// It first reads the `unified_alerting` section, then looks for non-defaults on the `alerting` section and prefers those.
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
@@ -110,12 +113,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ExecuteAlerts = uaExecuteAlerts
 
 	// if the unified alerting options equal the defaults, apply the respective legacy one
-	uaEvaluationTimeoutSeconds := ua.Key("evaluation_timeout_seconds").MustInt64(evaluatorDefaultEvaluationTimeoutSec)
-	if uaEvaluationTimeoutSeconds == evaluatorDefaultEvaluationTimeoutSec {
+	uaEvaluationTimeout, err := gtime.ParseDuration(valueAsString(ua, "evaluation_timeout", evaluatorDefaultEvaluationTimeout.String()))
+	if err != nil || uaEvaluationTimeout == evaluatorDefaultEvaluationTimeout {
 		cfg.Logger.Warn("falling back to legacy setting of 'evaluation_timeout_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
-		uaEvaluationTimeoutSeconds = alerting.Key("evaluation_timeout_seconds").MustInt64(evaluatorDefaultEvaluationTimeoutSec)
+		uaEvaluationTimeout = time.Duration(alerting.Key("evaluation_timeout_seconds").MustInt64(int64(evaluatorDefaultEvaluationTimeout.Seconds()))) * time.Second
 	}
-	uaCfg.EvaluationTimeout = time.Second * time.Duration(uaEvaluationTimeoutSeconds)
+	uaCfg.EvaluationTimeout = uaEvaluationTimeout
 
 	uaMaxAttempts := ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 	if uaMaxAttempts == schedulerDefaultMaxAttempts {
@@ -124,11 +127,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaMinInterval := ua.Key("min_interval_seconds").MustInt64(schedulerDefaultMinInterval)
-	if uaMinInterval == schedulerDefaultMinInterval {
+	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", schedulerDefaultMinInterval.String()))
+	fmt.Println(">>>>>", uaMinInterval, err, uaMinInterval == schedulerDefaultMinInterval, uaMinInterval, schedulerDefaultMinInterval)
+	if err != nil || uaMinInterval == schedulerDefaultMinInterval {
 		cfg.Logger.Warn("falling back legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		uaMinInterval = alerting.Key("min_interval_seconds").MustInt64(schedulerDefaultMinInterval)
+		uaMinInterval = time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(schedulerDefaultMinInterval.Seconds()))) * time.Second
 	}
 	uaCfg.MinInterval = uaMinInterval
 

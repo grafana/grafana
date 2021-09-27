@@ -1161,19 +1161,20 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### execute_alerts
 
-Turns off alert rule execution, but Grafana 8 Alerts are still visible in the Grafana UI. Default is `true`. If it's true (the default) then the [respective legacy option]({{< relref "#execute_alerts-1">}}) is applied.
+Enable or disable alerting rule execution. Default is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1">}}) that takes precedence.
 
-### evaluation_timeout_seconds
+### evaluation_timeout
 
-Sets the alert calculation timeout. Default value is `30`. If it's `30` (the default) then the [respective legacy option]({{< relref "#evaluation_timeout_seconds-1">}}) is applied.
+Sets the alert evaluation timeout when fetching data from the datasource. Default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
 
 ### max_attempts
 
 Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3 (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
 
-### min_interval_seconds
+### min_interval
 
-Sets the minimum interval between rule evaluations. Default value is `10` which equals the scheduler interval. This value should be multiple of `10`, otherwise it fallbacks to `10`. If it's `10` (the default) then the [respective legacy option]({{< relref "#min_interval_seconds-1">}}) is applied
+Sets the minimum interval between rule evaluations. Default value is `10s` which equals the scheduler interval. This value should be multiple of `10`, otherwise it fallbacks to `10`. If it's `10` (the default) then the [respective legacy option]({{< relref "#min_interval_seconds-1">}}) is applied
+Sets the minimum interval to enforce between rule evaluations. Default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 

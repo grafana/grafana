@@ -52,20 +52,20 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
 				"max_attempts":               "6",
-				"min_interval_seconds":       "60",
+				"min_interval":               "60s",
 				"execute_alerts":             "false",
-				"evaluation_timeout_seconds": "90",
+				"evaluation_timeout":         "90s",
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
 				"min_interval_seconds":       strconv.FormatInt(schedulerDefaultLegacyMinInterval, 10),
 				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
-				"evaluation_timeout_seconds": strconv.FormatInt(evaluatorDefaultEvaluationTimeoutSec, 10),
+				"evaluation_timeout_seconds": strconv.FormatInt(int64(evaluatorDefaultEvaluationTimeout.Seconds()), 10),
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(6), cfg.UnifiedAlerting.MaxAttempts)
-				require.Equal(t, int64(60), cfg.UnifiedAlerting.MinInterval)
+				require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 90*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 			},
@@ -75,9 +75,9 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
 				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
-				"min_interval_seconds":       strconv.FormatInt(schedulerDefaultMinInterval, 10),
+				"min_interval":               schedulerDefaultMinInterval.String(),
 				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
-				"evaluation_timeout_seconds": strconv.FormatInt(evaluatorDefaultEvaluationTimeoutSec, 10),
+				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               "12",
@@ -88,7 +88,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(12), cfg.UnifiedAlerting.MaxAttempts)
-				require.Equal(t, int64(120), cfg.UnifiedAlerting.MinInterval)
+				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 			},
@@ -96,10 +96,10 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 		{
 			desc: "when both unified and legacy options are invalid, apply the defaults",
 			unifiedAlertingOptions: map[string]string{
-				"max_attempts":               "invalid",
-				"min_interval_seconds":       "invalid",
-				"execute_alerts":             "invalid",
-				"evaluation_timeout_seconds": "invalid",
+				"max_attempts":        "invalid",
+				"min_interval":        "invalid",
+				"execute_alerts":      "invalid",
+				"evaluation_timeouts": "invalid",
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               "invalid",
@@ -109,19 +109,19 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, schedulerDefaultMaxAttempts, cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(schedulerDefaultMaxAttempts), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, schedulerDefaultMinInterval, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, schedulereDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
-				require.Equal(t, time.Duration(evaluatorDefaultEvaluationTimeoutSec)*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
+				require.Equal(t, evaluatorDefaultEvaluationTimeout, cfg.UnifiedAlerting.EvaluationTimeout)
 			},
 		},
 		{
 			desc: "when unified alerting options are invalid, apply legacy options",
 			unifiedAlertingOptions: map[string]string{
-				"max_attempts":               "invalid",
-				"min_interval_seconds":       "invalid",
-				"execute_alerts":             "invalid",
-				"evaluation_timeout_seconds": "invalid",
+				"max_attempts":       "invalid",
+				"min_interval":       "invalid",
+				"execute_alerts":     "invalid",
+				"evaluation_timeout": "invalid",
 			},
 			alertingOptions: map[string]string{
 				"max_attempts":               "12",
@@ -132,7 +132,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(12), cfg.UnifiedAlerting.MaxAttempts)
-				require.Equal(t, int64(120), cfg.UnifiedAlerting.MinInterval)
+				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 			},

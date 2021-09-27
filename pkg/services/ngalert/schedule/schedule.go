@@ -84,7 +84,7 @@ type schedule struct {
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
-	minRuleIntervalSeconds  int64
+	minRuleInterval         time.Duration
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -103,7 +103,7 @@ type SchedulerCfg struct {
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
 	Metrics                 *metrics.Scheduler
 	AdminConfigPollInterval time.Duration
-	MinRuleIntervalSeconds  int64
+	MinRuleInterval         time.Duration
 }
 
 // NewScheduler returns a new schedule.
@@ -132,7 +132,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
-		minRuleIntervalSeconds:  cfg.MinRuleIntervalSeconds,
+		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
 }
@@ -340,9 +340,9 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
 
 				// enforce minimum evaluation interval
-				if item.IntervalSeconds < sch.minRuleIntervalSeconds {
-					sch.log.Debug("interval adjusted", "rule_interval_seconds", item.IntervalSeconds, "min_interval_seconds", sch.minRuleIntervalSeconds, "key", key)
-					item.IntervalSeconds = sch.minRuleIntervalSeconds
+				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
+					sch.log.Debug("interval adjusted", "rule_interval_seconds", item.IntervalSeconds, "min_interval_seconds", sch.minRuleInterval.Seconds(), "key", key)
+					item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
 				}
 
 				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
