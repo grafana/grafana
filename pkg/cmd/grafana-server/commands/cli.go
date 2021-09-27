@@ -44,22 +44,27 @@ func (e exitWithCode) Error() string {
 }
 
 func RunServer(opt ServerOptions) int {
+	serverFs := flag.NewFlagSet("server", flag.ContinueOnError)
 	var (
-		configFile = flag.String("config", "", "path to config file")
-		homePath   = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
-		pidFile    = flag.String("pidfile", "", "path to pid file")
-		packaging  = flag.String("packaging", "unknown", "describes the way Grafana was installed")
+		configFile = serverFs.String("config", "", "path to config file")
+		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
+		pidFile    = serverFs.String("pidfile", "", "path to pid file")
+		packaging  = serverFs.String("packaging", "unknown", "describes the way Grafana was installed")
 
-		v           = flag.Bool("v", false, "prints current version and exits")
-		vv          = flag.Bool("vv", false, "prints current version, all dependencies and exits")
-		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
-		profileAddr = flag.String("profile-addr", "localhost", "Define custom address for profiling")
-		profilePort = flag.Uint64("profile-port", 6060, "Define custom port for profiling")
-		tracing     = flag.Bool("tracing", false, "Turn on tracing")
-		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
+		v           = serverFs.Bool("v", false, "prints current version and exits")
+		vv          = serverFs.Bool("vv", false, "prints current version, all dependencies and exits")
+		profile     = serverFs.Bool("profile", false, "Turn on pprof profiling")
+		profileAddr = serverFs.String("profile-addr", "localhost", "Define custom address for profiling")
+		profilePort = serverFs.Uint64("profile-port", 6060, "Define custom port for profiling")
+		tracing     = serverFs.Bool("tracing", false, "Turn on tracing")
+		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
 	)
-
-	flag.Parse()
+	switch os.Args[1] {
+	case "server":
+		serverFs.Parse(os.Args[2:])
+	default:
+		serverFs.Parse(os.Args[1:])
+	}
 
 	if *v || *vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opt.Version, opt.Commit, opt.BuildBranch)
