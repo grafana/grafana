@@ -7,7 +7,7 @@ weight = 605
 
 ## Visualize Prometheus data in Grafana
 
-This topic describes how to visualize Prometheus data as a histogram in Grafana. The histogram visualization is a graphical representation of the distribution of numerical data. For in-depth information, refer to [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/) and [Prometheus Best Practices: Histograms and summaries](https://prometheus.io/docs/practices/histograms/#apdex-score).
+Histogram visualization provides a graphical representation of the distribution of numerical data. This topic explains how to visualize **Prometheus** data as a histogram in Grafana. For more on this topic, please see [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/) and [Prometheus Best Practices: Histograms and summaries](https://prometheus.io/docs/practices/histograms/#apdex-score).
 
 Before you begin, we assume that you have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana. This documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/) though later versions of Grafana are also available.
 
