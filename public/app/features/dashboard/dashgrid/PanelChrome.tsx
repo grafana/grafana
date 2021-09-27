@@ -48,6 +48,8 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
+  instanceState: any;
+  onInstanceStateChange: (value: any) => void;
 }
 
 export interface State {
@@ -372,7 +374,7 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   renderPanel(width: number, height: number) {
-    const { panel, plugin, dashboard } = this.props;
+    const { panel, plugin, dashboard, instanceState, onInstanceStateChange } = this.props;
     const { renderCounter, data } = this.state;
     const { theme } = config;
     const { state: loadingState } = data;
@@ -420,11 +422,13 @@ export class PanelChrome extends Component<Props, State> {
               width={panelWidth}
               height={innerPanelHeight}
               renderCounter={renderCounter}
+              instanceState={instanceState}
               replaceVariables={panel.replaceVariables}
               onOptionsChange={this.onOptionsChange}
               onFieldConfigChange={this.onFieldConfigChange}
               onChangeTimeRange={this.onChangeTimeRange}
               eventBus={dashboard.events}
+              onInstanceStateChange={onInstanceStateChange}
             />
           </PanelContextProvider>
         </div>

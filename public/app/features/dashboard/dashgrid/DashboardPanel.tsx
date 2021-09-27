@@ -8,6 +8,7 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Actions
 import { initDashboardPanel } from '../state/actions';
+import { setPanelInstanceState } from '../state/reducers';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
@@ -36,10 +37,14 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 
   return {
     plugin: panelState.plugin,
+    instanceState: panelState.instanceState,
   };
 };
 
-const mapDispatchToProps = { initDashboardPanel };
+const mapDispatchToProps = {
+  initDashboardPanel,
+  setPanelInstanceState,
+};
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
@@ -66,8 +71,12 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
+  onInstanceStateChange = (value: any) => {
+    this.props.setPanelInstanceState({ panelId: this.props.panel.id, value });
+  };
+
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, width, height, instanceState } = this.props;
 
     if (plugin.angularPanelCtrl) {
       return (
@@ -94,6 +103,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
         isInView={isInView}
         width={width}
         height={height}
+        instanceState={instanceState}
+        onInstanceStateChange={this.onInstanceStateChange}
       />
     );
   }
