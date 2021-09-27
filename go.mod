@@ -49,6 +49,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
+	github.com/grafana/cuetsy v0.0.0-20210922100505-ae22e2c034e5
 	github.com/grafana/grafana-aws-sdk v0.7.0
 	github.com/grafana/grafana-plugin-sdk-go v0.114.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
@@ -139,7 +140,7 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
+	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/deepmap/oapi-codegen v1.6.0 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
@@ -182,6 +183,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/memberlist v0.2.4 // indirect
 	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
+	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/igm/sockjs-go/v3 v3.0.0 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
@@ -234,8 +236,14 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/goleak v1.1.10 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+<<<<<<< HEAD
 	golang.org/x/sys v0.0.0-20210906170528-6f6e22806c34 // indirect
 	golang.org/x/text v0.3.6 // indirect
+=======
+	golang.org/x/mod v0.4.2 // indirect
+	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
+	golang.org/x/text v0.3.7 // indirect
+>>>>>>> 10dc142e8c... Update go deps
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83 // indirect
@@ -249,3 +257,5 @@ replace gopkg.in/macaron.v1 => ./pkg/macaron
 replace github.com/go-macaron/binding => ./pkg/macaron/binding
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.9.8
+
+replace github.com/grafana/cuetsy => ../cuetsy
