@@ -42,6 +42,7 @@ module.exports = {
       // problems with @grafana/ui
       'react-router': require.resolve('react-router'),
       'react-router-dom': require.resolve('react-router-dom'),
+      jquery: require.resolve('jquery'),
       // some of data source pluginis use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
