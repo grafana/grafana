@@ -44,6 +44,10 @@
 - **Transformations:** Convert field types to time string number or boolean. [#38517](https://github.com/grafana/grafana/pull/38517), [@nikki-kiga](https://github.com/nikki-kiga)
 - **Value mappings:** Add regular-expression based value mapping. [#38931](https://github.com/grafana/grafana/pull/38931), [@mcdee](https://github.com/mcdee)
 - **Zipkin:** Add ability to upload trace JSON. [#37483](https://github.com/grafana/grafana/pull/37483), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Usage Insights:** Support writing events to Grafana's log (Enterprise)
+- **Admin:** Update license page UI (Enterprise)
+- **Reporting:** enable creating reports from dashboard (Enterprise)
+- **Recorded queries:** add api support for recorded queries (Enterprise)
 
 ### Bug fixes
 
@@ -54,6 +58,7 @@
 - **Thresholds:** Fix undefined color in "Add threshold". [#39113](https://github.com/grafana/grafana/pull/39113), [@glintik](https://github.com/glintik)
 - **Timeseries:** Add wide-to-long, and fix multi-frame output. [#38670](https://github.com/grafana/grafana/pull/38670), [@ryantxu](https://github.com/ryantxu)
 - **TooltipPlugin:** Fix behavior of Shared Crosshair when Tooltip is set to All. [#37285](https://github.com/grafana/grafana/pull/37285), [@nikki-kiga](https://github.com/nikki-kiga)
+- **Team Sync:** Batch team synchronization (Enterprise)
 
 ### Breaking changes
 
@@ -174,7 +179,7 @@ Panel and annotation queries using more than one statistic now converts into one
 ### Bug fixes
 
 - **CloudWatch Logs:** Fix crash when no region is selected. [#37639](https://github.com/grafana/grafana/pull/37639), [@aocenas](https://github.com/aocenas)
-- **Reporting:** Fix timezone parsing for scheduler (enterprise)
+- **Reporting:** Fix timezone parsing for scheduler (Enterprise)
 
 <!-- 8.1.1 END -->
 <!-- 8.1.0 START -->
@@ -187,6 +192,7 @@ Panel and annotation queries using more than one statistic now converts into one
 - **ColorPicker:** Display colors as RGBA. [#37231](https://github.com/grafana/grafana/pull/37231), [@nikki-kiga](https://github.com/nikki-kiga)
 - **Select:** Make portalling the menu opt-in, but opt-in _everywhere_. [#37501](https://github.com/grafana/grafana/pull/37501), [@ashharrison90](https://github.com/ashharrison90)
 - **TimeRangePicker:** Improve accessibility. [#36912](https://github.com/grafana/grafana/pull/36912), [@tskarhed](https://github.com/tskarhed)
+- **Encryption**: Support for aes-gcm (Enterprise)
 
 ### Bug fixes
 
@@ -294,6 +300,8 @@ Panel and annotation queries using more than one statistic now converts into one
 - **ValueMapping:** Added support for mapping text to color, boolean values, NaN and Null. Improved UI for value mapping. [#33820](https://github.com/grafana/grafana/pull/33820), [@torkelo](https://github.com/torkelo)
 - **Visualizations:** Dynamically set any config (min, max, unit, color, thresholds) from query results. [#36548](https://github.com/grafana/grafana/pull/36548), [@torkelo](https://github.com/torkelo)
 - **live:** Add support to handle origin without a value for the port when matching with root_url. [#36834](https://github.com/grafana/grafana/pull/36834), [@FZambia](https://github.com/FZambia)
+- **Reporting**: Use start and end dates for scheduling (Enterprise)
+- **Query cache**: Introduce encryption of cached results (Enterprise)
 
 ### Bug fixes
 
@@ -309,6 +317,7 @@ Panel and annotation queries using more than one statistic now converts into one
 - **Loki:** Fix highlight of logs when using filter expressions with backticks. [#36024](https://github.com/grafana/grafana/pull/36024), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Modal:** Force modal content to overflow with scroll. [#36754](https://github.com/grafana/grafana/pull/36754), [@ashharrison90](https://github.com/ashharrison90)
 - **Plugins:** Ignore symlinked folders when verifying plugin signature. [#34434](https://github.com/grafana/grafana/pull/34434), [@wbrowne](https://github.com/wbrowne)
+- **Reporting**: Use default timezone from config when rendering reports (Enterprise)
 
 ### Breaking changes
 
@@ -481,6 +490,10 @@ Issue [#33879](https://github.com/grafana/grafana/issues/33879)
 - **Dashboard:** Remove support for loading and deleting dashboard by slug. [#35104](https://github.com/grafana/grafana/pull/35104), [@dsotirakis](https://github.com/dsotirakis)
 - **InfluxDB:** Deprecate direct browser access in data source. [#35105](https://github.com/grafana/grafana/pull/35105), [@gabor](https://github.com/gabor)
 - **VizLegend:** Add a read-only property. [#35096](https://github.com/grafana/grafana/pull/35096), [@dprokop](https://github.com/dprokop)
+- **Runtime reload**: Introduce runtime reload for SAML settings (Enterprise)
+- **FGAC**: Introduce fine grained access control (Enterprise)
+- **Query cache**: Adds support for caching backend datasource queries (Enterprise)
+- **Reporting**: Adds the option of exporting table panels as CSV-files (Enterprise)
 
 ### Bug fixes
 
@@ -530,6 +543,7 @@ The following endpoints were deprecated for Grafana v5.0 and support for them ha
 - **PieChart:** Support row data in pie charts. [#34755](https://github.com/grafana/grafana/pull/34755), [@torkelo](https://github.com/torkelo)
 - **Prometheus:** Update default HTTP method to POST for existing data sources. [#34599](https://github.com/grafana/grafana/pull/34599), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Time series panel:** Position tooltip correctly when window is scrolled or resized. [#34782](https://github.com/grafana/grafana/pull/34782), [@dprokop](https://github.com/dprokop)
+- **SAML**: Make private key and certificate optional (Enterprise)
 
 ### Bug fixes
 
@@ -548,6 +562,7 @@ The following endpoints were deprecated for Grafana v5.0 and support for them ha
 - **Table:** Have text underline for datalink, and add support for image datalink. [#34635](https://github.com/grafana/grafana/pull/34635), [@thisisobate](https://github.com/thisisobate)
 - **Time series panel:** Position tooltip correctly when window is scrolled or resized. [#34584](https://github.com/grafana/grafana/pull/34584), [@dprokop](https://github.com/dprokop)
 - **Transformations:** Prevent FilterByValue transform from crashing panel edit. [#34747](https://github.com/grafana/grafana/pull/34747), [@jackw](https://github.com/jackw)
+- **Reporting**: Make it possible for anonymous users to generate PDF:s (Enterprise)
 
 ### Breaking changes
 
@@ -695,6 +710,7 @@ Issue [#34127](https://github.com/grafana/grafana/issues/34127)
 - **Visualizations**: Unify tooltip options across visualizations. [#33892](https://github.com/grafana/grafana/pull/33892), [@dprokop](https://github.com/dprokop)
 - **Visualizations**: Refactor and unify option creation between new visualizations. [#33867](https://github.com/grafana/grafana/pull/33867), [@oscarkilhed](https://github.com/oscarkilhed)
 - **Visualizations**: Remove singlestat panel. [#31904](https://github.com/grafana/grafana/pull/31904), [@dprokop](https://github.com/dprokop)
+- **Reporting**: Support for repeated panels (Enterprise)
 
 ### Bug fixes
 
@@ -850,6 +866,7 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 
 - **AzureMonitor**: Add support for Microsoft.AppConfiguration/configurationStores namespace. [#32123](https://github.com/grafana/grafana/pull/32123), [@deesejohn](https://github.com/deesejohn)
 - **TablePanel**: Make sorting case-insensitive. [#32435](https://github.com/grafana/grafana/pull/32435), [@kaydelaney](https://github.com/kaydelaney)
+- **Auditing**: Use nanosecond resolution for timestamps (Enterprise)
 
 ### Bug fixes
 
@@ -869,6 +886,7 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 
 - **Dashboard**: Do not include default datasource when externally exporting dashboard with row. [#32494](https://github.com/grafana/grafana/pull/32494), [@kaydelaney](https://github.com/kaydelaney)
 - **Loki**: Remove empty annotations tags. [#32359](https://github.com/grafana/grafana/pull/32359), [@conorevans](https://github.com/conorevans)
+- **Auditing**: Add name to user resources (Enterprise)
 
 ### Bug fixes
 
@@ -967,8 +985,9 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 - **ValueMappings**: Fixes value 0 not being mapped. [#31924](https://github.com/grafana/grafana/pull/31924), [@Willena](https://github.com/Willena)
 - **Variables**: Fixes filtering in picker with null items. [#31979](https://github.com/grafana/grafana/pull/31979), [@hugohaggmark](https://github.com/hugohaggmark)
 - **Variables**: Improves inspection performance and unknown filtering. [#31811](https://github.com/grafana/grafana/pull/31811), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Reporting**: Timezone support on Windows (Enterprise)
 
-### Plugin development fixes & changes
+- ### Plugin development fixes & changes
 
 - **Auth**: Allow soft token revocation. [#31601](https://github.com/grafana/grafana/pull/31601), [@joanlopez](https://github.com/joanlopez)
 
@@ -1014,6 +1033,9 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 - **Stats**: Exclude folders from total dashboard count. [#31320](https://github.com/grafana/grafana/pull/31320), [@bergquist](https://github.com/bergquist)
 - **Tracing**: Specify type of data frame that is expected for TraceView. [#31465](https://github.com/grafana/grafana/pull/31465), [@aocenas](https://github.com/aocenas)
 - **Transformers**: Add search to transform selection. [#30854](https://github.com/grafana/grafana/pull/30854), [@ryantxu](https://github.com/ryantxu)
+- **Reporting**: Support for template variables (Enterprise)
+- **Usage insights**: Display metadata related to sorting in search results (Enterprise)
+- **Licensing**: Enforce user limits (Enterprise)
 
 ### Bug fixes
 
@@ -1133,6 +1155,10 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 - **InfluxDB**: Add http configuration when selecting InfluxDB v2 flavor. [#30827](https://github.com/grafana/grafana/pull/30827), [@aocenas](https://github.com/aocenas)
 - **InfluxDB**: Show all datapoints for dynamically windowed flux query. [#30688](https://github.com/grafana/grafana/pull/30688), [@davkal](https://github.com/davkal)
 - **Loki**: Improve live tailing errors. [#30517](https://github.com/grafana/grafana/pull/30517), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Security**: Request blocking and filtering (Enterprise)
+- **Reporting**: Support unicode (Enterprise)
+- **Usage insights**: Export usage insights logs to Loki (Enterprise)
+- **Licensing**: Count users as editors if they have the ability to modify dashboards (Enterprise)
 
 ### Bug fixes
 
@@ -1227,6 +1253,10 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 - **Variables**: Adds variables inspection. [#25214](https://github.com/grafana/grafana/pull/25214), [@hugohaggmark](https://github.com/hugohaggmark)
 - **Variables**: New Variables are stored immediately. [#29178](https://github.com/grafana/grafana/pull/29178), [@hugohaggmark](https://github.com/hugohaggmark)
 - **Zipkin**: Remove browser access mode. [#30360](https://github.com/grafana/grafana/pull/30360), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Auditing**: Add logout logs (Enterprise)
+- **Auditing**: Add token count in login logs (Enterprise)
+- **Licensing**: Dashboard and folder permissions report (Enterprise)
+- **Licesning**: Automatically renew tokens (Enterprise)
 
 ### Bug fixes
 
@@ -1975,7 +2005,7 @@ This option to group query variable values into groups by tags has been an exper
 
 # 7.0.1 (2020-05-26)
 
-### Features / Enhancements
+### Features / Enhancementsrecord
 
 - **Datasource/CloudWatch**: Makes CloudWatch Logs query history more readable. [#24795](https://github.com/grafana/grafana/pull/24795), [@kaydelaney](https://github.com/kaydelaney)
 - **Download CSV**: Add date and time formatting. [#24992](https://github.com/grafana/grafana/pull/24992), [@ryantxu](https://github.com/ryantxu)
