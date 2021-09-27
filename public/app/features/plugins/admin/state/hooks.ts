@@ -70,6 +70,13 @@ export const useFetchStatus = () => {
   return { isLoading, error };
 };
 
+export const useFetchDetailsStatus = () => {
+  const isLoading = useSelector(selectIsRequestPending(fetchDetails.typePrefix));
+  const error = useSelector(selectRequestError(fetchDetails.typePrefix));
+
+  return { isLoading, error };
+};
+
 export const useInstallStatus = () => {
   const isInstalling = useSelector(selectIsRequestPending(install.typePrefix));
   const error = useSelector(selectRequestError(install.typePrefix));
