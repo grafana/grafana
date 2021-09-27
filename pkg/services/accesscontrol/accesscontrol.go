@@ -17,6 +17,9 @@ type AccessControl interface {
 	// GetUserRoles returns user roles.
 	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
 
+	// CloneUserToServiceAccount Creates a new service account and assigns the same roles to it
+	CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error)
+
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 

@@ -2,13 +2,8 @@ package api
 
 import (
 	"errors"
-	"fmt"
-	"log"
-	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -74,39 +69,14 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		}
 	}
 	cmd.OrgId = c.OrgId
-	serviceAccountId, _ := strconv.Atoi(cmd.ServiceAccountId)
-	if cmd.CreateNewServiceAccount == "on" { //FIXME use proper bool
+	//serviceAccountId, _ := strconv.Atoi(cmd.ServiceAccountId)
+	//var serviceAccount *models.User
+	var err error
+	if cmd.CreateNewServiceAccount {
 
-		cmd := models.CreateUserCommand{
-			Login:          "Service-Account-" + uuid.New().String(),
-			Email:          uuid.New().String(),
-			Password:       "", //FIXME, make random?
-			Name:           "ServiceAccount",
-			OrgId:          cmd.OrgId,
-			ServiceAccount: true,
-		}
-
-		user, err := hs.Login.CreateUser(cmd)
-		if err != nil {
-			panic("Could not create service account")
-		}
-		serviceAccountId = int(user.Id)
+		_, err = hs.AccessControl.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 
 	}
-	//FIXME Clone user permissions onto service account
-
-	roles, err := hs.AccessControl.GetUserRoles(c.Req.Context(), c.SignedInUser)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to list user roles.", err)
-	}
-
-	for _, v := range roles {
-		log.Println(fmt.Sprintf("Loaded role: %+v", v))
-	}
-
-	//AddUserRole //Add role to user
-
-	cmd.ServiceAccountId = fmt.Sprintf("%v", serviceAccountId)
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {

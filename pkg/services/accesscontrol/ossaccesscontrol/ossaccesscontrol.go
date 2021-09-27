@@ -73,6 +73,11 @@ func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *model
 	return ac.GetUserRoles(ctx, user)
 }
 
+// GetUserRoles returns user permissions based on built-in roles
+func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
+	return ac.CloneUserToServiceAccount(ctx, user)
+}
+
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
