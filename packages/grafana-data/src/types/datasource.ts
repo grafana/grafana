@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
+import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
@@ -248,6 +249,19 @@ abstract class DataSourceApi<
    * Convert a query to a simple text string
    */
   getQueryDisplayText?(query: TQuery): string;
+
+  /**
+   * @deprecated please use DataSourceWithLogsContextSupport instead
+   */
+  getLogRowContext?: <TContextQueryOptions extends {}>(
+    row: LogRowModel,
+    options?: TContextQueryOptions
+  ) => Promise<DataQueryResponse>;
+
+  /**
+   * @deprecated please use DataSourceWithLogsContextSupport instead
+   */
+  showContextToggle?(row?: LogRowModel): boolean;
 
   /**
    * Variable query action.
