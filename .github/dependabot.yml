@@ -21,6 +21,7 @@ updates:
       - dependency-name: "husky"
       - dependency-name: "slate"
       - dependency-name: "slate-plain-serializer"
+      - dependency-name: "systemjs"
     reviewers:
       - "grafana/frontend-ops"
     versioning-strategy: "increase-if-necessary"
