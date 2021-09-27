@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -107,32 +106,44 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaExecuteAlerts := ua.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
 	if uaExecuteAlerts { // true by default
-		cfg.Logger.Warn("falling back to legacy setting of 'execute_alerts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
-		uaExecuteAlerts = alerting.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+		legacyExecuteAlerts := alerting.Key("execute_alerts").MustBool(schedulereDefaultExecuteAlerts)
+		if !legacyExecuteAlerts {
+			cfg.Logger.Warn("falling back to legacy setting of 'execute_alerts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+		}
+		uaExecuteAlerts = legacyExecuteAlerts
 	}
 	uaCfg.ExecuteAlerts = uaExecuteAlerts
 
 	// if the unified alerting options equal the defaults, apply the respective legacy one
 	uaEvaluationTimeout, err := gtime.ParseDuration(valueAsString(ua, "evaluation_timeout", evaluatorDefaultEvaluationTimeout.String()))
 	if err != nil || uaEvaluationTimeout == evaluatorDefaultEvaluationTimeout {
-		cfg.Logger.Warn("falling back to legacy setting of 'evaluation_timeout_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
-		uaEvaluationTimeout = time.Duration(alerting.Key("evaluation_timeout_seconds").MustInt64(int64(evaluatorDefaultEvaluationTimeout.Seconds()))) * time.Second
+		legaceEvaluationTimeout := time.Duration(alerting.Key("evaluation_timeout_seconds").MustInt64(int64(evaluatorDefaultEvaluationTimeout.Seconds()))) * time.Second
+		if legaceEvaluationTimeout != evaluatorDefaultEvaluationTimeout {
+			cfg.Logger.Warn("falling back to legacy setting of 'evaluation_timeout_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+		}
+		uaEvaluationTimeout = legaceEvaluationTimeout
 	}
 	uaCfg.EvaluationTimeout = uaEvaluationTimeout
 
 	uaMaxAttempts := ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 	if uaMaxAttempts == schedulerDefaultMaxAttempts {
-		cfg.Logger.Warn("falling back to legacy setting of 'max_attempts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
-		uaMaxAttempts = alerting.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
+		legacyMaxAttempts := alerting.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
+		if legacyMaxAttempts != schedulerDefaultMaxAttempts {
+			cfg.Logger.Warn("falling back to legacy setting of 'max_attempts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+		}
+		uaMaxAttempts = legacyMaxAttempts
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", schedulerDefaultMinInterval.String()))
-	fmt.Println(">>>>>", uaMinInterval, err, uaMinInterval == schedulerDefaultMinInterval, uaMinInterval, schedulerDefaultMinInterval)
 	if err != nil || uaMinInterval == schedulerDefaultMinInterval {
-		cfg.Logger.Warn("falling back legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		uaMinInterval = time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(schedulerDefaultMinInterval.Seconds()))) * time.Second
+		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(schedulerDefaultMinInterval.Seconds()))) * time.Second
+		if legacyMinInterval != schedulerDefaultMinInterval {
+			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+		}
+		uaMinInterval = legacyMinInterval
+
 	}
 	uaCfg.MinInterval = uaMinInterval
 
