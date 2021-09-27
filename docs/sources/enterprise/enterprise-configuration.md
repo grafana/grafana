@@ -353,7 +353,11 @@ This value is `true` by default.
 
 ### ttl
 
-_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
+_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `1m` (1 minute).
+
+### max_ttl_ms
+
+The max number of milliseconds that a query result is stored in the caching system before it is deleted or refreshed. This value will override the if the `ttl` value in milliseconds is greater than `max_ttl_ms`.
 
 ### max_value_mb
 
