@@ -179,7 +179,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     } = {}) => (attempts: Observable<any>) => {
       return attempts.pipe(
         mergeMap((error, i) => {
-          const isLimitError = error.status === 429;
+          const isLimitError = error.data?.code === 'LimitExceededException';
           if (!isLimitError) {
             return throwError(error);
           }
@@ -605,7 +605,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err) => {
-        if (err.status === 429) {
+        if (err.status === 400) {
           throw err;
         }
 

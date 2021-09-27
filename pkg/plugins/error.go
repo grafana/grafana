@@ -6,3 +6,4 @@ type PluginError struct {
 	ErrorCode `json:"errorCode"`
 	PluginID  string `json:"pluginId,omitempty"`
 }
+

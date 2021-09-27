@@ -14,8 +14,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
+
+var LimitExceededException = "LimitExceededException"
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
@@ -96,7 +99,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", subType, err)
+		return nil, errutil.Wrapf(err, "failed to execute log action with subtype: %s", subType)
 	}
 
 	return data, nil
@@ -221,8 +224,8 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			plog.Info("executeStartQuery limit exceeded", "err", awsErr)
-			return nil, &plugins.ErrTooManyRequests{Details: err.Error()}
+			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			return nil, &plugins.PluginRequestError{Code: LimitExceededException, Message: err.Error()}
 		}
 		return nil, err
 	}

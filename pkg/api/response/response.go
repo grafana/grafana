@@ -183,25 +183,31 @@ func Error(status int, message string, err error) *NormalResponse {
 	var resp *NormalResponse
 	var responseStatus = status
 
-	switch status {
-	case 404:
-		data["message"] = "Not Found"
-	case 500:
-		data["message"] = "Internal Server Error"
-	}
-
-	if message != "" {
-		data["message"] = message
-	}
-
-	var errTooManyRequests *plugins.ErrTooManyRequests
-	if errors.As(err, &errTooManyRequests) {
-		responseStatus = 429
-		data["message"] = "Too many requests"
-		if errTooManyRequests.Details != "" {
-			data["error"] = errTooManyRequests.Details
+	var pluginRequestError *plugins.PluginRequestError
+	if errors.As(err, &pluginRequestError) {
+		responseStatus = 400
+		data["message"] = "Bad Request"
+		if pluginRequestError.Code != "" {
+			data["code"] = pluginRequestError.Code
+		}
+		if pluginRequestError.Message != "" {
+			data["error"] = pluginRequestError.Message
+		}
+		if pluginRequestError.Payload != nil {
+			data["payload"] = pluginRequestError.Payload
 		}
 	} else {
+		switch status {
+		case 404:
+			data["message"] = "Not Found"
+		case 500:
+			data["message"] = "Internal Server Error"
+		}
+
+		if message != "" {
+			data["message"] = message
+		}
+
 		if err != nil {
 			if setting.Env != setting.Prod {
 				data["error"] = err.Error()
