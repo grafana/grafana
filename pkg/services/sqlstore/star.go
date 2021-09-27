@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (ss *SQLStore) addOrgUSersQueryAndCommandHandlers() {
+func (ss *SQLStore) addStarQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", ss.StarDashboard)
 	bus.AddHandlerCtx("sql", ss.UnstarDashboard)
 	bus.AddHandlerCtx("sql", ss.GetUserStars)
