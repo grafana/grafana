@@ -22,5 +22,5 @@ updates:
       - dependency-name: "slate"
       - dependency-name: "slate-plain-serializer"
     reviewers:
-      - "grafana/grafana-frontend-ops"
+      - "grafana/frontend-ops"
     versioning-strategy: "increase-if-necessary"
