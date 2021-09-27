@@ -107,8 +107,10 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),
-				NewRedirectOutput(RedirectOutputConfig{
-					Channel: "stream/testdata/random-20Hz-stream",
+				NewRemoteWriteOutput(RemoteWriteConfig{
+					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
 			),
 		},
