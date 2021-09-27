@@ -144,21 +144,19 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.tags, getConfigValue('topTagPrefixes'));
     span.warnings = span.warnings.concat(tagsInfo.warnings);
+    span.parentSpan = span.parentSpan ? { ...span.parentSpan, span: spanMap.get(span.parentSpan.spanID) } : undefined;
+    console.log(span.references);
     span.references.forEach((ref, index) => {
       const refSpan = spanMap.get(ref.spanID) as TraceSpan;
       if (refSpan) {
         // eslint-disable-next-line no-param-reassign
         ref.span = refSpan;
-        if (index > 0) {
-          // Don't take into account the parent, just other references.
-          refSpan.subsidiarilyReferencedBy = refSpan.subsidiarilyReferencedBy || [];
-          refSpan.subsidiarilyReferencedBy.push({
-            spanID,
-            traceID,
-            span,
-            refType: ref.refType,
-          });
-        }
+        refSpan.subsidiarilyReferencedBy = refSpan.subsidiarilyReferencedBy || [];
+        refSpan.subsidiarilyReferencedBy.push({
+          spanID,
+          traceID,
+          span,
+        });
       }
     });
     spans.push(span);

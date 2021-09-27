@@ -236,6 +236,12 @@ function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
   return logs;
 }
 
+function getReferences(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  return span.links?.map((link) => {
+    return { traceID: link.traceId, spanID: link.spanId };
+  });
+}
+
 export function transformFromOTLP(
   traceData: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[]
 ): DataQueryResponse {
@@ -250,6 +256,7 @@ export function transformFromOTLP(
       { name: 'startTime', type: FieldType.number },
       { name: 'duration', type: FieldType.number },
       { name: 'logs', type: FieldType.other },
+      { name: 'references', type: FieldType.other },
       { name: 'tags', type: FieldType.other },
     ],
     meta: {
@@ -274,6 +281,7 @@ export function transformFromOTLP(
             startTime: span.startTimeUnixNano! / 1000000,
             duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
             tags: getSpanTags(span, librarySpan.instrumentationLibrary),
+            references: getReferences(span),
             logs: getLogs(span),
           } as TraceSpanRow);
         }
@@ -485,7 +493,7 @@ export function transformTrace(response: DataQueryResponse): DataQueryResponse {
  * Change fields which are json string into JS objects. Modifies the frame in place.
  */
 function parseJsonFields(frame: DataFrame) {
-  for (const fieldName of ['serviceTags', 'logs', 'tags']) {
+  for (const fieldName of ['serviceTags', 'logs', 'references', 'tags']) {
     const field = frame.fields.find((f) => f.name === fieldName);
     if (field) {
       const fieldIndex = frame.fields.indexOf(field);

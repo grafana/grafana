@@ -48,7 +48,7 @@ function getParentSpanId(span, levels) {
   return nestingLevel - 1 >= 0 ? chance.pickone(levels[nestingLevel - 1]) : null;
 }
 
-/* this simulates the hierarchy created by CHILD_OF tags */
+/* this simulates the hierarchy created by parentSpan references */
 function attachReferences(spans, depth, spansPerLevel) {
   let levels = [[getSpanId(spans[0])]];
 
@@ -72,13 +72,7 @@ function attachReferences(spans, depth, spansPerLevel) {
     return parentSpanId
       ? {
           ...span,
-          references: [
-            {
-              refType: 'CHILD_OF',
-              traceID: span.traceID,
-              spanID: parentSpanId,
-            },
-          ],
+          parentSpan: { traceID: span.traceID, spanID: parentSpanId },
         }
       : span;
   });

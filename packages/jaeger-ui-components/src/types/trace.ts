@@ -39,7 +39,7 @@ export type TraceProcess = {
 };
 
 export type TraceSpanReference = {
-  refType: 'CHILD_OF' | 'FOLLOWS_FROM';
+  // refType: 'CHILD_OF' | 'FOLLOWS_FROM';
   // eslint-disable-next-line no-use-before-define
   span?: TraceSpan | null | undefined;
   spanID: string;
@@ -54,6 +54,7 @@ export type TraceSpanData = {
   // Times are in microseconds
   startTime: number;
   duration: number;
+  parentSpan?: TraceSpanReference | null | undefined;
   logs: TraceLog[];
   tags?: TraceKeyValuePair[];
   references?: TraceSpanReference[];

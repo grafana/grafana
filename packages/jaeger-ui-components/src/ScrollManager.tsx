@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { TNil } from './types';
-import { TraceSpan, TraceSpanReference, Trace } from './types/trace';
+import { TraceSpan, Trace } from './types/trace';
 
 /**
  * `Accessors` is necessary because `ScrollManager` needs to be created by
@@ -56,29 +56,17 @@ interface Scroller {
  */
 function isSpanHidden(span: TraceSpan, childrenAreHidden: Set<string>, spansMap: Map<string, TraceSpan | TNil>) {
   const parentIDs = new Set<string>();
-  let { references }: { references: TraceSpanReference[] | TNil } = span;
-  let parentID: undefined | string;
-  const checkRef = (ref: TraceSpanReference) => {
-    if (ref.refType === 'CHILD_OF' || ref.refType === 'FOLLOWS_FROM') {
-      parentID = ref.spanID;
-      parentIDs.add(parentID);
-      return childrenAreHidden.has(parentID);
+  let ref = span.parentSpan?.span;
+  while (ref) {
+    parentIDs.add(ref.spanID);
+    if (childrenAreHidden.has(ref.spanID)) {
+      return { isHidden: true, parentIDs };
     }
-    return false;
-  };
-  while (Array.isArray(references) && references.length) {
-    const isHidden = references.some(checkRef);
-    if (isHidden) {
-      return { isHidden, parentIDs };
-    }
-    if (!parentID) {
-      break;
-    }
-    const parent = spansMap.get(parentID);
-    parentID = undefined;
-    references = parent && parent.references;
+
+    ref = ref.parentSpan?.span;
   }
-  return { parentIDs, isHidden: false };
+
+  return { isHidden: false, parentIDs };
 }
 
 /**

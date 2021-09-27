@@ -13,6 +13,7 @@ import {
   TTraceTimeline,
   UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
+import { TraceSpanReference } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -204,13 +205,16 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
     traceID: view.get(0).traceID,
     processes,
     spans: view.toArray().map((s) => {
+      if (s.references) {
+        console.log(s.references);
+      }
       return {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
         processID: s.serviceName,
         flags: 0,
-        references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
+        parentSpan: s.parentSpanID ? { traceID: s.traceID, spanID: s.parentSpanID } : undefined,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
       };
     }),

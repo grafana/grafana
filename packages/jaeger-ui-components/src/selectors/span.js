@@ -23,15 +23,7 @@ export const getSpanDuration = (span) => span.duration;
 export const getSpanTimestamp = (span) => span.startTime;
 export const getSpanProcessId = (span) => span.processID;
 export const getSpanReferences = (span) => span.references || [];
-export const getSpanReferenceByType = createSelector(
-  createSelector(({ span }) => span, getSpanReferences),
-  ({ type }) => type,
-  (references, type) => references.find((ref) => ref.refType === type)
-);
-export const getSpanParentId = createSelector(
-  (span) => getSpanReferenceByType({ span, type: 'CHILD_OF' }),
-  (childOfRef) => (childOfRef ? childOfRef.spanID : null)
-);
+export const getSpanParentId = (span) => span.parentSpan?.spanID;
 
 export const getSpanProcess = (span) => {
   if (!span.process) {

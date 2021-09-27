@@ -17,6 +17,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import AccordianKeyValues from './AccordianKeyValues';
+import AccordianLinks from './AccordianLinks';
 import AccordianLogs from './AccordianLogs';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
@@ -26,7 +27,6 @@ import LabeledList from '../../common/LabeledList';
 
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
-import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
@@ -132,7 +132,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     warningsToggle,
     stackTracesToggle,
     referencesToggle,
-    focusSpan,
     createSpanLink,
   } = props;
   const {
@@ -205,6 +204,17 @@ export default function SpanDetail(props: SpanDetailProps) {
               onToggle={() => processToggle(spanID)}
             />
           )}
+          {references && references.length > 0 && (
+            <AccordianLinks
+              className={ubMb1}
+              data={references}
+              span={span}
+              label="References"
+              linksGetter={linksGetter}
+              isOpen={isReferencesOpen}
+              onToggle={() => referencesToggle(spanID)}
+            />
+          )}
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs
@@ -253,14 +263,6 @@ export default function SpanDetail(props: SpanDetailProps) {
               );
             }}
             onToggle={() => stackTracesToggle(spanID)}
-          />
-        )}
-        {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
-          <AccordianReferences
-            data={references}
-            isOpen={isReferencesOpen}
-            onToggle={() => referencesToggle(spanID)}
-            focusSpan={focusSpan}
           />
         )}
         <small className={styles.debugInfo}>

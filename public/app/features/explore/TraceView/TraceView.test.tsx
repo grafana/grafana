@@ -220,7 +220,8 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       spanID: '3fb050342773d333',
       flags: 1,
       operationName: '/logproto.Pusher/Push',
-      references: [{ refType: 'CHILD_OF', traceID: '1ed38015486087ca', spanID: '1ed38015486087ca' }],
+      parentSpan: { traceID: '1ed38015486087ca', spanID: '1ed38015486087ca' },
+      references: [] as any,
       startTime: 1585244579835341,
       duration: 921,
       tags: [
@@ -237,7 +238,8 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       spanID: '35118c298fc91f68',
       flags: 1,
       operationName: '/logproto.Pusher/Push',
-      references: [{ refType: 'CHILD_OF', traceID: '1ed38015486087ca', spanID: '3fb050342773d333' }],
+      parentSpan: { traceID: '1ed38015486087ca', spanID: '3fb050342773d333' },
+      references: [] as any,
       startTime: 1585244579836040,
       duration: 36,
       tags: [

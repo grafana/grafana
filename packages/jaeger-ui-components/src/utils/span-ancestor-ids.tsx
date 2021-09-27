@@ -17,25 +17,15 @@ import { find as _find, get as _get } from 'lodash';
 import { TNil } from '../types';
 import { TraceSpan } from '../types/trace';
 
-function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
-  return _get(
-    _find(
-      span.references,
-      ({ span: ref, refType }) => ref && ref.spanID && (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM')
-    ),
-    'span'
-  );
-}
-
 export default function spanAncestorIds(span: TraceSpan | TNil): string[] {
   const ancestorIDs: string[] = [];
   if (!span) {
     return ancestorIDs;
   }
-  let ref = getFirstAncestor(span);
+  let ref = span.parentSpan?.span;
   while (ref) {
     ancestorIDs.push(ref.spanID);
-    ref = getFirstAncestor(ref);
+    ref = ref.parentSpan?.span;
   }
   return ancestorIDs;
 }

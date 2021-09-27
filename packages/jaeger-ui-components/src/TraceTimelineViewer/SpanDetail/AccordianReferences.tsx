@@ -101,9 +101,6 @@ export function References(props: ReferenceItemProps) {
                     <span className="span-svc-name">&lt; span in another trace &gt;</span>
                   )}
                   <small className={styles.debugInfo}>
-                    <span className={styles.debugLabel} data-label="Reference Type:">
-                      {reference.refType}
-                    </span>
                     <span className={styles.debugLabel} data-label="SpanID:">
                       {reference.spanID}
                     </span>

@@ -15,12 +15,9 @@
 import * as React from 'react';
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
-import IoNetwork from 'react-icons/lib/io/network';
-import MdFileUpload from 'react-icons/lib/md/file-upload';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
-import ReferencesButton from './ReferencesButton';
 import TimelineRow from './TimelineRow';
 import { formatDuration, ViewedBoundsFunctionType } from './utils';
 import SpanTreeOffset from './SpanTreeOffset';
@@ -337,7 +334,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       getViewedBounds,
       traceStartTime,
       span,
-      focusSpan,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -465,27 +461,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                   </a>
                 );
               })()}
-
-            {span.references && span.references.length > 1 && (
-              <ReferencesButton
-                references={span.references}
-                tooltipText="Contains multiple references"
-                focusSpan={focusSpan}
-              >
-                <IoNetwork />
-              </ReferencesButton>
-            )}
-            {span.subsidiarilyReferencedBy && span.subsidiarilyReferencedBy.length > 0 && (
-              <ReferencesButton
-                references={span.subsidiarilyReferencedBy}
-                tooltipText={`This span is referenced by ${
-                  span.subsidiarilyReferencedBy.length === 1 ? 'another span' : 'multiple other spans'
-                }`}
-                focusSpan={focusSpan}
-              >
-                <MdFileUpload />
-              </ReferencesButton>
-            )}
           </div>
         </TimelineRow.Cell>
         <TimelineRow.Cell

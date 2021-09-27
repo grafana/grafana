@@ -15,7 +15,6 @@
 import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
 import { getConfigValue } from '../utils/config/get-config';
-import { getParent } from './span';
 import { TNil } from '../types';
 import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '../types/trace';
 
@@ -132,7 +131,7 @@ export function getParameterInAncestor(name: string, span: TraceSpan) {
     if (result) {
       return result;
     }
-    currentSpan = getParent(currentSpan);
+    currentSpan = currentSpan.parentSpan?.span;
   }
   return undefined;
 }

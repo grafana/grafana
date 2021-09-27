@@ -24,9 +24,8 @@ export function _getTraceNameImpl(spans: TraceSpan[]) {
   const allIDs: Set<string> = new Set(spans.map(({ spanID }) => spanID));
 
   for (let i = 0; i < spans.length; i++) {
-    const hasInternalRef =
-      spans[i].references &&
-      spans[i].references.some(({ traceID, spanID }) => traceID === spans[i].traceID && allIDs.has(spanID));
+    const parent = spans[i].parentSpan;
+    const hasInternalRef = parent && parent.traceID === spans[i].traceID && allIDs.has(parent.spanID);
     if (hasInternalRef) {
       continue;
     }

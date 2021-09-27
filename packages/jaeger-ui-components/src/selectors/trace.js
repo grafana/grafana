@@ -50,7 +50,7 @@ export const TREE_ROOT_ID = '__root__';
 
 /**
  * Build a tree of { value: spanID, children } items derived from the
- * `span.references` information. The tree represents the grouping of parent /
+ * `span.parentSpan` information. The tree represents the grouping of parent /
  * child relationships. The root-most node is nominal in that
  * `.value === TREE_ROOT_ID`. This is done because a root span (the main trace
  * span) is not always included with the trace data. Thus, there can be
@@ -68,14 +68,9 @@ export function getTraceSpanIdsAsTree(trace) {
   const root = new TreeNode(TREE_ROOT_ID);
   trace.spans.forEach((span) => {
     const node = nodesById.get(span.spanID);
-    if (Array.isArray(span.references) && span.references.length) {
-      const { refType, spanID: parentID } = span.references[0];
-      if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {
-        const parent = nodesById.get(parentID) || root;
-        parent.children.push(node);
-      } else {
-        throw new Error(`Unrecognized ref type: ${refType}`);
-      }
+    if (span.parentSpan && span.parentSpan.traceID === trace.traceID) {
+      const parent = nodesById.get(span.parentSpan.spanID);
+      parent.children.push(node);
     } else {
       root.children.push(node);
     }
