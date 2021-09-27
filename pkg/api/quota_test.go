@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,8 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var getCurrentOrgQuotasURL = "/api/org/quotas"
-var getOrgsQuotasURL = "/api/orgs/%v/quotas"
+var (
+	getCurrentOrgQuotasURL = "/api/org/quotas"
+	getOrgsQuotasURL       = "/api/orgs/%v/quotas"
+	putOrgsQuotasURL       = "/api/orgs/%v/quotas/%v"
+
+	testUpdateOrgQuotaCmd = `{ "limit": 20 }`
+)
 
 var testOrgQuota = setting.OrgQuota{
 	User:       10,
@@ -136,6 +142,75 @@ func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
 	t.Run("AccessControl prevents viewing another org quotas with incorrect permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}})
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
+	sc := setupHTTPServer(t, false)
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	sc.hs.Cfg.Quota.Enabled = true
+	sc.hs.Cfg.Quota.Org = &testOrgQuota
+
+	// Create two orgs, to update another one than the logged in one
+	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	require.NoError(t, err)
+	_, err = sc.db.CreateOrgWithMember("TestOrg2", testUserID)
+	require.NoError(t, err)
+
+	input := strings.NewReader(testUpdateOrgQuotaCmd)
+	t.Run("Viewer cannot update another org quotas", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+
+	sc.initCtx.SignedInUser.IsGrafanaAdmin = true
+	input = strings.NewReader(testUpdateOrgQuotaCmd)
+	t.Run("Grafana admin viewer can update another org quotas", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+}
+
+func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
+	sc := setupHTTPServer(t, true)
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	sc.hs.Cfg.Quota.Enabled = true
+	sc.hs.Cfg.Quota.Org = &testOrgQuota
+
+	// Create two orgs, to update another one than the logged in one
+	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	require.NoError(t, err)
+	_, err = sc.db.CreateOrgWithMember("TestOrg2", testUserID)
+	require.NoError(t, err)
+
+	input := strings.NewReader(testUpdateOrgQuotaCmd)
+	t.Run("AccessControl allows updating another org quotas with correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsQuotasWrite, Scope: ScopeOrgsAll}})
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	input = strings.NewReader(testUpdateOrgQuotaCmd)
+	t.Run("AccessControl allows updating another org quotas with exact permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsQuotasWrite, Scope: accesscontrol.Scope("orgs", "id", "2")}})
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	input = strings.NewReader(testUpdateOrgQuotaCmd)
+	t.Run("AccessControl prevents updating another org quotas with too narrow permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsQuotasWrite, Scope: accesscontrol.Scope("orgs", "id", "1")}})
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+
+	input = strings.NewReader(testUpdateOrgQuotaCmd)
+	t.Run("AccessControl prevents updating another org quotas with incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}})
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 }

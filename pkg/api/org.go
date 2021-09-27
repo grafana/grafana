@@ -101,7 +101,7 @@ func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Respo
 }
 
 // PUT /api/org
-func UpdateOrgCurrent(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
+func UpdateCurrentOrg(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response {
 	return updateOrgHelper(form, c.OrgId)
 }
 
@@ -112,7 +112,7 @@ func UpdateOrg(c *models.ReqContext, form dtos.UpdateOrgForm) response.Response 
 
 func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) response.Response {
 	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := sqlstore.UpdateOrg(&cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(400, "Organization name taken", err)
 		}
@@ -123,7 +123,7 @@ func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) response.Response {
 }
 
 // PUT /api/org/address
-func UpdateOrgAddressCurrent(c *models.ReqContext, form dtos.UpdateOrgAddressForm) response.Response {
+func UpdateCurrentOrgAddress(c *models.ReqContext, form dtos.UpdateOrgAddressForm) response.Response {
 	return updateOrgAddressHelper(form, c.OrgId)
 }
 
@@ -145,7 +145,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 		},
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := sqlstore.UpdateOrgAddress(&cmd); err != nil {
 		return response.Error(500, "Failed to update org address", err)
 	}
 

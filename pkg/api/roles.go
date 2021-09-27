@@ -16,9 +16,12 @@ const (
 	ActionDatasourcesDelete = "datasources:delete"
 	ActionDatasourcesIDRead = "datasources.id:read"
 
-	ActionOrgsRead            = "orgs:read"
-	ActionOrgsPreferencesRead = "orgs.preferences:read"
-	ActionOrgsQuotasRead      = "orgs.quotas:read"
+	ActionOrgsRead             = "orgs:read"
+	ActionOrgsPreferencesRead  = "orgs.preferences:read"
+	ActionOrgsQuotasRead       = "orgs.quotas:read"
+	ActionOrgsWrite            = "orgs:write"
+	ActionOrgsPreferencesWrite = "orgs.preferences:write"
+	ActionOrgsQuotasWrite      = "orgs.quotas:write"
 )
 
 // API related scopes
