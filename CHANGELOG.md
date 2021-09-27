@@ -491,7 +491,7 @@ Issue [#33879](https://github.com/grafana/grafana/issues/33879)
 - **InfluxDB:** Deprecate direct browser access in data source. [#35105](https://github.com/grafana/grafana/pull/35105), [@gabor](https://github.com/gabor)
 - **VizLegend:** Add a read-only property. [#35096](https://github.com/grafana/grafana/pull/35096), [@dprokop](https://github.com/dprokop)
 - **Runtime reload**: Introduce runtime reload for SAML settings (Enterprise)
-- **FGAC**: Introduce fine grained access control (Enterprise)
+- **Access control**: Introduce fine grained access control beta (Enterprise)
 - **Query cache**: Adds support for caching backend datasource queries (Enterprise)
 - **Reporting**: Adds the option of exporting table panels as CSV-files (Enterprise)
 
