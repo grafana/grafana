@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
@@ -29,6 +30,7 @@ func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginMa
 		DataSourceCache:       dataSourceCache,
 		EncryptionService:     encryptionService,
 		PluginSettingsService: pluginSettingsService,
+		logger:                log.New("plugincontext"),
 	}
 }
 
@@ -39,6 +41,7 @@ type Provider struct {
 	DataSourceCache       datasources.CacheService
 	EncryptionService     encryption.Service
 	PluginSettingsService *pluginsettings.Service
+	logger                log.Logger
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -121,7 +124,10 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 
 func (p *Provider) decryptSecureJsonData() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, _ := p.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		decryptedJsonData, err := p.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		if err != nil {
+			p.logger.Error("Failed to decrypt secure json data", err)
+		}
 		return decryptedJsonData
 	}
 }

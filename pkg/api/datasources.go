@@ -491,7 +491,10 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 
 func (hs *HTTPServer) decryptSecureJsonData() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, _ := hs.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		decryptedJsonData, err := hs.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
+		if err != nil {
+			hs.log.Error("Failed to decrypt secure json data", err)
+		}
 		return decryptedJsonData
 	}
 }
