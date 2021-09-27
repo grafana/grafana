@@ -9,15 +9,20 @@ import {
   TypeaheadInput,
   TypeaheadOutput,
   Select,
+  Alert,
+  useStyles2,
 } from '@grafana/ui';
 import { tokenizer } from './syntax';
 import Prism from 'prismjs';
 import { Node } from 'slate';
 import { css } from '@emotion/css';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
 import { TempoDatasource, TempoQuery } from './datasource';
 import { debounce } from 'lodash';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 interface Props {
   datasource: TempoDatasource;
@@ -40,19 +45,17 @@ const plugins = [
 Prism.languages[PRISM_LANGUAGE] = tokenizer;
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
+  const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
   const [autocomplete, setAutocomplete] = useState<{
     serviceNameOptions: Array<SelectableValue<string>>;
-    selectedServiceName: SelectableValue<string> | undefined;
     spanNameOptions: Array<SelectableValue<string>>;
-    selectedSpanName: SelectableValue<string> | undefined;
   }>({
     serviceNameOptions: [],
-    selectedServiceName: undefined,
     spanNameOptions: [],
-    selectedSpanName: undefined,
   });
+  const [error, setError] = useState(null);
 
   const fetchServiceNameOptions = useMemo(
     () =>
@@ -82,10 +85,20 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 
   useEffect(() => {
     const fetchAutocomplete = async () => {
-      await languageProvider.start();
-      await fetchServiceNameOptions();
-      await fetchSpanNameOptions();
-      setHasSyntaxLoaded(true);
+      try {
+        await languageProvider.start();
+        const serviceNameOptions = await languageProvider.getOptions('service.name');
+        const spanNameOptions = await languageProvider.getOptions('name');
+        setHasSyntaxLoaded(true);
+        setAutocomplete({ serviceNameOptions, spanNameOptions });
+      } catch (error) {
+        // Display message if Tempo is connected but search 404's
+        if (error?.status === 404) {
+          setError(error);
+        } else {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+      }
     };
     fetchAutocomplete();
   }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
@@ -109,111 +122,129 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   };
 
   return (
-    <div className={css({ maxWidth: '500px' })}>
-      <InlineFieldRow>
-        <InlineField label="Service Name" labelWidth={14} grow>
-          <Select
-            menuShouldPortal
-            options={autocomplete.serviceNameOptions}
-            value={query.serviceName || ''}
-            onChange={(v) => {
-              onChange({
-                ...query,
-                serviceName: v?.value || undefined,
-              });
-            }}
-            placeholder="Select a service"
-            onOpenMenu={fetchServiceNameOptions}
-            isClearable
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Span Name" labelWidth={14} grow>
-          <Select
-            menuShouldPortal
-            options={autocomplete.spanNameOptions}
-            value={query.spanName || ''}
-            onChange={(v) => {
-              onChange({
-                ...query,
-                spanName: v?.value || undefined,
-              });
-            }}
-            placeholder="Select a span"
-            onOpenMenu={fetchSpanNameOptions}
-            isClearable
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
-          <QueryField
-            additionalPlugins={plugins}
-            query={query.search}
-            onTypeahead={onTypeahead}
-            onBlur={onBlur}
-            onChange={(value) => {
-              onChange({
-                ...query,
-                search: value,
-              });
-            }}
-            placeholder="http.status_code=200 error=true"
-            cleanText={cleanText}
-            onRunQuery={onRunQuery}
-            syntaxLoaded={hasSyntaxLoaded}
-            portalOrigin="tempo"
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Min Duration" labelWidth={14} grow>
-          <Input
-            value={query.minDuration || ''}
-            placeholder={durationPlaceholder}
-            onChange={(v) =>
-              onChange({
-                ...query,
-                minDuration: v.currentTarget.value,
-              })
-            }
-            onKeyDown={onKeyDown}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Max Duration" labelWidth={14} grow>
-          <Input
-            value={query.maxDuration || ''}
-            placeholder={durationPlaceholder}
-            onChange={(v) =>
-              onChange({
-                ...query,
-                maxDuration: v.currentTarget.value,
-              })
-            }
-            onKeyDown={onKeyDown}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum numbers of returned results">
-          <Input
-            value={query.limit || ''}
-            type="number"
-            onChange={(v) =>
-              onChange({
-                ...query,
-                limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
-              })
-            }
-            onKeyDown={onKeyDown}
-          />
-        </InlineField>
-      </InlineFieldRow>
-    </div>
+    <>
+      <div className={styles.container}>
+        <InlineFieldRow>
+          <InlineField label="Service Name" labelWidth={14} grow>
+            <Select
+              menuShouldPortal
+              options={autocomplete.serviceNameOptions}
+              value={query.serviceName || ''}
+              onChange={(v) => {
+                onChange({
+                  ...query,
+                  serviceName: v?.value || undefined,
+                });
+              }}
+              placeholder="Select a service"
+              onOpenMenu={fetchServiceNameOptions}
+              isClearable
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Span Name" labelWidth={14} grow>
+            <Select
+              menuShouldPortal
+              options={autocomplete.spanNameOptions}
+              value={query.spanName || ''}
+              onChange={(v) => {
+                onChange({
+                  ...query,
+                  spanName: v?.value || undefined,
+                });
+              }}
+              placeholder="Select a span"
+              onOpenMenu={fetchSpanNameOptions}
+              isClearable
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
+            <QueryField
+              additionalPlugins={plugins}
+              query={query.search}
+              onTypeahead={onTypeahead}
+              onBlur={onBlur}
+              onChange={(value) => {
+                onChange({
+                  ...query,
+                  search: value,
+                });
+              }}
+              placeholder="http.status_code=200 error=true"
+              cleanText={cleanText}
+              onRunQuery={onRunQuery}
+              syntaxLoaded={hasSyntaxLoaded}
+              portalOrigin="tempo"
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Min Duration" labelWidth={14} grow>
+            <Input
+              value={query.minDuration || ''}
+              placeholder={durationPlaceholder}
+              onChange={(v) =>
+                onChange({
+                  ...query,
+                  minDuration: v.currentTarget.value,
+                })
+              }
+              onKeyDown={onKeyDown}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Max Duration" labelWidth={14} grow>
+            <Input
+              value={query.maxDuration || ''}
+              placeholder={durationPlaceholder}
+              onChange={(v) =>
+                onChange({
+                  ...query,
+                  maxDuration: v.currentTarget.value,
+                })
+              }
+              onKeyDown={onKeyDown}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum numbers of returned results">
+            <Input
+              value={query.limit || ''}
+              type="number"
+              onChange={(v) =>
+                onChange({
+                  ...query,
+                  limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+                })
+              }
+              onKeyDown={onKeyDown}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </div>
+      {error ? (
+        <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
+          Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
+          configure it in the <a href={`/datasources/${datasource.uid}`}>datasource settings</a>.
+        </Alert>
+      ) : null}
+    </>
   );
 };
 
 export default NativeSearch;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    max-width: 500px;
+  `,
+  alert: css`
+    max-width: 75ch;
+    margin-top: ${theme.spacing(2)};
+  `,
+});

@@ -99,8 +99,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
     }
 
-    if (config.featureToggles.tempoSearch) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
+    if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search - Beta' });
     }
 
     if (logsDatasourceUid) {

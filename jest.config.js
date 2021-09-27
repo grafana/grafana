@@ -29,8 +29,10 @@ module.exports = {
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
     '^react($|/.+)$': '<rootDir>/node_modules/react$1',
     '^react-router(.+)$': '<rootDir>/node_modules/react-router$1',
+    '^react-hook-form$': '<rootDir>/node_modules/react-hook-form',
     '^@wojtekmaj/(.+)$': '<rootDir>/node_modules/@wojtekmaj/$1',
     '^enzyme($|/.+)$': '<rootDir>/node_modules/enzyme$1',
+    '^jquery$': '<rootDir>/node_modules/jquery',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };
