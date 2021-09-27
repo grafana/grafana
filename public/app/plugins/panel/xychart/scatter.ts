@@ -394,6 +394,15 @@ const prepConfig = (
             let frame = scatterInfo.frame(getData());
             u.ctx.strokeStyle = scatterInfo.lineColor(frame);
             u.ctx.lineWidth = scatterInfo.lineWidth * devicePixelRatio;
+
+            const { lineStyle } = scatterInfo;
+            if (lineStyle && lineStyle.fill !== 'solid') {
+              if (lineStyle.fill === 'dot') {
+                u.ctx.lineCap = 'round';
+              }
+              u.ctx.setLineDash(lineStyle.dash ?? [10, 10]);
+            }
+
             u.ctx.stroke(linePath!);
           }
 
