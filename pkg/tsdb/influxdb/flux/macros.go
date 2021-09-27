@@ -9,6 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+// $__interval_ms is the exact value in milliseconds
+// $__interval is rounded to nice whole values
+// v.windowPeriod is the exact value string-formatted
+
 func interpolateInterval(flux string, interval time.Duration) string {
 	intervalMs := int64(interval / time.Millisecond)
 	intervalText := intervalv2.FormatDuration(interval)
