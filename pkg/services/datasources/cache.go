@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideCacheService(cacheService *localcache.CacheService, bus bus.Bus) *CacheServiceImpl {
+func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
 	return &CacheServiceImpl{
 		CacheService: cacheService,
-		Bus:          bus,
+		SQLStore:     sqlStore,
 	}
 }
 
@@ -23,7 +23,7 @@ type CacheService interface {
 
 type CacheServiceImpl struct {
 	CacheService *localcache.CacheService
-	Bus          bus.Bus
+	SQLStore     *sqlstore.SQLStore
 }
 
 func (dc *CacheServiceImpl) GetDatasource(
@@ -45,7 +45,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
 	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
-	err := dc.Bus.Dispatch(query)
+	err := dc.SQLStore.GetDataSource(query)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
 	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
-	err := dc.Bus.Dispatch(query)
+	err := dc.SQLStore.GetDataSource(query)
 	if err != nil {
 		return nil, err
 	}
