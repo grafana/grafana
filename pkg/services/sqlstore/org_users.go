@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (ss *SQLStore) addOrgUSersQueryAndCommandHandlers() {
+func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", ss.AddOrgUser)
 	bus.AddHandlerCtx("sql", ss.RemoveOrgUser)
 	bus.AddHandlerCtx("sql", ss.GetOrgUsers)
