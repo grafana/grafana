@@ -11,19 +11,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type UsageStats struct {
-	Cfg                *setting.Cfg
-	Bus                bus.Bus
-	SQLStore           *sqlstore.SQLStore
-	AlertingUsageStats alerting.UsageStatsQuerier
-	PluginManager      plugins.Manager
-	SocialService      social.Service
-	kvStore            *kvstore.NamespacedKVStore
+	Cfg           *setting.Cfg
+	Bus           bus.Bus
+	SQLStore      *sqlstore.SQLStore
+	PluginManager plugins.Manager
+	SocialService social.Service
+	kvStore       *kvstore.NamespacedKVStore
 
 	log log.Logger
 
@@ -31,22 +29,20 @@ type UsageStats struct {
 	externalMetrics          []usagestats.MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
 	startTime                time.Time
+	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
-	alertingStats alerting.UsageStatsQuerier, pluginManager plugins.Manager,
-	socialService social.Service,
-	kvStore kvstore.KVStore) *UsageStats {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, pluginManager plugins.Manager,
+	socialService social.Service, kvStore kvstore.KVStore) *UsageStats {
 	s := &UsageStats{
-		Cfg:                cfg,
-		Bus:                bus,
-		SQLStore:           sqlStore,
-		AlertingUsageStats: alertingStats,
-		oauthProviders:     socialService.GetOAuthProviders(),
-		PluginManager:      pluginManager,
-		kvStore:            kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
-		log:                log.New("infra.usagestats"),
-		startTime:          time.Now(),
+		Cfg:            cfg,
+		Bus:            bus,
+		SQLStore:       sqlStore,
+		oauthProviders: socialService.GetOAuthProviders(),
+		PluginManager:  pluginManager,
+		kvStore:        kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
+		log:            log.New("infra.usagestats"),
+		startTime:      time.Now(),
 	}
 
 	return s
@@ -96,6 +92,10 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 				nextSendInterval = sendInterval
 				sendReportTicker.Reset(nextSendInterval)
 			}
+
+			for _, callback := range uss.sendReportCallbacks {
+				callback()
+			}
 		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
 		case <-ctx.Done():
@@ -142,4 +142,8 @@ FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
 
 	uss.concurrentUserStatsCache.memoized = time.Now()
 	return uss.concurrentUserStatsCache.stats, nil
+}
+
+func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbackFunc) {
+	uss.sendReportCallbacks = append(uss.sendReportCallbacks, c)
 }
