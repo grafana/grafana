@@ -400,6 +400,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       display: flex;
       flex: 1 1 0;
       flex-direction: column;
+      min-height: 0;
     `,
     dashboardScroll: css`
       width: 100%;
