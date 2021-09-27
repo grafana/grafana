@@ -949,95 +949,13 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
-type configInfo struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Example     interface{} `json:"example,omitempty"`
-}
-
 // HandlePipelineEntitiesListHTTP ...
 func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"subscribers": []configInfo{
-			{
-				Type:        pipeline.SubscriberTypeBuiltin,
-				Description: "apply builtin feature subscribe logic",
-			},
-			{
-				Type:        pipeline.SubscriberTypeManagedStream,
-				Description: "apply managed stream subscribe logic",
-			},
-			{
-				Type:        pipeline.SubscriberTypeMultiple,
-				Description: "apply multiple subscribers",
-			},
-			{
-				Type:        pipeline.SubscriberTypeAuthorizeRole,
-				Description: "authorize user role",
-			},
-		},
-		"outputs": []configInfo{
-			{
-				Type:        pipeline.OutputTypeManagedStream,
-				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
-				Example:     pipeline.ManagedStreamOutputConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeMultiple,
-				Description: "Send the output to multiple destinations",
-				Example:     pipeline.MultipleOutputterConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeConditional,
-				Description: "send to an output depending on frame values",
-				Example:     pipeline.ConditionalOutputConfig{},
-			},
-			{
-				Type: pipeline.OutputTypeRedirect,
-			},
-			{
-				Type: pipeline.OutputTypeThreshold,
-			},
-			{
-				Type: pipeline.OutputTypeChangeLog,
-			},
-			{
-				Type: pipeline.OutputTypeRemoteWrite,
-			},
-		},
-		"converters": []configInfo{
-			{
-				Type: pipeline.ConverterTypeJsonAuto,
-			},
-			{
-				Type: pipeline.ConverterTypeJsonExact,
-			},
-			{
-				Type:        pipeline.ConverterTypeInfluxAuto,
-				Description: "accept influx line protocol",
-				Example:     pipeline.AutoInfluxConverterConfig{},
-			},
-			{
-				Type: pipeline.ConverterTypeJsonFrame,
-			},
-		},
-		"processors": []configInfo{
-			{
-				Type:        pipeline.ProcessorTypeKeepFields,
-				Description: "list the fields that should stay",
-				Example:     pipeline.KeepFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeDropFields,
-				Description: "list the fields that should be removed",
-				Example:     pipeline.DropFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeMultiple,
-				Description: "apply multiple processors",
-				Example:     pipeline.MultipleProcessorConfig{},
-			},
-		},
+		"subscribers": pipeline.SubscribersRegistry,
+		"outputs":     pipeline.OutputsRegistry,
+		"converters":  pipeline.ConvertersRegistry,
+		"processors":  pipeline.ProcessorsRegistry,
 	})
 }
 
