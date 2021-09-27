@@ -11,4 +11,3 @@ list = false
 ### Bug fixes
 
 - **BarChart:** Fixes panel error that happens on second refresh. [#39304](https://github.com/grafana/grafana/pull/39304), [@DanCech](https://github.com/DanCech)
-

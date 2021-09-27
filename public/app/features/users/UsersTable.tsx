@@ -35,7 +35,7 @@ const UsersTable: FC<Props> = (props) => {
           return (
             <tr key={`${user.userId}-${index}`}>
               <td className="width-2 text-center">
-                <img className="filter-table__avatar" src={user.avatarUrl} />
+                <img className="filter-table__avatar" src={user.avatarUrl} alt="User avatar" />
               </td>
               <td className="max-width-6">
                 <span className="ellipsis" title={user.login}>
@@ -57,6 +57,7 @@ const UsersTable: FC<Props> = (props) => {
 
               <td className="width-8">
                 <OrgRolePicker
+                  aria-label="Role"
                   value={user.role}
                   disabled={!canUpdateRole}
                   onChange={(newRole) => onRoleChange(newRole, user)}
@@ -65,7 +66,13 @@ const UsersTable: FC<Props> = (props) => {
 
               {canRemoveFromOrg && (
                 <td>
-                  <Button size="sm" variant="destructive" onClick={() => setShowRemoveModal(user.login)} icon="times" />
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setShowRemoveModal(user.login)}
+                    icon="times"
+                    aria-label="Delete user"
+                  />
                   <ConfirmModal
                     body={`Are you sure you want to delete user ${user.login}?`}
                     confirmText="Delete"
