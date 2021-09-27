@@ -35,6 +35,9 @@ export interface TempoJsonData extends DataSourceJsonData {
   serviceMap?: {
     datasourceUid?: string;
   };
+  search?: {
+    hide?: boolean;
+  };
 }
 
 export type TempoQuery = {
@@ -55,12 +58,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   serviceMap?: {
     datasourceUid?: string;
   };
+  search?: {
+    hide?: boolean;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
+    this.search = instanceSettings.jsonData.search;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
