@@ -361,6 +361,28 @@ This value limits the size of a single cache value. If a cache value (or query r
 
 The default is `1`.
 
+### connection_timeout
+
+This setting defines the number of seconds to wait for a connection to the caching backend.
+
+The default is `5` seconds.
+
+### read_timeout
+
+This setting defines the number of seconds to wait for the caching backend to return a cached result. To disable this timeout, set this value to `0`.
+
+The default is `0` seconds (disabled).
+
+> **Note:** Disabling this timeout is not recommended in production environments.
+
+### write_timeout
+
+This setting defines the number of seconds to wait for the caching backend to store a result. To disable this timeout, set this value to `0`.
+
+The default is `0` seconds (disabled).
+
+> **Note:** Disabling this timeout is not recommended in production environments.
+
 ## [caching.encryption]
 
 ### enabled
