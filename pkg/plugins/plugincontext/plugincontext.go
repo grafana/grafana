@@ -126,7 +126,7 @@ func (p *Provider) decryptSecureJsonData() func(map[string][]byte) map[string]st
 	return func(m map[string][]byte) map[string]string {
 		decryptedJsonData, err := p.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
 		if err != nil {
-			p.logger.Error("Failed to decrypt secure json data", err)
+			p.logger.Error("Failed to decrypt secure json data", "error", err)
 		}
 		return decryptedJsonData
 	}
