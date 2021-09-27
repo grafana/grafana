@@ -355,9 +355,13 @@ This value is `true` by default.
 
 _Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `1m` (1 minute).
 
-### max_ttl_ms
+### max_ttl
 
-The max number of milliseconds that a query result is stored in the caching system before it is deleted or refreshed. This value will override the if the `ttl` value in milliseconds is greater than `max_ttl_ms`.
+The max duration that a query result is stored in the caching system before it is deleted or refreshed. This value will override `ttl` config option or data source setting if the `ttl` value is greater than `max_ttl`. To disable this timeout, set this value to `0s`.
+
+The default is `0s` (disabled).
+
+> **Note:** Disabling this timeout is not recommended in production environments.
 
 ### max_value_mb
 
@@ -367,15 +371,15 @@ The default is `1`.
 
 ### connection_timeout
 
-This setting defines the number of seconds to wait for a connection to the caching backend.
+This setting defines the duration to wait for a connection to the caching backend.
 
-The default is `5` seconds.
+The default is `5s`.
 
 ### read_timeout
 
-This setting defines the number of seconds to wait for the caching backend to return a cached result. To disable this timeout, set this value to `0`.
+This setting defines the duration to wait for the caching backend to return a cached result. To disable this timeout, set this value to `0s`.
 
-The default is `0` seconds (disabled).
+The default is `0s` (disabled).
 
 > **Note:** Disabling this timeout is not recommended in production environments.
 
@@ -383,7 +387,7 @@ The default is `0` seconds (disabled).
 
 This setting defines the number of seconds to wait for the caching backend to store a result. To disable this timeout, set this value to `0`.
 
-The default is `0` seconds (disabled).
+The default is `0s` (disabled).
 
 > **Note:** Disabling this timeout is not recommended in production environments.
 
