@@ -15,8 +15,8 @@ const fields: string[] = ['type', 'dataSourceName', 'condition', 'queries', 'exp
 export function PreviewRule(): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const [preview, onPreview] = usePreview();
-  const { getValues } = useFormContext();
-  const { type, condition } = getValues();
+  const { getValues, watch } = useFormContext();
+  const [type] = getValues(fields);
 
   if (type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) {
     return null;
@@ -25,7 +25,7 @@ export function PreviewRule(): React.ReactElement | null {
   return (
     <div className={styles.container}>
       <HorizontalGroup>
-        <Button disabled={!condition} type="button" variant="primary" onClick={onPreview}>
+        <Button disabled={!watch('condition')} type="button" variant="primary" onClick={onPreview}>
           Preview alerts
         </Button>
       </HorizontalGroup>
