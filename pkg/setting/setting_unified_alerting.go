@@ -61,19 +61,19 @@ type UnifiedAlertingSettings struct {
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
-	cfg.UnifiedAlerting.Enabled = ua.Key("enabled").MustBool(false)
+	uaCfg.Enabled = ua.Key("enabled").MustBool(false)
 
 	// if the old feature toggle ngalert is set, enable Grafana 8 alerts anyway
-	if !cfg.UnifiedAlerting.Enabled && cfg.FeatureToggles["ngalert"] {
+	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
 		cfg.UnifiedAlerting.Enabled = true
 		AlertingEnabled = false
 	}
 
-	if cfg.UnifiedAlerting.Enabled && AlertingEnabled {
+	if uaCfg.Enabled && AlertingEnabled {
 		return errors.New("both legacy and Grafana 8 Alerts are enabled")
 	}
 
-	cfg.UnifiedAlerting.DisabledOrgs = make(map[int64]struct{})
+	uaCfg.DisabledOrgs = make(map[int64]struct{})
 	orgsStr := valueAsString(ua, "disabled_orgs", "")
 	for _, org := range util.SplitString(orgsStr) {
 		orgID, err := strconv.ParseInt(org, 10, 64)

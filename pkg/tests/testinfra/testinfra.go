@@ -220,7 +220,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 		if o.NGAlertAlertmanagerConfigPollInterval != 0 {
-			ngalertingSection, err := cfg.NewSection("unified_alerting")
+			ngalertingSection, err := getOrCreateSection("unified_alerting")
 			require.NoError(t, err)
 			_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", o.NGAlertAlertmanagerConfigPollInterval.String())
 			require.NoError(t, err)
