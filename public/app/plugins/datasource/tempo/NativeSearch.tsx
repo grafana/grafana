@@ -260,7 +260,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
-          configure it in the <a href={`/datasources/${datasource.uid}`}>datasource settings</a>.
+          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
       ) : null}
     </>
