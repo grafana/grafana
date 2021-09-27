@@ -23,7 +23,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -150,7 +150,7 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn run --silent test:accessibility-pr
+  - yarn run test:accessibility-pr
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -274,7 +274,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -440,7 +440,7 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn run --silent test:accessibility --json > pa11y-ci-results.json
+  - yarn run test:accessibility --json > pa11y-ci-results.json
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -753,7 +753,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -1122,7 +1122,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
   depends_on:
@@ -1699,7 +1699,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -2057,7 +2057,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
   depends_on:
@@ -2627,7 +2627,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -2956,7 +2956,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+  - yarn install --immutable
   environment:
     DOCKERIZE_VERSION: 0.6.1
   depends_on:
@@ -3492,6 +3492,6 @@ get:
 
 ---
 kind: signature
-hmac: 7aff8432ab9444544b4690d1e5af35f94c0bd36a5ec707bad60b91fec529eac9
+hmac: 12a2fd743858195145e9c2ac7ef890a0cecfa9bd5f4452990d7c0fc71a209460
 
 ...

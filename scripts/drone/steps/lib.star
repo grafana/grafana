@@ -63,7 +63,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable',
+            'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
@@ -419,7 +419,7 @@ def test_a11y_frontend_step(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn run --silent test:accessibility --json > pa11y-ci-results.json',
+            'yarn run test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 
@@ -438,7 +438,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn run --silent test:accessibility-pr',
+            'yarn run test:accessibility-pr',
         ],
     }
 

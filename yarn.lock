@@ -2635,14 +2635,17 @@ __metadata:
     "@types/slate": 0.47.2
     "@types/slate-react": 0.22.5
     "@types/tinycolor2": 1.4.1
+    "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
     ansicolor: 1.1.95
     classnames: 2.2.6
     common-tags: ^1.8.0
     csstype: 3.0.9
     d3: 5.15.0
+    enzyme: 3.11.0
     hoist-non-react-statics: 3.3.2
     immutable: 3.8.2
     is-hotkey: 0.1.6
+    jquery: 3.5.1
     lodash: 4.17.21
     mock-raf: 1.0.1
     moment: 2.29.1
@@ -2653,16 +2656,20 @@ __metadata:
     rc-drawer: 4.4.0
     rc-slider: 9.6.4
     rc-time-picker: ^3.7.3
+    react: 17.0.1
     react-beautiful-dnd: 13.1.0
     react-calendar: 2.19.2
     react-colorful: 5.1.2
     react-custom-scrollbars-2: 4.4.0
     react-docgen-typescript-loader: 3.7.2
+    react-dom: 17.0.1
     react-dropzone: 11.3.4
     react-highlight-words: 0.17.0
+    react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-is: 16.8.0
     react-popper: 2.2.4
+    react-router-dom: ^5.2.0
     react-select: 4.3.0
     react-table: 7.7.0
     react-test-renderer: 17.0.1
@@ -2675,24 +2682,11 @@ __metadata:
     slate: 0.47.8
     storybook-dark-mode: 1.0.8
     tinycolor2: 1.4.1
+    ts-loader: 8.0.11
     tslib: 2.3.1
     typescript: 4.4.3
     uplot: 1.6.16
     webpack-filter-warnings-plugin: 1.2.1
-  peerDependencies:
-    "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
-    enzyme: 3.11.0
-    jquery: 3.5.1
-    react: 17.0.1
-    react-dom: 17.0.1
-    react-hook-form: 7.5.3
-    react-router-dom: ^5.2.0
-    ts-loader: 8.0.11
-  peerDependenciesMeta:
-    "@wojtekmaj/enzyme-adapter-react-17":
-      optional: true
-    enzyme:
-      optional: true
   languageName: unknown
   linkType: soft
 
@@ -2755,11 +2749,13 @@ __metadata:
     "@types/react-icons": 2.2.7
     "@types/recompose": ^0.30.7
     "@types/slate-react": 0.22.5
+    "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
     chance: ^1.0.10
     classnames: ^2.2.5
     combokeys: ^3.0.0
     copy-to-clipboard: ^3.1.0
     deep-freeze: ^0.0.1
+    enzyme: 3.11.0
     fuzzy: ^0.1.3
     hoist-non-react-statics: ^3.3.2
     json-markup: ^1.1.0
@@ -2767,21 +2763,13 @@ __metadata:
     lru-memoize: ^1.1.0
     memoize-one: ^5.0.0
     moment: 2.29.1
+    react: 17.0.1
     react-icons: 2.2.7
     recompose: ^0.25.0
     tinycolor2: 1.4.1
     tslib: 2.3.1
     tween-functions: ^1.2.0
     typescript: 4.4.3
-  peerDependencies:
-    "@wojtekmaj/enzyme-adapter-react-17": 0.6.2
-    enzyme: 3.11.0
-    react: 17.0.1
-  peerDependenciesMeta:
-    "@wojtekmaj/enzyme-adapter-react-17":
-      optional: true
-    enzyme:
-      optional: true
   languageName: unknown
   linkType: soft
 
@@ -7628,6 +7616,16 @@ __metadata:
   version: 3.0.0
   resolution: "@types/rbush@npm:3.0.0"
   checksum: 050eb2af4d7cb59c5b3dddfb9af93e4abfcffb1766d82fdcd4d37e03cff374f7cf761eef3b8cd48f976416ee3dd7ee4991bde938698865ed0c660317f3a020c2
+  languageName: node
+  linkType: hard
+
+"@types/rc-time-picker@npm:^3":
+  version: 3.4.1
+  resolution: "@types/rc-time-picker@npm:3.4.1"
+  dependencies:
+    "@types/react": "*"
+    moment: ^2.19.4
+  checksum: 26d43beb8c5fdbd1932996bee63d3f854ca8e931915463106cbb382d98efcc81a1140f7fda004b6652ca12e87b211b1b70302b854c5ce41e3f87e68537181c06
   languageName: node
   linkType: hard
 
@@ -17653,6 +17651,7 @@ fsevents@^1.2.7:
     "@types/papaparse": 5.2.0
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.0
+    "@types/rc-time-picker": ^3
     "@types/react": 16.9.9
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-dom": 16.9.9
@@ -17789,6 +17788,9 @@ fsevents@^1.2.7:
     prop-types: 15.7.2
     raw-loader: 4.0.2
     rc-cascader: 1.5.0
+    rc-drawer: 4.4.0
+    rc-slider: 9.6.4
+    rc-time-picker: ^3.7.3
     re-resizable: ^6.2.0
     react: 17.0.1
     react-beautiful-dnd: 13.1.0
@@ -23027,7 +23029,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.1, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.20.1":
+"moment@npm:2.29.1, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
   version: 2.29.1
   resolution: "moment@npm:2.29.1"
   checksum: 1e14d5f422a2687996be11dd2d50c8de3bd577c4a4ca79ba5d02c397242a933e5b941655de6c8cb90ac18f01cc4127e55b4a12ae3c527a6c0a274e455979345e
