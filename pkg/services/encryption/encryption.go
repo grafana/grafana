@@ -3,11 +3,11 @@ package encryption
 import "context"
 
 type Service interface {
-	Encrypt(context.Context, []byte, string) ([]byte, error)
-	Decrypt(context.Context, []byte, string) ([]byte, error)
+	Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
 
-	EncryptJsonData(context.Context, map[string]string, string) (map[string][]byte, error)
-	DecryptJsonData(context.Context, map[string][]byte, string) (map[string]string, error)
+	EncryptJsonData(ctx context.Context, kv map[string]string, secret string) (map[string][]byte, error)
+	DecryptJsonData(ctx context.Context, sjd map[string][]byte, secret string) (map[string]string, error)
 
-	GetDecryptedValue(context.Context, map[string][]byte, string, string, string) string
+	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
 }
