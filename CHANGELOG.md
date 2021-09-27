@@ -2005,7 +2005,7 @@ This option to group query variable values into groups by tags has been an exper
 
 # 7.0.1 (2020-05-26)
 
-### Features / Enhancementsrecord
+### Features / Enhancements
 
 - **Datasource/CloudWatch**: Makes CloudWatch Logs query history more readable. [#24795](https://github.com/grafana/grafana/pull/24795), [@kaydelaney](https://github.com/kaydelaney)
 - **Download CSV**: Add date and time formatting. [#24992](https://github.com/grafana/grafana/pull/24992), [@ryantxu](https://github.com/ryantxu)
