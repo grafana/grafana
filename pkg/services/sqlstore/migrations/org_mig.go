@@ -41,6 +41,7 @@ func addOrgMigrations(mg *Migrator) {
 		Indices: []*Index{
 			{Cols: []string{"org_id"}},
 			{Cols: []string{"org_id", "user_id"}, Type: UniqueIndex},
+			{Cols: []string{"user_id"}},
 		},
 	}
 
@@ -65,4 +66,5 @@ func addOrgMigrations(mg *Migrator) {
 
 	const migrateReadOnlyViewersToViewers = `UPDATE org_user SET role = 'Viewer' WHERE role = 'Read Only Editor'`
 	mg.AddMigration("Migrate all Read Only Viewers to Viewers", NewRawSQLMigration(migrateReadOnlyViewersToViewers))
+
 }
