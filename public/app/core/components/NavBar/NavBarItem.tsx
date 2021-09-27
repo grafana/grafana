@@ -1,8 +1,8 @@
 import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Link, styleMixins, useTheme2 } from '@grafana/ui';
-import SideMenuDropDown from './SideMenuDropDown';
+import { Link, useTheme2 } from '@grafana/ui';
+import NavBarDropdown from './NavBarDropdown';
 
 export interface Props {
   isActive?: boolean;
@@ -16,7 +16,7 @@ export interface Props {
   url?: string;
 }
 
-const SideMenuItem = ({
+const NavBarItem = ({
   isActive = false,
   children,
   label,
@@ -58,7 +58,7 @@ const SideMenuItem = ({
   return (
     <div className={cx(styles.container, 'dropdown', { dropup: reverseMenuDirection })}>
       {element}
-      <SideMenuDropDown
+      <NavBarDropdown
         headerTarget={target}
         headerText={label}
         headerUrl={url}
@@ -71,7 +71,7 @@ const SideMenuItem = ({
   );
 };
 
-export default SideMenuItem;
+export default NavBarItem;
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   container: css`
@@ -86,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       }
     }
 
-    @media ${styleMixins.mediaUp(`${theme.breakpoints.values.md}px`)} {
+    ${theme.breakpoints.up('md')} {
       color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
 
       &:hover {

@@ -122,8 +122,8 @@ func (ng *AlertNG) init() error {
 		OrgStore:                store,
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
-		DisabledOrgs:            ng.Cfg.UnifiedAlertingDisabledOrgs,
+		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
+		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
 	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
@@ -171,5 +171,5 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.UnifiedAlertingEnabled
+	return !ng.Cfg.UnifiedAlerting.Enabled
 }

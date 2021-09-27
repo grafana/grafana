@@ -31,7 +31,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg := setting.NewCfg()
 	cfg.AlertingBaseInterval = baseInterval
 	// AlertNG database migrations run and the relative database tables are created only when it's enabled
-	cfg.UnifiedAlertingEnabled = true
+	cfg.UnifiedAlerting.Enabled = true
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil, nil, m)

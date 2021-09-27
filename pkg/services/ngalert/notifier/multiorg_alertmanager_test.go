@@ -32,9 +32,11 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
 	cfg := &setting.Cfg{
-		DataPath:                       tmpDir,
-		AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests
-		UnifiedAlertingDisabledOrgs:    map[int64]struct{}{5: {}},
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.AlertmanagerDefaultConfiguration,
+		}, // do not poll in tests.
 	}
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
 	require.NoError(t, err)
@@ -101,8 +103,8 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
 	cfg := &setting.Cfg{
-		DataPath:                       tmpDir,
-		AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests
+		DataPath:        tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.AlertmanagerDefaultConfiguration}, // do not poll in tests.
 	}
 	kvStore := newFakeKVStore(t)
 	reg := prometheus.NewPedanticRegistry()

@@ -19,6 +19,8 @@ const DASHBOARD_FOLDER = "Migrated %s"
 // during alert migration cleanup.
 const FOLDER_CREATED_BY = -8
 
+const KV_NAMESPACE = "alertmanager"
+
 var migTitle = "move dashboard alerts to unified alerting"
 
 var rmMigTitle = "remove unified alerting data"
@@ -46,7 +48,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	_, migrationRun := logs[migTitle]
 
 	switch {
-	case mg.Cfg.UnifiedAlertingEnabled && !migrationRun:
+	case mg.Cfg.UnifiedAlerting.Enabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
@@ -59,8 +61,9 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			seenChannelUIDs:           make(map[string]struct{}),
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
+			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
-	case !mg.Cfg.UnifiedAlertingEnabled && migrationRun:
+	case !mg.Cfg.UnifiedAlerting.Enabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
@@ -88,7 +91,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	_, migrationRun := logs[cloneMigTitle]
 
 	switch {
-	case mg.Cfg.UnifiedAlertingEnabled && !migrationRun:
+	case mg.Cfg.UnifiedAlerting.Enabled && !migrationRun:
 		// Removes all unified alerting data.  It is not recorded so when the feature
 		// flag is removed in future the "clone remove unified alerting data" migration will be run again.
 		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
@@ -97,9 +100,10 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 			seenChannelUIDs:           make(map[string]struct{}),
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
+			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
 
-	case !mg.Cfg.UnifiedAlertingEnabled && migrationRun:
+	case !mg.Cfg.UnifiedAlerting.Enabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, cloneMigTitle), &clearMigrationEntry{
@@ -146,7 +150,7 @@ type migration struct {
 
 	seenChannelUIDs           map[string]struct{}
 	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
-	silences                  []*pb.MeshSilence
+	silences                  map[int64][]*pb.MeshSilence
 	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
 	lastReceiverID            int                         // For the auto generated receivers.
 }
@@ -409,6 +413,18 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	_, err = sess.Exec("delete from alert_instance")
 	if err != nil {
 		return err
+	}
+
+	exists, err := sess.IsTableExist("kv_store")
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		_, err = sess.Exec("delete from kv_store where namespace = ?", KV_NAMESPACE)
+		if err != nil {
+			return err
+		}
 	}
 
 	files, err := getSilenceFileNamesForAllOrgs(mg)
