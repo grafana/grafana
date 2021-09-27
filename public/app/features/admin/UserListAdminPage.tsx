@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { ComponentType, useEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
@@ -11,6 +11,11 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
+
+const extraFilters: ComponentType[] = [];
+export const addExtraFilters = (filter: ComponentType) => {
+  extraFilters.push(filter);
+};
 
 const mapDispatchToProps = {
   fetchUsers,
@@ -26,7 +31,7 @@ const mapStateToProps = (state: StoreState) => ({
   showPaging: state.userListAdmin.showPaging,
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
-  filter: state.userListAdmin.filter,
+  filters: state.userListAdmin.filters,
   isLoading: state.userListAdmin.isLoading,
 });
 
@@ -47,7 +52,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   page,
   changePage,
   changeFilter,
-  filter,
+  filters,
   isLoading,
 }) => {
   const styles = useStyles2(getStyles);
@@ -63,13 +68,16 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
           <div className="gf-form gf-form--grow">
             <RadioButtonGroup
               options={[
-                { label: 'All users', value: 'all' },
-                { label: 'Active last 30 days', value: 'activeLast30Days' },
+                { label: 'All users', value: false },
+                { label: 'Active last 30 days', value: true },
               ]}
-              onChange={changeFilter}
-              value={filter}
+              onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+              value={filters.find((f) => f.name === 'activeLast30Days')?.value}
               className={styles.filter}
             />
+            {extraFilters.map((FilterComponent, index) => (
+              <FilterComponent key={index} />
+            ))}
             <FilterInput
               placeholder="Search user by login, email, or name."
               autoFocus={true}

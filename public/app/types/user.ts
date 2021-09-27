@@ -100,6 +100,7 @@ export interface UserAdminError {
   body: string;
 }
 
+export type UserFilter = Record<string, string | boolean>;
 export interface UserListAdminState {
   users: UserDTO[];
   query: string;
@@ -107,6 +108,6 @@ export interface UserListAdminState {
   page: number;
   totalPages: number;
   showPaging: boolean;
-  filter: string;
+  filters: UserFilter[];
   isLoading: boolean;
 }
