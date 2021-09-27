@@ -64,6 +64,19 @@ export const ExternalAlertmanagers = () => {
     }));
   }, [setModalState]);
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'green';
+
+      case 'pending':
+        return 'yellow';
+
+      default:
+        return 'red';
+    }
+  };
+
   return (
     <div>
       <h4>External Alertmanagers</h4>
@@ -88,7 +101,15 @@ export const ExternalAlertmanagers = () => {
             {externalAlertManagers.map((am, index) => {
               return (
                 <tr key={index}>
-                  <td className="link-td">{am.url}</td>
+                  <td className="link-td">
+                    {am.url}{' '}
+                    <Icon
+                      name="heart"
+                      className={css`
+                        color: ${getStatusColor(am.status)};
+                      `}
+                    />
+                  </td>
                   <td>
                     <HorizontalGroup>
                       <Button variant="secondary" type="button" onClick={onEdit}>
