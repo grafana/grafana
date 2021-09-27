@@ -59,9 +59,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     const liveUrl = `${baseURL}${config.appSubUrl}/api/live/ws`;
 
     this.orgId = contextSrv.user.orgId;
-    this.centrifuge = new Centrifuge(liveUrl, {
-      debug: true,
-    });
+    this.centrifuge = new Centrifuge(liveUrl, {});
     this.centrifuge.setConnectData({
       sessionId,
       orgId: this.orgId,
