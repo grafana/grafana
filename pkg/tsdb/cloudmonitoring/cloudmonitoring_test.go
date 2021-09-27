@@ -942,7 +942,7 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringTimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
-					AliasBy:     "{{project}} - {{resource.label.zone}} - {{resource.label.instance_id}}",
+					AliasBy:     "{{project}} - {{resource.label.zone}} - {{resource.label.instance_id}} - {{metric.label.response_code_class}}",
 					timeRange: plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
@@ -952,7 +952,7 @@ func TestCloudMonitoring(t *testing.T) {
 				require.NoError(t, err)
 				frames, err := res.Dataframes.Decoded()
 				require.NoError(t, err)
-				assert.Equal(t, "test-proj - asia-northeast1-c - 6724404429462225363", frames[0].Fields[1].Name)
+				assert.Equal(t, "test-proj - asia-northeast1-c - 6724404429462225363 - 200", frames[0].Fields[1].Name)
 			})
 		})
 	})

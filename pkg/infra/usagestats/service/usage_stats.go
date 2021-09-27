@@ -1,4 +1,4 @@
-package usagestats
+package service
 
 import (
 	"bytes"
@@ -12,23 +12,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
-type UsageReport struct {
-	Version         string                 `json:"version"`
-	Metrics         map[string]interface{} `json:"metrics"`
-	Os              string                 `json:"os"`
-	Arch            string                 `json:"arch"`
-	Edition         string                 `json:"edition"`
-	HasValidLicense bool                   `json:"hasValidLicense"`
-	Packaging       string                 `json:"packaging"`
-	UsageStatsId    string                 `json:"usageStatsId"`
-}
-
-func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
+func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, error) {
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
@@ -37,7 +27,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	if uss.Cfg.IsEnterprise {
 		edition = "enterprise"
 	}
-	report := UsageReport{
+	report := usagestats.Report{
 		Version:      version,
 		Metrics:      metrics,
 		Os:           runtime.GOOS,
@@ -92,20 +82,6 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
-
-	liveUsersAvg := 0
-	liveClientsAvg := 0
-	if uss.liveStats.sampleCount > 0 {
-		liveUsersAvg = uss.liveStats.numUsersSum / uss.liveStats.sampleCount
-		liveClientsAvg = uss.liveStats.numClientsSum / uss.liveStats.sampleCount
-	}
-	metrics["stats.live_samples.count"] = uss.liveStats.sampleCount
-	metrics["stats.live_users_max.count"] = uss.liveStats.numUsersMax
-	metrics["stats.live_users_min.count"] = uss.liveStats.numUsersMin
-	metrics["stats.live_users_avg.count"] = liveUsersAvg
-	metrics["stats.live_clients_max.count"] = uss.liveStats.numClientsMax
-	metrics["stats.live_clients_min.count"] = uss.liveStats.numClientsMin
-	metrics["stats.live_clients_avg.count"] = liveClientsAvg
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -173,28 +149,6 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
 	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
-
-	// Alerting stats
-	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
-	if err != nil {
-		uss.log.Error("Failed to get alerting usage stats", "error", err)
-		return report, err
-	}
-
-	var addAlertingUsageStats = func(dsType string, usageCount int) {
-		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
-	}
-
-	alertingOtherCount := 0
-	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if uss.ShouldBeReported(dsType) {
-			addAlertingUsageStats(dsType, usageCount)
-		} else {
-			alertingOtherCount += usageCount
-		}
-	}
-
-	addAlertingUsageStats("other", alertingOtherCount)
 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
@@ -276,7 +230,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	return report, nil
 }
 
-func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
+func (uss *UsageStats) registerExternalMetrics(metrics map[string]interface{}) {
 	for _, fn := range uss.externalMetrics {
 		fnMetrics, err := fn()
 		if err != nil {
@@ -290,11 +244,11 @@ func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interfa
 	}
 }
 
-func (uss *UsageStatsService) RegisterMetricsFunc(fn MetricsFunc) {
+func (uss *UsageStats) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
 	uss.externalMetrics = append(uss.externalMetrics, fn)
 }
 
-func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
+func (uss *UsageStats) sendUsageStats(ctx context.Context) error {
 	if !uss.Cfg.ReportingEnabled {
 		return nil
 	}
@@ -319,7 +273,7 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 // sendUsageStats sends usage statistics.
 //
 // Stubbable by tests.
-var sendUsageStats = func(uss *UsageStatsService, data *bytes.Buffer) {
+var sendUsageStats = func(uss *UsageStats, data *bytes.Buffer) {
 	go func() {
 		client := http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Post(usageStatsURL, "application/json", data)
@@ -333,35 +287,7 @@ var sendUsageStats = func(uss *UsageStatsService, data *bytes.Buffer) {
 	}()
 }
 
-func (uss *UsageStatsService) sampleLiveStats() {
-	current := uss.grafanaLive.UsageStats()
-
-	uss.liveStats.sampleCount++
-	uss.liveStats.numClientsSum += current.NumClients
-	uss.liveStats.numUsersSum += current.NumUsers
-
-	if current.NumClients > uss.liveStats.numClientsMax {
-		uss.liveStats.numClientsMax = current.NumClients
-	}
-
-	if current.NumClients < uss.liveStats.numClientsMin {
-		uss.liveStats.numClientsMin = current.NumClients
-	}
-
-	if current.NumUsers > uss.liveStats.numUsersMax {
-		uss.liveStats.numUsersMax = current.NumUsers
-	}
-
-	if current.NumUsers < uss.liveStats.numUsersMin {
-		uss.liveStats.numUsersMin = current.NumUsers
-	}
-}
-
-func (uss *UsageStatsService) resetLiveStats() {
-	uss.liveStats = liveUsageStats{}
-}
-
-func (uss *UsageStatsService) updateTotalStats() {
+func (uss *UsageStats) updateTotalStats() {
 	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
 		return
 	}
@@ -401,7 +327,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 }
 
-func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
+func (uss *UsageStats) ShouldBeReported(dsType string) bool {
 	ds := uss.PluginManager.GetDataSource(dsType)
 	if ds == nil {
 		return false
@@ -410,7 +336,7 @@ func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
 	return ds.Signature.IsValid() || ds.Signature.IsInternal()
 }
 
-func (uss *UsageStatsService) GetUsageStatsId(ctx context.Context) string {
+func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 	anonId, ok, err := uss.kvStore.Get(ctx, "anonymous_id")
 	if err != nil {
 		uss.log.Error("Failed to get usage stats id", "error", err)

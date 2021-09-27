@@ -188,6 +188,7 @@ export class GeomapPanel extends Component<Props, State> {
     hoverPayload.data = undefined;
     hoverPayload.columnIndex = undefined;
     hoverPayload.rowIndex = undefined;
+    hoverPayload.feature = undefined;
 
     let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
     const features: GeomapHoverFeature[] = [];
@@ -198,6 +199,8 @@ export class GeomapPanel extends Component<Props, State> {
         if (frame) {
           hoverPayload.data = ttip.data = frame as DataFrame;
           hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
+        } else {
+          hoverPayload.feature = ttip.feature = feature;
         }
       }
       features.push({ feature, layer, geo });
@@ -206,7 +209,11 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     const currentTTip = this.state.ttip;
-    if (ttip.data !== currentTTip?.data || ttip.rowIndex !== currentTTip?.rowIndex) {
+    if (
+      ttip.data !== currentTTip?.data ||
+      ttip.rowIndex !== currentTTip?.rowIndex ||
+      ttip.feature !== currentTTip?.feature
+    ) {
       this.setState({ ttip: { ...hoverPayload } });
     }
   };
@@ -360,7 +367,7 @@ export class GeomapPanel extends Component<Props, State> {
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
         <Portal>
-          {ttip && ttip.data && (
+          {ttip && (ttip.data || ttip.feature) && (
             <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
               <DataHoverView {...ttip} />
             </VizTooltipContainer>
