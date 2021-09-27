@@ -99,27 +99,31 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern: "plugin/testdata/random-20Hz-stream",
-			Subscriber: NewMultipleSubscriber(
-				NewBuiltinSubscriber(f.ChannelHandlerGetter),
-				NewManagedStreamSubscriber(f.ManagedStream),
-			),
+			Pattern:   "plugin/testdata/random-20Hz-stream",
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
-			Outputter: NewMultipleOutput(
+			Outputters: []Outputter{
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-			),
+			},
+			Subscribers: []Subscriber{
+				NewBuiltinSubscriber(f.ChannelHandlerGetter),
+				NewManagedStreamSubscriber(f.ManagedStream),
+			},
 		},
 		{
 			Pattern: "stream/testdata/random-20Hz-stream",
-			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
-				FieldNames: []string{"Time", "Min", "Max"},
-			}),
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			Processors: []Processor{
+				NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
+					FieldNames: []string{"Time", "Min", "Max"},
+				}),
+			},
+			Outputters: []Outputter{
+				NewManagedStreamOutput(f.ManagedStream),
+			},
 		},
 		{
 			OrgId:   1,
@@ -129,9 +133,11 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			}),
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/:rest",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/influx/input/:rest",
+			Outputters: []Outputter{
+				NewManagedStreamOutput(f.ManagedStream),
+			},
 		},
 		{
 			OrgId:   1,
@@ -140,10 +146,12 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			// since there are cases when labels attached to a field, and cases where labels
 			// set in a first frame column (in Influx converter). For example, this will allow
 			// to leave only "total-cpu" data while dropping individual CPUs.
-			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
-				FieldNames: []string{"labels", "time", "usage_user"},
-			}),
-			Outputter: NewMultipleOutput(
+			Processors: []Processor{
+				NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
+					FieldNames: []string{"labels", "time", "usage_user"},
+				}),
+			},
+			Outputters: []Outputter{
 				NewManagedStreamOutput(f.ManagedStream),
 				NewConditionalOutput(
 					NewNumberCompareCondition("usage_user", "gte", 50),
@@ -151,18 +159,18 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 						Channel: "stream/influx/input/cpu/spikes",
 					}),
 				),
-			),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/cpu/spikes",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:      1,
+			Pattern:    "stream/influx/input/cpu/spikes",
+			Outputters: []Outputter{NewManagedStreamOutput(f.ManagedStream)},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/auto",
-			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:      1,
+			Pattern:    "stream/json/auto",
+			Converter:  NewAutoJsonConverter(AutoJsonConverterConfig{}),
+			Outputters: []Outputter{NewManagedStreamOutput(f.ManagedStream)},
 		},
 		{
 			OrgId:   1,
@@ -179,10 +187,14 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					},
 				},
 			}),
-			Processor: NewDropFieldsProcessor(DropFieldsProcessorConfig{
-				FieldNames: []string{"value2"},
-			}),
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			Processors: []Processor{
+				NewDropFieldsProcessor(DropFieldsProcessorConfig{
+					FieldNames: []string{"value2"},
+				}),
+			},
+			Outputters: []Outputter{
+				NewManagedStreamOutput(f.ManagedStream),
+			},
 		},
 		{
 			OrgId:   1,
@@ -274,7 +286,7 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					},
 				},
 			}),
-			Outputter: NewMultipleOutput(
+			Outputters: []Outputter{
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
@@ -303,34 +315,40 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 					FieldName: "value4",
 					Channel:   "stream/json/exact/value4/state",
 				}),
-			),
+			},
 		},
 		{
 			OrgId:   1,
 			Pattern: "stream/json/exact/value3/changes",
-			Outputter: NewMultipleOutput(
+			Outputters: []Outputter{
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-			),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/annotation/changes",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/json/exact/annotation/changes",
+			Outputters: []Outputter{
+				NewManagedStreamOutput(f.ManagedStream),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/condition",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/json/exact/condition",
+			Outputters: []Outputter{
+				NewManagedStreamOutput(f.ManagedStream),
+			},
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/value4/state",
-			Outputter: NewManagedStreamOutput(f.ManagedStream),
+			OrgId:   1,
+			Pattern: "stream/json/exact/value4/state",
+			Outputters: []Outputter{
+				NewManagedStreamOutput(f.ManagedStream),
+			},
 		},
 	}, nil
 }

@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/models"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
@@ -73,12 +72,12 @@ type Subscriber interface {
 // LiveChannelRule is an in-memory representation of each specific rule, with Converter, Processor
 // and Outputter to be executed by Pipeline.
 type LiveChannelRule struct {
-	OrgId      int64
-	Pattern    string
-	Subscriber Subscriber
-	Converter  Converter
-	Processor  Processor
-	Outputter  Outputter
+	OrgId       int64
+	Pattern     string
+	Converter   Converter
+	Processors  []Processor
+	Outputters  []Outputter
+	Subscribers []Subscriber
 }
 
 // Label ...
@@ -231,14 +230,16 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 		},
 	}
 
-	if rule.Processor != nil {
-		frame, err = rule.Processor.Process(ctx, vars, frame)
-		if err != nil {
-			logger.Error("Error processing frame", "error", err)
-			return nil, err
-		}
-		if frame == nil {
-			return nil, nil
+	if len(rule.Processors) > 0 {
+		for _, proc := range rule.Processors {
+			frame, err = proc.Process(ctx, vars, frame)
+			if err != nil {
+				logger.Error("Error processing frame", "error", err)
+				return nil, err
+			}
+			if frame == nil {
+				return nil, nil
+			}
 		}
 	}
 
@@ -246,13 +247,17 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 		ProcessorVars: vars,
 	}
 
-	if rule.Outputter != nil {
-		frames, err := rule.Outputter.Output(ctx, outputVars, frame)
-		if err != nil {
-			logger.Error("Error outputting frame", "error", err)
-			return nil, err
+	if len(rule.Outputters) > 0 {
+		var resultingFrames []*ChannelFrame
+		for _, out := range rule.Outputters {
+			frames, err := out.Output(ctx, outputVars, frame)
+			if err != nil {
+				logger.Error("Error outputting frame", "error", err)
+				return nil, err
+			}
+			resultingFrames = append(resultingFrames, frames...)
 		}
-		return frames, nil
+		return resultingFrames, nil
 	}
 
 	return nil, nil

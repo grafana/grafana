@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
-
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
+	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
 
 	"github.com/centrifugal/centrifuge"
 )
@@ -70,10 +69,10 @@ type SubscriberConfig struct {
 }
 
 type ChannelRuleSettings struct {
-	Subscriber *SubscriberConfig `json:"subscriber,omitempty"`
-	Converter  *ConverterConfig  `json:"converter,omitempty"`
-	Processor  *ProcessorConfig  `json:"processor,omitempty"`
-	Outputter  *OutputterConfig  `json:"output,omitempty"`
+	Converter   *ConverterConfig    `json:"converter,omitempty"`
+	Processors  []*ProcessorConfig  `json:"processors,omitempty"`
+	Outputters  []*OutputterConfig  `json:"outputs,omitempty"`
+	Subscribers []*SubscriberConfig `json:"subscribers,omitempty"`
 }
 
 type ChannelRule struct {
@@ -92,19 +91,25 @@ func (r ChannelRule) Valid() (bool, string) {
 			return false, fmt.Sprintf("unknown converter type: %s", r.Settings.Converter.Type)
 		}
 	}
-	if r.Settings.Subscriber != nil {
-		if !typeRegistered(r.Settings.Subscriber.Type, SubscribersRegistry) {
-			return false, fmt.Sprintf("unknown subscriber type: %s", r.Settings.Subscriber.Type)
+	if len(r.Settings.Subscribers) > 0 {
+		for _, sub := range r.Settings.Subscribers {
+			if !typeRegistered(sub.Type, SubscribersRegistry) {
+				return false, fmt.Sprintf("unknown subscriber type: %s", sub.Type)
+			}
 		}
 	}
-	if r.Settings.Processor != nil {
-		if !typeRegistered(r.Settings.Processor.Type, ProcessorsRegistry) {
-			return false, fmt.Sprintf("unknown processor type: %s", r.Settings.Processor.Type)
+	if len(r.Settings.Processors) > 0 {
+		for _, proc := range r.Settings.Processors {
+			if !typeRegistered(proc.Type, ProcessorsRegistry) {
+				return false, fmt.Sprintf("unknown processor type: %s", proc.Type)
+			}
 		}
 	}
-	if r.Settings.Outputter != nil {
-		if !typeRegistered(r.Settings.Outputter.Type, OutputsRegistry) {
-			return false, fmt.Sprintf("unknown output type: %s", r.Settings.Outputter.Type)
+	if len(r.Settings.Outputters) > 0 {
+		for _, out := range r.Settings.Outputters {
+			if !typeRegistered(out.Type, OutputsRegistry) {
+				return false, fmt.Sprintf("unknown output type: %s", out.Type)
+			}
 		}
 	}
 	return true, ""
@@ -408,22 +413,41 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			Pattern: ruleConfig.Pattern,
 		}
 		var err error
-		rule.Subscriber, err = f.extractSubscriber(ruleConfig.Settings.Subscriber)
-		if err != nil {
-			return nil, err
-		}
 		rule.Converter, err = f.extractConverter(ruleConfig.Settings.Converter)
 		if err != nil {
 			return nil, err
 		}
-		rule.Processor, err = f.extractProcessor(ruleConfig.Settings.Processor)
-		if err != nil {
-			return nil, err
+
+		var processors []Processor
+		for _, procConfig := range ruleConfig.Settings.Processors {
+			proc, err := f.extractProcessor(procConfig)
+			if err != nil {
+				return nil, err
+			}
+			processors = append(processors, proc)
 		}
-		rule.Outputter, err = f.extractOutputter(ruleConfig.Settings.Outputter, remoteWriteBackends)
-		if err != nil {
-			return nil, err
+		rule.Processors = processors
+
+		var outputters []Outputter
+		for _, outConfig := range ruleConfig.Settings.Outputters {
+			out, err := f.extractOutputter(outConfig, remoteWriteBackends)
+			if err != nil {
+				return nil, err
+			}
+			outputters = append(outputters, out)
 		}
+		rule.Outputters = outputters
+
+		var subscribers []Subscriber
+		for _, subConfig := range ruleConfig.Settings.Subscribers {
+			sub, err := f.extractSubscriber(subConfig)
+			if err != nil {
+				return nil, err
+			}
+			subscribers = append(subscribers, sub)
+		}
+		rule.Subscribers = subscribers
+
 		rules = append(rules, rule)
 	}
 

@@ -88,9 +88,9 @@ func TestPipeline(t *testing.T) {
 	p, err := New(&testRuleGetter{
 		rules: map[string]*LiveChannelRule{
 			"stream/test/xxx": {
-				Converter: &testConverter{"", data.NewFrame("test")},
-				Processor: &testProcessor{},
-				Outputter: outputter,
+				Converter:  &testConverter{"", data.NewFrame("test")},
+				Processors: []Processor{&testProcessor{}},
+				Outputters: []Outputter{outputter},
 			},
 		},
 	})
@@ -107,9 +107,9 @@ func TestPipeline_OutputError(t *testing.T) {
 	p, err := New(&testRuleGetter{
 		rules: map[string]*LiveChannelRule{
 			"stream/test/xxx": {
-				Converter: &testConverter{"", data.NewFrame("test")},
-				Processor: &testProcessor{},
-				Outputter: outputter,
+				Converter:  &testConverter{"", data.NewFrame("test")},
+				Processors: []Processor{&testProcessor{}},
+				Outputters: []Outputter{outputter},
 			},
 		},
 	})
@@ -123,15 +123,19 @@ func TestPipeline_Recursion(t *testing.T) {
 		rules: map[string]*LiveChannelRule{
 			"stream/test/xxx": {
 				Converter: &testConverter{"", data.NewFrame("test")},
-				Outputter: NewRedirectOutput(RedirectOutputConfig{
-					Channel: "stream/test/yyy",
-				}),
+				Outputters: []Outputter{
+					NewRedirectOutput(RedirectOutputConfig{
+						Channel: "stream/test/yyy",
+					}),
+				},
 			},
 			"stream/test/yyy": {
 				Converter: &testConverter{"", data.NewFrame("test")},
-				Outputter: NewRedirectOutput(RedirectOutputConfig{
-					Channel: "stream/test/xxx",
-				}),
+				Outputters: []Outputter{
+					NewRedirectOutput(RedirectOutputConfig{
+						Channel: "stream/test/xxx",
+					}),
+				},
 			},
 		},
 	})

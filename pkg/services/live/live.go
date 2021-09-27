@@ -545,16 +545,21 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		if ok && rule.Subscriber != nil {
+		if ok && len(rule.Subscribers) > 0 {
 			subscribeRuleFound = true
 			var err error
-			reply, status, err = rule.Subscriber.Subscribe(client.Context(), pipeline.Vars{
-				OrgID:   orgID,
-				Channel: channel,
-			})
-			if err != nil {
-				logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-				return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			for _, sub := range rule.Subscribers {
+				reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
+					OrgID:   orgID,
+					Channel: channel,
+				})
+				if err != nil {
+					logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+				}
+				if status != backend.SubscribeStreamStatusOK {
+					break
+				}
 			}
 		}
 	}
