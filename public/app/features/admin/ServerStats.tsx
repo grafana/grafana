@@ -13,13 +13,15 @@ export const ServerStats = () => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    getServerStats().then((stats) => {
-      setStats(stats);
-      setIsLoading(false);
-    });
+    if (contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
+      getServerStats().then((stats) => {
+        setStats(stats);
+        setIsLoading(false);
+      });
+    }
   }, []);
 
-  if (!contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
+  if (!contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
     return null;
   }
 

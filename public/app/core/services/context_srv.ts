@@ -87,7 +87,7 @@ export class ContextSrv {
   }
 
   isGrafanaVisible() {
-    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
+    return document.visibilityState === undefined || document.visibilityState === 'visible';
   }
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
