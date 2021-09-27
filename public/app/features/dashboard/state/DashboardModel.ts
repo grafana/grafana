@@ -106,6 +106,7 @@ export class DashboardModel {
   iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
+  unsavedUserChanges: number;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -120,6 +121,7 @@ export class DashboardModel {
     getVariablesFromState: true,
     formatDate: true,
     hasChangesThatAffectsAllPanels: true,
+    unsavedUserChanges: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -162,6 +164,7 @@ export class DashboardModel {
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.hasChangesThatAffectsAllPanels = false;
+    this.unsavedUserChanges = 0;
   }
 
   addBuiltInAnnotationQuery() {
@@ -498,18 +501,25 @@ export class DashboardModel {
   }
 
   clearUnsavedChanges() {
+    this.unsavedUserChanges = 0;
+
     for (const panel of this.panels) {
       panel.configRev = 0;
     }
   }
 
   hasUnsavedChanges() {
+    if (this.unsavedUserChanges > 0) {
+      return true;
+    }
+
     for (const panel of this.panels) {
       if (panel.hasChanged) {
         console.log('Panel has changed', panel);
         return true;
       }
     }
+
     return false;
   }
 

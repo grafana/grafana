@@ -47,8 +47,8 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   };
 
   onUpdate = (title: string, repeat?: string | null) => {
-    this.props.panel['title'] = title;
-    this.props.panel['repeat'] = repeat ?? undefined;
+    this.props.panel.title = title;
+    this.props.panel.repeat = repeat ?? undefined;
     this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
