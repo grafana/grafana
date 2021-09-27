@@ -4,30 +4,33 @@ description = "Histogram visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart", "prometheus"]
 weight = 605
 +++
+--
 
-## Visualize Prometheus data in Grafana
+[comment]: <> (Add introduction)
+
+# Visualize Prometheus data in Grafana
 
 Histogram visualization provides a graphical representation of the distribution of numerical data. This topic explains how to visualize **Prometheus** data as a histogram in Grafana. For more on this topic, please see [Introduction to histograms and heatmaps](https://grafana.com/docs/grafana/latest/basics/intro-histograms/) and [Prometheus Best Practices: Histograms and summaries](https://prometheus.io/docs/practices/histograms/#apdex-score).
 
-Before you begin, we assume that you have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana. This documentation will look at histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/) though later versions of Grafana are also available.
+Before you begin, you should have a basic understanding of [Prometheus](https://grafana.com/oss/prometheus/) and Grafana. This documentation will refer to histograms from the perspective of [Grafana 7.0](https://grafana.com/blog/2020/05/18/grafana-v7.0-released-new-plugin-architecture-visualizations-transformations-native-trace-support-and-more/), though later versions of Grafana are also available.
 
-Understanding visualizing histograms is straightforward when an example is provided. For the purposes of this topic, the data sample is from a fictional image hosting service where you can query based on file size.
+It's more straightforward to understand visualizing histograms with an example. Here, we'll use data sampling from a fictional image hosting service where you can query based on file size.
 
-Assumptions about this sample data:
+Key assumptions about this sample data:
 
 - The Prometheus data does not contain any relevant resets and does not require joining metrics.
 
-- Only positive numeric values are included in this sample. Therefore, `_sum` can be used as a counter. However, it is possible to have negative values.
+- Only positive numeric values are included. As a result, `_sum` can be used as a counter. Note that it is possible to have negative values, but they are not used in this example.
 
-- The Go Prometheus client uses scientific notation for large numbers. This sample does not which causes the screenshots to be slightly off. However, the principle is the same.
+- The Go Prometheus client uses scientific notation for large numbers. This sample does not, which causes the screenshots to be slightly off as they are provided only for illustrative purposes. The principle is, however, the same.
 
 A Prometheus histogram consists of three elements:
 
-1. a `_count` counting the number of samples
-2. a `_sum` summing up the value of all samples
-3. a set of multiple buckets `_bucket` with a label `le` which contains a cumulative count of samples whose value are less than or equal to the numeric value contained in the `le` label.
+- `_count` counting the number of samples
+- `_sum` summing up the value of all samples
+- set of multiple buckets `_bucket` with a label `le` which contains a cumulative count of samples whose value are less than or equal to the numeric value contained in the `le` label.
 
-This image hosting site receives pictures ranging in size from a few bytes to a few megabytes, and the buckets are set up in an exponential scale between 64 bytes and 16MB (each bucket representing four times the size of the previous).
+Our sample data image hosting site receives pictures ranging in size from a few bytes to a few megabytes. The buckets are set up in an exponential scale between 64 bytes and 16MB (so each bucket represents four times the size of the previous bucket).
 
 ```bash
 uploaded_image_bytes_bucket{le="64"}
@@ -45,9 +48,9 @@ uploaded_image_bytes_total
 uploaded_image_bytes_count
 ```
 
-For the example, there is a log-normal distribution generated between the buckets where the 64KB and 256KB buckets contain almost the same amount of values where the median is near 64KB. The buckets surrounding those will gradually decrease in size.
+For the example, a log-normal distribution is generated between the buckets, where the 64KB and 256KB buckets contain almost the same amount of values where the median is near 64KB. The buckets surrounding those will gradually decrease in size.
 
-## **How to use query based on file size**
+# **How to use query based on file size**
 
 | Size                         | Query                          |       Parameter       | Description  |
 |:----------------------------:|:-----------------------------------------------------------------|-------------------------------|------------------------------------------------:|
@@ -59,13 +62,13 @@ For the example, there is a log-normal distribution generated between the bucket
 
 You can use one of the following **panels** to visualize their query:
 
-1. **Stat** - shows the summary of a single series; displays only one metric per panel
-2. **Gauge** - also known as a speedometer; best used when the data had defined boundary limits to warn users when they are falling under the normal range
-3. **Graph** - time charts that display data points over a time axis allowing users to overlap metrics to compare them overtime; easily modified and good for tracking outliers, state changes, or triggers
+- **Stat.** Shows the summary of a single series; displays only one metric per panel
+- **Gauge.** Also known as a speedometer; best used when the data had defined boundary limits to warn users when they are falling under the normal range
+- **Graph.** Time charts that display data points over a time axis allowing users to overlap metrics to compare them overtime; easily modified and good for tracking outliers, state changes, or triggers
 
 This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible because there is no defined range.
 
-## **What size is a quarter of the files smaller than?**
+# **What size is a quarter of the files smaller than?**
 
 [comment]: <> (I don't understand what this above question is asking)
 
@@ -91,7 +94,7 @@ However, since the p95 value is approximated, we cannot tell definitively if p95
 
 A way of phrasing this same requirement so that we do get an accurate number of how close we are to violating our service level is “the proportion of requests in which latency exceeds 0.25 seconds must be less than 5 percent.” Instead of approximating the p95 and seeing if it’s below or above 0.25 seconds, we precisely define the percentage of requests exceeding 0.25 seconds using the methods from above.
 
-## **Buckets' distribution**
+# **Buckets' distribution**
 
 When users create a **bar gauge** panel to visualize `uploaded_image_bytes_bucket` and set the label to `{{le}}`, they will notice the following:
 
@@ -103,7 +106,7 @@ There is an option to change the **format** of the Prometheus data from `Time
 
 [comment]: <> (Do we like having two buckets sections?)
 
-### **Buckets' distribution over time**
+# **Buckets' distribution over time**
 
 Since a bar gauge does not contain any temporal data, users must use a **Heatmap** to see the same visualization over time. After switching the panel type to **Heatmap**, the following adjustments are required to display it properly:
 
