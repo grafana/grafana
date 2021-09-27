@@ -69,6 +69,7 @@ export interface IntervalVariableModel extends VariableWithOptions {
 
 export interface DateTimeVariableModel extends VariableWithOptions {
   allValue?: string | null;
+  returnValue?: 'start' | 'end';
 }
 
 export interface CustomVariableModel extends VariableWithMultiSupport {}

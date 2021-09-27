@@ -62,5 +62,12 @@ export function DateTimeVariablePicker({ variable, onVariableChange }: Props): R
     updateVariable(value, isDateInput);
   };
 
-  return <DatePickerWithEmptyWithInput value={date} onChange={onChange} isDateInput={isDateInput} />;
+  return (
+    <DatePickerWithEmptyWithInput
+      value={date}
+      onChange={onChange}
+      isDateInput={isDateInput}
+      returnValue={variable.returnValue || 'start'}
+    />
+  );
 }

@@ -12,6 +12,7 @@ export interface DatePickerWithEmptyWithInputProps extends Omit<InputProps, 'ref
   value?: Date | string;
   onChange: (value: Date | string, isDateInput: boolean) => void;
   isDateInput: boolean;
+  returnValue: 'start' | 'end';
   closeOnSelect?: boolean;
   placeholder?: string;
 }
@@ -21,6 +22,7 @@ export const DatePickerWithEmptyWithInput = ({
   value,
   onChange,
   isDateInput,
+  returnValue,
   closeOnSelect,
   placeholder = 'Date',
   ...rest
@@ -56,6 +58,7 @@ export const DatePickerWithEmptyWithInput = ({
         }}
         onClose={() => setOpen(false)}
         isDateInput={isDateInput}
+        returnValue={returnValue}
       />
     </div>
   );

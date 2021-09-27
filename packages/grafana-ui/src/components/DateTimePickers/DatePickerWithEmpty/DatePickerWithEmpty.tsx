@@ -16,6 +16,7 @@ export interface DatePickerWithEmptyProps {
   onChange: (value: Date, isDateInput: boolean) => void;
   isDateInput: boolean;
   value?: Date;
+  returnValue?: 'start' | 'end';
 }
 
 /** @public */
@@ -38,7 +39,7 @@ export const DatePickerWithEmpty = memo<DatePickerWithEmptyProps>((props) => {
 
 DatePickerWithEmpty.displayName = 'DatePickerWithEmpty';
 
-const Body = memo<DatePickerWithEmptyProps>(({ value, onChange, isDateInput }) => {
+const Body = memo<DatePickerWithEmptyProps>(({ value, onChange, isDateInput, returnValue }) => {
   const styles = useStyles2(getBodyStyles);
 
   return (
@@ -53,6 +54,7 @@ const Body = memo<DatePickerWithEmptyProps>(({ value, onChange, isDateInput }) =
         />
       </InlineField>
       <Calendar
+        returnValue={returnValue || 'start'}
         className={styles.body}
         tileClassName={styles.title}
         value={value || new Date()}
