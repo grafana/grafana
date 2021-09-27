@@ -528,7 +528,7 @@ export function getAppRoutes(): RouteDescriptor[] {
 }
 
 // evaluates access control permission, using fallback if access control is disabled
-export const evaluatePermission = (fallback: () => string[], action: AccessControlAction): string[] => {
+export const evaluatePermission = (fallback: () => string[], action: string): string[] => {
   if (!config.featureToggles['accesscontrol']) {
     return fallback();
   }
