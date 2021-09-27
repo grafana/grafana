@@ -52,7 +52,6 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
-	start := time.Now()
 
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -84,9 +83,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
 
-	fmt.Printf("getting rule groups took %s", time.Since(start))
-	start = time.Now()
-
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID: c.SignedInUser.OrgId,
 	}
@@ -96,9 +92,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
-
-	fmt.Printf("getting alerts took %s", time.Since(start))
-	start = time.Now()
 
 	groupMap := make(map[string]*apimodels.RuleGroup)
 
@@ -197,6 +190,5 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		newGroup.Interval = float64(rule.IntervalSeconds)
 	}
 
-	fmt.Printf("processing rules took %s", time.Since(start))
 	return response.JSON(http.StatusOK, ruleResponse)
 }
