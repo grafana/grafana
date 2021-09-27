@@ -111,6 +111,13 @@ export class ContextSrv {
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
+
+  hasAccess(action: string, fallBack: boolean) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallBack;
+    }
+    return this.hasPermission(action);
+  }
 }
 
 let contextSrv = new ContextSrv();

@@ -42,6 +42,4 @@ export enum AccessControlAction {
   DataSourcesPermissionsRead = 'datasources.permissions:read',
 
   ActionServerStatsRead = 'server.stats:read',
-
-  LicensingRead = 'licensing:read',
 }
