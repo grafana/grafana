@@ -39,12 +39,13 @@ type exitWithCode struct {
 	code   int
 }
 
+var serverFs = flag.NewFlagSet("server", flag.ContinueOnError)
+
 func (e exitWithCode) Error() string {
 	return e.reason
 }
 
 func RunServer(opt ServerOptions) int {
-	serverFs := flag.NewFlagSet("server", flag.ContinueOnError)
 	var (
 		configFile = serverFs.String("config", "", "path to config file")
 		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
@@ -162,7 +163,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 	}
 
 	s, err := server.Initialize(setting.CommandLineArgs{
-		Config: configFile, HomePath: homePath, Args: flag.Args(),
+		Config: configFile, HomePath: homePath, Args: serverFs.Args(),
 	}, server.Options{
 		PidFile: pidFile, Version: opt.Version, Commit: opt.Commit, BuildBranch: opt.BuildBranch,
 	}, api.ServerOptions{})
