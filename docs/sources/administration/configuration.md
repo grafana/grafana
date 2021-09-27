@@ -1169,7 +1169,7 @@ Sets the alert evaluation timeout when fetching data from the datasource. Defaul
 
 ### max_attempts
 
-Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3 (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
+Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3` (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
 
 ### min_interval
 
