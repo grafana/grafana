@@ -401,6 +401,12 @@ The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
 
 The default is `"redis://localhost:6379"`.
 
+### cluster
+
+A comma separated list of Redis cluster members in `host:port` format. Example: `localhost:7000, localhost: 7001, localhost:7002`.
+
+> **Note:** The value for `url` will be ignored if `cluster` is specified.
+
 ### prefix
 
 A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.
