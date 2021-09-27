@@ -26,9 +26,9 @@ Key assumptions about this sample data:
 
 A Prometheus histogram consists of three elements:
 
-- `_count` counting the number of samples
-- `_sum` summing up the value of all samples
-- set of multiple buckets `_bucket` with a label `le` which contains a cumulative count of samples whose value are less than or equal to the numeric value contained in the `le` label.
+- **`_count`.** Counts the number of samples
+- **`_sum`.** Sums up the value of all samples
+- **`_bucket`.** Used to show a set of multiple buckets with a label `le` which contains a cumulative count of samples whose value are less than or equal to the numeric value contained in the `le` label
 
 Our sample data image hosting site receives pictures ranging in size from a few bytes to a few megabytes. The buckets are set up in an exponential scale between 64 bytes and 16MB (so each bucket represents four times the size of the previous bucket).
 
@@ -50,7 +50,7 @@ uploaded_image_bytes_count
 
 For the example, a log-normal distribution is generated between the buckets, where the 64KB and 256KB buckets contain almost the same amount of values where the median is near 64KB. The buckets surrounding those will gradually decrease in size.
 
-# **How to use query based on file size**
+# How to use query based on file size
 
 | Size                         | Query                          |       Parameter       | Description  |
 |:----------------------------:|:-----------------------------------------------------------------|-------------------------------|------------------------------------------------:|
@@ -68,7 +68,7 @@ You can use one of the following **panels** to visualize their query:
 
 This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible because there is no defined range.
 
-# **What size is a quarter of the files smaller than?**
+# What size is a quarter of the files smaller than?
 
 [comment]: <> (I don't understand what this above question is asking)
 
@@ -94,7 +94,7 @@ However, since the p95 value is approximated, we cannot tell definitively if p95
 
 A way of phrasing this same requirement so that we do get an accurate number of how close we are to violating our service level is “the proportion of requests in which latency exceeds 0.25 seconds must be less than 5 percent.” Instead of approximating the p95 and seeing if it’s below or above 0.25 seconds, we precisely define the percentage of requests exceeding 0.25 seconds using the methods from above.
 
-# **Buckets' distribution**
+# Buckets' distribution
 
 When users create a **bar gauge** panel to visualize `uploaded_image_bytes_bucket` and set the label to `{{le}}`, they will notice the following:
 
@@ -106,7 +106,7 @@ There is an option to change the **format** of the Prometheus data from `Time
 
 [comment]: <> (Do we like having two buckets sections?)
 
-# **Buckets' distribution over time**
+# Buckets' distribution over time
 
 Since a bar gauge does not contain any temporal data, users must use a **Heatmap** to see the same visualization over time. After switching the panel type to **Heatmap**, the following adjustments are required to display it properly:
 
