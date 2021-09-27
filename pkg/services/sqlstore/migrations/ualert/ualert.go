@@ -474,7 +474,7 @@ func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrat
 
 	// assigning all configurations to the first org because 0 does not usually point to any
 	migrator.Logger.Info("Assigning all existing records from alert_configuration to the first organization", "org", firstOrg)
-	_, err = sess.Cols("org_id").Update(&AlertConfiguration{OrgID: firstOrg})
+	_, err = sess.Cols("org_id").Where("org_id = 0").Update(&AlertConfiguration{OrgID: firstOrg})
 	if err != nil {
 		return 0, fmt.Errorf("failed to update org_id for all rows in the table alert_configuration: %w", err)
 	}
@@ -484,7 +484,7 @@ func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrat
 		return firstOrg, nil
 	}
 	// if there are many organizations we cannot safely assume what organization an alert_configuration belongs to.
-	// Therefore, we apply the default configuration to all organizations. The previous version could
+	// Therefore, we apply the default configuration to all organizations. The previous version could be restored if needed.
 	migrator.Logger.Warn("Detected many organizations. The current alertmanager configuration will be replaced by the default one")
 	configs := make([]*AlertConfiguration, 0, len(orgs))
 	for _, org := range orgs {
