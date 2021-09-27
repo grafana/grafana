@@ -61,7 +61,10 @@ func RunServer(opt ServerOptions) int {
 		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
 	)
 
-	serverFs.Parse(os.Args[1:])
+	if err := serverFs.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
+	}
 
 	if *v || *vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opt.Version, opt.Commit, opt.BuildBranch)
