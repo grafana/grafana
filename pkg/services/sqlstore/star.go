@@ -15,7 +15,7 @@ func (ss *SQLStore) addStarQueryAndCommandHandlers() {
 }
 
 func (ss *SQLStore) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
 		results, err := sess.Query(rawSQL, query.UserId, query.DashboardId)
 
