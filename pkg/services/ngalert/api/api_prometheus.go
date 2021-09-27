@@ -52,7 +52,6 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
-
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -189,6 +188,5 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
 	}
-
 	return response.JSON(http.StatusOK, ruleResponse)
 }
