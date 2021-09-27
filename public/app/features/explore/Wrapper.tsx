@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect, ConnectedProps, ReactReduxContext } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import {
@@ -39,12 +39,8 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
-  static contextType = ReactReduxContext;
-  private unsubscribe = () => {};
-
   componentWillUnmount() {
     this.props.resetExploreAction({});
-    this.unsubscribe();
   }
 
   componentDidMount() {
@@ -53,18 +49,10 @@ class WrapperUnconnected extends PureComponent<Props> {
 
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
-
-    let previousAutoLoadLogsVolume = this.props.autoLoadLogsVolume;
-    this.unsubscribe = this.context.store.subscribe(() => {
-      const newAutoLoadLogsVolume = this.context.store.getState().explore.autoLoadLogsVolume;
-      if (newAutoLoadLogsVolume !== previousAutoLoadLogsVolume) {
-        store.set(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, newAutoLoadLogsVolume);
-        previousAutoLoadLogsVolume = newAutoLoadLogsVolume;
-      }
-    });
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
+    const { autoLoadLogsVolume } = this.props;
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
     const datasourceTitle = hasSplit
@@ -72,6 +60,10 @@ class WrapperUnconnected extends PureComponent<Props> {
       : `${this.props.exploreState.left.datasourceInstance?.name}`;
     const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
     document.title = documentTitle;
+
+    if (prevProps.autoLoadLogsVolume !== autoLoadLogsVolume) {
+      store.set(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, autoLoadLogsVolume);
+    }
   }
 
   render() {
