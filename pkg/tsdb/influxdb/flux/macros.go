@@ -5,14 +5,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 func interpolateInterval(flux string, interval time.Duration) string {
 	intervalMs := int64(interval / time.Millisecond)
+	intervalText := intervalv2.FormatDuration(interval)
 
 	flux = strings.ReplaceAll(flux, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
-	flux = strings.ReplaceAll(flux, "$__interval", interval.String())
-
+	flux = strings.ReplaceAll(flux, "$__interval", intervalText)
 	return flux
 }
 
