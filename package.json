@@ -222,8 +222,7 @@
     "webpack-cli": "4.8.0",
     "webpack-dev-server": "4.0.0",
     "webpack-merge": "5.8.0",
-    "worker-loader": "^3.0.8",
-    "zone.js": "0.7.8"
+    "worker-loader": "^3.0.8"
   },
   "dependencies": {
     "@emotion/css": "11.1.3",

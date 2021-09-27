@@ -25038,11 +25038,6 @@ z-schema@~3.18.3:
   optionalDependencies:
     commander "^2.7.1"
 
-zone.js@0.7.8:
-  version "0.7.8"
-  resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.7.8.tgz#4f3fe8834d44597f2639053a0fa438df34fffded"
-  integrity sha1-Tz/og01EWX8mOQU6D6Q43zT//e0=
-
 zwitch@^1.0.0:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/zwitch/-/zwitch-1.0.5.tgz#d11d7381ffed16b742f6af7b3f223d5cd9fe9920"
