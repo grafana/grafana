@@ -2,11 +2,11 @@ package api
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/api/navlinks"
 	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/navlinks"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
