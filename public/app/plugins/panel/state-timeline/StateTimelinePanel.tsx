@@ -36,14 +36,25 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
 
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+      const data = frames ?? [];
       // Not caring about multi mode in StateTimeline
       if (seriesIdx === null || datapointIdx === null) {
         return null;
       }
 
+      /**
+       * There could be a case when the tooltip shows a data from one of a multiple query and the other query finishes first
+       * from refreshing. This causes data to be out of sync. alignedData - 1 because Time field doesn't count.
+       * Render nothing in this case to prevent error.
+       * See https://github.com/grafana/support-escalations/issues/932
+       */
+      if (alignedData.fields.length - 1 !== data.length || !alignedData.fields[seriesIdx]) {
+        return null;
+      }
+
       return (
         <StateTimelineTooltip
-          data={frames ?? []}
+          data={data}
           alignedData={alignedData}
           seriesIdx={seriesIdx}
           datapointIdx={datapointIdx}
