@@ -341,6 +341,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				// enforce minimum evaluation interval
 				if item.IntervalSeconds < sch.minRuleIntervalSeconds {
+					sch.log.Debug("interval adjusted", "rule_interval_seconds", item.IntervalSeconds, "min_interval_seconds", sch.minRuleIntervalSeconds, "key", key)
 					item.IntervalSeconds = sch.minRuleIntervalSeconds
 				}
 
