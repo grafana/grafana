@@ -16,10 +16,6 @@ var SubscribersRegistry = []EntityInfo{
 		Description: "apply managed stream subscribe logic",
 	},
 	{
-		Type:        SubscriberTypeMultiple,
-		Description: "apply multiple subscribers",
-	},
-	{
 		Type:        SubscriberTypeAuthorizeRole,
 		Description: "authorize user role",
 	},
@@ -30,11 +26,6 @@ var OutputsRegistry = []EntityInfo{
 		Type:        OutputTypeManagedStream,
 		Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
 		Example:     ManagedStreamOutputConfig{},
-	},
-	{
-		Type:        OutputTypeMultiple,
-		Description: "Send the output to multiple destinations",
-		Example:     MultipleOutputterConfig{},
 	},
 	{
 		Type:        OutputTypeConditional,
@@ -82,10 +73,5 @@ var ProcessorsRegistry = []EntityInfo{
 		Type:        ProcessorTypeDropFields,
 		Description: "list the fields that should be removed",
 		Example:     DropFieldsProcessorConfig{},
-	},
-	{
-		Type:        ProcessorTypeMultiple,
-		Description: "apply multiple processors",
-		Example:     MultipleProcessorConfig{},
 	},
 }
