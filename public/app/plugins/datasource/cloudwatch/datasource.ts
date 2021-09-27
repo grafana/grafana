@@ -1,21 +1,9 @@
 import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import {
-  catchError,
-  concatMap,
-  filter,
-  finalize,
-  map,
-  mergeMap,
-  repeat,
-  scan,
-  share,
-  takeWhile,
-  tap,
-} from 'rxjs/operators';
-import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
@@ -24,9 +12,6 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
-  LiveChannelEvent,
-  LiveChannelMessageEvent,
-  LiveChannelScope,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -62,10 +47,9 @@ import {
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import config from 'app/core/config';
+import { addDataLinksToLogsResponse } from './utils/datalinks';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -94,6 +78,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
+  tracingDataSourceUid?: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -116,8 +101,8 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.datasourceName = instanceSettings.name;
-
     this.languageProvider = new CloudWatchLanguageProvider(this);
+    this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -128,11 +113,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.liveEnabled) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {
@@ -150,75 +131,12 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return merge(...dataQueryResponses);
   }
 
-  handleLiveLogQueries = (
-    logQueries: CloudWatchLogsQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
-  ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter((item) => item.logGroupNames?.length);
-    if (logQueries.length > validLogQueries.length) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
-
-    // No valid targets, return the empty result to save a round trip.
-    if (isEmpty(validLogQueries)) {
-      return of({ data: [], state: LoadingState.Done });
-    }
-
-    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
-      intervalMs: 1, // dummy
-      maxDataPoints: 1, // dummy
-      datasourceId: this.id,
-      queryString: this.replace(target.expression, options.scopedVars, true),
-      refId: target.refId,
-      logGroupNames: target.logGroupNames?.map((logGroup) =>
-        this.replace(logGroup, options.scopedVars, true, 'log groups')
-      ),
-      statsGroups: target.statsGroups,
-      region: this.getActualRegion(this.replace(target.region, options.scopedVars, true, 'region')),
-      type: 'liveLogAction',
-    }));
-
-    const range = this.timeSrv.timeRange();
-
-    const requestParams = {
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-      queries: queryParams,
-    };
-
-    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
-      mergeMap((response: TSDBResponse) => {
-        const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
-        const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
-        return getGrafanaLiveSrv().getStream({
-          scope: LiveChannelScope.Plugin,
-          namespace: 'cloudwatch',
-          path: channelName,
-        });
-      }),
-      filter((e: LiveChannelEvent<any>) => e.type === 'message'),
-      map(({ message }: LiveChannelMessageEvent<TSDBResponse>) => {
-        const dataQueryResponse = toDataQueryResponse({
-          data: message,
-        });
-        dataQueryResponse.state = dataQueryResponse.data.every((dataFrame) =>
-          statusIsTerminated(dataFrame.meta?.custom?.['Status'])
-        )
-          ? LoadingState.Done
-          : LoadingState.Loading;
-        dataQueryResponse.key = message.results[Object.keys(message.results)[0]].refId;
-        return this.addDataLinksToLogsResponse(dataQueryResponse, options);
-      }),
-      catchError((err) => {
-        if (err.data?.error) {
-          throw err.data.error;
-        }
-
-        throw err;
-      })
-    );
-  };
-
+  /**
+   * Handle log query. The log query works by starting the query on the CloudWatch and then periodically polling for
+   * results.
+   * @param logQueries
+   * @param options
+   */
   handleLogQueries = (
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
@@ -233,15 +151,17 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       return of({ data: [], state: LoadingState.Done });
     }
 
-    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression,
       refId: target.refId,
       logGroupNames: target.logGroupNames,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
+    // This first starts the query which returns queryId which can be used to retrieve results.
     return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
       mergeMap((dataFrames) =>
+        // This queries for the results
         this.logsQuery(
           dataFrames.map((dataFrame) => ({
             queryId: dataFrame.fields[0].values.get(0),
@@ -252,7 +172,22 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           }))
         )
       ),
-      map((response) => this.addDataLinksToLogsResponse(response, options))
+      mergeMap((dataQueryResponse) => {
+        return from(
+          (async () => {
+            await addDataLinksToLogsResponse(
+              dataQueryResponse,
+              options,
+              this.timeSrv.timeRange(),
+              this.replace.bind(this),
+              this.getActualRegion.bind(this),
+              this.tracingDataSourceUid
+            );
+
+            return dataQueryResponse;
+          })()
+        );
+      })
     );
   };
 
@@ -300,6 +235,10 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return this.performTimeSeriesQuery(request, options.range);
   };
 
+  /**
+   * Checks progress and polls data of a started logs query with some retry logic.
+   * @param queryParams
+   */
   logsQuery(
     queryParams: Array<{
       queryId: string;
@@ -391,46 +330,6 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     );
 
     return withTeardown(queryResponse, () => this.stopQueries());
-  }
-
-  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
-    for (const dataFrame of response.data as DataFrame[]) {
-      const range = this.timeSrv.timeRange();
-      const start = range.from.toISOString();
-      const end = range.to.toISOString();
-
-      const curTarget = options.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
-      const interpolatedGroups =
-        curTarget.logGroupNames?.map((logGroup: string) =>
-          this.replace(logGroup, options.scopedVars, true, 'log groups')
-        ) ?? [];
-      const urlProps: AwsUrl = {
-        end,
-        start,
-        timeType: 'ABSOLUTE',
-        tz: 'UTC',
-        editorString: curTarget.expression ? this.replace(curTarget.expression, options.scopedVars, true) : '',
-        isLiveTail: false,
-        source: interpolatedGroups,
-      };
-
-      const encodedUrl = encodeUrl(
-        urlProps,
-        this.getActualRegion(this.replace(curTarget.region, options.scopedVars, true, 'region'))
-      );
-
-      for (const field of dataFrame.fields) {
-        field.config.links = [
-          {
-            url: encodedUrl,
-            title: 'View in CloudWatch console',
-            targetBlank: true,
-          },
-        ];
-      }
-    }
-
-    return response;
   }
 
   stopQueries() {
@@ -1052,13 +951,4 @@ function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => v
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.substr(colonIndex + 1);
-}
-
-function statusIsTerminated(status: string | CloudWatchLogsQueryStatus) {
-  return [
-    CloudWatchLogsQueryStatus.Complete,
-    CloudWatchLogsQueryStatus.Cancelled,
-    CloudWatchLogsQueryStatus.Failed,
-    CloudWatchLogsQueryStatus.Timeout,
-  ].includes(status as CloudWatchLogsQueryStatus);
 }

@@ -38,9 +38,9 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		DataPath: dir,
 	}
 
-	m := metrics.NewMetrics(prometheus.NewRegistry())
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
-	store := &store.DBstore{
+	s := &store.DBstore{
 		BaseInterval:           10 * time.Second,
 		DefaultIntervalSeconds: 60,
 		SQLStore:               sqlStore,
@@ -48,15 +48,9 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	}
 
 	kvStore := newFakeKVStore(t)
-	am, err := newAlertmanager(1, cfg, store, kvStore, m)
+	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, m)
 	require.NoError(t, err)
 	return am
-}
-
-func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
-	require.NotNil(t, am.config)
 }
 
 func TestPutAlert(t *testing.T) {

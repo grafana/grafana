@@ -31,15 +31,21 @@ func NewThresholdOutput(frameStorage FrameGetSetter, config ThresholdOutputConfi
 	return &ThresholdOutput{frameStorage: frameStorage, config: config}
 }
 
-func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+const OutputTypeThreshold = "threshold"
+
+func (out *ThresholdOutput) Type() string {
+	return OutputTypeThreshold
+}
+
+func (out *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if frame == nil {
 		return nil, nil
 	}
-	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
+	previousFrame, previousFrameOk, err := out.frameStorage.Get(vars.OrgID, out.config.Channel)
 	if err != nil {
 		return nil, err
 	}
-	fieldName := l.config.FieldName
+	fieldName := out.config.FieldName
 
 	currentFrameFieldIndex := -1
 	for i, f := range frame.Fields {
@@ -136,15 +142,15 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 
 	if fTime.Len() > 0 {
 		stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
-		err := l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
+		err := out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
 		if err != nil {
 			return nil, err
 		}
 		return []*ChannelFrame{{
-			Channel: l.config.Channel,
+			Channel: out.config.Channel,
 			Frame:   stateFrame,
 		}}, nil
 	}
 
-	return nil, l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
+	return nil, out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
 }

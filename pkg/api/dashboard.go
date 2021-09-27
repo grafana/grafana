@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -70,7 +71,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	uid := c.Params(":uid")
+	uid := macaron.Params(c.Req)[":uid"]
 	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -90,7 +91,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		}
 	}
 
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		return dashboardGuardianResponse(err)
 	}
@@ -174,7 +175,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	dash.Data.Set("version", dash.Version)
 
 	// load library panels JSON for this dashboard
-	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
+	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c.Req.Context(), dash)
 	if err != nil {
 		return response.Error(500, "Error while loading library panels", err)
 	}
@@ -214,7 +215,7 @@ func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) 
 }
 
 func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Response {
-	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
+	query := models.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: macaron.Params(c.Req)[":slug"]}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return response.Error(500, "Failed to retrieve dashboards by slug", err)
@@ -232,18 +233,18 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, macaron.Params(c.Req)[":uid"])
 	if rsp != nil {
 		return rsp
 	}
 
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	// disconnect all library elements for this dashboard
-	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c, dash.Id)
+	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.Id)
 	if err != nil {
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
@@ -276,12 +277,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	ctx := c.Req.Context()
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 	if cmd.FolderUid != "" {
 		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-		folder, err := folders.GetFolderByUID(cmd.FolderUid)
+		folder, err := folders.GetFolderByUID(ctx, cmd.FolderUid)
 		if err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
@@ -361,14 +363,14 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := dashSvc.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dashboard)
 	if err != nil {
 		return response.Error(500, "Error while connecting library panels", err)
 	}
@@ -506,7 +508,7 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 func GetDashboardVersions(c *models.ReqContext) response.Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -545,7 +547,7 @@ func GetDashboardVersions(c *models.ReqContext) response.Response {
 func GetDashboardVersion(c *models.ReqContext) response.Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -582,13 +584,13 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
 func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffOptions) response.Response {
-	guardianBase := guardian.New(apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
+	guardianBase := guardian.New(c.Req.Context(), apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
-		guardianNew := guardian.New(apiOptions.New.DashboardId, c.OrgId, c.SignedInUser)
+		guardianNew := guardian.New(c.Req.Context(), apiOptions.New.DashboardId, c.OrgId, c.SignedInUser)
 		if canSave, err := guardianNew.CanSave(); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
 		}
@@ -631,7 +633,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.
 		return rsp
 	}
 
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}

@@ -18,14 +18,14 @@ import (
     ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Family: {
+Panel: {
     lineages: [
         [
             {
                 PanelOptions: {
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
-                    showValue: ui.BarValueVisibility
+                    showValue: ui.VisibilityMode
                     rowHeight: number
                     colWidth?: number
                     alignValue: "center" | *"left" | "right"

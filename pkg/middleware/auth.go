@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -111,9 +112,8 @@ func Auth(options *AuthOptions) macaron.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
 			var revokedErr *models.TokenRevokedError
-			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
+			if errors.As(c.LookupTokenErr, &revokedErr) {
 				tokenRevoked(c, revokedErr)
 				return
 			}
@@ -188,4 +188,30 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	}
 
 	return forceLogin
+}
+
+func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
+	if c.OrgRole == models.ROLE_ADMIN {
+		return
+	}
+
+	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	if err := sqlstore.HasAdminPermissionInFolders(&hasAdminPermissionInFoldersQuery); err != nil {
+		c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
+	}
+
+	if hasAdminPermissionInFoldersQuery.Result {
+		return
+	}
+
+	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+	if err := sqlstore.IsAdminOfTeams(&isAdminOfTeamsQuery); err != nil {
+		c.JsonApiErr(500, "Failed to check if user is a team admin", err)
+	}
+
+	if isAdminOfTeamsQuery.Result {
+		return
+	}
+
+	accessForbidden(c)
 }

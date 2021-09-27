@@ -14,6 +14,12 @@ interface Props {
   editingExistingRule: boolean;
 }
 
+const recordingRuleNameValidationPattern = {
+  message:
+    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+  value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
+};
+
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles2(getStyles);
 
@@ -63,7 +69,10 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
       >
         <Input
           id="name"
-          {...register('name', { required: { value: true, message: 'Must enter an alert name' } })}
+          {...register('name', {
+            required: { value: true, message: 'Must enter an alert name' },
+            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
+          })}
           autoFocus={true}
         />
       </Field>

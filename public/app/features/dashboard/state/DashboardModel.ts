@@ -497,6 +497,22 @@ export class DashboardModel {
     });
   }
 
+  clearUnsavedChanges() {
+    for (const panel of this.panels) {
+      panel.configRev = 0;
+    }
+  }
+
+  hasUnsavedChanges() {
+    for (const panel of this.panels) {
+      if (panel.hasChanged) {
+        console.log('Panel has changed', panel);
+        return true;
+      }
+    }
+    return false;
+  }
+
   cleanUpRepeats() {
     if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
@@ -738,9 +754,11 @@ export class DashboardModel {
         panelBelowIndex = insertPos + rowPanels.length;
       }
 
-      // Update gridPos for panels below
-      for (let i = panelBelowIndex; i < this.panels.length; i++) {
-        this.panels[i].gridPos.y += yPos;
+      // Update gridPos for panels below if we inserted more than 1 repeated row panel
+      if (selectedOptions.length > 1) {
+        for (let i = panelBelowIndex; i < this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
+        }
       }
     }
   }

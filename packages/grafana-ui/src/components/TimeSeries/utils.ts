@@ -20,7 +20,7 @@ import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphTresholdsStyleMode,
-  PointVisibility,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/schema';
@@ -31,7 +31,7 @@ const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
-  showPoints: PointVisibility.Auto,
+  showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
@@ -154,7 +154,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     }
 
     const showPoints =
-      customConfig.drawStyle === GraphDrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+      customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 

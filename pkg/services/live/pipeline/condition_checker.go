@@ -8,5 +8,6 @@ import (
 
 // ConditionChecker checks conditions in context of data.Frame being processed.
 type ConditionChecker interface {
+	Type() string
 	CheckCondition(ctx context.Context, frame *data.Frame) (bool, error)
 }

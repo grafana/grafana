@@ -41,17 +41,6 @@ type SqlQueryResultTransformer interface {
 	GetConverterList() []sqlutil.StringConverter
 }
 
-type engineCacheType struct {
-	cache   map[int64]*xorm.Engine
-	updates map[int64]time.Time
-	sync.Mutex
-}
-
-var engineCache = engineCacheType{
-	cache:   make(map[int64]*xorm.Engine),
-	updates: make(map[int64]time.Time),
-}
-
 var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
@@ -92,6 +81,7 @@ type DataPluginConfiguration struct {
 	ConnectionString  string
 	TimeColumnNames   []string
 	MetricColumnTypes []string
+	RowLimit          int64
 }
 type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
@@ -101,6 +91,7 @@ type DataSourceHandler struct {
 	metricColumnTypes      []string
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
+	rowLimit               int64
 }
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
@@ -127,12 +118,18 @@ func (e *DataSourceHandler) transformQueryError(err error) error {
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
+	log.Debug("Creating engine...")
+	defer func() {
+		log.Debug("Engine created")
+	}()
+
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
 		log:                    log,
 		dsInfo:                 config.DSInfo,
+		rowLimit:               config.RowLimit,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -141,16 +138,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 
 	if len(config.MetricColumnTypes) > 0 {
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
-	}
-
-	engineCache.Lock()
-	defer engineCache.Unlock()
-
-	if engine, present := engineCache.cache[config.DSInfo.ID]; present {
-		if updateTime := engineCache.updates[config.DSInfo.ID]; updateTime.Before(config.DSInfo.Updated) {
-			queryDataHandler.engine = engine
-			return &queryDataHandler, nil
-		}
 	}
 
 	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
@@ -162,17 +149,23 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-	engineCache.updates[config.DSInfo.ID] = config.DSInfo.Updated
-	engineCache.cache[config.DSInfo.ID] = engine
 	queryDataHandler.engine = engine
 	return &queryDataHandler, nil
 }
 
-const rowLimit = 1000000
-
 type DBDataResponse struct {
 	dataResponse backend.DataResponse
 	refID        string
+}
+
+func (e *DataSourceHandler) Dispose() {
+	e.log.Debug("Disposing engine...")
+	if e.engine != nil {
+		if err := e.engine.Close(); err != nil {
+			e.log.Error("Failed to dispose engine", "error", err)
+		}
+	}
+	e.log.Debug("Engine disposed")
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -284,15 +277,17 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
-	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
+	frame, err := sqlutil.FrameFromRows(rows.Rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return
 	}
 
-	frame.SetMeta(&data.FrameMeta{
-		ExecutedQueryString: interpolatedQuery,
-	})
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.ExecutedQueryString = interpolatedQuery
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
@@ -377,7 +372,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	if err != nil {
 		return "", err
 	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
+	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, query.MaxDataPoints)
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)

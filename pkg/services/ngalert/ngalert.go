@@ -39,7 +39,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, m *metrics.Metrics) (*AlertNG, error) {
+	quotaService *quota.QuotaService, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:             cfg,
 		DataSourceCache: dataSourceCache,
@@ -74,7 +74,7 @@ type AlertNG struct {
 	DataService     *tsdb.Service
 	DataProxy       *datasourceproxy.DataSourceProxyService
 	QuotaService    *quota.QuotaService
-	Metrics         *metrics.Metrics
+	Metrics         *metrics.NGAlert
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
@@ -84,6 +84,8 @@ type AlertNG struct {
 }
 
 func (ng *AlertNG) init() error {
+	var err error
+
 	baseInterval := ng.Cfg.AlertingBaseInterval
 	if baseInterval <= 0 {
 		baseInterval = defaultBaseIntervalSeconds
@@ -97,7 +99,11 @@ func (ng *AlertNG) init() error {
 		Logger:                 ng.Log,
 	}
 
-	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore)
+	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
+	if err != nil {
+		return err
+	}
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
@@ -115,10 +121,10 @@ func (ng *AlertNG) init() error {
 		AdminConfigStore:        store,
 		OrgStore:                store,
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
-		Metrics:                 ng.Metrics,
-		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
+		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
+		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 	}
-	stateManager := state.NewManager(ng.Log, ng.Metrics, store, store)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
 	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
 
 	ng.stateManager = stateManager
@@ -139,7 +145,7 @@ func (ng *AlertNG) init() error {
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
 	}
-	api.RegisterAPIEndpoints(ng.Metrics)
+	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
 	return nil
 }
