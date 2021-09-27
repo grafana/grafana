@@ -313,28 +313,38 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 }
 
 func parseResponse(value map[PrometheusQueryType]model.Value, query *PrometheusQuery) (data.Frames, error) {
-	frames := data.Frames{}
+	allFrames := data.Frames{}
 
 	for queryType, value := range value {
+		var frames data.Frames
+
 		matrix, ok := value.(model.Matrix)
 		if ok {
-			matrixFrames := matrixToDataFrames(matrix, query, queryType)
-			frames = append(frames, matrixFrames...)
+			frames = matrixToDataFrames(matrix, query, queryType)
 		}
 
 		vector, ok := value.(model.Vector)
 		if ok {
-			vectorFrames := vectorToDataFrames(vector, query, queryType)
-			frames = append(frames, vectorFrames...)
+			frames = vectorToDataFrames(vector, query, queryType)
 		}
 
 		scalar, ok := value.(*model.Scalar)
 		if ok {
-			scalarFrames := scalarToDataFrames(scalar, query, queryType)
-			frames = append(frames, scalarFrames...)
+			frames = scalarToDataFrames(scalar, query, queryType)
 		}
+
+		for _, frame := range frames {
+			frame.Meta = &data.FrameMeta{
+				Custom: map[string]PrometheusQueryType{
+					"queryType": queryType,
+				},
+			}
+		}
+
+		allFrames = append(allFrames, frames...)
 	}
-	return frames, nil
+
+	return allFrames, nil
 }
 
 // IsAPIError returns whether err is or wraps a Prometheus error.
@@ -385,11 +395,6 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, queryType P
 		frame := data.NewFrame(name,
 			data.NewField("Time", nil, timeVector),
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
-		frame.Meta = &data.FrameMeta{
-			Custom: map[string]PrometheusQueryType{
-				"queryType": queryType,
-			},
-		}
 		frames = append(frames, frame)
 	}
 	return frames
@@ -402,12 +407,6 @@ func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, queryType 
 	frame := data.NewFrame(name,
 		data.NewField("Time", nil, timeVector),
 		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
-	frame.Meta = &data.FrameMeta{
-		Custom: map[string]PrometheusQueryType{
-			"queryType": queryType,
-		},
-	}
-
 	frames := data.Frames{frame}
 	return frames
 }
@@ -425,11 +424,6 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, queryType P
 		frame := data.NewFrame(name,
 			data.NewField("Time", nil, timeVector),
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
-		frame.Meta = &data.FrameMeta{
-			Custom: map[string]PrometheusQueryType{
-				"queryType": queryType,
-			},
-		}
 		frames = append(frames, frame)
 	}
 
