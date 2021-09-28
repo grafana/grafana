@@ -39,6 +39,13 @@ func init() {
 				Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
 				PropertyName: "recipient",
 			},
+			{
+				Label:        "Thread",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Specify a thread ID for all notifications to be sent as a reply to that thread instead of individual messages",
+				PropertyName: "threadTS",
+			},
 			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 			// However, since the UI doesn't allow to say that a field is required or not depending on another field,
 			// we've gone with the compromise of making this field optional and instead return a validation error
@@ -150,6 +157,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
+	threadTS := model.Settings.Get("threadTS").MustString()
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
@@ -192,6 +200,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		token:          token,
 		upload:         uploadImage,
 		log:            log.New("alerting.notifier.slack"),
+		threadTS:       threadTS,
 	}, nil
 }
 
@@ -210,6 +219,7 @@ type SlackNotifier struct {
 	token          string
 	upload         bool
 	log            log.Logger
+	threadTS       string
 }
 
 // Notify sends an alert notification to Slack.
@@ -302,6 +312,9 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"attachments": []map[string]interface{}{
 			attachment,
 		},
+	}
+	if sn.threadTS != "" {
+		body["thread_ts"] = sn.threadTS
 	}
 	if len(blocks) > 0 {
 		body["blocks"] = blocks

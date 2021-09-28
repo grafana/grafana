@@ -972,6 +972,20 @@ export const grafanaNotifiersMock: NotifierDTO[] = [
       {
         element: 'input',
         inputType: 'text',
+        label: 'Thread',
+        description:
+          'Specify a thread ID for all notifications to be sent as a reply to that thread instead of individual messages',
+        placeholder: '',
+        propertyName: 'threadTS',
+        selectOptions: null,
+        showWhen: { field: '', is: '' },
+        required: false,
+        validationRule: '',
+        secure: false,
+      },
+      {
+        element: 'input',
+        inputType: 'text',
         label: 'Token',
         description: 'Provide a Slack API token (starts with "xoxb") - required unless you provide a webhook',
         placeholder: '',
