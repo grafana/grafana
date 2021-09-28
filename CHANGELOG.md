@@ -190,7 +190,7 @@ Panel queries and/or annotation queries that used more than one statistic will b
 ### Bug fixes
 
 - **CloudWatch Logs:** Fix crash when no region is selected. [#37639](https://github.com/grafana/grafana/pull/37639), [@aocenas](https://github.com/aocenas)
-- **Reporting:** Fix timezone parsing for scheduler (enterprise)
+- **Reporting:** Fix timezone parsing for scheduler. (Enterprise)
 
 <!-- 8.1.1 END -->
 <!-- 8.1.0 START -->
