@@ -56,7 +56,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     spanNameOptions: [],
   });
   const [error, setError] = useState(null);
-  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+  const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
 
   const fetchServiceNameOptions = useMemo(
     () =>
@@ -185,15 +185,15 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Min Duration" invalid={!!errors.minDuration} labelWidth={14} grow>
+          <InlineField label="Min Duration" invalid={!!inputErrors.minDuration} labelWidth={14} grow>
             <Input
               value={query.minDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
                 if (query.minDuration && !isValidGoDuration(query.minDuration)) {
-                  setErrors({ ...errors, minDuration: true });
+                  setInputErrors({ ...inputErrors, minDuration: true });
                 } else {
-                  setErrors({ ...errors, minDuration: false });
+                  setInputErrors({ ...inputErrors, minDuration: false });
                 }
               }}
               onChange={(v) =>
@@ -207,15 +207,15 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Max Duration" invalid={!!errors.maxDuration} labelWidth={14} grow>
+          <InlineField label="Max Duration" invalid={!!inputErrors.maxDuration} labelWidth={14} grow>
             <Input
               value={query.maxDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
                 if (query.maxDuration && !isValidGoDuration(query.maxDuration)) {
-                  setErrors({ ...errors, maxDuration: true });
+                  setInputErrors({ ...inputErrors, maxDuration: true });
                 } else {
-                  setErrors({ ...errors, maxDuration: false });
+                  setInputErrors({ ...inputErrors, maxDuration: false });
                 }
               }}
               onChange={(v) =>
@@ -231,7 +231,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         <InlineFieldRow>
           <InlineField
             label="Limit"
-            invalid={!!errors.limit}
+            invalid={!!inputErrors.limit}
             labelWidth={14}
             grow
             tooltip="Maximum numbers of returned results"
@@ -242,9 +242,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               onChange={(v) => {
                 let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;
                 if (limit && (!Number.isInteger(limit) || limit <= 0)) {
-                  setErrors({ ...errors, limit: true });
+                  setInputErrors({ ...inputErrors, limit: true });
                 } else {
-                  setErrors({ ...errors, limit: false });
+                  setInputErrors({ ...inputErrors, limit: false });
                 }
 
                 onChange({

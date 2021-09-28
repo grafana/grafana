@@ -1,5 +1,5 @@
 import { from, merge, Observable, of, throwError } from 'rxjs';
-import { map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
   DataQueryRequest,
@@ -118,6 +118,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               return {
                 data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
               };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
             })
           )
         );
