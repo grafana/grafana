@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"strings"
 	"testing"
 	"time"
 
@@ -170,7 +169,7 @@ func TestMultiOrgAlertmanager_addOrUpdateConfiguration(t *testing.T) {
 		dbConfig := generateFakeAlertConfiguration()
 		orgID := dbConfig.OrgID
 
-		//there is no instance of alert manager, but there is a configuration
+		// there is no instance of alert manager, but there is a configuration
 		err := mam.addOrUpdateAlertmanager(orgID, dbConfig)
 		require.NoError(t, err)
 
@@ -189,7 +188,7 @@ func TestMultiOrgAlertmanager_addOrUpdateConfiguration(t *testing.T) {
 
 		require.Contains(t, configStore.configs, orgID)
 		dbConfig := configStore.configs[orgID]
-		require.Equal(t, dbConfig.AlertmanagerConfiguration, alertmanagerDefaultConfiguration)
+		require.Equal(t, dbConfig.AlertmanagerConfiguration, cfg.UnifiedAlerting.DefaultConfiguration)
 	})
 
 	t.Run("Updates the existing Alertmanager with the new configuration", func(t *testing.T) {
@@ -228,12 +227,30 @@ func TestMultiOrgAlertmanager_addOrUpdateConfiguration(t *testing.T) {
 
 func generateFakeAlertConfiguration() *models.AlertConfiguration {
 	return &models.AlertConfiguration{
-		ID:                        rand.Int63(),
-		AlertmanagerConfiguration: strings.Replace(alertmanagerDefaultConfiguration, "grafana-default-email", "grafana-custom-email", -1),
-		ConfigurationVersion:      fmt.Sprint(rand.Int()),
-		CreatedAt:                 rand.Int63(),
-		Default:                   rand.Int()%2 > 0,
-		OrgID:                     rand.Int63(),
+		ID: rand.Int63(),
+		AlertmanagerConfiguration: fmt.Sprintf(`{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-%[1]d-email"
+		},
+		"receivers": [{
+			"name": "grafana-%[1]d-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}`, rand.Int63()),
+		ConfigurationVersion: fmt.Sprint(rand.Int()),
+		CreatedAt:            rand.Int63(),
+		Default:              rand.Int()%2 > 0,
+		OrgID:                rand.Int63(),
 	}
 }
 
