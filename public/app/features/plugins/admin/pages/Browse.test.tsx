@@ -6,7 +6,8 @@ import { locationService } from '@grafana/runtime';
 import { PluginType } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
-import { PluginAdminRoutes, CatalogPlugin } from '../types';
+import { fetchRemotePlugins } from '../state/actions';
+import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../types';
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import BrowsePage from './Browse';
 
@@ -17,8 +18,12 @@ jest.mock('@grafana/runtime', () => {
   return { ...original, pluginAdminEnabled: true };
 });
 
-const renderBrowse = (path = '/plugins', plugins: CatalogPlugin[] = []): RenderResult => {
-  const store = configureStore({ plugins: getPluginsStateMock(plugins) });
+const renderBrowse = (
+  path = '/plugins',
+  plugins: CatalogPlugin[] = [],
+  pluginsStateOverride?: ReducerState
+): RenderResult => {
+  const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
   locationService.push(path);
   const props = getRouteComponentProps({
     route: { routeName: PluginAdminRoutes.Home } as any,
@@ -286,6 +291,32 @@ describe('Browse list of plugins', () => {
         'Diagram',
         'Redis Application',
       ]);
+    });
+  });
+
+  describe('when GCOM api is not available', () => {
+    it('should disable the All / Installed filter', async () => {
+      const plugins = [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 2', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 3', isInstalled: true }),
+      ];
+      const state = getPluginsStateMock(plugins);
+
+      // Mock the store like if the remote plugins request was rejected
+      const stateOverride = {
+        ...state,
+        requests: {
+          ...state.requests,
+          [fetchRemotePlugins.typePrefix]: {
+            status: RequestStatus.Rejected,
+          },
+        },
+      };
+
+      // The radio input for the filters should be disabled
+      const { getByRole } = renderBrowse('/plugins', [], stateOverride);
+      await waitFor(() => expect(getByRole('radio', { name: 'Installed' })).toBeDisabled());
     });
   });
 });

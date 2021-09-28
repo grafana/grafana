@@ -1,7 +1,6 @@
 import { setBackendSrv } from '@grafana/runtime';
-import { PluginsState } from 'app/types';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
-import { CatalogPlugin, LocalPlugin, RemotePlugin, Version } from '../types';
+import { CatalogPlugin, LocalPlugin, RemotePlugin, Version, ReducerState, RequestStatus } from '../types';
 import remotePluginMock from './remotePlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import catalogPluginMock from './catalogPlugin.mock';
@@ -16,7 +15,7 @@ export const getLocalPluginMock = (overrides?: Partial<LocalPlugin>) => ({ ...lo
 export const getRemotePluginMock = (overrides?: Partial<RemotePlugin>) => ({ ...remotePluginMock, ...overrides });
 
 // Returns a mock for the Redux store state of plugins
-export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): PluginsState => ({
+export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): ReducerState => ({
   // @ts-ignore - We don't need the rest of the properties here as we are using the "new" reducer (public/app/features/plugins/admin/state/reducer.ts)
   items: {
     ids: plugins.map(({ id }) => id),
@@ -24,12 +23,20 @@ export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): PluginsState
   },
   requests: {
     'plugins/fetchAll': {
-      status: 'Fulfilled',
+      status: RequestStatus.Fulfilled,
     },
     'plugins/fetchDetails': {
-      status: 'Fulfilled',
+      status: RequestStatus.Fulfilled,
     },
   },
+  // Backward compatibility
+  plugins: [],
+  errors: [],
+  searchQuery: '',
+  hasFetched: false,
+  dashboards: [],
+  isLoadingPluginDashboards: false,
+  panels: {},
 });
 
 // Mocks a plugin by considering what needs to be mocked from GCOM and what needs to be mocked locally (local Grafana API)
