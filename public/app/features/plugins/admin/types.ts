@@ -6,6 +6,7 @@ import {
   PluginDependencies,
   PluginErrorCode,
 } from '@grafana/data';
+import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
@@ -19,7 +20,7 @@ export enum PluginAdminRoutes {
   DetailsAdmin = 'plugins-details-admin',
 }
 
-export enum IconName {
+export enum PluginIconName {
   app = 'apps',
   datasource = 'database',
   panel = 'credit-card',
@@ -203,6 +204,13 @@ export enum PluginTabLabels {
   DASHBOARDS = 'Dashboards',
 }
 
+export enum PluginTabIds {
+  OVERVIEW = 'overview',
+  VERSIONS = 'version-history',
+  CONFIG = 'config',
+  DASHBOARDS = 'dashboards',
+}
+
 export enum RequestStatus {
   Pending = 'Pending',
   Fulfilled = 'Fulfilled',
@@ -219,6 +227,9 @@ export type RequestInfo = {
 
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
+  icon?: IconName | string;
+  id: PluginTabIds | string;
+  href?: string;
 };
 
 // TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>
