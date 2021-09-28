@@ -44,15 +44,12 @@ func getAzureCredentials(cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) azc
 	// * If authType and other fields aren't set then it means the datasource never been configured
 	//   and managed identity is the default authentication choice as long as managed identities are enabled
 	isManagedIdentity := authType == "msi" || (authType == "" && clientId == "" && cfg.Azure.ManagedIdentityEnabled)
-	isUserIdentity := authType == "userid" && cfg.Azure.UserIdentityEnabled
+	isUserIdentity := authType == "userid"
 
 	if isManagedIdentity {
 		return &azcredentials.AzureManagedIdentityCredentials{}
 	} else if isUserIdentity {
-		return &azcredentials.AzureUserIdentityCredentials{
-			TokenEndpoint: cfg.Azure.UserIdentityTokenEndpoint,
-			AuthHeader:    cfg.Azure.UserIdentityAuthHeader,
-		}
+		return &azcredentials.AzureUserIdentityCredentials{}
 	} else {
 		return &azcredentials.AzureClientSecretCredentials{
 			AzureCloud:   authParams.Params["azure_cloud"],

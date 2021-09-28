@@ -1,13 +1,8 @@
 package aztokenprovider
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
-	"net/http"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -162,20 +157,16 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 func TestAzureTokenProvider_GetUserIdAccessToken(t *testing.T) {
 	cfg := &setting.Cfg{
 		Azure: setting.AzureSettings{
-			UserIdentityEnabled: true,
+			UserIdentityEnabled:       true,
+			UserIdentityTokenEndpoint: "https://test.io",
+			UserIdentityAuthHeader:    "Bear xxxxx",
 		},
 	}
 	ctx := context.Background()
-
-	credentials := &azcredentials.AzureUserIdentityCredentials{
-		TokenEndpoint: "https://test.io",
-		AuthHeader:    "Bear xxxxx",
-	}
-
 	scope := []string{"testresource/.default"}
 
 	t.Run("return error if there is no signed in user", func(t *testing.T) {
-		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials)
+		tokenRetriver := getUserIdentityTokenRetriever(cfg)
 		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
 
 		_, err := tokenRetriver.GetAccessToken(ctx, scope)
@@ -183,111 +174,28 @@ func TestAzureTokenProvider_GetUserIdAccessToken(t *testing.T) {
 	})
 
 	t.Run("return error if there is empty signed in user", func(t *testing.T) {
-		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials)
+		tokenRetriver := getUserIdentityTokenRetriever(cfg)
 		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
 
 		ctx = context.WithValue(ctx, proxyutil.ContextKeyLoginUser{}, "")
 		_, err := tokenRetriver.GetAccessToken(ctx, scope)
 		assert.Error(t, err, "empty signed-in userId")
 	})
-}
 
-func TestAzureTokenProvider_GetAccessTokenFromResponse(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{
-			UserIdentityEnabled: true,
-		},
-	}
+	t.Run("return emtpty cache key if there is no signed in user", func(t *testing.T) {
+		tokenRetriver := getUserIdentityTokenRetriever(cfg)
+		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
 
-	credentials := &azcredentials.AzureUserIdentityCredentials{
-		TokenEndpoint: "https://test.io",
-		AuthHeader:    "Bear xxxxx",
-	}
-
-	t.Run("Successful token parse", func(t *testing.T) {
-		value := struct {
-			Token     string      `json:"access_token"`
-			ExpiresIn json.Number `json:"expires_in"`
-			ExpiresOn string      `json:"expires_on"`
-		}{
-			Token:     "testtoken",
-			ExpiresIn: "1000",
-		}
-		data, err := json.Marshal(value)
-		assert.Empty(t, err, "failed to marshal data")
-
-		body := io.NopCloser(bytes.NewReader(data))
-		var resp = &http.Response{
-			StatusCode: 200,
-			Body:       body,
-		}
-		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
-		token, err := tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Empty(t, err, "failed on getting token")
-
-		assert.Equal(t, value.Token, token.Token)
-
-		timeMin := time.Now().UTC().Add(time.Second * 950)
-		timeMax := timeMin.Add(time.Second * 100)
-		assert.True(t, token.ExpiresOn.After(timeMin), "token.ExpiresOn is not after timeMin")
-		assert.True(t, token.ExpiresOn.Before(timeMax), "token.ExpiresOn is not before timeMax")
+		cacheKey := tokenRetriver.GetCacheKey(ctx)
+		assert.Equal(t, cacheKey, "", "failed to get empty cache key when there is no signed in user")
 	})
 
-	t.Run("Fail token parse on bad status code", func(t *testing.T) {
-		value := struct {
-			Token     string      `json:"access_token"`
-			ExpiresIn json.Number `json:"expires_in"`
-			ExpiresOn string      `json:"expires_on"`
-		}{
-			Token:     "testtoken",
-			ExpiresIn: "1000",
-		}
-		data, err := json.Marshal(value)
-		assert.Empty(t, err, "failed to marshal data")
+	t.Run("return error if there is empty signed in user", func(t *testing.T) {
+		tokenRetriver := getUserIdentityTokenRetriever(cfg)
+		assert.IsType(t, &userIdentityTokenRetriever{}, tokenRetriver)
 
-		body := io.NopCloser(bytes.NewReader(data))
-		var resp = &http.Response{
-			StatusCode: 401,
-			Body:       body,
-		}
-		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
-		_, err = tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Error(t, err, "bad statuscode on token request: 401")
-	})
-
-	t.Run("Fail token parse on bad data", func(t *testing.T) {
-		data, err := json.Marshal("bad test")
-		assert.Empty(t, err, "failed to marshal data")
-
-		body := io.NopCloser(bytes.NewReader(data))
-		var resp = &http.Response{
-			StatusCode: 200,
-			Body:       body,
-		}
-		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
-		_, err = tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Contains(t, err.Error(), "failed to deserialize token response")
-	})
-
-	t.Run("Fail token parse on bad expiresIn", func(t *testing.T) {
-		value := struct {
-			Token     string      `json:"access_token"`
-			ExpiresIn json.Number `json:"expires_in"`
-			ExpiresOn string      `json:"expires_on"`
-		}{
-			Token:     "testtoken",
-			ExpiresIn: "99.999",
-		}
-		data, err := json.Marshal(value)
-		assert.Empty(t, err, "failed to marshal data")
-
-		body := io.NopCloser(bytes.NewReader(data))
-		var resp = &http.Response{
-			StatusCode: 200,
-			Body:       body,
-		}
-		tokenRetriver := getUserIdentityTokenRetriever(cfg, credentials).(*userIdentityTokenRetriever)
-		_, err = tokenRetriver.getAccessTokenFromResponse(resp)
-		assert.Contains(t, err.Error(), "failed to get ExpiresIn property of the token")
+		ctx = context.WithValue(ctx, proxyutil.ContextKeyLoginUser{}, "")
+		cacheKey := tokenRetriver.GetCacheKey(ctx)
+		assert.Equal(t, cacheKey, "", "failed to get empty cache key when there is empty signed in user")
 	})
 }

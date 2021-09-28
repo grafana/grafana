@@ -20,7 +20,7 @@ type AccessToken struct {
 }
 
 type TokenRetriever interface {
-	GetCacheKey() string
+	GetCacheKey(ctx context.Context) string
 	Init() error
 	GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error)
 }
@@ -54,14 +54,20 @@ type scopesCacheEntry struct {
 }
 
 func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, tokenRetriever TokenRetriever, scopes []string) (string, error) {
-	return c.getEntryFor(tokenRetriever).getAccessToken(ctx, scopes)
+	return c.getEntryFor(ctx, tokenRetriever).getAccessToken(ctx, scopes)
 }
 
-func (c *tokenCacheImpl) getEntryFor(credential TokenRetriever) *credentialCacheEntry {
+func (c *tokenCacheImpl) getEntryFor(ctx context.Context, credential TokenRetriever) *credentialCacheEntry {
 	var entry interface{}
 	var ok bool
 
-	key := credential.GetCacheKey()
+	key := credential.GetCacheKey(ctx)
+
+	if key == "" {
+		return &credentialCacheEntry{
+			retriever: credential,
+		}
+	}
 
 	if entry, ok = c.cache.Load(key); !ok {
 		entry, _ = c.cache.LoadOrStore(key, &credentialCacheEntry{

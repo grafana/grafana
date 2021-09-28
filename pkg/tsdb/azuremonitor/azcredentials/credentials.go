@@ -23,8 +23,6 @@ type AzureClientSecretCredentials struct {
 }
 
 type AzureUserIdentityCredentials struct {
-	TokenEndpoint string // token endpoint to retrieve the token from
-	AuthHeader    string // exact Authorization header to be used to talk to the token endpoint
 }
 
 func (credentials *AzureManagedIdentityCredentials) AzureAuthType() string {

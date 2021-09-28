@@ -28,7 +28,7 @@ func (cfg *Cfg) readAzureSettings() {
 	// Managed Identity
 	cfg.Azure.ManagedIdentityEnabled = azureSection.Key("managed_identity_enabled").MustBool(false)
 	cfg.Azure.ManagedIdentityClientId = azureSection.Key("managed_identity_client_id").String()
-	// User Identity toke endpoint
+	// User Identity authentication
 	cfg.Azure.UserIdentityEnabled = azureSection.Key("user_identity_enabled").MustBool(false)
 	cfg.Azure.UserIdentityTokenEndpoint = azureSection.Key("user_identity_token_endpoint").String()
 	cfg.Azure.UserIdentityAuthHeader = azureSection.Key("user_identity_auth_header").String()

@@ -105,10 +105,7 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 		credentials := &azcredentials.AzureManagedIdentityCredentials{}
 		return credentials, nil
 	case azcredentials.AzureAuthUserIdentity:
-		credentials := &azcredentials.AzureUserIdentityCredentials{
-			TokenEndpoint: cfg.Azure.UserIdentityTokenEndpoint,
-			AuthHeader:    cfg.Azure.UserIdentityAuthHeader,
-		}
+		credentials := &azcredentials.AzureUserIdentityCredentials{}
 		return credentials, nil
 	case azcredentials.AzureAuthClientSecret:
 		cloud, err := getAzureCloud(cfg, jsonData)

@@ -24,9 +24,11 @@ func getFromCredentialsObject(credentialsObj map[string]interface{}, secureData 
 	case AzureAuthManagedIdentity:
 		credentials := &AzureManagedIdentityCredentials{}
 		return credentials, nil
+
 	case AzureAuthUserIdentity:
 		credentials := &AzureUserIdentityCredentials{}
 		return credentials, nil
+
 	case AzureAuthClientSecret:
 		cloud, err := getStringValue(credentialsObj, "azureCloud")
 		if err != nil {

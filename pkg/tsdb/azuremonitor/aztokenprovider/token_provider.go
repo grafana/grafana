@@ -3,23 +3,14 @@ package aztokenprovider
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azuseridentityclient"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
@@ -62,7 +53,7 @@ func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.Azu
 			err := fmt.Errorf("user identity authentication is not enabled in Grafana config")
 			return nil, err
 		} else {
-			tokenRetriever = getUserIdentityTokenRetriever(cfg, c)
+			tokenRetriever = getUserIdentityTokenRetriever(cfg)
 		}
 	default:
 		err := fmt.Errorf("credentials of type '%s' not supported by authentication provider", c.AzureAuthType())
@@ -120,20 +111,10 @@ func getClientSecretTokenRetriever(credentials *azcredentials.AzureClientSecretC
 	}
 }
 
-func getUserIdentityTokenRetriever(cfg *setting.Cfg, credentials *azcredentials.AzureUserIdentityCredentials) TokenRetriever {
-	tokenEndpoint := credentials.TokenEndpoint
-	if tokenEndpoint == "" {
-		tokenEndpoint = cfg.Azure.UserIdentityTokenEndpoint
-	}
-
-	authHeader := credentials.AuthHeader
-	if authHeader == "" {
-		authHeader = cfg.Azure.UserIdentityAuthHeader
-	}
-
+func getUserIdentityTokenRetriever(cfg *setting.Cfg) TokenRetriever {
 	return &userIdentityTokenRetriever{
-		tokenEndpoint: tokenEndpoint,
-		authHeader:    authHeader,
+		tokenEndpoint: cfg.Azure.UserIdentityTokenEndpoint,
+		authHeader:    cfg.Azure.UserIdentityAuthHeader,
 	}
 }
 
@@ -158,7 +139,7 @@ type managedIdentityTokenRetriever struct {
 	credential azcore.TokenCredential
 }
 
-func (c *managedIdentityTokenRetriever) GetCacheKey() string {
+func (c *managedIdentityTokenRetriever) GetCacheKey(ctx context.Context) string {
 	clientId := c.clientId
 	if clientId == "" {
 		clientId = "system"
@@ -192,7 +173,7 @@ type clientSecretTokenRetriever struct {
 	credential   azcore.TokenCredential
 }
 
-func (c *clientSecretTokenRetriever) GetCacheKey() string {
+func (c *clientSecretTokenRetriever) GetCacheKey(ctx context.Context) string {
 	return fmt.Sprintf("azure|clientsecret|%s|%s|%s|%s", c.authority, c.tenantId, c.clientId, hashSecret(c.clientSecret))
 }
 
@@ -218,15 +199,25 @@ func (c *clientSecretTokenRetriever) GetAccessToken(ctx context.Context, scopes 
 type userIdentityTokenRetriever struct {
 	tokenEndpoint string // token endpoint to retrieve the token from
 	authHeader    string // exact Authorization header to be used to talk to the token endpoint
-	client        *http.Client
+	client        *azuseridentityclient.UserIdentityClient
 }
 
-func (c *userIdentityTokenRetriever) GetCacheKey() string {
-	return fmt.Sprintf("azure|useridtoken|%s", c.tokenEndpoint)
+func (c *userIdentityTokenRetriever) GetCacheKey(ctx context.Context) string {
+	value := ctx.Value(proxyutil.ContextKeyLoginUser{})
+	if value == nil {
+		return ""
+	}
+
+	userId := value.(string)
+	if userId == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("azure|useridtoken|%s", userId)
 }
 
 func (c *userIdentityTokenRetriever) Init() error {
-	c.client = &http.Client{Timeout: time.Second * 10}
+	c.client = azuseridentityclient.NewUserIdentityClient(c.tokenEndpoint, c.authHeader)
 	return nil
 }
 
@@ -241,91 +232,12 @@ func (c *userIdentityTokenRetriever) GetAccessToken(ctx context.Context, scopes 
 		return nil, fmt.Errorf("empty signed-in userId")
 	}
 
-	return c.getUserAccessToken(userId, scopes)
-}
-
-func (c *userIdentityTokenRetriever) getUserAccessToken(userId string, scopes []string) (*AccessToken, error) {
-	// The token endpoint needs to support the following API:
-	// POST {endpoint url}
-	//
-	// Headers:
-	// "Content-Type", "application/x-www-form-urlencoded"
-	// "Accept", "application/json"
-	//
-	// Body:
-	// scope=xxx&user_id=xxx
-	req, err := http.NewRequest("POST", c.tokenEndpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create token request, %w", err)
-	}
-
-	// Token server supports POST method with parameters in the body
-	data := url.Values{}
-	data.Set("scope", strings.Join(scopes, " "))
-	data.Set("user_id", userId)
-	dataEncoded := data.Encode()
-	body := streaming.NopCloser(strings.NewReader(dataEncoded))
-
-	size, err := body.Seek(0, io.SeekEnd) // Seek to the end to get the stream's size
-	if err != nil {
-		return nil, err
-	}
-	_, err = body.Seek(0, io.SeekStart)
+	accessToken, err := c.client.GetUserAccessToken(userId, scopes)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Body = body
-	req.ContentLength = size
-	req.Header.Set("Content-Length", strconv.FormatInt(size, 10))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Accept", "application/json")
-
-	if c.authHeader != "" {
-		req.Header.Set("Authorization", c.authHeader)
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get AccessToken: %w", err)
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Println("error closing response:", err)
-		}
-	}()
-
-	return c.getAccessTokenFromResponse(resp)
-}
-
-func (c *userIdentityTokenRetriever) getAccessTokenFromResponse(resp *http.Response) (*AccessToken, error) {
-	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-		return nil, fmt.Errorf("bad statuscode on token request: %d", resp.StatusCode)
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read token response: %w", err)
-	}
-
-	value := struct {
-		Token     string      `json:"access_token"`
-		ExpiresIn json.Number `json:"expires_in"`
-		ExpiresOn string      `json:"expires_on"`
-	}{}
-
-	if err := json.Unmarshal(respBody, &value); err != nil {
-		return nil, fmt.Errorf("failed to deserialize token response: %w", err)
-	}
-	t, err := value.ExpiresIn.Int64()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get ExpiresIn property of the token: %w", err)
-	}
-	return &AccessToken{
-		Token:     value.Token,
-		ExpiresOn: time.Now().Add(time.Second * time.Duration(t)).UTC(),
-	}, nil
+	return &AccessToken{Token: accessToken.Token, ExpiresOn: accessToken.ExpiresOn}, nil
 }
 
 func hashSecret(secret string) string {
