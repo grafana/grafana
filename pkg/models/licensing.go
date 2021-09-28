@@ -1,5 +1,7 @@
 package models
 
+import "github.com/grafana/grafana/pkg/services/accesscontrol"
+
 type Licensing interface {
 	// HasValidLicense is true if a valid license exists
 	HasValidLicense() bool
@@ -25,3 +27,18 @@ type LicenseEnvironment interface {
 	// Environment is a map of environment variables
 	Environment() map[string]string
 }
+
+const (
+	// Licensing related actions
+	ActionLicensingRead        = "licensing:read"
+	ActionLicensingUpdate      = "licensing:update"
+	ActionLicensingDelete      = "licensing:delete"
+	ActionLicensingReportsRead = "licensing:reports:read"
+)
+
+// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
+var LicensingPageReaderAccess = accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(ActionLicensingRead),
+		accesscontrol.EvalPermission(ActionLicensingReportsRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionServerStatsRead),
+	)

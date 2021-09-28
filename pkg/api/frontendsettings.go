@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/extensions/licensing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -196,11 +195,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		buildstamp = 0
 	}
 
-	licensingPageReaderAccess := accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(licensing.ActionLicensingRead),
-		accesscontrol.EvalPermission(licensing.ActionLicensingReportsRead),
-		accesscontrol.EvalPermission(accesscontrol.ActionServerStatsRead),
-	)
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 
 	jsonObj := map[string]interface{}{
@@ -254,7 +248,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"hasValidLicense": hs.License.HasValidLicense(),
 			"expiry":          hs.License.Expiry(),
 			"stateInfo":       hs.License.StateInfo(),
-			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensingPageReaderAccess)),
+			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, models.LicensingPageReaderAccess)),
 			"edition":         hs.License.Edition(),
 		},
 		"featureToggles":                   hs.Cfg.FeatureToggles,
