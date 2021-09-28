@@ -1,12 +1,12 @@
 +++
-title = "Histogram"
+title = "Visualize Histograms in Grafana"
 description = "Histogram visualization"
-keywords = ["grafana", "docs", "bar chart", "panel", "barchart", "prometheus"]
+keywords = ["grafana", "docs", "bar chart", "panel", "prometheus"]
 weight = 605
 +++
---
+---
 
-[comment]: <> (Add introduction)
+This section provides detailed information on using histograms and constructing queries to find the number of files based on file size and bucket distribution over time.
 
 # Visualize Prometheus data in Grafana
 
@@ -50,15 +50,17 @@ uploaded_image_bytes_count
 
 For the example, a log-normal distribution is generated between the buckets, where the 64KB and 256KB buckets contain almost the same amount of values where the median is near 64KB. The buckets surrounding those will gradually decrease in size.
 
-# How to use query based on file size
+## How to use query based on file size
 
-| Size                         | Query                          |       Parameter       | Description  |
+| Size                         | Query                          |       Parameters       | Description  |
 |:----------------------------:|:-----------------------------------------------------------------|-------------------------------|------------------------------------------------:|
-| `less than (or equal to) 1MB` |   `uploaded_image_bytes_bucket{le="1048576"}`                                                         |       Parameter       | The number of files less than (or equal to) 1MB that have been uploaded is stored in the time series database. Additional functions are not needed. Due to Prometheus storing buckets cumulatively, you do not need to use helper functions. The operation then only needs to look at one number when doing a simple query rather than being error-prone and complex if you needed to add the sum of buckets manually.          |
-| `smaller than 1MB`            |   `uploaded_image_bytes_bucket{le="1048576"} / ignoring (le) uploaded_image_bytes_count`              |       Parameter       | The total count of files. Total count for a histogram which can be found in two ways: 1. `uploaded_image_bytes_count` 2. `uploaded_image_bytes_bucket{le="+Inf"}` (i.e. How many events are smaller than positive infinity, which is by definition all events) Divide the number of files smaller than 1MB by the total number of files to get a ratio between the two. Since the normal way of displaying ratios is as percentages, set the unit to `Percent (0.0-1.0)`.|
-| `larger than 1MB`             |   `uploaded_image_bytes_count - ignoring(le) uploaded_image_bytes_bucket{le="1048576"}`               |       Parameter       | Subtract the number of smaller files from the number of total files to get the number of larger files.  |  
-| `between 256KB and 1MB`       |   `uploaded_image_bytes_bucket{le="1048576"} - ignoring(le) uploaded_image_bytes_bucket{le="262144"}` |       Parameter       | Using the same logic as for the previous query, get the number of files between any two bucket boundaries by subtracting the smaller boundary from the larger.  |
-| `european question`           |   `histogram_quantile(0.75, uploaded_image_bytes_bucket)`                                             |       Parameter       | Description  |
+| `less than (or equal to) 1MB` |   `uploaded_image_bytes_bucket{le="1048576"}`                                                         |       number of files less than (or equal to) 1MB       | The number of files less than (or equal to) 1MB that have been uploaded is stored in the time series database. Additional functions are not needed. Due to Prometheus storing buckets cumulatively, you do not need to use helper functions. The operation then only needs to look at one number when doing a simple query rather than being error-prone and complex if you needed to add the sum of buckets manually.          |
+| `smaller than 1MB`            |   `uploaded_image_bytes_bucket{le="1048576"} / ignoring (le) uploaded_image_bytes_count`              |       number of files less than (or equal to) 1MB, total number of files       | The total count of files. Total count for a histogram can be found using either `uploaded_image_bytes_count` or `uploaded_image_bytes_bucket{le="+Inf"}`. Divide the number of files smaller than 1MB by the total number of files to get a ratio between the two. Since the normal way of displaying ratios is as percentages, set the unit to `Percent (0.0-1.0)`.|
+| `larger than 1MB`             |   `uploaded_image_bytes_count - ignoring(le) uploaded_image_bytes_bucket{le="1048576"}`               |       number of smaller files, number of total files       | Subtract the number of smaller files from the number of total files to get the number of larger files.  |  
+| `between 256KB and 1MB`       |   `uploaded_image_bytes_bucket{le="1048576"} - ignoring(le) uploaded_image_bytes_bucket{le="262144"}` |       number or files between any two bucket boundaries       | Using the same logic as for the previous query, get the number of files between any two bucket boundaries by subtracting the smaller boundary from the larger.  |
+| `European question`           |   `histogram_quantile(0.75, uploaded_image_bytes_bucket)`                                             |       Parameter       | Description  |
+
+[comment]: <> (Asking Emil for help on the last query)
 
 You can use one of the following **panels** to visualize their query:
 
@@ -68,7 +70,7 @@ You can use one of the following **panels** to visualize their query:
 
 This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible without a defined range.
 
-# What size is a quarter of the files smaller than?
+## What size is a quarter of the files smaller than?
 
 [comment]: <> (I don't understand what this above question is asking)
 
@@ -94,7 +96,7 @@ However, since the p95 value is approximated, we cannot tell definitively if p95
 
 A way of phrasing this same requirement so that we do get an accurate number of how close we are to violating our service level is “the proportion of requests in which latency exceeds 0.25 seconds must be less than 5 percent.” Instead of approximating the p95 and seeing if it’s below or above 0.25 seconds, we precisely define the percentage of requests exceeding 0.25 seconds using the methods from above.
 
-# Buckets' distribution
+## Buckets' distribution
 
 When users create a **bar gauge** panel to visualize `uploaded_image_bytes_bucket` and set the label to `{{le}}`, they will notice the following:
 
@@ -104,7 +106,7 @@ When users create a **bar gauge** panel to visualize `uploaded_image_bytes_bu
 
 The option to change the **format** of the Prometheus data from `Time series` to `Heatmap` allows users to tell Grafana it is working with a histogram </em>and</em> they would like to sort the buckets to only show distinctive counts for each bucket.
 
-# Buckets' distribution over time
+## Buckets' distribution over time
 
 Since a bar gauge does not contain any temporal data, users must use a **Heatmap** to see the same visualization over time. After switching the panel type to **Heatmap**, the following adjustments are required to display it properly:
 
