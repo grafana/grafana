@@ -27,10 +27,16 @@ const (
 	NumberCompareOpNe  NumberCompareOp = "ne"
 )
 
-func (f NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Frame) (bool, error) {
+const ConditionCheckerTypeNumberCompare = "numberCompare"
+
+func (c *NumberCompareCondition) Type() string {
+	return ConditionCheckerTypeNumberCompare
+}
+
+func (c *NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Frame) (bool, error) {
 	for _, field := range frame.Fields {
 		// TODO: support other numeric types.
-		if field.Name == f.FieldName && (field.Type() == data.FieldTypeNullableFloat64) {
+		if field.Name == c.FieldName && (field.Type() == data.FieldTypeNullableFloat64) {
 			value, ok := field.At(0).(*float64)
 			if !ok {
 				return false, fmt.Errorf("unexpected value type: %T", field.At(0))
@@ -38,21 +44,21 @@ func (f NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Fr
 			if value == nil {
 				return false, nil
 			}
-			switch f.Op {
+			switch c.Op {
 			case NumberCompareOpGt:
-				return *value > f.Value, nil
+				return *value > c.Value, nil
 			case NumberCompareOpGte:
-				return *value >= f.Value, nil
+				return *value >= c.Value, nil
 			case NumberCompareOpLte:
-				return *value <= f.Value, nil
+				return *value <= c.Value, nil
 			case NumberCompareOpLt:
-				return *value < f.Value, nil
+				return *value < c.Value, nil
 			case NumberCompareOpEq:
-				return *value == f.Value, nil
+				return *value == c.Value, nil
 			case NumberCompareOpNe:
-				return *value != f.Value, nil
+				return *value != c.Value, nil
 			default:
-				return false, fmt.Errorf("unknown comparison operator: %s", f.Op)
+				return false, fmt.Errorf("unknown comparison operator: %s", c.Op)
 			}
 		}
 	}

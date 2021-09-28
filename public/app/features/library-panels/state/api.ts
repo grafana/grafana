@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { DashboardSearchHit } from '../../search/types';
 import { getBackendSrv } from '../../../core/services/backend_srv';
+import { lastValueFrom } from 'rxjs';
 
 export interface GetLibraryPanelsOptions {
   searchString?: string;
@@ -43,9 +44,16 @@ export async function getLibraryPanels({
   return result;
 }
 
-export async function getLibraryPanel(uid: string): Promise<LibraryElementDTO> {
-  const { result } = await getBackendSrv().get(`/api/library-elements/${uid}`);
-  return result;
+export async function getLibraryPanel(uid: string, isHandled = false): Promise<LibraryElementDTO> {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<{ result: LibraryElementDTO }>({
+      method: 'GET',
+      url: `/api/library-elements/${uid}`,
+      showSuccessAlert: !isHandled,
+      showErrorAlert: !isHandled,
+    })
+  );
+  return response.data.result;
 }
 
 export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {

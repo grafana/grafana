@@ -258,61 +258,6 @@ func redirectToChangePassword(c *models.ReqContext) {
 	c.Redirect("/profile/password", 302)
 }
 
-// GET /api/users
-func SearchUsers(c *models.ReqContext) response.Response {
-	query, err := searchUser(c)
-	if err != nil {
-		return response.Error(500, "Failed to fetch users", err)
-	}
-
-	return response.JSON(200, query.Result.Users)
-}
-
-// GET /api/users/search
-func SearchUsersWithPaging(c *models.ReqContext) response.Response {
-	query, err := searchUser(c)
-	if err != nil {
-		return response.Error(500, "Failed to fetch users", err)
-	}
-
-	return response.JSON(200, query.Result)
-}
-
-func searchUser(c *models.ReqContext) (*models.SearchUsersQuery, error) {
-	perPage := c.QueryInt("perpage")
-	if perPage <= 0 {
-		perPage = 1000
-	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
-
-	searchQuery := c.Query("query")
-	filter := c.Query("filter")
-
-	query := &models.SearchUsersQuery{Query: searchQuery, Filter: models.SearchUsersFilter(filter), Page: page, Limit: perPage}
-	if err := bus.Dispatch(query); err != nil {
-		return nil, err
-	}
-
-	for _, user := range query.Result.Users {
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
-		user.AuthLabels = make([]string, 0)
-		if user.AuthModule != nil && len(user.AuthModule) > 0 {
-			for _, authModule := range user.AuthModule {
-				user.AuthLabels = append(user.AuthLabels, GetAuthProviderLabel(authModule))
-			}
-		}
-	}
-
-	query.Result.Page = page
-	query.Result.PerPage = perPage
-
-	return query, nil
-}
-
 func SetHelpFlag(c *models.ReqContext) response.Response {
 	flag := c.ParamsInt64(":id")
 

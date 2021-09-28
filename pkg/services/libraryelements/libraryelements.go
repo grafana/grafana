@@ -22,6 +22,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 // Service is a service for operating on library elements.
 type Service interface {
 	CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error)
+	GetElement(c *models.ReqContext, UID string) (LibraryElementDTO, error)
 	GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error)
 	ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error
@@ -39,6 +40,11 @@ type LibraryElementService struct {
 // CreateElement creates a Library Element.
 func (l *LibraryElementService) CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
 	return l.createLibraryElement(c, cmd)
+}
+
+// GetElement gets an element from a UID.
+func (l *LibraryElementService) GetElement(c *models.ReqContext, UID string) (LibraryElementDTO, error) {
+	return l.getLibraryElementByUid(c, UID)
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
