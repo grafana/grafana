@@ -343,6 +343,26 @@ func TestAny_Inject(t *testing.T) {
 			},
 		},
 		{
+			desc:     "should inject extra and url param",
+			expected: true,
+			evaluator: EvalAny(
+				EvalPermission("orgs:read", Scope("orgs", ExtraParameter("OrgID"))),
+				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
+			),
+			params: ScopeParams{
+				OrgID: 3,
+				UrlParams: map[string]string{
+					":orgId": "4",
+				},
+			},
+			permissions: map[string]map[string]struct{}{
+				"orgs:read": {
+					"orgs:3": struct{}{},
+					"orgs:4": struct{}{},
+				},
+			},
+		},
+		{
 			desc:     "should fail for nil params",
 			expected: false,
 			evaluator: EvalAny(
