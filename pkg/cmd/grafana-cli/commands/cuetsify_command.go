@@ -15,7 +15,6 @@ import (
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
-	"cuelang.org/go/cue/format"
 	cload "cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/parser"
 	"github.com/grafana/cuetsy"
@@ -270,24 +269,6 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 	}
 
 	return nil
-}
-
-func printCUE(v cue.Value) string {
-	syn := v.Syntax(
-		cue.Final(),         // close structs and lists
-		cue.Concrete(false), // allow incomplete values
-		cue.Definitions(false),
-		cue.Optional(true),
-		cue.Attributes(true),
-		cue.Docs(true),
-	)
-
-	bs, _ := format.Node(
-		syn,
-		format.TabIndent(true),
-	)
-
-	return string(bs)
 }
 
 type tsFile struct {
