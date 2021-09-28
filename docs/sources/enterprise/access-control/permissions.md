@@ -67,10 +67,10 @@ The following list contains fine-grained access control actions.
 | `settings:write`           | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update settings                                                                 |
 | `server.stats:read`        | n/a                                                                                     | Read server stats                                                               |
 | `datasources:explore`      | n/a                                                                                     | Enable explore                                                                  |
-| `licensing:read`           | n/a                                                                                     | Read licensing information                                                      |
-| `licensing:update`         | n/a                                                                                     | Update the license token                                                        |
-| `licensing:delete`         | n/a                                                                                     | Delete the license token                                                        |
-| `licensing:reports:read`   | n/a                                                                                     | Get custom permission reports                                                   |
+| `licensing:read`           | n/a                                                                                     | Read licensing information.                                                      |
+| `licensing:update`         | n/a                                                                                     | Update the license token.                                                        |
+| `licensing:delete`         | n/a                                                                                     | Delete the license token.                                                        |
+| `licensing:reports:read`   | n/a                                                                                     | Get custom permission reports.                                                   |
 
 ## Scope definitions
 
