@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -47,6 +48,10 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 				return sc.handlerFunc(sc.context)
 			}
 
+			if sc.handlerFuncCtx != nil {
+				return sc.handlerFuncCtx(context.Background(), sc.context)
+			}
+
 			return nil
 		})
 
@@ -70,6 +75,10 @@ func anonymousUserScenario(t *testing.T, desc string, method string, url string,
 			sc.context = c
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
+			}
+
+			if sc.handlerFuncCtx != nil {
+				return sc.handlerFuncCtx(context.Background(), sc.context)
 			}
 
 			return nil
@@ -111,7 +120,6 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	}
 	req.URL.RawQuery = q.Encode()
 	sc.req = req
-
 	return sc
 }
 
@@ -142,6 +150,7 @@ type scenarioContext struct {
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
 	handlerFunc          handlerFunc
+	handlerFuncCtx       handlerFuncCtx
 	defaultHandler       macaron.Handler
 	req                  *http.Request
 	url                  string
@@ -154,6 +163,7 @@ func (sc *scenarioContext) exec() {
 
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) response.Response
+type handlerFuncCtx func(ctx context.Context, c *models.ReqContext) response.Response
 
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()

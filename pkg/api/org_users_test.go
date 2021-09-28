@@ -41,6 +41,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := &HTTPServer{Cfg: settings}
 
 	sqlStore := sqlstore.InitTestDB(t)
+	hs.SQLStore = sqlStore
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
@@ -59,7 +60,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
-		sc.handlerFunc = hs.SearchOrgUsersWithPaging
+		sc.handlerFuncCtx = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
@@ -77,7 +78,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
-		sc.handlerFunc = hs.SearchOrgUsersWithPaging
+		sc.handlerFuncCtx = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "2", "page": "2"}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
@@ -258,7 +259,6 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll}},
 		},
 		{
-
 			expectedCode: http.StatusForbidden,
 			desc:         "UsersLookupGet should return 403 for user without required permissions",
 			url:          "/api/org/users/lookup",

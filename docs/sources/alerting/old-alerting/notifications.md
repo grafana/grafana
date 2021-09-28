@@ -51,26 +51,26 @@ These examples show how often and when reminders are sent for a triggered alert.
 ## List of supported notifiers
 
 | Name                                          | Type                      | Supports images    | Supports alert rule tags |
-| --------------------------------------------- | ------------------------- | ------------------ | ----------------------- |
-| [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                      |
-| [Discord](#discord)                           | `discord`                 | yes                | no                      |
-| [Email](#email)                               | `email`                   | yes                | no                      |
-| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | yes, external only | no                      |
-| Hipchat                                       | `hipchat`                 | yes, external only | no                      |
-| [Kafka](#kafka)                               | `kafka`                   | yes, external only | no                      |
-| Line                                          | `line`                    | yes, external only | no                      |
-| Microsoft Teams                               | `teams`                   | yes, external only | no                      |
-| [Opsgenie](#opsgenie)                         | `opsgenie`                | yes, external only | yes                     |
-| [Pagerduty](#pagerduty)                       | `pagerduty`               | yes, external only | yes                     |
-| Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                     |
-| [Pushover](#pushover)                         | `pushover`                | yes                | no                      |
-| Sensu                                         | `sensu`                   | yes, external only | no                      |
-| [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                      |
-| [Slack](#slack)                               | `slack`                   | yes                | no                      |
-| Telegram                                      | `telegram`                | yes                | no                      |
-| Threema                                       | `threema`                 | yes, external only | no                      |
-| VictorOps                                     | `victorops`               | yes, external only | yes                     |
-| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |
+| --------------------------------------------- | ------------------------- | ------------------ | ------------------------ |
+| [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
+| [Discord](#discord)                           | `discord`                 | yes                | no                       |
+| [Email](#email)                               | `email`                   | yes                | no                       |
+| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | yes, external only | no                       |
+| Hipchat                                       | `hipchat`                 | yes, external only | no                       |
+| [Kafka](#kafka)                               | `kafka`                   | yes, external only | no                       |
+| Line                                          | `line`                    | yes, external only | no                       |
+| Microsoft Teams                               | `teams`                   | yes, external only | no                       |
+| [Opsgenie](#opsgenie)                         | `opsgenie`                | yes, external only | yes                      |
+| [Pagerduty](#pagerduty)                       | `pagerduty`               | yes, external only | yes                      |
+| Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                      |
+| [Pushover](#pushover)                         | `pushover`                | yes                | no                       |
+| Sensu                                         | `sensu`                   | yes, external only | no                       |
+| [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                       |
+| [Slack](#slack)                               | `slack`                   | yes                | no                       |
+| Telegram                                      | `telegram`                | yes                | no                       |
+| Threema                                       | `threema`                 | yes, external only | no                       |
+| VictorOps                                     | `victorops`               | yes, external only | yes                      |
+| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                      |
 
 ### Email
 

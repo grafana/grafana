@@ -254,7 +254,7 @@ func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 
 	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
-	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()
 	if err != nil {
 		return response.Error(500, "Error while checking permissions for snapshot", err)

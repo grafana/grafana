@@ -233,7 +233,7 @@ func TestUserDataAccess(t *testing.T) {
 			}
 		})
 
-		err = AddOrgUser(&models.AddOrgUserCommand{
+		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
 			OrgId: users[0].OrgId, UserId: users[1].Id,
 		})
@@ -261,7 +261,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, query1.Result, 1)
 
 		permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = GetDashboardAclInfoList(permQuery)
+		err = ss.GetDashboardAclInfoList(context.Background(), permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -284,7 +284,7 @@ func TestUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err = AddOrgUser(&models.AddOrgUserCommand{
+		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
 			OrgId: users[0].OrgId, UserId: users[1].Id,
 		})
@@ -347,7 +347,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, query2.Result, 1)
 
 		permQuery = &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = GetDashboardAclInfoList(permQuery)
+		err = ss.GetDashboardAclInfoList(context.Background(), permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
