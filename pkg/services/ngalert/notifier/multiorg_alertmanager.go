@@ -141,13 +141,20 @@ func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int6
 
 // SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
 func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
-	moa.alertmanagersMtx.Lock()
-
-	orgsFound, err := moa.addOrUpdateAlertmanagerConfigurations(ctx, orgIDs)
+	orgsFound := make(map[int64]struct{}, len(orgIDs))
+	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
-		moa.alertmanagersMtx.Unlock()
-		moa.logger.Error("failed to update Alertmanager configurations", "err", err)
+		moa.logger.Error("failed to load Alertmanager configurations", "err", err)
 		return
+	}
+	moa.alertmanagersMtx.Lock()
+	for _, orgID := range orgIDs {
+		orgsFound[orgID] = struct{}{}
+		maybeDbConfig := dbConfigs[orgID]
+		err = moa.addOrUpdateAlertmanager(orgID, maybeDbConfig)
+		if err != nil {
+			moa.logger.Error("unable to add or update configuration of Alertmanager", "org", orgID, "err", err)
+		}
 	}
 
 	amsToStop := map[int64]*Alertmanager{}
@@ -170,29 +177,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 }
 
-// addOrUpdateAlertmanagerConfigurations retrieves the latest configurations for all organizations and then calls addOrUpdateAlertmanager for every organization in orgIDs.
-//The result is either a map that contains ID of all organizations updated or created or error in the case something happened while fetching configurations from database
-//NOTE this is an internal method, and it is not supposed to be called without locked mutex alertmanagersMtx
-func (moa *MultiOrgAlertmanager) addOrUpdateAlertmanagerConfigurations(ctx context.Context, orgIDs []int64) (map[int64]struct{}, error) {
-	orgsFound := make(map[int64]struct{}, len(orgIDs))
-	dbConfigs, err := moa.getLatestConfigs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load Alertmanager configurations: %w", err)
-	}
-	for _, orgID := range orgIDs {
-		orgsFound[orgID] = struct{}{}
-		maybeDbConfig := dbConfigs[orgID]
-		err = moa.addOrUpdateAlertmanager(orgID, maybeDbConfig)
-		if err != nil {
-			moa.logger.Error("unable to add or update configuration of Alertmanager", "org", orgID, "err", err)
-		}
-	}
-	return orgsFound, nil
-}
-
 // addOrUpdateAlertmanager gets an instance of Alertmanager that serves a specific orgID from alertmanagers, and applies a new configuration.
-//If the configuration is not provided, it applies the default one.
-//If there is no Alertmanager service the organization, it creates a new instance, applies the configuration (if provided, default otherwise) and adds it to alertmanagers.
+// If the configuration is not provided, it applies the default one.
+// If there is no Alertmanager service the organization, it creates a new instance, applies the configuration (if provided, default otherwise) and adds it to alertmanagers.
 func (moa *MultiOrgAlertmanager) addOrUpdateAlertmanager(orgID int64, maybeDbConfig *models.AlertConfiguration) error {
 	alertmanager, found := moa.alertmanagers[orgID]
 	if !found {
