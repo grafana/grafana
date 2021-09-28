@@ -1167,7 +1167,8 @@ Enable or disable alerting rule execution. Default is `true`. The alerting UI re
 
 Sets the alert evaluation timeout when fetching data from the datasource. Default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
 
-The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
 ### max_attempts
 
 Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3` (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
@@ -1175,6 +1176,8 @@ Sets a maximum limit on attempts to sending alert notifications. Default value i
 ### min_interval
 
 Sets the minimum interval to enforce between rule evaluations. Default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
