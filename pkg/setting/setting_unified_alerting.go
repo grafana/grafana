@@ -65,7 +65,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	// if the old feature toggle ngalert is set, enable Grafana 8 alerts anyway
 	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
-		cfg.UnifiedAlerting.Enabled = true
+		uaCfg.Enabled = true
 		AlertingEnabled = false
 	}
 
@@ -80,7 +80,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		if err != nil {
 			return err
 		}
-		cfg.UnifiedAlerting.DisabledOrgs[orgID] = struct{}{}
+		uaCfg.DisabledOrgs[orgID] = struct{}{}
 	}
 
 	var err error
@@ -114,8 +114,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
-	// TODO load from ini file
 	uaCfg.DefaultConfiguration = AlertmanagerDefaultConfiguration
+
 	cfg.UnifiedAlerting = uaCfg
 	return nil
 }
