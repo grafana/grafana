@@ -103,7 +103,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search - Beta' });
     }
 
-    if (logsDatasourceUid) {
+    if (logsDatasourceUid && tracesToLogsOptions?.lokiSearch !== false) {
       if (!config.featureToggles.tempoSearch) {
         // Place at beginning as Search if no native search
         queryTypeOptions.unshift({ value: 'search', label: 'Search' });
