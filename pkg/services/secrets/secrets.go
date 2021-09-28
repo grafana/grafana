@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const defaultProvider = "grafana-provider"
+const defaultProvider = "secretKey"
 
 type SecretsStore interface {
 	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
