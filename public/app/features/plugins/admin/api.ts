@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { PluginError } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { mergeLocalAndRemote } from './helpers';
-import { PluginError } from '@grafana/data';
 import {
   PluginDetails,
   Org,
