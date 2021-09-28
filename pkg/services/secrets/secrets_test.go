@@ -116,6 +116,17 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		assert.Nil(t, res)
 	})
 
+	t.Run("deleting DEK when no name provided must fail", func(t *testing.T) {
+		beforeDelete, err := svc.store.GetAllDataKeys(ctx)
+		require.NoError(t, err)
+		err = svc.store.DeleteDataKey(ctx, "")
+		require.Error(t, err)
+
+		afterDelete, err := svc.store.GetAllDataKeys(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, beforeDelete, afterDelete)
+	})
+
 	t.Run("deleting a DEK", func(t *testing.T) {
 		err := svc.store.DeleteDataKey(ctx, dataKey.Name)
 		require.NoError(t, err)

@@ -76,6 +76,10 @@ func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKe
 }
 
 func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) error {
+	if len(name) == 0 {
+		return fmt.Errorf("data key name is missing")
+	}
+
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Table(dataKeysTable).Delete(&types.DataKey{Name: name})
 
