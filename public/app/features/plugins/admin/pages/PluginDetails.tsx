@@ -1,7 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
+import { usePrevious } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -10,43 +12,53 @@ import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
-import { PluginTabLabels, PluginDetailsTab } from '../types';
-import { useGetSingle, useFetchStatus } from '../state/hooks';
+import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
+import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { AppNotificationSeverity } from 'app/types';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
-type State = {
-  tabs: PluginDetailsTab[];
-  activeTabIndex: number;
-};
-
-const DefaultState = {
-  tabs: [{ label: PluginTabLabels.OVERVIEW }, { label: PluginTabLabels.VERSIONS }],
-  activeTabIndex: 0,
-};
-
-export default function PluginDetails({ match }: Props): JSX.Element | null {
-  const { pluginId = '' } = match.params;
-  const [state, setState] = useState<State>(DefaultState);
+export default function PluginDetails({ match, queryParams }: Props): JSX.Element | null {
+  const {
+    params: { pluginId = '' },
+    url,
+  } = match;
+  const pageId = (queryParams.page as PluginTabIds) || PluginTabIds.OVERVIEW;
+  const parentUrl = url.substring(0, url.lastIndexOf('/'));
+  const defaultTabs: PluginDetailsTab[] = [
+    {
+      label: PluginTabLabels.OVERVIEW,
+      icon: 'file-alt',
+      id: PluginTabIds.OVERVIEW,
+      href: `${url}?page=${PluginTabIds.OVERVIEW}`,
+    },
+    {
+      label: PluginTabLabels.VERSIONS,
+      icon: 'history',
+      id: PluginTabIds.VERSIONS,
+      href: `${url}?page=${PluginTabIds.VERSIONS}`,
+    },
+  ];
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
-  const { tabs } = usePluginDetailsTabs(plugin, DefaultState.tabs);
-  const { activeTabIndex } = state;
-  const { isLoading } = useFetchStatus();
+  const { tabs } = usePluginDetailsTabs(plugin, defaultTabs);
+  const { isLoading: isFetchLoading } = useFetchStatus();
+  const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
-  const setActiveTab = useCallback((activeTabIndex: number) => setState({ ...state, activeTabIndex }), [state]);
-  const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
+  const prevTabs = usePrevious(tabs);
 
   // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
   useEffect(() => {
-    if (activeTabIndex > tabs.length - 1) {
-      setActiveTab(0);
-    }
-  }, [setActiveTab, activeTabIndex, tabs]);
+    const hasUninstalledWithConfigPages = prevTabs && prevTabs.length > tabs.length;
+    const isViewingAConfigPage = pageId !== PluginTabIds.OVERVIEW && pageId !== PluginTabIds.VERSIONS;
 
-  if (isLoading) {
+    if (hasUninstalledWithConfigPages && isViewingAConfigPage) {
+      locationService.replace(`${url}?page=${PluginTabIds.OVERVIEW}`);
+    }
+  }, [pageId, url, tabs, prevTabs]);
+
+  if (isFetchLoading || isFetchDetailsLoading) {
     return (
       <Page>
         <Loader />
@@ -68,25 +80,28 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   return (
     <Page>
       <PluginPage>
-        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} plugin={plugin} />
+        <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
 
         {/* Tab navigation */}
         <TabsBar>
-          {tabs.map((tab: PluginDetailsTab, idx: number) => (
-            <Tab
-              key={tab.label}
-              label={tab.label}
-              active={idx === activeTabIndex}
-              onChangeTab={() => setActiveTab(idx)}
-            />
-          ))}
+          {tabs.map((tab: PluginDetailsTab) => {
+            return (
+              <Tab
+                key={tab.label}
+                label={tab.label}
+                href={tab.href}
+                icon={tab.icon as IconName}
+                active={tab.id === pageId}
+              />
+            );
+          })}
         </TabsBar>
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
-          <PluginDetailsBody tab={tabs[activeTabIndex]} plugin={plugin} />
+          <PluginDetailsBody queryParams={queryParams} plugin={plugin} />
         </TabContent>
       </PluginPage>
     </Page>
