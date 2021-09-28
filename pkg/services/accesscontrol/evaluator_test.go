@@ -78,6 +78,19 @@ func TestPermission_Evaluate(t *testing.T) {
 func TestPermission_Inject(t *testing.T) {
 	tests := []injectTestCase{
 		{
+			desc:      "should inject extra param",
+			expected:  true,
+			evaluator: EvalPermission("orgs:read", Scope("orgs", ExtraParameter("OrgID"))),
+			params: ScopeParams{
+				OrgID: 3,
+			},
+			permissions: map[string]map[string]struct{}{
+				"orgs:read": {
+					"orgs:3": struct{}{},
+				},
+			},
+		},
+		{
 			desc:      "should inject correct param",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
@@ -204,6 +217,26 @@ func TestAll_Inject(t *testing.T) {
 				},
 				"settings:read": {
 					"settings:3": struct{}{},
+				},
+			},
+		},
+		{
+			desc:     "should inject extra and url param",
+			expected: true,
+			evaluator: EvalAll(
+				EvalPermission("orgs:read", Scope("orgs", ExtraParameter("OrgID"))),
+				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
+			),
+			params: ScopeParams{
+				OrgID: 3,
+				UrlParams: map[string]string{
+					":orgId": "4",
+				},
+			},
+			permissions: map[string]map[string]struct{}{
+				"orgs:read": {
+					"orgs:3": struct{}{},
+					"orgs:4": struct{}{},
 				},
 			},
 		},
