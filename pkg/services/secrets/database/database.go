@@ -29,10 +29,10 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types
 	var exists bool
 
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		ex, err := sess.Table(dataKeysTable).
+		var err error
+		exists, err = sess.Table(dataKeysTable).
 			Where("name = ? AND active = ?", name, ss.sqlStore.Dialect.BooleanStr(true)).
 			Get(dataKey)
-		exists = ex
 		return err
 	})
 
