@@ -36,6 +36,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 		UnifiedAlerting: setting.UnifiedAlertingSettings{
 			AlertmanagerConfigPollInterval: 3 * time.Minute,
 			DefaultConfiguration:           setting.AlertmanagerDefaultConfiguration,
+			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
 	}
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
