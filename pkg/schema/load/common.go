@@ -6,13 +6,10 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana"
 )
-
-var rt = &cue.Runtime{}
 
 var ctx = cuecontext.New()
 

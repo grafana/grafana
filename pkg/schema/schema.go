@@ -282,7 +282,7 @@ func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rv := ctx.CompileString(r.Value.(string))
+	rv := ctx.CompileString(r.Value.(string), cue.Filename(name))
 	if rv.Err() != nil {
 		return r, rv.Err()
 	}
