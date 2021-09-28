@@ -7,11 +7,14 @@ import (
 	"path/filepath"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana"
 )
 
 var rt = &cue.Runtime{}
+
+var ctx = cuecontext.New()
 
 // Families can have variants, where more typing information narrows the
 // possible values for certain keys in schemas. These are a meta-property
