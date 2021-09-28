@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -111,6 +112,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
+	datasources.ProvideInitializerService,
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	live.ProvideService,

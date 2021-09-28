@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -43,6 +44,7 @@ func ProvideBackgroundServiceRegistry(
 	backendPM *backendmanager.Manager, metrics *metrics.InternalMetricsService,
 	usageStats *usagestats.UsageStatsService, tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
 	// Need to make sure these are initialized, is there a better place to put them?
+	datasourceInitializer *datasources.DataSourceInitializerService,
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
 	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service,
@@ -65,7 +67,8 @@ func ProvideBackgroundServiceRegistry(
 		metrics,
 		usageStats,
 		tracing,
-		remoteCache)
+		remoteCache,
+		datasourceInitializer)
 }
 
 // BackgroundServiceRegistry provides background services.
