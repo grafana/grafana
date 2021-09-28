@@ -137,7 +137,7 @@ export function isFetchError(e: unknown): e is FetchError {
   return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }
 
-function messageFromError(e: Error | FetchError | SerializedError): string {
+export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
       let msg = e.data?.message;

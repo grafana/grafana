@@ -1,5 +1,5 @@
 import React from 'react';
-import { SideMenu } from './SideMenu';
+import { NavBar } from './NavBar';
 import { render, screen } from '@testing-library/react';
 import { Router } from 'react-router-dom';
 import { locationService } from '@grafana/runtime';
@@ -23,7 +23,7 @@ const setup = () => {
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <SideMenu />
+        <NavBar />
       </Router>
     </Provider>
   );

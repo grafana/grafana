@@ -53,7 +53,7 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
-    const { type, help } = metadata[metric][0];
+    const { type, help } = metadata[metric];
     item.documentation = `${type.toUpperCase()}: ${help}`;
   }
   return item;
