@@ -76,10 +76,7 @@ class GraphElement {
 
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
-    // unified alerting does not support threshold for graphs, at least for now
-    if (!config.unifiedAlertingEnabled) {
-      this.thresholdManager = new ThresholdManager(this.ctrl);
-    }
+    this.thresholdManager = new ThresholdManager(this.ctrl);
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
     // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
