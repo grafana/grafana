@@ -31,7 +31,7 @@ var ctx = cuecontext.New()
 const allowedImport = "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 
 var importMap = map[string]string{
-	allowedImport: "@grafana-schema",
+	allowedImport: "@grafana/schema",
 }
 
 const prefix = "/"

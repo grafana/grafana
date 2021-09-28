@@ -18,9 +18,9 @@ Panel: {
     lineages: [
         [
             {
-                TextMode: "html" | "markdown" @cuetsy(kind="enum")
+                TextMode: "html" | "markdown" @cuetsy(kind="enum",memberNames="HTML|Markdown")
                 PanelOptions: {
-                    mode: *"markdown" | TextMode
+                    mode: TextMode | *"markdown" 
                     content: string | *"""
                     # Title
 
