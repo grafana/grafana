@@ -88,8 +88,6 @@ func (am *LotexAM) withAMReq(
 		iPathParams[idx] = value
 	}
 
-	fmt.Printf("impl %s endpoint %s=%s\n", impl, endpoint, endpointPath)
-
 	return am.withReq(
 		ctx,
 		method,
