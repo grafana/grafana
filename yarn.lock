@@ -3339,7 +3339,7 @@
   dependencies:
     "@scena/event-emitter" "^1.0.2"
 
-"@scena/event-emitter@^1.0.2":
+"@scena/event-emitter@^1.0.2", "@scena/event-emitter@^1.0.3":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@scena/event-emitter/-/event-emitter-1.0.5.tgz#047e3acef93cf238d7ce3a8cc5a12ec6bd9c3bb1"
   integrity sha512-AzY4OTb0+7ynefmWFQ6hxDdk0CySAq/D4efljfhtRHCOP7MBF9zUfhKG3TJiroVjASqVgkRJFdenS8ArZo6Olg==
@@ -16684,6 +16684,14 @@ move-concurrently@^1.0.1:
     rimraf "^2.5.4"
     run-queue "^1.0.3"
 
+moveable@^0.26.0:
+  version "0.26.0"
+  resolved "https://registry.yarnpkg.com/moveable/-/moveable-0.26.0.tgz#7ae053290189bccd4740faf4829eb9f36f3a4023"
+  integrity sha512-pVwd6IQKn1QaL3KXcUluz+dReDidwQwQ45MoiusbOo/QCdab5+ToOpNyMPVHpN0biuiQzqoO3AKRx5Ob+wt7Hg==
+  dependencies:
+    "@scena/event-emitter" "^1.0.3"
+    react-compat-moveable "~0.14.0"
+
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
@@ -19952,7 +19960,29 @@ react-colorful@^5.1.2:
   resolved "https://registry.yarnpkg.com/react-colorful/-/react-colorful-5.3.0.tgz#bcbae49c1affa9ab9a3c8063398c5948419296bd"
   integrity sha512-zWE5E88zmjPXFhv6mGnRZqKin9s5vip1O3IIGynY9EhZxN8MATUxZkT3e/9OwTEm4DjQBXc6PFWP6AetY+Px+A==
 
-react-css-styled@^1.0.1:
+react-compat-css-styled@^1.0.5:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/react-compat-css-styled/-/react-compat-css-styled-1.0.6.tgz#876f00752bc006ee66800f9135852af477331e5f"
+  integrity sha512-xzEq7a06ttItTA29nqBbso1fw7pOirU3iEsYyvSo0pz8NJ5pflLWPq3hJ/0/J1M8OOfOrlfuA5xQSlzcLBX8eQ==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    css-styled "^1.0.0"
+    framework-utils "^0.3.4"
+    react-css-styled "^1.0.2"
+    react-simple-compat "^1.1.0"
+
+react-compat-moveable@~0.14.0:
+  version "0.14.0"
+  resolved "https://registry.yarnpkg.com/react-compat-moveable/-/react-compat-moveable-0.14.0.tgz#cfb1ef54a712209bc4dcb677f0115df9be996a4b"
+  integrity sha512-z6julXupdwY1zytfDbXutdfY1wGmP+okoeC8PSb+Yd1Ju3bCTML6MQ6t6uivhqHVCQB+A6m1Ft76LlZmV8opvg==
+  dependencies:
+    "@daybrush/utils" "^1.6.0"
+    "@scena/dragscroll" "^1.0.1"
+    react-compat-css-styled "^1.0.5"
+    react-moveable "~0.29.0"
+    react-simple-compat "^1.2.1"
+
+react-css-styled@^1.0.1, react-css-styled@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/react-css-styled/-/react-css-styled-1.0.2.tgz#95b2f34dea852aa63cbfe2af0ca322b19899f404"
   integrity sha512-5XBI2lLNO1q2N0l6B4VWbGIlysVCsMJavWvu4ydDe58EToBP9tF0HNCUS7p8MyhQRnwCe9JCW6HkXU0TkVvS4A==
@@ -20194,7 +20224,7 @@ react-loadable@5.5.0:
   dependencies:
     prop-types "^15.5.0"
 
-react-moveable@^0.29.0:
+react-moveable@~0.29.0:
   version "0.29.0"
   resolved "https://registry.yarnpkg.com/react-moveable/-/react-moveable-0.29.0.tgz#851ceae979a46dc103a2420672c1e443e513c8ec"
   integrity sha512-dZ8jXc8WZQ3nsKsTh7h2h6cm8t0G2qc0Ie0a5DYgXX0N0kSrj0Q9psRTt6fZ5bRdIfonezM5r0Z4paTbbpRypA==
@@ -20352,6 +20382,14 @@ react-shallow-renderer@^16.13.1:
   dependencies:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0"
+
+react-simple-compat@^1.1.0, react-simple-compat@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/react-simple-compat/-/react-simple-compat-1.2.1.tgz#d5bd74440f51b9c4a421dc941be039561cb6e08e"
+  integrity sha512-bfeKTLGyI2A/TGsIhbe8e4pRFcqNu9u6oT7kwD+2Z77elhhxEgOfqS6jb/OUp5WLVuyEzJsR0kdb04rx+2i6UA==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    "@egjs/list-differ" "^1.0.0"
 
 react-sizeme@^3.0.1:
   version "3.0.1"
