@@ -18,8 +18,14 @@ func Scope(parts ...string) string {
 	return b.String()
 }
 
-// Parameter returns injectable scope part
+// Parameter returns injectable scope part, based on the URL parameter
 // e.g. Scope("users", Parameter(":id")) or "users:" + Parameter(":id")
 func Parameter(key string) string {
-	return fmt.Sprintf(`{{ index . "%s" }}`, key)
+	return fmt.Sprintf(`{{ index .UrlParams "%s" }}`, key)
+}
+
+// ExtraParameter returns injectable scope part, based on ScopeParams fields
+// e.g. Scope("orgs", Parameter("OrgID")) or "orgs:" + Parameter("OrgID")
+func ExtraParameter(key string) string {
+	return fmt.Sprintf(`{{ .%s }}`, key)
 }
