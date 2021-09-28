@@ -211,7 +211,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				r.New.UID = uid
 
 				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = st.DefaultIntervalSeconds
+					r.New.IntervalSeconds = int64(st.DefaultInterval.Seconds())
 				}
 
 				r.New.Version = 1
