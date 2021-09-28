@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -170,7 +171,11 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+	cmd := dtos.LoginCommand{}
+	if err := binding.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad login data", err)
+	}
 	authModule := ""
 	var user *models.User
 	var resp *response.NormalResponse
