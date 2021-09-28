@@ -55,29 +55,6 @@ const (
 	defaultResolveTimeout = 5 * time.Minute
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
-	// To start, the alertmanager needs at least one route defined.
-	// TODO: we should move this to Grafana settings and define this as the default.
-	alertmanagerDefaultConfiguration = `
-{
-	"alertmanager_config": {
-		"route": {
-			"receiver": "grafana-default-email"
-		},
-		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"isDefault": true,
-				"settings": {
-					"addresses": "<example@email.com>"
-				}
-			}]
-		}]
-	}
-}
-`
 )
 
 type ClusterPeer interface {
@@ -252,19 +229,19 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	defer am.reloadConfigMtx.Unlock()
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 	}
 
-	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 	if err != nil {
 		return err
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
-		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
 		}
 		return nil
