@@ -84,6 +84,7 @@ type schedule struct {
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
+	minRuleInterval         time.Duration
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -102,12 +103,14 @@ type SchedulerCfg struct {
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
 	Metrics                 *metrics.Scheduler
 	AdminConfigPollInterval time.Duration
+	MinRuleInterval         time.Duration
 }
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
+
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
@@ -129,6 +132,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
+		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
 }
@@ -334,6 +338,13 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				itemVersion := item.Version
 				newRoutine := !sch.registry.exists(key)
 				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+
+				// enforce minimum evaluation interval
+				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
+					sch.log.Debug("interval adjusted", "rule_interval_seconds", item.IntervalSeconds, "min_interval_seconds", sch.minRuleInterval.Seconds(), "key", key)
+					item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
+				}
+
 				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
@@ -344,7 +355,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				if invalidInterval {
 					// this is expected to be always false
-					// give that we validate interval during alert rule updates
+					// given that we validate interval during alert rule updates
 					sch.log.Debug("alert rule with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
 					continue
 				}
