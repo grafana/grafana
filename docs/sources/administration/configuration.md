@@ -14,7 +14,7 @@ Grafana has default and custom configuration files. You can customize your Grafa
 
 ## Configuration file location
 
-The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change the location in this file. 
+The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change the location in this file.
 
 Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
@@ -1158,6 +1158,28 @@ The interval between gossip full state syncs. Setting this interval lower (more 
 across larger clusters at the expense of increased bandwidth usage. The default value is `60s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### execute_alerts
+
+Enable or disable alerting rule execution. Default is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1">}}) that takes precedence.
+
+### evaluation_timeout
+
+Sets the alert evaluation timeout when fetching data from the datasource. Default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
+
+The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### max_attempts
+
+Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3` (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
+
+### min_interval
+
+Sets the minimum interval to enforce between rule evaluations. Default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+> **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
