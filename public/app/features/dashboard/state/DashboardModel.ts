@@ -106,7 +106,7 @@ export class DashboardModel {
   iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
-  unsavedUserChanges: number;
+  private unsavedUserChanges: number;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
