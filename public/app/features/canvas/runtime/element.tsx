@@ -1,4 +1,5 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, createRef } from 'react';
+
 import {
   BackgroundImageSize,
   CanvasElementItem,
@@ -8,15 +9,18 @@ import {
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
+// import MoveableElement from './MoveableElement';
 
 let counter = 100;
 
 export class ElementState {
   readonly UID = counter++;
+  private moveableRef = createRef<HTMLDivElement>();
 
   revId = 0;
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
+  transform: string;
 
   // Calculated
   width = 100;
@@ -125,11 +129,26 @@ export class ElementState {
     return { ...this.options };
   }
 
+  updateTransform(newTransform: string) {
+    this.transform = newTransform;
+    console.log('whats happening');
+  }
+
   render() {
     const { item } = this;
     return (
       <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
-        <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
+        <item.display
+          config={this.options.config}
+          width={this.width}
+          height={this.height}
+          data={this.data}
+          style={{
+            transform: this.transform,
+          }}
+          ref={this.moveableRef}
+        />
+        {/* <MoveableElement moveableRef={this.moveableRef} setStyle={this.updateTransform} /> */}
       </div>
     );
   }
