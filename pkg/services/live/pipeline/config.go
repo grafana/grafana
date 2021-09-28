@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
@@ -63,12 +64,25 @@ type MultipleSubscriberConfig struct {
 }
 
 type SubscriberConfig struct {
-	Type                          string                         `json:"type"`
-	MultipleSubscriberConfig      *MultipleSubscriberConfig      `json:"multiple,omitempty"`
-	AuthorizeRoleSubscriberConfig *AuthorizeRoleSubscriberConfig `json:"authorizeRole,omitempty"`
+	Type                     string                    `json:"type"`
+	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
+}
+
+// ChannelAuthCheckConfig is used to define auth rules for a channel.
+type ChannelAuthCheckConfig struct {
+	RequireRole models.RoleType `json:"role,omitempty"`
+}
+
+type ChannelAuthConfig struct {
+	// By default anyone can subscribe.
+	Subscribe *ChannelAuthCheckConfig `json:"subscribe,omitempty"`
+
+	// By default HTTP and WS require admin permissions to publish.
+	Publish *ChannelAuthCheckConfig `json:"publish,omitempty"`
 }
 
 type ChannelRuleSettings struct {
+	Auth        *ChannelAuthConfig  `json:"auth,omitempty"`
 	Converter   *ConverterConfig    `json:"converter,omitempty"`
 	Processors  []*ProcessorConfig  `json:"processors,omitempty"`
 	Outputters  []*OutputterConfig  `json:"outputs,omitempty"`
@@ -198,11 +212,6 @@ func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscr
 		return NewBuiltinSubscriber(f.ChannelHandlerGetter), nil
 	case SubscriberTypeManagedStream:
 		return NewManagedStreamSubscriber(f.ManagedStream), nil
-	case SubscriberTypeAuthorizeRole:
-		if config.AuthorizeRoleSubscriberConfig == nil {
-			return nil, missingConfiguration
-		}
-		return NewAuthorizeRoleSubscriber(*config.AuthorizeRoleSubscriberConfig), nil
 	case SubscriberTypeMultiple:
 		if config.MultipleSubscriberConfig == nil {
 			return nil, missingConfiguration
@@ -412,6 +421,15 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			OrgId:   orgID,
 			Pattern: ruleConfig.Pattern,
 		}
+
+		if ruleConfig.Settings.Auth != nil && ruleConfig.Settings.Auth.Subscribe != nil {
+			rule.SubscribeAuth = NewRoleCheckAuthorizer(ruleConfig.Settings.Auth.Subscribe.RequireRole)
+		}
+
+		if ruleConfig.Settings.Auth != nil && ruleConfig.Settings.Auth.Publish != nil {
+			rule.PublishAuth = NewRoleCheckAuthorizer(ruleConfig.Settings.Auth.Publish.RequireRole)
+		}
+
 		var err error
 		rule.Converter, err = f.extractConverter(ruleConfig.Settings.Converter)
 		if err != nil {

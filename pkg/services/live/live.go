@@ -537,33 +537,47 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 
 	var reply models.SubscribeReply
 	var status backend.SubscribeStreamStatus
+	var ruleFound bool
 
-	var subscribeRuleFound bool
 	if g.Pipeline != nil {
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		if ok && len(rule.Subscribers) > 0 {
-			subscribeRuleFound = true
-			var err error
-			for _, sub := range rule.Subscribers {
-				reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
-					OrgID:   orgID,
-					Channel: channel,
-				})
+		ruleFound = ok
+		if ok {
+			if rule.SubscribeAuth != nil {
+				ok, err := rule.SubscribeAuth.CanSubscribe(client.Context(), user)
 				if err != nil {
-					logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					logger.Error("Error checking subscribe permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 					return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 				}
-				if status != backend.SubscribeStreamStatusOK {
-					break
+				if !ok {
+					// using HTTP error codes for WS errors too.
+					code, text := subscribeStatusToHTTPError(backend.SubscribeStreamStatusPermissionDenied)
+					return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			}
+			if len(rule.Subscribers) > 0 {
+				var err error
+				for _, sub := range rule.Subscribers {
+					reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
+						OrgID:   orgID,
+						Channel: channel,
+					})
+					if err != nil {
+						logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+						return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+					}
+					if status != backend.SubscribeStreamStatusOK {
+						break
+					}
 				}
 			}
 		}
 	}
-	if !subscribeRuleFound {
+	if !ruleFound {
 		handler, addr, err := g.GetChannelHandler(user, channel)
 		if err != nil {
 			if errors.Is(err, live.ErrInvalidChannelID) {
@@ -620,6 +634,48 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		return centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied
 	}
 
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+		}
+		if ok {
+			if rule.PublishAuth != nil {
+				ok, err := rule.PublishAuth.CanPublish(client.Context(), user)
+				if err != nil {
+					logger.Error("Error checking publish permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+				}
+				if !ok {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			} else {
+				if !user.HasRole(models.ROLE_ADMIN) {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			}
+			if rule.Converter != nil {
+				_, err := g.Pipeline.ProcessInput(client.Context(), user.OrgId, channel, e.Data)
+				if err != nil {
+					logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+				}
+				return centrifuge.PublishReply{
+					Result: &centrifuge.PublishResult{},
+				}, nil
+			} else {
+				// using HTTP error codes for WS errors too.
+				code, text := publishStatusToHTTPError(backend.PublishStreamStatusNotFound)
+				return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+			}
+		}
+	}
+
 	handler, addr, err := g.GetChannelHandler(user, channel)
 	if err != nil {
 		if errors.Is(err, live.ErrInvalidChannelID) {
@@ -638,6 +694,7 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		logger.Error("Error calling channel handler publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
+
 	if status != backend.PublishStreamStatusOK {
 		// using HTTP error codes for WS errors too.
 		code, text := publishStatusToHTTPError(status)
@@ -817,6 +874,41 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	}
 
 	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
+	user := ctx.SignedInUser
+	channel := cmd.Channel
+
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", user, "channel", channel, "error", err)
+			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+		}
+		if ok {
+			if rule.PublishAuth != nil {
+				ok, err := rule.PublishAuth.CanPublish(ctx.Req.Context(), user)
+				if err != nil {
+					logger.Error("Error checking publish permissions", "user", user, "channel", channel, "error", err)
+					return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+				}
+				if !ok {
+					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+				}
+			} else {
+				if !user.HasRole(models.ROLE_ADMIN) {
+					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+				}
+			}
+			if rule.Converter != nil {
+				_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgId, channel, cmd.Data)
+				if err != nil {
+					logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
+					return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+				}
+				return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+			}
+			return response.Error(http.StatusNotFound, http.StatusText(http.StatusNotFound), nil)
+		}
+	}
 
 	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
@@ -829,6 +921,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
+
 	if status != backend.PublishStreamStatusOK {
 		code, text := publishStatusToHTTPError(status)
 		return response.Error(code, text, nil)

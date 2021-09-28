@@ -69,15 +69,27 @@ type Subscriber interface {
 	Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error)
 }
 
+// PublishAuthChecker checks whether current user can publish to a channel.
+type PublishAuthChecker interface {
+	CanPublish(ctx context.Context, u *models.SignedInUser) (bool, error)
+}
+
+// SubscribeAuthChecker checks whether current user can subscribe to a channel.
+type SubscribeAuthChecker interface {
+	CanSubscribe(ctx context.Context, u *models.SignedInUser) (bool, error)
+}
+
 // LiveChannelRule is an in-memory representation of each specific rule, with Converter, Processor
 // and Outputter to be executed by Pipeline.
 type LiveChannelRule struct {
-	OrgId       int64
-	Pattern     string
-	Converter   Converter
-	Processors  []Processor
-	Outputters  []Outputter
-	Subscribers []Subscriber
+	OrgId         int64
+	Pattern       string
+	PublishAuth   PublishAuthChecker
+	SubscribeAuth SubscribeAuthChecker
+	Converter     Converter
+	Processors    []Processor
+	Outputters    []Outputter
+	Subscribers   []Subscriber
 }
 
 // Label ...
