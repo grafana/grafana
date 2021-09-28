@@ -62,13 +62,15 @@ func (ss *SQLStore) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashb
 }
 
 func (ss *SQLStore) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
-	var stars = make([]models.Star, 0)
-	err := x.Where("user_id=?", query.UserId).Find(&stars)
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var stars = make([]models.Star, 0)
+		err := dbSession.Where("user_id=?", query.UserId).Find(&stars)
 
-	query.Result = make(map[int64]bool)
-	for _, star := range stars {
-		query.Result[star.DashboardId] = true
-	}
+		query.Result = make(map[int64]bool)
+		for _, star := range stars {
+			query.Result[star.DashboardId] = true
+		}
 
-	return err
+		return err
+	})
 }
