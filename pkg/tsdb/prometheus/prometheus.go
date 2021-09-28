@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -466,31 +467,114 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		}
 	}
 
-	//TODO: Sampling of exemplars
-	timeVector := make([]time.Time, 0, len(events))
-	valuesVector := make([]float64, 0, len(events))
-	labelsVector := make(map[string][]string, len(events))
+	//Sampling of exemplars
+	bucketedExemplars := make(map[string][]interface{})
+	values := make([]float64, 0)
 
+	//Create bucketed exemplars based on aligned timestamp
 	for _, event := range events {
-		for key, value := range event {
-			l, ok := value.(string)
-			if ok {
-				if labelsVector[key] == nil {
-					labelsVector[key] = make([]string, 0)
+		timeStamp, okTime := event["Time"].(time.Time)
+		value, okValue := event["Value"].(model.SampleValue)
+		if okTime && okValue {
+			alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(timeStamp.Unix())/query.Step.Seconds())*query.Step.Seconds())
+			_, ok := bucketedExemplars[alignedTs]
+			if !ok {
+				bucketedExemplars[alignedTs] = make([]interface{}, 0)
+			} else {
+				bucketedExemplars[alignedTs] = append(bucketedExemplars[alignedTs], event)
+				values = append(values, float64(value))
+			}
+		}
+	}
+
+	//Calculate standard deviation
+	standardDeviation := deviation(values)
+
+	//Create slice with all of the bucketed exemplars
+	sampledBuckets := make([]string, len(bucketedExemplars))
+	for bucketTimes := range bucketedExemplars {
+		sampledBuckets = append(sampledBuckets, bucketTimes)
+	}
+	sort.Strings(sampledBuckets)
+
+	//Sample exemplars based ona value, so we are not showing too many of them
+	sampleExemplars := make([]interface{}, 0)
+	for _, bucket := range sampledBuckets {
+		exemplarsInBucket := bucketedExemplars[bucket]
+		if len(exemplarsInBucket) == 1 {
+			sampleExemplars = append(sampleExemplars, exemplarsInBucket[0])
+		} else {
+			bucketValues := make([]float64, len(exemplarsInBucket))
+			for _, exmplr := range exemplarsInBucket {
+				exemplar, ok := exmplr.(map[string]interface{})
+				if ok {
+					value, ok := exemplar["Value"].(model.SampleValue)
+					if ok {
+						bucketValues = append(bucketValues, float64(value))
+					}
 				}
-				labelsVector[key] = append(labelsVector[key], l)
 			}
+			sort.Slice(bucketValues, func(i, j int) bool {
+				return bucketValues[i] > bucketValues[j]
+			})
 
-			t, ok := value.(time.Time)
-			if ok {
-				timeVector = append(timeVector, t)
+			sampledBucketValues := make([]float64, 0)
+			for _, value := range bucketValues {
+				if len(sampledBucketValues) == 0 {
+					sampledBucketValues = append(sampledBucketValues, value)
+				} else {
+					// Then take values only when at least 2 standard deviation distance to previously taken value
+					prev := sampledBucketValues[len(sampledBucketValues)-1]
+					if standardDeviation != 0 && prev-value >= float64(2)*standardDeviation {
+						sampledBucketValues = append(sampledBucketValues, value)
+					}
+				}
 			}
+			for _, valueBucket := range sampledBucketValues {
+				for _, exmplr := range exemplarsInBucket {
+					exemplar, ok := exmplr.(map[string]interface{})
+					if ok {
+						value, ok := exemplar["Value"].(model.SampleValue)
+						if ok {
+							if float64(value) == valueBucket {
+								sampleExemplars = append(sampleExemplars, exemplar)
+							}
+						}
 
-			v, ok := value.(model.SampleValue)
-			if ok {
-				valuesVector = append(valuesVector, float64(v))
+					}
+				}
 			}
+		}
+	}
 
+	// Create DF from sampled exemplars
+	timeVector := make([]time.Time, 0, len(sampleExemplars))
+	valuesVector := make([]float64, 0, len(sampleExemplars))
+	labelsVector := make(map[string][]string, len(sampleExemplars))
+
+	for _, exmplr := range sampleExemplars {
+		exemplar, ok := exmplr.(map[string]interface{})
+		if ok {
+
+			for key, value := range exemplar {
+				l, ok := value.(string)
+				if ok {
+					if labelsVector[key] == nil {
+						labelsVector[key] = make([]string, 0)
+					}
+					labelsVector[key] = append(labelsVector[key], l)
+				}
+
+				t, ok := value.(time.Time)
+				if ok {
+					timeVector = append(timeVector, t)
+				}
+
+				v, ok := value.(model.SampleValue)
+				if ok {
+					valuesVector = append(valuesVector, float64(v))
+				}
+			}
 		}
 	}
 
@@ -510,4 +594,17 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	frames = append(frames, frame)
 	return frames
+}
+
+func deviation(values []float64) float64 {
+	var sum, mean, sd float64
+	valuesLen := float64(len(values))
+	for _, value := range values {
+		sum += value
+	}
+	mean = sum / valuesLen
+	for j := 0; j < len(values); j++ {
+		sd += math.Pow(values[j]-mean, 2)
+	}
+	return math.Sqrt(sd / (valuesLen - 1))
 }
