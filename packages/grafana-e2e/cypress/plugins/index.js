@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
@@ -10,6 +13,17 @@ module.exports = (on, config) => {
     log({ message, optional }) {
       optional ? console.log(message, optional) : console.log(message);
       return null;
+    },
+  });
+  on('task', {
+    getJSONFiles: async ({ dirPath }) => {
+      const directoryPath = path.join(__dirname, dirPath);
+      console.log(`Attempting to read contents of directory: ${directoryPath}`);
+      const jsonFiles = fs.readdirSync(directoryPath);
+      return jsonFiles.map((fileName) => {
+        const fileBuffer = fs.readFileSync(path.join(directoryPath, fileName));
+        return JSON.parse(fileBuffer);
+      });
     },
   });
 
