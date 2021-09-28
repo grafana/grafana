@@ -47,7 +47,7 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 		text,
 		name,
 		data,
-		model.Time(timestamp.FromTime(time.Now())),
+		model.Time(timestamp.FromTime(alertInstance.EvaluatedAt)),
 		func(context.Context, string, time.Time) (promql.Vector, error) {
 			return nil, nil
 		},
