@@ -1,0 +1,94 @@
+---
+openapi: 3.0.1
+info:
+  title: Grafana User Identity Token API
+  version: 1.0.0-oas3
+servers:
+- url: /
+paths:
+  /oauth2/v2.0/token:
+    post:
+      tags:
+      - Token
+      description: Get an access token for a user.
+      operationId: Get_Token
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccessTokenRequestForm'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessTokenResult'
+        "400":
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        "404":
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+      - {}
+      - bearerAuth: []
+      - basicAuth: []
+components:
+  schemas:
+    AccessTokenRequestForm:
+      type: object
+      properties:
+        scope:
+          type: string
+          description: A space-separated list of OAuth 2.0 scopes requested for the token.
+          example: https%3A%2F%2Fmyservice1.net%2F.default%20https%3A%2F%2Fmyservice2.io%2F.default
+        user_id:
+          type: string
+          description: user identity
+          example: userid@test.io
+    AccessTokenResult:
+      type: object
+      properties:
+        expires_on:
+          type: integer
+          description: Expiration date of the access token in epoch
+          format: int64
+          example: 1622153553
+        access_token:
+          type: string
+          description: Access token
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ilg1ZVhrN...
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+      description: Problem Details for HTTP APIs defined by RFC7807
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    basicAuth:
+      type: http
+      scheme: basic

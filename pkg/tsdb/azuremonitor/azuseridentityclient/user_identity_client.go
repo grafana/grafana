@@ -29,6 +29,7 @@ type UserIdentityClient struct {
 }
 
 // GetUserAccessToken retieves the access token for a user and the specified scopes
+// Token endpoint needs to support the OpenAPI contract defined in user_identity_token_endpoint.yaml
 func (c *UserIdentityClient) GetUserAccessToken(userID string, scopes []string) (*TokenResponse, error) {
 	req, err := http.NewRequest("POST", c.tokenEndpoint, nil)
 	if err != nil {
