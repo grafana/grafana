@@ -467,8 +467,17 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
+    const labels = this.languageProvider.getLabelKeys();
     const query = Object.keys(row.labels)
-      .map((label) => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`) // escape backslashes in label as users can't escape them by themselves
+      .map((label: string) => {
+        if (labels.includes(label)) {
+          // escape backslashes in label as users can't escape them by themselves
+          return `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`;
+        }
+        return '';
+      })
+      // Filter empty strings
+      .filter((label) => !!label)
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
