@@ -8,12 +8,16 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AccessControlAction, StoreState, UserDTO } from '../../types';
+import { AccessControlAction, StoreState, UserDTO, UserFilter } from '../../types';
 import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
 
-const extraFilters: ComponentType[] = [];
-export const addExtraFilters = (filter: ComponentType) => {
+export interface FilterProps {
+  filters: UserFilter[];
+  onChange: (filter: any) => void;
+}
+const extraFilters: Array<ComponentType<FilterProps>> = [];
+export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
   extraFilters.push(filter);
 };
 
@@ -76,7 +80,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
               className={styles.filter}
             />
             {extraFilters.map((FilterComponent, index) => (
-              <FilterComponent key={index} />
+              <FilterComponent key={index} filters={filters} onChange={changeFilter} />
             ))}
             <FilterInput
               placeholder="Search user by login, email, or name."

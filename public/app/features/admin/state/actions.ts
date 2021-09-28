@@ -264,7 +264,12 @@ export function fetchUsers(): ThunkResult<void> {
       const { perPage, page, query, filters } = getState().userListAdmin;
       const result = await getBackendSrv().get(
         `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${filters
-          .map((filter) => `${filter.name}=${filter.value}`)
+          .map((filter) => {
+            if (Array.isArray(filter.value)) {
+              return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
+            }
+            return `${filter.name}=${filter.value}`;
+          })
           .join('&')}`
       );
       dispatch(usersFetched(result));
