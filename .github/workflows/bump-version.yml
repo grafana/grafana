@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # This is a basic workflow to help you get started with Actions
-      - uses: actions-ecosystem/action-regex-match@v2.0.1
+      - uses: actions-ecosystem/action-regex-match@v2.0.2
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
