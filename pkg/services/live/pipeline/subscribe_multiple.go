@@ -15,10 +15,16 @@ func NewMultipleSubscriber(subscribers ...Subscriber) *MultipleSubscriber {
 	return &MultipleSubscriber{Subscribers: subscribers}
 }
 
-func (m *MultipleSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+const SubscriberTypeMultiple = "multiple"
+
+func (s *MultipleSubscriber) Type() string {
+	return SubscriberTypeMultiple
+}
+
+func (s *MultipleSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	finalReply := models.SubscribeReply{}
 
-	for _, s := range m.Subscribers {
+	for _, s := range s.Subscribers {
 		reply, status, err := s.Subscribe(ctx, vars)
 		if err != nil {
 			return models.SubscribeReply{}, 0, err
