@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -15,7 +15,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useGetAll, useGetAllWithFilters } from '../state/hooks';
+import { useGetAll, useGetAllWithFilters, useIsRemotePluginsAvailable } from '../state/hooks';
 import { Sorters } from '../helpers';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
@@ -26,6 +26,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
   const styles = useStyles2(getStyles);
   const history = useHistory();
+  const remotePluginsAvailable = useIsRemotePluginsAvailable();
   const query = (locationSearch.q as string) || '';
   const filterBy = (locationSearch.filterBy as string) || 'installed';
   const filterByType = (locationSearch.filterByType as string) || 'all';
@@ -36,6 +37,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     filterByType,
     sortBy,
   });
+  const filterByOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'installed', label: 'Installed' },
+  ];
 
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
@@ -78,16 +83,25 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   ]}
                 />
               </div>
-              <div>
-                <RadioButtonGroup
-                  value={filterBy}
-                  onChange={onFilterByChange}
-                  options={[
-                    { value: 'all', label: 'All' },
-                    { value: 'installed', label: 'Installed' },
-                  ]}
-                />
-              </div>
+              {remotePluginsAvailable ? (
+                <div>
+                  <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
+                </div>
+              ) : (
+                <Tooltip
+                  content="This filter has been disabled because the Grafana server cannot access grafana.com"
+                  placement="top"
+                >
+                  <div>
+                    <RadioButtonGroup
+                      disabled={true}
+                      value={filterBy}
+                      onChange={onFilterByChange}
+                      options={filterByOptions}
+                    />
+                  </div>
+                </Tooltip>
+              )}
               <div>
                 <Select
                   menuShouldPortal
