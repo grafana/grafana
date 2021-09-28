@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { PluginError } from '@grafana/data';
+import { PluginError, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { mergeLocalAndRemote } from './helpers';
 import {
@@ -23,7 +23,11 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const localPlugins = await getLocalPlugins();
   const local = localPlugins.find((p) => p.id === id);
   const isInstalled = Boolean(local);
-  const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
+  const [remote, versions, localReadme] = await Promise.all([
+    getRemotePlugin(id, isInstalled),
+    getPluginVersions(id),
+    getLocalPluginReadme(id),
+  ]);
   const dependencies = remote?.json?.dependencies;
   // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
   // otherwise plugins cannot be installed.
@@ -37,7 +41,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     grafanaDependency,
     pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
-    readme: remote?.readme,
+    readme: localReadme || remote?.readme,
     versions,
   };
 }
@@ -92,6 +96,18 @@ async function getPluginVersions(id: string): Promise<Version[]> {
     // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
     error.isHandled = true;
     return [];
+  }
+}
+
+async function getLocalPluginReadme(id: string): Promise<string> {
+  try {
+    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/help`);
+    const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
+
+    return markdownAsHtml;
+  } catch (error) {
+    error.isHandled = true;
+    return '';
   }
 }
 
