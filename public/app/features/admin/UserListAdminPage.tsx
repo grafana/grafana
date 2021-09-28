@@ -15,6 +15,7 @@ import PageLoader from '../../core/components/PageLoader/PageLoader';
 export interface FilterProps {
   filters: UserFilter[];
   onChange: (filter: any) => void;
+  className?: string;
 }
 const extraFilters: Array<ComponentType<FilterProps>> = [];
 export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
@@ -80,7 +81,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
               className={styles.filter}
             />
             {extraFilters.map((FilterComponent, index) => (
-              <FilterComponent key={index} filters={filters} onChange={changeFilter} />
+              <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
             ))}
             <FilterInput
               placeholder="Search user by login, email, or name."
