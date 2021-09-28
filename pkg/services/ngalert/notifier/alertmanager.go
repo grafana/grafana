@@ -276,7 +276,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 			// First, let's save it to the database. We don't need to use a transaction here as we'll always succeed.
 			am.logger.Info("no Alertmanager configuration found, saving and applying a default")
 			savecmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+				AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
 				Default:                   true,
 				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 				OrgID:                     am.orgID,
@@ -285,7 +285,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 				return err
 			}
 
-			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration, Default: true}
+			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration, Default: true}
 		} else {
 			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
 		}
