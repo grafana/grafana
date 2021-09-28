@@ -10,6 +10,7 @@ import { TimeZonePicker } from '../TimeZonePicker';
 import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, RadioButtonGroup, Select } from '../..';
+import { monthOptions } from '../options';
 
 interface Props {
   timeZone?: TimeZone;
@@ -106,20 +107,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
               <Field className={style.fiscalYearField} label={'Fiscal year start month'}>
                 <Select
                   value={fiscalYearStartMonth}
-                  options={[
-                    { label: 'January', value: 0 },
-                    { label: 'February', value: 1 },
-                    { label: 'March', value: 2 },
-                    { label: 'April', value: 3 },
-                    { label: 'May', value: 4 },
-                    { label: 'June', value: 5 },
-                    { label: 'July', value: 6 },
-                    { label: 'August', value: 7 },
-                    { label: 'September', value: 8 },
-                    { label: 'October', value: 9 },
-                    { label: 'November', value: 10 },
-                    { label: 'December', value: 11 },
-                  ]}
+                  options={monthOptions}
                   onChange={(value) => {
                     if (onChangeFiscalYearStartMonth) {
                       onChangeFiscalYearStartMonth(value.value ?? 0);

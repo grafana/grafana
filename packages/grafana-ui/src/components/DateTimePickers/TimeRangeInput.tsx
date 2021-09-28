@@ -7,7 +7,7 @@ import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
-import { otherOptions, quickOptions } from './rangeOptions';
+import { otherOptions, quickOptions } from './options';
 import { selectors } from '@grafana/e2e-selectors';
 import { stylesFactory } from '../../themes';
 

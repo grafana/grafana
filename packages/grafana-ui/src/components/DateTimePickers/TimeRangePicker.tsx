@@ -23,7 +23,7 @@ import {
   dateMath,
 } from '@grafana/data';
 import { Themeable } from '../../types';
-import { otherOptions, quickOptions } from './rangeOptions';
+import { otherOptions, quickOptions } from './options';
 import { ButtonGroup, ToolbarButton } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
 
