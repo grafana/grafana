@@ -118,6 +118,19 @@ export class ContextSrv {
     }
     return this.hasPermission(action);
   }
+
+  // evaluates access control permission, using fallback if access control is disabled
+  evaluatePermission(fallback: () => string[], action: string) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallback();
+    }
+    if (this.hasPermission(action)) {
+      return [];
+    } else {
+      // Hack to reject when user does not have permission
+      return ['Reject'];
+    }
+  }
 }
 
 let contextSrv = new ContextSrv();
