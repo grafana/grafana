@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -25,7 +24,7 @@ func SetupTestService(t *testing.T) SecretsService {
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
 	return ProvideSecretsService(
-		database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
+		sqlstore.InitTestDB(t),
 		bus.New(),
 		ossencryption.ProvideService(),
 		settings,

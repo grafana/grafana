@@ -14,23 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 
 	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const defaultProvider = "secretKey"
 
-type SecretsStore interface {
-	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
-	GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error)
-	CreateDataKey(ctx context.Context, dataKey types.DataKey) error
-	CreateDataKeyWithDBSession(ctx context.Context, dataKey types.DataKey, sess *sqlstore.DBSession) error
-	DeleteDataKey(ctx context.Context, name string) error
-}
-
 type SecretsService struct {
-	store    SecretsStore
+	sqlStore *sqlstore.SQLStore
 	bus      bus.Bus
 	enc      encryption.Service
 	settings setting.Provider
@@ -40,13 +31,13 @@ type SecretsService struct {
 	dataKeyCache    map[string]dataKeyCacheItem
 }
 
-func ProvideSecretsService(store SecretsStore, bus bus.Bus, enc encryption.Service, settings setting.Provider) SecretsService {
+func ProvideSecretsService(sqlStore *sqlstore.SQLStore, bus bus.Bus, enc encryption.Service, settings setting.Provider) SecretsService {
 	providers := map[string]Provider{
 		defaultProvider: newGrafanaProvider(settings, enc),
 	}
 
 	s := SecretsService{
-		store:           store,
+		sqlStore:        sqlStore,
 		bus:             bus,
 		enc:             enc,
 		settings:        settings,
@@ -221,7 +212,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.store.CreateDataKey(ctx, types.DataKey{
+	err = s.CreateDataKey(ctx, types.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
 		Provider:      s.defaultProvider,
@@ -252,7 +243,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 1. get encrypted data key from database
-	dataKey, err := s.store.GetDataKey(ctx, name)
+	dataKey, err := s.GetDataKey(ctx, name)
 	if err != nil {
 		return nil, err
 	}

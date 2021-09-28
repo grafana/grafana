@@ -23,7 +23,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx)
+		keys, err := svc.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -37,7 +37,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx)
+		keys, err := svc.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -51,7 +51,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx)
+		keys, err := svc.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 2)
 	})
@@ -84,16 +84,16 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	}
 
 	t.Run("querying for a DEK that does not exist", func(t *testing.T) {
-		res, err := svc.store.GetDataKey(ctx, dataKey.Name)
+		res, err := svc.GetDataKey(ctx, dataKey.Name)
 		assert.ErrorIs(t, types.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
 	t.Run("creating an active DEK", func(t *testing.T) {
-		err := svc.store.CreateDataKey(ctx, dataKey)
+		err := svc.CreateDataKey(ctx, dataKey)
 		require.NoError(t, err)
 
-		res, err := svc.store.GetDataKey(ctx, dataKey.Name)
+		res, err := svc.GetDataKey(ctx, dataKey.Name)
 		require.NoError(t, err)
 		assert.Equal(t, dataKey.EncryptedData, res.EncryptedData)
 		assert.Equal(t, dataKey.Provider, res.Provider)
@@ -108,30 +108,30 @@ func TestSecretsService_DataKeys(t *testing.T) {
 			Provider:      "test",
 			EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
 		}
-		err := svc.store.CreateDataKey(ctx, k)
+		err := svc.CreateDataKey(ctx, k)
 		require.Error(t, err)
 
-		res, err := svc.store.GetDataKey(ctx, k.Name)
+		res, err := svc.GetDataKey(ctx, k.Name)
 		assert.Equal(t, types.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
 	t.Run("deleting DEK when no name provided must fail", func(t *testing.T) {
-		beforeDelete, err := svc.store.GetAllDataKeys(ctx)
+		beforeDelete, err := svc.GetAllDataKeys(ctx)
 		require.NoError(t, err)
-		err = svc.store.DeleteDataKey(ctx, "")
+		err = svc.DeleteDataKey(ctx, "")
 		require.Error(t, err)
 
-		afterDelete, err := svc.store.GetAllDataKeys(ctx)
+		afterDelete, err := svc.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, beforeDelete, afterDelete)
 	})
 
 	t.Run("deleting a DEK", func(t *testing.T) {
-		err := svc.store.DeleteDataKey(ctx, dataKey.Name)
+		err := svc.DeleteDataKey(ctx, dataKey.Name)
 		require.NoError(t, err)
 
-		res, err := svc.store.GetDataKey(ctx, dataKey.Name)
+		res, err := svc.GetDataKey(ctx, dataKey.Name)
 		assert.Equal(t, types.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
