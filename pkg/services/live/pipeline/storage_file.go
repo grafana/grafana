@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -52,13 +53,17 @@ func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule Cha
 	if err != nil {
 		return rule, fmt.Errorf("can't read channel rules: %w", err)
 	}
+	ok, reason := rule.Valid()
+	if !ok {
+		return rule, fmt.Errorf("invalid channel rule: %s", reason)
+	}
 	for _, existingRule := range channelRules.Rules {
 		if patternMatch(orgID, rule.Pattern, existingRule) {
 			return rule, fmt.Errorf("pattern already exists in org: %s", rule.Pattern)
 		}
 	}
 	channelRules.Rules = append(channelRules.Rules, rule)
-	err = f.saveChannelRules(channelRules)
+	err = f.saveChannelRules(orgID, channelRules)
 	return rule, err
 }
 
@@ -66,10 +71,15 @@ func patternMatch(orgID int64, pattern string, existingRule ChannelRule) bool {
 	return pattern == existingRule.Pattern && (existingRule.OrgId == orgID || (existingRule.OrgId == 0 && orgID == 1))
 }
 
-func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
 	channelRules, err := f.readRules()
 	if err != nil {
 		return rule, fmt.Errorf("can't read channel rules: %w", err)
+	}
+
+	ok, reason := rule.Valid()
+	if !ok {
+		return rule, fmt.Errorf("invalid channel rule: %s", reason)
 	}
 
 	index := -1
@@ -83,10 +93,10 @@ func (f *FileStorage) UpdateChannelRule(_ context.Context, orgID int64, rule Cha
 	if index > -1 {
 		channelRules.Rules[index] = rule
 	} else {
-		return rule, fmt.Errorf("rule not found")
+		return f.CreateChannelRule(ctx, orgID, rule)
 	}
 
-	err = f.saveChannelRules(channelRules)
+	err = f.saveChannelRules(orgID, channelRules)
 	return rule, err
 }
 
@@ -114,7 +124,11 @@ func (f *FileStorage) readRules() (ChannelRules, error) {
 	return channelRules, nil
 }
 
-func (f *FileStorage) saveChannelRules(rules ChannelRules) error {
+func (f *FileStorage) saveChannelRules(orgID int64, rules ChannelRules) error {
+	ok, reason := checkRulesValid(orgID, rules.Rules)
+	if !ok {
+		return errors.New(reason)
+	}
 	ruleFile := f.ruleFilePath()
 	// Safe to ignore gosec warning G304.
 	// nolint:gosec
@@ -152,5 +166,5 @@ func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern 
 		return fmt.Errorf("rule not found")
 	}
 
-	return f.saveChannelRules(channelRules)
+	return f.saveChannelRules(orgID, channelRules)
 }
