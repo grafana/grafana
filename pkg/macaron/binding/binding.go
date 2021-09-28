@@ -18,6 +18,7 @@ package binding
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -31,6 +32,59 @@ import (
 
 	"gopkg.in/macaron.v1"
 )
+
+// JSON deserializes a JSON payload from the request into the struct pointer that is passed in.
+func JSON(req *http.Request, v interface{}) error {
+	if req.Body != nil {
+		defer req.Body.Close()
+		err := json.NewDecoder(req.Body).Decode(v)
+		if err != nil && err != io.EOF {
+			return err
+		}
+	}
+	return validate(v)
+}
+
+// Form deserializes form-urlencoded data from the request.
+// It gets data from the form-urlencoded body, if present, or from the
+// query string. It uses the http.Request.ParseForm() method
+// to perform deserialization, then reflection is used to map each field
+// into the struct with the proper type. Structs with primitive slice types
+// (bool, float, int, string) can support deserialization of repeated form
+// keys, for example: key=val1&key=val2&key=val3
+func Form(req *http.Request, v interface{}) error {
+	if err := req.ParseForm(); err != nil {
+		return err
+	}
+	if err := req.ParseMultipartForm(MaxMemory); err != nil && err != http.ErrNotMultipart {
+		return err
+	}
+	_ = mapForm(reflect.ValueOf(v), req.Form, req.MultipartForm.File, nil)
+	// TODO:
+	return validate(v)
+}
+
+func Bind(req *http.Request, v interface{}) error {
+	contentType := req.Header.Get("Content-Type")
+	if req.Method == "POST" || req.Method == "PUT" || req.Method == "PATCH" || req.Method == "DELETE" {
+		switch {
+		case strings.Contains(contentType, "form-urlencoded"):
+			return Form(req, v)
+		case strings.Contains(contentType, "multipart/form-data"):
+			return Form(req, v)
+		case strings.Contains(contentType, "json"):
+			return JSON(req, v)
+		case contentType == "":
+			return errors.New("empty Content-Type")
+		default:
+			return errors.New("unsupported Content-Type")
+		}
+	}
+	return Form(req, v)
+}
+
+// TODO:
+func validate(v interface{}) error { return nil }
 
 func bind(ctx *macaron.Context, obj interface{}, ifacePtr ...interface{}) {
 	contentType := ctx.Req.Header.Get("Content-Type")
@@ -98,11 +152,7 @@ func errorHandler(errs Errors, rw http.ResponseWriter) {
 func BindMiddleware(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		bind(ctx, obj, ifacePtr...)
-		if handler, ok := obj.(_ErrorHandler); ok {
-			_, _ = ctx.Invoke(handler.Error)
-		} else {
-			_, _ = ctx.Invoke(errorHandler)
-		}
+		_, _ = ctx.Invoke(errorHandler)
 	}
 }
 
@@ -196,11 +246,11 @@ func bindJson(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	}
 }
 
-// validate is middleware to enforce required fields. If the struct
-// passed in implements Validator, then the user-defined validate method
+// validateMiddleware is middleware to enforce required fields. If the struct
+// passed in implements Validator, then the user-defined validateMiddleware method
 // is executed, and its errors are mapped to the context. This middleware
 // performs no error handling: it merely detects errors and maps them.
-func validate(obj interface{}) macaron.Handler {
+func validateMiddleware(obj interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		var errs Errors
 		v := reflect.ValueOf(obj)
@@ -682,7 +732,7 @@ func ensureNotPointer(obj interface{}) {
 // with errors from deserialization, then maps both the
 // resulting struct and the errors to the context.
 func validateAndMap(obj reflect.Value, ctx *macaron.Context, errors Errors, ifacePtr ...interface{}) {
-	_, _ = ctx.Invoke(validate(obj.Interface()))
+	_, _ = ctx.Invoke(validateMiddleware(obj.Interface()))
 	errors = append(errors, getErrors(ctx)...)
 	ctx.Map(errors)
 	ctx.Map(obj.Elem().Interface())
@@ -697,12 +747,6 @@ func getErrors(ctx *macaron.Context) Errors {
 }
 
 type (
-	// _ErrorHandler is the interface that has custom error handling process.
-	_ErrorHandler interface {
-		// Error handles validation errors with custom process.
-		Error(*macaron.Context, Errors)
-	}
-
 	// _Validator is the interface that handles some rudimentary
 	// request validation logic so your application doesn't have to.
 	_Validator interface {
