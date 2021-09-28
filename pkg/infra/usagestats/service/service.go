@@ -29,6 +29,7 @@ type UsageStats struct {
 	externalMetrics          []usagestats.MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
 	startTime                time.Time
+	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, pluginManager plugins.Manager,
@@ -91,6 +92,10 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 				nextSendInterval = sendInterval
 				sendReportTicker.Reset(nextSendInterval)
 			}
+
+			for _, callback := range uss.sendReportCallbacks {
+				callback()
+			}
 		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
 		case <-ctx.Done():
@@ -137,4 +142,8 @@ FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
 
 	uss.concurrentUserStatsCache.memoized = time.Now()
 	return uss.concurrentUserStatsCache.stats, nil
+}
+
+func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbackFunc) {
+	uss.sendReportCallbacks = append(uss.sendReportCallbacks, c)
 }
