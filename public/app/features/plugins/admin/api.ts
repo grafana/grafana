@@ -73,10 +73,10 @@ export async function getPluginErrors(): Promise<PluginError[]> {
 
 async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {
   try {
-    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}`);
+    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}`, {});
   } catch (error) {
-    // this might be a plugin that doesn't exist on gcom.
-    error.isHandled = isInstalled;
+    // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+    error.isHandled = true;
     return;
   }
 }
@@ -89,6 +89,8 @@ async function getPluginVersions(id: string): Promise<Version[]> {
 
     return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
   } catch (error) {
+    // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+    error.isHandled = true;
     return [];
   }
 }
