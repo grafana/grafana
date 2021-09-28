@@ -6,6 +6,7 @@ import { PanelRenderer } from '@grafana/runtime';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType } from '../../types/rule-form';
+import { messageFromError } from '../../utils/redux';
 
 type Props = {
   preview: PreviewRuleResponse | undefined;
@@ -30,7 +31,11 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
   }
 
   if (data.state === LoadingState.Error) {
-    return <div className={styles.container}>{data.error ?? 'Failed to preview alert rule'}</div>;
+    return (
+      <div className={styles.container}>
+        {data.error ? messageFromError(data.error) : 'Failed to preview alert rule'}
+      </div>
+    );
   }
 
   return (
