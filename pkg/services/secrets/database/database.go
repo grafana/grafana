@@ -58,19 +58,9 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*types.DataKe
 }
 
 func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey types.DataKey) error {
-	if !dataKey.Active {
-		return fmt.Errorf("cannot insert deactivated data keys")
-	}
-
-	dataKey.Created = time.Now()
-	dataKey.Updated = dataKey.Created
-
-	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Table(dataKeysTable).Insert(&dataKey)
-		return err
+	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return ss.CreateDataKeyWithDBSession(ctx, dataKey, sess)
 	})
-
-	return err
 }
 
 func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey types.DataKey, sess *sqlstore.DBSession) error {
