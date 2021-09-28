@@ -132,9 +132,9 @@ interface Props {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
-  onChangeFiscalYearStartMonth?: (month: Number) => void;
+  onChangeFiscalYearStartMonth?: (month: number) => void;
   timeZone?: TimeZone;
-  fiscalYearStartMonth?: Number;
+  fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
   history?: TimeRange[];

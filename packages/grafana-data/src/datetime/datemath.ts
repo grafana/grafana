@@ -26,7 +26,8 @@ export function isMathString(text: string | DateTime | Date): boolean {
 export function parse(
   text?: string | DateTime | Date | null,
   roundUp?: boolean,
-  timezone?: TimeZone
+  timezone?: TimeZone,
+  fiscalYearStartMonth?: number
 ): DateTime | undefined {
   if (!text) {
     return undefined;
@@ -67,7 +68,7 @@ export function parse(
       return time;
     }
 
-    return parseDateMath(mathString, time, roundUp);
+    return parseDateMath(mathString, time, roundUp, fiscalYearStartMonth);
   }
 }
 
@@ -96,13 +97,16 @@ export function isValid(text: string | DateTime): boolean {
  * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
  */
 // TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
-export function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined {
+export function parseDateMath(
+  mathString: string,
+  time: any,
+  roundUp?: boolean,
+  fiscalYearStartMonth = 0
+): DateTime | undefined {
   const strippedMathString = mathString.replace(/\s/g, '');
   const dateTime = time;
   let i = 0;
   const len = strippedMathString.length;
-
-  const fy_start_month = 2;
 
   while (i < len) {
     const c = strippedMathString.charAt(i++);
@@ -155,13 +159,13 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
       if (type === 0) {
         if (roundUp) {
           if (isFiscal) {
-            roundToFiscal(fy_start_month, dateTime, unit, roundUp);
+            roundToFiscal(fiscalYearStartMonth, dateTime, unit, roundUp);
           } else {
             dateTime.endOf(unit);
           }
         } else {
           if (isFiscal) {
-            roundToFiscal(fy_start_month, dateTime, unit, roundUp);
+            roundToFiscal(fiscalYearStartMonth, dateTime, unit, roundUp);
           } else {
             dateTime.startOf(unit);
           }

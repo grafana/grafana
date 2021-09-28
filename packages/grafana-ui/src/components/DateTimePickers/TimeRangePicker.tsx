@@ -32,12 +32,12 @@ export interface TimeRangePickerProps extends Themeable {
   hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
-  fiscalYearStartMonth?: Number;
+  fiscalYearStartMonth?: number;
   timeSyncButton?: JSX.Element;
   isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
-  onChangeFiscalYearStartMonth?: (month: Number) => void;
+  onChangeFiscalYearStartMonth?: (month: number) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;

@@ -13,10 +13,10 @@ import { Field, RadioButtonGroup, Select } from '../..';
 
 interface Props {
   timeZone?: TimeZone;
-  fiscalYearStartMonth?: Number;
+  fiscalYearStartMonth?: number;
   timestamp?: number;
   onChangeTimeZone: (timeZone: TimeZone) => void;
-  onChangeFiscalYearStartMonth?: (month: Number) => void;
+  onChangeFiscalYearStartMonth?: (month: number) => void;
 }
 
 export const TimePickerFooter: FC<Props> = (props) => {

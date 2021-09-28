@@ -70,7 +70,7 @@ export class DashNavTimeControls extends Component<Props> {
     this.onRefresh();
   };
 
-  onChangeFiscalYearStartMonth = (month: Number) => {
+  onChangeFiscalYearStartMonth = (month: number) => {
     this.props.dashboard.fiscalYearStartMonth = month;
     this.onRefresh();
   };

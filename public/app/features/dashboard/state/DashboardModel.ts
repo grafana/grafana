@@ -96,7 +96,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
-  fiscalYearStartMonth?: Number;
+  fiscalYearStartMonth?: number;
   private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
