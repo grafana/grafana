@@ -143,7 +143,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
 		}
 		uaMinInterval = legacyMinInterval
-
 	}
 	uaCfg.MinInterval = uaMinInterval
 
