@@ -19,7 +19,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-	ac := ProvideService(cfg, &usagestats.UsageStatsMock{MetricsFuncs: make([]usagestats.MetricsFunc, 0)})
+	ac := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
 	return ac
 }
 
@@ -136,7 +136,7 @@ func TestUsageMetrics(t *testing.T) {
 				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			}
 
-			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t, MetricsFuncs: make([]usagestats.MetricsFunc, 0)})
+			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
@@ -251,7 +251,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
 				Cfg:        setting.NewCfg(),
-				UsageStats: &usagestats.UsageStatsMock{T: t, MetricsFuncs: make([]usagestats.MetricsFunc, 0)},
+				UsageStats: &usagestats.UsageStatsMock{T: t},
 				Log:        log.New("accesscontrol-test"),
 			}
 
@@ -370,7 +370,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
 				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t, MetricsFuncs: make([]usagestats.MetricsFunc, 0)},
+				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
@@ -456,7 +456,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			// Setup
 			ac := &OSSAccessControlService{
 				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t, MetricsFuncs: make([]usagestats.MetricsFunc, 0)},
+				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}

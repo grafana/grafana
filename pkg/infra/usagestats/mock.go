@@ -8,17 +8,17 @@ import (
 )
 
 type UsageStatsMock struct {
-	T            *testing.T
-	MetricsFuncs []MetricsFunc
+	T            testing.TB
+	metricsFuncs []MetricsFunc
 }
 
 func (usm *UsageStatsMock) RegisterMetricsFunc(fn MetricsFunc) {
-	usm.MetricsFuncs = append(usm.MetricsFuncs, fn)
+	usm.metricsFuncs = append(usm.metricsFuncs, fn)
 }
 
 func (usm *UsageStatsMock) GetUsageReport(_ context.Context) (Report, error) {
 	all := make(map[string]interface{})
-	for _, fn := range usm.MetricsFuncs {
+	for _, fn := range usm.metricsFuncs {
 		fnMetrics, err := fn()
 		require.NoError(usm.T, err)
 
