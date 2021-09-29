@@ -2466,8 +2466,8 @@ Example:
 
 ```js
 backendSrv.get(‘http://your.url/api’).then(result => {
-  this.result = result;
-this.$scope.$digest();
+    this.result = result;
+    this.$scope.$digest();
 });
 ```
 
