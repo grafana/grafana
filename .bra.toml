@@ -15,6 +15,7 @@ watch_dirs = [
 watch_exts = [".go", ".ini", ".toml", ".template.html"]
 build_delay = 1500
 cmds = [
+  ["make", "gen-go"],
   ["go", "run", "build.go", "-dev", "build-server"],
   ["./bin/grafana-server", "-packaging=dev", "cfg:app_mode=development"]
 ]
