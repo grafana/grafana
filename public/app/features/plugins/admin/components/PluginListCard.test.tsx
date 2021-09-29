@@ -33,7 +33,7 @@ describe('PluginCard', () => {
   it('renders a card with link, image, name, orgName and badges', () => {
     render(<PluginListCard plugin={plugin} pathName="/plugins" />);
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin?page=overview');
 
     const logo = screen.getByRole('img');
     expect(logo).toHaveAttribute('src', plugin.info.logos.small);

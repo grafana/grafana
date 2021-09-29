@@ -186,7 +186,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
-	frameWithLink := addConfigData(*frame, url)
+	frameWithLink := addConfigLinks(*frame, url)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
 	}
@@ -196,7 +196,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	return dataResponse
 }
 
-func addConfigData(frame data.Frame, dl string) data.Frame {
+func addConfigLinks(frame data.Frame, dl string) data.Frame {
 	for i := range frame.Fields {
 		if frame.Fields[i].Config == nil {
 			frame.Fields[i].Config = &data.FieldConfig{}

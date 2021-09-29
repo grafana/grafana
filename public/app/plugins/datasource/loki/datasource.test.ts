@@ -1,6 +1,17 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries, toUtc } from '@grafana/data';
+import {
+  AnnotationQueryRequest,
+  CoreApp,
+  DataFrame,
+  dateTime,
+  FieldCache,
+  TimeSeries,
+  toUtc,
+  LogRowModel,
+  MutableDataFrame,
+  FieldType,
+} from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -880,6 +891,33 @@ describe('LokiDatasource', () => {
       const unsafeInterval = safeInterval - 0.01;
       let interval = ds.adjustInterval(unsafeInterval, resolution, range);
       expect(interval).toBeGreaterThanOrEqual(safeInterval);
+    });
+  });
+
+  describe('prepareLogRowContextQueryTarget', () => {
+    const ds = createLokiDSForTests();
+    it('creates query with only labels from /labels API', () => {
+      const row: LogRowModel = {
+        rowIndex: 0,
+        dataFrame: new MutableDataFrame({
+          fields: [
+            {
+              name: 'tsNs',
+              type: FieldType.string,
+              values: ['0'],
+            },
+          ],
+        }),
+        labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
+        uid: '1',
+      } as any;
+
+      //Mock stored labels to only include "bar" label
+      jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
+      const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
+
+      expect(contextQuery.expr).toContain('baz');
+      expect(contextQuery.expr).not.toContain('uniqueParsedLabel');
     });
   });
 });

@@ -41,10 +41,10 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	s := &store.DBstore{
-		BaseInterval:           10 * time.Second,
-		DefaultIntervalSeconds: 60,
-		SQLStore:               sqlStore,
-		Logger:                 log.New("alertmanager-test"),
+		BaseInterval:    10 * time.Second,
+		DefaultInterval: 60 * time.Second,
+		SQLStore:        sqlStore,
+		Logger:          log.New("alertmanager-test"),
 	}
 
 	kvStore := newFakeKVStore(t)
