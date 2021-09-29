@@ -1,10 +1,13 @@
 package load
 
 import (
+	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,13 +25,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var p = GetDefaultLoadPaths()
+var (
+	p      = GetDefaultLoadPaths()
+	update = flag.Bool("update", false, "update golden files")
+)
 
 type testType int
 
 const (
-	dashboardValidityTests testType = 1
-	trimApplyDefaultsTests testType = 2
+	dashboardValidity testType = 1
+	trimApplyDefaults testType = 2
+	goldenFileUpdate  testType = 3
 )
 
 // for now we keep the validdir as input parameter since for trim apply default we can't use devenv directory yet,
@@ -70,7 +77,21 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, t
 
 			t.Run(filepath.Base(path), func(t *testing.T) {
 				switch testtype {
-				case trimApplyDefaultsTests:
+				case trimApplyDefaults:
+					{
+						dsSchema, err := schema.SearchAndValidate(sch, string(byt))
+						require.NoError(t, err)
+
+						// Trimmed default json file
+						trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
+						require.NoError(t, err)
+
+						// store the trimmed result into testdata for easy debug
+						out, err := schema.ApplyDefaults(trimmed, dsSchema.CUE())
+						require.NoError(t, err)
+						require.JSONEq(t, string(byt), out.Value.(string))
+					}
+				case goldenFileUpdate:
 					{
 						dsSchema, err := schema.SearchAndValidate(sch, string(byt))
 						require.NoError(t, err)
@@ -78,16 +99,14 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, t
 						origin, err := schema.ApplyDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
 						require.NoError(t, err)
 
-						// Trimmed default json file
-						trimmed, err := schema.TrimDefaults(origin, dsSchema.CUE())
+						var prettyJSON bytes.Buffer
+						err = json.Indent(&prettyJSON, []byte(origin.Value.(string)), "", "\t")
 						require.NoError(t, err)
 
-						// store the trimmed result into testdata for easy debug
-						out, err := schema.ApplyDefaults(trimmed, dsSchema.CUE())
+						err = ioutil.WriteFile(filepath.Join("..", "testdata", "devenvgoldenfiles", d.Name()), prettyJSON.Bytes(), 0644)
 						require.NoError(t, err)
-						require.JSONEq(t, origin.Value.(string), out.Value.(string))
 					}
-				case dashboardValidityTests:
+				case dashboardValidity:
 					err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
 					if err != nil {
 						// Testify trims errors to short length. We want the full text
@@ -141,21 +160,32 @@ func TestDevenvDashboardValidity(t *testing.T) {
 	var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
-	t.Run("base", doTestAgainstDevenv(dash, validdir, dashboardValidityTests))
+	t.Run("base", doTestAgainstDevenv(dash, validdir, dashboardValidity))
 
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
-	t.Run("dist", doTestAgainstDevenv(ddash, validdir, dashboardValidityTests))
+	t.Run("dist", doTestAgainstDevenv(ddash, validdir, dashboardValidity))
+}
+
+// TO update the golden file located in pkg/schema/testdata/devenvgoldenfiles
+// run go test -v ./pkg/schema/load/... -update
+func TestUpdateDevenvDashboardGoldenFiles(t *testing.T) {
+	flag.Parse()
+	if *update {
+		ddash, err := DistDashboardFamily(p)
+		require.NoError(t, err, "error while loading dist dashboard scuemata")
+		var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
+		t.Run("updategoldenfile", doTestAgainstDevenv(ddash, validdir, goldenFileUpdate))
+	}
 }
 
 func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
-	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
-
-	// TODO will need to expand this appropriately when the scuemata contain
-	// more than one schema
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
-	t.Run("dist", doTestAgainstDevenv(ddash, validdir, trimApplyDefaultsTests))
+	// TODO will need to expand this appropriately when the scuemata contain
+	// more than one schema
+	validdir := filepath.Join("..", "testdata", "devenvgoldenfiles")
+	t.Run("defaults", doTestAgainstDevenv(ddash, validdir, trimApplyDefaults))
 }
 
 func TestPanelValidity(t *testing.T) {
