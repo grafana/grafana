@@ -25,4 +25,3 @@ type LicenseEnvironment interface {
 	// Environment is a map of environment variables
 	Environment() map[string]string
 }
-
