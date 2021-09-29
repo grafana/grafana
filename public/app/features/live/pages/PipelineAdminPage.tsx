@@ -64,8 +64,8 @@ export default function PipelineAdminPage() {
 
   const onRemoveRule = (pattern: string) => {
     getBackendSrv()
-      .delete(`api/live/channel-rules`, { pattern: pattern })
-      .then((response) => response.json());
+      .delete(`api/live/channel-rules`, JSON.stringify({ pattern: pattern }))
+      .catch((e) => console.error(e));
   };
   return (
     <Page navModel={navModel}>
