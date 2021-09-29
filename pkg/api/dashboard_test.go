@@ -87,37 +87,9 @@ type testState struct {
 	dashQueries []*models.GetDashboardQuery
 }
 
-type usageStatsMock struct {
-	t            *testing.T
-	metricsFuncs []usagestats.MetricsFunc
-}
-
-func (usm *usageStatsMock) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
-	usm.metricsFuncs = append(usm.metricsFuncs, fn)
-}
-
-func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.Report, error) {
-	all := make(map[string]interface{})
-	for _, fn := range usm.metricsFuncs {
-		fnMetrics, err := fn()
-		require.NoError(usm.t, err)
-
-		for name, value := range fnMetrics {
-			all[name] = value
-		}
-	}
-	return usagestats.Report{Metrics: all}, nil
-}
-
-func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
-	return true
-}
-
-func (usm *usageStatsMock) RegisterSendReportCallback(_ usagestats.SendReportCallbackFunc) {}
-
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), &usageStatsMock{t: t})
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t), &usagestats.UsageStatsMock{T: t})
 	require.NoError(t, err)
 	return gLive
 }

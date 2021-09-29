@@ -197,7 +197,9 @@ Panel queries and/or annotation queries that used more than one statistic will b
 
 - **Alerting:** Deduplicate receivers during migration. [#36812](https://github.com/grafana/grafana/pull/36812), [@codesome](https://github.com/codesome)
 - **ColorPicker:** Display colors as RGBA. [#37231](https://github.com/grafana/grafana/pull/37231), [@nikki-kiga](https://github.com/nikki-kiga)
+- **Encryption:** Add support for multiple encryption algorithms (aes-gcm). (Enterprise)
 - **Select:** Make portalling the menu opt-in, but opt-in _everywhere_. [#37501](https://github.com/grafana/grafana/pull/37501), [@ashharrison90](https://github.com/ashharrison90)
+- **TeamSync:** Batch team synchronization. (Enterprise)
 - **TimeRangePicker:** Improve accessibility. [#36912](https://github.com/grafana/grafana/pull/36912), [@tskarhed](https://github.com/tskarhed)
 
 ### Bug fixes
@@ -297,6 +299,8 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Prometheus:** Update PromQL typeahead and highlighting. [#36730](https://github.com/grafana/grafana/pull/36730), [@ekpdt](https://github.com/ekpdt)
 - **Prometheus:** interpolate variable for step field. [#36437](https://github.com/grafana/grafana/pull/36437), [@zoltanbedi](https://github.com/zoltanbedi)
 - **Provisioning:** Improve validation by validating across all dashboard providers. [#26742](https://github.com/grafana/grafana/pull/26742), [@nabokihms](https://github.com/nabokihms)
+- **Query cache:** Adding an encryption option for caching. (Enterprise)
+- **Reporting:** Use start and end dates for scheduling. (Enterprise)
 - **SQL Datasources:** Allow multiple string/labels columns with time series. [#36485](https://github.com/grafana/grafana/pull/36485), [@kylebrandt](https://github.com/kylebrandt)
 - **Select:** Portal select menu to document.body. [#36398](https://github.com/grafana/grafana/pull/36398), [@ashharrison90](https://github.com/ashharrison90)
 - **Team Sync:** Add group mapping to support team sync in the Generic OAuth provider. [#36307](https://github.com/grafana/grafana/pull/36307), [@wardbekker](https://github.com/wardbekker)
@@ -532,7 +536,7 @@ The following endpoints were deprecated for Grafana v5.0 and support for them ha
 - **AzureMonitor:** Support querying subscriptions and resource groups in Azure Monitor Logs. [#34766](https://github.com/grafana/grafana/pull/34766), [@joshhunt](https://github.com/joshhunt)
 - **AzureMonitor:** remove requirement for default subscription. [#34787](https://github.com/grafana/grafana/pull/34787), [@kostrse](https://github.com/kostrse)
 - **CloudWatch:** Add Lambda@Edge Amazon CloudFront metrics. [#34561](https://github.com/grafana/grafana/pull/34561), [@razor-x](https://github.com/razor-x)
-- **CloudWatch:** Add missing AWS and AppSync metrics. [#34691](https://github.com/grafana/grafana/pull/34691), [@razor-x](https://github.com/razor-x)
+- **CloudWatch:** Add missing AWS AppSync metrics. [#34691](https://github.com/grafana/grafana/pull/34691), [@razor-x](https://github.com/razor-x)
 - **ConfirmModal:** Auto focus delete button. [#34917](https://github.com/grafana/grafana/pull/34917), [@torkelo](https://github.com/torkelo)
 - **Explore:** Add caching for queries that are run from logs navigation. [#34297](https://github.com/grafana/grafana/pull/34297), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Loki:** Add formatting for annotations. [#34774](https://github.com/grafana/grafana/pull/34774), [@fredr](https://github.com/fredr)
@@ -541,6 +545,8 @@ The following endpoints were deprecated for Grafana v5.0 and support for them ha
 - **Overrides:** Include a manual override option to hide something from visualization. [#34783](https://github.com/grafana/grafana/pull/34783), [@torkelo](https://github.com/torkelo)
 - **PieChart:** Support row data in pie charts. [#34755](https://github.com/grafana/grafana/pull/34755), [@torkelo](https://github.com/torkelo)
 - **Prometheus:** Update default HTTP method to POST for existing data sources. [#34599](https://github.com/grafana/grafana/pull/34599), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Reporting:** Enable generating PDF for anonymous users. (Enterprise)
+- **SAML:** Make private key and certificate optional. (Enterprise)
 - **Time series panel:** Position tooltip correctly when window is scrolled or resized. [#34782](https://github.com/grafana/grafana/pull/34782), [@dprokop](https://github.com/dprokop)
 
 ### Bug fixes

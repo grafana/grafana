@@ -216,6 +216,10 @@ export enum RequestStatus {
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
+export type RemotePluginResponse = {
+  plugins: RemotePlugin[];
+  error?: Error;
+};
 
 export type RequestInfo = {
   status: RequestStatus;
