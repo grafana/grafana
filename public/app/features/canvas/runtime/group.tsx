@@ -70,7 +70,7 @@ export class GroupState extends ElementState {
     );
   }
 
-  /** Recursivly visit all nodes */
+  /** Recursively visit all nodes */
   visit(visitor: (v: ElementState) => void) {
     super.visit(visitor);
     for (const e of this.elements) {

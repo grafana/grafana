@@ -10,6 +10,8 @@ import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
 
+import Moveable from 'moveable';
+
 let counter = 100;
 
 export class ElementState {
@@ -102,7 +104,7 @@ export class ElementState {
     this.dataStyle = css;
   }
 
-  /** Recursivly visit all nodes */
+  /** Recursively visit all nodes */
   visit(visitor: (v: ElementState) => void) {
     visitor(this);
   }
@@ -126,10 +128,70 @@ export class ElementState {
     return { ...this.options };
   }
 
+  // updateElementPosition(top: number, left: number) {
+  //   console.log('BEFORE', this.options.placement);
+
+  //   this.options.placement = {
+  //     ...this.options.placement,
+  //     top: top,
+  //     left: left,
+  //   };
+
+  //   console.log('AFTER', this.options.placement);
+  // }
+
+  // use transform to modify relative top / left values
+  // whether than worrying right now about serializing it
+
+  // resize / selecto
+  // Do we want to serialize at the end of each event (how often events are fired)
+  // Implement resize / selecto first before determining approach for serialization
+
+  // IF define object with relative positioning (bottom / right) -> does transform still work -> double check
+
+  setUpMoveable(target: HTMLDivElement) {
+    const moveable = new Moveable(document.body, {
+      target: target,
+      draggable: true,
+      throttleDrag: 0,
+      throttleDragRotate: 0,
+    });
+
+    const frame = {
+      translate: [0, 0],
+    };
+
+    // const updateElementPosition = (top: number, left: number) => {
+    //   console.log('BEFORE', top, left);
+
+    //   this.options.placement = {
+    //     ...this.options.placement,
+    //     top: top,
+    //     left: left,
+    //   };
+
+    //   console.log('AFTER', this.options.placement);
+    // };
+
+    moveable
+      .on('dragStart', ({ set }) => {
+        set(frame.translate);
+      })
+      .on('drag', ({ target, beforeTranslate }) => {
+        frame.translate = beforeTranslate;
+        target.style.transform = `translate(${beforeTranslate[0]}px, ${beforeTranslate[1]}px)`;
+      })
+      .on('dragEnd', ({ target, isDrag, clientX, clientY }) => {
+        console.log('onDragEnd', target, isDrag);
+        console.log(target.style.top);
+        // updateElementPosition(Number(target.style.top), Number(target.style.left));
+      });
+  }
+
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.setUpMoveable}>
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );
