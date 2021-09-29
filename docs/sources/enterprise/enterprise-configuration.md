@@ -403,9 +403,9 @@ The default is `"redis://localhost:6379"`.
 
 ### cluster
 
-A comma separated list of Redis cluster members in `host:port` format. Example: `localhost:7000, localhost: 7001, localhost:7002`.
+A comma-separated list of Redis cluster members in `host:port` format. For example, `localhost:7000, localhost: 7001, localhost:7002`.
 
-> **Note:** The value for `url` will be ignored if `cluster` is specified.
+> **Note:** If you have specify `cluster`, the value for `url` is ignored.
 
 ### prefix
 
