@@ -22,6 +22,7 @@ updates:
       - dependency-name: "slate"
       - dependency-name: "slate-plain-serializer"
       - dependency-name: "systemjs"
+      - dependency-name: "ts-loader" # we should remove ts-loader and use babel-loader instead
     reviewers:
       - "grafana/frontend-ops"
     versioning-strategy: "increase-if-necessary"
