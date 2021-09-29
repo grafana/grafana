@@ -49,7 +49,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -321,7 +321,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -797,7 +797,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -1177,7 +1177,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -1761,7 +1761,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -2130,7 +2130,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -2707,7 +2707,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -3047,7 +3047,7 @@ steps:
   depends_on:
   - initialize
 
-- name: list-frontend
+- name: lint-frontend
   image: grafana/build-container:1.4.3
   commands:
   - yarn run prettier:check
@@ -3564,6 +3564,6 @@ get:
 
 ---
 kind: signature
-hmac: 209f3aa02cd75c161552a94b2d2c7d98d84c8dc3ead1bf6c74c026676c767be8
+hmac: 1a0a169db008e1e64f43227aef586c8a6f6c763ce8ffb91923ac60d4f94ca33f
 
 ...

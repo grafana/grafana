@@ -403,7 +403,7 @@ def test_frontend_step():
 
 def lint_frontend_step():
     return {
-        'name': 'list-frontend',
+        'name': 'lint-frontend',
         'image': build_image,
         'depends_on': [
             'initialize',
