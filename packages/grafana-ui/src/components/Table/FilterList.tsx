@@ -20,7 +20,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
   const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');
   const items = useMemo(
-    () => options.filter((option) => option.label?.toLowerCase().indexOf(searchFilter.toLowerCase()) !== -1),
+    () => options.filter((option) => option.label?.toLowerCase().includes(searchFilter.toLowerCase())),
     [options, searchFilter]
   );
   const gutter = theme.spacing.gridSize;
