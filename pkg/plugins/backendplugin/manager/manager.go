@@ -15,23 +15,33 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
+const (
+	adminUserID    = 1
+	adminUserOrgID = 1
+)
+
 func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
-	pluginRequestValidator models.PluginRequestValidator) *Manager {
+	pluginRequestValidator models.PluginRequestValidator,
+	dataSourceCache datasources.CacheService) *Manager {
 	s := &Manager{
 		Cfg:                    cfg,
 		License:                licensing,
 		PluginRequestValidator: pluginRequestValidator,
 		logger:                 log.New("plugins.backend"),
 		plugins:                map[string]backendplugin.Plugin{},
+		DataSourceCache:        dataSourceCache,
 	}
 	return s
 }
@@ -43,6 +53,7 @@ type Manager struct {
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
+	DataSourceCache        datasources.CacheService
 }
 
 func (m *Manager) Run(ctx context.Context) error {
@@ -193,6 +204,11 @@ func (m *Manager) start(ctx context.Context, p backendplugin.Plugin) {
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		p.Logger().Error("Failed to start plugin", "error", err)
 	}
+
+	err := m.checkPluginDataSources(p)
+	if err != nil {
+		p.Logger().Error("Plugin check failed", p.PluginID(), err)
+	}
 }
 
 // StartPlugin starts a non-managed backend plugin
@@ -209,6 +225,67 @@ func (m *Manager) StartPlugin(ctx context.Context, pluginID string) error {
 	}
 
 	return startPluginAndRestartKilledProcesses(ctx, p)
+}
+
+// checkPlugin calls the healthcheck on each configured datasource for a plugin
+func (m *Manager) checkPluginDataSources(p backendplugin.Plugin) error {
+	query := models.GetDataSourcesByTypeQuery{
+		Type: p.PluginID(),
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return fmt.Errorf("failed to query datasources: %v", err)
+	}
+
+	adminUser := models.SignedInUser{
+		UserId:  adminUserID,
+		Name:    "admin",
+		OrgId:   adminUserOrgID,
+		OrgRole: "admin",
+	}
+	for _, ds := range query.Result {
+		err := m.CheckDatasourceHealth(adminUser, p, ds.Id, ds.Name)
+		if err != nil {
+			m.logger.Error(fmt.Sprintf("error checking datasource: %v", err))
+		}
+	}
+	return nil
+}
+
+// CheckDatasourceHealth sends a health check request to the plugin datasource
+func (m *Manager) CheckDatasourceHealth(adminUser models.SignedInUser, p backendplugin.Plugin,
+	datasourceID int64, datasourceName string) error {
+
+	ds, err := m.DataSourceCache.GetDatasource(datasourceID, &adminUser, true)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			return fmt.Errorf("access denied to datasource: %v", err)
+		}
+		return fmt.Errorf("unable to load datasource metadata: %v", err)
+	}
+
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
+	if err != nil {
+		return fmt.Errorf("unable to get datasource model: %v", err)
+	}
+	pCtx := backend.PluginContext{
+		User:                       adapters.BackendUserFromSignedInUser(&adminUser),
+		OrgID:                      adminUser.OrgId,
+		PluginID:                   p.PluginID(),
+		DataSourceInstanceSettings: dsInstanceSettings,
+	}
+
+	ctx := context.Background()
+	m.logger.Info(fmt.Sprintf("Checking healthcheck on %s", p.PluginID()))
+	resp, err := m.CheckHealth(ctx, pCtx)
+	if err != nil {
+		m.logger.Error("Plugin %s failed to initialise", datasourceName)
+	} else if resp.Status != backend.HealthStatusOk {
+		m.logger.Error("Plugin %s responded %s to initialize", datasourceName, resp.Status.String())
+	} else {
+		m.logger.Info("Plugin %s responded %s to initialize", datasourceName, resp.Status.String())
+	}
+	return nil
 }
 
 // stop stops all managed backend plugins
