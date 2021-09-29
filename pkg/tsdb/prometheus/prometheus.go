@@ -326,32 +326,51 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 func parseResponse(value map[PrometheusQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
 	frames := data.Frames{}
 
-	for queryType, value := range value {
+	for _, value := range value {
 		matrix, ok := value.(model.Matrix)
 		if ok {
-			matrixFrames := matrixToDataFrames(matrix, query, queryType)
+			matrixFrames := matrixToDataFrames(matrix, query)
 			frames = append(frames, matrixFrames...)
+			continue
 		}
 
 		vector, ok := value.(model.Vector)
 		if ok {
-			vectorFrames := vectorToDataFrames(vector, query, queryType)
+			vectorFrames := vectorToDataFrames(vector, query)
 			frames = append(frames, vectorFrames...)
+			continue
 		}
 
 		scalar, ok := value.(*model.Scalar)
 		if ok {
-			scalarFrames := scalarToDataFrames(scalar, query, queryType)
+			scalarFrames := scalarToDataFrames(scalar, query)
 			frames = append(frames, scalarFrames...)
+			continue
 		}
 
 		exemplar, ok := value.([]apiv1.ExemplarQueryResult)
 		if ok {
-			exemplarFrames := exemplarToDataFrames(exemplar, query, queryType)
+			exemplarFrames := exemplarToDataFrames(exemplar, query)
 			frames = append(frames, exemplarFrames...)
+			continue
 		}
 	}
 	return frames, nil
+}
+
+// IsAPIError returns whether err is or wraps a Prometheus error.
+func IsAPIError(err error) bool {
+	// Check if the right error type is in err's chain.
+	var e *apiv1.Error
+	return errors.As(err, &e)
+}
+
+func ConvertAPIError(err error) error {
+	var e *apiv1.Error
+	if errors.As(err, &e) {
+		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
+	}
+	return err
 }
 
 func calculateRateInterval(interval time.Duration, scrapeInterval string, intervalCalculator intervalv2.Calculator) time.Duration {
@@ -369,7 +388,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
+func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range matrix {
@@ -389,7 +408,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, queryType P
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
 		frame.Meta = &data.FrameMeta{
 			Custom: map[string]PrometheusQueryType{
-				"queryType": queryType,
+				"resultType": "matrix",
 			},
 		}
 		frames = append(frames, frame)
@@ -397,7 +416,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, queryType P
 	return frames
 }
 
-func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
+func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery) data.Frames {
 	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
 	values := []float64{float64(scalar.Value)}
 	name := fmt.Sprintf("%g", values[0])
@@ -406,7 +425,7 @@ func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, queryType 
 		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
 	frame.Meta = &data.FrameMeta{
 		Custom: map[string]PrometheusQueryType{
-			"queryType": queryType,
+			"resultType": "scalar",
 		},
 	}
 
@@ -414,7 +433,7 @@ func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, queryType 
 	return frames
 }
 
-func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
+func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
@@ -429,7 +448,7 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, queryType P
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
 		frame.Meta = &data.FrameMeta{
 			Custom: map[string]PrometheusQueryType{
-				"queryType": queryType,
+				"resultType": "vector",
 			},
 		}
 		frames = append(frames, frame)
@@ -438,7 +457,7 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, queryType P
 	return frames
 }
 
-func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
 	events := make([]map[string]interface{}, len(response))
 	for _, exemplarData := range response {
@@ -578,7 +597,7 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	frame.Meta = &data.FrameMeta{
 		Custom: map[string]PrometheusQueryType{
-			"queryType": queryType,
+			"resultType": "exemplars",
 		},
 	}
 

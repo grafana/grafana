@@ -44,7 +44,7 @@ interface TimeAndValue {
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
   // We want to process instant results in Explore as table
-  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.queryType) === 'instant') {
+  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
     return true;
   }
 
@@ -76,7 +76,7 @@ export function transformV2(
 
   const [exemplarResults, otherResults]: [DataFrame[], DataFrame[]] = partition(
     results,
-    (dataFrame) => dataFrame.meta?.custom?.queryType === 'exemplar'
+    (dataFrame) => dataFrame.meta?.custom?.resultType === 'exemplar'
   );
 
   // EXEMPLAR FRAMES: We enrich exemplar frames with data links and add dataTopic meta info
