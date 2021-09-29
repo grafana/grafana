@@ -432,11 +432,12 @@ def restore_cache_step(cache):
     mount = []
     if cache == 'yarn':
         name = 'restore-cache-yarn'
-        cache_key = 'yarn'
+        cache_key = 'test123'
         local_root = '/cache'
         volumes = [{'name': 'cache', 'path': '/cache',},]
         mount = ['yarn']
     else:
+        cache_key = 'node_modules'
         name = 'restore-cache-node-modules'
         mount = ['node_modules']
     return {
@@ -466,7 +467,7 @@ def rebuild_cache_step(cache):
     mount = []
     if cache == 'yarn':
         name = 'rebuild-cache-yarn'
-        cache_key = 'yarn'
+        cache_key = 'test123'
         local_root = '/cache'
         volumes = [{'name': 'cache', 'path': '/cache',},]
         mount = ['yarn']
