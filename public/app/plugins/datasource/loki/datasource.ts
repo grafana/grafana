@@ -36,7 +36,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { addParsedLabelToQuery, getHighlighterExpressionsFromQuery, queryHasPipeParser } from './query_utils';
+import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
@@ -429,10 +429,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return { ...query, expr: expression };
   }
 
-  getHighlighterExpression(query: LokiQuery): string[] {
-    return getHighlighterExpressionsFromQuery(query.expr);
-  }
-
   getTime(date: string | DateTime, roundUp: boolean) {
     if (typeof date === 'string') {
       date = dateMath.parse(date, roundUp)!;
@@ -471,8 +467,17 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
+    const labels = this.languageProvider.getLabelKeys();
     const query = Object.keys(row.labels)
-      .map((label) => `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`) // escape backslashes in label as users can't escape them by themselves
+      .map((label: string) => {
+        if (labels.includes(label)) {
+          // escape backslashes in label as users can't escape them by themselves
+          return `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`;
+        }
+        return '';
+      })
+      // Filter empty strings
+      .filter((label) => !!label)
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer

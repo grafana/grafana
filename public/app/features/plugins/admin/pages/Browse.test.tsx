@@ -6,7 +6,8 @@ import { locationService } from '@grafana/runtime';
 import { PluginType } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
-import { PluginAdminRoutes, CatalogPlugin } from '../types';
+import { fetchRemotePlugins } from '../state/actions';
+import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../types';
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import BrowsePage from './Browse';
 
@@ -17,8 +18,12 @@ jest.mock('@grafana/runtime', () => {
   return { ...original, pluginAdminEnabled: true };
 });
 
-const renderBrowse = (path = '/plugins', plugins: CatalogPlugin[] = []): RenderResult => {
-  const store = configureStore({ plugins: getPluginsStateMock(plugins) });
+const renderBrowse = (
+  path = '/plugins',
+  plugins: CatalogPlugin[] = [],
+  pluginsStateOverride?: ReducerState
+): RenderResult => {
+  const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
   locationService.push(path);
   const props = getRouteComponentProps({
     route: { routeName: PluginAdminRoutes.Home } as any,
@@ -73,6 +78,37 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
         getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
         getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
+
+      // Not showing not installed plugins
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+    });
+
+    it('should list all plugins (including disabled plugins) when filtering by all', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
+    });
+
+    it('should list installed plugins (including disabled plugins) when filtering by installed', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=installed', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
@@ -139,6 +175,7 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
   });
+
   describe('when searching', () => {
     it('should only list plugins matching search', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [
@@ -254,6 +291,32 @@ describe('Browse list of plugins', () => {
         'Diagram',
         'Redis Application',
       ]);
+    });
+  });
+
+  describe('when GCOM api is not available', () => {
+    it('should disable the All / Installed filter', async () => {
+      const plugins = [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 2', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 3', isInstalled: true }),
+      ];
+      const state = getPluginsStateMock(plugins);
+
+      // Mock the store like if the remote plugins request was rejected
+      const stateOverride = {
+        ...state,
+        requests: {
+          ...state.requests,
+          [fetchRemotePlugins.typePrefix]: {
+            status: RequestStatus.Rejected,
+          },
+        },
+      };
+
+      // The radio input for the filters should be disabled
+      const { getByRole } = renderBrowse('/plugins', [], stateOverride);
+      await waitFor(() => expect(getByRole('radio', { name: 'Installed' })).toBeDisabled());
     });
   });
 });

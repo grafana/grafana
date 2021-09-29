@@ -1,5 +1,12 @@
 import { EntityState } from '@reduxjs/toolkit';
-import { PluginType, PluginSignatureStatus, PluginSignatureType, PluginDependencies } from '@grafana/data';
+import {
+  PluginType,
+  PluginSignatureStatus,
+  PluginSignatureType,
+  PluginDependencies,
+  PluginErrorCode,
+} from '@grafana/data';
+import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
@@ -13,7 +20,7 @@ export enum PluginAdminRoutes {
   DetailsAdmin = 'plugins-details-admin',
 }
 
-export enum IconName {
+export enum PluginIconName {
   app = 'apps',
   datasource = 'database',
   panel = 'credit-card',
@@ -30,6 +37,7 @@ export interface CatalogPlugin {
   isCore: boolean;
   isEnterprise: boolean;
   isInstalled: boolean;
+  isDisabled: boolean;
   name: string;
   orgName: string;
   signature: PluginSignatureStatus;
@@ -41,6 +49,7 @@ export interface CatalogPlugin {
   updatedAt: string;
   version: string;
   details?: CatalogPluginDetails;
+  error?: PluginErrorCode;
 }
 
 export interface CatalogPluginDetails {
@@ -185,6 +194,7 @@ export enum PluginStatus {
   INSTALL = 'INSTALL',
   UNINSTALL = 'UNINSTALL',
   UPDATE = 'UPDATE',
+  REINSTALL = 'REINSTALL',
 }
 
 export enum PluginTabLabels {
@@ -194,11 +204,22 @@ export enum PluginTabLabels {
   DASHBOARDS = 'Dashboards',
 }
 
+export enum PluginTabIds {
+  OVERVIEW = 'overview',
+  VERSIONS = 'version-history',
+  CONFIG = 'config',
+  DASHBOARDS = 'dashboards',
+}
+
 export enum RequestStatus {
   Pending = 'Pending',
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
+export type RemotePluginResponse = {
+  plugins: RemotePlugin[];
+  error?: Error;
+};
 
 export type RequestInfo = {
   status: RequestStatus;
@@ -210,6 +231,9 @@ export type RequestInfo = {
 
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
+  icon?: IconName | string;
+  id: PluginTabIds | string;
+  href?: string;
 };
 
 // TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>

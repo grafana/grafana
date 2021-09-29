@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	maxAttempts int64 = 3
 	// scheduler interval
 	// changing this value is discouraged
 	// because this could cause existing alert definition
@@ -84,6 +83,8 @@ type AlertNG struct {
 }
 
 func (ng *AlertNG) init() error {
+	var err error
+
 	baseInterval := ng.Cfg.AlertingBaseInterval
 	if baseInterval <= 0 {
 		baseInterval = defaultBaseIntervalSeconds
@@ -91,13 +92,17 @@ func (ng *AlertNG) init() error {
 	baseInterval *= time.Second
 
 	store := &store.DBstore{
-		BaseInterval:           baseInterval,
-		DefaultIntervalSeconds: defaultIntervalSeconds,
-		SQLStore:               ng.SQLStore,
-		Logger:                 ng.Log,
+		BaseInterval:    baseInterval,
+		DefaultInterval: ng.getRuleDefaultInterval(),
+		SQLStore:        ng.SQLStore,
+		Logger:          ng.Log,
 	}
 
-	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, ng.Metrics.GetMultiOrgAlertmanagerMetrics())
+	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
+	if err != nil {
+		return err
+	}
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
@@ -107,8 +112,8 @@ func (ng *AlertNG) init() error {
 	schedCfg := schedule.SchedulerCfg{
 		C:                       clock.New(),
 		BaseInterval:            baseInterval,
-		Logger:                  log.New("ngalert.scheduler"),
-		MaxAttempts:             maxAttempts,
+		Logger:                  ng.Log,
+		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
 		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
 		InstanceStore:           store,
 		RuleStore:               store,
@@ -116,7 +121,8 @@ func (ng *AlertNG) init() error {
 		OrgStore:                store,
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
+		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
+		MinRuleInterval:         ng.getRuleMinInterval(),
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
 	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
@@ -150,9 +156,12 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.stateManager.Warm()
 
 	children, subCtx := errgroup.WithContext(ctx)
-	children.Go(func() error {
-		return ng.schedule.Run(subCtx)
-	})
+
+	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+		children.Go(func() error {
+			return ng.schedule.Run(subCtx)
+		})
+	}
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
@@ -165,4 +174,31 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.IsNgAlertEnabled()
+}
+
+// getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.
+// If this constant (1 minute) is lower than the configured minimum evaluation interval then
+// this configuration is returned.
+func (ng *AlertNG) getRuleDefaultInterval() time.Duration {
+	ruleMinInterval := ng.getRuleMinInterval()
+	if defaultIntervalSeconds < int64(ruleMinInterval.Seconds()) {
+		return ruleMinInterval
+	}
+	return time.Duration(defaultIntervalSeconds) * time.Second
+}
+
+// getRuleMinIntervalSeconds returns the configured minimum rule interval.
+// If this value is less or equal to zero or not divided exactly by the scheduler interval
+// the scheduler interval (10 seconds) is returned.
+func (ng *AlertNG) getRuleMinInterval() time.Duration {
+	if ng.Cfg.UnifiedAlerting.MinInterval <= 0 {
+		return defaultBaseIntervalSeconds // if it's not configured; apply default
+	}
+
+	if ng.Cfg.UnifiedAlerting.MinInterval%defaultBaseIntervalSeconds != 0 {
+		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.UnifiedAlerting.MinInterval, "baseIntervalSeconds", defaultBaseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
+		return defaultBaseIntervalSeconds // if it's invalid; apply default
+	}
+
+	return ng.Cfg.UnifiedAlerting.MinInterval
 }
