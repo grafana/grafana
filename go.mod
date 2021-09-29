@@ -13,7 +13,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 require (
 	cloud.google.com/go/storage v1.14.0
-	cuelang.org/go v0.3.2
+	cuelang.org/go v0.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
 	github.com/BurntSushi/toml v0.3.1
@@ -164,6 +164,7 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.0.3 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
@@ -210,6 +211,7 @@ require (
 	github.com/prometheus/exporter-toolkit v0.6.1 // indirect
 	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/rs/cors v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
