@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
-import { Input, Icon, Button } from '@grafana/ui';
+import { Button, Icon, Input } from '..';
+import { useFocus } from '../Input/utils';
 
 export interface Props {
   value: string | undefined;
@@ -12,9 +13,20 @@ export interface Props {
 }
 
 export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, onKeyDown, autoFocus }) => {
+  const [inputRef, setInputFocus] = useFocus();
+
   const suffix =
     value !== '' ? (
-      <Button icon="times" fill="text" size="sm" onClick={() => onChange('')}>
+      <Button
+        icon="times"
+        fill="text"
+        size="sm"
+        onClick={(e) => {
+          setInputFocus();
+          onChange('');
+          e.stopPropagation();
+        }}
+      >
         Clear
       </Button>
     ) : null;
@@ -23,6 +35,7 @@ export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, on
     <Input
       autoFocus={autoFocus ?? false}
       prefix={<Icon name="search" />}
+      ref={inputRef}
       suffix={suffix}
       width={width}
       type="text"
