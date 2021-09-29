@@ -135,7 +135,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	encryptionService encryption.Service, searchUsersService searchusers.Service,
-  dataSourcesService *datasources.Service) (*HTTPServer, error) {
+	dataSourcesService *datasources.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 
