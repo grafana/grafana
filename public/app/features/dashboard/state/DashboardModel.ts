@@ -470,7 +470,7 @@ export class DashboardModel {
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
-    return this.meta.canEdit && panel && !panel.repeatPanelId;
+    return Boolean(this.meta.canEdit && panel && !panel.repeatPanelId && panel.type !== 'row');
   }
 
   canEditPanelById(id: number): boolean | undefined | null {
