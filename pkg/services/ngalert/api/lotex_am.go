@@ -35,9 +35,7 @@ var endpoints = map[string]map[string]string{
 }
 
 const (
-	implementationCortex     = "cortex"
-	implementationPrometheus = "prometheus"
-	defaultImplementation    = implementationCortex
+	defaultImplementation = "cortex"
 )
 
 type LotexAM struct {
@@ -65,7 +63,6 @@ func (am *LotexAM) withAMReq(
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")
-
 		}
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "Unable to find datasource")
@@ -76,11 +73,11 @@ func (am *LotexAM) withAMReq(
 	impl := ds.JsonData.Get("implementation").MustString(defaultImplementation)
 	implEndpoints, ok := endpoints[impl]
 	if !ok {
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("Unsupported Alert Manager implementation \"%s\"", impl), "")
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("unsupported Alert Manager implementation \"%s\"", impl), "")
 	}
 	endpointPath, ok := implEndpoints[endpoint]
 	if !ok {
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("Unsupported endpoint \"%s\" for Alert Manager implementation \"%s\"", endpoint, impl), "")
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("unsupported endpoint \"%s\" for Alert Manager implementation \"%s\"", endpoint, impl), "")
 	}
 
 	iPathParams := make([]interface{}, len(pathParams))
