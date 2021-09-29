@@ -136,6 +136,10 @@ const iconMap = new Map<string, IconName>([
   ['folder', 'folder'],
 ]);
 
+const getUsersAriaLabel = (name: string) => {
+  return `Edit user's ${name} details`;
+};
+
 type UserListItemProps = {
   user: UserDTO;
   showLicensedRole: boolean;
@@ -153,17 +157,17 @@ const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.login} aria-label={`Edit user's ${user.name} details`}>
+        <a className="ellipsis" href={editUrl} title={user.login} aria-label={getUsersAriaLabel(user.name)}>
           {user.login}
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.email} aria-label={`Edit user's ${user.name} details`}>
+        <a className="ellipsis" href={editUrl} title={user.email} aria-label={getUsersAriaLabel(user.name)}>
           {user.email}
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.name} aria-label={`Edit user's ${user.name} details`}>
+        <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
           {user.name}
         </a>
       </td>
@@ -172,7 +176,7 @@ const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
         <OrgUnits units={user.orgs} icon={'building'} />
         <OrgUnits units={user.teams} icon={'users-alt'} />
         {user.isAdmin && (
-          <a href={editUrl} aria-label={`Edit user's ${user.name} details`}>
+          <a href={editUrl} aria-label={getUsersAriaLabel(user.name)}>
             <Tooltip placement="top" content="Grafana Admin">
               <Icon name="shield" />
             </Tooltip>
@@ -181,7 +185,7 @@ const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
       </td>
       {showLicensedRole && (
         <td className={cx('link-td', styles.iconRow)}>
-          <a className="ellipsis" href={editUrl} title={user.name} aria-label={`Edit user's ${user.name} details`}>
+          <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
             {user.licensedRole}{' '}
             {user.permissions?.map((permission) =>
               iconMap.has(permission) ? <Icon name={iconMap.get(permission)!} /> : null
