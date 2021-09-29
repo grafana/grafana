@@ -76,6 +76,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	// TODO: Deprecate this in v8.4, if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
 	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
+		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 		uaCfg.Enabled = true
 		AlertingEnabled = false
 	}

@@ -193,6 +193,12 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	sch.sendersMtx.Lock()
 	for _, cfg := range cfgs {
+		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
+		if isDisabledOrg {
+			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
+			continue
+		}
+
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
 		existing, ok := sch.senders[cfg.OrgID]
@@ -224,12 +230,6 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 				continue
 			}
 			sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
-			continue
-		}
-
-		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
-		if isDisabledOrg {
-			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
 			continue
 		}
 

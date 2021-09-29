@@ -149,12 +149,12 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
-		orgsFound[orgID] = struct{}{}
-
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
 			moa.logger.Debug("skipping syncing Alertmanger for disabled org", "org", orgID)
 			continue
 		}
+		orgsFound[orgID] = struct{}{}
+
 		alertmanager, found := moa.alertmanagers[orgID]
 
 		if !found {
