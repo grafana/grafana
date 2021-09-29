@@ -472,6 +472,7 @@ def rebuild_cache_step(cache):
         mount = ['yarn']
     else:
         name = 'rebuild-cache-node-modules'
+        cache_key = 'node_modules'
         mount = ['node_modules']
     return {
         'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',

@@ -121,6 +121,7 @@ steps:
   settings:
     backend: gcs
     bucket: test-julien
+    cache_key: node_modules
     json_key:
       from_secret: tf_google_credentials
     mount:
@@ -190,6 +191,6 @@ get:
 
 ---
 kind: signature
-hmac: fe8656c6cbd4e06ed61e302ef254e273e8b1427cb2186fae7e2c2231e6ffc208
+hmac: be550b4bf7f5aecfe14464fafc18429311fe1a74f459e53c727d1c7d5f0a4779
 
 ...
