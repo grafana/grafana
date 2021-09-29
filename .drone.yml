@@ -72,14 +72,6 @@ steps:
   - restore-cache-yarn
   - restore-cache-node-modules
 
-- name: lint-backend
-  image: grafana/build-container:1.4.3
-  commands:
-  - make gen-go
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-
 - name: test-frontend
   image: grafana/build-container:1.4.3
   commands:
@@ -198,6 +190,6 @@ get:
 
 ---
 kind: signature
-hmac: d9962b628a96c556693e9fd16a86101124634198cd9e6d8b741104a87f8dafa6
+hmac: fe8656c6cbd4e06ed61e302ef254e273e8b1427cb2186fae7e2c2231e6ffc208
 
 ...
