@@ -156,15 +156,12 @@ export interface DataSourceWithLogsContextSupport {
   showContextToggle(row?: LogRowModel): boolean;
 }
 
-export const hasLogsContextSupport = (datasource: DataSourceApi | undefined): datasource is DataSourceWithLogsContextSupport => {
+export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
-     return false;
+    return false;
   }
-  
+
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
-  
-  return (
-    withLogsSupport.getLogRowContext !== undefined &&
-    withLogsSupport.showContextToggle !== undefined
-  );
+
+  return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
 };

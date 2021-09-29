@@ -252,9 +252,9 @@ abstract class DataSourceApi<
 
   /**
    * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   *
    * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
    * the same signature in DataSourceWithLogsContextSupport).
-   *
    * This method will be removed from DataSourceApi in the future. Some editors may still show
    * a deprecation warning which can be ignored for time being.
    */
@@ -265,9 +265,9 @@ abstract class DataSourceApi<
 
   /**
    * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   *
    * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
    * the same signature in DataSourceWithLogsContextSupport).
-   *
    * This method will be removed from DataSourceApi in the future. Some editors may still show
    * a deprecation warning which can be ignored for time being.
    */

@@ -43,7 +43,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance && hasLogsContextSupport(datasourceInstance)) {
+    if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.getLogRowContext(row, options);
     }
 
@@ -53,7 +53,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   showContextToggle = (row?: LogRowModel): boolean => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance && hasLogsContextSupport(datasourceInstance)) {
+    if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.showContextToggle(row);
     }
 
