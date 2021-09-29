@@ -45,8 +45,6 @@ def pr_pipelines(edition):
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
-        codespell_step(),
-        shellcheck_step(),
         lint_backend_step(edition=edition),
         test_frontend_step(),
         build_frontend_step(edition=edition, ver_mode=ver_mode),

@@ -72,21 +72,6 @@ steps:
   - restore-cache-yarn
   - restore-cache-node-modules
 
-- name: codespell
-  image: grafana/build-container:1.4.3
-  commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
-  - codespell -I words_to_ignore.txt docs/
-  depends_on:
-  - restore-cache-yarn
-
-- name: shellcheck
-  image: grafana/build-container:1.4.3
-  commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - restore-cache-yarn
-
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -213,6 +198,6 @@ get:
 
 ---
 kind: signature
-hmac: 8c8f546f8acb3d21a6fcd91e0e381ffef4f15000329d0a6f03c1d14869eb7292
+hmac: d9962b628a96c556693e9fd16a86101124634198cd9e6d8b741104a87f8dafa6
 
 ...
