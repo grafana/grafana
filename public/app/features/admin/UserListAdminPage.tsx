@@ -172,9 +172,15 @@ const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
         </a>
       </td>
 
-      <td className={styles.row}>
+      <td
+        className={styles.row}
+        title={
+          user.orgs?.length
+            ? `The user is a member of the following organizations: ${user.orgs.map((org) => org.name).join(',')}`
+            : undefined
+        }
+      >
         <OrgUnits units={user.orgs} icon={'building'} />
-        <OrgUnits units={user.teams} icon={'users-alt'} />
         {user.isAdmin && (
           <a href={editUrl} aria-label={getUsersAriaLabel(user.name)}>
             <Tooltip placement="top" content="Grafana Admin">
