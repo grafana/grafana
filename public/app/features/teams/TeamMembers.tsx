@@ -6,14 +6,13 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, OrgUser } from 'app/types';
 import { addTeamMember } from './state/actions';
 import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { Button } from '@grafana/ui';
+import { Button, FilterInput } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 function mapStateToProps(state: any) {
