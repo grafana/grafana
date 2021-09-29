@@ -74,7 +74,7 @@ type schedule struct {
 
 	stateManager *state.Manager
 
-	appURL string
+	appURL *url.URL
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
 	metrics          *metrics.Scheduler
@@ -111,6 +111,12 @@ type SchedulerCfg struct {
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	appUrl, err := url.Parse(appURL)
+	if err != nil {
+		cfg.Logger.Error("Failed to parse app URL. Continue without it.", "error", err)
+		appUrl = nil
+	}
+
 	sch := schedule{
 
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
@@ -129,7 +135,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		adminConfigStore:        cfg.AdminConfigStore,
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
-		appURL:                  appURL,
+		appURL:                  appUrl,
 		stateManager:            stateManager,
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
@@ -475,7 +481,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 				processedStates := sch.stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
-				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, sch.stateManager, sch.appURL)
+				alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
 				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
