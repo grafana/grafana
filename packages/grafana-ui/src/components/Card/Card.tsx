@@ -69,9 +69,7 @@ export const Card: CardInterface = ({ heading, description, disabled, href, onCl
       <div className={styles.inner}>
         <div className={styles.info}>
           <div>
-            <div className={styles.heading} role="heading">
-              {heading}
-            </div>
+            <h2 className={styles.heading}>{heading}</h2>
             {meta}
             {description && <p className={styles.description}>{description}</p>}
           </div>
@@ -115,6 +113,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme2) => {
       width: 100%;
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
+      letter-spacing: inherit;
       line-height: ${theme.typography.body.lineHeight};
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};
