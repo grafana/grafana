@@ -11,6 +11,11 @@ import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
+export enum PluginListDisplayMode {
+  Grid = 'grid',
+  List = 'list',
+}
+
 export enum PluginAdminRoutes {
   Home = 'plugins-home',
   Browse = 'plugins-browse',
@@ -240,6 +245,9 @@ export type PluginDetailsTab = {
 export type ReducerState = PluginsState & {
   items: EntityState<CatalogPlugin>;
   requests: Record<string, RequestInfo>;
+  settings: {
+    displayMode: PluginListDisplayMode;
+  };
 };
 
 // TODO<remove when the "plugin_admin_enabled" feature flag is removed>

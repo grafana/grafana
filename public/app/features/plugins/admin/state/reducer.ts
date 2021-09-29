@@ -1,6 +1,6 @@
-import { createSlice, createEntityAdapter, AnyAction } from '@reduxjs/toolkit';
+import { createSlice, createEntityAdapter, AnyAction, PayloadAction } from '@reduxjs/toolkit';
 import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards } from './actions';
-import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
+import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
@@ -18,11 +18,14 @@ const getOriginalActionType = (type: string) => {
   return type.substring(0, separator);
 };
 
-export const { reducer } = createSlice({
+const slice = createSlice({
   name: 'plugins',
   initialState: {
     items: pluginsAdapter.getInitialState(),
     requests: {},
+    settings: {
+      displayMode: PluginListDisplayMode.Grid,
+    },
     // Backwards compatibility
     // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
     // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
@@ -34,7 +37,11 @@ export const { reducer } = createSlice({
     isLoadingPluginDashboards: false,
     panels: {},
   } as ReducerState,
-  reducers: {},
+  reducers: {
+    setDisplayMode(state, action: PayloadAction<PluginListDisplayMode>) {
+      state.settings.displayMode = action.payload;
+    },
+  },
   extraReducers: (builder) =>
     builder
       // Fetch All
@@ -87,3 +94,6 @@ export const { reducer } = createSlice({
         };
       }),
 });
+
+export const { setDisplayMode } = slice.actions;
+export const { reducer } = slice;
