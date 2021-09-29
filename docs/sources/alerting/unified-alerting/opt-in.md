@@ -15,9 +15,9 @@ Before you begin, we recommend that you backup Grafana's database. If you are us
 To enable Grafana 8 alerts:
 
 1. Go to your custom configuration file located in $WORKING_DIR/conf/custom.ini.
-1. In the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section, set the `enable` property to `true`.
-1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enable` property to `false`. 
-1. Restart Grafana for the  configuration changes to take effect.
+1. In the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section, set the `enabled` property to `true`.
+1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enabled` property to `false`.
+1. Restart Grafana for the configuration changes to take effect.
 
 > **Note:** Before Grafana v8.2, to enable or disable Grafana 8 alerts, users configured the `ngalert` feature toggle. This toggle option is no longer available.
 
@@ -29,7 +29,7 @@ As of Grafana 8.2, we no longer require the use of a persistent disk. The notifi
 
 When Grafana 8 alerting is enabled, existing legacy dashboard alerts migrate in a format compatible with the Grafana 8 alerting system. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside new alerts.
 
-Read and write access to legacy dashboard alerts was governed by the dashboard and folder permissions storing them. In Grafana 8,  alerts inherit the permissions of the folders they are stored in. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
+Read and write access to legacy dashboard alerts was governed by the dashboard and folder permissions storing them. In Grafana 8, alerts inherit the permissions of the folders they are stored in. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
 
 - If alert's dashboard has permissions, it will create a folder named like `Migrated {"dashboardUid": "UID", "panelId": 1, "alertId": 1}` to match permissions of the dashboard (including the inherited permissions from the folder).
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
@@ -49,8 +49,8 @@ Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki
 To disable Grafana 8 alerts and enable legacy dashboard alerts:
 
 1. Go to your custom configuration file located in $WORKING_DIR/conf/custom.ini.
-1. In the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section, set the `enable` property to `false`.
-1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enable` property to `true`. 
-1. Restart Grafana for the  configuration changes to take effect.
+1. In the [unified alerts]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section, set the `enabled` property to `false`.
+1. Next, in the [alerting]({{< relref "../../administration/configuration.md#alerting" >}}) section of the configuration file, update the configuration for the legacy dashboard alerts by setting the `enabled` property to `true`.
+1. Restart Grafana for the configuration changes to take effect.
 
 > **Note:** If you choose to migrate from Grafana 8 alerts to legacy dashboard alerts, you will lose any new alerts that you created in the Grafana 8 alerting system.
