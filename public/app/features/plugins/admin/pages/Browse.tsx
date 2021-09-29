@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { SelectableValue, GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
@@ -15,7 +15,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useGetAllWithFilters, useIsRemotePluginsAvailable } from '../state/hooks';
+import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
 import { Sorters } from '../helpers';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
@@ -23,6 +23,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const locationSearch = locationSearchToObject(location.search);
   const navModelId = getNavModelId(route.routeName);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
+  const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
@@ -30,7 +31,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const filterBy = (locationSearch.filterBy as string) || 'installed';
   const filterByType = (locationSearch.filterByType as string) || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
-  const displayMode = toDisplayMode(locationSearch.displayAs);
   const { isLoading, error, plugins } = useGetAllWithFilters({
     query,
     filterBy,
@@ -56,10 +56,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 
   const onSearch = (q: any) => {
     history.push({ query: { filterBy: 'all', filterByType: 'all', q } });
-  };
-
-  const onDisplayMode = (value: string) => {
-    history.push({ query: { displayAs: value } });
   };
 
   // How should we handle errors?
@@ -123,13 +119,13 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 />
               </div>
               <div>
-                <RadioButtonGroup
+                <RadioButtonGroup<PluginListDisplayMode>
                   className={styles.displayAs}
                   value={displayMode}
-                  onChange={onDisplayMode}
+                  onChange={setDisplayMode}
                   options={[
-                    { value: 'table', icon: 'table', description: 'Display plugins in table' },
-                    { value: 'list', icon: 'list-ul', description: 'Display plugins in list' },
+                    { value: PluginListDisplayMode.Table, icon: 'table', description: 'Display plugins in table' },
+                    { value: PluginListDisplayMode.List, icon: 'list-ul', description: 'Display plugins in list' },
                   ]}
                 />
               </div>
@@ -178,12 +174,3 @@ const getNavModelId = (routeName?: string) => {
 
   return 'plugins';
 };
-
-function toDisplayMode(value: UrlQueryValue): PluginListDisplayMode {
-  switch (value) {
-    case PluginListDisplayMode.List:
-      return PluginListDisplayMode.List;
-    default:
-      return PluginListDisplayMode.Table;
-  }
-}

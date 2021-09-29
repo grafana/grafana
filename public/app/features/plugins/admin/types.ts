@@ -245,6 +245,9 @@ export type PluginDetailsTab = {
 export type ReducerState = PluginsState & {
   items: EntityState<CatalogPlugin>;
   requests: Record<string, RequestInfo>;
+  settings: {
+    displayMode: PluginListDisplayMode;
+  };
 };
 
 // TODO<remove when the "plugin_admin_enabled" feature flag is removed>
