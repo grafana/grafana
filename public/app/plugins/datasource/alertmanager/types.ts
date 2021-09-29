@@ -94,7 +94,6 @@ export type Route = {
   group_by?: string[];
   continue?: boolean;
   object_matchers?: ObjectMatcher[];
-  /** @deprecated use `object_matchers` for matcher namespaces support */
   matchers?: string[];
   /** @deprecated use `object_matchers` */
   match?: Record<string, string>;

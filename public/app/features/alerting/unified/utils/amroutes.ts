@@ -6,6 +6,7 @@ import { parseInterval, timeOptions } from './time';
 import { isUndefined, omitBy } from 'lodash';
 import { MatcherFieldValue } from '../types/silence-form';
 import { matcherToMatcherField, parseMatcher } from './alertmanager';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
@@ -114,7 +115,11 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
   ];
 };
 
-export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute: Record<string, Route>): Route => {
+export const formAmRouteToAmRoute = (
+  alertManagerSourceName: string | undefined,
+  formAmRoute: FormAmRoute,
+  id2ExistingRoute: Record<string, Route>
+): Route => {
   const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
   const amRoute: Route = {
     ...(existing ?? {}),
@@ -134,8 +139,15 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute:
     repeat_interval: formAmRoute.repeatIntervalValue
       ? `${formAmRoute.repeatIntervalValue}${formAmRoute.repeatIntervalValueType}`
       : undefined,
-    routes: formAmRoute.routes.map((subRoute) => formAmRouteToAmRoute(subRoute, id2ExistingRoute)),
+    routes: formAmRoute.routes.map((subRoute) =>
+      formAmRouteToAmRoute(alertManagerSourceName, subRoute, id2ExistingRoute)
+    ),
   };
+
+  if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    amRoute.matchers = formAmRoute.object_matchers.map(({ name, operator, value }) => `${name}${operator}${value}`);
+    delete amRoute.object_matchers;
+  }
 
   if (formAmRoute.receiver) {
     amRoute.receiver = formAmRoute.receiver;
