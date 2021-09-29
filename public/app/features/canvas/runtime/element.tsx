@@ -1,4 +1,6 @@
 import React, { CSSProperties } from 'react';
+import Moveable from 'moveable';
+import Selecto from 'selecto';
 
 import {
   BackgroundImageSize,
@@ -9,8 +11,6 @@ import {
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
-
-import Moveable from 'moveable';
 
 let counter = 100;
 
@@ -150,8 +150,20 @@ export class ElementState {
   // IF define object with relative positioning (bottom / right) -> does transform still work -> double check
 
   setUpMoveable(target: HTMLDivElement) {
-    const moveable = new Moveable(document.getElementById('canvas-panel')!, {
-      target: target,
+    const canvasPanelContainer = document.getElementById('canvas-panel')!;
+    const frameMap = new Map();
+    let targets: Array<HTMLElement | SVGElement> = [];
+
+    const selecto = new Selecto({
+      container: canvasPanelContainer,
+      selectableTargets: ['.selectable'],
+      continueSelect: false,
+      toggleContinueSelect: 'shift',
+      keyContainer: window,
+    });
+
+    const moveable = new Moveable(canvasPanelContainer, {
+      // target: target,
       draggable: true,
       throttleDrag: 0,
       throttleDragRotate: 0,
@@ -159,34 +171,58 @@ export class ElementState {
       throttleResize: 0,
     });
 
-    const frame = {
-      translate: [0, 0],
-    };
-
-    // const updateElementPosition = (top: number, left: number) => {
-    //   console.log('BEFORE', top, left);
-
-    //   this.options.placement = {
-    //     ...this.options.placement,
-    //     top: top,
-    //     left: left,
-    //   };
-
-    //   console.log('AFTER', this.options.placement);
-    // };
-
     moveable
-      .on('dragStart', ({ set }) => {
-        set(frame.translate);
+      .on('drag', (e) => {
+        const target = e.target;
+        const frame = frameMap.get(target);
+
+        frame.translate = e.beforeTranslate;
+        target.style.transform = `translate(${frame.translate[0]}px, ${frame.translate[1]}px)`;
       })
-      .on('drag', ({ target, beforeTranslate }) => {
-        frame.translate = beforeTranslate;
-        target.style.transform = `translate(${beforeTranslate[0]}px, ${beforeTranslate[1]}px)`;
+      .on('dragGroupStart', (e) => {
+        e.events.forEach((ev) => {
+          const target = ev.target;
+
+          if (!frameMap.has(target)) {
+            frameMap.set(target, {
+              translate: [0, 0],
+            });
+          }
+          const frame = frameMap.get(target);
+
+          ev.set(frame.translate);
+        });
       })
-      .on('dragEnd', ({ target, isDrag, clientX, clientY }) => {
-        console.log('onDragEnd', target, isDrag);
-        console.log(target.style.top);
-        // updateElementPosition(Number(target.style.top), Number(target.style.left));
+      .on('dragGroup', (e) => {
+        e.events.forEach((ev) => {
+          const target = ev.target;
+          const frame = frameMap.get(target);
+
+          frame.translate = ev.beforeTranslate;
+          target.style.transform = `translate(${frame.translate[0]}px, ${frame.translate[1]}px)`;
+        });
+      });
+
+    selecto
+      .on('dragStart', (e) => {
+        const target = e.inputEvent.target;
+        console.log(target, targets, 'hmmm');
+        if (moveable.isMoveableElement(target) || targets.some((t) => t === target || t.contains(target))) {
+          e.stop();
+        }
+      })
+      .on('select', (e) => {
+        targets = e.selected;
+        moveable.target = targets;
+      })
+      .on('selectEnd', (e) => {
+        if (e.isDragStart) {
+          e.inputEvent.preventDefault();
+
+          setTimeout(() => {
+            moveable.dragStart(e.inputEvent);
+          });
+        }
       });
 
     moveable
@@ -206,7 +242,12 @@ export class ElementState {
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.setUpMoveable}>
+      <div
+        key={`${this.UID}/${this.revId}`}
+        style={{ ...this.sizeStyle, ...this.dataStyle }}
+        ref={this.setUpMoveable}
+        className={'selectable'}
+      >
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );
