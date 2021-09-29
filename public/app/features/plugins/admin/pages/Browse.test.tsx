@@ -12,14 +12,12 @@ import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '.
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import BrowsePage from './Browse';
 
-// Mock the config to enable the plugin catalog
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   const mockedRuntime = { ...original };
 
   mockedRuntime.config.bootData.user.isGrafanaAdmin = true;
   mockedRuntime.config.buildInfo.version = 'v8.1.0';
-  mockedRuntime.config.pluginAdminEnabled = true;
 
   return mockedRuntime;
 });
