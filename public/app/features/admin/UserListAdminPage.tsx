@@ -71,6 +71,12 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
       <Page.Contents>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
+            <FilterInput
+              placeholder="Search user by login, email, or name."
+              autoFocus={true}
+              value={query}
+              onChange={changeQuery}
+            />
             <RadioButtonGroup
               options={[
                 { label: 'All users', value: 'all' },
@@ -79,12 +85,6 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
               onChange={changeFilter}
               value={filter}
               className={styles.filter}
-            />
-            <FilterInput
-              placeholder="Search user by login, email, or name."
-              autoFocus={true}
-              value={query}
-              onChange={changeQuery}
             />
           </div>
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
@@ -258,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-top: ${theme.spacing(3)};
     `,
     filter: css`
-      margin-right: ${theme.spacing(1)};
+      margin: 0 ${theme.spacing(1)};
     `,
     iconRow: css`
       svg {
