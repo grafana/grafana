@@ -73,7 +73,7 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 	val = removeNils(val)
 	data, _ := json.Marshal(val)
 
-	dsSchema, err := schema.SearchAndValidate(rs.DashFamily, data)
+	dsSchema, err := schema.SearchAndValidate(rs.DashFamily, string(data))
 	if err != nil {
 		return input, err
 	}

@@ -17,6 +17,7 @@ import (
 	"cuelang.org/go/cue/load"
 	cuejson "cuelang.org/go/pkg/encoding/json"
 	"github.com/grafana/grafana/pkg/schema"
+	internal "github.com/grafana/grafana/pkg/schema/internal/rt"
 	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
 )
@@ -191,10 +192,10 @@ func TestAllPluginsInDist(t *testing.T) {
 		Dir:        filepath.Join(prefix, dashboardDir, "dist"),
 		Package:    "dist",
 	}
-	inst := ctx.BuildInstance(load.Instances(nil, cfg)[0])
+	inst := internal.CueContext.BuildInstance(load.Instances(nil, cfg)[0])
 	require.NoError(t, inst.Err())
 
-	dinst := ctx.CompileString(`
+	dinst := internal.CueContext.CompileString(`
 	Family: compose: Panel: {}
 	typs: [for typ, _ in Family.compose.Panel {typ}]
 	`, cue.Filename("str"))
@@ -259,11 +260,11 @@ func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
 					}
 				}
 				t.Run(filepath.Base(path), func(t *testing.T) {
-					dsSchema, err := schema.SearchAndValidate(sch, byt)
+					dsSchema, err := schema.SearchAndValidate(sch, string(byt))
 					require.NoError(t, err)
 
 					// Trimmed default json file
-					trimmed, err := schema.TrimDefaults(schema.Resource{Value: byt}, dsSchema.CUE())
+					trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
 					require.NoError(t, err)
 
 					// store the trimmed result into testdata for easy debug

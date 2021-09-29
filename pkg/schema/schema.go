@@ -8,12 +8,10 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
 	errs "cuelang.org/go/cue/errors"
 	cuejson "cuelang.org/go/pkg/encoding/json"
+	internal "github.com/grafana/grafana/pkg/schema/internal/rt"
 )
-
-var ctx = cuecontext.New()
 
 // CueError wraps Errors caused by malformed cue files.
 type CueError struct {
@@ -282,7 +280,7 @@ func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rv := ctx.CompileString(r.Value.(string), cue.Filename(name))
+	rv := internal.CueContext.CompileString(r.Value.(string), cue.Filename(name))
 	if rv.Err() != nil {
 		return r, rv.Err()
 	}
@@ -330,7 +328,7 @@ func applyDefaultHelper(input cue.Value, scue cue.Value) (cue.Value, error) {
 				}
 			}
 			iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-			liInstance := ctx.CompileString(iterlistContent, cue.Filename("resource"))
+			liInstance := internal.CueContext.CompileString(iterlistContent, cue.Filename("resource"))
 			if liInstance.Err() != nil {
 				return input, liInstance.Err()
 			}
@@ -387,7 +385,7 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rvInstance := ctx.CompileString(r.Value.(string), cue.Filename(name))
+	rvInstance := internal.CueContext.CompileString(r.Value.(string), cue.Filename(name))
 	if rvInstance.Err() != nil {
 		return r, rvInstance.Err()
 	}
@@ -444,7 +442,7 @@ func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
 	// To include all optional fields, we need to use inputdef for iteration,
 	// since the lookuppath with optional field doesn't work very well
-	rv := ctx.CompileString("", cue.Filename("helper"))
+	rv := internal.CueContext.CompileString("", cue.Filename("helper"))
 	if rv.Err() != nil {
 		return input, false, rv.Err()
 	}
@@ -525,7 +523,7 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 				}
 			}
 			iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-			liInstance := ctx.CompileString(iterlistContent, cue.Filename("resource"))
+			liInstance := internal.CueContext.CompileString(iterlistContent, cue.Filename("resource"))
 			if liInstance.Err() != nil {
 				return rv, false, liInstance.Err()
 			}

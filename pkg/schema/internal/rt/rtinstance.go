@@ -1,7 +1,5 @@
 package internal
 
-import (
-	"cuelang.org/go/cue"
-)
+import "cuelang.org/go/cue/cuecontext"
 
-var Runtime = &cue.Runtime{}
+var CueContext = cuecontext.New()
