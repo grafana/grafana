@@ -141,7 +141,6 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  height: 100vh;
   width: 100%;
 }
 
@@ -166,6 +165,7 @@
 
 .explore-wrapper {
   display: flex;
+  height: 100%;
 
   > .explore-split {
     width: 50%;

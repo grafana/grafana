@@ -4,7 +4,7 @@ import { css, cx } from '@emotion/css';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Spinner } from '../Spinner/Spinner';
-import { useClientRect } from '../../utils/useClientRect';
+import useMeasure from 'react-use/lib/useMeasure';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
@@ -28,6 +28,55 @@ interface StyleDeps {
   invalid: boolean;
   width?: number;
 }
+
+export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
+  /**
+   * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
+   * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
+   * Thanks to that prefix/suffix do not overflow the input element itself.
+   */
+  const [prefixRef, prefixRect] = useMeasure<HTMLDivElement>();
+  const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
+
+  const theme = useTheme2();
+  const styles = getInputStyles({ theme, invalid: !!invalid, width });
+
+  return (
+    <div className={cx(styles.wrapper, className)}>
+      {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
+
+      <div className={styles.inputWrapper}>
+        {prefix && (
+          <div className={styles.prefix} ref={prefixRef}>
+            {prefix}
+          </div>
+        )}
+
+        <input
+          ref={ref}
+          className={styles.input}
+          {...restProps}
+          style={{
+            paddingLeft: prefixRect ? prefixRect.width + 12 : undefined,
+            paddingRight: suffixRect ? suffixRect.width + 12 : undefined,
+          }}
+        />
+
+        {(suffix || loading) && (
+          <div className={styles.suffix} ref={suffixRef}>
+            {loading && <Spinner className={styles.loadingIndicator} inline={true} />}
+            {suffix}
+          </div>
+        )}
+      </div>
+
+      {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
+    </div>
+  );
+});
+
+Input.displayName = 'Input';
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';
@@ -212,52 +261,3 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     `,
   };
 });
-
-export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
-  /**
-   * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
-   * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
-   * Thanks to that prefix/suffix do not overflow the input element itself.
-   */
-  const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
-  const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
-
-  const theme = useTheme2();
-  const styles = getInputStyles({ theme, invalid: !!invalid, width });
-
-  return (
-    <div className={cx(styles.wrapper, className)}>
-      {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
-
-      <div className={styles.inputWrapper}>
-        {prefix && (
-          <div className={styles.prefix} ref={prefixRef}>
-            {prefix}
-          </div>
-        )}
-
-        <input
-          ref={ref}
-          className={styles.input}
-          {...restProps}
-          style={{
-            paddingLeft: prefixRect ? prefixRect.width : undefined,
-            paddingRight: suffixRect ? suffixRect.width : undefined,
-          }}
-        />
-
-        {(suffix || loading) && (
-          <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Spinner className={styles.loadingIndicator} inline={true} />}
-            {suffix}
-          </div>
-        )}
-      </div>
-
-      {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
-    </div>
-  );
-});
-
-Input.displayName = 'Input';

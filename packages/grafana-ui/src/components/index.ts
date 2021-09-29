@@ -199,6 +199,7 @@ export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
 export { Input } from './Input/Input';
+export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 
 export { Switch, InlineSwitch } from './Switch/Switch';

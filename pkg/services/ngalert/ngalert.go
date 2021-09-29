@@ -122,6 +122,7 @@ func (ng *AlertNG) init() error {
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
+		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval:         ng.getRuleMinInterval(),
 	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
@@ -173,7 +174,7 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.IsNgAlertEnabled()
+	return !ng.Cfg.UnifiedAlerting.Enabled
 }
 
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.

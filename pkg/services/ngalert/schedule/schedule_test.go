@@ -37,7 +37,8 @@ func TestWarmStateCache(t *testing.T) {
 	require.NoError(t, err)
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
-	rule := tests.CreateTestAlertRule(t, dbstore, 600)
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, dbstore, 600, mainOrgID)
 
 	expectedEntries := []*state.State{
 		{
@@ -123,8 +124,11 @@ func TestAlertingTicker(t *testing.T) {
 
 	alerts := make([]*models.AlertRule, 0)
 
-	// create alert rule with one second interval
-	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
+	const mainOrgID int64 = 1
+	// create alert rule under main org with one second interval
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1, mainOrgID))
+
+	const disabledOrgID int64 = 3
 
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
 	stopAppliedCh := make(chan models.AlertRuleKey, len(alerts))
@@ -146,6 +150,9 @@ func TestAlertingTicker(t *testing.T) {
 		Logger:                  log.New("ngalert schedule test"),
 		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+		DisabledOrgs: map[int64]struct{}{
+			disabledOrgID: {},
+		},
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), dbstore, dbstore)
 	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
@@ -164,9 +171,9 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
 
-	// change alert rule interval to three seconds
+	// add alert rule under main org with three seconds interval
 	var threeSecInterval int64 = 3
-	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, threeSecInterval))
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, threeSecInterval, mainOrgID))
 	t.Logf("alert rule: %v added with interval: %d", alerts[1].GetKey(), threeSecInterval)
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
@@ -187,9 +194,10 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
 
+	key := alerts[0].GetKey()
 	err := dbstore.DeleteAlertRuleByUID(alerts[0].OrgID, alerts[0].UID)
 	require.NoError(t, err)
-	t.Logf("alert rule: %v deleted", alerts[1].GetKey())
+	t.Logf("alert rule: %v deleted", key)
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{}
 	t.Run(fmt.Sprintf("on 5th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
@@ -208,10 +216,19 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	// create alert rule with one second interval
-	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1, mainOrgID))
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
+		tick := advanceClock(t, mockedClock)
+		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+	})
+
+	// create alert rule with one second interval under disabled org
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1, disabledOrgID))
+
+	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
+	t.Run(fmt.Sprintf("on 8th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
@@ -229,13 +246,12 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 		select {
 		case info := <-ch:
 			_, ok := expected[info.alertDefKey]
+			if !ok {
+				t.Fatal(fmt.Sprintf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now))
+			}
 			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
-			assert.True(t, ok)
 			assert.Equal(t, tick, info.now)
 			delete(expected, info.alertDefKey)
-			if len(expected) == 0 {
-				return
-			}
 		case <-timeout:
 			if len(expected) == 0 {
 				return

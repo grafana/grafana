@@ -4,7 +4,7 @@ AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cue
 VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
 DrawStyle:          "line" | "bars" | "points"                              @cuetsy(kind="enum")
 LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
-ScaleDistribution:  "linear" | "log"                                        @cuetsy(kind="enum")
+ScaleDistribution:  "linear" | "log" | "ordinal"                            @cuetsy(kind="enum")
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
 StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
 BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")

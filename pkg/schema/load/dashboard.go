@@ -56,15 +56,15 @@ func baseDashboardFamily(p BaseLoadPaths) (cue.Value, error) {
 		Module:     "github.com/grafana/grafana",
 		Dir:        filepath.Join(prefix, dashboardDir),
 	}
-	inst, err := rt.Build(load.Instances(nil, cfg)[0])
-	if err != nil {
-		cueError := schema.WrapCUEError(err)
-		if err != nil {
+	inst := ctx.BuildInstance(load.Instances(nil, cfg)[0])
+	if inst.Err() != nil {
+		cueError := schema.WrapCUEError(inst.Err())
+		if inst.Err() != nil {
 			return cue.Value{}, cueError
 		}
 	}
 
-	famval := inst.Value().LookupPath(cue.MakePath(cue.Str("Family")))
+	famval := inst.LookupPath(cue.MakePath(cue.Str("Family")))
 	if !famval.Exists() {
 		return cue.Value{}, errors.New("dashboard schema family did not exist at expected path in expected file")
 	}
@@ -148,11 +148,11 @@ func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
 	if name == "" {
 		name = "resource"
 	}
-	rv, err := rt.Compile(name, r.Value)
-	if err != nil {
-		return err
+	rv := ctx.CompileString(r.Value.(string), cue.Filename(name))
+	if rv.Err() != nil {
+		return rv.Err()
 	}
-	return cds.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
+	return cds.actual.Unify(rv).Validate(cue.Concrete(true))
 }
 
 // CUE returns the cue.Value representing the actual schema.

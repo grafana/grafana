@@ -84,6 +84,7 @@ type schedule struct {
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
+	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
 }
 
@@ -103,6 +104,7 @@ type SchedulerCfg struct {
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
 	Metrics                 *metrics.Scheduler
 	AdminConfigPollInterval time.Duration
+	DisabledOrgs            map[int64]struct{}
 	MinRuleInterval         time.Duration
 }
 
@@ -132,6 +134,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
+		disabledOrgs:            cfg.DisabledOrgs,
 		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
@@ -190,6 +193,12 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	sch.sendersMtx.Lock()
 	for _, cfg := range cfgs {
+		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
+		if isDisabledOrg {
+			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
+			continue
+		}
+
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
 		existing, ok := sch.senders[cfg.OrgID]
@@ -318,8 +327,12 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 		select {
 		case tick := <-sch.heartbeat.C:
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			alertRules := sch.fetchAllDetails()
-			sch.log.Debug("alert rules fetched", "count", len(alertRules))
+			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
+			for disabledOrg := range sch.disabledOrgs {
+				disabledOrgs = append(disabledOrgs, disabledOrg)
+			}
+			alertRules := sch.fetchAllDetails(disabledOrgs)
+			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle

@@ -1,4 +1,4 @@
-# Guidelines for code comments in grafana-* packages
+# Guidelines for code comments in grafana-\* packages
 
 This document aims to give you some recommendation on how to add code comments to the exported code in the grafana packages.
 
@@ -9,11 +9,12 @@ This document aims to give you some recommendation on how to add code comments t
 1. [Deprecate an API](#deprecate-an-api)
 1. [Specify parameters](#specify-parameters)
 1. [Set return values](#set-return-values)
-____
 
- ## Add package description
+---
 
-Each package has an overview explaining the overall responsibility and usage of the package. 
+## Add package description
+
+Each package has an overview explaining the overall responsibility and usage of the package.
 
 You can document this description with [`@packageDocumentation`](https://api-extractor.com/pages/tsdoc/tag_packagedocumentation/) tag.
 
@@ -32,33 +33,34 @@ All `exported` apis from the package should have a release tag to indicate its s
 
 Add a tag to mark the stability of the whole exported `class/interface/function/type` etc.
 
-Please place the `release tag` at the bottom of the comment to make it consistent among files and easier to read. 
+Please place the `release tag` at the bottom of the comment to make it consistent among files and easier to read.
 
 **Do:**
 
-```typescript
+````typescript
 /**
- * Will help to create DataFrame objects and handle 
+ * Will help to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
- * 
+ *
  * @example
  * ```typescript
  * const dataFrame = factory.create();
  * ```
- * 
+ *
  * @public
  **/
 export class DataFrameFactory {
-    create(): DataFrame { }
+  create(): DataFrame {}
 }
-```
+````
 
 **Don't**
-```typescript
+
+````typescript
 /**
- * Will help to create DataFrame objects and handle 
+ * Will help to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
- * 
+ *
  * @public
  * @example
  * ```typescript
@@ -66,9 +68,9 @@ export class DataFrameFactory {
  * ```
  **/
 export class DataFrameFactory {
-    create(): DataFrame { }
+  create(): DataFrame {}
 }
-```
+````
 
 ### Partial stability of APIs
 
@@ -78,59 +80,61 @@ Then override the non-stable parts of the API with the proper [release tag](#rel
 
 **Do:**
 
-```typescript
+````typescript
 /**
- * Will help to create DataFrame objects and handle 
+ * Will help to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
- * 
+ *
  * @example
  * ```typescript
  * const dataFrame = factory.create();
  * ```
- * 
+ *
  * @public
  **/
 export class DataFrameFactory {
-    create(): DataFrame { }
+  create(): DataFrame {}
 
-    /**
-     * @beta
-     **/
-    createMany(): DataFrames[] {}
+  /**
+   * @beta
+   **/
+  createMany(): DataFrames[] {}
 }
-```
+````
 
 **Don't**
 
-```typescript
+````typescript
 /**
- * Will help to create DataFrame objects and handle 
+ * Will help to create DataFrame objects and handle
  * the heavy lifting of creating a complex object.
- * 
+ *
  * @example
  * ```typescript
  * const dataFrame = factory.create();
  * ```
  **/
 export class DataFrameFactory {
-    /**
-     * @public
-     **/
-    create(): DataFrame { }
+  /**
+   * @public
+   **/
+  create(): DataFrame {}
 
-    /**
-     * @beta
-     **/
-    createMany(): DataFrame[] {}
+  /**
+   * @beta
+   **/
+  createMany(): DataFrame[] {}
 }
-```
+````
 
 ## Deprecate an API
+
 If you want to mark an API as deprecated to signal that this API will be removed in the future, then add the [`@deprecated`](https://api-extractor.com/pages/tsdoc/tag_deprecated/) tag.
 
 If applicable add a reason why the API is deprecated directly after the `@deprecated tag`.
 
 ## Specify parameters
+
 If you want to specify the possible parameters that can be passed to an API, then add the [`@param`](https://api-extractor.com/pages/tsdoc/tag_param/) tag.
 
 This attribute can be skipped if the type provided by `typescript` and the function comment or the function name is enough to explain what the parameters are.
@@ -141,17 +145,17 @@ This attribute can be skipped if the type provided by `typescript` and the funct
 /**
  * Will help to create a resource resolver depending
  * on the current execution context.
- * 
+ *
  * @param context - The current execution context.
  * @returns FileResolver if executed on the server otherwise a HttpResolver.
  * @public
  **/
 export const factory = (context: Context): IResolver => {
-    if (context.isServer) {
-        return new FileResolver();
-    }
-    return new HttpResolver();
-}
+  if (context.isServer) {
+    return new FileResolver();
+  }
+  return new HttpResolver();
+};
 ```
 
 **Don't**
@@ -159,18 +163,18 @@ export const factory = (context: Context): IResolver => {
 ```typescript
 /**
  * Will compare two numbers to see if they are equal to each others.
- * 
+ *
  * @param x - The first number
  * @param y - The second number
  * @public
  **/
 export const isEqual = (x: number, y: number): boolean => {
-    return x === y;
-}
+  return x === y;
+};
 ```
 
-
 ## Set return values
+
 If you want to specify the return value from a function you can use the [`@returns`](https://api-extractor.com/pages/tsdoc/tag_returns/) tag.
 
 This attribute can be skipped if the type provided by `typescript` and the function comment or the function name is enough to explain what the function returns.
@@ -181,17 +185,17 @@ This attribute can be skipped if the type provided by `typescript` and the funct
 /**
  * Will help to create a resource resolver depending
  * on the current execution context.
- * 
+ *
  * @param context - The current execution context.
  * @returns FileResolver if executed on the server otherwise a HttpResolver.
  * @public
  **/
 export const factory = (context: Context): IResolver => {
-    if (context.isServer) {
-        return new FileResolver();
-    }
-    return new HttpResolver();
-}
+  if (context.isServer) {
+    return new FileResolver();
+  }
+  return new HttpResolver();
+};
 ```
 
 **Don't**
@@ -199,11 +203,11 @@ export const factory = (context: Context): IResolver => {
 ```typescript
 /**
  * Will compare two numbers to see if they are equal to each others.
- * 
+ *
  * @returns true if values are equal
  * @public
  **/
 export const isEqual = (x: number, y: number): boolean => {
-    return x === y;
-}
+  return x === y;
+};
 ```
