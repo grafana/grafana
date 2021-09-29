@@ -12,7 +12,8 @@
     "typeRoots": ["node_modules/@types", "public/app/types"],
     "allowJs": true,
     "strictNullChecks": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "useUnknownInCatchVariables": false
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [

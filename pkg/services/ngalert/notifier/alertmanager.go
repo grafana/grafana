@@ -55,29 +55,6 @@ const (
 	defaultResolveTimeout = 5 * time.Minute
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
-	// To start, the alertmanager needs at least one route defined.
-	// TODO: we should move this to Grafana settings and define this as the default.
-	alertmanagerDefaultConfiguration = `
-{
-	"alertmanager_config": {
-		"route": {
-			"receiver": "grafana-default-email"
-		},
-		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"isDefault": true,
-				"settings": {
-					"addresses": "<example@email.com>"
-				}
-			}]
-		}]
-	}
-}
-`
 )
 
 type ClusterPeer interface {
@@ -252,19 +229,19 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	defer am.reloadConfigMtx.Unlock()
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 	}
 
-	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 	if err != nil {
 		return err
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
-		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
 		}
 		return nil
@@ -306,44 +283,20 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	return nil
 }
 
-// SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
-// the components with the new config.
-func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
+// ApplyConfig applies the configuration to the Alertmanager.
+func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
+	var err error
+	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
+	}
+
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
-	// First, let's get the configuration we need from the database.
-	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: am.orgID}
-	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
-		// If there's no configuration in the database, let's use the default configuration.
-		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			// First, let's save it to the database. We don't need to use a transaction here as we'll always succeed.
-			am.logger.Info("no Alertmanager configuration found, saving and applying a default")
-			savecmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
-				Default:                   true,
-				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-				OrgID:                     am.orgID,
-			}
-			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
-				return err
-			}
-
-			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration, Default: true}
-		} else {
-			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
-		}
+	if err = am.applyConfig(cfg, nil); err != nil {
+		return fmt.Errorf("unable to apply configuration: %w", err)
 	}
-
-	cfg, err := Load([]byte(q.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
-
-	if err := am.applyConfig(cfg, nil); err != nil {
-		return fmt.Errorf("unable to reload configuration: %w", err)
-	}
-
 	return nil
 }
 
