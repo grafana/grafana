@@ -58,9 +58,7 @@ For the example, a log-normal distribution is generated between the buckets, whe
 | `smaller than 1MB`            |   `uploaded_image_bytes_bucket{le="1048576"} / ignoring (le) uploaded_image_bytes_count`              |       number of files less than (or equal to) 1MB, total number of files       | The total count of files. Total count for a histogram can be found using either `uploaded_image_bytes_count` or `uploaded_image_bytes_bucket{le="+Inf"}`. Divide the number of files smaller than 1MB by the total number of files to get a ratio between the two. Since the normal way of displaying ratios is as percentages, set the unit to `Percent (0.0-1.0)`.|
 | `larger than 1MB`             |   `uploaded_image_bytes_count - ignoring(le) uploaded_image_bytes_bucket{le="1048576"}`               |       number of smaller files, number of total files       | Subtract the number of smaller files from the number of total files to get the number of larger files.  |  
 | `between 256KB and 1MB`       |   `uploaded_image_bytes_bucket{le="1048576"} - ignoring(le) uploaded_image_bytes_bucket{le="262144"}` |       number or files between any two bucket boundaries       | Using the same logic as for the previous query, get the number of files between any two bucket boundaries by subtracting the smaller boundary from the larger.  |
-| `European question`           |   `histogram_quantile(0.75, uploaded_image_bytes_bucket)`                                             |       Parameter       | Description  |
-
-[comment]: <> (Asking Emil for help on the last query)
+| `approximation using PromQL`           |   `histogram_quantile(0.75, uploaded_image_bytes_bucket)`                                             |       ratio, buckets       | The function takes a ratio and the histogram’s buckets as input and returns an approximation of the value at the point of the ratio’s quantile. |
 
 You can use one of the following **panels** to visualize their query:
 
@@ -70,21 +68,15 @@ You can use one of the following **panels** to visualize their query:
 
 This sample query is best represented using a stat if users want to see files they currently have as opposed to over time (which is better shown as a graph). A gauge would not be feasible without a defined range.
 
-## What size is a quarter of the files smaller than?
+## Using PromQL to approximate
 
-[comment]: <> (I don't understand what this above question is asking)
+We cannot get an accurate value of what size is a quarter of the files smaller than, but we can get an approximation by using PromQL’s `histogram_quantile` function.
 
-There is not an accurate answer to this question, but users can get an approximation by using PromQL’s `histogram_quantile` function.
-
-[comment]: <> (Is there another source to this explanation?)
-
-The function takes a ratio and the histogram’s buckets as input and returns an approximation of the value at the point of the ratio’s quantile. (i.e. If 1 is the largest file and 0 is the smallest file, how big would file 0.75 be?)
-
-The approximation is based on our knowledge of exactly how many values are above a particular bucket and how many values are below it. This means we get an approximation which is somewhere in the correct bucket.
+The function returns an approximation somewhere in the correct bucket based on our knowledge of exactly how many values are above a particular bucket and how many values are below it.
 
 If the approximated value is larger than the largest bucket (excluding the `+Inf` bucket), Prometheus will give up and give you the value of the largest bucket’s `le` back.
 
-With that caveat out of the way, we can make our approximation of the third quartile with the following query:
+We can then make our approximation of the third quartile with the following query:
 
 ```bash
 histogram_quantile(0.75, uploaded_image_bytes_bucket)
@@ -92,9 +84,7 @@ histogram_quantile(0.75, uploaded_image_bytes_bucket)
 
 **Note:** When talking about service level, the precision of quantile estimations is relevant. Historically, a lot of services are defined as something like “the p95 latency may not exceed 0.25 seconds.” Assuming we have a bucket for `le=0.25`, we *can* accurately answer whether or not the p95 latency does exceed 0.25 or not.
 
-However, since the p95 value is approximated, we cannot tell definitively if p95 is, say, 0.22 or 0.24 without a bucket in between the two.
-
-A way of phrasing this same requirement so that we do get an accurate number of how close we are to violating our service level is “the proportion of requests in which latency exceeds 0.25 seconds must be less than 5 percent.” Instead of approximating the p95 and seeing if it’s below or above 0.25 seconds, we precisely define the percentage of requests exceeding 0.25 seconds using the methods from above.
+However, since the p95 value is approximated, we cannot tell definitively if p95 is, say, 0.22 or 0.24 without a bucket in between the two. A way of phrasing this requirement so we do get an accurate number of how close we are to violating our service level is “the proportion of requests in which latency exceeds 0.25 seconds must be less than 5 percent.” Instead of approximating the p95 and seeing if it’s below or above 0.25 seconds, we precisely define the percentage of requests exceeding 0.25 seconds using the methods from above.
 
 ## Buckets' distribution
 
@@ -114,6 +104,4 @@ Since a bar gauge does not contain any temporal data, users must use a **Heatmap
 - Slightly change the query to show the increase per histogram block rather than the total count of the bucket. The new query is `sum(increase(image_uploaded_bytes_bucket[$__interval])) by (le)`. When users have a temporal dimension in their visualization, they must make sure the query takes advantage of that.
 - Set **Query options > Max data points** to 25 to avoid slowing down the browser.
 
-> *Note:* The heat map animation recording mistakenly uses `rate` instead of `increase` . The rate is the average increase per second for the interval. The relative difference between the buckets is the same, so the resulting heatmap will have the same appearance.
-
-You can use either, selecting the one that makes the most sense for their application. To know *how fast* something is happening, use `rate`. To know *how much* something is happening, use `increase`.
+You can use either `rate` or `increase`, selecting the one that makes the most sense for their application. To know *how fast* something is happening, use `rate`. To know *how much* something is happening, use `increase`.
