@@ -77,7 +77,7 @@ export const SingleValue = (props: Props) => {
   );
 };
 
-const FadeWithImage = (props: { loading: boolean; imgUrl: string; styles: StylesType; alt?: string }) => {
+const FadeWithImage = (props: { loading: boolean; imgUrl: string; styles: StylesType; alt: string }) => {
   return (
     <div className={props.styles.container}>
       <FadeTransition duration={150} visible={props.loading}>
