@@ -19,11 +19,11 @@ Verifies common usecases for trimdefault/applydefault functions:
 {
   "id": 42,
   "uid": "emal8gQMz",
+  "schemaVersion": 27,
   "style": "light",
   "editable": true,
-  "schemaVersion": 27,
-  "version": 2,
-  "graphTooltip": 0
+  "graphTooltip": 0,
+  "version": 2
 }
 
 -- Trimed --

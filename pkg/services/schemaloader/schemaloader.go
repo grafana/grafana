@@ -77,7 +77,7 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 	if err != nil {
 		return input, err
 	}
-	// spew.Dump(dsSchema)
+
 	result, err := schema.TrimDefaults(schema.Resource{Value: data}, dsSchema.CUE())
 	if err != nil {
 		return input, err

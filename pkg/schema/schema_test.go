@@ -41,7 +41,7 @@ func TestGenerate(t *testing.T) {
 			}
 			b := []byte(out.Value.(string))
 
-			if s := cmp.Diff(string(b), c.Full); s != "" {
+			if s := cmp.Diff(c.Full, string(b)); s != "" {
 				t.Fatal(s)
 			}
 		})
@@ -59,7 +59,7 @@ func TestGenerate(t *testing.T) {
 				t.Fatal(err)
 			}
 			b := []byte(out.Value.(string))
-			if s := cmp.Diff(string(b), c.Trimmed); s != "" {
+			if s := cmp.Diff(c.Trimmed, string(b)); s != "" {
 				t.Fatal(s)
 			}
 		})

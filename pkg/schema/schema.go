@@ -10,6 +10,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	errs "cuelang.org/go/cue/errors"
+	"cuelang.org/go/cue/format"
 	cuejson "cuelang.org/go/pkg/encoding/json"
 )
 
@@ -286,12 +287,83 @@ func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if rv.Err() != nil {
 		return r, rv.Err()
 	}
-	rvUnified := rv.Unify(scue)
+
+	rvUnified, err := applyDefaultHelper(rv.Value(), scue)
+	if err != nil {
+		return r, err
+	}
+
 	re, err := convertCUEValueToString(rvUnified)
 	if err != nil {
 		return r, err
 	}
 	return Resource{Value: re}, nil
+}
+
+func applyDefaultHelper(input cue.Value, scue cue.Value) (cue.Value, error) {
+	switch scue.IncompleteKind() {
+	case cue.ListKind:
+		// if list element exist
+		ele := scue.LookupPath(cue.MakePath(cue.AnyIndex))
+		// if input is not a concrete list, we must have list elements exist to be used to trim defaults
+		if ele.Exists() {
+			if ele.IncompleteKind() == cue.BottomKind {
+				return input, errors.New("can't get the element of list")
+			}
+			iter, err := input.List()
+			if err != nil {
+				return input, errors.New("can't apply defaults for list")
+			}
+			var iterlist []string
+			for iter.Next() {
+				ref, err := getBranch(ele, iter.Value())
+				if err != nil {
+					return input, err
+				}
+				re, err := applyDefaultHelper(ref, iter.Value())
+				if err == nil {
+					reString, err := convertCUEValueToString(re)
+					if err != nil {
+						return input, err
+					}
+					iterlist = append(iterlist, reString)
+				}
+			}
+			iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
+			liInstance := ctx.CompileString(iterlistContent, cue.Filename("resource"))
+			if liInstance.Err() != nil {
+				return input, liInstance.Err()
+			}
+			return liInstance, nil
+		} else {
+			return input.Unify(scue), nil
+		}
+	case cue.StructKind:
+		iter, err := scue.Fields(cue.Optional(true))
+		if err != nil {
+			return input, err
+		}
+		for iter.Next() {
+			lable, _ := iter.Value().Label()
+			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
+			if err != nil {
+				continue
+			}
+			if lv.Exists() {
+				res, err := applyDefaultHelper(lv, iter.Value())
+				if err != nil {
+					continue
+				}
+				input = input.FillPath(cue.MakePath(cue.Str(lable)), res)
+			} else if !iter.IsOptional() {
+				input = input.FillPath(cue.MakePath(cue.Str(lable)), iter.Value().Eval())
+			}
+		}
+		return input, nil
+	default:
+		input = input.Unify(scue)
+	}
+	return input, nil
 }
 
 func convertCUEValueToString(inputCUE cue.Value) (string, error) {
@@ -331,8 +403,11 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 }
 
 func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
-	val, _ := inputdef.Default()
-	return input.Subsume(val) == nil && val.Subsume(input) == nil
+	val, exist := inputdef.Default()
+	if exist {
+		return input.Subsume(val) == nil && val.Subsume(input) == nil
+	}
+	return false
 }
 
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
@@ -382,40 +457,84 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		if isCueValueEqual(inputdef, input) {
 			return rv, true, nil
 		}
+
+		// take every element of the list
 		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
-		if ele.IncompleteKind() == cue.BottomKind {
-			return rv, true, nil
-		}
+		// if input is not a concrete list, we must have list elements exist to be used to trim defaults
+		if ele.Exists() {
+			if ele.IncompleteKind() == cue.BottomKind {
+				return rv, true, nil
+			}
 
-		iter, err := input.List()
-		if err != nil {
-			return rv, true, nil
-		}
-
-		// The following code is workaround since today overwrite list element doesn't work
-		var iterlist []string
-		for iter.Next() {
-			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
-			if err == nil && !isEqual {
-				reString, err := convertCUEValueToString(re)
+			iter, err := input.List()
+			if err != nil {
+				return rv, true, nil
+			}
+			var iterlist []string
+			for iter.Next() {
+				ref, err := getBranch(ele, iter.Value())
 				if err != nil {
 					return rv, true, nil
 				}
-				iterlist = append(iterlist, reString)
+				re, isEqual, err := removeDefaultHelper(ref, iter.Value())
+				if err == nil && !isEqual {
+					reString, err := convertCUEValueToString(re)
+					if err != nil {
+						return rv, true, nil
+					}
+					iterlist = append(iterlist, reString)
+				}
 			}
+			iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
+			liInstance := ctx.CompileString(iterlistContent, cue.Filename("resource"))
+			if liInstance.Err() != nil {
+				return rv, false, liInstance.Err()
+			}
+			return liInstance, false, nil
 		}
-		iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-		liInstance := ctx.CompileString(iterlistContent, cue.Filename("resource"))
-		if liInstance.Err() != nil {
-			return rv, false, err
-		}
-		return liInstance, false, nil
+		// now when ele is empty, we don't trim anything
+		return input, false, nil
+
 	default:
 		if isCueValueEqual(inputdef, input) {
 			return input, true, nil
 		}
 		return input, false, nil
 	}
+}
+
+func getBranch(def cue.Value, input cue.Value) (cue.Value, error) {
+	op, defs := def.Expr()
+	if op == cue.OrOp {
+		for _, def := range defs {
+			err := def.Unify(input).Validate(cue.Concrete(true))
+			if err == nil {
+				return def, nil
+			}
+		}
+		// no matching branches? wtf
+		return def, errors.New("no branch is found for list")
+	}
+	return def, nil
+}
+
+func PrintCUE(v cue.Value) string {
+	syn := v.Syntax(
+		cue.Final(),         // close structs and lists
+		cue.Concrete(false), // allow incomplete values
+		cue.Definitions(false),
+		cue.Optional(true),
+		cue.Attributes(true),
+		cue.Docs(true),
+	)
+
+	bs, _ := format.Node(
+		syn,
+		format.TabIndent(false),
+		format.UseSpaces(2),
+	)
+
+	return string(bs)
 }
 
 // A Resource represents a concrete data object - e.g., JSON
