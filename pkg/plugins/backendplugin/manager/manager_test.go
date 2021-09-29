@@ -63,7 +63,7 @@ func TestManager(t *testing.T) {
 				})
 
 				t.Run("Should provide expected host environment variables", func(t *testing.T) {
-					require.Len(t, ctx.env, 7)
+					require.Len(t, ctx.env, 9)
 					require.EqualValues(t, []string{
 						"GF_VERSION=7.0.0",
 						"GF_EDITION=Open Source",
@@ -71,7 +71,9 @@ func TestManager(t *testing.T) {
 						fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName),
 						"AZURE_CLOUD=AzureCloud",
 						"AZURE_MANAGED_IDENTITY_CLIENT_ID=client-id",
-						"AZURE_MANAGED_IDENTITY_ENABLED=true"},
+						"AZURE_MANAGED_IDENTITY_ENABLED=true",
+						"AZURE_USER_IDENTITY_ENABLED=true",
+						"AZURE_USER_IDENTITY_TOKEN_ENDPOINT=test_endpoint"},
 						ctx.env)
 				})
 
@@ -290,7 +292,7 @@ func TestManager(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should provide expected host environment variables", func(t *testing.T) {
-				require.Len(t, ctx.env, 9)
+				require.Len(t, ctx.env, 11)
 				require.EqualValues(t, []string{
 					"GF_VERSION=7.0.0",
 					"GF_EDITION=Enterprise",
@@ -300,7 +302,9 @@ func TestManager(t *testing.T) {
 					fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName),
 					"AZURE_CLOUD=AzureCloud",
 					"AZURE_MANAGED_IDENTITY_CLIENT_ID=client-id",
-					"AZURE_MANAGED_IDENTITY_ENABLED=true"},
+					"AZURE_MANAGED_IDENTITY_ENABLED=true",
+					"AZURE_USER_IDENTITY_ENABLED=true",
+					"AZURE_USER_IDENTITY_TOKEN_ENDPOINT=test_endpoint"},
 					ctx.env)
 			})
 		})
@@ -325,6 +329,9 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	cfg.Azure.ManagedIdentityEnabled = true
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
+	cfg.Azure.UserIdentityEnabled = true
+	cfg.Azure.UserIdentityTokenEndpoint = "test_endpoint"
+	cfg.Azure.UserIdentityAuthHeader = ""
 
 	license := &testLicensingService{}
 	validator := &testPluginRequestValidator{}

@@ -43,18 +43,16 @@ func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.Azu
 		if !cfg.Azure.ManagedIdentityEnabled {
 			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
 			return nil, err
-		} else {
-			tokenRetriever = getManagedIdentityTokenRetriever(cfg, c)
 		}
+		tokenRetriever = getManagedIdentityTokenRetriever(cfg, c)
 	case *azcredentials.AzureClientSecretCredentials:
 		tokenRetriever = getClientSecretTokenRetriever(c)
 	case *azcredentials.AzureUserIdentityCredentials:
 		if !cfg.Azure.UserIdentityEnabled {
 			err := fmt.Errorf("user identity authentication is not enabled in Grafana config")
 			return nil, err
-		} else {
-			tokenRetriever = getUserIdentityTokenRetriever(cfg)
 		}
+		tokenRetriever = getUserIdentityTokenRetriever(cfg)
 	default:
 		err := fmt.Errorf("credentials of type '%s' not supported by authentication provider", c.AzureAuthType())
 		return nil, err

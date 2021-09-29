@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -78,6 +79,10 @@ func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 
 func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if cp.QueryDataHandler != nil {
+		// Pass in the context with logged in userId
+		if req.PluginContext.User != nil {
+			ctx = context.WithValue(ctx, proxyutil.ContextKeyLoginUser{}, req.PluginContext.User.Login)
+		}
 		return cp.QueryDataHandler.QueryData(ctx, req)
 	}
 
@@ -86,6 +91,10 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if cp.CallResourceHandler != nil {
+		// Pass in the context with logged in userId
+		if req.PluginContext.User != nil {
+			ctx = context.WithValue(ctx, proxyutil.ContextKeyLoginUser{}, req.PluginContext.User.Login)
+		}
 		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
