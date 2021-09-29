@@ -82,6 +82,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -109,6 +110,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -212,6 +214,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -239,6 +242,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -342,6 +346,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -369,6 +374,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -472,6 +478,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -499,6 +506,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -602,6 +610,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -629,6 +638,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -732,6 +742,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -759,6 +770,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -862,6 +874,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -889,6 +902,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -992,6 +1006,7 @@ Object {
       [Function],
     ],
   },
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "m/s": Object {
@@ -1019,6 +1034,7 @@ Object {
       "value": [Function],
     },
     Object {
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
