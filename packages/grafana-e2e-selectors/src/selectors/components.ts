@@ -243,4 +243,7 @@ export const Components = {
     name: 'data-testid-import-dashboard-title',
     submit: 'data-testid-import-dashboard-submit',
   },
+  PanelAlertTabContent: {
+    content: 'Unified alert editor tab content',
+  },
 };

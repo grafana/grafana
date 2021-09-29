@@ -427,11 +427,6 @@ func (cfg Cfg) IsLiveConfigEnabled() bool {
 	return cfg.FeatureToggles["live-config"]
 }
 
-// IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
-func (cfg Cfg) IsNgAlertEnabled() bool {
-	return cfg.FeatureToggles["ngalert"]
-}
-
 // IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
 func (cfg Cfg) IsTrimDefaultsEnabled() bool {
 	return cfg.FeatureToggles["trimDefaults"]
@@ -938,12 +933,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
-	// Read and populate feature toggles list
-	featureTogglesSection := iniFile.Section("feature_toggles")
-	cfg.FeatureToggles = make(map[string]bool)
-	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
-	for _, feature := range util.SplitString(featuresTogglesStr) {
-		cfg.FeatureToggles[feature] = true
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
+		return err
 	}
 
 	// check old location for this option
@@ -1369,6 +1364,17 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
+	return nil
+}
+
+func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("feature_toggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
 	return nil
 }
 
