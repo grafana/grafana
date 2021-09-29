@@ -74,7 +74,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	uaCfg.Enabled = ua.Key("enabled").MustBool(false)
 
-	// if the old feature toggle ngalert is set, enable Grafana 8 alerts anyway
+	// TODO: Deprecate this in v8.4, if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
 	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
 		uaCfg.Enabled = true
 		AlertingEnabled = false

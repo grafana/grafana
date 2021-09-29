@@ -23,7 +23,7 @@ To enable Grafana 8 alerts:
 
 Moreover, before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, any configured silences and logs would get lost on a restart, resulting in unwanted or duplicate notifications.
 
-As of Grafana 8.2, we no longer require the use of a persistent disk. The notification logs and silences are stored in a database. If you used the file-based approach, we'll read those files every fifteen (15) minutes and eventually persist them to the database.
+As of Grafana 8.2, we no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes), and a clean shutdown to the database. If you used the file-based approach, Grafana will read the existing file and persisting it eventually.
 
 ## Migrating legacy alerts to Grafana 8 alerting system
 

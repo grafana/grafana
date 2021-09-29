@@ -1115,11 +1115,13 @@ For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{<
 
 ### enabled
 
-Set to `true` to enable Grafana 8 alerts. Default is `false`.
+ Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+ 
+ Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
 ### disabled_orgs
 
-Specify the ID of the organization where you want to disable Grafana 8 alerting. For multiple organizations, specify the IDs separated by commas.
+Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting. 
 
 ### admin_config_poll_interval
 
