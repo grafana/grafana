@@ -4,9 +4,11 @@ import { FieldValidationMessage } from './FieldValidationMessage';
 <Meta title="MDX|FieldValidationMessage" component={FieldValidationMessage} />
 
 # FieldValidationMessage
+
 Component for displaying a validation error message under an element.
 
 ### Example usage
+
 An example usage of this is in out `FormField` component.
 
 ```tsx
@@ -14,14 +16,13 @@ export const CustomFormField = () => {
   return (
     <div>
       Label
-        <div>
-          <input />
-          {error &&
-            (<FormValidationMessage>Invalid input</FormValidationMessage>)}
-        </div>
+      <div>
+        <input />
+        {error && <FormValidationMessage>Invalid input</FormValidationMessage>}
+      </div>
     </div>
-  )
-}
+  );
+};
 ```
 
 <Props of={FieldValidationMessage} />

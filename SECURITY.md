@@ -1,10 +1,10 @@
 # Reporting security issues
 
-If you think you have found a security vulnerability, please send a report to [security@grafana.com](mailto:security@grafana.com). This address can be used for all of Grafana Labs's open source and commercial products (including but not limited to Grafana, Grafana Cloud, Grafana Enterprise, and grafana.com). We can accept only vulnerability reports at this address. 
+If you think you have found a security vulnerability, please send a report to [security@grafana.com](mailto:security@grafana.com). This address can be used for all of Grafana Labs's open source and commercial products (including but not limited to Grafana, Grafana Cloud, Grafana Enterprise, and grafana.com). We can accept only vulnerability reports at this address.
 
 Please encrypt your message to us; please use our PGP key. The key fingerprint is:
 
-F988 7BEA 027A 049F AE8E  5CAA D125 8932 BE24 C5CA
+F988 7BEA 027A 049F AE8E 5CAA D125 8932 BE24 C5CA
 
 The key is available from [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=0xF9887BEA027A049FAE8E5CAAD1258932BE24C5CA&fingerprint=on&op=index).
 
@@ -15,6 +15,6 @@ Grafana Labs will send you a response indicating the next steps in handling your
 ## Security announcements
 
 We maintain a category on the community site called [Security Announcements](https://community.grafana.com/c/security-announcements),
-where we will post a summary, remediation, and mitigation details for any patch containing security fixes. 
+where we will post a summary, remediation, and mitigation details for any patch containing security fixes.
 
 You can also subscribe to email updates to this category if you have a grafana.com account and sign on to the community site or track updates via an [RSS feed](https://community.grafana.com/c/security-announcements.rss).
