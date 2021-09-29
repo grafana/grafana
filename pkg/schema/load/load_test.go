@@ -24,6 +24,85 @@ import (
 
 var p = GetDefaultLoadPaths()
 
+type testType int
+
+const (
+	dashboardValidityTests testType = 1
+	trimApplyDefaultsTests testType = 2
+)
+
+// for now we keep the validdir as input parameter since for trim apply default we can't use devenv directory yet,
+// otherwise we can hardcoded validdir and just pass the testtype is more than enough.
+// TODO: remove validdir once we can test directly with devenv folder
+var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, testtype testType) func(t *testing.T) {
+	return func(t *testing.T) {
+		t.Parallel()
+		require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
+			require.NoError(t, err)
+
+			if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
+				return nil
+			}
+
+			// Ignore gosec warning G304 since it's a test
+			// nolint:gosec
+			b, err := os.Open(path)
+			require.NoError(t, err, "failed to open dashboard file")
+
+			// Only try to validate dashboards with schemaVersion >= 30
+			jtree := make(map[string]interface{})
+			byt, err := io.ReadAll(b)
+			if err != nil {
+				t.Fatal(err)
+			}
+			require.NoError(t, json.Unmarshal(byt, &jtree))
+			if oldschemav, has := jtree["schemaVersion"]; !has {
+				t.Logf("no schemaVersion in %s", path)
+				return nil
+			} else {
+				if !(oldschemav.(float64) > 29) {
+					if testing.Verbose() {
+						t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+					}
+					return nil
+				}
+			}
+
+			t.Run(filepath.Base(path), func(t *testing.T) {
+				switch testtype {
+				case trimApplyDefaultsTests:
+					{
+						dsSchema, err := schema.SearchAndValidate(sch, string(byt))
+						require.NoError(t, err)
+
+						// Trimmed default json file
+						trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
+						require.NoError(t, err)
+
+						// store the trimmed result into testdata for easy debug
+						out, err := schema.ApplyDefaults(schema.Resource{Value: trimmed.Value.(string)}, dsSchema.CUE())
+						require.NoError(t, err)
+
+						require.JSONEq(t, string(byt), out.Value.(string))
+					}
+				case dashboardValidityTests:
+					err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
+					if err != nil {
+						// Testify trims errors to short length. We want the full text
+						errstr := errors.Details(err, nil)
+						t.Log(errstr)
+						if strings.Contains(errstr, "null") {
+							t.Log("validation failure appears to involve nulls - see if scripts/stripnulls.sh has any effect?")
+						}
+						t.FailNow()
+					}
+				}
+			})
+			return nil
+		}))
+	}
+}
+
 // Basic well-formedness tests on core scuemata.
 func TestScuemataBasics(t *testing.T) {
 	all := make(map[string]schema.VersionedCueSchema)
@@ -55,70 +134,26 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDevenvDashboardValidity(t *testing.T) {
-	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
-
-	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
-		return func(t *testing.T) {
-			t.Parallel()
-			require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
-				require.NoError(t, err)
-
-				if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
-					return nil
-				}
-
-				// Ignore gosec warning G304 since it's a test
-				// nolint:gosec
-				b, err := os.Open(path)
-				require.NoError(t, err, "failed to open dashboard file")
-
-				// Only try to validate dashboards with schemaVersion >= 30
-				jtree := make(map[string]interface{})
-				byt, err := io.ReadAll(b)
-				if err != nil {
-					t.Fatal(err)
-				}
-				require.NoError(t, json.Unmarshal(byt, &jtree))
-				if oldschemav, has := jtree["schemaVersion"]; !has {
-					t.Logf("no schemaVersion in %s", path)
-					return nil
-				} else {
-					if !(oldschemav.(float64) > 29) {
-						if testing.Verbose() {
-							t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
-						}
-						return nil
-					}
-				}
-
-				t.Run(filepath.Base(path), func(t *testing.T) {
-					err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
-					if err != nil {
-						// Testify trims errors to short length. We want the full text
-						errstr := errors.Details(err, nil)
-						t.Log(errstr)
-						if strings.Contains(errstr, "null") {
-							t.Log("validation failure appears to involve nulls - see if scripts/stripnulls.sh has any effect?")
-						}
-						t.FailNow()
-					}
-				})
-
-				return nil
-			}))
-		}
-	}
-
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
-
+	var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
-	t.Run("base", doTest(dash))
+	t.Run("base", doTestAgainstDevenv(dash, validdir, dashboardValidityTests))
 
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
-	t.Run("dist", doTest(ddash))
+	t.Run("dist", doTestAgainstDevenv(ddash, validdir, dashboardValidityTests))
+}
+
+func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
+	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
+
+	// TODO will need to expand this appropriately when the scuemata contain
+	// more than one schema
+	ddash, err := DistDashboardFamily(p)
+	require.NoError(t, err, "error while loading dist dashboard scuemata")
+	t.Run("dist", doTestAgainstDevenv(ddash, validdir, trimApplyDefaultsTests))
 }
 
 func TestPanelValidity(t *testing.T) {
@@ -221,66 +256,4 @@ func TestAllPluginsInDist(t *testing.T) {
 	sort.Strings(loadedPanelTypes)
 
 	require.Equal(t, loadedPanelTypes, importedPanelTypes, "%s/family.cue needs updating, it must compose the same set of panel plugin models that are found by the plugin loader", cfg.Dir)
-}
-
-func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
-	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
-
-	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
-		return func(t *testing.T) {
-			t.Parallel()
-			require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
-				require.NoError(t, err)
-
-				if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
-					return nil
-				}
-
-				// Ignore gosec warning G304 since it's a test
-				// nolint:gosec
-				b, err := os.Open(path)
-				require.NoError(t, err, "failed to open dashboard file")
-
-				// Only try to validate dashboards with schemaVersion >= 30
-				jtree := make(map[string]interface{})
-				byt, err := io.ReadAll(b)
-				if err != nil {
-					t.Fatal(err)
-				}
-				require.NoError(t, json.Unmarshal(byt, &jtree))
-				if oldschemav, has := jtree["schemaVersion"]; !has {
-					t.Logf("no schemaVersion in %s", path)
-					return nil
-				} else {
-					if !(oldschemav.(float64) > 29) {
-						if testing.Verbose() {
-							t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
-						}
-						return nil
-					}
-				}
-				t.Run(filepath.Base(path), func(t *testing.T) {
-					dsSchema, err := schema.SearchAndValidate(sch, string(byt))
-					require.NoError(t, err)
-
-					// Trimmed default json file
-					trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
-					require.NoError(t, err)
-
-					// store the trimmed result into testdata for easy debug
-					out, err := schema.ApplyDefaults(schema.Resource{Value: trimmed.Value.(string)}, dsSchema.CUE())
-					require.NoError(t, err)
-
-					require.JSONEq(t, string(byt), out.Value.(string))
-				})
-				return nil
-			}))
-		}
-	}
-
-	// TODO will need to expand this appropriately when the scuemata contain
-	// more than one schema
-	ddash, err := DistDashboardFamily(p)
-	require.NoError(t, err, "error while loading dist dashboard scuemata")
-	t.Run("dist", doTest(ddash))
 }

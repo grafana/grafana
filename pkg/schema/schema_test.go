@@ -31,7 +31,8 @@ func TestGenerate(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(c.Name+" apply default value", func(t *testing.T) {
+
+		t.Run(c.Name+" apply defaults", func(t *testing.T) {
 			scmInstance := internal.CueContext.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
 				t.Fatal(scmInstance.Err())
@@ -51,7 +52,7 @@ func TestGenerate(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(c.Name+" trim default value", func(t *testing.T) {
+		t.Run(c.Name+" trim defaults", func(t *testing.T) {
 			scmInstance := internal.CueContext.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
 				t.Fatal(scmInstance.Err())
@@ -118,7 +119,7 @@ func loadCases(dir string) ([]Case, error) {
 		}
 
 		cases = append(cases, Case{
-			Name:    fi.Name(),
+			Name:    strings.TrimSuffix(fi.Name(), filepath.Ext(fi.Name())),
 			CUE:     string(a.Files[0].Data),
 			Full:    fullBuffer.String(),
 			Trimmed: trimBuffer.String(),
