@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.4.6'
-build_image = 'grafana/build-container:1.4.2'
+build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -42,7 +42,13 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'chmod +x bin/grabpl',
     ]
     common_cmds = [
-        './bin/grabpl verify-drone',
+        'yarn config set cache-folder /cache/yarn',
+        'yarn cache dir',
+        'echo "ls /cache/yarn"',
+        'ls /cache/yarn',
+        'echo "ls /cache/yarn/v6"',
+        'ls /cache/yarn/v6',
+        'find . -type d | grep cache',
     ]
 
     if ver_mode == 'release':
@@ -60,10 +66,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'yarn install --frozen-lockfile --no-progress',
+            'ls /cache/yarn/v6',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
@@ -99,7 +103,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                     'DOCKERIZE_VERSION': dockerize_version,
                 },
                 'depends_on': [
-                    'clone',
+                    'clone'
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -120,12 +124,24 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
+            'depends_on': [
+                   'restore-cache-yarn',
+                   'restore-cache-node-modules'
+                ],
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
+                'YARN_CACHE_FOLDER': '/cache/yarn',
             },
-            'commands': download_grabpl_cmds + common_cmds,
+            'commands': ['echo test'] + download_grabpl_cmds + common_cmds,
+            'volumes': [
+            {
+                'name': 'cache',
+                'path': '/cache',
+            },
+         ],
         },
     ]
+
 
     return steps
 
@@ -157,9 +173,6 @@ def lint_backend_step(edition):
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
         },
-        'depends_on': [
-            'initialize',
-        ],
         'commands': [
             # Generate Go code, will install Wire
             # TODO: Install Wire in Docker image instead
@@ -180,7 +193,7 @@ def benchmark_ldap_step():
 	  'LDAP_HOSTNAME': 'ldap',
         },
         'commands': [
-            './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
+            'dockerize -wait tcp://ldap:389 -timeout 120s',
             'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
     }
@@ -295,7 +308,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'test-backend' + enterprise2_suffix(edition),
+            'lint-backend',
         ],
         'environment': env,
         'commands': cmds,
@@ -327,6 +340,9 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     return {
         'name': 'build-frontend',
         'image': build_image,
+        'environment': {
+            'YARN_CACHE_FOLDER': '/cache/yarn',
+        },
         'depends_on': [
             'test-frontend',
         ],
@@ -394,27 +410,88 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'restore-cache-yarn',
+            'restore-cache-node-modules',
+            'initialize'
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
+            'YARN_CACHE_FOLDER': '/cache/yarn',
         },
         'commands': [
             'yarn run ci:test-frontend',
         ],
     }
 
-def restore_cache_step():
+
+def restore_cache_step(cache):
+    name = ''
+    cache_key = ''
+    local_root = ''
+    volumes = []
+    mount = []
+    if cache == 'yarn':
+        name = 'restore-cache-yarn'
+        cache_key = 'test123'
+        local_root = '/cache'
+        volumes = [{'name': 'cache', 'path': '/cache',},]
+        mount = ['yarn']
+    else:
+        name = 'restore-cache-node-modules'
+        mount = ['node_modules']
     return {
-        'image': 'homerovalle/drone-gcs-cache',
-        'name': 'restore-cache',
+        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',
+        'name': name,
         'pull': 'always',
-        'environment': {
-            'GCS_CACHE_JSON_KEY': 'tf_google_credentials',
-         },
          'settings': {
+            'backend': 'gcs',
+            'json_key': from_secret('tf_google_credentials'),
             'bucket': 'test-julien',
             'restore': 'true',
+            'cache_key': cache_key,
+            'local_root': local_root,
+            'mount': mount
+         },
+         'depends_on': [
+            'clone'
+         ],
+         'volumes': volumes,
+    }
+
+def rebuild_cache_step(cache):
+    name = ''
+    cache_key = ''
+    local_root = ''
+    volumes = []
+    mount = []
+    if cache == 'yarn':
+        name = 'rebuild-cache-yarn'
+        cache_key = 'yarn'
+        local_root = '/cache'
+        volumes = [{'name': 'cache', 'path': '/cache',},]
+        mount = ['yarn']
+    else:
+        name = 'rebuild-cache-node-modules'
+        mount = ['node_modules']
+    return {
+        'image': 'jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest',
+        'name': name,
+        'pull': 'always',
+         'settings': {
+            'backend': 'gcs',
+            'json_key': from_secret('tf_google_credentials'),
+            'bucket': 'test-julien',
+            'rebuild': 'true',
+            'cache_key': cache_key,
+            'local_root': local_root,
+            'mount': mount
+         },
+         'depends_on': [
+            'build-frontend',
+         ],
+         'volumes': volumes,
+         'when': {
+            'event': 'pull_request',
          },
     }
 
@@ -449,6 +526,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
             'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
             'PORT': port,
         },
+        'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
             'yarn -s test:accessibility-pr',
@@ -479,7 +557,7 @@ def codespell_step():
         'name': 'codespell',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'restore-cache-yarn',
         ],
         'commands': [
             # Important: all words have to be in lowercase, and separated by "\n".
@@ -493,7 +571,7 @@ def shellcheck_step():
         'name': 'shellcheck',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'restore-cache-yarn',
         ],
         'commands': [
             './bin/grabpl shellcheck',
@@ -711,7 +789,7 @@ def postgres_integration_tests_step():
         'commands': [
             'apt-get update',
             'apt-get install -yq postgresql-client',
-            './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                 'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
@@ -735,7 +813,7 @@ def mysql_integration_tests_step():
         'commands': [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
-            './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
@@ -755,7 +833,7 @@ def redis_integration_tests_step():
             'REDIS_URL': 'redis://redis:6379/0',
         },
         'commands': [
-            './bin/dockerize -wait tcp://redis:6379/0 -timeout 120s',
+            'dockerize -wait tcp://redis:6379/0 -timeout 120s',
             './bin/grabpl integration-tests',
         ],
     }
@@ -772,7 +850,7 @@ def memcached_integration_tests_step():
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
         'commands': [
-            './bin/dockerize -wait tcp://memcached:11211 -timeout 120s',
+            'dockerize -wait tcp://memcached:11211 -timeout 120s',
             './bin/grabpl integration-tests',
         ],
     }

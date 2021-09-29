@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'restore_cache_step',
     'initialize_step',
     'slack_step',
 )
@@ -16,11 +17,6 @@ def pipeline(
                 'os': 'linux',
                 'arch': 'amd64'
             },
-            # A shared cache is used on the host
-            # To avoid issues with parallel builds, we run this repo on single build agents
-            'node': {
-                'type': 'no-parallel'
-            }
         }
     else:
         platform_conf = {
@@ -31,16 +27,24 @@ def pipeline(
             }
         }
 
+    finalSteps = [restore_cache_step('yarn'), restore_cache_step('node_modules')]
+
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': initialize_step(
+        'steps': finalSteps + initialize_step(
             edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
         ) + steps,
         'depends_on': depends_on,
+        'volumes': [
+            {
+                'name': 'cache',
+                'temp': {},
+            },
+        ],
     }
     pipeline.update(platform_conf)
 
