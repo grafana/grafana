@@ -14,7 +14,8 @@ const IMPL_OPTIONS: SelectableValue[] = [
   {
     value: AlertManagerImplementation.prometheus,
     label: 'Prometheus',
-    description: 'https://prometheus.io/',
+    description:
+      'https://prometheus.io/. Does not support editing configuration via API, so contact points and notification policies are read-only.',
   },
 ];
 
@@ -27,6 +28,7 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
           <div className="gf-form">
             <InlineFormLabel width={13}>Implementation</InlineFormLabel>
             <Select
+              width={40}
               options={IMPL_OPTIONS}
               value={options.jsonData.implementation || AlertManagerImplementation.cortex}
               onChange={(value) =>
