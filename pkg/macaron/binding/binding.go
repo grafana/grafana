@@ -60,10 +60,10 @@ func Form(req *http.Request, v interface{}) error {
 		return err
 	}
 	_ = mapForm(reflect.ValueOf(v), req.Form, req.MultipartForm.File, nil)
-	// TODO:
 	return validate(v)
 }
 
+// Bind deserializes payload from the request using JSON or Form depending on the method and the content type.
 func Bind(req *http.Request, v interface{}) error {
 	contentType := req.Header.Get("Content-Type")
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "PATCH" || req.Method == "DELETE" {
@@ -83,8 +83,64 @@ func Bind(req *http.Request, v interface{}) error {
 	return Form(req, v)
 }
 
-// TODO:
-func validate(v interface{}) error { return nil }
+type Validator interface {
+	Validate() error
+}
+
+func validate(obj interface{}) error {
+	t := reflect.TypeOf(obj)
+	v := reflect.ValueOf(obj)
+	k := v.Kind()
+	// Resolve all pointers and interfaces, until we get a concrete type
+	for k == reflect.Interface || k == reflect.Ptr {
+		t = t.Elem()
+		v = v.Elem()
+		k = v.Kind()
+	}
+	// If type has a Validate() method - use that
+	if validator, ok := obj.(Validator); ok {
+		return validator.Validate()
+	}
+
+	// For arrays and slices - iterate over each element and validate it recursively
+	if k == reflect.Slice || k == reflect.Array {
+		for i := 0; i < v.Len(); i++ {
+			e := v.Index(i).Interface()
+			if err := validate(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// For structs - iterate over each field, check for the "Required" constraint (Macaron legacy), then validate it recursively
+	if k == reflect.Struct {
+		for i := 0; i < t.NumField(); i++ {
+			field := t.Field(i)
+			fieldVal := v.Field(i)
+			fieldValue := fieldVal.Interface()
+			zero := reflect.Zero(field.Type).Interface()
+			rule := field.Tag.Get("binding")
+			if len(rule) == 0 || rule != "Required" {
+				continue
+			}
+			v := reflect.ValueOf(fieldValue)
+			if v.Kind() == reflect.Slice {
+				if v.Len() == 0 {
+					return fmt.Errorf("required slice %s must not be empty", field.Name)
+				}
+				continue
+			}
+			if reflect.DeepEqual(zero, fieldValue) {
+				return fmt.Errorf("required value %s must not be empty", field.Name)
+			}
+			if err := validate(fieldVal); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
 func bind(ctx *macaron.Context, obj interface{}, ifacePtr ...interface{}) {
 	contentType := ctx.Req.Header.Get("Content-Type")
