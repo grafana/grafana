@@ -72,7 +72,7 @@ export interface GraphNGState {
 }
 
 /**
- * "Time as X" core component, expectes ascending x
+ * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
@@ -138,7 +138,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
             const u = this.plotInstance.current;
             if (u) {
               // Try finding left position on time axis
-              const left = u.valToPos(evt.payload.point.time, 'time');
+              const left = u.valToPos(evt.payload.point.time, 'x');
               let top;
               if (left) {
                 // find midpoint between points at current idx
