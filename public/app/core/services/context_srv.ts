@@ -124,9 +124,9 @@ export class ContextSrv {
     if (!config.featureToggles['accesscontrol']) {
       return fallback();
     }
-    if (actions.some((action) => this.hasPermission(action)) {
-      return []
-    }  
+    if (actions.some((action) => this.hasPermission(action))) {
+      return [];
+    }
     // Hack to reject when user does not have permission
     return ['Reject'];
   }
