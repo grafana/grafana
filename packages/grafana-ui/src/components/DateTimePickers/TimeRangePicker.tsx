@@ -23,7 +23,7 @@ import {
   dateMath,
 } from '@grafana/data';
 import { Themeable } from '../../types';
-import { otherOptions, quickOptions } from './options';
+import { quickOptions } from './options';
 import { ButtonGroup, ToolbarButton } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -124,7 +124,6 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
               fiscalYearStartMonth={fiscalYearStartMonth}
               value={value}
               onChange={this.onChange}
-              otherOptions={otherOptions}
               quickOptions={quickOptions}
               history={history}
               showHistory

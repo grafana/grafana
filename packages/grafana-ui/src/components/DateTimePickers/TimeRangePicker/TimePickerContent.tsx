@@ -136,7 +136,6 @@ interface Props {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
-  otherOptions?: TimeOption[];
   history?: TimeRange[];
   showHistory?: boolean;
   className?: string;
@@ -157,7 +156,6 @@ interface FormProps extends Omit<Props, 'history'> {
 export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (props) => {
   const {
     quickOptions = [],
-    otherOptions = [],
     isReversed,
     isFullscreen,
     hideQuickRanges,
@@ -178,11 +176,10 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   const theme = useTheme2();
   const styles = getStyles(theme, isReversed, hideQuickRanges, isContainerTall);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const timeOption = useTimeOption(value.raw, otherOptions, quickOptions);
+  const timeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
 
   const filteredQuickOptions = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredOtherOptions = otherOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption));
@@ -205,27 +202,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
             <CustomScrollbar>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
-                <>
-                  {filteredQuickOptions.length > 0 && (
-                    <>
-                      <TimeRangeList
-                        title="Relative time ranges"
-                        options={filteredQuickOptions}
-                        onChange={onChangeTimeOption}
-                        value={timeOption}
-                      />
-                      <div className={styles.spacing} />
-                    </>
-                  )}
-                  {filteredOtherOptions.length > 0 && (
-                    <TimeRangeList
-                      title="Other quick ranges"
-                      options={filteredOtherOptions}
-                      onChange={onChangeTimeOption}
-                      value={timeOption}
-                    />
-                  )}
-                </>
+                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
               )}
             </CustomScrollbar>
           </div>
@@ -375,23 +352,13 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
 
 EmptyRecentList.displayName = 'EmptyRecentList';
 
-const useTimeOption = (
-  raw: RawTimeRange,
-  quickOptions: TimeOption[],
-  otherOptions: TimeOption[]
-): TimeOption | undefined => {
+const useTimeOption = (raw: RawTimeRange, quickOptions: TimeOption[]): TimeOption | undefined => {
   return useMemo(() => {
     if (!rangeUtil.isRelativeTimeRange(raw)) {
       return;
     }
-    const quickOption = quickOptions.find((option) => {
+    return quickOptions.find((option) => {
       return option.from === raw.from && option.to === raw.to;
     });
-    if (quickOption) {
-      return quickOption;
-    }
-    return otherOptions.find((option) => {
-      return option.from === raw.from && option.to === raw.to;
-    });
-  }, [raw, otherOptions, quickOptions]);
+  }, [raw, quickOptions]);
 };
