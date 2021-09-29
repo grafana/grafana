@@ -12,7 +12,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 // TODO: remove before merging!!!
-replace github.com/prometheus/alertmanager => /home/kbrandt/go/github.com/prometheus/alertmanager
+replace github.com/prometheus/alertmanager => github.com/grafana/alertmanager v0.21.1-0.20210929114340-613e5cc2a4ee
 
 require (
 	cloud.google.com/go/storage v1.14.0
