@@ -55,6 +55,7 @@ Here is a minimal policy example:
         "cloudwatch:ListMetrics",
         "cloudwatch:GetMetricStatistics",
         "cloudwatch:GetMetricData"
+        "cloudwatch:GetInsightRuleReport"
       ],
       "Resource": "*"
     },

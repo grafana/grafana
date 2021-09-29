@@ -4,6 +4,7 @@ import { TraceToLogsSettings } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { ServiceMapSettings } from './ServiceMapSettings';
 import { config } from '@grafana/runtime';
+import { SearchSettings } from './SearchSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -21,7 +22,14 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
       </div>
       {config.featureToggles.tempoServiceGraph && (
-        <ServiceMapSettings options={options} onOptionsChange={onOptionsChange} />
+        <div className="gf-form-group">
+          <ServiceMapSettings options={options} onOptionsChange={onOptionsChange} />
+        </div>
+      )}
+      {config.featureToggles.tempoSearch && (
+        <div className="gf-form-group">
+          <SearchSettings options={options} onOptionsChange={onOptionsChange} />
+        </div>
       )}
     </>
   );

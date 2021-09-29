@@ -94,6 +94,11 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
+		// Set SigV4 service namespace
+		if httpCliOpts.SigV4 != nil {
+			httpCliOpts.SigV4.Service = "aps"
+		}
+
 		httpMethod, ok := jsonData["httpMethod"].(string)
 		if !ok {
 			httpMethod = defaultHttpMethod

@@ -155,6 +155,20 @@ describe('Tempo data source', () => {
     });
   });
 
+  it('should include a default limit of 100', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      search: '',
+    };
+    const builtQuery = ds.buildSearchQuery(tempoQuery);
+    expect(builtQuery).toStrictEqual({
+      limit: 100,
+    });
+  });
+
   it('should ignore incomplete tag queries', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
@@ -165,6 +179,7 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
+      limit: 100,
       'root.http.status_code': '500',
     });
   });

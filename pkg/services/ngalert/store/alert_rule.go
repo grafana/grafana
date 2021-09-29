@@ -211,7 +211,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				r.New.UID = uid
 
 				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = st.DefaultIntervalSeconds
+					r.New.IntervalSeconds = int64(st.DefaultInterval.Seconds())
 				}
 
 				r.New.Version = 1
@@ -404,7 +404,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 	}
 
 	if withCanSave {
-		g := guardian.New(folder.Id, orgID, user)
+		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
 				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)

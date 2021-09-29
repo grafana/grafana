@@ -13,7 +13,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 require (
 	cloud.google.com/go/storage v1.14.0
-	cuelang.org/go v0.3.2
+	cuelang.org/go v0.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.19.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.10.0
 	github.com/BurntSushi/toml v0.3.1
@@ -82,7 +82,7 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20210915140241-bd217c58a735
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/russellhaering/goxmldsig v1.1.0
+	github.com/russellhaering/goxmldsig v1.1.1
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spyzhov/ajson v0.4.2
 	github.com/stretchr/testify v1.7.0
@@ -116,6 +116,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	xorm.io/builder v0.3.6
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -163,6 +164,7 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.0.3 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
@@ -209,6 +211,7 @@ require (
 	github.com/prometheus/exporter-toolkit v0.6.1 // indirect
 	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/rs/cors v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
@@ -237,7 +240,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
-	xorm.io/builder v0.3.6 // indirect
 )
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
