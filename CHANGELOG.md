@@ -73,7 +73,7 @@ Issue [#38078](https://github.com/grafana/grafana/issues/38078)
 
 ### Unified Alerting (Grafana 8 Alerting) data loss
 
-Grafana v8.2 fixed an issue with org isolation for notification configuration. To fix this, Grafana will now re-run the migration procedure from the previous alerting, and this will cause the complete removal of all new alert rules and notification configurations. This data loss is not acceptable, and we are working on ways to mitigate it. So in the meantime, if you are an early adopter of unified alerting, please wait before trying v8.2.0-beta1.
+Grafana v8.2 fixed an issue with org isolation for notification configuration but to fix this Grafana will now re-run the migration from old alerting and this will cause complete removal of all new alert rules and notification configurations. This data loss is not something we find acceptable and are working on ways to mitigate it. So in the meantime, if you are an early adopter of unified alerting please wait with trying v8.2 beta.
 Issue [#37414](https://github.com/grafana/grafana/issues/37414)
 
 Panel queries and/or annotation queries that used more than one statistic will be converted into one query/annotation per statistic. In case an alerting rule was based on a query row that had more than one statistic, it would now be based only on the first statistic for that query row. New alerting rules will not be created for migrated queries. Please note that in most cases it would not make sense to have an alerting rule that is based on multiple statistics anyway. Issue [#36925](https://github.com/grafana/grafana/issues/36925)
