@@ -75,6 +75,11 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
+		// Set SigV4 service namespace
+		if httpCliOpts.SigV4 != nil {
+			httpCliOpts.SigV4.Service = "aps"
+		}
+
 		httpMethod, ok := jsonData["httpMethod"].(string)
 		if !ok {
 			httpMethod = defaultHttpMethod
@@ -347,21 +352,6 @@ func parseResponse(value map[PrometheusQueryType]interface{}, query *PrometheusQ
 		}
 	}
 	return frames, nil
-}
-
-// IsAPIError returns whether err is or wraps a Prometheus error.
-func IsAPIError(err error) bool {
-	// Check if the right error type is in err's chain.
-	var e *apiv1.Error
-	return errors.As(err, &e)
-}
-
-func ConvertAPIError(err error) error {
-	var e *apiv1.Error
-	if errors.As(err, &e) {
-		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
-	}
-	return err
 }
 
 func calculateRateInterval(interval time.Duration, scrapeInterval string, intervalCalculator intervalv2.Calculator) time.Duration {

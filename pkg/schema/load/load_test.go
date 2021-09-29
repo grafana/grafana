@@ -91,7 +91,7 @@ func TestDevenvDashboardValidity(t *testing.T) {
 				}
 
 				t.Run(filepath.Base(path), func(t *testing.T) {
-					err := sch.Validate(schema.Resource{Value: byt, Name: path})
+					err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
 					if err != nil {
 						// Testify trims errors to short length. We want the full text
 						errstr := errors.Details(err, nil)
@@ -191,16 +191,16 @@ func TestAllPluginsInDist(t *testing.T) {
 		Dir:        filepath.Join(prefix, dashboardDir, "dist"),
 		Package:    "dist",
 	}
-	inst, err := rt.Build(load.Instances(nil, cfg)[0])
-	require.NoError(t, err)
+	inst := ctx.BuildInstance(load.Instances(nil, cfg)[0])
+	require.NoError(t, inst.Err())
 
-	dinst, err := rt.Compile("str", `
+	dinst := ctx.CompileString(`
 	Family: compose: Panel: {}
 	typs: [for typ, _ in Family.compose.Panel {typ}]
-	`)
-	require.NoError(t, err)
+	`, cue.Filename("str"))
+	require.NoError(t, dinst.Err())
 
-	typs := dinst.Value().Unify(inst.Value()).LookupPath(cue.MakePath(cue.Str("typs")))
+	typs := dinst.Unify(inst).LookupPath(cue.MakePath(cue.Str("typs")))
 	j, err := cuejson.Marshal(typs)
 	require.NoError(t, err)
 

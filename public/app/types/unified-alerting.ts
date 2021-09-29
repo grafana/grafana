@@ -133,4 +133,10 @@ export interface FilterState {
   dataSource?: string;
   alertState?: string;
   groupBy?: string[];
+  silenceState?: string;
+}
+
+export interface SilenceFilterState {
+  queryString?: string;
+  silenceState?: string;
 }

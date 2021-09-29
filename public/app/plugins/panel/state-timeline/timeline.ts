@@ -4,7 +4,7 @@ import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { BarValueVisibility } from '@grafana/schema';
+import { VisibilityMode } from '@grafana/schema';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 const { round, min, ceil } = Math;
@@ -40,7 +40,7 @@ export interface TimelineCoreOptions {
   rowHeight: number;
   colWidth?: number;
   theme: GrafanaTheme2;
-  showValue: BarValueVisibility;
+  showValue: VisibilityMode;
   isDiscrete: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
@@ -288,7 +288,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const drawPoints: Series.Points.Show =
-    formatValue == null || showValue === BarValueVisibility.Never
+    formatValue == null || showValue === VisibilityMode.Never
       ? false
       : (u, sidx, i0, i1) => {
           u.ctx.save();
@@ -312,7 +312,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   // Todo refine this to better know when to not render text (when values do not fit)
-                  if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 25)) {
+                  if (!boxRect || (showValue === VisibilityMode.Auto && boxRect.w < 25)) {
                     continue;
                   }
 
