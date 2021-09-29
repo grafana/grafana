@@ -140,7 +140,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 text="Loading results"
               />
             ) : (
-              <PluginList plugins={plugins} display={displayMode} />
+              <PluginList plugins={plugins} displayMode={displayMode} />
             )}
           </div>
         </PluginPage>

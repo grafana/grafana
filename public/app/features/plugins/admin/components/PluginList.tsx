@@ -9,17 +9,17 @@ import { PluginListRow } from './PluginListRow';
 
 interface Props {
   plugins: CatalogPlugin[];
-  display: PluginListDisplayMode;
+  displayMode: PluginListDisplayMode;
 }
 
-export const PluginList = ({ plugins, display }: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme, display));
+export const PluginList = ({ plugins, displayMode }: Props) => {
+  const styles = useStyles2((theme) => getStyles(theme, displayMode));
   const location = useLocation();
 
   return (
     <div className={styles.container} data-testid="plugin-list">
       {plugins.map((plugin) => {
-        switch (display) {
+        switch (displayMode) {
           case PluginListDisplayMode.List:
             return <PluginListRow key={plugin.id} plugin={plugin} pathName={location.pathname} />;
           default:
