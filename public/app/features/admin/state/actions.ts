@@ -258,19 +258,23 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 
 // UserListAdminPage
 
+const getFilters = (filters: UserFilter[]) => {
+  return filters
+    .map((filter) => {
+      if (Array.isArray(filter.value)) {
+        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
+      }
+      return `${filter.name}=${filter.value}`;
+    })
+    .join('&');
+};
+
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters } = getState().userListAdmin;
       const result = await getBackendSrv().get(
-        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${filters
-          .map((filter) => {
-            if (Array.isArray(filter.value)) {
-              return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
-            }
-            return `${filter.name}=${filter.value}`;
-          })
-          .join('&')}`
+        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`
       );
       dispatch(usersFetched(result));
     } catch (error) {
