@@ -1,21 +1,23 @@
-export interface Converter {
-  type: string;
+import { SelectableValue } from '@grafana/data';
+export interface Converter extends RuleSetting {
   [t: string]: any;
 }
 
-export interface Processor {
-  type: string;
+export interface Processor extends RuleSetting {
   [t: string]: any;
 }
 
-export interface Output {
-  type: string;
+export interface Output extends RuleSetting {
   [t: string]: any;
   multiple?: {
     outputs: Output[];
   };
 }
 
+export interface RuleSetting<T = any> {
+  type: string;
+  [key: string]: any;
+}
 export interface RuleSettings {
   converter?: Converter;
   processor?: Processor;
@@ -36,8 +38,8 @@ export interface GrafanaCloudBackend {
   settings: any;
 }
 
-export type Setting = 'converter' | 'processor' | 'output';
-export type SettingLabel = 'Converter' | 'Processor' | 'Output';
+export type RuleType = 'converter' | 'processor' | 'output';
+
 export interface PipelineListOption {
   type: string;
   description: string;
@@ -47,4 +49,11 @@ export interface EntitiesTypes {
   converters: PipelineListOption[];
   processors: PipelineListOption[];
   outputs: PipelineListOption[];
+}
+
+export interface PipeLineEntitiesInfo {
+  converter: SelectableValue[];
+  processor: SelectableValue[];
+  output: SelectableValue[];
+  getExample: (rule: RuleType, type: string) => object;
 }

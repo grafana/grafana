@@ -5,9 +5,9 @@ import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Rule, Output, Setting } from './types';
+import { Rule, Output, RuleType } from './types';
 import { RuleModal } from './RuleModal';
-import AddNewRule from './AddNewRule';
+import { AddNewRule } from './AddNewRule';
 
 function renderOutputTags(key: string, output?: Output): React.ReactNode {
   if (!output?.type) {
@@ -27,7 +27,7 @@ export default function PipelineAdminPage() {
   const navModel = useNavModel('live-pipeline');
   const [isOpenEditor, setOpenEditor] = useState<boolean>(false);
   const [error, setError] = useState<string>();
-  const [clickColumn, setClickColumn] = useState<Setting>('converter');
+  const [clickColumn, setClickColumn] = useState<RuleType>('converter');
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -62,6 +62,11 @@ export default function PipelineAdminPage() {
     }
   };
 
+  const onRemoveRule = (pattern: string) => {
+    getBackendSrv()
+      .delete(`api/live/channel-rules`, { pattern: pattern })
+      .then((response) => response.json());
+  };
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -100,7 +105,7 @@ export default function PipelineAdminPage() {
                     {renderOutputTags('out', rule.settings?.output)}
                   </td>
                   <td>
-                    <IconButton name="trash-alt"></IconButton>
+                    <IconButton name="trash-alt" onClick={() => onRemoveRule(rule.pattern)}></IconButton>
                   </td>
                 </tr>
               ))}
@@ -109,7 +114,7 @@ export default function PipelineAdminPage() {
         </div>
         {isOpenEditor && (
           <Modal isOpen={isOpenEditor} onDismiss={() => setOpenEditor(false)} title="Add a new rule">
-            <AddNewRule />
+            <AddNewRule onClose={setOpenEditor} />
           </Modal>
         )}
         {isOpen && selectedRule && (
