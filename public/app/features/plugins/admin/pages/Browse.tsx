@@ -131,7 +131,11 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   value={displayMode}
                   onChange={setDisplayMode}
                   options={[
-                    { value: PluginListDisplayMode.Table, icon: 'table', description: 'Display plugins in table' },
+                    {
+                      value: PluginListDisplayMode.Grid,
+                      icon: 'table',
+                      description: 'Display plugins in a grid layout',
+                    },
                     { value: PluginListDisplayMode.List, icon: 'list-ul', description: 'Display plugins in list' },
                   ]}
                 />

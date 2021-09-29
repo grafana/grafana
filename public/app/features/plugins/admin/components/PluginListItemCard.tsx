@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function PluginListItemCard({ plugin, pathName }: Props) {
-  const styles = useStyles2((theme) => getStyles(theme, PluginListDisplayMode.Table));
+  const styles = useStyles2((theme) => getStyles(theme, PluginListDisplayMode.Grid));
 
   return (
     <CardContainer href={`${pathName}/${plugin.id}?page=${PluginTabIds.OVERVIEW}`} className={styles.cardContainer}>

@@ -12,7 +12,7 @@ import { StoreState, PluginsState } from 'app/types';
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export enum PluginListDisplayMode {
-  Table = 'table',
+  Grid = 'grid',
   List = 'list',
 }
 

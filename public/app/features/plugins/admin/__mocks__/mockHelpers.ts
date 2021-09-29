@@ -38,7 +38,7 @@ export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): ReducerState
     },
   },
   settings: {
-    displayMode: PluginListDisplayMode.Table,
+    displayMode: PluginListDisplayMode.Grid,
   },
   // Backward compatibility
   plugins: [],

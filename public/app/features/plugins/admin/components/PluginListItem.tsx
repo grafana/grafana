@@ -27,7 +27,7 @@ export function PluginListItem({ plugin, pathName }: Props) {
 // Styles shared between the different type of list items
 export const getStyles = (theme: GrafanaTheme2, displayMode: PluginListDisplayMode) => {
   const isRow = displayMode === PluginListDisplayMode.List;
-  const isCard = displayMode === PluginListDisplayMode.Table;
+  const isCard = displayMode === PluginListDisplayMode.Grid;
 
   return {
     cardContainer: css`

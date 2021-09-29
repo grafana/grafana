@@ -24,7 +24,7 @@ const slice = createSlice({
     items: pluginsAdapter.getInitialState(),
     requests: {},
     settings: {
-      displayMode: PluginListDisplayMode.Table,
+      displayMode: PluginListDisplayMode.Grid,
     },
     // Backwards compatibility
     // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
