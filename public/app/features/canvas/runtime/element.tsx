@@ -155,6 +155,8 @@ export class ElementState {
       draggable: true,
       throttleDrag: 0,
       throttleDragRotate: 0,
+      resizable: true,
+      throttleResize: 0,
     });
 
     const frame = {
@@ -185,6 +187,19 @@ export class ElementState {
         console.log('onDragEnd', target, isDrag);
         console.log(target.style.top);
         // updateElementPosition(Number(target.style.top), Number(target.style.left));
+      });
+
+    moveable
+      .on('resizeStart', ({ target, clientX, clientY }) => {
+        console.log('onResizeStart', target);
+      })
+      .on('resize', ({ target, width, height, dist, delta, clientX, clientY }) => {
+        console.log('onResize', target);
+        delta[0] && (target!.style.width = `${width}px`);
+        delta[1] && (target!.style.height = `${height}px`);
+      })
+      .on('resizeEnd', ({ target, isDrag, clientX, clientY }) => {
+        console.log('onResizeEnd', target, isDrag);
       });
   }
 
