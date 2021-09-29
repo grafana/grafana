@@ -357,11 +357,11 @@ _Time to live_ (TTL) is the time that a query result is stored in the caching sy
 
 ### max_ttl
 
-The max duration that a query result is stored in the caching system before it is deleted or refreshed. This value will override `ttl` config option or data source setting if the `ttl` value is greater than `max_ttl`. To disable this timeout, set this value to `0s`.
+The max duration that a query result is stored in the caching system before it is deleted or refreshed. This value will override `ttl` config option or data source setting if the `ttl` value is greater than `max_ttl`. To disable this constraint, set this value to `0s`.
 
 The default is `0s` (disabled).
 
-> **Note:** Disabling this timeout is not recommended in production environments.
+> **Note:** Disabling this constraint is not recommended in production environments.
 
 ### max_value_mb
 
