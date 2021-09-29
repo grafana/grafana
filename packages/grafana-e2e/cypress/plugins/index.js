@@ -16,14 +16,20 @@ module.exports = (on, config) => {
     },
   });
   on('task', {
-    getJSONFiles: async ({ dirPath }) => {
-      const directoryPath = path.join(__dirname, dirPath);
-      console.log(`Attempting to read contents of directory: ${directoryPath}`);
+    getJSONFilesFromDir: async ({ projectPath, relativePath }) => {
+      const directoryPath = path.join(projectPath, relativePath);
       const jsonFiles = fs.readdirSync(directoryPath);
-      return jsonFiles.map((fileName) => {
-        const fileBuffer = fs.readFileSync(path.join(directoryPath, fileName));
-        return JSON.parse(fileBuffer);
-      });
+      return jsonFiles
+        .map((fileName) => {
+          try {
+            const fileBuffer = fs.readFileSync(path.join(directoryPath, fileName));
+            return JSON.parse(fileBuffer);
+          } catch (err) {
+            console.error(`Could not read and parse: ${fileName}`);
+            return null;
+          }
+        })
+        .filter((fileWasParsedSuccessfully) => !!fileWasParsedSuccessfully);
     },
   });
 
