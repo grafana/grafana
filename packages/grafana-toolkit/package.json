@@ -66,7 +66,7 @@
     "expect-puppeteer": "4.1.1",
     "file-loader": "5.0.2",
     "fork-ts-checker-webpack-plugin": "1.0.0",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^10.0.0",
     "globby": "^10.0.1",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",

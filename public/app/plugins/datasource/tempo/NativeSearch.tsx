@@ -16,7 +16,7 @@ import { tokenizer } from './syntax';
 import Prism from 'prismjs';
 import { Node } from 'slate';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
 import { TempoDatasource, TempoQuery } from './datasource';
 import { debounce } from 'lodash';
@@ -56,6 +56,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     spanNameOptions: [],
   });
   const [error, setError] = useState(null);
+  const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
 
   const fetchServiceNameOptions = useMemo(
     () =>
@@ -139,6 +140,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               placeholder="Select a service"
               onOpenMenu={fetchServiceNameOptions}
               isClearable
+              onKeyDown={onKeyDown}
             />
           </InlineField>
         </InlineFieldRow>
@@ -157,6 +159,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               placeholder="Select a span"
               onOpenMenu={fetchSpanNameOptions}
               isClearable
+              onKeyDown={onKeyDown}
             />
           </InlineField>
         </InlineFieldRow>
@@ -182,10 +185,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Min Duration" labelWidth={14} grow>
+          <InlineField label="Min Duration" invalid={!!inputErrors.minDuration} labelWidth={14} grow>
             <Input
               value={query.minDuration || ''}
               placeholder={durationPlaceholder}
+              onBlur={() => {
+                if (query.minDuration && !isValidGoDuration(query.minDuration)) {
+                  setInputErrors({ ...inputErrors, minDuration: true });
+                } else {
+                  setInputErrors({ ...inputErrors, minDuration: false });
+                }
+              }}
               onChange={(v) =>
                 onChange({
                   ...query,
@@ -197,10 +207,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Max Duration" labelWidth={14} grow>
+          <InlineField label="Max Duration" invalid={!!inputErrors.maxDuration} labelWidth={14} grow>
             <Input
               value={query.maxDuration || ''}
               placeholder={durationPlaceholder}
+              onBlur={() => {
+                if (query.maxDuration && !isValidGoDuration(query.maxDuration)) {
+                  setInputErrors({ ...inputErrors, maxDuration: true });
+                } else {
+                  setInputErrors({ ...inputErrors, maxDuration: false });
+                }
+              }}
               onChange={(v) =>
                 onChange({
                   ...query,
@@ -212,16 +229,29 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum numbers of returned results">
+          <InlineField
+            label="Limit"
+            invalid={!!inputErrors.limit}
+            labelWidth={14}
+            grow
+            tooltip="Maximum numbers of returned results"
+          >
             <Input
               value={query.limit || ''}
               type="number"
-              onChange={(v) =>
+              onChange={(v) => {
+                let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;
+                if (limit && (!Number.isInteger(limit) || limit <= 0)) {
+                  setInputErrors({ ...inputErrors, limit: true });
+                } else {
+                  setInputErrors({ ...inputErrors, limit: false });
+                }
+
                 onChange({
                   ...query,
                   limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
-                })
-              }
+                });
+              }}
               onKeyDown={onKeyDown}
             />
           </InlineField>
@@ -230,7 +260,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
-          configure it in the <a href={`/datasources/${datasource.uid}`}>datasource settings</a>.
+          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
       ) : null}
     </>
