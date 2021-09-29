@@ -25,13 +25,6 @@ export function PromExemplarField({ datasource, onChange, isEnabled, refId }: Pr
     };
   }, [datasource, refId]);
 
-  // If exemplars are disabled, set them to false
-  useEffect(() => {
-    if (error) {
-      onChange(false);
-    }
-  }, [error, onChange]);
-
   const iconButtonStyles = cx(
     {
       [styles.activeIcon]: isEnabled,
