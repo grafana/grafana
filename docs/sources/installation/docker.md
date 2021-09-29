@@ -24,7 +24,7 @@ You can run Grafana on your own hardware or use [Grafana Cloud](https://grafana.
 
 ## Alpine image (recommended)
 
-**Grafana Enterprise edition**: `grafana/grafana-enterprise:<version>` 
+**Grafana Enterprise edition**: `grafana/grafana-enterprise:<version>`
 
 **Grafana Open Source edition**: `grafana/grafana-oss:<version>`
 
@@ -259,4 +259,3 @@ Refer to [Configure a Grafana Docker image]({{< relref "../administration/config
 ## Configure Grafana
 
 Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
-
