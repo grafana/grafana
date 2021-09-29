@@ -14,7 +14,7 @@ steps:
   settings:
     backend: gcs
     bucket: test-julien
-    cache_key: test123
+    cache_key: yarn
     json_key:
       from_secret: tf_google_credentials
     local_root: /cache
@@ -191,6 +191,6 @@ get:
 
 ---
 kind: signature
-hmac: be550b4bf7f5aecfe14464fafc18429311fe1a74f459e53c727d1c7d5f0a4779
+hmac: 4441578979785c4a8340990c1e7f3696e3e567274a15b28564daad8ac4dc4bef
 
 ...

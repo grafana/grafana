@@ -432,7 +432,7 @@ def restore_cache_step(cache):
     mount = []
     if cache == 'yarn':
         name = 'restore-cache-yarn'
-        cache_key = 'test123'
+        cache_key = 'yarn'
         local_root = '/cache'
         volumes = [{'name': 'cache', 'path': '/cache',},]
         mount = ['yarn']
