@@ -75,7 +75,7 @@ The following list contains fine-grained access control actions.
 | `datasources:permissions:read`   | `datasources:*`<br>`datasources:id:*`                                                       | List data sources permissions.                                                                                                                             |
 | `datasources:permissions:create` | `datasources:*`<br>`datasources:id:*`                                                       | Create data sources permissions.                                                                                                                           |
 | `datasources:permissions:delete` | `datasources:*`<br>`datasources:id:*`                                                       | Delete data sources permissions.                                                                                                                           |
-| `datasources:permissions:toggle` | `datasources:*`<br>`datasources:id:*`                                                       | Enable or Disable data sources permissions.                                                                                                                |
+| `datasources:permissions:toggle` | `datasources:*`<br>`datasources:id:*`                                                       | Enable or disable data sources permissions.                                                                                                                |
 
 ## Scope definitions
 
