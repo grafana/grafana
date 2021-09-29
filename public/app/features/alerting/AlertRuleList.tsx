@@ -112,7 +112,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               </div>
             </div>
             <div className="page-action-bar__spacer" />
-            {config.featureToggles.ngalert && (
+            {config.unifiedAlertingEnabled && (
               <LinkButton variant="primary" href="alerting/ng/new">
                 Add NG Alert
               </LinkButton>

@@ -49,10 +49,8 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 
 	_, migrationRun := logs[migTitle]
 
-	ngEnabled := mg.Cfg.IsNgAlertEnabled()
-
 	switch {
-	case ngEnabled && !migrationRun:
+	case mg.Cfg.UnifiedAlerting.Enabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
@@ -67,7 +65,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
-	case !ngEnabled && migrationRun:
+	case !mg.Cfg.UnifiedAlerting.Enabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
@@ -92,7 +90,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	cloneMigTitle := fmt.Sprintf("clone %s", migTitle)
 
 	_, migrationRun := logs[cloneMigTitle]
-	ngEnabled := mg.Cfg.IsNgAlertEnabled()
+	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
 
 	switch {
 	case ngEnabled && !migrationRun:

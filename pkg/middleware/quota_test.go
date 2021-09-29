@@ -209,7 +209,7 @@ func TestMiddlewareQuota(t *testing.T) {
 			cfg.Quota.Enabled = false
 		})
 
-		middlewareScenario(t, "org alert quota reached and ngalert enabled", func(t *testing.T, sc *scenarioContext) {
+		middlewareScenario(t, "org alert quota reached and unified alerting is enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
 			quotaHandler := getQuotaHandler(sc, "alert_rule")
@@ -219,11 +219,11 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.FeatureToggles = map[string]bool{"ngalert": true}
+			cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
-		middlewareScenario(t, "org alert quota not reached and ngalert enabled", func(t *testing.T, sc *scenarioContext) {
+		middlewareScenario(t, "org alert quota not reached and unified alerting is enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
 			quotaHandler := getQuotaHandler(sc, "alert_rule")
@@ -233,7 +233,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.FeatureToggles = map[string]bool{"ngalert": true}
+			cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed + 1
 		})
 
