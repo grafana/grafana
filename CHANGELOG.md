@@ -291,9 +291,9 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **InfluxDB:** InfluxQL: adds tags to timeseries data. [#36702](https://github.com/grafana/grafana/pull/36702), [@gabor](https://github.com/gabor)
 - **InfluxDB:** InfluxQL: make measurement search case insensitive. [#34563](https://github.com/grafana/grafana/pull/34563), [@gabor](https://github.com/gabor)
 - **Legacy Alerting:** Replace simplejson with a struct in webhook notification channel. [#34952](https://github.com/grafana/grafana/pull/34952), [@KEVISONG](https://github.com/KEVISONG)
-- **Legend:** Updates display name for Last (not null) to just Last\*. [#35633](https://github.com/grafana/grafana/pull/35633), [@torkelo](https://github.com/torkelo)
+- **Legend:** Updates display name for Last (not null) to just Last*. [#35633](https://github.com/grafana/grafana/pull/35633), [@torkelo](https://github.com/torkelo)
 - **Logs panel:** Add option to show common labels. [#36166](https://github.com/grafana/grafana/pull/36166), [@ivanahuckova](https://github.com/ivanahuckova)
-- **Loki:** Add $\_\_range variable. [#36175](https://github.com/grafana/grafana/pull/36175), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Add $__range variable. [#36175](https://github.com/grafana/grafana/pull/36175), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Loki:** Add support for "label_values(log stream selector, label)" in templating. [#35488](https://github.com/grafana/grafana/pull/35488), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Loki:** Add support for ad-hoc filtering in dashboard. [#36393](https://github.com/grafana/grafana/pull/36393), [@ivanahuckova](https://github.com/ivanahuckova)
 - **MySQL Datasource:** Add timezone parameter. [#27535](https://github.com/grafana/grafana/pull/27535), [@andipabst](https://github.com/andipabst)
@@ -303,6 +303,8 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Prometheus:** Update PromQL typeahead and highlighting. [#36730](https://github.com/grafana/grafana/pull/36730), [@ekpdt](https://github.com/ekpdt)
 - **Prometheus:** interpolate variable for step field. [#36437](https://github.com/grafana/grafana/pull/36437), [@zoltanbedi](https://github.com/zoltanbedi)
 - **Provisioning:** Improve validation by validating across all dashboard providers. [#26742](https://github.com/grafana/grafana/pull/26742), [@nabokihms](https://github.com/nabokihms)
+- **Query cache:** Adding an encryption option for caching. (Enterprise)
+- **Reporting:** Use start and end dates for scheduling. (Enterprise)
 - **SQL Datasources:** Allow multiple string/labels columns with time series. [#36485](https://github.com/grafana/grafana/pull/36485), [@kylebrandt](https://github.com/kylebrandt)
 - **Select:** Portal select menu to document.body. [#36398](https://github.com/grafana/grafana/pull/36398), [@ashharrison90](https://github.com/ashharrison90)
 - **Team Sync:** Add group mapping to support team sync in the Generic OAuth provider. [#36307](https://github.com/grafana/grafana/pull/36307), [@wardbekker](https://github.com/wardbekker)
@@ -330,8 +332,10 @@ Panel queries and/or annotation queries that used more than one statistic will b
 
 ### Breaking changes
 
+
 When parsing Elasticsearch query responses using template variables, each field gets named after the variable value instead of the name.
 For example, executing a `terms` aggregation on a variable named `$groupBy` that has `@hostname` as a value, the resulting column in the table response will be `@hostname` instead of `$groupBy` Issue [#36035](https://github.com/grafana/grafana/issues/36035)
+
 
 Azure Monitor data source no longer supports different credentials for Metrics and Logs in existing data sources. To use different credentials for Azure Monitor Logs, create another data source. Issue [#35121](https://github.com/grafana/grafana/issues/35121)
 
@@ -339,7 +343,7 @@ Existing Azure Metrics Logs queries for Log Analytics Workspaces should be backw
 
 Application Insights and Insights Analytics queries are now read-only and cannot be modified. To update Application Insights queries, users can manually recreate them as Metrics queries, and Insights Analytics are recreated with Logs.
 
-Issue [#33879](https://github.com/grafana/grafana/issues/33879)
+ Issue [#33879](https://github.com/grafana/grafana/issues/33879)
 
 ### Plugin development fixes & changes
 
