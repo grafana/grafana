@@ -36,7 +36,7 @@ const getStyles = (theme: GrafanaTheme2, display: PluginListDisplayMode) => {
   return {
     container: css`
       display: grid;
-      grid-template-columns: ${isList ? 'repeat(auto-fill)' : 'repeat(auto-fill, minmax(288px, 1fr))'};
+      grid-template-columns: ${isList ? '1fr' : 'repeat(auto-fill, minmax(288px, 1fr))'};
       grid-gap: ${theme.spacing(3)};
     `,
   };
