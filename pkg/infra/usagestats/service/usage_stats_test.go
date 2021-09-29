@@ -411,7 +411,7 @@ func TestMetrics(t *testing.T) {
 		t.Run("When metrics is disabled and total stats is enabled, stats should not be updated", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = false
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
-			uss.updateTotalStats()
+			uss.updateTotalStats(context.Background())
 
 			assert.False(t, getSystemStatsWasCalled)
 		})
@@ -420,7 +420,7 @@ func TestMetrics(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = true
 			uss.Cfg.MetricsEndpointDisableTotalStats = true
 
-			uss.updateTotalStats()
+			uss.updateTotalStats(context.Background())
 
 			assert.False(t, getSystemStatsWasCalled)
 		})
@@ -429,7 +429,7 @@ func TestMetrics(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = false
 			uss.Cfg.MetricsEndpointDisableTotalStats = true
 
-			uss.updateTotalStats()
+			uss.updateTotalStats(context.Background())
 
 			assert.False(t, getSystemStatsWasCalled)
 		})
@@ -438,7 +438,7 @@ func TestMetrics(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = true
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
 
-			uss.updateTotalStats()
+			uss.updateTotalStats(context.Background())
 
 			assert.True(t, getSystemStatsWasCalled)
 		})

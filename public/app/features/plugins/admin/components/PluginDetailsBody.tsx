@@ -1,25 +1,26 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 
-import { AppPlugin, GrafanaTheme2 } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { CatalogPlugin, PluginTabLabels } from '../types';
+import { CatalogPlugin, PluginTabIds } from '../types';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
 import { PluginDashboards } from '../../PluginDashboards';
 
 type Props = {
-  tab: { label: string };
   plugin: CatalogPlugin;
+  queryParams: UrlQueryMap;
 };
 
-export function PluginDetailsBody({ tab, plugin }: Props): JSX.Element | null {
+export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
+  const pageId = queryParams.page;
 
-  if (tab?.label === PluginTabLabels.OVERVIEW) {
+  if (pageId === PluginTabIds.OVERVIEW) {
     return (
       <div
         className={cx(styles.readme, styles.container)}
@@ -30,7 +31,7 @@ export function PluginDetailsBody({ tab, plugin }: Props): JSX.Element | null {
     );
   }
 
-  if (tab?.label === PluginTabLabels.VERSIONS) {
+  if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div className={styles.container}>
         <VersionList versions={plugin.details?.versions} />
@@ -38,7 +39,7 @@ export function PluginDetailsBody({ tab, plugin }: Props): JSX.Element | null {
     );
   }
 
-  if (tab?.label === PluginTabLabels.CONFIG && pluginConfig?.angularConfigCtrl) {
+  if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
     return (
       <div className={styles.container}>
         <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
@@ -48,18 +49,17 @@ export function PluginDetailsBody({ tab, plugin }: Props): JSX.Element | null {
 
   if (pluginConfig?.configPages) {
     for (const configPage of pluginConfig.configPages) {
-      if (tab?.label === configPage.title) {
+      if (pageId === configPage.id) {
         return (
           <div className={styles.container}>
-            {/* TODO: we should pass the query params down */}
-            <configPage.body plugin={pluginConfig} query={{}} />
+            <configPage.body plugin={pluginConfig} query={queryParams} />
           </div>
         );
       }
     }
   }
 
-  if (tab?.label === PluginTabLabels.DASHBOARDS && pluginConfig) {
+  if (pageId === PluginTabIds.DASHBOARDS && pluginConfig) {
     return (
       <div className={styles.container}>
         <PluginDashboards plugin={pluginConfig?.meta} />
@@ -67,7 +67,11 @@ export function PluginDetailsBody({ tab, plugin }: Props): JSX.Element | null {
     );
   }
 
-  return null;
+  return (
+    <div className={styles.container}>
+      <p>Page not found.</p>
+    </div>
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({

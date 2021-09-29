@@ -8,36 +8,36 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUserStarsDataAccess(t *testing.T) {
-	Convey("Testing User Stars Data Access", t, func() {
-		InitTestDB(t)
+	t.Run("Testing User Stars Data Access", func(t *testing.T) {
+		sqlStore := InitTestDB(t)
 
-		Convey("Given saved star", func() {
+		t.Run("Given saved star", func(t *testing.T) {
 			cmd := models.StarDashboardCommand{
 				DashboardId: 10,
 				UserId:      12,
 			}
 
-			err := StarDashboard(&cmd)
-			So(err, ShouldBeNil)
+			err := sqlStore.StarDashboard(context.Background(), &cmd)
+			require.NoError(t, err)
 
-			Convey("IsStarredByUser should return true when starred", func() {
+			t.Run("IsStarredByUser should return true when starred", func(t *testing.T) {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 10}
-				err := IsStarredByUserCtx(context.Background(), &query)
-				So(err, ShouldBeNil)
+				err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
+				require.NoError(t, err)
 
-				So(query.Result, ShouldBeTrue)
+				require.True(t, query.Result)
 			})
 
-			Convey("IsStarredByUser should return false when not starred", func() {
+			t.Run("IsStarredByUser should return false when not starred", func(t *testing.T) {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 12}
-				err := IsStarredByUserCtx(context.Background(), &query)
-				So(err, ShouldBeNil)
+				err := sqlStore.IsStarredByUserCtx(context.Background(), &query)
+				require.NoError(t, err)
 
-				So(query.Result, ShouldBeFalse)
+				require.False(t, query.Result)
 			})
 		})
 	})

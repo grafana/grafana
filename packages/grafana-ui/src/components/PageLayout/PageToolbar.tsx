@@ -125,6 +125,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    margin: 0;
     max-width: 240px;
     border-radius: 2px;
 

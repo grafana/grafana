@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAll, fetchDetails, install, uninstall } from './actions';
+import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
 import { CatalogPlugin, PluginCatalogStoreState } from '../types';
 import {
   find,
@@ -63,9 +63,21 @@ export const useUninstall = () => {
   return (id: string) => dispatch(uninstall(id));
 };
 
+export const useIsRemotePluginsAvailable = () => {
+  const error = useSelector(selectRequestError(fetchRemotePlugins.typePrefix));
+  return error === null;
+};
+
 export const useFetchStatus = () => {
   const isLoading = useSelector(selectIsRequestPending(fetchAll.typePrefix));
   const error = useSelector(selectRequestError(fetchAll.typePrefix));
+
+  return { isLoading, error };
+};
+
+export const useFetchDetailsStatus = () => {
+  const isLoading = useSelector(selectIsRequestPending(fetchDetails.typePrefix));
+  const error = useSelector(selectRequestError(fetchDetails.typePrefix));
 
   return { isLoading, error };
 };
