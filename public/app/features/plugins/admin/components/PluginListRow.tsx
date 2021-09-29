@@ -31,11 +31,11 @@ export function PluginListRow({ plugin, pathName }: PluginListRowProps) {
             <p className={styles.orgName}>By {plugin.orgName}</p>
             <HorizontalGroup height="auto">
               <PluginListBadges plugin={plugin} />
-              {plugin.hasUpdate && !plugin.isCore ? (
+              {plugin.hasUpdate && !plugin.isCore && (
                 <Tooltip content={plugin.version}>
                   <p className={styles.hasUpdate}>Update available!</p>
                 </Tooltip>
-              ) : null}
+              )}
             </HorizontalGroup>
           </div>
           {plugin.type && (
