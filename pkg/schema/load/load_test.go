@@ -75,15 +75,17 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, t
 						dsSchema, err := schema.SearchAndValidate(sch, string(byt))
 						require.NoError(t, err)
 
+						origin, err := schema.ApplyDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
+						require.NoError(t, err)
+
 						// Trimmed default json file
-						trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
+						trimmed, err := schema.TrimDefaults(origin, dsSchema.CUE())
 						require.NoError(t, err)
 
 						// store the trimmed result into testdata for easy debug
-						out, err := schema.ApplyDefaults(schema.Resource{Value: trimmed.Value.(string)}, dsSchema.CUE())
+						out, err := schema.ApplyDefaults(trimmed, dsSchema.CUE())
 						require.NoError(t, err)
-
-						require.JSONEq(t, string(byt), out.Value.(string))
+						require.JSONEq(t, origin.Value.(string), out.Value.(string))
 					}
 				case dashboardValidityTests:
 					err := sch.Validate(schema.Resource{Value: string(byt), Name: path})

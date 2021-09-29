@@ -29,9 +29,7 @@ func TestGenerate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	for _, c := range cases {
-
 		t.Run(c.Name+" apply defaults", func(t *testing.T) {
 			scmInstance := internal.CueContext.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
