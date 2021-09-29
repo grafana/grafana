@@ -336,23 +336,23 @@ describe('Browse list of plugins', () => {
     await findByTestId('plugin-list');
 
     const listOptionTitle = 'Display plugins in list';
-    const tableOptionTitle = 'Display plugins in table';
+    const gridOptionTitle = 'Display plugins in a grid layout';
     const listOption = getByRole('radio', { name: listOptionTitle });
     const listOptionLabel = getByTitle(listOptionTitle);
-    const tableOption = getByRole('radio', { name: tableOptionTitle });
-    const tableOptionLabel = getByTitle(tableOptionTitle);
+    const gridOption = getByRole('radio', { name: gridOptionTitle });
+    const gridOptionLabel = getByTitle(gridOptionTitle);
 
     // All options should be visible
     expect(listOptionLabel).toBeVisible();
-    expect(tableOptionLabel).toBeVisible();
+    expect(gridOptionLabel).toBeVisible();
 
-    // The default display mode should be "table"
-    expect(tableOption).toBeChecked();
+    // The default display mode should be "grid"
+    expect(gridOption).toBeChecked();
     expect(listOption).not.toBeChecked();
 
     // Switch to "list" view
     userEvent.click(listOption);
-    expect(tableOption).not.toBeChecked();
+    expect(gridOption).not.toBeChecked();
     expect(listOption).toBeChecked();
 
     // All plugins are still visible
