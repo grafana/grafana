@@ -71,6 +71,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
           <HorizontalGroup wrap>
             <SearchField value={query} onSearch={onSearch} />
             <HorizontalGroup wrap className={styles.actionBar}>
+              {/* Filter by type */}
               <div>
                 <RadioButtonGroup
                   value={filterByType}
@@ -83,6 +84,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   ]}
                 />
               </div>
+
+              {/* Filter by installed / all */}
               {remotePluginsAvailable ? (
                 <div>
                   <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
@@ -102,6 +105,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   </div>
                 </Tooltip>
               )}
+
+              {/* Sorting */}
               <div>
                 <Select
                   menuShouldPortal
@@ -118,6 +123,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   ]}
                 />
               </div>
+
+              {/* Display mode */}
               <div>
                 <RadioButtonGroup<PluginListDisplayMode>
                   className={styles.displayAs}
