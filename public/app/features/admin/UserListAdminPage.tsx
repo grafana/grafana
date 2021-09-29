@@ -106,7 +106,30 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th>Email</th>
                     <th>Name</th>
                     <th>Belongs to</th>
-                    {showLicensedRole && <th>Licensed role</th>}
+                    {showLicensedRole && (
+                      <th>
+                        Licensed role{' '}
+                        <Tooltip
+                          placement="top"
+                          content={
+                            <>
+                              Licensed role is based on a user&apos;s Org role (i.e. Viewer, Editor, Admin) and their
+                              dashboard/folder permissions.{' '}
+                              <a
+                                className={styles.link}
+                                href={
+                                  'https://grafana.com/docs/grafana/next/enterprise/license/license-restrictions/#active-users-limit'
+                                }
+                              >
+                                Learn more
+                              </a>
+                            </>
+                          }
+                        >
+                          <Icon name="question-circle" />
+                        </Tooltip>
+                      </th>
+                    )}
                     <th>
                       Last active&nbsp;
                       <Tooltip placement="top" content="Time since user was seen using Grafana">
@@ -130,11 +153,6 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
     </Page>
   );
 };
-
-const iconMap = new Map<string, IconName>([
-  ['dashboard', 'apps'],
-  ['folder', 'folder'],
-]);
 
 const getUsersAriaLabel = (name: string) => {
   return `Edit user's ${name} details`;
@@ -192,9 +210,15 @@ const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
       {showLicensedRole && (
         <td className={cx('link-td', styles.iconRow)}>
           <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
-            {user.licensedRole}{' '}
-            {user.permissions?.map((permission) =>
-              iconMap.has(permission) ? <Icon name={iconMap.get(permission)!} /> : null
+            {user.licensedRole === 'None' ? (
+              <span className={styles.disabled}>
+                Not assigned{' '}
+                <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                  <Icon name="question-circle" />
+                </Tooltip>
+              </span>
+            ) : (
+              user.licensedRole
             )}
           </a>
         </td>
@@ -205,7 +229,7 @@ const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
             href={editUrl}
             aria-label={`Last seen at ${user.lastSeenAtAge}. Follow to edit user's ${user.name} details.`}
           >
-            {user.lastSeenAtAge}
+            {user.lastSeenAtAge === '10 years' ? <span className={styles.disabled}>Never</span> : user.lastSeenAtAge}
           </a>
         )}
       </td>
@@ -238,7 +262,13 @@ const OrgUnits = ({ units, icon }: OrgUnitProps) => {
       content={
         <div className={styles.unitTooltip}>
           {units?.map((unit) => (
-            <a href={unit.url} title={unit.name} key={unit.name} aria-label={`Edit ${unit.name}`}>
+            <a
+              href={unit.url}
+              className={styles.link}
+              title={unit.name}
+              key={unit.name}
+              aria-label={`Edit ${unit.name}`}
+            >
               {unit.name}
             </a>
           ))}
@@ -292,6 +322,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: pointer;
       padding: ${theme.spacing(0.5)} 0;
       margin-right: ${theme.spacing(1)};
+    `,
+    disabled: css`
+      color: ${theme.colors.text.disabled};
+    `,
+    link: css`
+      color: ${theme.colors.text.link};
+      :hover {
+        text-decoration: underline;
+      }
     `,
   };
 };
