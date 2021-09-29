@@ -7,7 +7,7 @@ weight = 110
 
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
-Grafana 8.0 has new and improved alerts that centralizes alerting information for Grafana managed alerts as well as alerts from Prometheus-compatible data sources into one user interface and API. 
+Grafana 8.0 has new and improved alerts that centralizes alerting information for Grafana managed alerts as well as alerts from Prometheus-compatible data sources into one user interface and API.
 
 > **Note:** Grafana 8 alerts is an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
 
