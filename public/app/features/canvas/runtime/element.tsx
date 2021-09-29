@@ -150,7 +150,7 @@ export class ElementState {
   // IF define object with relative positioning (bottom / right) -> does transform still work -> double check
 
   setUpMoveable(target: HTMLDivElement) {
-    const moveable = new Moveable(document.body, {
+    const moveable = new Moveable(document.getElementById('canvas-panel')!, {
       target: target,
       draggable: true,
       throttleDrag: 0,
