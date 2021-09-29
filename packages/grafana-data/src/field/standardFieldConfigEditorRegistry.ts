@@ -4,7 +4,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataFrame, InterpolateFunction, VariableSuggestionsScope, VariableSuggestion } from '../types';
 import { EventBus } from '../events';
 
-export interface StandardEditorContext<TOptions, TState> {
+export interface StandardEditorContext<TOptions, TState = any> {
   data: DataFrame[]; // All results
   replaceVariables?: InterpolateFunction;
   eventBus?: EventBus;

@@ -1,18 +1,20 @@
 import React, { FormEvent } from 'react';
 import { PanelOptionsEditorProps, PanelProps } from '@grafana/data';
-import { Field, Input } from '@grafana/ui';
+import { Field, Input, usePanelContext } from '@grafana/ui';
 import { DebugPanelOptions } from './types';
 
 export function StateView(props: PanelProps<DebugPanelOptions>) {
+  const context = usePanelContext();
+
   const onChangeName = (e: FormEvent<HTMLInputElement>) => {
-    props.onInstanceStateChange!({
+    context.onInstanceStateChange!({
       name: e.currentTarget.value,
     });
   };
 
   return (
     <Field label="State name">
-      <Input value={props.instanceState?.name ?? ''} onChange={onChangeName} />
+      <Input value={context.instanceState?.name ?? ''} onChange={onChangeName} />
     </Field>
   );
 }

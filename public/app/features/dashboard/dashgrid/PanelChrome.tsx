@@ -36,6 +36,8 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
+import { setPanelInstanceState } from '../state/reducers';
+import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -48,8 +50,6 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
-  instanceState: any;
-  onInstanceStateChange: (value: any) => void;
 }
 
 export interface State {
@@ -86,10 +86,23 @@ export class PanelChrome extends Component<Props, State> {
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
+        onInstanceStateChange: this.onInstanceStateChange,
       },
       data: this.getInitialPanelDataState(),
     };
   }
+
+  onInstanceStateChange = (value: any) => {
+    this.setState({
+      context: {
+        ...this.state.context,
+        instanceState: value,
+      },
+    });
+
+    // Set redux panel state so panel options can get notified
+    store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
+  };
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
@@ -374,7 +387,7 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   renderPanel(width: number, height: number) {
-    const { panel, plugin, dashboard, instanceState, onInstanceStateChange } = this.props;
+    const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data } = this.state;
     const { theme } = config;
     const { state: loadingState } = data;
@@ -422,13 +435,11 @@ export class PanelChrome extends Component<Props, State> {
               width={panelWidth}
               height={innerPanelHeight}
               renderCounter={renderCounter}
-              instanceState={instanceState}
               replaceVariables={panel.replaceVariables}
               onOptionsChange={this.onOptionsChange}
               onFieldConfigChange={this.onFieldConfigChange}
               onChangeTimeRange={this.onChangeTimeRange}
               eventBus={dashboard.events}
-              onInstanceStateChange={onInstanceStateChange}
             />
           </PanelContextProvider>
         </div>

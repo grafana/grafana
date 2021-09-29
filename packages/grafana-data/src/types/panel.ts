@@ -96,12 +96,6 @@ export interface PanelProps<T = any, S = any> {
   /** EventBus  */
   eventBus: EventBus;
 
-  /** For instance state that can be shared between panel & options UI  */
-  instanceState?: S;
-
-  /** Update transient state */
-  onInstanceStateChange?: (state: S) => void;
-
   /** Panel options change handler */
   onOptionsChange: (options: T) => void;
 

@@ -48,6 +48,12 @@ export interface PanelContext {
    * For example TimeSeries panel.
    */
   onSplitOpen?: SplitOpen;
+
+  /** For instance state that can be shared between panel & options UI  */
+  instanceState?: any;
+
+  /** Update instance state, this is only supported in dashboard panel context currently */
+  onInstanceStateChange?: (state: any) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
