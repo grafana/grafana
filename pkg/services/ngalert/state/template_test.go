@@ -367,9 +367,21 @@ func TestExpandTemplate(t *testing.T) {
 		text:     "{{ tableLink \"up\" }}",
 		expected: "",
 	}, {
-		name:     "check that sortByLabel or strvalue don't error or panic",
-		text:     "{{ query \"metric{__value__='a'}\" | sortByLabel | strvalue }}",
+		name:     "check that sortByLabel doesn't error or panic",
+		text:     "{{ query \"metric{__value__='a'}\" | sortByLabel }}",
 		expected: "",
+	}, {
+		name: "strvalue",
+		text: "{{ $values.A | strvalue }}",
+		alertInstance: eval.Result{
+			Values: map[string]eval.NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"__value__": "foo"},
+				},
+			},
+		},
+		expected: "foo",
 	}, {
 		name:     "check that safeHtml doesn't error or panic",
 		text:     "{{ \"<b>\" | safeHtml }}",

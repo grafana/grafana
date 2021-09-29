@@ -55,8 +55,11 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 		[]string{"missingkey=error"},
 	)
 
-	// These two functions are no-ops for now.
 	expander.Funcs(text_template.FuncMap{
+		"strvalue": func(value templateCaptureValue) string {
+			return value.Labels["__value__"]
+		},
+		// These two functions are no-ops for now.
 		"graphLink": func() string {
 			return ""
 		},

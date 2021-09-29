@@ -131,11 +131,14 @@ The following template functions are available when expanding annotations and la
 | graphLink          | expr                       | string                 | Not supported                                                                                                                      |
 | tableLink          | expr                       | string                 | Not supported                                                                                                                      |
 | args               | []interface{}              | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates. |
+| externalURL        | nothing                    | string                 | Returns a string representing the external URL.                                                                                    |
+| pathPrefix         | nothing                    | string                 | Returns the path of the external URL.                                                                                              |
 | tmpl               | string, []interface{}      | nothing                | Not supported.                                                                                                                     |
 | safeHtml           | string                     | string                 | Not supported.                                                                                                                     |
 | query              | query string               | []sample               | Not supported.                                                                                                                     |
 | first              | []sample                   | sample                 | Not supported.                                                                                                                     |
 | label              | label, sample              | string                 | Not supported.                                                                                                                     |
+| strvalue           | []sample                   | string                 | Returns the "\_\_value\_\_" label.                                                                                                 |
 | value              | sample                     | float64                | Not supported.                                                                                                                     |
 | sortByLabel        | label, []samples           | []sample               | Not supported.                                                                                                                     |
 
