@@ -32,8 +32,12 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
 	cfg := &setting.Cfg{
-		DataPath:        tmpDir,
-		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			DisabledOrgs:                   map[int64]struct{}{5: {}},
+		}, // do not poll in tests.
 	}
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
 	require.NoError(t, err)
@@ -81,6 +85,12 @@ grafana_alerting_active_configurations 4
 # TYPE grafana_alerting_discovered_configurations gauge
 grafana_alerting_discovered_configurations 4
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
+	}
+	// if the disabled org comes back, it should not detect it.
+	{
+		orgStore.orgs = []int64{1, 2, 3, 4, 5}
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 4)
 	}
 }
 

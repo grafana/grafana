@@ -40,7 +40,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map((tab) => {
-          if (config.featureToggles.ngalert && tab.id === PanelEditorTabId.Alert) {
+          if (config.unifiedAlertingEnabled && tab.id === PanelEditorTabId.Alert) {
             return (
               <PanelAlertTab
                 key={tab.id}
