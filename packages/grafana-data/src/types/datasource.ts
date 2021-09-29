@@ -251,7 +251,12 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * @deprecated please use DataSourceWithLogsContextSupport instead
+   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
+   * the same signature in DataSourceWithLogsContextSupport).
+   *
+   * This method will be removed from DataSourceApi in the future. Some editors may still show
+   * a deprecation warning which can be ignored for time being.
    */
   getLogRowContext?: <TContextQueryOptions extends {}>(
     row: LogRowModel,
@@ -259,7 +264,12 @@ abstract class DataSourceApi<
   ) => Promise<DataQueryResponse>;
 
   /**
-   * @deprecated please use DataSourceWithLogsContextSupport instead
+   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
+   * the same signature in DataSourceWithLogsContextSupport).
+   *
+   * This method will be removed from DataSourceApi in the future. Some editors may still show
+   * a deprecation warning which can be ignored for time being.
    */
   showContextToggle?(row?: LogRowModel): boolean;
 
