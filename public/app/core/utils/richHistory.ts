@@ -75,17 +75,6 @@ export function addToRichHistory(
     ];
 
     try {
-      for (let i = 0; i < 1000; i++) {
-        updatedHistory = updatedHistory.concat({
-          queries: newQueriesToSave,
-          ts,
-          datasourceId,
-          datasourceName,
-          starred,
-          comment,
-          sessionName,
-        });
-      }
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
       return updatedHistory;
     } catch (error) {
