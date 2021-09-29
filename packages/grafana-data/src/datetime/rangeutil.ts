@@ -216,6 +216,15 @@ function isRelativeTime(v: DateTime | string) {
   return false;
 }
 
+export function isFiscal(timeRange: TimeRange) {
+  if (typeof timeRange.raw.from === 'string' && timeRange.raw.from.indexOf('f') > 0) {
+    return true;
+  } else if (typeof timeRange.raw.to === 'string' && timeRange.raw.to.indexOf('f') > 0) {
+    return true;
+  }
+  return false;
+}
+
 export function isRelativeTimeRange(raw: RawTimeRange): boolean {
   return isRelativeTime(raw.from) || isRelativeTime(raw.to);
 }
