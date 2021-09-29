@@ -26,7 +26,8 @@ export function PluginListItem({ plugin, pathName }: Props) {
 
 // Styles shared between the different type of list items
 export const getStyles = (theme: GrafanaTheme2, displayMode: PluginListDisplayMode) => {
-  const isList = displayMode === PluginListDisplayMode.List;
+  const isRow = displayMode === PluginListDisplayMode.List;
+  const isCard = displayMode === PluginListDisplayMode.Table;
 
   return {
     cardContainer: css`
@@ -34,11 +35,14 @@ export const getStyles = (theme: GrafanaTheme2, displayMode: PluginListDisplayMo
       padding: ${theme.spacing()};
     `,
     headerWrap: css`
-      ${isList ? '' : `align-items: center;`}
       display: grid;
       grid-template-columns: ${LOGO_SIZE} 1fr ${theme.spacing(3)};
       grid-gap: ${theme.spacing(2)};
       width: 100%;
+      ${isCard &&
+      css`
+        align-items: center;
+      `}
     `,
     name: css`
       color: ${theme.colors.text.primary};
@@ -56,7 +60,14 @@ export const getStyles = (theme: GrafanaTheme2, displayMode: PluginListDisplayMo
     `,
     orgName: css`
       color: ${theme.colors.text.secondary};
-      ${isList ? `margin: ${theme.spacing(0, 0, 0.5, 0)}` : `margin-bottom: 0`};
+      ${isRow &&
+      css`
+        margin: ${theme.spacing(0, 0, 0.5, 0)};
+      `}
+      ${isCard &&
+      css`
+        margin-bottom: 0;
+      `};
     `,
     hasUpdate: css`
       color: ${theme.colors.text.secondary};
