@@ -11,6 +11,7 @@ import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
+import * as style from 'ol/style';
 
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
@@ -33,6 +34,8 @@ export interface MarkersConfig {
   fillOpacity: number;
   shape?: string;
   showLegend?: boolean;
+  icon?: string;
+  iconScale?: number;
 }
 
 const defaultOptions: MarkersConfig = {
@@ -47,6 +50,8 @@ const defaultOptions: MarkersConfig = {
   fillOpacity: 0.4,
   shape: 'circle',
   showLegend: true,
+  icon: '',
+  iconScale: 1,
 };
 
 export const MARKERS_LAYER_ID = 'markers';
@@ -110,6 +115,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const colorDim = getColorDimension(frame, config.color, theme);
           const sizeDim = getScaledDimension(frame, config.size);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
+          const icon = config?.icon;
 
           // Map each data value into new points
           for (let i = 0; i < frame.length; i++) {
@@ -126,8 +132,20 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               frame,
               rowIndex: i,
             });
-
-            dot.setStyle(shape!.make(color, fillColor, radius));
+            if (!icon) {
+              dot.setStyle(shape!.make(color, fillColor, radius));
+            } else {
+              dot.setStyle(
+                new style.Style({
+                  image: new style.Icon({
+                    src: icon,
+                    color,
+                    opacity,
+                    scale: config.iconScale,
+                  }),
+                })
+              );
+            }
             features.push(dot);
           }
 
@@ -150,17 +168,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   // Marker overlay options
   registerOptionsUI: (builder) => {
     builder
-      .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-      })
       .addCustomEditor({
         id: 'config.size',
         path: 'config.size',
@@ -185,6 +192,17 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         },
         defaultValue: 'circle',
       })
+      .addCustomEditor({
+        id: 'config.color',
+        path: 'config.color',
+        name: 'Marker Color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {
+          // Configured values
+          fixed: 'grey',
+        },
+      })
       .addSliderInput({
         path: 'config.fillOpacity',
         name: 'Fill opacity',
@@ -195,6 +213,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           step: 0.1,
         },
         showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
+      })
+      .addTextInput({
+        path: 'config.icon',
+        name: 'Marker Icon',
+        defaultValue: defaultOptions.icon,
+        settings: {
+          placeholder: 'Enter custom icon url',
+        },
+      })
+      .addSliderInput({
+        path: 'config.iconScale',
+        name: 'Icon scale',
+        defaultValue: defaultOptions.iconScale,
+        settings: {
+          min: 0,
+          max: 20,
+          step: 0.05,
+        },
       })
       .addBooleanSwitch({
         path: 'config.showLegend',
