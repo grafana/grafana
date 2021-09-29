@@ -237,6 +237,10 @@ export function addLimitInfo(items: any[] | undefined): string {
   return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }
 
+// NOTE: the following 2 exported functions are very similar to the prometheus*Escape
+// functions in datasource.ts, but they are not exactly the same algorithm, and we found
+// no way to reuse one in the another or vice versa.
+
 // Prometheus regular-expressions use the RE2 syntax (https://github.com/google/re2/wiki/Syntax),
 // so every character that matches something in that list has to be escaped.
 // the list of metacharacters is: *+?()|\.[]{}^$
