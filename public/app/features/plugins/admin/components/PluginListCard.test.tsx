@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
-import { PluginListCard } from './PluginListCard';
+import { PluginListItemCard } from './PluginListItemCard';
 import { CatalogPlugin } from '../types';
 
 describe('PluginCard', () => {
@@ -31,7 +31,7 @@ describe('PluginCard', () => {
   };
 
   it('renders a card with link, image, name, orgName and badges', () => {
-    render(<PluginListCard plugin={plugin} pathName="/plugins" />);
+    render(<PluginListItemCard plugin={plugin} pathName="/plugins" />);
 
     expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin?page=overview');
 
@@ -47,28 +47,28 @@ describe('PluginCard', () => {
 
   it('renders a datasource plugin with correct icon', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
-    render(<PluginListCard plugin={datasourcePlugin} pathName="" />);
+    render(<PluginListItemCard plugin={datasourcePlugin} pathName="" />);
 
     expect(screen.getByTestId(/datasource plugin icon/i)).toBeVisible();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
-    render(<PluginListCard plugin={panelPlugin} pathName="" />);
+    render(<PluginListItemCard plugin={panelPlugin} pathName="" />);
 
     expect(screen.getByTestId(/panel plugin icon/i)).toBeVisible();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
-    render(<PluginListCard plugin={appPlugin} pathName="" />);
+    render(<PluginListItemCard plugin={appPlugin} pathName="" />);
 
     expect(screen.getByTestId(/app plugin icon/i)).toBeVisible();
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
     const pluginWithError = { ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature };
-    render(<PluginListCard plugin={pluginWithError} pathName="" />);
+    render(<PluginListItemCard plugin={pluginWithError} pathName="" />);
 
     expect(screen.getByText(/disabled/i)).toBeVisible();
   });

@@ -4,8 +4,7 @@ import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useLocation } from 'react-router-dom';
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
-import { PluginListCard } from './PluginListCard';
-import { PluginListRow } from './PluginListRow';
+import { PluginListItem } from './PluginListItem';
 
 interface Props {
   plugins: CatalogPlugin[];
@@ -18,14 +17,9 @@ export const PluginList = ({ plugins, displayMode }: Props) => {
 
   return (
     <div className={styles.container} data-testid="plugin-list">
-      {plugins.map((plugin) => {
-        switch (displayMode) {
-          case PluginListDisplayMode.List:
-            return <PluginListRow key={plugin.id} plugin={plugin} pathName={location.pathname} />;
-          default:
-            return <PluginListCard key={plugin.id} plugin={plugin} pathName={location.pathname} />;
-        }
-      })}
+      {plugins.map((plugin) => (
+        <PluginListItem key={plugin.id} plugin={plugin} pathName={location.pathname} />
+      ))}
     </div>
   );
 };
