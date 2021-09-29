@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,6 +49,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	ossencryption.ProvideService,
 	wire.Bind(new(encryption.Service), new(*ossencryption.Service)),
+	searchusers.ProvideUsersService,
+	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 )
 
 var wireExtsSet = wire.NewSet(
