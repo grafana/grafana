@@ -659,20 +659,14 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
-			if rule.Converter != nil {
-				_, err := g.Pipeline.ProcessInput(client.Context(), user.OrgId, channel, e.Data)
-				if err != nil {
-					logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-					return centrifuge.PublishReply{}, centrifuge.ErrorInternal
-				}
-				return centrifuge.PublishReply{
-					Result: &centrifuge.PublishResult{},
-				}, nil
-			} else {
-				// using HTTP error codes for WS errors too.
-				code, text := publishStatusToHTTPError(backend.PublishStreamStatusNotFound)
-				return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+			_, err := g.Pipeline.ProcessInput(client.Context(), user.OrgId, channel, e.Data)
+			if err != nil {
+				logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+				return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 			}
+			return centrifuge.PublishReply{
+				Result: &centrifuge.PublishResult{},
+			}, nil
 		}
 	}
 
@@ -898,15 +892,12 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
 				}
 			}
-			if rule.Converter != nil {
-				_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgId, channel, cmd.Data)
-				if err != nil {
-					logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
-					return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
-				}
-				return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+			_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgId, channel, cmd.Data)
+			if err != nil {
+				logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
+				return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 			}
-			return response.Error(http.StatusNotFound, http.StatusText(http.StatusNotFound), nil)
+			return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 		}
 	}
 

@@ -13,11 +13,33 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
+// TODO: some things to implement and ideas to consider.
+// * Can return ChannelData from Frame Outputter – thus starting corresponding rule from processing input step.
+// * Better error communication with WS/HTTP? Currently we can't return nothing beyond InternalError.
+// * Better copy data and Frame on redirects? (at least for safety, but no real problem exists yet).
+// * How to deal with auth on redirects? What if publish auth configured for a rule in redirect? Currently auth skipped.
+// * Avoid ProcessorVars, OutputVars – use Vars everywhere.
+// * Rename:
+//		* Converter => FrameConverter
+//		* Outputter => FrameOutputter
+//		* Processor => FrameProcessor
+//		* ConditionChecker => FrameConditionChecker.
+// * Put SignedInUser into Vars.
+// * Distributed tracing to visualize pipeline path
+
+// ChannelData is a wrapper over raw data with additional channel information.
+// Channel is used for rule routing, if the channel is empty then data processing
+// stops. If channel is not empty then data processing will be redirected to a
+// corresponding channel rule.
+type ChannelData struct {
+	Channel string
+	Data    []byte
+}
+
 // ChannelFrame is a wrapper over data.Frame with additional channel information.
 // Channel is used for rule routing, if the channel is empty then frame processing
 // will try to take current rule Processor and Outputter. If channel is not empty
 // then frame processing will be redirected to a corresponding channel rule.
-// TODO: avoid recursion, increment a counter while frame travels over pipeline steps, make it configurable.
 type ChannelFrame struct {
 	Channel string
 	Frame   *data.Frame
@@ -40,6 +62,12 @@ type ProcessorVars struct {
 // OutputVars has some helpful things Outputter entities could use.
 type OutputVars struct {
 	ProcessorVars
+}
+
+// DataOutputter can output incoming data before conversion to frames.
+type DataOutputter interface {
+	Type() string
+	OutputData(ctx context.Context, vars Vars, data []byte) ([]*ChannelData, error)
 }
 
 // Converter converts raw bytes to slice of ChannelFrame. Each element
@@ -82,14 +110,15 @@ type SubscribeAuthChecker interface {
 // LiveChannelRule is an in-memory representation of each specific rule, with Converter, Processor
 // and Outputter to be executed by Pipeline.
 type LiveChannelRule struct {
-	OrgId         int64
-	Pattern       string
-	PublishAuth   PublishAuthChecker
-	SubscribeAuth SubscribeAuthChecker
-	Converter     Converter
-	Processors    []Processor
-	Outputters    []Outputter
-	Subscribers   []Subscriber
+	OrgId          int64
+	Pattern        string
+	PublishAuth    PublishAuthChecker
+	SubscribeAuth  SubscribeAuthChecker
+	DataOutputters []DataOutputter
+	Converter      Converter
+	Processors     []Processor
+	Outputters     []Outputter
+	Subscribers    []Subscriber
 }
 
 // Label ...
@@ -137,12 +166,26 @@ func (p *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, err
 }
 
 func (p *Pipeline) ProcessInput(ctx context.Context, orgID int64, channelID string, body []byte) (bool, error) {
+	return p.processInput(ctx, orgID, channelID, body, nil)
+}
+
+func (p *Pipeline) processInput(ctx context.Context, orgID int64, channelID string, body []byte, visitedChannels map[string]struct{}) (bool, error) {
 	rule, ok, err := p.ruleGetter.Get(orgID, channelID)
 	if err != nil {
 		return false, err
 	}
 	if !ok {
 		return false, nil
+	}
+	if visitedChannels == nil {
+		visitedChannels = map[string]struct{}{}
+	}
+	if len(rule.DataOutputters) > 0 {
+		channelDataList := []*ChannelData{{Channel: channelID, Data: body}}
+		err = p.processChannelDataList(ctx, orgID, channelID, channelDataList, visitedChannels)
+		if err != nil {
+			return false, err
+		}
 	}
 	channelFrames, ok, err := p.dataToChannelFrames(ctx, *rule, orgID, channelID, body)
 	if err != nil {
@@ -187,6 +230,32 @@ func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule
 }
 
 var errChannelRecursion = errors.New("channel recursion")
+
+func (p *Pipeline) processChannelDataList(ctx context.Context, orgID int64, channelID string, channelDataList []*ChannelData, visitedChannels map[string]struct{}) error {
+	for _, channelData := range channelDataList {
+		var nextChannel = channelID
+		if channelData.Channel != "" {
+			nextChannel = channelData.Channel
+		}
+		if _, ok := visitedChannels[nextChannel]; ok {
+			return fmt.Errorf("%w: %s", errChannelRecursion, nextChannel)
+		}
+		visitedChannels[nextChannel] = struct{}{}
+		newChannelDataList, err := p.processData(ctx, orgID, nextChannel, channelData.Data)
+		if err != nil {
+			return err
+		}
+		if len(newChannelDataList) > 0 {
+			for _, cd := range newChannelDataList {
+				_, err := p.processInput(ctx, orgID, cd.Channel, cd.Data, visitedChannels)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
 
 func (p *Pipeline) processChannelFrames(ctx context.Context, orgID int64, channelID string, channelFrames []*ChannelFrame, visitedChannels map[string]struct{}) error {
 	if visitedChannels == nil {
@@ -270,6 +339,47 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 			resultingFrames = append(resultingFrames, frames...)
 		}
 		return resultingFrames, nil
+	}
+
+	return nil, nil
+}
+
+func (p *Pipeline) processData(ctx context.Context, orgID int64, channelID string, data []byte) ([]*ChannelData, error) {
+	rule, ruleOk, err := p.ruleGetter.Get(orgID, channelID)
+	if err != nil {
+		logger.Error("Error getting rule", "error", err)
+		return nil, err
+	}
+	if !ruleOk {
+		logger.Debug("Rule not found", "channel", channelID)
+		return nil, err
+	}
+
+	ch, err := live.ParseChannel(channelID)
+	if err != nil {
+		logger.Error("Error parsing channel", "error", err, "channel", channelID)
+		return nil, err
+	}
+
+	vars := Vars{
+		OrgID:     orgID,
+		Channel:   channelID,
+		Scope:     ch.Scope,
+		Namespace: ch.Namespace,
+		Path:      ch.Path,
+	}
+
+	if len(rule.DataOutputters) > 0 {
+		var resultingChannelDataList []*ChannelData
+		for _, out := range rule.DataOutputters {
+			channelDataList, err := out.OutputData(ctx, vars, data)
+			if err != nil {
+				logger.Error("Error outputting frame", "error", err)
+				return nil, err
+			}
+			resultingChannelDataList = append(resultingChannelDataList, channelDataList...)
+		}
+		return resultingChannelDataList, nil
 	}
 
 	return nil, nil
