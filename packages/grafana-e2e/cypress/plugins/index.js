@@ -20,16 +20,11 @@ module.exports = (on, config) => {
       const directoryPath = path.join(projectPath, relativePath);
       const jsonFiles = fs.readdirSync(directoryPath);
       return jsonFiles
+        .filter((fileName) => /.json$/i.test(fileName))
         .map((fileName) => {
-          try {
-            const fileBuffer = fs.readFileSync(path.join(directoryPath, fileName));
-            return JSON.parse(fileBuffer);
-          } catch (err) {
-            console.error(`Could not read and parse: ${fileName}`);
-            return null;
-          }
-        })
-        .filter((fileWasParsedSuccessfully) => !!fileWasParsedSuccessfully);
+          const fileBuffer = fs.readFileSync(path.join(directoryPath, fileName));
+          return JSON.parse(fileBuffer);
+        });
     },
   });
 
