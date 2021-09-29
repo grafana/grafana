@@ -14,8 +14,6 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
-const RICH_HISTORY_SAVE_ERROR_TITLE = 'Saving rich history failed';
-const RICH_HISTORY_SAVE_ERROR_MESSAGE = 'Please clear query history to save new items.';
 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
@@ -77,10 +75,21 @@ export function addToRichHistory(
     ];
 
     try {
+      for (let i = 0; i < 1000; i++) {
+        updatedHistory = updatedHistory.concat({
+          queries: newQueriesToSave,
+          ts,
+          datasourceId,
+          datasourceName,
+          starred,
+          comment,
+          sessionName,
+        });
+      }
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
       return updatedHistory;
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(RICH_HISTORY_SAVE_ERROR_TITLE, RICH_HISTORY_SAVE_ERROR_MESSAGE)));
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
       return richHistory;
     }
   }
@@ -113,7 +122,7 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(RICH_HISTORY_SAVE_ERROR_TITLE, RICH_HISTORY_SAVE_ERROR_MESSAGE)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -135,7 +144,7 @@ export function updateCommentInRichHistory(
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(RICH_HISTORY_SAVE_ERROR_TITLE, RICH_HISTORY_SAVE_ERROR_MESSAGE)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -146,7 +155,7 @@ export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: nu
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(RICH_HISTORY_SAVE_ERROR_TITLE, RICH_HISTORY_SAVE_ERROR_MESSAGE)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
