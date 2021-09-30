@@ -1,4 +1,4 @@
-# Heatmap Panel -  Native Plugin
+# Heatmap Panel - Native Plugin
 
 The Heatmap panel allows you to view histograms over time and is **included** with Grafana.
 

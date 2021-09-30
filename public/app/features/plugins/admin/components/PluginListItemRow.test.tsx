@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
-import { PluginListCard } from './PluginListCard';
+import { PluginListItemRow } from './PluginListItemRow';
 import { CatalogPlugin } from '../types';
 
-describe('PluginCard', () => {
+describe('PluginListItemRow', () => {
   const plugin: CatalogPlugin = {
     description: 'The test plugin',
     downloads: 5,
@@ -30,8 +30,8 @@ describe('PluginCard', () => {
     isDisabled: false,
   };
 
-  it('renders a card with link, image, name, orgName and badges', () => {
-    render(<PluginListCard plugin={plugin} pathName="/plugins" />);
+  it('renders a row with link, image, name, orgName and badges', () => {
+    render(<PluginListItemRow plugin={plugin} pathName="/plugins" />);
 
     expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin?page=overview');
 
@@ -47,28 +47,28 @@ describe('PluginCard', () => {
 
   it('renders a datasource plugin with correct icon', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
-    render(<PluginListCard plugin={datasourcePlugin} pathName="" />);
+    render(<PluginListItemRow plugin={datasourcePlugin} pathName="" />);
 
-    expect(screen.getByTestId(/datasource plugin icon/i)).toBeVisible();
+    expect(screen.getByLabelText(/datasource plugin icon/i)).toBeVisible();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
-    render(<PluginListCard plugin={panelPlugin} pathName="" />);
+    render(<PluginListItemRow plugin={panelPlugin} pathName="" />);
 
-    expect(screen.getByTestId(/panel plugin icon/i)).toBeVisible();
+    expect(screen.getByLabelText(/panel plugin icon/i)).toBeVisible();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
-    render(<PluginListCard plugin={appPlugin} pathName="" />);
+    render(<PluginListItemRow plugin={appPlugin} pathName="" />);
 
-    expect(screen.getByTestId(/app plugin icon/i)).toBeVisible();
+    expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
     const pluginWithError = { ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature };
-    render(<PluginListCard plugin={pluginWithError} pathName="" />);
+    render(<PluginListItemRow plugin={pluginWithError} pathName="" />);
 
     expect(screen.getByText(/disabled/i)).toBeVisible();
   });

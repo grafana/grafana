@@ -52,7 +52,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
         aria-label="Select option"
       >
         {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
-        {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
+        {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || data.value} />}
         <div className={styles.optionBody}>
           <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>
           {data.description && <div className={styles.optionDescription}>{data.description}</div>}

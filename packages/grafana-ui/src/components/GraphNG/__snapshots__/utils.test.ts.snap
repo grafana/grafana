@@ -98,6 +98,7 @@ Object {
     },
   },
   "hooks": Object {},
+  "mode": 1,
   "padding": undefined,
   "scales": Object {
     "__fixed": Object {
@@ -127,6 +128,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -149,6 +151,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -171,6 +174,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -193,6 +197,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
@@ -215,6 +220,7 @@ Object {
         1,
         2,
       ],
+      "facets": undefined,
       "fill": [Function],
       "paths": [Function],
       "points": Object {
