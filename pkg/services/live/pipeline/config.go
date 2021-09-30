@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
@@ -58,21 +59,40 @@ type OutputterConfig struct {
 	ChangeLogOutputConfig   *ChangeLogOutputConfig     `json:"changeLog,omitempty"`
 }
 
+type DataOutputterConfig struct {
+	Type                     string                    `json:"type"`
+	RedirectDataOutputConfig *RedirectDataOutputConfig `json:"redirect,omitempty"`
+}
+
 type MultipleSubscriberConfig struct {
 	Subscribers []SubscriberConfig `json:"subscribers"`
 }
 
 type SubscriberConfig struct {
-	Type                          string                         `json:"type"`
-	MultipleSubscriberConfig      *MultipleSubscriberConfig      `json:"multiple,omitempty"`
-	AuthorizeRoleSubscriberConfig *AuthorizeRoleSubscriberConfig `json:"authorizeRole,omitempty"`
+	Type                     string                    `json:"type"`
+	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
+}
+
+// ChannelAuthCheckConfig is used to define auth rules for a channel.
+type ChannelAuthCheckConfig struct {
+	RequireRole models.RoleType `json:"role,omitempty"`
+}
+
+type ChannelAuthConfig struct {
+	// By default anyone can subscribe.
+	Subscribe *ChannelAuthCheckConfig `json:"subscribe,omitempty"`
+
+	// By default HTTP and WS require admin permissions to publish.
+	Publish *ChannelAuthCheckConfig `json:"publish,omitempty"`
 }
 
 type ChannelRuleSettings struct {
-	Converter   *ConverterConfig    `json:"converter,omitempty"`
-	Processors  []*ProcessorConfig  `json:"processors,omitempty"`
-	Outputters  []*OutputterConfig  `json:"outputs,omitempty"`
-	Subscribers []*SubscriberConfig `json:"subscribers,omitempty"`
+	Auth           *ChannelAuthConfig     `json:"auth,omitempty"`
+	DataOutputters []*DataOutputterConfig `json:"dataOutputs,omitempty"`
+	Converter      *ConverterConfig       `json:"converter,omitempty"`
+	Processors     []*ProcessorConfig     `json:"processors,omitempty"`
+	Outputters     []*OutputterConfig     `json:"outputs,omitempty"`
+	Subscribers    []*SubscriberConfig    `json:"subscribers,omitempty"`
 }
 
 type ChannelRule struct {
@@ -198,11 +218,6 @@ func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscr
 		return NewBuiltinSubscriber(f.ChannelHandlerGetter), nil
 	case SubscriberTypeManagedStream:
 		return NewManagedStreamSubscriber(f.ManagedStream), nil
-	case SubscriberTypeAuthorizeRole:
-		if config.AuthorizeRoleSubscriberConfig == nil {
-			return nil, missingConfiguration
-		}
-		return NewAuthorizeRoleSubscriber(*config.AuthorizeRoleSubscriberConfig), nil
 	case SubscriberTypeMultiple:
 		if config.MultipleSubscriberConfig == nil {
 			return nil, missingConfiguration
@@ -385,6 +400,24 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 	}
 }
 
+func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig) (DataOutputter, error) {
+	if config == nil {
+		return nil, nil
+	}
+	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
+	switch config.Type {
+	case DataOutputTypeRedirect:
+		if config.RedirectDataOutputConfig == nil {
+			return nil, missingConfiguration
+		}
+		return NewRedirectDataOutput(*config.RedirectDataOutputConfig), nil
+	case DataOutputTypeBuiltin:
+		return NewBuiltinDataOutput(f.ChannelHandlerGetter), nil
+	default:
+		return nil, fmt.Errorf("unknown data output type: %s", config.Type)
+	}
+}
+
 func (f *StorageRuleBuilder) getRemoteWriteConfig(uid string, remoteWriteBackends []RemoteWriteBackend) (*RemoteWriteConfig, bool) {
 	for _, rwb := range remoteWriteBackends {
 		if rwb.UID == uid {
@@ -412,7 +445,17 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			OrgId:   orgID,
 			Pattern: ruleConfig.Pattern,
 		}
+
+		if ruleConfig.Settings.Auth != nil && ruleConfig.Settings.Auth.Subscribe != nil {
+			rule.SubscribeAuth = NewRoleCheckAuthorizer(ruleConfig.Settings.Auth.Subscribe.RequireRole)
+		}
+
+		if ruleConfig.Settings.Auth != nil && ruleConfig.Settings.Auth.Publish != nil {
+			rule.PublishAuth = NewRoleCheckAuthorizer(ruleConfig.Settings.Auth.Publish.RequireRole)
+		}
+
 		var err error
+
 		rule.Converter, err = f.extractConverter(ruleConfig.Settings.Converter)
 		if err != nil {
 			return nil, err
@@ -427,6 +470,16 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			processors = append(processors, proc)
 		}
 		rule.Processors = processors
+
+		var dataOutputters []DataOutputter
+		for _, outConfig := range ruleConfig.Settings.DataOutputters {
+			out, err := f.extractDataOutputter(outConfig)
+			if err != nil {
+				return nil, err
+			}
+			dataOutputters = append(dataOutputters, out)
+		}
+		rule.DataOutputters = dataOutputters
 
 		var outputters []Outputter
 		for _, outConfig := range ruleConfig.Settings.Outputters {

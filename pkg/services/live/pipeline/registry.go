@@ -15,16 +15,12 @@ var SubscribersRegistry = []EntityInfo{
 		Type:        SubscriberTypeManagedStream,
 		Description: "apply managed stream subscribe logic",
 	},
-	{
-		Type:        SubscriberTypeAuthorizeRole,
-		Description: "authorize user role",
-	},
 }
 
 var OutputsRegistry = []EntityInfo{
 	{
 		Type:        OutputTypeManagedStream,
-		Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+		Description: "only send schema when structure changes (note this also requires a matching subscriber)",
 		Example:     ManagedStreamOutputConfig{},
 	},
 	{
@@ -33,25 +29,31 @@ var OutputsRegistry = []EntityInfo{
 		Example:     ConditionalOutputConfig{},
 	},
 	{
-		Type: OutputTypeRedirect,
+		Type:        OutputTypeRedirect,
+		Description: "redirect for processing by another channel rule",
 	},
 	{
-		Type: OutputTypeThreshold,
+		Type:        OutputTypeThreshold,
+		Description: "output field threshold boundaries cross into new channel",
 	},
 	{
-		Type: OutputTypeChangeLog,
+		Type:        OutputTypeChangeLog,
+		Description: "output field changes into new channel",
 	},
 	{
-		Type: OutputTypeRemoteWrite,
+		Type:        OutputTypeRemoteWrite,
+		Description: "output to remote write endpoint",
 	},
 }
 
 var ConvertersRegistry = []EntityInfo{
 	{
-		Type: ConverterTypeJsonAuto,
+		Type:        ConverterTypeJsonAuto,
+		Description: "automatic recursive JSON to Frame conversion",
 	},
 	{
-		Type: ConverterTypeJsonExact,
+		Type:        ConverterTypeJsonExact,
+		Description: "JSON to Frame conversion according to exact list of fields",
 	},
 	{
 		Type:        ConverterTypeInfluxAuto,
@@ -59,7 +61,8 @@ var ConvertersRegistry = []EntityInfo{
 		Example:     AutoInfluxConverterConfig{},
 	},
 	{
-		Type: ConverterTypeJsonFrame,
+		Type:        ConverterTypeJsonFrame,
+		Description: "JSON-encoded Grafana data frame",
 	},
 }
 
