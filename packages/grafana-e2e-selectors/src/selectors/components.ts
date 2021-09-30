@@ -202,6 +202,7 @@ export const Components = {
   },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    input: () => 'input[id="data-source-picker"]',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
