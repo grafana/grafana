@@ -478,7 +478,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, sch.stateManager, sch.appURL)
 
 				if len(alerts.PostableAlerts) == 0 {
-					sch.log.Debug("no alerts to send to Alertmanager. Exiting", "org", alertRule.OrgID)
+					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
 					return nil
 				}
 
