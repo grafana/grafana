@@ -66,7 +66,6 @@ type ClusterPeer interface {
 type Alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
-	OrgID       int64
 
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
@@ -139,7 +138,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
-	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
+	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.orgID), am.notificationLog, m.Registerer)
 	am.notificationLog.SetBroadcast(c.Broadcast)
 
 	am.silences, err = newSilences(silencesFilePath, m.Registerer)
@@ -147,7 +146,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
-	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.OrgID), am.silences, m.Registerer)
+	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.orgID), am.silences, m.Registerer)
 	am.silences.SetBroadcast(c.Broadcast)
 
 	am.wg.Add(1)
