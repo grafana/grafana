@@ -5,7 +5,7 @@
 ### Features and enhancements
 
 - **AccessControl:** Document new permissions restricting data source access. [#39091](https://github.com/grafana/grafana/pull/39091), [@gamab](https://github.com/gamab)
-- Add fiscal years and search to time picker. [#39073](https://github.com/grafana/grafana/pull/39073), [@oscarkilhed](https://github.com/oscarkilhed)
+- **TimePicker:** Add fiscal years and search to time picker. [#39073](https://github.com/grafana/grafana/pull/39073), [@oscarkilhed](https://github.com/oscarkilhed)
 - **Alerting:** Added support for Unified Alerting with Grafana HA. [#37920](https://github.com/grafana/grafana/pull/37920), [@gotjosh](https://github.com/gotjosh)
 - **Alerting:** Added support for tune rule evaluation using configuration options. [#35623](https://github.com/grafana/grafana/pull/35623), [@papagian](https://github.com/papagian)
 - **Alerting:** Cleanups alertmanager namespace from key-value store when disabling Grafana 8 alerts. [#39554](https://github.com/grafana/grafana/pull/39554), [@papagian](https://github.com/papagian)
