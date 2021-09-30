@@ -144,6 +144,9 @@ export enum LogsDedupDescription {
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
 
+/**
+ * @public
+ */
 export interface DataSourceWithLogsContextSupport {
   /**
    * Retrieve context for a given log row
@@ -156,6 +159,9 @@ export interface DataSourceWithLogsContextSupport {
   showContextToggle(row?: LogRowModel): boolean;
 }
 
+/**
+ * @public
+ */
 export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
     return false;
