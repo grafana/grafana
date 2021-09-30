@@ -18,4 +18,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   rulesLabel: css`
     margin-top: ${theme.spacing.sm};
   `,
+  warning: css`
+    margin-bottom: ${theme.spacing.md};
+  `,
+  warningLink: css`
+    text-decoration: underline;
+  `,
 }));
