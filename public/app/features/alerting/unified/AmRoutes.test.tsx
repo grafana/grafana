@@ -335,7 +335,7 @@ describe('AmRoutes', () => {
     });
   });
 
-  it('Show error message if loading Alert Manager config fails', async () => {
+  it('Show error message if loading Alertmanager config fails', async () => {
     mocks.api.fetchAlertManagerConfig.mockRejectedValue({
       status: 500,
       data: {
@@ -349,7 +349,7 @@ describe('AmRoutes', () => {
     expect(ui.editButton.query()).not.toBeInTheDocument();
   });
 
-  it('Prometheus alert manager routes cannot be edited', async () => {
+  it('Prometheus Alertmanager routes cannot be edited', async () => {
     mocks.api.fetchStatus.mockResolvedValue({
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,

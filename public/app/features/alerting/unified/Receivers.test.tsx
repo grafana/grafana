@@ -363,7 +363,7 @@ describe('Receivers', () => {
     });
   }, 10000);
 
-  it('Prometheus alert manager receiver cannot be edited', async () => {
+  it('Prometheus Alertmanager receiver cannot be edited', async () => {
     mocks.api.fetchStatus.mockResolvedValue({
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,

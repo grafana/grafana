@@ -136,7 +136,7 @@ describe('Alerting Admin', () => {
     expect(input.value).toEqual(JSON.stringify(newConfig, null, 2));
   });
 
-  it('Read-only when using Prometheus alert manager', async () => {
+  it('Read-only when using Prometheus Alertmanager', async () => {
     mocks.api.fetchStatus.mockResolvedValue({
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,

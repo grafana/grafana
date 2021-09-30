@@ -22,7 +22,7 @@ const IMPL_OPTIONS: SelectableValue[] = [
 export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
   return (
     <>
-      <h3 className="page-heading">Alert Manager</h3>
+      <h3 className="page-heading">Alertmanager</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
