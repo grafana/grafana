@@ -2,7 +2,7 @@
 title = "Visualize Prometheus Data"
 description = "Histogram visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "prometheus"]
-weight = 605
+weight = 200
 +++
 ---
 
