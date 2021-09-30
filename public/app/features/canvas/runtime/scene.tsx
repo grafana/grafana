@@ -93,9 +93,24 @@ export class Scene {
     this.onSave(this.root.getSaveModel());
   }
 
+  // make sure this gets called after 'loadScene' and all items have a div
+  initMoveable = (div: HTMLDivElement) => {
+    this.root.visit((v) => {
+      this.lookup.set(v.UID, v);
+      // HACK! select the first/only item
+      if (v.item.id !== 'group') {
+        // console.log('ADD', v.div);
+      }
+    });
+  };
+
+  // init function on scene (ref on entire scene)
+  // function onSave
+  // Maybe try and implement selecto at this level
+
   render() {
     return (
-      <div key={this.revId} className={this.styles.wrap} style={this.style}>
+      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
         {this.root.render()}
       </div>
     );

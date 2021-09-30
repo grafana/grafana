@@ -1,6 +1,5 @@
 import React, { CSSProperties } from 'react';
 import Moveable from 'moveable';
-import Selecto from 'selecto';
 
 import {
   BackgroundImageSize,
@@ -20,6 +19,9 @@ export class ElementState {
   revId = 0;
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
+
+  // Filled in by react ref
+  // div?: HTMLDivElement;
 
   // Calculated
   width = 100;
@@ -128,42 +130,13 @@ export class ElementState {
     return { ...this.options };
   }
 
-  // updateElementPosition(top: number, left: number) {
-  //   console.log('BEFORE', this.options.placement);
+  // initElement = (target: HTMLDivElement) => {
+  //   this.div = target;
+  // };
 
-  //   this.options.placement = {
-  //     ...this.options.placement,
-  //     top: top,
-  //     left: left,
-  //   };
-
-  //   console.log('AFTER', this.options.placement);
-  // }
-
-  // use transform to modify relative top / left values
-  // whether than worrying right now about serializing it
-
-  // resize / selecto
-  // Do we want to serialize at the end of each event (how often events are fired)
-  // Implement resize / selecto first before determining approach for serialization
-
-  // IF define object with relative positioning (bottom / right) -> does transform still work -> double check
-
-  setUpMoveable(target: HTMLDivElement) {
-    const canvasPanelContainer = document.getElementById('canvas-panel')!;
-    const frameMap = new Map();
-    let targets: Array<HTMLElement | SVGElement> = [];
-
-    const selecto = new Selecto({
-      container: canvasPanelContainer,
-      selectableTargets: ['.selectable'],
-      continueSelect: false,
-      toggleContinueSelect: 'shift',
-      keyContainer: window,
-    });
-
-    const moveable = new Moveable(canvasPanelContainer, {
-      // target: target,
+  setUpMoveable = (elementDiv: HTMLDivElement) => {
+    const moveable = new Moveable(document.getElementById('canvas-panel')!, {
+      target: elementDiv,
       draggable: true,
       throttleDrag: 0,
       throttleDragRotate: 0,
@@ -171,83 +144,36 @@ export class ElementState {
       throttleResize: 0,
     });
 
-    moveable
-      .on('drag', (e) => {
-        const target = e.target;
-        const frame = frameMap.get(target);
+    let placement = this.options.placement;
 
-        frame.translate = e.beforeTranslate;
-        target.style.transform = `translate(${frame.translate[0]}px, ${frame.translate[1]}px)`;
-      })
-      .on('dragGroupStart', (e) => {
-        e.events.forEach((ev) => {
-          const target = ev.target;
+    if (!placement) {
+      placement = {
+        left: 0,
+        top: 0,
+      };
+      this.options.placement = placement;
+    }
 
-          if (!frameMap.has(target)) {
-            frameMap.set(target, {
-              translate: [0, 0],
-            });
-          }
-          const frame = frameMap.get(target);
+    moveable.on('drag', ({ target, top, left }) => {
+      target.style.top = `${top}px`;
+      target.style.left = `${left}px`;
 
-          ev.set(frame.translate);
-        });
-      })
-      .on('dragGroup', (e) => {
-        e.events.forEach((ev) => {
-          const target = ev.target;
-          const frame = frameMap.get(target);
+      placement!.top = top;
+      placement!.left = left;
+    });
+    moveable.on('resize', ({ target, height, width }) => {
+      target.style.height = `${height}px`;
+      target.style.width = `${width}px`;
 
-          frame.translate = ev.beforeTranslate;
-          target.style.transform = `translate(${frame.translate[0]}px, ${frame.translate[1]}px)`;
-        });
-      });
-
-    selecto
-      .on('dragStart', (e) => {
-        const target = e.inputEvent.target;
-        console.log(target, targets, 'hmmm');
-        if (moveable.isMoveableElement(target) || targets.some((t) => t === target || t.contains(target))) {
-          e.stop();
-        }
-      })
-      .on('select', (e) => {
-        targets = e.selected;
-        moveable.target = targets;
-      })
-      .on('selectEnd', (e) => {
-        if (e.isDragStart) {
-          e.inputEvent.preventDefault();
-
-          setTimeout(() => {
-            moveable.dragStart(e.inputEvent);
-          });
-        }
-      });
-
-    moveable
-      .on('resizeStart', ({ target, clientX, clientY }) => {
-        console.log('onResizeStart', target);
-      })
-      .on('resize', ({ target, width, height, dist, delta, clientX, clientY }) => {
-        console.log('onResize', target);
-        delta[0] && (target!.style.width = `${width}px`);
-        delta[1] && (target!.style.height = `${height}px`);
-      })
-      .on('resizeEnd', ({ target, isDrag, clientX, clientY }) => {
-        console.log('onResizeEnd', target, isDrag);
-      });
-  }
+      placement!.height = height;
+      placement!.width = width;
+    });
+  };
 
   render() {
     const { item } = this;
     return (
-      <div
-        key={`${this.UID}/${this.revId}`}
-        style={{ ...this.sizeStyle, ...this.dataStyle }}
-        ref={this.setUpMoveable}
-        className={'selectable'}
-      >
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.setUpMoveable}>
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );

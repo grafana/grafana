@@ -3332,14 +3332,14 @@
   dependencies:
     any-observable "^0.3.0"
 
-"@scena/dragscroll@^1.0.1", "@scena/dragscroll@^1.0.2":
+"@scena/dragscroll@^1.0.1":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@scena/dragscroll/-/dragscroll-1.0.2.tgz#6fc6565898a9c2e4a90588b9ba5a0d93ba77aa31"
   integrity sha512-M0KDr4CP9SHTqyFD9oGxXDoVQV8EG7rKDtwDlyHXqCyL4sXljDjSqVSpK+2kKZxCnpo1DfB7cXkbods/PjZ3JQ==
   dependencies:
     "@scena/event-emitter" "^1.0.2"
 
-"@scena/event-emitter@^1.0.2", "@scena/event-emitter@^1.0.3", "@scena/event-emitter@^1.0.5":
+"@scena/event-emitter@^1.0.2", "@scena/event-emitter@^1.0.3":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@scena/event-emitter/-/event-emitter-1.0.5.tgz#047e3acef93cf238d7ce3a8cc5a12ec6bd9c3bb1"
   integrity sha512-AzY4OTb0+7ynefmWFQ6hxDdk0CySAq/D4efljfhtRHCOP7MBF9zUfhKG3TJiroVjASqVgkRJFdenS8ArZo6Olg==
@@ -12341,7 +12341,7 @@ geotiff@^1.0.5:
     threads "^1.3.1"
     txml "^3.1.2"
 
-gesto@^1.2.1, gesto@^1.4.0:
+gesto@^1.2.1:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/gesto/-/gesto-1.4.0.tgz#e63952cda67d3210c83303ad635d9868eef8a01d"
   integrity sha512-fSG37iqXb/4wD82B3I5p7KsI4W5mIQkLThDndJmv7HmdX1+Y0QJS7TQgDPgiT7A7PXHa7p8NJNbRX23LNVS6/Q==
@@ -15324,20 +15324,6 @@ keycharm@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/keycharm/-/keycharm-0.2.0.tgz#fa6ea2e43b90a68028843d27f2075d35a8c3e6f9"
   integrity sha1-+m6i5DuQpoAohD0n8gddNajD5vk=
-
-keycode@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/keycode/-/keycode-2.2.0.tgz#3d0af56dc7b8b8e5cba8d0a97f107204eec22b04"
-  integrity sha1-PQr1bce4uOXLqNCpfxByBO7CKwQ=
-
-keycon@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/keycon/-/keycon-1.1.2.tgz#a7a9f5f22f32012fafd11e68c4283911d0738bce"
-  integrity sha512-yCoUAfwqmQUWrtOFuZhicxasF/4ae+M0aH8yV1wEKKZCZql8v6jWhlVF9dT5i1TfuHSmgt/GNuCaWIHT8wk6eQ==
-  dependencies:
-    "@daybrush/utils" "^1.0.0"
-    "@scena/event-emitter" "^1.0.2"
-    keycode "^2.2.0"
 
 kind-of@^3.0.2, kind-of@^3.0.3, kind-of@^3.2.0:
   version "3.2.2"
@@ -21644,22 +21630,6 @@ selection-is-backward@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/selection-is-backward/-/selection-is-backward-1.0.0.tgz#97a54633188a511aba6419fc5c1fa91b467e6be1"
   integrity sha1-l6VGMxiKURq6ZBn8XB+pG0Z+a+E=
-
-selecto@^1.13.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/selecto/-/selecto-1.13.0.tgz#c6498705f3d4382f7637402d9af7b045da345a88"
-  integrity sha512-YQNg7Nk/kLNGX8NZHj/yQwSQIjN0ud3MQssULCsRvzKP0oFDbBD9neR1+Go6u2ZSC3U0hSvpk+Czlttnnm1Lag==
-  dependencies:
-    "@daybrush/utils" "^1.4.0"
-    "@egjs/children-differ" "^1.0.1"
-    "@scena/dragscroll" "^1.0.2"
-    "@scena/event-emitter" "^1.0.5"
-    css-styled "^1.0.0"
-    css-to-mat "^1.0.3"
-    framework-utils "^1.1.0"
-    gesto "^1.4.0"
-    keycon "^1.1.2"
-    overlap-area "^1.0.0"
 
 selfsigned@^1.10.11:
   version "1.10.11"
