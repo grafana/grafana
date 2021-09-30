@@ -96,9 +96,9 @@ By default, Grafana does not automatically refresh the dashboard. Queries run on
 
 Time settings are saved on a per-dashboard basis.
 
-**Timezone** and **fiscal year** settings can be changed from the time range controls by clicking the **Change time settings** button.
+You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
 
-For more advanced time settings, click the **Dashboard settings** (gear) icon at the top of the screen. The settings are in the **Time Options** section of the General tab.
+For more advanced time settings, click the **Dashboard settings** (gear) icon at the top of the UI. Then navigate to the **Time Options** section of the General tab.
 
 - **Timezone -** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
   - **Default -** The default selected time zone for the user profile, team, or organization is used. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses local browser time.
