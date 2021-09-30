@@ -1,5 +1,5 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, Observable, of } from 'rxjs';
+import { combineLatest, from, Observable, of } from 'rxjs';
 import { catchError, map, mergeAll, mergeMap } from 'rxjs/operators';
 
 import {
@@ -85,7 +85,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       )
     );
 
-    return forkJoin(runningQueries).pipe(map(this.finalizeResponses), mergeAll());
+    return combineLatest(runningQueries).pipe(map(this.finalizeResponses), mergeAll());
   }
 
   testDatasource() {

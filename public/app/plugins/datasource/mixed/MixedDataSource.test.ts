@@ -1,4 +1,4 @@
-import { from } from 'rxjs';
+import { from, merge } from 'rxjs';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataSourceInstanceSettings, LoadingState } from '@grafana/data';
 
@@ -16,11 +16,10 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
   E: new MockDataSourceApi('DSE', { data: [] }, {}, 'syntax error near WHERE'),
 });
 
+const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getDataSourceSrv: () => {
-    return datasourceSrv;
-  },
+  getDataSourceSrv: () => getDataSourceSrvMock(),
 }));
 
 describe('MixedDatasource', () => {
@@ -97,4 +96,33 @@ describe('MixedDatasource', () => {
       expect(results[5].error).toEqual({ message: 'DSD: syntax error near FROM' });
     });
   });
+
+  it('should return both query results from the same data source', async () => {
+    getDataSourceSrvMock.mockImplementationOnce(() => {
+      return { get: () => Promise.resolve(mockDs()) };
+    });
+    const ds = new MixedDatasource({} as any);
+    const request: any = {
+      targets: [
+        { refId: 'A', datasource: 'Loki' },
+        { refId: 'B', datasource: 'Loki' },
+      ],
+    };
+
+    await expect(ds.query(request)).toEmitValuesWith((resp) => {
+      expect(resp).toHaveLength(2);
+      expect(resp[0].key).toBe('mixed-0-A');
+      expect(resp[1].key).toBe('mixed-0-B');
+    });
+  });
 });
+
+const mockDs = jest.fn(() => ({
+  query: (q: any) => {
+    const promises = [];
+    for (const target of q.targets) {
+      promises.push(from(Promise.resolve({ key: target.refId })));
+    }
+    return merge(...promises);
+  },
+}));
