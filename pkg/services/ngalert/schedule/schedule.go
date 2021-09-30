@@ -478,6 +478,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
+				if len(alerts.PostableAlerts) == 0 {
+					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
+					return nil
+				}
+
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
 				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
 				if err == nil {
