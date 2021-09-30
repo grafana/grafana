@@ -1,19 +1,22 @@
 # Using this docker image
 
-Currently tagged and uploaded to dockerhub as srclosson/integrations-ci-build 
+Currently tagged and uploaded to dockerhub as srclosson/integrations-ci-build
 
-Based off of `circleci/node:12-browsers` 
+Based off of `circleci/node:12-browsers`
 
 ## User
+
 The user will be `circleci`
 The home directory will be `/home/circleci`
 
 ## Node
+
 - node 12 is installed
 - yarn is installed globally
 - npm is installed globally
 
 ## Go
+
 - Go is installed in `/usr/local/bin/go`
 - golangci-lint is installed in `/usr/local/bin/golangci-lint`
 - mage is installed in `/home/circleci/go/bin/mage`
@@ -21,17 +24,21 @@ The home directory will be `/home/circleci`
 All of the above directories are in the path, so there is no need to specify fully qualified paths.
 
 ## Grafana
+
 - Installed in `/home/circleci/src/grafana`
 - `yarn install` has been run
 
 ## Integration/Release Testing
+
 There are 4 previous versions pre-downloaded to /usr/local/grafana. These versions are:
+
 1. 6.6.2
 2. 6.5.3
 3. 6.4.5
 4. 6.3.7
 
 To test, your CircleCI config will need a run section with something similar to the following
+
 ```
 - run:
         name: Setup Grafana (local install)
@@ -43,15 +50,18 @@ To test, your CircleCI config will need a run section with something similar to 
           grafana-cli --version
 ```
 
-
 # Building
+
 To build, cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci`
+
 ```
 ./build.sh
 ```
 
 # Developing/Testing
+
 To test, you should have docker-compose installed.
+
 ```
 cd test
 ./start.sh

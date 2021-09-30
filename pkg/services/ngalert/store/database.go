@@ -28,7 +28,7 @@ type DBstore struct {
 	// the base scheduler tick rate; it's used for validating definition interval
 	BaseInterval time.Duration
 	// default alert definiiton interval
-	DefaultIntervalSeconds int64
-	SQLStore               *sqlstore.SQLStore
-	Logger                 log.Logger
+	DefaultInterval time.Duration
+	SQLStore        *sqlstore.SQLStore
+	Logger          log.Logger
 }

@@ -1,8 +1,3 @@
-// Actual Diff
-#delta {
-  margin: 2em 0;
-}
-
 // JSON
 @for $i from 0 through 16 {
   .diff-indent-#{$i} {

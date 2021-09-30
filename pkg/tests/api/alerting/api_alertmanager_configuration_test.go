@@ -18,7 +18,8 @@ import (
 
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:                  []string{"ngalert"},
+		DisableLegacyAlerting:                 true,
+		EnableUnifiedAlerting:                 true,
 		NGAlertAlertmanagerConfigPollInterval: 2 * time.Second,
 		DisableAnonymous:                      true,
 	})
@@ -127,8 +128,9 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 
 func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

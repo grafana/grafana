@@ -30,13 +30,12 @@ func TestGenerate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name+" apply default value", func(t *testing.T) {
-			var r cue.Runtime
-			scmInstance, err := r.Compile(c.Name+".cue", c.CUE)
-			if err != nil {
-				t.Fatal(err)
+			scmInstance := ctx.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
+			if scmInstance.Err() != nil {
+				t.Fatal(scmInstance.Err())
 			}
 			inputResource := Resource{Value: c.Trimmed}
-			out, err := ApplyDefaults(inputResource, scmInstance.Value())
+			out, err := ApplyDefaults(inputResource, scmInstance)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -50,13 +49,12 @@ func TestGenerate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name+" trim default value", func(t *testing.T) {
-			var r cue.Runtime
-			scmInstance, err := r.Compile(c.Name+".cue", c.CUE)
-			if err != nil {
-				t.Fatal(err)
+			scmInstance := ctx.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
+			if scmInstance.Err() != nil {
+				t.Fatal(scmInstance.Err())
 			}
 			inputResource := Resource{Value: c.Full}
-			out, err := TrimDefaults(inputResource, scmInstance.Value())
+			out, err := TrimDefaults(inputResource, scmInstance)
 			if err != nil {
 				t.Fatal(err)
 			}

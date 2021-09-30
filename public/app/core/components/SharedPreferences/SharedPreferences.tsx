@@ -135,9 +135,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
               <Field
                 label={
-                  <Label>
+                  <Label htmlFor="home-dashboard-select">
                     <span className={styles.labelText}>Home Dashboard</span>
-                    <Tooltip content="Not finding dashboard you want? Star it first, then it should appear in this select box.">
+                    <Tooltip content="Not finding the dashboard you want? Star it first, then it should appear in this select box.">
                       <Icon name="info-circle" />
                     </Tooltip>
                   </Label>
@@ -154,6 +154,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   }
                   options={dashboards}
                   placeholder="Choose default dashboard"
+                  inputId="home-dashboard-select"
                 />
               </Field>
 

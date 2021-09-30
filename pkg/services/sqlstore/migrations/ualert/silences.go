@@ -47,13 +47,22 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		ExpiresAt: time.Now().Add(365 * 20 * time.Hour), // 1 year.
 	}
 
-	m.silences = append(m.silences, s)
+	_, ok := m.silences[da.OrgId]
+	if !ok {
+		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+	}
+	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
 	return nil
 }
 
 func (m *migration) writeSilencesFile(orgID int64) error {
 	var buf bytes.Buffer
-	for _, e := range m.silences {
+	orgSilences, ok := m.silences[orgID]
+	if !ok {
+		return nil
+	}
+
+	for _, e := range orgSilences {
 		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
 			return err
 		}

@@ -62,7 +62,7 @@ We use [pa11y-ci](https://github.com/pa11y/pa11y-ci) to collect accessibility er
 If the contribution introduces new a11y errors, our continuous integration will fail, preventing you to merge on the main branch. In those cases there are two alternatives for moving forward:
 
 - Check the error log on the pipeline step `test-a11y-frontend-pr`, identify what was the error, and fix it.
-- Locally run the command `yarn test:accessibility-report` that generates an HTML accessibility report, then go to the URL that contains your change, identify the error, and fix it. Keep in mind, a local Grafana instance needs to be running on `http://localhost:3000`.
+- Locally run the command `yarn test:accessibility-report` that generates an HTML accessibility report, then go to the URL that contains your change, identify the error, and fix it. Keep in mind, a local e2e Grafana instance is going to be running on `http://localhost:3001`.
 
 You can also prevent introducing a11y errors by installing an a11y plugin in your browser, for example, axe DevTools, Accessibility Insights for Web among others.
 
@@ -95,25 +95,25 @@ The area should use upper camel case, e.g. UpperCamelCase.
 
 Prefer using one of the following areas:
 
-- **Build:** Changes to the build system, or external dependencies.
-- **Chore:** Changes that don't affect functionality.
-- **Dashboard:** Changes to the Dashboard feature.
-- **Docs:** Changes to documentation.
-- **Explore:** Changes to the Explore feature.
-- **Plugins:** Changes to any of the plugins.
+- **Build:** Change the build system, or external dependencies
+- **Chore:** Change that don't affect functionality
+- **Dashboard:** Change the Dashboard feature
+- **Docs:** Change documentation
+- **Explore:** Change the Explore feature
+- **Plugins:** Change the ... plugin
 
-For changes to data sources, the area should be the name of the data source, e.g., AzureMonitor, Graphite, and Prometheus.
+For changes to data sources, the area is the name of the data source. For example, AzureMonitor, Graphite, or Prometheus.
 
-For changes to panels, the area should be the name of the panel, suffixed with Panel, e.g., GraphPanel, SinglestatPanel, and TablePanel.
+For changes to panels, the area is the name of the panel, suffixed with Panel. For example, GraphPanel, SinglestatPanel, or TablePanel.
 
 **Examples**
 
 - `Build: Support publishing MSI to grafana.com`
 - `Explore: Add Live option for supported data sources`
 - `GraphPanel: Fix legend sorting issues`
-- `Docs: Changed url to URL in all documentation files`
+- `Docs: Change url to URL in all documentation files`
 
-If you're unsure, please have a look at the existing [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) for inspiration/guidance.
+If you're unsure, see the existing [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) for inspiration or guidance.
 
 ### Pull request titles
 

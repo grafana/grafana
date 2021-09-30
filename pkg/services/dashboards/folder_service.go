@@ -72,7 +72,7 @@ func (dr *dashboardServiceImpl) GetFolderByID(ctx context.Context, id int64) (*m
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -91,7 +91,7 @@ func (dr *dashboardServiceImpl) GetFolderByUID(ctx context.Context, uid string) 
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -108,7 +108,7 @@ func (dr *dashboardServiceImpl) GetFolderByTitle(ctx context.Context, title stri
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -200,7 +200,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 		return nil, toFolderError(err)
 	}
 
-	guardian := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	guardian := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)

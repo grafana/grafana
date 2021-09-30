@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -91,7 +90,7 @@ func getLibraryElement(dialect migrator.Dialect, session *sqlstore.DBSession, ui
 }
 
 // createLibraryElement adds a library element.
-func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
+func (l *LibraryElementService) createLibraryElement(c context.Context, signedInUser *models.SignedInUser, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
@@ -106,7 +105,7 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 		}
 	}
 	element := LibraryElement{
-		OrgID:    c.SignedInUser.OrgId,
+		OrgID:    signedInUser.OrgId,
 		FolderID: cmd.FolderID,
 		UID:      createUID,
 		Name:     cmd.Name,
@@ -117,16 +116,16 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 		Created: time.Now(),
 		Updated: time.Now(),
 
-		CreatedBy: c.SignedInUser.UserId,
-		UpdatedBy: c.SignedInUser.UserId,
+		CreatedBy: signedInUser.UserId,
+		UpdatedBy: signedInUser.UserId,
 	}
 
 	if err := syncFieldsWithModel(&element); err != nil {
 		return LibraryElementDTO{}, err
 	}
 
-	err := l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
-		if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, cmd.FolderID); err != nil {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+		if err := l.requirePermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&element); err != nil {
@@ -155,13 +154,13 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 			Updated:             element.Updated,
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        element.CreatedBy,
-				Name:      c.SignedInUser.Login,
-				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				Name:      signedInUser.Login,
+				AvatarURL: dtos.GetGravatarUrl(signedInUser.Email),
 			},
 			UpdatedBy: LibraryElementDTOMetaUser{
 				ID:        element.UpdatedBy,
-				Name:      c.SignedInUser.Login,
-				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				Name:      signedInUser.Login,
+				AvatarURL: dtos.GetGravatarUrl(signedInUser.Email),
 			},
 		},
 	}
@@ -170,13 +169,13 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid string) error {
-	return l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
-		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, c.SignedInUser.OrgId)
+func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *models.SignedInUser, uid string) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgId)
 		if err != nil {
 			return err
 		}
-		if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, element.FolderID); err != nil {
+		if err := l.requirePermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {
@@ -204,9 +203,9 @@ func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid s
 }
 
 // getLibraryElements gets a Library Element where param == value
-func getLibraryElements(c *models.ReqContext, store *sqlstore.SQLStore, params []Pair) ([]LibraryElementDTO, error) {
+func getLibraryElements(c context.Context, store *sqlstore.SQLStore, signedInUser *models.SignedInUser, params []Pair) ([]LibraryElementDTO, error) {
 	libraryElements := make([]LibraryElementWithMeta, 0)
-	err := store.WithDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
+	err := store.WithDbSession(c, func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
@@ -220,8 +219,8 @@ func getLibraryElements(c *models.ReqContext, store *sqlstore.SQLStore, params [
 		builder.Write(getFromLibraryElementDTOWithMeta(store.Dialect))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
-			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		if signedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(signedInUser, models.PERMISSION_VIEW)
 		}
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
@@ -274,8 +273,8 @@ func getLibraryElements(c *models.ReqContext, store *sqlstore.SQLStore, params [
 }
 
 // getLibraryElementByUid gets a Library Element by uid.
-func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext, UID string) (LibraryElementDTO, error) {
-	libraryElements, err := getLibraryElements(c, l.SQLStore, []Pair{{key: "org_id", value: c.SignedInUser.OrgId}, {key: "uid", value: UID}})
+func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser *models.SignedInUser, UID string) (LibraryElementDTO, error) {
+	libraryElements, err := getLibraryElements(c, l.SQLStore, signedInUser, []Pair{{key: "org_id", value: signedInUser.OrgId}, {key: "uid", value: UID}})
 	if err != nil {
 		return LibraryElementDTO{}, err
 	}
@@ -287,12 +286,12 @@ func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext, UID
 }
 
 // getLibraryElementByName gets a Library Element by name.
-func (l *LibraryElementService) getLibraryElementsByName(c *models.ReqContext) ([]LibraryElementDTO, error) {
-	return getLibraryElements(c, l.SQLStore, []Pair{{"org_id", c.SignedInUser.OrgId}, {"name", macaron.Params(c.Req)[":name"]}})
+func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser *models.SignedInUser, name string) ([]LibraryElementDTO, error) {
+	return getLibraryElements(c, l.SQLStore, signedInUser, []Pair{{"org_id", signedInUser.OrgId}, {"name", name}})
 }
 
 // getAllLibraryElements gets all Library Elements.
-func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, query searchLibraryElementsQuery) (LibraryElementSearchResult, error) {
+func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedInUser *models.SignedInUser, query searchLibraryElementsQuery) (LibraryElementSearchResult, error) {
 	elements := make([]LibraryElementWithMeta, 0)
 	result := LibraryElementSearchResult{}
 	if query.perPage <= 0 {
@@ -309,14 +308,14 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 	if folderFilter.parseError != nil {
 		return LibraryElementSearchResult{}, folderFilter.parseError
 	}
-	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", 'General' as folder_name ")
 			builder.Write(", '' as folder_uid ")
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.Dialect))
-			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, c.SignedInUser.OrgId)
+			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.OrgId)
 			writeKindSQL(query, &builder)
 			writeSearchStringSQL(query, l.SQLStore, &builder)
 			writeExcludeSQL(query, &builder)
@@ -328,7 +327,7 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.Dialect))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id<>0")
-		builder.Write(` WHERE le.org_id=?`, c.SignedInUser.OrgId)
+		builder.Write(` WHERE le.org_id=?`, signedInUser.OrgId)
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
 		writeExcludeSQL(query, &builder)
@@ -336,8 +335,8 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
 			return err
 		}
-		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
-			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		if signedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(signedInUser, models.PERMISSION_VIEW)
 		}
 		if query.sortDirection == search.SortAlphaDesc.Name {
 			builder.Write(" ORDER BY 1 DESC")
@@ -385,7 +384,7 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 		var libraryElements []LibraryElement
 		countBuilder := sqlstore.SQLBuilder{}
 		countBuilder.Write("SELECT * FROM library_element AS le")
-		countBuilder.Write(` WHERE le.org_id=?`, c.SignedInUser.OrgId)
+		countBuilder.Write(` WHERE le.org_id=?`, signedInUser.OrgId)
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
 		writeExcludeSQL(query, &countBuilder)
@@ -434,13 +433,13 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
+func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *models.SignedInUser, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
 	var dto LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
-	err := l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
-		elementInDB, err := getLibraryElement(l.SQLStore.Dialect, session, uid, c.SignedInUser.OrgId)
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+		elementInDB, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgId)
 		if err != nil {
 			return err
 		}
@@ -457,7 +456,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 				return errLibraryElementUIDTooLong
 			}
 
-			_, err := getLibraryElement(l.SQLStore.Dialect, session, updateUID, c.SignedInUser.OrgId)
+			_, err := getLibraryElement(l.SQLStore.Dialect, session, updateUID, signedInUser.OrgId)
 			if !errors.Is(err, ErrLibraryElementNotFound) {
 				return errLibraryElementAlreadyExists
 			}
@@ -465,7 +464,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 
 		var libraryElement = LibraryElement{
 			ID:          elementInDB.ID,
-			OrgID:       c.SignedInUser.OrgId,
+			OrgID:       signedInUser.OrgId,
 			FolderID:    cmd.FolderID,
 			UID:         updateUID,
 			Name:        cmd.Name,
@@ -477,7 +476,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 			Created:     elementInDB.Created,
 			CreatedBy:   elementInDB.CreatedBy,
 			Updated:     time.Now(),
-			UpdatedBy:   c.SignedInUser.UserId,
+			UpdatedBy:   signedInUser.UserId,
 		}
 
 		if cmd.Name == "" {
@@ -486,7 +485,7 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 		if cmd.Model == nil {
 			libraryElement.Model = elementInDB.Model
 		}
-		if err := l.handleFolderIDPatches(c.Req.Context(), &libraryElement, elementInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
+		if err := l.handleFolderIDPatches(c, &libraryElement, elementInDB.FolderID, cmd.FolderID, signedInUser); err != nil {
 			return err
 		}
 		if err := syncFieldsWithModel(&libraryElement); err != nil {
@@ -523,8 +522,8 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 				},
 				UpdatedBy: LibraryElementDTOMetaUser{
 					ID:        libraryElement.UpdatedBy,
-					Name:      c.SignedInUser.Login,
-					AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
+					Name:      signedInUser.Login,
+					AvatarURL: dtos.GetGravatarUrl(signedInUser.Email),
 				},
 			},
 		}
@@ -536,10 +535,10 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 }
 
 // getConnections gets all connections for a Library Element.
-func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string) ([]LibraryElementConnectionDTO, error) {
+func (l *LibraryElementService) getConnections(c context.Context, signedInUser *models.SignedInUser, uid string) ([]LibraryElementConnectionDTO, error) {
 	connections := make([]LibraryElementConnectionDTO, 0)
-	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, c.SignedInUser.OrgId)
+	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
+		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgId)
 		if err != nil {
 			return err
 		}
@@ -550,8 +549,8 @@ func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string)
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
-		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
-			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		if signedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(signedInUser, models.PERMISSION_VIEW)
 		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
@@ -579,9 +578,9 @@ func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string)
 }
 
 //getElementsForDashboardID gets all elements for a specific dashboard
-func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
+func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]LibraryElementDTO)
-	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
 		var libraryElements []LibraryElementWithMeta
 		sql := selectLibraryElementDTOWithMeta +
 			", coalesce(dashboard.title, 'General') AS folder_name" +
@@ -634,18 +633,18 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 }
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
-func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
-	err := l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
+func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
 		}
 		for _, elementUID := range elementUIDs {
-			element, err := getLibraryElement(l.SQLStore.Dialect, session, elementUID, c.SignedInUser.OrgId)
+			element, err := getLibraryElement(l.SQLStore.Dialect, session, elementUID, signedInUser.OrgId)
 			if err != nil {
 				return err
 			}
-			if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, element.FolderID); err != nil {
+			if err := l.requirePermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err
 			}
 
@@ -654,7 +653,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContex
 				Kind:         1,
 				ConnectionID: dashboardID,
 				Created:      time.Now(),
-				CreatedBy:    c.SignedInUser.UserId,
+				CreatedBy:    signedInUser.UserId,
 			}
 			if _, err := session.Insert(&connection); err != nil {
 				if l.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
@@ -670,8 +669,8 @@ func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContex
 }
 
 // disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
-func (l *LibraryElementService) disconnectElementsFromDashboardID(c *models.ReqContext, dashboardID int64) error {
-	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Context, dashboardID int64) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -681,12 +680,12 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c *models.ReqC
 }
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
-func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqContext, folderUID string) error {
-	return l.SQLStore.WithTransactionalDbSession(c.Req.Context(), func(session *sqlstore.DBSession) error {
+func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser *models.SignedInUser, folderUID string) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`
 		}
-		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=?", folderUID, c.SignedInUser.OrgId, l.SQLStore.Dialect.BooleanStr(true)).Find(&folderUIDs)
+		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=?", folderUID, signedInUser.OrgId, l.SQLStore.Dialect.BooleanStr(true)).Find(&folderUIDs)
 		if err != nil {
 			return err
 		}
@@ -695,7 +694,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 		}
 		folderID := folderUIDs[0].ID
 
-		if err := l.requirePermissionsOnFolder(c.Req.Context(), c.SignedInUser, folderID); err != nil {
+		if err := l.requirePermissionsOnFolder(c, signedInUser, folderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {
@@ -704,7 +703,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 		sql := "SELECT lec.connection_id FROM library_element AS le"
 		sql += " INNER JOIN " + models.LibraryElementConnectionTableName + " AS lec on le.id = lec.element_id"
 		sql += " WHERE le.folder_id=? AND le.org_id=?"
-		err = session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&connectionIDs)
+		err = session.SQL(sql, folderID, signedInUser.OrgId).Find(&connectionIDs)
 		if err != nil {
 			return err
 		}
@@ -715,7 +714,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 		var elementIDs []struct {
 			ID int64 `xorm:"id"`
 		}
-		err = session.SQL("SELECT id from library_element WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId).Find(&elementIDs)
+		err = session.SQL("SELECT id from library_element WHERE folder_id=? AND org_id=?", folderID, signedInUser.OrgId).Find(&elementIDs)
 		if err != nil {
 			return err
 		}
@@ -725,7 +724,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 				return err
 			}
 		}
-		if _, err := session.Exec("DELETE FROM library_element WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId); err != nil {
+		if _, err := session.Exec("DELETE FROM library_element WHERE folder_id=? AND org_id=?", folderID, signedInUser.OrgId); err != nil {
 			return err
 		}
 

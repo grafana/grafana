@@ -38,7 +38,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &statsQuery); err != nil {
 		uss.log.Error("Failed to get system stats", "error", err)
 		return report, err
 	}
@@ -83,20 +83,6 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 
-	liveUsersAvg := 0
-	liveClientsAvg := 0
-	if uss.liveStats.sampleCount > 0 {
-		liveUsersAvg = uss.liveStats.numUsersSum / uss.liveStats.sampleCount
-		liveClientsAvg = uss.liveStats.numClientsSum / uss.liveStats.sampleCount
-	}
-	metrics["stats.live_samples.count"] = uss.liveStats.sampleCount
-	metrics["stats.live_users_max.count"] = uss.liveStats.numUsersMax
-	metrics["stats.live_users_min.count"] = uss.liveStats.numUsersMin
-	metrics["stats.live_users_avg.count"] = liveUsersAvg
-	metrics["stats.live_clients_max.count"] = uss.liveStats.numClientsMax
-	metrics["stats.live_clients_min.count"] = uss.liveStats.numClientsMin
-	metrics["stats.live_clients_avg.count"] = liveClientsAvg
-
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
 	if uss.Cfg.IsEnterprise {
@@ -124,7 +110,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return report, err
 	}
@@ -143,7 +129,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &esDataSourcesQuery); err != nil {
 		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
@@ -164,31 +150,9 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
 	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
 
-	// Alerting stats
-	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
-	if err != nil {
-		uss.log.Error("Failed to get alerting usage stats", "error", err)
-		return report, err
-	}
-
-	var addAlertingUsageStats = func(dsType string, usageCount int) {
-		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
-	}
-
-	alertingOtherCount := 0
-	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if uss.ShouldBeReported(dsType) {
-			addAlertingUsageStats(dsType, usageCount)
-		} else {
-			alertingOtherCount += usageCount
-		}
-	}
-
-	addAlertingUsageStats("other", alertingOtherCount)
-
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsAccessStats); err != nil {
 		uss.log.Error("Failed to get datasource access stats", "error", err)
 		return report, err
 	}
@@ -323,41 +287,13 @@ var sendUsageStats = func(uss *UsageStats, data *bytes.Buffer) {
 	}()
 }
 
-func (uss *UsageStats) sampleLiveStats() {
-	current := uss.grafanaLive.UsageStats()
-
-	uss.liveStats.sampleCount++
-	uss.liveStats.numClientsSum += current.NumClients
-	uss.liveStats.numUsersSum += current.NumUsers
-
-	if current.NumClients > uss.liveStats.numClientsMax {
-		uss.liveStats.numClientsMax = current.NumClients
-	}
-
-	if current.NumClients < uss.liveStats.numClientsMin {
-		uss.liveStats.numClientsMin = current.NumClients
-	}
-
-	if current.NumUsers > uss.liveStats.numUsersMax {
-		uss.liveStats.numUsersMax = current.NumUsers
-	}
-
-	if current.NumUsers < uss.liveStats.numUsersMin {
-		uss.liveStats.numUsersMin = current.NumUsers
-	}
-}
-
-func (uss *UsageStats) resetLiveStats() {
-	uss.liveStats = liveUsageStats{}
-}
-
-func (uss *UsageStats) updateTotalStats() {
+func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
 		return
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &statsQuery); err != nil {
 		uss.log.Error("Failed to get system stats", "error", err)
 		return
 	}
@@ -381,7 +317,7 @@ func (uss *UsageStats) updateTotalStats() {
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return
 	}

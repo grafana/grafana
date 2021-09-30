@@ -27,6 +27,8 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
 
+  facets?: uPlot.Series.Facet[];
+
   /** Used when gradientMode is set to Scheme */
   thresholds?: ThresholdsConfig;
   colorMode?: FieldColorMode;
@@ -48,6 +50,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const {
+      facets,
       drawStyle,
       pathBuilder,
       pointsBuilder,
@@ -132,6 +135,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     return {
       scale: scaleKey,
+      facets,
       spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
       value: () => '',
       pxAlign,

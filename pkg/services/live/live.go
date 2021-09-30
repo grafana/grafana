@@ -13,11 +13,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -37,12 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
-	"github.com/gobwas/glob"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/macaron.v1"
 )
 
@@ -61,7 +62,8 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore) (*GrafanaLive, error) {
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
+	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		PluginContextProvider: plugCtxProvider,
@@ -75,6 +77,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
+		usageStatsService: usageStatsService,
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -327,6 +330,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 	}, middleware.ReqOrgAdmin)
 
+	g.registerUsageMetrics()
+
 	return g, nil
 }
 
@@ -366,11 +371,9 @@ type GrafanaLive struct {
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
-}
 
-type UsageStats struct {
-	NumClients int
-	NumUsers   int
+	usageStatsService usagestats.Service
+	usageStats        usageStats
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -386,11 +389,30 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
+	eGroup, eCtx := errgroup.WithContext(ctx)
+
+	eGroup.Go(func() error {
+		updateStatsTicker := time.NewTicker(time.Minute * 30)
+		defer updateStatsTicker.Stop()
+
+		for {
+			select {
+			case <-updateStatsTicker.C:
+				g.sampleLiveStats()
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	})
+
 	if g.runStreamManager != nil {
 		// Only run stream manager if GrafanaLive properly initialized.
-		return g.runStreamManager.Run(ctx)
+		eGroup.Go(func() error {
+			return g.runStreamManager.Run(eCtx)
+		})
 	}
-	return nil
+
+	return eGroup.Wait()
 }
 
 func (g *GrafanaLive) ChannelRuleStorage() pipeline.RuleStorage {
@@ -783,13 +805,6 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 	return len(p.Presence), nil
 }
 
-func (g *GrafanaLive) UsageStats() UsageStats {
-	clients := g.node.Hub().NumClients()
-	users := g.node.Hub().NumUsers()
-
-	return UsageStats{NumClients: clients, NumUsers: users}
-}
-
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
 	addr, err := live.ParseChannel(cmd.Channel)
 	if err != nil {
@@ -943,85 +958,77 @@ type configInfo struct {
 	Example     interface{} `json:"example,omitempty"`
 }
 
+// HandleChannelRulesPostHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	result, err := g.channelRuleStorage.CreateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": result,
+	})
+}
+
+// HandleChannelRulesPutHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": rule,
+	})
+}
+
+// HandleChannelRulesDeleteHTTP ...
+func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{})
+}
+
 // HandlePipelineEntitiesListHTTP ...
 func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"subscribers": []configInfo{
-			{
-				Type:        pipeline.SubscriberTypeBuiltin,
-				Description: "list the fields that should be removed",
-				// Example:     pipeline.Bu{},
-			},
-			{
-				Type:        pipeline.SubscriberTypeManagedStream,
-				Description: "list the fields that should be removed",
-			},
-			{
-				Type: pipeline.SubscriberTypeMultiple,
-			},
-		},
-		"outputs": []configInfo{
-			{
-				Type:        pipeline.OutputTypeManagedStream,
-				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
-				Example:     pipeline.ManagedStreamOutputConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeMultiple,
-				Description: "Send the output to multiple destinations",
-				Example:     pipeline.MultipleOutputterConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeConditional,
-				Description: "send to an output depending on frame values",
-				Example:     pipeline.ConditionalOutputConfig{},
-			},
-			{
-				Type: pipeline.OutputTypeRedirect,
-			},
-			{
-				Type: pipeline.OutputTypeThreshold,
-			},
-			{
-				Type: pipeline.OutputTypeChangeLog,
-			},
-			{
-				Type: pipeline.OutputTypeRemoteWrite,
-			},
-		},
-		"converters": []configInfo{
-			{
-				Type: pipeline.ConverterTypeJsonAuto,
-			},
-			{
-				Type: pipeline.ConverterTypeJsonExact,
-			},
-			{
-				Type:        pipeline.ConverterTypeInfluxAuto,
-				Description: "accept influx line protocol",
-				Example:     pipeline.AutoInfluxConverterConfig{},
-			},
-			{
-				Type: pipeline.ConverterTypeJsonFrame,
-			},
-		},
-		"processors": []configInfo{
-			{
-				Type:        pipeline.ProcessorTypeKeepFields,
-				Description: "list the fields that should stay",
-				Example:     pipeline.KeepFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeDropFields,
-				Description: "list the fields that should be removed",
-				Example:     pipeline.DropFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeMultiple,
-				Description: "apply multiplie processors",
-				Example:     pipeline.MultipleProcessorConfig{},
-			},
-		},
+		"subscribers": pipeline.SubscribersRegistry,
+		"outputs":     pipeline.OutputsRegistry,
+		"converters":  pipeline.ConvertersRegistry,
+		"processors":  pipeline.ProcessorsRegistry,
 	})
 }
 
@@ -1058,4 +1065,69 @@ func handleLog(msg centrifuge.LogEntry) {
 	default:
 		loggerCF.Debug(msg.Message, arr...)
 	}
+}
+
+func (g *GrafanaLive) sampleLiveStats() {
+	numClients := g.node.Hub().NumClients()
+	numUsers := g.node.Hub().NumUsers()
+
+	g.usageStats.sampleCount++
+	g.usageStats.numClientsSum += numClients
+	g.usageStats.numUsersSum += numUsers
+
+	if numClients > g.usageStats.numClientsMax {
+		g.usageStats.numClientsMax = numClients
+	}
+
+	if numClients < g.usageStats.numClientsMin {
+		g.usageStats.numClientsMin = numClients
+	}
+
+	if numUsers > g.usageStats.numUsersMax {
+		g.usageStats.numUsersMax = numUsers
+	}
+
+	if numUsers < g.usageStats.numUsersMin {
+		g.usageStats.numUsersMin = numUsers
+	}
+}
+
+func (g *GrafanaLive) resetLiveStats() {
+	g.usageStats = usageStats{}
+}
+
+func (g *GrafanaLive) registerUsageMetrics() {
+	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
+
+	g.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+		liveUsersAvg := 0
+		liveClientsAvg := 0
+
+		if g.usageStats.sampleCount > 0 {
+			liveUsersAvg = g.usageStats.numUsersSum / g.usageStats.sampleCount
+			liveClientsAvg = g.usageStats.numClientsSum / g.usageStats.sampleCount
+		}
+
+		metrics := map[string]interface{}{
+			"stats.live_samples.count":     g.usageStats.sampleCount,
+			"stats.live_users_max.count":   g.usageStats.numUsersMax,
+			"stats.live_users_min.count":   g.usageStats.numUsersMin,
+			"stats.live_users_avg.count":   liveUsersAvg,
+			"stats.live_clients_max.count": g.usageStats.numClientsMax,
+			"stats.live_clients_min.count": g.usageStats.numClientsMin,
+			"stats.live_clients_avg.count": liveClientsAvg,
+		}
+
+		return metrics, nil
+	})
+}
+
+type usageStats struct {
+	numClientsMax int
+	numClientsMin int
+	numClientsSum int
+	numUsersMax   int
+	numUsersMin   int
+	numUsersSum   int
+	sampleCount   int
 }
