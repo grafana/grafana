@@ -5,7 +5,10 @@ package sqlstore
 
 import (
 	"context"
+<<<<<<< HEAD
 	"fmt"
+=======
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -34,10 +37,17 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder.Id)
 					require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+=======
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].ID, ShouldEqual, folder.Id)
+					So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 			})
 
@@ -57,7 +67,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 1)
 					require.Equal(t, query.Result[0].ID, dashInRoot.Id)
@@ -76,10 +90,17 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, folder.Id)
 						require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 2)
+						So(query.Result[0].ID, ShouldEqual, folder.Id)
+						So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 
@@ -95,10 +116,17 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, folder.Id)
 						require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 2)
+						So(query.Result[0].ID, ShouldEqual, folder.Id)
+						So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 			})
@@ -117,9 +145,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 1)
 					require.Equal(t, query.Result[0].ID, dashInRoot.Id)
+=======
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 
 				t.Run("when the user is given permission to child", func(t *testing.T) {
@@ -131,10 +165,17 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
 						query := &search.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, childDash.Id)
 						require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 2)
+						So(query.Result[0].ID, ShouldEqual, childDash.Id)
+						So(query.Result[1].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 
@@ -150,11 +191,19 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
 						}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 3)
 						require.Equal(t, query.Result[0].ID, folder.Id)
 						require.Equal(t, query.Result[1].ID, childDash.Id)
 						require.Equal(t, query.Result[2].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 3)
+						So(query.Result[0].ID, ShouldEqual, folder.Id)
+						So(query.Result[1].ID, ShouldEqual, childDash.Id)
+						So(query.Result[2].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 			})
@@ -181,6 +230,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId: 1,
 					}
 					err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					fmt.Println(query.Result)
 					require.Equal(t, len(query.Result), 4)
@@ -188,6 +238,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					require.Equal(t, query.Result[1].ID, folder2.Id)
 					require.Equal(t, query.Result[2].ID, childDash1.Id)
 					require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+=======
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 4)
+					So(query.Result[0].ID, ShouldEqual, folder1.Id)
+					So(query.Result[1].ID, ShouldEqual, folder2.Id)
+					So(query.Result[2].ID, ShouldEqual, childDash1.Id)
+					So(query.Result[3].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 			})
 
@@ -208,9 +266,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 1)
 						require.Equal(t, query.Result[0].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 1)
+						So(query.Result[0].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
@@ -223,12 +287,21 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 3)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
 						require.Equal(t, query.Result[1].ID, childDash1.Id)
 						// require.Equal(t, query.Result[2].ID, childDash2.Id)  //3 instead of 5
 						// require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 4)
+						So(query.Result[0].ID, ShouldEqual, folder2.Id)
+						So(query.Result[1].ID, ShouldEqual, childDash1.Id)
+						So(query.Result[2].ID, ShouldEqual, childDash2.Id)
+						So(query.Result[3].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 
@@ -247,12 +320,21 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
 						err := SearchDashboards(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 3)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
 						require.Equal(t, query.Result[1].ID, childDash1.Id)
 						// require.Equal(t, query.Result[2].ID, childDash2.Id) // 3 instead of 5
 						// require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+=======
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 4)
+						So(query.Result[0].ID, ShouldEqual, folder2.Id)
+						So(query.Result[1].ID, ShouldEqual, childDash1.Id)
+						So(query.Result[2].ID, ShouldEqual, childDash2.Id)
+						So(query.Result[3].ID, ShouldEqual, dashInRoot.Id)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 			})
@@ -278,7 +360,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 
 					err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
@@ -294,7 +380,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 
 					err := GetDashboardPermissionsForUser(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
@@ -308,8 +398,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
 					err := HasEditPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.True(t, query.Result)
+=======
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeTrue)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 
 				t.Run("should have admin permission in folders", func(t *testing.T) {
@@ -317,8 +412,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
 					err := HasAdminPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.True(t, query.Result)
+=======
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeTrue)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 			})
 
@@ -329,9 +429,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					Permission:   models.PERMISSION_EDIT,
 				}
 
+<<<<<<< HEAD
 				t.Run("Should have write access to all dashboard folders with default ACL", func(t *testing.T) {
 					err := SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
+=======
+				Convey("Should have write access to all dashboard folders with default ACL", func() {
+					err := SearchDashboards(context.Background(), &query)
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
@@ -347,7 +453,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 
 					err := GetDashboardPermissionsForUser(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
@@ -363,7 +473,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					err = SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 1)
 					require.Equal(t, query.Result[0].ID, folder2.Id)
@@ -374,8 +488,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 					err := HasEditPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.True(t, query.Result)
+=======
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeTrue)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
@@ -383,8 +502,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 					err := HasAdminPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.False(t, query.Result)
+=======
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeFalse)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 			})
 
@@ -395,9 +519,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					Permission:   models.PERMISSION_EDIT,
 				}
 
+<<<<<<< HEAD
 				t.Run("Should have no write access to any dashboard folders with default ACL", func(t *testing.T) {
 					err := SearchDashboards(context.Background(), &query)
 					require.NoError(t, err)
+=======
+				Convey("Should have no write access to any dashboard folders with default ACL", func() {
+					err := SearchDashboards(context.Background(), &query)
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 0)
 				})
@@ -411,7 +541,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 
 					err := GetDashboardPermissionsForUser(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 1)
 					// require.Equal(t, query.Result[0].DashboardId, folder1.Id) //2 instead of 1
@@ -427,7 +561,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					err = SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 1)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
@@ -438,8 +576,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
 					err := HasEditPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					// require.False(t, query.Result)
+=======
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeFalse)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
@@ -447,8 +590,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
 					err := HasAdminPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 					require.NoError(t, err)
 					require.False(t, query.Result)
+=======
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeFalse)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 				})
 
 				t.Run("and admin permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
@@ -462,8 +610,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
 						err := HasEditPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.True(t, query.Result)
+=======
+						So(err, ShouldBeNil)
+						So(query.Result, ShouldBeTrue)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 
@@ -478,8 +631,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
 						err := HasEditPermissionInFolders(context.Background(), query)
+<<<<<<< HEAD
 						require.NoError(t, err)
 						require.True(t, query.Result)
+=======
+						So(err, ShouldBeNil)
+						So(query.Result, ShouldBeTrue)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 					})
 				})
 			})

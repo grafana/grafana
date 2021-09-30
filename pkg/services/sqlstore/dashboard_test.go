@@ -204,19 +204,31 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 				err := DeleteDashboard(context.Background(), deleteCmd)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 			})
 
 			t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
 				err := DeleteDashboard(context.Background(), deleteCmd)
+<<<<<<< HEAD
 				require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
+=======
+				So(errors.Is(err, models.ErrFolderContainsAlertRules), ShouldBeTrue)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 			})
 
 			t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
 				err := DeleteDashboard(context.Background(), deleteCmd)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
@@ -225,7 +237,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err = SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				require.Equal(t, len(query.Result), 0)
 
@@ -277,7 +293,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := models.GetDashboardTagsQuery{OrgId: 1}
 
 				err := GetDashboardTags(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				fmt.Println("dashboard tag", query.Result)
 				require.Equal(t, len(query.Result), 2)
@@ -291,7 +311,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				require.Equal(t, len(query.Result), 1)
 				hit := query.Result[0]
@@ -308,7 +332,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				require.Equal(t, len(query.Result), 1)
 				require.EqualValues(t, query.Result[0].Title, "1 test dash folder")
@@ -323,7 +351,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				require.Equal(t, len(query.Result), 1)
 				require.EqualValues(t, query.Result[0].Title, "test dash 23")
@@ -338,7 +370,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				require.Equal(t, len(query.Result), 3)
 				require.Equal(t, query.Result[0].Title, "test dash 23")
@@ -352,7 +388,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
+=======
+				So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 				require.Equal(t, len(query.Result), 2)
 				hit := query.Result[0]
@@ -372,7 +412,11 @@ func TestDashboardDataAccess(t *testing.T) {
 					}
 
 					err := SearchDashboards(context.Background(), &query)
+<<<<<<< HEAD
 					require.NoError(t, err)
+=======
+					So(err, ShouldBeNil)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 
 					require.Equal(t, len(query.Result), 2)
 
@@ -426,8 +470,13 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := GetDashboardsByPluginId(context.Background(), &query)
+<<<<<<< HEAD
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 2)
+=======
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 2)
+>>>>>>> bd1c6e0ff0 (Add context for dashboards)
 			})
 		})
 	})
