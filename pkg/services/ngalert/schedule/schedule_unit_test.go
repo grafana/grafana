@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"testing"
 	"time"
 
@@ -247,7 +248,11 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), rs, is)
-	return NewScheduler(schedCfg, nil, "http://localhost", st), mockedClock
+	appUrl := &url.URL{
+		Scheme: "http",
+		Host:   "localhost",
+	}
+	return NewScheduler(schedCfg, nil, appUrl, st), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
