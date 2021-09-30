@@ -145,7 +145,7 @@ export enum LogsDedupDescription {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface DataSourceWithLogsContextSupport {
   /**
@@ -160,7 +160,7 @@ export interface DataSourceWithLogsContextSupport {
 }
 
 /**
- * @public
+ * @alpha
  */
 export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
