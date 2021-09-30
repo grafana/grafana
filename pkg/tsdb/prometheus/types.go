@@ -27,6 +27,12 @@ type PrometheusQuery struct {
 	UtcOffsetSec  int64
 }
 
+type ExemplarEvent struct {
+	Time   time.Time
+	Value  float64
+	Labels map[string]string
+}
+
 type QueryModel struct {
 	Expr           string `json:"expr"`
 	LegendFormat   string `json:"legendFormat"`

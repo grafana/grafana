@@ -407,7 +407,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 			data.NewField("Time", nil, timeVector),
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
 		frame.Meta = &data.FrameMeta{
-			Custom: map[string]PrometheusQueryType{
+			Custom: map[string]string{
 				"resultType": "matrix",
 			},
 		}
@@ -424,7 +424,7 @@ func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery) data.Frame
 		data.NewField("Time", nil, timeVector),
 		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
 	frame.Meta = &data.FrameMeta{
-		Custom: map[string]PrometheusQueryType{
+		Custom: map[string]string{
 			"resultType": "scalar",
 		},
 	}
@@ -447,7 +447,7 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 			data.NewField("Time", nil, timeVector),
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
 		frame.Meta = &data.FrameMeta{
-			Custom: map[string]PrometheusQueryType{
+			Custom: map[string]string{
 				"resultType": "vector",
 			},
 		}
@@ -459,17 +459,23 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 
 func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
-	events := make([]map[string]interface{}, len(response))
+	events := make([]ExemplarEvent, len(response))
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
-			event := make(map[string]interface{})
-			event["Time"] = time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
-			event["Value"] = exemplar.Value
-			for k, v := range exemplar.Labels {
-				event[string(k)] = string(v)
+			event := ExemplarEvent{}
+			exemplarTime := time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
+			// Sometimes we receive exemplars with inivalid timestamps and we want to filter them out
+			if exemplarTime.Unix() < 0 {
+				continue
 			}
-			for k, v := range exemplarData.SeriesLabels {
-				event[string(k)] = string(v)
+			event.Time = exemplarTime
+			event.Value = float64(exemplar.Value)
+			event.Labels = make(map[string]string)
+			for label, value := range exemplar.Labels {
+				event.Labels[string(label)] = string(value)
+			}
+			for seriesLabel, seriesValue := range exemplarData.SeriesLabels {
+				event.Labels[string(seriesLabel)] = string(seriesValue)
 			}
 
 			events = append(events, event)
@@ -477,22 +483,21 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	}
 
 	//Sampling of exemplars
-	bucketedExemplars := make(map[string][]interface{})
+	bucketedExemplars := make(map[string][]ExemplarEvent)
 	values := make([]float64, 0)
 
 	//Create bucketed exemplars based on aligned timestamp
 	for _, event := range events {
-		timeStamp, okTime := event["Time"].(time.Time)
-		value, okValue := event["Value"].(model.SampleValue)
-		if okTime && okValue {
-			alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(timeStamp.Unix())/query.Step.Seconds())*query.Step.Seconds())
-			_, ok := bucketedExemplars[alignedTs]
-			if !ok {
-				bucketedExemplars[alignedTs] = make([]interface{}, 0)
-			} else {
-				bucketedExemplars[alignedTs] = append(bucketedExemplars[alignedTs], event)
-				values = append(values, float64(value))
-			}
+		if event.Time.Unix() < 0 {
+			continue
+		}
+		alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(event.Time.Unix())/query.Step.Seconds())*query.Step.Seconds())
+		_, ok := bucketedExemplars[alignedTs]
+		if !ok {
+			bucketedExemplars[alignedTs] = make([]ExemplarEvent, 0)
+		} else {
+			bucketedExemplars[alignedTs] = append(bucketedExemplars[alignedTs], event)
+			values = append(values, event.Value)
 		}
 	}
 
@@ -507,21 +512,15 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	sort.Strings(sampledBuckets)
 
 	//Sample exemplars based ona value, so we are not showing too many of them
-	sampleExemplars := make([]interface{}, 0)
+	sampleExemplars := make([]ExemplarEvent, 0)
 	for _, bucket := range sampledBuckets {
 		exemplarsInBucket := bucketedExemplars[bucket]
 		if len(exemplarsInBucket) == 1 {
 			sampleExemplars = append(sampleExemplars, exemplarsInBucket[0])
 		} else {
 			bucketValues := make([]float64, len(exemplarsInBucket))
-			for _, exmplr := range exemplarsInBucket {
-				exemplar, ok := exmplr.(map[string]interface{})
-				if ok {
-					value, ok := exemplar["Value"].(model.SampleValue)
-					if ok {
-						bucketValues = append(bucketValues, float64(value))
-					}
-				}
+			for _, exemplar := range exemplarsInBucket {
+				bucketValues = append(bucketValues, exemplar.Value)
 			}
 			sort.Slice(bucketValues, func(i, j int) bool {
 				return bucketValues[i] > bucketValues[j]
@@ -540,16 +539,9 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 				}
 			}
 			for _, valueBucket := range sampledBucketValues {
-				for _, exmplr := range exemplarsInBucket {
-					exemplar, ok := exmplr.(map[string]interface{})
-					if ok {
-						value, ok := exemplar["Value"].(model.SampleValue)
-						if ok {
-							if float64(value) == valueBucket {
-								sampleExemplars = append(sampleExemplars, exemplar)
-							}
-						}
-
+				for _, exemplar := range exemplarsInBucket {
+					if exemplar.Value == valueBucket {
+						sampleExemplars = append(sampleExemplars, exemplar)
 					}
 				}
 			}
@@ -561,33 +553,21 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	valuesVector := make([]float64, 0, len(sampleExemplars))
 	labelsVector := make(map[string][]string, len(sampleExemplars))
 
-	for _, exmplr := range sampleExemplars {
-		exemplar, ok := exmplr.(map[string]interface{})
-		if ok {
+	for _, exemplar := range sampleExemplars {
+		timeVector = append(timeVector, exemplar.Time)
+		valuesVector = append(valuesVector, exemplar.Value)
 
-			for key, value := range exemplar {
-				l, ok := value.(string)
-				if ok {
-					if labelsVector[key] == nil {
-						labelsVector[key] = make([]string, 0)
-					}
-					labelsVector[key] = append(labelsVector[key], l)
-				}
-
-				t, ok := value.(time.Time)
-				if ok {
-					timeVector = append(timeVector, t)
-				}
-
-				v, ok := value.(model.SampleValue)
-				if ok {
-					valuesVector = append(valuesVector, float64(v))
-				}
+		for label, value := range exemplar.Labels {
+			if labelsVector[label] == nil {
+				labelsVector[label] = make([]string, 0)
 			}
+
+			labelsVector[label] = append(labelsVector[label], value)
+
 		}
 	}
 
-	frame := data.NewFrame("exemplars",
+	frame := data.NewFrame("exemplar",
 		data.NewField("Time", nil, timeVector),
 		data.NewField("Value", nil, valuesVector))
 
@@ -597,7 +577,7 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	frame.Meta = &data.FrameMeta{
 		Custom: map[string]PrometheusQueryType{
-			"resultType": "exemplars",
+			"resultType": "exemplar",
 		},
 	}
 
