@@ -15,9 +15,9 @@ weight = 100
 
 # Reference
 
-The *reference* topic type is for storing reference information, such as extensive tables, lists, or other information that is used as support for a task. Reference topics are also designed for API information.
+The _reference_ topic type is for storing reference information, such as extensive tables, lists, or other information that is used as support for a task. Reference topics are also designed for API information.
 
-Often reference topics are linked from *task* topics, because they contain information the user needs in order to perform a task.
+Often reference topics are linked from _task_ topics, because they contain information the user needs in order to perform a task.
 
 [Grafana CLI](https://grafana.com/docs/grafana/latest/administration/cli/) is one example of a reference topic.
 
@@ -41,12 +41,12 @@ The [Glossary](https://grafana.com/docs/grafana/latest/guides/glossary/) provide
 
 While you might not need a heading for each table, headings are a good way to chunk information if you have several tables. They also make the content easy to skim. Use headings or intro paragraphs like this one to explain to the reader what the information in the table is used for.
 
-|    |    |    |    |    |    |
-|:---|:---|:--:|:--:|---:|---:|
-|    |    |    |    |    |    |
-|    |    |    |    |    |    |
-|    |    |    |    |    |    |
-|    |    |    |    |    |    |
+|     |     |     |     |     |     |
+| :-- | :-- | :-: | :-: | --: | --: |
+|     |     |     |     |     |     |
+|     |     |     |     |     |     |
+|     |     |     |     |     |     |
+|     |     |     |     |     |     |
 
 ### Empty HTML table
 

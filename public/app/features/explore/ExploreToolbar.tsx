@@ -146,7 +146,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               ) : null}
 
               <Tooltip content={'Copy shortened link to the executed query'} placement="bottom">
-                <ToolbarButton icon="share-alt" onClick={() => createAndCopyShortLink(window.location.href)} />
+                <ToolbarButton
+                  icon="share-alt"
+                  onClick={() => createAndCopyShortLink(window.location.href)}
+                  aria-label="Copy shortened link to the executed query"
+                />
               </Tooltip>
 
               {!isLive && (
