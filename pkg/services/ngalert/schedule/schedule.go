@@ -109,13 +109,8 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-	appUrl, err := url.Parse(appURL)
-	if err != nil {
-		cfg.Logger.Error("Failed to parse app URL. Continue without it.", "error", err)
-		appUrl = nil
-	}
 
 	sch := schedule{
 
@@ -135,7 +130,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		adminConfigStore:        cfg.AdminConfigStore,
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
-		appURL:                  appUrl,
+		appURL:                  appURL,
 		stateManager:            stateManager,
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
