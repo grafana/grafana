@@ -59,7 +59,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.name}</a>
         </td>
         <td className="link-td">
-          <a href={teamUrl} aria-label={team.email?.length > 0 ? '' : 'Empty email cell'}>
+          <a href={teamUrl} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
             {team.email}
           </a>
         </td>
