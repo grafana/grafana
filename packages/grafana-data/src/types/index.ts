@@ -1,3 +1,4 @@
+export * from './constants';
 export * from './data';
 export * from './dataFrame';
 export * from './dataFrameTypes';

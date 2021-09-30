@@ -422,10 +422,12 @@ func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*ngmodels.AlertRule, 0)
 		q := "SELECT uid, org_id, interval_seconds, version FROM alert_rule"
+		if len(query.ExcludeOrgs) > 0 {
+			q = fmt.Sprintf("%s WHERE org_id NOT IN (%s)", q, strings.Join(strings.Split(strings.Trim(fmt.Sprint(query.ExcludeOrgs), "[]"), " "), ","))
+		}
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
-
 		query.Result = alerts
 		return nil
 	})

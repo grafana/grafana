@@ -20,7 +20,7 @@ import (
 func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	maj, min := vcs.Version()
 	// Ignore err return, this can't fail to compile
-	inter, _ := rt.Compile(fmt.Sprintf("%s-glue-panelComposition", id), fmt.Sprintf(`
+	inter := ctx.CompileString(fmt.Sprintf(`
 	in: {
 		type: %q
 		v: {
@@ -39,10 +39,10 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 			fieldConfig: defaults: custom: in.model.PanelFieldConfig
 		}
 	}
-	`, id, maj, min))
+	`, id, maj, min), cue.Filename(fmt.Sprintf("%s-glue-panelComposition", id)))
 
 	// TODO validate, especially with #PanelModel
-	return inter.Value().FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
+	return inter.FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
 }
 
 func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
@@ -60,7 +60,7 @@ func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
 		return nil, err
 	}
 
-	pmf := base.Value().LookupPath(cue.MakePath(cue.Def("#PanelFamily")))
+	pmf := base.LookupPath(cue.MakePath(cue.Def("#PanelFamily")))
 	if !pmf.Exists() {
 		return nil, errors.New("could not locate #PanelFamily definition")
 	}
@@ -108,13 +108,13 @@ func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
 		}
 
 		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
-		imod, err := rt.Build(li[0])
-		if err != nil {
-			return err
+		imod := ctx.BuildInstance(li[0])
+		if imod.Err() != nil {
+			return imod.Err()
 		}
 
 		// Get the Family declaration in the models.cue file...
-		pmod := imod.Value().LookupPath(cue.MakePath(cue.Str("Panel")))
+		pmod := imod.LookupPath(cue.MakePath(cue.Str("Panel")))
 		if !pmod.Exists() {
 			return fmt.Errorf("%s does not contain a declaration of its models at path 'Family'", path)
 		}

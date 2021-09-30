@@ -18,6 +18,10 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     if (query.exemplar === undefined) {
       onChange({ ...query, exemplar: true });
     }
+
+    if (!query.instant && !query.range) {
+      onChange({ ...query, instant: true, range: true });
+    }
   }, [onChange, query]);
 
   function onChangeQueryStep(value: string) {

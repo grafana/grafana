@@ -137,7 +137,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 label={
                   <Label>
                     <span className={styles.labelText}>Home Dashboard</span>
-                    <Tooltip content="Not finding dashboard you want? Star it first, then it should appear in this select box.">
+                    <Tooltip content="Not finding the dashboard you want? Star it first, then it should appear in this select box.">
                       <Icon name="info-circle" />
                     </Tooltip>
                   </Label>
