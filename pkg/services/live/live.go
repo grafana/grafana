@@ -885,6 +885,85 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	})
 }
 
+type ConvertDryRunRequest struct {
+	ChannelRules []pipeline.ChannelRule `json:"channelRules"`
+	Channel      string                 `json:"channel"`
+	Data         string                 `json:"data"`
+}
+
+type ConvertDryRunResponse struct {
+	ChannelFrames []*pipeline.ChannelFrame `json:"channelFrames"`
+}
+
+type DryRunRuleStorage struct {
+	ChannelRules []pipeline.ChannelRule
+}
+
+func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ string) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) ListRemoteWriteBackends(_ context.Context, _ int64) ([]pipeline.RemoteWriteBackend, error) {
+	return nil, nil
+}
+
+func (s *DryRunRuleStorage) ListChannelRules(_ context.Context, _ int64) ([]pipeline.ChannelRule, error) {
+	return s.ChannelRules, nil
+}
+
+// HandlePipelineConvertTestHTTP ...
+func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var req ConvertDryRunRequest
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding request", err)
+	}
+	storage := &DryRunRuleStorage{
+		ChannelRules: req.ChannelRules,
+	}
+	builder := &pipeline.StorageRuleBuilder{
+		Node:                 g.node,
+		ManagedStream:        g.ManagedStreamRunner,
+		FrameStorage:         pipeline.NewFrameStorage(),
+		RuleStorage:          storage,
+		ChannelHandlerGetter: g,
+	}
+	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+	pipe, err := pipeline.New(channelRuleGetter)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error creating pipeline", err)
+	}
+	rule, ok, err := channelRuleGetter.Get(c.OrgId, req.Channel)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error getting channel rule", err)
+	}
+	if !ok {
+		return response.Error(http.StatusNotFound, "No rule found", nil)
+	}
+	channelFrames, ok, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, []byte(req.Data))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error converting data", err)
+	}
+	if !ok {
+		return response.Error(http.StatusNotFound, "No converter found", nil)
+	}
+	return response.JSON(http.StatusOK, ConvertDryRunResponse{
+		ChannelFrames: channelFrames,
+	})
+}
+
 // HandleChannelRulesPostHTTP ...
 func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
 	body, err := ioutil.ReadAll(c.Req.Body)
