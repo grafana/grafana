@@ -1,14 +1,19 @@
 import * as api from '../../../../features/manage-dashboards/state/actions';
-import { getFoldersAsOptions } from './api';
+import { getFolderAsOption, getFoldersAsOptions } from './api';
 import { DashboardSearchHit } from '../../../../features/search/types';
 import { PermissionLevelString } from '../../../../types';
 import { ALL_FOLDER, GENERAL_FOLDER } from './ReadonlyFolderPicker';
+import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 
-function getTestContext(searchHits: DashboardSearchHit[] = []) {
+function getTestContext(
+  searchHits: DashboardSearchHit[] = [],
+  folderById: { id: number; title: string } = { id: 1, title: 'Folder 1' }
+) {
   jest.clearAllMocks();
   const searchFoldersSpy = jest.spyOn(api, 'searchFolders').mockResolvedValue(searchHits);
+  const getFolderByIdSpy = jest.spyOn(api, 'getFolderById').mockResolvedValue(folderById);
 
-  return { searchFoldersSpy };
+  return { searchFoldersSpy, getFolderByIdSpy };
 }
 
 describe('getFoldersAsOptions', () => {
@@ -71,6 +76,40 @@ describe('getFoldersAsOptions', () => {
         const result = await getFoldersAsOptions(args);
         expect(result).toEqual([{ value: { id: 1, title: 'Folder 1' }, label: 'Folder 1' }]);
       });
+    });
+  });
+});
+
+describe('getFolderAsOption', () => {
+  describe('when called with undefined', () => {
+    it('then it should return undefined', async () => {
+      const { getFolderByIdSpy } = getTestContext();
+
+      const result = await getFolderAsOption(undefined);
+      expect(result).toBeUndefined();
+      expect(getFolderByIdSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when called with a folder id that does not exist', () => {
+    silenceConsoleOutput();
+    it('then it should return undefined', async () => {
+      const { getFolderByIdSpy } = getTestContext();
+      getFolderByIdSpy.mockRejectedValue('Not found');
+
+      const result = await getFolderAsOption(-1);
+      expect(result).toBeUndefined();
+      expect(getFolderByIdSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('when called with a folder id that exist', () => {
+    it('then it should return a SelectableValue of FolderInfo', async () => {
+      const { getFolderByIdSpy } = getTestContext();
+
+      const result = await getFolderAsOption(1);
+      expect(result).toEqual({ value: { id: 1, title: 'Folder 1' }, label: 'Folder 1' });
+      expect(getFolderByIdSpy).toHaveBeenCalled();
     });
   });
 });

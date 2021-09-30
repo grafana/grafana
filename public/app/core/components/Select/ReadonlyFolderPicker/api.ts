@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 
 import { FolderInfo, PermissionLevelString } from '../../../../types';
-import { searchFolders } from '../../../../features/manage-dashboards/state/actions';
+import { getFolderById, searchFolders } from '../../../../features/manage-dashboards/state/actions';
 import { PermissionLevel } from './types';
 
 interface GetFoldersArgs {
@@ -51,13 +51,24 @@ export async function getFoldersAsOptions({
   });
 }
 
-function isValidFolderId(id?: number) {
-  return id !== undefined && id !== null && id >= 0;
-}
-
 export function findOptionWithId(
   options?: Array<SelectableValue<FolderInfo>>,
   id?: number
 ): SelectableValue<FolderInfo> | undefined {
-  return options?.find((o) => isValidFolderId(o.value?.id) && isValidFolderId(id) && o.value?.id === id);
+  return options?.find((o) => o.value?.id === id);
+}
+
+export async function getFolderAsOption(folderId?: number): Promise<SelectableValue<FolderInfo> | undefined> {
+  if (folderId === undefined || folderId === null) {
+    return;
+  }
+
+  try {
+    const { id, title } = await getFolderById(folderId);
+    return { value: { id, title }, label: title };
+  } catch (err) {
+    console.error(`Could not find folder with id:${folderId}`);
+  }
+
+  return;
 }

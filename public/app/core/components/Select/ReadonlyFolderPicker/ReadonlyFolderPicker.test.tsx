@@ -9,15 +9,22 @@ import { FolderInfo, PermissionLevelString } from '../../../../types';
 import { ALL_FOLDER, GENERAL_FOLDER, ReadonlyFolderPicker, ReadonlyFolderPickerProps } from './ReadonlyFolderPicker';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
+const FOLDERS = [
+  { value: GENERAL_FOLDER, label: GENERAL_FOLDER.title },
+  { value: { id: 1, title: 'Test' }, label: 'Test' },
+];
+
 async function getTestContext(
   propOverrides: Partial<ReadonlyFolderPickerProps> = {},
-  folders: Array<SelectableValue<FolderInfo>> = []
+  folders: Array<SelectableValue<FolderInfo>> = [],
+  folder: SelectableValue<FolderInfo> | undefined = undefined
 ) {
   jest.clearAllMocks();
   const selectors = {
     container: byTestId(e2eSelectors.components.ReadonlyFolderPicker.container),
   };
   const getFoldersAsOptionsSpy = jest.spyOn(api, 'getFoldersAsOptions').mockResolvedValue(folders);
+  const getFolderAsOptionSpy = jest.spyOn(api, 'getFolderAsOption').mockResolvedValue(folder);
   const props: ReadonlyFolderPickerProps = {
     onChange: jest.fn(),
   };
@@ -27,7 +34,7 @@ async function getTestContext(
   render(<ReadonlyFolderPicker {...props} />);
   await waitFor(() => expect(getFoldersAsOptionsSpy).toHaveBeenCalledTimes(1));
 
-  return { getFoldersAsOptionsSpy, selectors };
+  return { getFoldersAsOptionsSpy, getFolderAsOptionSpy, selectors };
 }
 
 describe('ReadonlyFolderPicker', () => {
@@ -82,33 +89,48 @@ describe('ReadonlyFolderPicker', () => {
 
   describe('when there are folders', () => {
     it('then the first folder in all folders should be selected', async () => {
-      const { selectors } = await getTestContext({}, [
-        { value: GENERAL_FOLDER, label: GENERAL_FOLDER.title },
-        { value: { id: 1, title: 'Test' }, label: 'Test' },
-      ]);
+      const { selectors } = await getTestContext({}, FOLDERS);
 
-      expect(within(selectors.container.get()).getByText(GENERAL_FOLDER.title!)).toBeInTheDocument();
+      expect(within(selectors.container.get()).getByText('General')).toBeInTheDocument();
     });
 
     describe('and initialFolderId is passed in props and it matches an existing folder', () => {
       it('then the folder with an id equal to initialFolderId should be selected', async () => {
-        const { selectors } = await getTestContext({ initialFolderId: 1 }, [
-          { value: GENERAL_FOLDER, label: GENERAL_FOLDER.title },
-          { value: { id: 1, title: 'Test' }, label: 'Test' },
-        ]);
+        const { selectors } = await getTestContext({ initialFolderId: 1 }, FOLDERS);
 
         expect(within(selectors.container.get()).getByText('Test')).toBeInTheDocument();
       });
     });
 
-    describe('and initialFolderId is passed in props and it does not match an existing folder', () => {
-      it('then the first folder in all folders should be selected', async () => {
-        const { selectors } = await getTestContext({ initialFolderId: 2 }, [
-          { value: GENERAL_FOLDER, label: GENERAL_FOLDER.title },
-          { value: { id: 1, title: 'Test' }, label: 'Test' },
-        ]);
+    describe('and initialFolderId is passed in props and it does not match an existing folder from search api', () => {
+      it('then getFolderAsOption should be called and correct folder should be selected', async () => {
+        const folderById = {
+          value: { id: 50000, title: 'Outside api search' },
+          label: 'Outside api search',
+        };
+        const { selectors, getFolderAsOptionSpy } = await getTestContext(
+          { initialFolderId: 50000 },
+          FOLDERS,
+          folderById
+        );
 
-        expect(within(selectors.container.get()).getByText(GENERAL_FOLDER.title!)).toBeInTheDocument();
+        expect(within(selectors.container.get()).getByText('Outside api search')).toBeInTheDocument();
+        expect(getFolderAsOptionSpy).toHaveBeenCalledTimes(1);
+        expect(getFolderAsOptionSpy).toHaveBeenCalledWith(50000);
+      });
+    });
+
+    describe('and initialFolderId is passed in props and folder does not exist', () => {
+      it('then getFolderAsOption should be called and the first folder should be selected instead', async () => {
+        const { selectors, getFolderAsOptionSpy } = await getTestContext(
+          { initialFolderId: 50000 },
+          FOLDERS,
+          undefined
+        );
+
+        expect(within(selectors.container.get()).getByText('General')).toBeInTheDocument();
+        expect(getFolderAsOptionSpy).toHaveBeenCalledTimes(1);
+        expect(getFolderAsOptionSpy).toHaveBeenCalledWith(50000);
       });
     });
   });

@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect } from '@grafana/ui';
 
 import { FolderInfo, PermissionLevelString } from '../../../../types';
-import { findOptionWithId, getFoldersAsOptions } from './api';
+import { findOptionWithId, getFolderAsOption, getFoldersAsOptions } from './api';
 import { PermissionLevel } from './types';
 import { GENERAL_FOLDER_ID, GENERAL_FOLDER_TITLE } from '../../../../features/search/constants';
 
@@ -33,11 +33,13 @@ export function ReadonlyFolderPicker({
   const [option, setOption] = useState<SelectableValue<FolderInfo> | undefined>(undefined);
   const [options, setOptions] = useState<Array<SelectableValue<FolderInfo>> | undefined>(undefined);
   const initialize = useCallback(
-    (options: Array<SelectableValue<FolderInfo>>) => {
+    async (options: Array<SelectableValue<FolderInfo>>) => {
       let option = findOptionWithId(options, initialFolderId);
       if (!option) {
-        // we didn't find the option with the initialFolderId, select the first item in the options and call propsOnChange
-        option = options[0];
+        // we didn't find the option with the initialFolderId
+        // might be because the folder doesn't exist any longer
+        // might be because the folder is outside of the search limit of the api
+        option = (await getFolderAsOption(initialFolderId)) ?? options[0]; // get folder by id or select the first item in the options and call propsOnChange
         propsOnChange(option.value);
       }
 
@@ -51,7 +53,7 @@ export function ReadonlyFolderPicker({
     async (query: string) => {
       const options = await getFoldersAsOptions({ query, permissionLevel, extraFolders });
       if (!initialized) {
-        initialize(options);
+        await initialize(options);
       }
       return options;
     },
