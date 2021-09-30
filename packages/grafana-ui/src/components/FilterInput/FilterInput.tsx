@@ -14,7 +14,6 @@ export interface Props {
 
 export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, onKeyDown, autoFocus }) => {
   const [inputRef, setInputFocus] = useFocus();
-
   const suffix =
     value !== '' ? (
       <Button

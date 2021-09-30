@@ -12,8 +12,8 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen } from './state/main';
 import { syncTimes, changeRefreshInterval } from './state/time';
-import { getTimeZone } from '../profile/state/selectors';
-import { updateTimeZoneForSession } from '../profile/state/reducers';
+import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
@@ -65,6 +65,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       loading,
       range,
       timeZone,
+      fiscalYearStartMonth,
       splitted,
       syncedTimes,
       refreshInterval,
@@ -75,6 +76,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       isPaused,
       containerWidth,
       onChangeTimeZone,
+      onChangeFiscalYearStartMonth,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
@@ -158,12 +160,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   exploreId={exploreId}
                   range={range}
                   timeZone={timeZone}
+                  fiscalYearStartMonth={fiscalYearStartMonth}
                   onChangeTime={onChangeTime}
                   splitted={splitted}
                   syncedTimes={syncedTimes}
                   onChangeTimeSync={this.onChangeTimeSync}
                   hideText={showSmallTimePicker}
                   onChangeTimeZone={onChangeTimeZone}
+                  onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 />
               )}
 
@@ -230,6 +234,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     loading,
     range,
     timeZone: getTimeZone(state.user),
+    fiscalYearStartMonth: getFiscalYearStartMonth(state.user),
     splitted: isSplit(state),
     refreshInterval,
     hasLiveOption,
@@ -250,6 +255,7 @@ const mapDispatchToProps = {
   split: splitOpen,
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
+  onChangeFiscalYearStartMonth: updateFiscalYearStartMonthForSession,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

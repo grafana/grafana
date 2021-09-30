@@ -115,7 +115,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
       state = {
         alignedFrame,
-        alignedData: config!.prepData!(alignedFrame),
+        alignedData: config!.prepData!([alignedFrame]) as AlignedData,
         config,
       };
 
@@ -195,7 +195,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
-          newState.alignedData = newState.config.prepData!(newState.alignedFrame);
+          newState.alignedData = newState.config.prepData!([newState.alignedFrame]) as AlignedData;
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
       }
