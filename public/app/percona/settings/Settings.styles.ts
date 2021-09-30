@@ -53,6 +53,7 @@ export const getSettingsStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     labelWrapper: css`
       display: flex;
+      flex-wrap: wrap;
       svg {
         margin-left: ${theme.spacing.xs};
       }
