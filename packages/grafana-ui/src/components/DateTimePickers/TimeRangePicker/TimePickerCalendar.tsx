@@ -10,7 +10,6 @@ import { Portal } from '../../Portal/Portal';
 import { selectors } from '@grafana/e2e-selectors';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {
@@ -180,6 +179,7 @@ const getHeaderStyles = stylesFactory((theme: GrafanaTheme2) => {
     container: css`
       background-color: ${theme.colors.background.primary};
       display: flex;
+      align-items: center;
       justify-content: space-between;
       padding: 7px;
     `,
@@ -205,7 +205,7 @@ export const TimePickerCalendar = memo<Props>((props) => {
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;
   const ref = React.createRef<HTMLElement>();
-  let { overlayProps, underlayProps } = useOverlay(props, ref);
+  let { overlayProps } = useOverlay(props, ref);
 
   if (!isOpen) {
     return null;
@@ -213,34 +213,33 @@ export const TimePickerCalendar = memo<Props>((props) => {
 
   if (isFullscreen) {
     return (
-      <div {...underlayProps}>
-        <FocusScope contain restoreFocus autoFocus>
-          <section
-            className={styles.container}
-            onClick={stopPropagation}
-            aria-label={selectors.components.TimePicker.calendar}
-            ref={ref}
-            {...overlayProps}
-          >
-            <Body {...props} />
-          </section>
-        </FocusScope>
-      </div>
+      <FocusScope contain restoreFocus autoFocus>
+        <section
+          className={styles.container}
+          onClick={stopPropagation}
+          aria-label={selectors.components.TimePicker.calendar}
+          ref={ref}
+          {...overlayProps}
+        >
+          <Header {...props} />
+          <Body {...props} />
+        </section>
+      </FocusScope>
     );
   }
 
   return (
     <Portal>
-      <FocusScope contain restoreFocus autoFocus>
-        <div className={styles.modal} onClick={stopPropagation}>
+      <FocusScope contain autoFocus restoreFocus>
+        <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps}>
           <div className={styles.content} aria-label={selectors.components.TimePicker.calendar}>
             <Header {...props} />
             <Body {...props} />
             <Footer {...props} />
           </div>
-        </div>
-        <div className={styles.backdrop} onClick={stopPropagation} />
+        </section>
       </FocusScope>
+      <div className={styles.backdrop} onClick={stopPropagation} />
     </Portal>
   );
 });
@@ -254,7 +253,7 @@ const Header = memo<Props>(({ onClose }) => {
   return (
     <div className={styles.container}>
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <Icon name="times" onClick={onClose} tabIndex={0} />
+      <Button icon="times" variant="secondary" onClick={onClose} />
     </div>
   );
 });

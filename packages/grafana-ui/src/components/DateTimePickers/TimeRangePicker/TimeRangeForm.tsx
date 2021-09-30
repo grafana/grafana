@@ -60,16 +60,6 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [setOpen]
   );
 
-  const onFocus = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      if (!isFullscreen) {
-        return;
-      }
-      onOpen(event);
-    },
-    [isFullscreen, onOpen]
-  );
-
   const onApply = useCallback(
     (e: FormEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -97,7 +87,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
-    <ClickOutsideWrapper onClick={() => setOpen(false)}>
+    <ClickOutsideWrapper includeButtonPress={false} onClick={() => setOpen(false)}>
       <div aria-label="Absolute time ranges">
         <Field label="From" invalid={from.invalid} error={from.errorMessage}>
           <Input
