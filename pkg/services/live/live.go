@@ -899,6 +899,18 @@ type DryRunRuleStorage struct {
 	ChannelRules []pipeline.ChannelRule
 }
 
+func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ string) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
 func (s *DryRunRuleStorage) ListRemoteWriteBackends(_ context.Context, _ int64) ([]pipeline.RemoteWriteBackend, error) {
 	return nil, nil
 }
@@ -950,12 +962,6 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 	return response.JSON(http.StatusOK, ConvertDryRunResponse{
 		ChannelFrames: channelFrames,
 	})
-}
-
-type configInfo struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Example     interface{} `json:"example,omitempty"`
 }
 
 // HandleChannelRulesPostHTTP ...
