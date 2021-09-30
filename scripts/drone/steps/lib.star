@@ -43,6 +43,9 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     ]
     common_cmds = [
         './bin/grabpl verify-drone',
+        # Generate Go code, will install Wire
+        # TODO: Install Wire in Docker image instead
+        'make gen-go',
     ]
 
     if ver_mode == 'release':
@@ -158,9 +161,6 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],

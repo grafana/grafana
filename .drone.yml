@@ -20,6 +20,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -42,7 +43,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -280,6 +280,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -314,7 +315,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -679,6 +679,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -767,6 +768,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - yarn install --frozen-lockfile --no-progress
   environment:
@@ -790,7 +792,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -1145,6 +1146,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - yarn install --frozen-lockfile --no-progress
   environment:
@@ -1170,7 +1172,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
@@ -1244,7 +1245,6 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -1623,6 +1623,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -1731,6 +1732,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - yarn install --frozen-lockfile --no-progress
   environment:
@@ -1754,7 +1756,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -2098,6 +2099,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - yarn install --frozen-lockfile --no-progress
   environment:
@@ -2123,7 +2125,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
@@ -2197,7 +2198,6 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -2570,6 +2570,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -2678,6 +2679,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -2700,7 +2702,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -3016,6 +3017,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -3040,7 +3042,6 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
@@ -3111,7 +3112,6 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -3564,6 +3564,6 @@ get:
 
 ---
 kind: signature
-hmac: 1a0a169db008e1e64f43227aef586c8a6f6c763ce8ffb91923ac60d4f94ca33f
+hmac: d3678699582d6ef40d04ddcb11b084bbb0dc15d67a0b690c474b4a4d32e1933d
 
 ...
