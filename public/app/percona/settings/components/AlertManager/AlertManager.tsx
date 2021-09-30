@@ -8,13 +8,25 @@ import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/
 import { getStyles } from './AlertManager.styles';
 import { AlertManagerProps } from './AlertManager.types';
 import { AlertManagerChangePayload } from '../../Settings.types';
+import { AM_WARNING_URL } from '../../Settings.constants';
 
 export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertManagerRules, updateSettings }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const settingsStyles = getSettingsStyles(theme);
   const {
-    alertmanager: { action, rulesLabel, rulesLink, rulesTooltip, urlLabel, urlLink, urlTooltip },
+    alertmanager: {
+      action,
+      rulesLabel,
+      rulesLink,
+      rulesTooltip,
+      urlLabel,
+      urlLink,
+      urlTooltip,
+      warningPre,
+      warningLinkContent,
+      warningPost,
+    },
     tooltipLinkText,
   } = Messages;
   const [loading, setLoading] = useState(false);
@@ -48,6 +60,13 @@ export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertMana
         render={({ handleSubmit, pristine }) => (
           <form onSubmit={handleSubmit}>
             <div className={settingsStyles.labelWrapper} data-qa="alertmanager-url-label">
+              <strong className={styles.warning}>
+                {warningPre}{' '}
+                <a className={styles.warningLink} href={AM_WARNING_URL}>
+                  {warningLinkContent}
+                </a>{' '}
+                {warningPost}
+              </strong>
               <span>{urlLabel}</span>
               <LinkTooltip tooltipText={urlTooltip} link={urlLink} linkText={tooltipLinkText} icon="info-circle" />
             </div>

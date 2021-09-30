@@ -48,6 +48,9 @@ export const Messages = {
     technicalPreviewLinkText: 'here',
   },
   alertmanager: {
+    warningPre: "Note: integration with Alertmanager is needed only in cases when you can't use",
+    warningLinkContent: 'Integrated Alerting',
+    warningPost: 'but you need to manage and configure alerts.',
     action: 'Apply Alertmanager settings',
     rulesLabel: 'Prometheus Alerting rules',
     rulesLink: `${GUI_DOC_URL}#prometheus-alertmanager-integration`,
