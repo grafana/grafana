@@ -3,6 +3,7 @@ package schedule_test
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"runtime"
 	"strings"
 	"testing"
@@ -155,7 +156,11 @@ func TestAlertingTicker(t *testing.T) {
 		},
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), dbstore, dbstore)
-	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
+	appUrl := &url.URL{
+		Scheme: "http",
+		Host:   "localhost",
+	}
+	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st)
 
 	ctx := context.Background()
 
