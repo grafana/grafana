@@ -11,7 +11,44 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 )
+
+const (
+	service     = "grafana"
+	environment = "dev"
+	id          = 1
+)
+
+// tracerProvider returns an OpenTelemetry TracerProvider configured to use
+// the Jaeger exporter that will send spans to the provided url. The returned
+// TracerProvider will also use a Resource configured with all the information
+// about the application.
+func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
+	// Create the Jaeger exporter
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+	if err != nil {
+		return nil, err
+	}
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in an Resource.
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(service),
+			attribute.String("environment", environment),
+			attribute.Int64("ID", id),
+		)),
+	)
+	return tp, nil
+}
 
 // TODO: some things to implement and ideas to consider.
 // * Can return ChannelData from Frame Outputter – thus starting corresponding rule from processing input step.
@@ -25,7 +62,6 @@ import (
 //		* Processor => FrameProcessor
 //		* ConditionChecker => FrameConditionChecker.
 // * Put SignedInUser into Vars.
-// * Distributed tracing to visualize pipeline path
 
 // ChannelData is a wrapper over raw data with additional channel information.
 // Channel is used for rule routing, if the channel is empty then data processing
@@ -147,6 +183,7 @@ type ChannelRuleGetter interface {
 // * output resulting frames to various destinations.
 type Pipeline struct {
 	ruleGetter ChannelRuleGetter
+	tracer     trace.Tracer
 }
 
 // New creates new Pipeline.
@@ -155,9 +192,24 @@ func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	p := &Pipeline{
 		ruleGetter: ruleGetter,
 	}
+
+	if os.Getenv("GF_LIVE_PIPELINE_TRACE") != "" {
+		// Traces for development only at the moment.
+		// Start local Jaeger and then run Grafana with GF_LIVE_PIPELINE_TRACE:
+		// docker run --rm -it --name jaeger -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 14250:14250 -p 9411:9411 jaegertracing/all-in-one:1.26
+		// Then visit http://localhost:16686/ where Jaeger UI is served.
+		tp, err := tracerProvider("http://localhost:14268/api/traces")
+		if err != nil {
+			return nil, err
+		}
+		tracer := tp.Tracer("gf.live.pipeline")
+		p.tracer = tracer
+	}
+
 	if os.Getenv("GF_LIVE_PIPELINE_DEV") != "" {
 		go postTestData() // TODO: temporary for development, remove before merge.
 	}
+
 	return p, nil
 }
 
@@ -166,10 +218,37 @@ func (p *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, err
 }
 
 func (p *Pipeline) ProcessInput(ctx context.Context, orgID int64, channelID string, body []byte) (bool, error) {
-	return p.processInput(ctx, orgID, channelID, body, nil)
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.process_input")
+		span.SetAttributes(
+			attribute.Int64("orgId", orgID),
+			attribute.String("channel", channelID),
+			attribute.String("body", string(body)),
+		)
+		defer span.End()
+	}
+	ok, err := p.processInput(ctx, orgID, channelID, body, nil)
+	if err != nil {
+		if p.tracer != nil && span != nil {
+			span.SetStatus(codes.Error, err.Error())
+		}
+		return ok, err
+	}
+	return ok, err
 }
 
 func (p *Pipeline) processInput(ctx context.Context, orgID int64, channelID string, body []byte, visitedChannels map[string]struct{}) (bool, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.process_input_"+channelID)
+		span.SetAttributes(
+			attribute.Int64("orgId", orgID),
+			attribute.String("channel", channelID),
+			attribute.String("body", string(body)),
+		)
+		defer span.End()
+	}
 	rule, ok, err := p.ruleGetter.Get(orgID, channelID)
 	if err != nil {
 		return false, err
@@ -187,12 +266,12 @@ func (p *Pipeline) processInput(ctx context.Context, orgID int64, channelID stri
 			return false, err
 		}
 	}
-	channelFrames, ok, err := p.dataToChannelFrames(ctx, *rule, orgID, channelID, body)
+	if rule.Converter == nil {
+		return false, nil
+	}
+	channelFrames, err := p.dataToChannelFrames(ctx, *rule, orgID, channelID, body)
 	if err != nil {
 		return false, err
-	}
-	if !ok {
-		return false, nil
 	}
 	err = p.processChannelFrames(ctx, orgID, channelID, channelFrames, nil)
 	if err != nil {
@@ -201,15 +280,21 @@ func (p *Pipeline) processInput(ctx context.Context, orgID int64, channelID stri
 	return true, nil
 }
 
-func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, bool, error) {
-	if rule.Converter == nil {
-		return nil, false, nil
+func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.convert_"+rule.Converter.Type())
+		span.SetAttributes(
+			attribute.Int64("orgId", orgID),
+			attribute.String("channel", channelID),
+		)
+		defer span.End()
 	}
 
 	channel, err := live.ParseChannel(channelID)
 	if err != nil {
 		logger.Error("Error parsing channel", "error", err, "channel", channelID)
-		return nil, false, err
+		return nil, err
 	}
 
 	vars := Vars{
@@ -223,10 +308,10 @@ func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule
 	frames, err := rule.Converter.Convert(ctx, vars, body)
 	if err != nil {
 		logger.Error("Error converting data", "error", err)
-		return nil, false, err
+		return nil, err
 	}
 
-	return frames, true, nil
+	return frames, nil
 }
 
 var errChannelRecursion = errors.New("channel recursion")
@@ -285,6 +370,20 @@ func (p *Pipeline) processChannelFrames(ctx context.Context, orgID int64, channe
 }
 
 func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) ([]*ChannelFrame, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		table, err := frame.StringTable(32, 32)
+		if err != nil {
+			return nil, err
+		}
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.process_frame_"+channelID)
+		span.SetAttributes(
+			attribute.Int64("orgId", orgID),
+			attribute.String("channel", channelID),
+			attribute.String("frame", table),
+		)
+		defer span.End()
+	}
 	rule, ruleOk, err := p.ruleGetter.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err)
@@ -331,7 +430,7 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 	if len(rule.Outputters) > 0 {
 		var resultingFrames []*ChannelFrame
 		for _, out := range rule.Outputters {
-			frames, err := out.Output(ctx, outputVars, frame)
+			frames, err := p.processFrameOutput(ctx, out, outputVars, frame)
 			if err != nil {
 				logger.Error("Error outputting frame", "error", err)
 				return nil, err
@@ -344,7 +443,56 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 	return nil, nil
 }
 
+func (p *Pipeline) execProcessor(ctx context.Context, proc Processor, vars ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.apply_processor_"+proc.Type())
+		table, err := frame.StringTable(32, 32)
+		if err != nil {
+			return nil, err
+		}
+		span.SetAttributes(
+			attribute.Int64("orgId", vars.OrgID),
+			attribute.String("channel", vars.Channel),
+			attribute.String("frame", table),
+			attribute.String("processor", proc.Type()),
+		)
+		// Note: we can also visualize resulting frame here.
+		defer span.End()
+	}
+	return proc.Process(ctx, vars, frame)
+}
+
+func (p *Pipeline) processFrameOutput(ctx context.Context, out Outputter, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.frame_output_"+out.Type())
+		table, err := frame.StringTable(32, 32)
+		if err != nil {
+			return nil, err
+		}
+		span.SetAttributes(
+			attribute.Int64("orgId", vars.OrgID),
+			attribute.String("channel", vars.Channel),
+			attribute.String("frame", table),
+			attribute.String("output", out.Type()),
+		)
+		defer span.End()
+	}
+	return out.Output(ctx, vars, frame)
+}
+
 func (p *Pipeline) processData(ctx context.Context, orgID int64, channelID string, data []byte) ([]*ChannelData, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.process_data_"+channelID)
+		span.SetAttributes(
+			attribute.Int64("orgId", orgID),
+			attribute.String("channel", channelID),
+			attribute.String("data", string(data)),
+		)
+		defer span.End()
+	}
 	rule, ruleOk, err := p.ruleGetter.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err)
@@ -372,7 +520,7 @@ func (p *Pipeline) processData(ctx context.Context, orgID int64, channelID strin
 	if len(rule.DataOutputters) > 0 {
 		var resultingChannelDataList []*ChannelData
 		for _, out := range rule.DataOutputters {
-			channelDataList, err := out.OutputData(ctx, vars, data)
+			channelDataList, err := p.processDataOutput(ctx, out, vars, data)
 			if err != nil {
 				logger.Error("Error outputting frame", "error", err)
 				return nil, err
@@ -383,4 +531,19 @@ func (p *Pipeline) processData(ctx context.Context, orgID int64, channelID strin
 	}
 
 	return nil, nil
+}
+
+func (p *Pipeline) processDataOutput(ctx context.Context, out DataOutputter, vars Vars, data []byte) ([]*ChannelData, error) {
+	var span trace.Span
+	if p.tracer != nil {
+		ctx, span = p.tracer.Start(ctx, "live.pipeline.data_output_"+out.Type())
+		span.SetAttributes(
+			attribute.Int64("orgId", vars.OrgID),
+			attribute.String("channel", vars.Channel),
+			attribute.String("data", string(data)),
+			attribute.String("output", out.Type()),
+		)
+		defer span.End()
+	}
+	return out.OutputData(ctx, vars, data)
 }
