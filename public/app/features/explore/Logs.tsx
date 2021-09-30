@@ -136,8 +136,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ dedupStrategy });
   };
 
-  onChangeLabels = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const showLabels = target.checked;
       this.setState({
@@ -147,8 +147,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangeTime = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangeTime = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const showTime = target.checked;
       this.setState({
@@ -158,8 +158,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
       this.setState({
@@ -169,8 +169,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangePrettifyLogMessage = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
+  onChangePrettifyLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
     if (target) {
       const prettifyLogMessage = target.checked;
       this.setState({
@@ -294,21 +294,24 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className={styles.infoText}>
-          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
-        </div>
         {logsSeries && logsSeries.length ? (
-          <ExploreGraph
-            data={logsSeries}
-            height={150}
-            width={width}
-            tooltipDisplayMode={TooltipDisplayMode.Multi}
-            absoluteRange={visibleRange || absoluteRange}
-            timeZone={timeZone}
-            loadingState={loadingState}
-            onChangeTime={onChangeTime}
-            onHiddenSeriesChanged={this.onToggleLogLevel}
-          />
+          <>
+            <div className={styles.infoText}>
+              This datasource does not support full-range histograms. The graph is based on the logs seen in the
+              response.
+            </div>
+            <ExploreGraph
+              data={logsSeries}
+              height={150}
+              width={width}
+              tooltipDisplayMode={TooltipDisplayMode.Multi}
+              absoluteRange={visibleRange || absoluteRange}
+              timeZone={timeZone}
+              loadingState={loadingState}
+              onChangeTime={onChangeTime}
+              onHiddenSeriesChanged={this.onToggleLogLevel}
+            />
+          </>
         ) : undefined}
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
