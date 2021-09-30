@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
-import { PluginListBadges } from './PluginListBadges';
+import { PluginListItemBadges } from './PluginListItemBadges';
 import { CatalogPlugin } from '../types';
 import { config } from '@grafana/runtime';
 
-describe('PluginBadges', () => {
+describe('PluginListItemBadges', () => {
   const plugin: CatalogPlugin = {
     description: 'The test plugin',
     downloads: 5,
@@ -36,13 +36,13 @@ describe('PluginBadges', () => {
   });
 
   it('renders a plugin signature badge', () => {
-    render(<PluginListBadges plugin={plugin} />);
+    render(<PluginListItemBadges plugin={plugin} />);
 
     expect(screen.getByText(/signed/i)).toBeVisible();
   });
 
   it('renders an installed badge', () => {
-    render(<PluginListBadges plugin={{ ...plugin, isInstalled: true }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, isInstalled: true }} />);
 
     expect(screen.getByText(/signed/i)).toBeVisible();
     expect(screen.getByText(/installed/i)).toBeVisible();
@@ -50,21 +50,21 @@ describe('PluginBadges', () => {
 
   it('renders an enterprise badge (when a license is valid)', () => {
     config.licenseInfo.hasValidLicense = true;
-    render(<PluginListBadges plugin={{ ...plugin, isEnterprise: true }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.queryByRole('button', { name: /learn more/i })).not.toBeInTheDocument();
   });
 
   it('renders an enterprise badge with icon and link (when a license is invalid)', () => {
     config.licenseInfo.hasValidLicense = false;
-    render(<PluginListBadges plugin={{ ...plugin, isEnterprise: true }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /learn more/i })).toBeInTheDocument();
   });
 
   it('renders a error badge (when plugin has an error', () => {
-    render(<PluginListBadges plugin={{ ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature }} />);
     expect(screen.getByText(/disabled/i)).toBeVisible();
   });
 });
