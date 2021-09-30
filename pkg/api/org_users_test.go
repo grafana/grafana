@@ -145,7 +145,7 @@ func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) (*scenarioConte
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithDisabled(),
 		SQLStore:           db,
-		searchUsersService: searchusers.ProvideUsersService(bus.New()),
+		searchUsersService: searchusers.ProvideUsersService(bus.New(), models.ProvideOSSSearchUserFilter()),
 	}
 
 	sc := setupScenarioContext(t, "/api/org/users/lookup")

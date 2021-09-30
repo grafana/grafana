@@ -136,7 +136,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), models.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -160,7 +160,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), models.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -180,7 +180,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), models.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -206,7 +206,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), models.ProvideOSSSearchUserFilter())
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 

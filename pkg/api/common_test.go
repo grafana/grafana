@@ -226,7 +226,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(bus),
+		searchUsersService: searchusers.ProvideUsersService(bus, models.ProvideOSSSearchUserFilter()),
 	}
 
 	sc := setupScenarioContext(t, url)
