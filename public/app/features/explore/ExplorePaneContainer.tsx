@@ -16,7 +16,7 @@ import {
   lastUsedDatasourceKeyForOrgId,
   parseUrlState,
 } from 'app/core/utils/explore';
-import { getTimeZone } from '../profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 import Explore from './Explore';
 
 interface OwnProps {
@@ -99,13 +99,14 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 function mapStateToProps(state: StoreState, props: OwnProps) {
   const urlState = parseUrlState(props.urlQuery);
   const timeZone = getTimeZone(state.user);
+  const fiscalYearStartMonth = getFiscalYearStartMonth(state.user);
 
   const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange
-    ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
-    : getTimeRange(timeZone, DEFAULT_RANGE);
+    ? getTimeRangeFromUrlMemoized(urlRange, timeZone, fiscalYearStartMonth)
+    : getTimeRange(timeZone, DEFAULT_RANGE, fiscalYearStartMonth);
 
   return {
     initialized: state.explore[props.exploreId]?.initialized,

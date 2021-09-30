@@ -60,7 +60,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    ngalert: false,
     accesscontrol: false,
     trimDefaults: false,
     tempoServiceGraph: false,
@@ -81,7 +80,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     sampleRate: 1,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
-  pluginAdminEnabled = false;
+  pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   expressionsEnabled = false;
   customTheme?: any;
@@ -95,6 +94,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled = false;
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
 

@@ -1,14 +1,23 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
-import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
+import {
+  Icon,
+  IconName,
+  LinkButton,
+  Pagination,
+  RadioButtonGroup,
+  Tooltip,
+  useStyles2,
+  FilterInput,
+} from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AccessControlAction, StoreState, UserDTO } from '../../types';
-import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
+import { AccessControlAction, StoreState, Unit, UserDTO } from '../../types';
+import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
 import PageLoader from '../../core/components/PageLoader/PageLoader';
 
 const mapDispatchToProps = {
@@ -55,11 +64,19 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
     fetchUsers();
   }, [fetchUsers]);
 
+  const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
+            <FilterInput
+              placeholder="Search user by login, email, or name."
+              autoFocus={true}
+              value={query}
+              onChange={changeQuery}
+            />
             <RadioButtonGroup
               options={[
                 { label: 'All users', value: 'all' },
@@ -68,12 +85,6 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
               onChange={changeFilter}
               value={filter}
               className={styles.filter}
-            />
-            <FilterInput
-              placeholder="Search user by login, email, or name."
-              autoFocus={true}
-              value={query}
-              onChange={changeQuery}
             />
           </div>
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
@@ -94,7 +105,31 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th>Login</th>
                     <th>Email</th>
                     <th>Name</th>
-                    <th>Server admin</th>
+                    <th>Belongs to</th>
+                    {showLicensedRole && (
+                      <th>
+                        Licensed role{' '}
+                        <Tooltip
+                          placement="top"
+                          content={
+                            <>
+                              Licensed role is based on a user&apos;s Org role (i.e. Viewer, Editor, Admin) and their
+                              dashboard/folder permissions.{' '}
+                              <a
+                                className={styles.link}
+                                href={
+                                  'https://grafana.com/docs/grafana/next/enterprise/license/license-restrictions/#active-users-limit'
+                                }
+                              >
+                                Learn more
+                              </a>
+                            </>
+                          }
+                        >
+                          <Icon name="question-circle" />
+                        </Tooltip>
+                      </th>
+                    )}
                     <th>
                       Last active&nbsp;
                       <Tooltip placement="top" content="Time since user was seen using Grafana">
@@ -104,7 +139,11 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th style={{ width: '1%' }}></th>
                   </tr>
                 </thead>
-                <tbody>{users.map(renderUser)}</tbody>
+                <tbody>
+                  {users.map((user) => (
+                    <UserListItem user={user} showLicensedRole={showLicensedRole} key={user.id} />
+                  ))}
+                </tbody>
               </table>
             </div>
             {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
@@ -115,7 +154,17 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   );
 };
 
-const renderUser = (user: UserDTO) => {
+const getUsersAriaLabel = (name: string) => {
+  return `Edit user's ${name} details`;
+};
+
+type UserListItemProps = {
+  user: UserDTO;
+  showLicensedRole: boolean;
+};
+
+const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
+  const styles = useStyles2(getStyles);
   const editUrl = `admin/users/edit/${user.id}`;
 
   return (
@@ -126,36 +175,61 @@ const renderUser = (user: UserDTO) => {
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.login} aria-label={`Edit user's ${user.name} details`}>
+        <a className="ellipsis" href={editUrl} title={user.login} aria-label={getUsersAriaLabel(user.name)}>
           {user.login}
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.email} aria-label={`Edit user's ${user.name} details`}>
+        <a className="ellipsis" href={editUrl} title={user.email} aria-label={getUsersAriaLabel(user.name)}>
           {user.email}
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.name} aria-label={`Edit user's ${user.name} details`}>
+        <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
           {user.name}
         </a>
       </td>
-      <td className="link-td">
+
+      <td
+        className={styles.row}
+        title={
+          user.orgs?.length
+            ? `The user is a member of the following organizations: ${user.orgs.map((org) => org.name).join(',')}`
+            : undefined
+        }
+      >
+        <OrgUnits units={user.orgs} icon={'building'} />
         {user.isAdmin && (
-          <a href={editUrl} aria-label={`Edit user's ${user.name} details`}>
+          <a href={editUrl} aria-label={getUsersAriaLabel(user.name)}>
             <Tooltip placement="top" content="Grafana Admin">
               <Icon name="shield" />
             </Tooltip>
           </a>
         )}
       </td>
+      {showLicensedRole && (
+        <td className={cx('link-td', styles.iconRow)}>
+          <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
+            {user.licensedRole === 'None' ? (
+              <span className={styles.disabled}>
+                Not assigned{' '}
+                <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                  <Icon name="question-circle" />
+                </Tooltip>
+              </span>
+            ) : (
+              user.licensedRole
+            )}
+          </a>
+        </td>
+      )}
       <td className="link-td">
         {user.lastSeenAtAge && (
           <a
             href={editUrl}
             aria-label={`Last seen at ${user.lastSeenAtAge}. Follow to edit user's ${user.name} details.`}
           >
-            {user.lastSeenAtAge}
+            {user.lastSeenAtAge === '10 years' ? <span className={styles.disabled}>Never</span> : user.lastSeenAtAge}
           </a>
         )}
       </td>
@@ -169,6 +243,53 @@ const renderUser = (user: UserDTO) => {
       </td>
     </tr>
   );
+});
+
+UserListItem.displayName = 'UserListItem';
+
+type OrgUnitProps = { units?: Unit[]; icon: IconName };
+
+const OrgUnits = ({ units, icon }: OrgUnitProps) => {
+  const styles = useStyles2(getStyles);
+
+  if (!units?.length) {
+    return null;
+  }
+
+  return units.length > 1 ? (
+    <Tooltip
+      placement={'top'}
+      content={
+        <div className={styles.unitTooltip}>
+          {units?.map((unit) => (
+            <a
+              href={unit.url}
+              className={styles.link}
+              title={unit.name}
+              key={unit.name}
+              aria-label={`Edit ${unit.name}`}
+            >
+              {unit.name}
+            </a>
+          ))}
+        </div>
+      }
+    >
+      <div className={styles.unitItem}>
+        <Icon name={icon} /> <span>{units.length}</span>
+      </div>
+    </Tooltip>
+  ) : (
+    <a
+      href={units[0].url}
+      className={styles.unitItem}
+      title={units[0].name}
+      key={units[0].name}
+      aria-label={`Edit ${units[0].name}`}
+    >
+      <Icon name={icon} /> {units[0].name}
+    </a>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -177,7 +298,39 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-top: ${theme.spacing(3)};
     `,
     filter: css`
+      margin: 0 ${theme.spacing(1)};
+    `,
+    iconRow: css`
+      svg {
+        margin-left: ${theme.spacing(0.5)};
+      }
+    `,
+    row: css`
+      display: flex;
+      align-items: center;
+      height: 100% !important;
+
+      a {
+        padding: ${theme.spacing(0.5)} 0 !important;
+      }
+    `,
+    unitTooltip: css`
+      display: flex;
+      flex-direction: column;
+    `,
+    unitItem: css`
+      cursor: pointer;
+      padding: ${theme.spacing(0.5)} 0;
       margin-right: ${theme.spacing(1)};
+    `,
+    disabled: css`
+      color: ${theme.colors.text.disabled};
+    `,
+    link: css`
+      color: ${theme.colors.text.link};
+      :hover {
+        text-decoration: underline;
+      }
     `,
   };
 };

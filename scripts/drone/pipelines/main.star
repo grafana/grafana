@@ -1,6 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
     'lint_backend_step',
+    'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
     'test_backend_step',
@@ -56,6 +57,7 @@ def get_steps(edition, is_downstream=False):
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
+        lint_frontend_step(),
         test_backend_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),

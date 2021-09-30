@@ -1,4 +1,3 @@
-
 # 5.4.5 (2019-08-29)
 
 - **Security**: Urgent security patch release. Please read more in our [blog](https://grafana.com/blog/2019/08/29/grafana-5.4.5-and-6.3.4-released-with-important-security-fix/)
@@ -180,7 +179,7 @@ See [security announcement](https://community.grafana.com/t/grafana-5-3-3-and-4-
 - **Alerting**: Link to view full size image in Microsoft Teams alert notifier [#13121](https://github.com/grafana/grafana/issues/13121), thx [@holiiveira](https://github.com/holiiveira)
 - **Alerting**: Fixes a bug where all alerts would send reminders after upgrade & restart [#13402](https://github.com/grafana/grafana/pull/13402)
 - **Alerting**: Concurrent render limit for graphs used in notifications [#13401](https://github.com/grafana/grafana/pull/13401)
-- **Postgres/MySQL/MSSQL**: Add support for replacing $__interval and  $\_\_interval_ms in alert queries [#11555](https://github.com/grafana/grafana/issues/11555), thx [@svenklemm](https://github.com/svenklemm)
+- **Postgres/MySQL/MSSQL**: Add support for replacing $\_\_interval and $\_\_interval_ms in alert queries [#11555](https://github.com/grafana/grafana/issues/11555), thx [@svenklemm](https://github.com/svenklemm)
 
 # 5.3.0-beta1 (2018-09-06)
 
@@ -214,18 +213,18 @@ See [security announcement](https://community.grafana.com/t/grafana-5-3-3-and-4-
 - **OAuth**: Fix overriding tls_skip_verify_insecure using environment variable [#12747](https://github.com/grafana/grafana/issues/12747), thx [@jangaraj](https://github.com/jangaraj)
 - **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
 - **Prometheus**: Heatmap - fix unhandled error when some points are missing [#12484](https://github.com/grafana/grafana/issues/12484)
-- **Prometheus**: Add $__interval, $**interval_ms, \$**range, $__range_s & $\_\_range_ms support for dashboard and template queries [#12597](https://github.com/grafana/grafana/issues/12597) [#12882](https://github.com/grafana/grafana/issues/12882), thx [@roidelapluie](https://github.com/roidelapluie)
+- **Prometheus**: Add $**interval, $**interval_ms, \$**range, $**range_s & $\_\_range_ms support for dashboard and template queries [#12597](https://github.com/grafana/grafana/issues/12597) [#12882](https://github.com/grafana/grafana/issues/12882), thx [@roidelapluie](https://github.com/roidelapluie)
 - **Elasticsearch**: For alerting/backend, support having index name to the right of pattern in index pattern [#12731](https://github.com/grafana/grafana/issues/12731)
 - **Graphite**: Fix for quoting of int function parameters (when using variables) [#11927](https://github.com/grafana/grafana/pull/11927)
 - **InfluxDB**: Support timeFilter in query templating for InfluxDB [#12598](https://github.com/grafana/grafana/pull/12598), thx [kichristensen](https://github.com/kichristensen)
-- **Postgres/MySQL/MSSQL**: New $__unixEpochGroup and $\_\_unixEpochGroupAlias macros [#12892](https://github.com/grafana/grafana/issues/12892), thx [@svenklemm](https://github.com/svenklemm)
+- **Postgres/MySQL/MSSQL**: New $\_\_unixEpochGroup and $\_\_unixEpochGroupAlias macros [#12892](https://github.com/grafana/grafana/issues/12892), thx [@svenklemm](https://github.com/svenklemm)
 - **Postgres/MySQL/MSSQL**: Add previous fill mode to \$\_\_timeGroup macro which will fill in previously seen value when point is missing [#12756](https://github.com/grafana/grafana/issues/12756), thx [@svenklemm](https://github.com/svenklemm)
 - **Postgres/MySQL/MSSQL**: Use floor rounding in \$\_\_timeGroup macro function [#12460](https://github.com/grafana/grafana/issues/12460), thx [@svenklemm](https://github.com/svenklemm)
 - **Postgres/MySQL/MSSQL**: Use metric column as prefix when returning multiple value columns [#12727](https://github.com/grafana/grafana/issues/12727), thx [@svenklemm](https://github.com/svenklemm)
-- **Postgres/MySQL/MSSQL**: New $__timeGroupAlias macro. Postgres $\_\_timeGroup no longer automatically adds time column alias [#12749](https://github.com/grafana/grafana/issues/12749), thx [@svenklemm](https://github.com/svenklemm)
+- **Postgres/MySQL/MSSQL**: New $\_\_timeGroupAlias macro. Postgres $\_\_timeGroup no longer automatically adds time column alias [#12749](https://github.com/grafana/grafana/issues/12749), thx [@svenklemm](https://github.com/svenklemm)
 - **Postgres/MySQL/MSSQL**: Escape single quotes in variables [#12785](https://github.com/grafana/grafana/issues/12785), thx [@eMerzh](https://github.com/eMerzh)
 - **Postgres/MySQL/MSSQL**: Min time interval support [#13157](https://github.com/grafana/grafana/issues/13157), thx [@svenklemm](https://github.com/svenklemm)
-- **MySQL/MSSQL**: Use datetime format instead of epoch for $__timeFilter, $**timeFrom and \$**timeTo macros [#11618](https://github.com/grafana/grafana/issues/11618) [#11619](https://github.com/grafana/grafana/issues/11619), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
+- **MySQL/MSSQL**: Use datetime format instead of epoch for $\_\_timeFilter, $**timeFrom and \$**timeTo macros [#11618](https://github.com/grafana/grafana/issues/11618) [#11619](https://github.com/grafana/grafana/issues/11619), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
 - **Postgres**: Escape ssl mode parameter in connectionstring [#12644](https://github.com/grafana/grafana/issues/12644), thx [@yogyrahmawan](https://github.com/yogyrahmawan)
 - **Cloudwatch**: Improved error handling [#12489](https://github.com/grafana/grafana/issues/12489), thx [@mtanda](https://github.com/mtanda)
 - **Cloudwatch**: AppSync metrics and dimensions [#12300](https://github.com/grafana/grafana/issues/12300), thx [@franciscocpg](https://github.com/franciscocpg)
@@ -1019,7 +1018,7 @@ Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 ## Enhancements
 
 - **Telegram**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
-- **Templating**: Make $__interval and $\_\_interval_ms global built in variables that can be used in by any data source (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
+- **Templating**: Make $\_\_interval and $\_\_interval_ms global built in variables that can be used in by any data source (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
 - **S3 Image Store**: External s3 image store (used in alert notifications) now support AWS IAM Roles, closes [#6985](https://github.com/grafana/grafana/issues/6985), [#7058](https://github.com/grafana/grafana/issues/7058) thx [@mtanda](https://github.com/mtanda)
 - **SingleStat**: Implements diff aggregation method for singlestat [#7234](https://github.com/grafana/grafana/issues/7234), thx [@oliverpool](https://github.com/oliverpool)
 - **Dataproxy**: Added setting to enable more verbose logging in dataproxy [#7209](https://github.com/grafana/grafana/pull/7209), thx [@Ricky-N](https://github.com/Ricky-N)
