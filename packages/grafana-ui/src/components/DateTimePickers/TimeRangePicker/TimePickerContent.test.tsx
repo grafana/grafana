@@ -38,14 +38,12 @@ describe('TimePickerContent', () => {
 
     it('renders with relative picker', () => {
       renderComponent({ value: absoluteValue });
-      expect(screen.queryByText(/relative time ranges/i)).toBeInTheDocument();
-      expect(screen.queryByText(/other quick ranges/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Last 5 minutes/i)).toBeInTheDocument();
     });
 
     it('renders without relative picker', () => {
       renderComponent({ value: absoluteValue, hideQuickRanges: true });
-      expect(screen.queryByText(/relative time ranges/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/other quick ranges/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
     });
 
     it('renders with timezone picker', () => {
@@ -86,14 +84,12 @@ describe('TimePickerContent', () => {
 
     it('renders with relative picker', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(screen.queryByText(/relative time ranges/i)).toBeInTheDocument();
-      expect(screen.queryByText(/other quick ranges/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Last 5 minutes/i)).toBeInTheDocument();
     });
 
     it('renders without relative picker', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.queryByText(/relative time ranges/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/other quick ranges/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are visible', () => {
@@ -139,6 +135,10 @@ function renderComponent({
     <TimePickerContentWithScreenSize
       onChangeTimeZone={noop}
       onChange={noop}
+      quickOptions={[
+        { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
+        { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
+      ]}
       timeZone="utc"
       value={value}
       isFullscreen={isFullscreen}
