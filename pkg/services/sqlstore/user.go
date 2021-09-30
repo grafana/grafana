@@ -21,11 +21,11 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", GetUserById)
 	bus.AddHandlerCtx("sql", UpdateUser)
 	bus.AddHandlerCtx("sql", ChangeUserPassword)
-	bus.AddHandlerCtx("sql", GetUserByLogin)
-	bus.AddHandlerCtx("sql", GetUserByEmail)
+	bus.AddHandlerCtx("sql", ss.GetUserByLogin)
+	bus.AddHandlerCtx("sql", ss.GetUserByEmail)
 	bus.AddHandlerCtx("sql", SetUsingOrg)
 	bus.AddHandlerCtx("sql", UpdateUserLastSeenAt)
-	bus.AddHandlerCtx("sql", GetUserProfile)
+	bus.AddHandlerCtx("sql", ss.GetUserProfile)
 	bus.AddHandlerCtx("sql", SearchUsers)
 	bus.AddHandlerCtx("sql", GetUserOrgList)
 	bus.AddHandlerCtx("sql", DisableUser)
@@ -297,55 +297,59 @@ func GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
 	})
 }
 
-func GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
-	if query.LoginOrEmail == "" {
-		return models.ErrUserNotFound
-	}
+func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.LoginOrEmail == "" {
+			return models.ErrUserNotFound
+		}
 
-	// Try and find the user by login first.
-	// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-	user := &models.User{Login: query.LoginOrEmail}
-	has, err := x.Get(user)
+		// Try and find the user by login first.
+		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+		user := &models.User{Login: query.LoginOrEmail}
+		has, err := sess.Get(user)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if !has && strings.Contains(query.LoginOrEmail, "@") {
-		// If the user wasn't found, and it contains an "@" fallback to finding the
-		// user by email.
-		user = &models.User{Email: query.LoginOrEmail}
-		has, err = x.Get(user)
-	}
+		if !has && strings.Contains(query.LoginOrEmail, "@") {
+			// If the user wasn't found, and it contains an "@" fallback to finding the
+			// user by email.
+			user = &models.User{Email: query.LoginOrEmail}
+			has, err = sess.Get(user)
+		}
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
 
-	query.Result = user
+		query.Result = user
 
-	return nil
+		return nil
+	})
 }
 
-func GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error {
-	if query.Email == "" {
-		return models.ErrUserNotFound
-	}
+func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.Email == "" {
+			return models.ErrUserNotFound
+		}
 
-	user := &models.User{Email: query.Email}
-	has, err := x.Get(user)
+		user := &models.User{Email: query.Email}
+		has, err := sess.Get(user)
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
 
-	query.Result = user
+		query.Result = user
 
-	return nil
+		return nil
+	})
 }
 
 func UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
@@ -429,30 +433,32 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 	return err
 }
 
-func GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
-	var user models.User
-	has, err := x.Id(query.UserId).Get(&user)
+func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var user models.User
+		has, err := sess.ID(query.UserId).Get(&user)
 
-	if err != nil {
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
+
+		query.Result = models.UserProfileDTO{
+			Id:             user.Id,
+			Name:           user.Name,
+			Email:          user.Email,
+			Login:          user.Login,
+			Theme:          user.Theme,
+			IsGrafanaAdmin: user.IsAdmin,
+			IsDisabled:     user.IsDisabled,
+			OrgId:          user.OrgId,
+			UpdatedAt:      user.Updated,
+			CreatedAt:      user.Created,
+		}
+
 		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
-
-	query.Result = models.UserProfileDTO{
-		Id:             user.Id,
-		Name:           user.Name,
-		Email:          user.Email,
-		Login:          user.Login,
-		Theme:          user.Theme,
-		IsGrafanaAdmin: user.IsAdmin,
-		IsDisabled:     user.IsDisabled,
-		OrgId:          user.OrgId,
-		UpdatedAt:      user.Updated,
-		CreatedAt:      user.Created,
-	}
-
-	return err
+	})
 }
 
 type byOrgName []*models.UserOrgDTO

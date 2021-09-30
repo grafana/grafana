@@ -149,7 +149,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to read user info projection", func(t *testing.T) {
 				query := models.GetUserProfileQuery{UserId: ac1.Id}
-				err = GetUserProfile(context.Background(), &query)
+				err = sqlStore.GetUserProfile(context.Background(), &query)
 
 				require.NoError(t, err)
 				require.Equal(t, query.Result.Email, "ac1@test.com")
