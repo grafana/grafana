@@ -1,4 +1,14 @@
 {
+  "__inputs": [
+    {
+      "name": "AZ_MON",
+      "label": "Azure Monitor",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "grafana-azure-monitor-datasource",
+      "pluginName": "Azure Monitor"
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -24,7 +34,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": "Azure Monitor",
+      "datasource": "${AZ_MON}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -331,8 +341,8 @@
           },
           "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscription": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-          "subscriptions": []
+          "subscription": "",
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "V1 Alerts",

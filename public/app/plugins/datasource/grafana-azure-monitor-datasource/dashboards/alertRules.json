@@ -1,4 +1,14 @@
 {
+  "__inputs": [
+    {
+      "name": "AZ_MON",
+      "label": "Azure Monitor",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "grafana-azure-monitor-datasource",
+      "pluginName": "Azure Monitor"
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -24,7 +34,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": "Azure Monitor",
+      "datasource": "${AZ_MON}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -165,8 +175,8 @@
           },
           "queryType": "Azure Resource Graph",
           "refId": "Smart detector alert rules",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": []
+          "subscription": "",
+          "subscriptions": ["$sub"]
         },
         {
           "appInsights": {
@@ -196,9 +206,9 @@
             "resultFormat": "time_series"
           },
           "queryType": "Azure Resource Graph",
-          "refId": "Resource halth alert rules",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": []
+          "refId": "Resource health alert rules",
+          "subscription": "",
+          "subscriptions": ["$sub"]
         },
         {
           "appInsights": {
@@ -229,8 +239,8 @@
           },
           "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": []
+          "subscription": "",
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Alert rules",
