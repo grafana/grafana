@@ -7,19 +7,23 @@ import { TempoJsonData } from '../datasource';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
-export function ServiceMapSettings({ options, onOptionsChange }: Props) {
+export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles(getStyles);
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Service map</h3>
+      <h3 className="page-heading">Service Graph</h3>
 
       <div className={styles.infoText}>
-        To allow querying service map data you have to select a Prometheus instance where the data is stored.
+        To allow querying service graph data you have to select a Prometheus instance where the data is stored.
       </div>
 
       <InlineFieldRow className={styles.row}>
-        <InlineField tooltip="The Prometheus data source with the service map data" label="Data source" labelWidth={26}>
+        <InlineField
+          tooltip="The Prometheus data source with the service graph data"
+          label="Data source"
+          labelWidth={26}
+        >
           <DataSourcePicker
             pluginId="prometheus"
             current={options.jsonData.serviceMap?.datasourceUid}
