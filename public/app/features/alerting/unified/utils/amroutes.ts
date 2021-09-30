@@ -10,21 +10,21 @@ import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-// const matchersToArrayFieldMatchers = (
-//   matchers: Record<string, string> | undefined,
-//   isRegex: boolean
-// ): MatcherFieldValue[] =>
-//   Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
-//     (acc, [name, value]) => [
-//       ...acc,
-//       {
-//         name,
-//         value,
-//         operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
-//       },
-//     ],
-//     [] as MatcherFieldValue[]
-//   );
+const matchersToArrayFieldMatchers = (
+  matchers: Record<string, string> | undefined,
+  isRegex: boolean
+): MatcherFieldValue[] =>
+  Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
+    (acc, [name, value]) => [
+      ...acc,
+      {
+        name,
+        value,
+        operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
+      },
+    ],
+    [] as MatcherFieldValue[]
+  );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
   if (!strValue) {
@@ -99,7 +99,11 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
   return [
     {
       id,
-      object_matchers: matchers,
+      object_matchers: [
+        ...matchers,
+        ...matchersToArrayFieldMatchers(route.match, false),
+        ...matchersToArrayFieldMatchers(route.match_re, true),
+      ],
       continue: route.continue ?? false,
       receiver: route.receiver ?? '',
       groupBy: route.group_by ?? [],
@@ -146,7 +150,9 @@ export const formAmRouteToAmRoute = (
 
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     amRoute.matchers = formAmRoute.object_matchers.map(({ name, operator, value }) => `${name}${operator}${value}`);
-    delete amRoute.object_matchers;
+    amRoute.object_matchers = undefined;
+  } else {
+    amRoute.matchers = undefined;
   }
 
   if (formAmRoute.receiver) {
