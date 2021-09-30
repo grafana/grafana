@@ -387,7 +387,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
-			GetAlertNotifiers(hs.Cfg.IsNgAlertEnabled())),
+			GetAlertNotifiers(hs.Cfg.UnifiedAlerting.Enabled)),
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {

@@ -28,6 +28,7 @@ export const getAvailableIcons = () =>
     'book-open',
     'brackets-curly',
     'bug',
+    'building',
     'calculator-alt',
     'calendar-alt',
     'camera',

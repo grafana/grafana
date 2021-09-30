@@ -16,6 +16,7 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   grow?: boolean;
   /** Make field's background transparent */
   transparent?: boolean;
+  htmlFor?: string;
 }
 
 export const InlineField: FC<Props> = ({
@@ -27,13 +28,14 @@ export const InlineField: FC<Props> = ({
   loading,
   disabled,
   className,
+  htmlFor,
   grow,
   transparent,
   ...htmlProps
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
-  const inputId = getChildId(children);
+  const inputId = htmlFor ?? getChildId(children);
 
   const labelElement =
     typeof label === 'string' ? (

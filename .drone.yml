@@ -49,6 +49,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -65,7 +77,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -309,6 +321,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -325,7 +349,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -773,6 +797,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -789,7 +825,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -1141,6 +1177,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -1157,7 +1205,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -1713,6 +1761,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -1729,7 +1789,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -2070,6 +2130,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -2086,7 +2158,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -2635,6 +2707,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -2651,7 +2735,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -2963,6 +3047,18 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.3
   commands:
@@ -2979,7 +3075,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -3468,6 +3564,6 @@ get:
 
 ---
 kind: signature
-hmac: 9d5ee57b9eff4ba3df8f70c8f7625c2ff1e07c2ce438182a97f81e6e8dbbb1dc
+hmac: 1a0a169db008e1e64f43227aef586c8a6f6c763ce8ffb91923ac60d4f94ca33f
 
 ...

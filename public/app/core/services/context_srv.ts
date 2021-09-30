@@ -14,6 +14,7 @@ export class User {
   login: string;
   orgCount: number;
   timezone: string;
+  fiscalYearStartMonth: number;
   helpFlags1: number;
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
@@ -30,6 +31,7 @@ export class User {
     this.login = '';
     this.orgCount = 0;
     this.timezone = '';
+    this.fiscalYearStartMonth = 0;
     this.helpFlags1 = 0;
     this.lightTheme = false;
     this.hasEditPermissionInFolders = false;
