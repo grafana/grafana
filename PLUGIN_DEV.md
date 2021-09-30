@@ -1,8 +1,8 @@
-# Plugin development 
+# Plugin development
 
 This document is not meant as a complete guide for developing plugins but more as a changelog for changes in
 Grafana that can impact plugin development. Whenever you as a plugin author encounter an issue with your plugin after
-upgrading Grafana please check here before creating an issue. 
+upgrading Grafana please check here before creating an issue.
 
 ## Plugin development resources
 
@@ -13,15 +13,15 @@ upgrading Grafana please check here before creating an issue.
 ## Changes in Grafana v4.6
 
 This version of Grafana has big changes that will impact a limited set of plugins. We moved from systemjs to webpack
-for built-in plugins and everything internal. External plugins still use systemjs but now with a limited 
-set of Grafana components they can import. Plugins can depend on libs like lodash & moment and internal components 
-like before using the same import paths. However since everything in Grafana is no longer accessible, a few plugins could encounter issues when importing a Grafana dependency. 
+for built-in plugins and everything internal. External plugins still use systemjs but now with a limited
+set of Grafana components they can import. Plugins can depend on libs like lodash & moment and internal components
+like before using the same import paths. However since everything in Grafana is no longer accessible, a few plugins could encounter issues when importing a Grafana dependency.
 
 [List of exposed components plugins can import/require](https://github.com/grafana/grafana/blob/main/public/app/features/plugins/plugin_loader.ts#L48)
 
-If you think we missed exposing a crucial lib or Grafana component let us know by opening an issue.  
+If you think we missed exposing a crucial lib or Grafana component let us know by opening an issue.
 
-### Deprecated components 
+### Deprecated components
 
 The angular directive `<spectrum-picker>` is now deprecated (will still work for a version more) but we recommend plugin authors
 upgrade to new `<color-picker color="ctrl.color" onChange="ctrl.onSparklineColorChange"></color-picker>`

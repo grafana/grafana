@@ -25,11 +25,15 @@ interface AppWrapperState {
 
 /** Used by enterprise */
 let bodyRenderHooks: ComponentType[] = [];
+let pageBanners: ComponentType[] = [];
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
 }
 
+export function addPageBanner(fn: ComponentType) {
+  pageBanners.push(fn);
+}
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
@@ -98,6 +102,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <Router history={locationService.getHistory()}>
                     <NavBar />
                     <main className="main-view">
+                      {pageBanners.map((Banner, index) => (
+                        <Banner key={index.toString()} />
+                      ))}
                       <div
                         ref={this.container}
                         dangerouslySetInnerHTML={{

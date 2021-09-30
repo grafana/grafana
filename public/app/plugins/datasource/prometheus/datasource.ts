@@ -289,36 +289,18 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
-  prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
-    const targets = options.targets.map((target) => {
-      //This is currently only preparing options for Explore queries where we know the format of data we want to receive
-      if (target.instant) {
-        return { ...target, instant: true, range: false, format: 'table' };
-      }
-      return {
-        ...target,
-        instant: false,
-        range: true,
-        format: 'time_series',
-        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
-      };
-    });
-
-    return { ...options, targets };
-  };
-
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
     const shouldRunBackendQuery =
-      this.access === 'proxy' &&
-      options.app === CoreApp.Explore &&
-      !options.targets.some((query) => query.exemplar) &&
-      // When running both queries, run through proxy
-      !options.targets.some((query) => query.instant && query.range);
+      this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
 
     if (shouldRunBackendQuery) {
-      const newOptions = this.prepareOptionsV2(options);
-      return super.query(newOptions).pipe(map((response) => transformV2(response, newOptions)));
+      const targets = options.targets.map((target) => ({
+        ...target,
+        // We need to pass utcOffsetSec to backend to calculate aligned range
+        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+      }));
+      return super.query({ ...options, targets }).pipe(map((response) => transformV2(response, options)));
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(options.range.from, false);

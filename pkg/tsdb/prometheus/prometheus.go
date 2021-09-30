@@ -34,26 +34,6 @@ var (
 	safeRes      = 11000
 )
 
-type DatasourceInfo struct {
-	ID             int64
-	HTTPClientOpts sdkhttpclient.Options
-	URL            string
-	HTTPMethod     string
-	TimeInterval   string
-}
-
-type QueryModel struct {
-	Expr           string `json:"expr"`
-	LegendFormat   string `json:"legendFormat"`
-	Interval       string `json:"interval"`
-	IntervalMS     int64  `json:"intervalMS"`
-	StepMode       string `json:"stepMode"`
-	RangeQuery     bool   `json:"range"`
-	InstantQuery   bool   `json:"instant"`
-	IntervalFactor int64  `json:"intervalFactor"`
-	UtcOffsetSec   int64  `json:"utcOffsetSec"`
-}
-
 type Service struct {
 	httpClientProvider httpclient.Provider
 	intervalCalculator intervalv2.Calculator
@@ -154,13 +134,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, query := range queries {
-		timeRange := apiv1.Range{
-			Start: query.Start,
-			End:   query.End,
-			Step:  query.Step,
-		}
-
-		plog.Debug("Sending query", "start", timeRange.Start, "end", timeRange.End, "step", timeRange.Step, "query", query.Expr)
+		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
 		span, ctx := opentracing.StartSpanFromContext(ctx, "datasource.prometheus")
 		span.SetTag("expr", query.Expr)
@@ -168,30 +142,38 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		var response model.Value
+		response := make(map[PrometheusQueryType]model.Value)
 
-		switch query.QueryType {
-		case Range:
-			response, _, err = client.QueryRange(ctx, query.Expr, timeRange)
+		if query.RangeQuery {
+			timeRange := apiv1.Range{
+				Step: query.Step,
+				// Align query range to step. It rounds start and end down to a multiple of step.
+				Start: time.Unix(int64(math.Floor((float64(query.Start.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
+				End:   time.Unix(int64(math.Floor((float64(query.End.Unix()+query.UtcOffsetSec)/query.Step.Seconds()))*query.Step.Seconds()-float64(query.UtcOffsetSec)), 0),
+			}
+
+			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
-		case Instant:
-			response, _, err = client.Query(ctx, query.Expr, query.End)
-			if err != nil {
-				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
-			}
-		default:
-			return &result, fmt.Errorf("unknown Query type detected %#v", query.QueryType)
+			response[Range] = rangeResponse
 		}
 
-		frame, err := parseResponse(response, query)
+		if query.InstantQuery {
+			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
+			if err != nil {
+				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
+			}
+			response[Instant] = instantResponse
+		}
+
+		frames, err := parseResponse(response, query)
 		if err != nil {
 			return &result, err
 		}
 
 		result.Responses[query.RefId] = backend.DataResponse{
-			Frames: frame,
+			Frames: frames,
 		}
 	}
 
@@ -309,61 +291,60 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
 		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
-		if model.RangeQuery && model.InstantQuery {
-			return nil, fmt.Errorf("the provided query is not valid, expected only one of `range` and `instant` to be true")
-		}
-
-		var queryType PrometheusQueryType
-		var start time.Time
-		var end time.Time
-
-		if model.InstantQuery {
-			queryType = Instant
-			start = query.TimeRange.From
-			end = query.TimeRange.To
-		} else {
-			queryType = Range
-			// Align query range to step. It rounds start and end down to a multiple of step.
-			start = time.Unix(int64(math.Floor((float64(query.TimeRange.From.Unix()+model.UtcOffsetSec)/interval.Seconds()))*interval.Seconds()-float64(model.UtcOffsetSec)), 0)
-			end = time.Unix(int64(math.Floor((float64(query.TimeRange.To.Unix()+model.UtcOffsetSec)/interval.Seconds()))*interval.Seconds()-float64(model.UtcOffsetSec)), 0)
+		rangeQuery := model.RangeQuery
+		if !model.InstantQuery && !model.RangeQuery {
+			// In older dashboards, we were not setting range query param and !range && !instant was run as range query
+			rangeQuery = true
 		}
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
 			Step:         interval,
 			LegendFormat: model.LegendFormat,
-			Start:        start,
-			End:          end,
+			Start:        query.TimeRange.From,
+			End:          query.TimeRange.To,
 			RefId:        query.RefID,
-			QueryType:    queryType,
+			InstantQuery: model.InstantQuery,
+			RangeQuery:   rangeQuery,
+			UtcOffsetSec: model.UtcOffsetSec,
 		})
 	}
-
 	return qs, nil
 }
 
-func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, error) {
-	frames := data.Frames{}
+func parseResponse(value map[PrometheusQueryType]model.Value, query *PrometheusQuery) (data.Frames, error) {
+	allFrames := data.Frames{}
 
-	matrix, ok := value.(model.Matrix)
-	if ok {
-		matrixFrames := matrixToDataFrames(matrix, query)
-		frames = append(frames, matrixFrames...)
+	for queryType, value := range value {
+		var frames data.Frames
+
+		matrix, ok := value.(model.Matrix)
+		if ok {
+			frames = matrixToDataFrames(matrix, query, queryType)
+		}
+
+		vector, ok := value.(model.Vector)
+		if ok {
+			frames = vectorToDataFrames(vector, query, queryType)
+		}
+
+		scalar, ok := value.(*model.Scalar)
+		if ok {
+			frames = scalarToDataFrames(scalar, query, queryType)
+		}
+
+		for _, frame := range frames {
+			frame.Meta = &data.FrameMeta{
+				Custom: map[string]PrometheusQueryType{
+					"queryType": queryType,
+				},
+			}
+		}
+
+		allFrames = append(allFrames, frames...)
 	}
 
-	vector, ok := value.(model.Vector)
-	if ok {
-		vectorFrames := vectorToDataFrames(vector, query)
-		frames = append(frames, vectorFrames...)
-	}
-
-	scalar, ok := value.(*model.Scalar)
-	if ok {
-		scalarFrames := scalarToDataFrames(scalar)
-		frames = append(frames, scalarFrames...)
-	}
-
-	return frames, nil
+	return allFrames, nil
 }
 
 // IsAPIError returns whether err is or wraps a Prometheus error.
@@ -396,7 +377,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames {
+func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range matrix {
@@ -411,26 +392,26 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 			values = append(values, float64(k.Value))
 		}
 		name := formatLegend(v.Metric, query)
-		frames = append(frames, data.NewFrame(name,
+		frame := data.NewFrame(name,
 			data.NewField("Time", nil, timeVector),
-			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
+		frames = append(frames, frame)
 	}
-
 	return frames
 }
 
-func scalarToDataFrames(scalar *model.Scalar) data.Frames {
+func scalarToDataFrames(scalar *model.Scalar, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
 	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
 	values := []float64{float64(scalar.Value)}
 	name := fmt.Sprintf("%g", values[0])
-	frames := data.Frames{data.NewFrame(name,
+	frame := data.NewFrame(name,
 		data.NewField("Time", nil, timeVector),
-		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))}
-
+		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
+	frames := data.Frames{frame}
 	return frames
 }
 
-func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
+func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, queryType PrometheusQueryType) data.Frames {
 	frames := data.Frames{}
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
@@ -440,9 +421,10 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		frames = append(frames, data.NewFrame(name,
+		frame := data.NewFrame(name,
 			data.NewField("Time", nil, timeVector),
-			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))
+		frames = append(frames, frame)
 	}
 
 	return frames

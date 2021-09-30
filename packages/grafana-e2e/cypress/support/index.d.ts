@@ -5,5 +5,6 @@ declare namespace Cypress {
     compareScreenshots(config: CompareScreenshotsConfig | string): Chainable;
     logToConsole(message: string, optional?: any): void;
     readProvisions(filePaths: string[]): Chainable;
+    getJSONFilesFromDir(dirPath: string): Chainable;
   }
 }

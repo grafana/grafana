@@ -1,5 +1,12 @@
 import $ from 'jquery';
-import { EchoBackend, EchoEventType, isInteractionEvent, isPageviewEvent, PageviewEchoEvent } from '@grafana/runtime';
+import {
+  EchoBackend,
+  EchoEventType,
+  InteractionEchoEvent,
+  isInteractionEvent,
+  isPageviewEvent,
+  PageviewEchoEvent,
+} from '@grafana/runtime';
 
 export interface ApplicationInsightsBackendOptions {
   connectionString: string;
@@ -7,7 +14,7 @@ export interface ApplicationInsightsBackendOptions {
 }
 
 export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent, ApplicationInsightsBackendOptions> {
-  supportedEvents = [EchoEventType.Pageview];
+  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
 
   constructor(public options: ApplicationInsightsBackendOptions) {
     $.ajax({
@@ -26,7 +33,7 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
     });
   }
 
-  addEvent = (e: PageviewEchoEvent) => {
+  addEvent = (e: PageviewEchoEvent | InteractionEchoEvent) => {
     if (!(window as any).applicationInsights) {
       return;
     }
@@ -36,7 +43,7 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
     }
 
     if (isInteractionEvent(e)) {
-      (window as any).applicationInsights.trackPageView({
+      (window as any).applicationInsights.trackEvent({
         name: e.payload.interactionName,
         properties: e.payload.properties,
       });

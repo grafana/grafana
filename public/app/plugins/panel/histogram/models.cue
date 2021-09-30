@@ -28,9 +28,7 @@ Panel: {
                     combine?: bool
                 }
 
-                PanelFieldConfig: {
-                    ui.GraphFieldConfig
-                }
+                PanelFieldConfig: ui.GraphFieldConfig
             }
         ]
     ]

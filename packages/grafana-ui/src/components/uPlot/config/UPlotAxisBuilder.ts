@@ -18,7 +18,7 @@ export interface AxisProps {
   formatValue?: (v: any) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
-  values?: any;
+  values?: Axis.Values;
   isTime?: boolean;
   timeZone?: TimeZone;
 }
