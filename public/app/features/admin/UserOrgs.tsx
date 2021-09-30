@@ -18,6 +18,7 @@ import { AccessControlAction, Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 import { contextSrv } from 'app/core/core';
+import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
 
 interface Props {
   orgs: UserOrg[];
@@ -159,7 +160,9 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
             <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
           </td>
         ) : (
-          <td className="width-25">{org.role}</td>
+          <td className="width-25">
+            <RolePicker role={org.role} onChange={() => {}} />
+          </td>
         )}
         <td colSpan={1}>
           <div className="pull-right">
