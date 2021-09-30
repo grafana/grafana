@@ -88,53 +88,48 @@ type Validator interface {
 }
 
 func validate(obj interface{}) error {
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
-	k := v.Kind()
-	// Resolve all pointers and interfaces, until we get a concrete type
-	for k == reflect.Interface || k == reflect.Ptr {
-		t = t.Elem()
-		v = v.Elem()
-		k = v.Kind()
-	}
 	// If type has a Validate() method - use that
 	if validator, ok := obj.(Validator); ok {
+		fmt.Println("VALIDATOR", obj)
 		return validator.Validate()
 	}
-
+	// Otherwise, use relfection to match `binding:"Required"` struct field tags.
+	// Resolve all pointers and interfaces, until we get a concrete type.
+	t := reflect.TypeOf(obj)
+	v := reflect.ValueOf(obj)
+	for v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr {
+		t = t.Elem()
+		v = v.Elem()
+	}
+	switch v.Kind() {
 	// For arrays and slices - iterate over each element and validate it recursively
-	if k == reflect.Slice || k == reflect.Array {
+	case reflect.Slice, reflect.Array:
 		for i := 0; i < v.Len(); i++ {
 			e := v.Index(i).Interface()
 			if err := validate(e); err != nil {
 				return err
 			}
 		}
-		return nil
-	}
-
 	// For structs - iterate over each field, check for the "Required" constraint (Macaron legacy), then validate it recursively
-	if k == reflect.Struct {
-		for i := 0; i < t.NumField(); i++ {
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
 			field := t.Field(i)
-			fieldVal := v.Field(i)
-			fieldValue := fieldVal.Interface()
-			zero := reflect.Zero(field.Type).Interface()
+			value := v.Field(i)
 			rule := field.Tag.Get("binding")
-			if len(rule) == 0 || rule != "Required" {
+			if !value.CanInterface() {
 				continue
 			}
-			v := reflect.ValueOf(fieldValue)
-			if v.Kind() == reflect.Slice {
-				if v.Len() == 0 {
-					return fmt.Errorf("required slice %s must not be empty", field.Name)
+			if rule == "Required" {
+				zero := reflect.Zero(field.Type).Interface()
+				if value.Kind() == reflect.Slice {
+					if value.Len() == 0 {
+						return fmt.Errorf("required slice %s must not be empty", field.Name)
+					}
+				} else if reflect.DeepEqual(zero, value.Interface()) {
+					return fmt.Errorf("required value %s must not be empty", field.Name)
 				}
-				continue
 			}
-			if reflect.DeepEqual(zero, fieldValue) {
-				return fmt.Errorf("required value %s must not be empty", field.Name)
-			}
-			if err := validate(fieldVal); err != nil {
+			if err := validate(value.Interface()); err != nil {
 				return err
 			}
 		}
