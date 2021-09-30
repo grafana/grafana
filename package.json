@@ -8,6 +8,7 @@
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js",
+    "check-strict": "./scripts/ci-check-strict.sh",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
@@ -48,7 +49,7 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
+    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-2/",

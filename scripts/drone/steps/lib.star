@@ -391,13 +391,31 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'lint-frontend',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
             'yarn run ci:test-frontend',
+        ],
+    }
+
+def lint_frontend_step():
+    return {
+        'name': 'lint-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
+        'commands': [
+            'yarn run prettier:check',
+            'yarn run lint',
+            'yarn run typecheck',
+            'yarn run check-strict',
         ],
     }
 
