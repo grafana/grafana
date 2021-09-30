@@ -39,8 +39,7 @@ type Filter interface {
 }
 
 type OSSSearchUserFilter struct {
-	filterList []FilterHandler
-	filters    map[string]FilterHandler
+	filters map[string]FilterHandler
 }
 
 func ProvideOSSSearchUserFilter() *OSSSearchUserFilter {
