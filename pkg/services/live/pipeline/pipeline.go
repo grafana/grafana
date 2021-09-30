@@ -412,7 +412,7 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 
 	if len(rule.Processors) > 0 {
 		for _, proc := range rule.Processors {
-			frame, err = proc.Process(ctx, vars, frame)
+			frame, err = p.execProcessor(ctx, proc, vars, frame)
 			if err != nil {
 				logger.Error("Error processing frame", "error", err)
 				return nil, err
