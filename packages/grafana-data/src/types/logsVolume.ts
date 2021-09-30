@@ -3,7 +3,7 @@ import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { Observable } from 'rxjs';
 
 /**
- * TODO: This should be added ot ./logs.ts but because of cross reference between ./datasource.ts and ./logs.ts it can
+ * TODO: This should be added to ./logs.ts but because of cross reference between ./datasource.ts and ./logs.ts it can
  * be done only after decoupling "logs" from "datasource" (https://github.com/grafana/grafana/pull/39536)
  *
  * @internal
