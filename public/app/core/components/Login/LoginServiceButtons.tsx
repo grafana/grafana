@@ -24,7 +24,7 @@ const loginServices: () => LoginServices = () => {
     saml: {
       bgColor: '#464646',
       enabled: config.samlEnabled,
-      name: 'SAML',
+      name: config.samlName || 'SAML',
       icon: 'key-skeleton-alt',
     },
     google: {
