@@ -14,18 +14,23 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	Evaluate            []interface{}
-	GetUserPermissions  []interface{}
-	GetUserRoles        []interface{}
-	IsDisabled          []interface{}
-	DeclareFixedRoles   []interface{}
-	GetUserBuiltInRoles []interface{}
-	RegisterFixedRoles  []interface{}
+	CloneUserToServiceAccount []interface{}
+	Evaluate                  []interface{}
+	GetUserPermissions        []interface{}
+	GetUserRoles              []interface{}
+	IsDisabled                []interface{}
+	DeclareFixedRoles         []interface{}
+	GetUserBuiltInRoles       []interface{}
+	RegisterFixedRoles        []interface{}
 }
 
 type Mock struct {
+	// Unless an override is provided, user will be returned by CloneUserToServiceAccount
+	createduser *models.User
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []*accesscontrol.Permission
+	// Unless an override is provided, roles will be returned by GetUserRoles
+	roles []*accesscontrol.RoleDTO
 	// Unless an override is provided, disabled will be returned by IsDisabled
 	disabled bool
 	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
@@ -35,13 +40,14 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	EvaluateFunc            func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc  func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
-	GetUserRolesFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
-	IsDisabledFunc          func() bool
-	DeclareFixedRolesFunc   func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc func(user *models.SignedInUser) []string
-	RegisterFixedRolesFunc  func() error
+	CloneUserToServiceAccountFunc func(ctx context.Context, user *models.SignedInUser) (*models.User, error)
+	EvaluateFunc                  func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
+	GetUserRolesFunc              func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
+	IsDisabledFunc                func() bool
+	DeclareFixedRolesFunc         func(...accesscontrol.RoleRegistration) error
+	GetUserBuiltInRolesFunc       func(user *models.SignedInUser) []string
+	RegisterFixedRolesFunc        func() error
 }
 
 // Ensure the mock stays in line with the interface
@@ -102,7 +108,23 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser
 }
 
 func (m *Mock) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
-	return []*accesscontrol.RoleDTO{}, nil
+	m.Calls.GetUserRoles = append(m.Calls.GetUserRoles, []interface{}{ctx, user})
+	// Use override if provided
+	if m.GetUserPermissionsFunc != nil {
+		return m.GetUserRolesFunc(ctx, user)
+	}
+	// Otherwise return the Roles list
+	return m.roles, nil
+}
+
+func (m *Mock) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
+	m.Calls.CloneUserToServiceAccount = append(m.Calls.CloneUserToServiceAccount, []interface{}{ctx, user})
+	// Use override if provided
+	if m.CloneUserToServiceAccountFunc != nil {
+		return m.CloneUserToServiceAccountFunc(ctx, user)
+	}
+	// Otherwise return the user
+	return m.createduser, nil
 }
 
 // Middleware checks if service disabled or not to switch to fallback authorization.
