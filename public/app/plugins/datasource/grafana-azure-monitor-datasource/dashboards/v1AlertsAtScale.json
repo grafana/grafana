@@ -1,0 +1,760 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Azure Monitor",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count_"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "https://jcolladokuri-grafana.scus.azgrafana.io/d/5DLst5N7k/alert-consumption?orgId=1&var-sub=${sub}&var-rg=${rg}&var-ns=${ns}&var-res=${res}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev1&var-sev=Sev0&var-sev=Sev2&var-sev=Sev3&var-sev=Sev4&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup == \"$rg\"\r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+          "subscriptions": []
+        }
+      ],
+      "title": "Total alerts",
+      "type": "stat"
+    },
+    {
+      "datasource": "Azure Monitor",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count_"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "https://jcolladokuri-grafana.scus.azgrafana.io/d/Pxwf9wN7k/alert-rules-overview?orgId=1&var-sub=${sub}&var-rg=${rg}&var-ns=${ns}&var-res=${res}&var-sig_type=metrics&var-sig_type=logsearch&var-sig_type=activitylog&var-sig_type=smartdetectoralertrules&var-sig_type=advisor&var-sig_type=servicehealth&var-sig_type=resourcehealth&var-stat=Enabled&var-stat=Disabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 2,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and targetResource in ($res)\r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "hide": false,
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "Smart detector rules",
+          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+          "subscriptions": []
+        },
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" \r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "hide": false,
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "Resource health alert rules",
+          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+          "subscriptions": []
+        },
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" \r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "hide": false,
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "Insights alert rules",
+          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+          "subscriptions": []
+        }
+      ],
+      "title": "Total alert rules",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "count_"
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": "Azure Monitor",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 4,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and properties.conditions.targetResourceGroup in ($res)\r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+          "subscriptions": []
+        }
+      ],
+      "title": "Action rules",
+      "type": "stat"
+    },
+    {
+      "datasource": "Azure Monitor",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "align": "left",
+            "displayMode": "auto",
+            "filterable": true
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "properties_essentials_severity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Severity"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "Sev0": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "0 - Critical"
+                      },
+                      "Sev1": {
+                        "color": "orange",
+                        "index": 1,
+                        "text": "1 - Error"
+                      },
+                      "Sev2": {
+                        "color": "yellow",
+                        "index": 2,
+                        "text": "2 - Warning"
+                      },
+                      "Sev3": {
+                        "color": "blue",
+                        "index": 3,
+                        "text": "3 - Informational"
+                      },
+                      "Sev4": {
+                        "color": "purple",
+                        "index": 4,
+                        "text": "4 - Verbose"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "https://jcolladokuri-grafana.scus.azgrafana.io/d/5DLst5N7k/alert-consumption?orgId=1&var-sub=${sub}&var-rg=${rg}&var-ns=${ns}&var-res=${res}&var-mc=Fired&var-mc=Resolved&var-as=New&var-sev=${__data.fields.properties_essentials_severity}&${__url_time_range}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Total alerts"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "basic"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mcFired"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Fired"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "gradient-gauge"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mcResolved"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Resolved"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "basic"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "asNew"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "New"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "asAcknowledged"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Acknowledged"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "asClosed"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Closed"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 2,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Severity"
+          }
+        ]
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup == \"$rg\" and properties.essentials.targetResourceType == \"$ns\"\r\nand properties.essentials.targetResourceName in ($res)\r\n| summarize total = count(),\r\n            mcFired = countif(properties.essentials.monitorCondition == \"Fired\"),\r\n            mcResolved = countif(properties.essentials.monitorCondition == \"Resolved\"),\r\n            asNew = countif(properties.essentials.alertState == \"New\"),\r\n            asAcknowledged = countif(properties.essentials.alertState == \"Acknowledged\"),\r\n            asClosed = countif(properties.essentials.alertState == \"Closed\")\r\nby tostring(properties.essentials.severity)",
+            "resultFormat": "table"
+          },
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
+          "subscriptions": []
+        }
+      ],
+      "title": "Alerts by Severity",
+      "transformations": [],
+      "transparent": true,
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "RTD-Experimental",
+          "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
+        },
+        "datasource": "Azure Monitor",
+        "definition": "Subscriptions()",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Subscription",
+        "multi": false,
+        "name": "sub",
+        "options": [],
+        "query": "Subscriptions()",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "development",
+          "value": "development"
+        },
+        "datasource": "Azure Monitor",
+        "definition": "ResourceGroups($sub)",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource Group",
+        "multi": false,
+        "name": "rg",
+        "options": [],
+        "query": "ResourceGroups($sub)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "Application Insights",
+          "value": "microsoft.insights/components"
+        },
+        "datasource": "Azure Monitor",
+        "definition": "Namespaces($sub, $rg)",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource type",
+        "multi": false,
+        "name": "ns",
+        "options": [],
+        "query": "Namespaces($sub, $rg)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "rtd-development",
+          "value": "rtd-development"
+        },
+        "datasource": "Azure Monitor",
+        "definition": "ResourceNames($sub, $rg, $ns)",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource",
+        "multi": true,
+        "name": "res",
+        "options": [],
+        "query": "ResourceNames($sub, $rg, $ns)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Alert Consumption At Scale",
+  "uid": "QddYFyNnk",
+  "version": 21
+}
