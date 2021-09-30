@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';

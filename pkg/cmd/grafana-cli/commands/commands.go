@@ -169,6 +169,19 @@ so must be recompiled to validate newly-added CUE files.`,
 			},
 		},
 	},
+	{
+		Name:  "gen-ts",
+		Usage: "generate TypeScript from all known CUE file types",
+		Description: `gen-ts generates TypeScript from all CUE files at
+		expected positions in the filesystem tree of a Grafana repository.`,
+		Action: runCueCommand(cmd.generateTypescript),
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "grafana-root",
+				Usage: "path to the root of a Grafana repository in which to generate TypeScript from CUE files",
+			},
+		},
+	},
 }
 
 var Commands = []*cli.Command{

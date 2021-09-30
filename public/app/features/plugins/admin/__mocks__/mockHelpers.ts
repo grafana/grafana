@@ -1,6 +1,14 @@
 import { setBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
-import { CatalogPlugin, LocalPlugin, RemotePlugin, Version, ReducerState, RequestStatus } from '../types';
+import {
+  CatalogPlugin,
+  LocalPlugin,
+  RemotePlugin,
+  Version,
+  ReducerState,
+  RequestStatus,
+  PluginListDisplayMode,
+} from '../types';
 import remotePluginMock from './remotePlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import catalogPluginMock from './catalogPlugin.mock';
@@ -28,6 +36,9 @@ export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): ReducerState
     'plugins/fetchDetails': {
       status: RequestStatus.Fulfilled,
     },
+  },
+  settings: {
+    displayMode: PluginListDisplayMode.Grid,
   },
   // Backward compatibility
   plugins: [],

@@ -873,7 +873,8 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
-	rule := tests.CreateTestAlertRule(t, dbstore, 600)
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, dbstore, 600, mainOrgID)
 
 	saveCmd1 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,

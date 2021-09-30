@@ -16,6 +16,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceWithLogsVolumeSupport,
   dateMath,
   DateTime,
   FieldCache,
@@ -52,6 +53,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import { createLokiLogsVolumeProvider } from './dataProviders/logsVolumeProvider';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -67,7 +69,9 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   query: '',
 };
 
-export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
+export class LokiDatasource
+  extends DataSourceApi<LokiQuery, LokiOptions>
+  implements DataSourceWithLogsVolumeSupport<LokiQuery> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -100,6 +104,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
 
     return getBackendSrv().fetch<Record<string, any>>(req);
+  }
+
+  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
+    return isLogsVolumeAvailable ? createLokiLogsVolumeProvider(this, request) : undefined;
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
@@ -703,7 +712,7 @@ export function lokiSpecialRegexEscape(value: any) {
  * Checks if the query expression uses function and so should return a time series instead of logs.
  * Sometimes important to know that before we actually do the query.
  */
-function isMetricsQuery(query: string): boolean {
+export function isMetricsQuery(query: string): boolean {
   const tokens = Prism.tokenize(query, syntax);
   return tokens.some((t) => {
     // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function

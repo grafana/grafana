@@ -303,10 +303,32 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		dsInfo := &DatasourceInfo{}
 		models, err := service.parseQuery(query, dsInfo)
 		require.NoError(t, err)
-		require.Equal(t, Range, models[0].QueryType)
+		require.Equal(t, true, models[0].RangeQuery)
 	})
 
-	t.Run("parsing query model of with default query type", func(t *testing.T) {
+	t.Run("parsing query model of range and instant query", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A",
+			"range": true,
+			"instant": true
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, true, models[0].RangeQuery)
+		require.Equal(t, true, models[0].InstantQuery)
+	})
+
+	t.Run("parsing query model of with no query type", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,
 			To:   now.Add(48 * time.Hour),
@@ -322,7 +344,7 @@ func TestPrometheus_parseQuery(t *testing.T) {
 		dsInfo := &DatasourceInfo{}
 		models, err := service.parseQuery(query, dsInfo)
 		require.NoError(t, err)
-		require.Equal(t, Range, models[0].QueryType)
+		require.Equal(t, true, models[0].RangeQuery)
 	})
 }
 
@@ -335,7 +357,8 @@ func TestPrometheus_parseResponse(t *testing.T) {
 			{Value: 4, Timestamp: 4000},
 			{Value: 5, Timestamp: 5000},
 		}
-		value := p.Matrix{
+		value := make(map[PrometheusQueryType]p.Value)
+		value[Range] = p.Matrix{
 			&p.SampleStream{
 				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
 				Values: values,
@@ -363,7 +386,8 @@ func TestPrometheus_parseResponse(t *testing.T) {
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
-		value := p.Vector{
+		value := make(map[PrometheusQueryType]p.Value)
+		value[Range] = p.Vector{
 			&p.Sample{
 				Metric:    p.Metric{"app": "Application", "tag2": "tag2"},
 				Value:     1,
@@ -392,10 +416,12 @@ func TestPrometheus_parseResponse(t *testing.T) {
 	})
 
 	t.Run("scalar response should be parsed normally", func(t *testing.T) {
-		value := &p.Scalar{
+		value := make(map[PrometheusQueryType]p.Value)
+		value[Range] = &p.Scalar{
 			Value:     1,
 			Timestamp: 1000,
 		}
+
 		query := &PrometheusQuery{}
 		res, err := parseResponse(value, query)
 		require.NoError(t, err)
