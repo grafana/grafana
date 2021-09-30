@@ -77,7 +77,14 @@ function aggregateRawLogsVolume(rawLogsVolume: DataFrame[]): DataFrame[] {
   const logsVolumeByLevelMap: { [level in LogLevel]?: DataFrame[] } = {};
   let levels = 0;
   rawLogsVolume.forEach((dataFrame) => {
-    const valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number)!;
+    let valueField;
+    try {
+      valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
+    } catch {}
+    // If value field doesn't exist skip the frame (it may happen with instant queries)
+    if (!valueField) {
+      return;
+    }
     const level: LogLevel = valueField.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
     if (!logsVolumeByLevelMap[level]) {
       logsVolumeByLevelMap[level] = [];
