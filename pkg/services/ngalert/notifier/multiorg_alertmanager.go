@@ -149,9 +149,14 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
+		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
+			moa.logger.Debug("skipping syncing Alertmanger for disabled org", "org", orgID)
+			continue
+		}
 		orgsFound[orgID] = struct{}{}
 
 		alertmanager, found := moa.alertmanagers[orgID]
+
 		if !found {
 			// These metrics are not exported by Grafana and are mostly a placeholder.
 			// To export them, we need to translate the metrics from each individual registry and,
