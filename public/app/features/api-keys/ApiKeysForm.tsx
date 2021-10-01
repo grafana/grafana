@@ -14,9 +14,9 @@ import { SlideDown } from '../../core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 const { Input } = LegacyForms;
-const ROLE_OPTIONS: Array<SelectableValue<OrgRole>> = Object.keys(OrgRole).map((role: OrgRole) => ({
+const ROLE_OPTIONS: Array<SelectableValue<OrgRole>> = Object.keys(OrgRole).map((role) => ({
   label: role,
-  value: role,
+  value: role as OrgRole,
 }));
 
 interface Props {
