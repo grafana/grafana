@@ -82,18 +82,23 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
 
+	alertRuleQuery := ngmodels.ListAlertRulesQuery{
+		OrgID: c.SignedInUser.OrgId,
+	}
+	if err := srv.store.GetOrgAlertRules(&alertRuleQuery); err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+		return response.JSON(http.StatusInternalServerError, ruleResponse)
+	}
+
+	groupMap := make(map[string]*apimodels.RuleGroup)
+
 	for _, r := range ruleGroupQuery.Result {
 		if len(r) < 3 {
 			continue
 		}
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
-		alertRuleQuery := ngmodels.ListRuleGroupAlertRulesQuery{OrgID: c.SignedInUser.OrgId, NamespaceUID: namespaceUID, RuleGroup: groupId}
-		if err := srv.store.GetRuleGroupAlertRules(&alertRuleQuery); err != nil {
-			ruleResponse.DiscoveryBase.Status = "error"
-			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules for group %s: %s", groupId, err.Error())
-			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-			return response.JSON(http.StatusInternalServerError, ruleResponse)
-		}
 
 		newGroup := &apimodels.RuleGroup{
 			Name: groupId,
@@ -104,77 +109,84 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
 
-		for _, rule := range alertRuleQuery.Result {
-			var queryStr string
-			encodedQuery, err := json.Marshal(rule.Data)
-			if err != nil {
-				queryStr = err.Error()
-			} else {
-				queryStr = string(encodedQuery)
-			}
-			alertingRule := apimodels.AlertingRule{
-				State:       "inactive",
-				Name:        rule.Title,
-				Query:       queryStr,
-				Duration:    rule.For.Seconds(),
-				Annotations: rule.Annotations,
-			}
+		groupMap[groupId+"-"+namespaceUID] = newGroup
 
-			newRule := apimodels.Rule{
-				Name:           rule.Title,
-				Labels:         rule.Labels,
-				Health:         "ok",
-				Type:           apiv1.RuleTypeAlerting,
-				LastEvaluation: time.Time{},
-			}
-
-			for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
-				activeAt := alertState.StartsAt
-				valString := ""
-				if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
-					valString = alertState.Results[0].EvaluationString
-				}
-				alert := &apimodels.Alert{
-					Labels:      map[string]string(alertState.Labels),
-					Annotations: alertState.Annotations,
-					State:       alertState.State.String(),
-					ActiveAt:    &activeAt,
-					Value:       valString, // TODO: set this once it is added to the evaluation results
-				}
-
-				if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
-					newRule.LastEvaluation = alertState.LastEvaluationTime
-					newGroup.LastEvaluation = alertState.LastEvaluationTime
-				}
-
-				newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
-
-				switch alertState.State {
-				case eval.Normal:
-				case eval.Pending:
-					if alertingRule.State == "inactive" {
-						alertingRule.State = "pending"
-					}
-				case eval.Alerting:
-					alertingRule.State = "firing"
-				case eval.Error:
-					newRule.Health = "error"
-				case eval.NoData:
-					newRule.Health = "nodata"
-				}
-
-				if alertState.Error != nil {
-					newRule.LastError = alertState.Error.Error()
-					newRule.Health = "error"
-				}
-				alertingRule.Alerts = append(alertingRule.Alerts, alert)
-			}
-
-			alertingRule.Rule = newRule
-			newGroup.Rules = append(newGroup.Rules, alertingRule)
-			newGroup.Interval = float64(rule.IntervalSeconds)
-		}
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
+	}
+
+	for _, rule := range alertRuleQuery.Result {
+		newGroup, ok := groupMap[rule.RuleGroup+"-"+rule.NamespaceUID]
+		if !ok {
+			continue
+		}
+		var queryStr string
+		encodedQuery, err := json.Marshal(rule.Data)
+		if err != nil {
+			queryStr = err.Error()
+		} else {
+			queryStr = string(encodedQuery)
+		}
+		alertingRule := apimodels.AlertingRule{
+			State:       "inactive",
+			Name:        rule.Title,
+			Query:       queryStr,
+			Duration:    rule.For.Seconds(),
+			Annotations: rule.Annotations,
+		}
+
+		newRule := apimodels.Rule{
+			Name:           rule.Title,
+			Labels:         rule.Labels,
+			Health:         "ok",
+			Type:           apiv1.RuleTypeAlerting,
+			LastEvaluation: time.Time{},
+		}
+
+		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
+			activeAt := alertState.StartsAt
+			valString := ""
+			if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
+				valString = alertState.Results[0].EvaluationString
+			}
+			alert := &apimodels.Alert{
+				Labels:      map[string]string(alertState.Labels),
+				Annotations: alertState.Annotations,
+				State:       alertState.State.String(),
+				ActiveAt:    &activeAt,
+				Value:       valString, // TODO: set this once it is added to the evaluation results
+			}
+
+			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
+				newRule.LastEvaluation = alertState.LastEvaluationTime
+				newGroup.LastEvaluation = alertState.LastEvaluationTime
+			}
+
+			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
+
+			switch alertState.State {
+			case eval.Normal:
+			case eval.Pending:
+				if alertingRule.State == "inactive" {
+					alertingRule.State = "pending"
+				}
+			case eval.Alerting:
+				alertingRule.State = "firing"
+			case eval.Error:
+				newRule.Health = "error"
+			case eval.NoData:
+				newRule.Health = "nodata"
+			}
+
+			if alertState.Error != nil {
+				newRule.LastError = alertState.Error.Error()
+				newRule.Health = "error"
+			}
+			alertingRule.Alerts = append(alertingRule.Alerts, alert)
+		}
+
+		alertingRule.Rule = newRule
+		newGroup.Rules = append(newGroup.Rules, alertingRule)
+		newGroup.Interval = float64(rule.IntervalSeconds)
 	}
 	return response.JSON(http.StatusOK, ruleResponse)
 }

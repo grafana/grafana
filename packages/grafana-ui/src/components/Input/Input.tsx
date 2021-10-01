@@ -59,7 +59,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
           {...restProps}
           style={{
             paddingLeft: prefixRect ? prefixRect.width + 12 : undefined,
-            paddingRight: suffixRect ? suffixRect.width + 12 : undefined,
+            paddingRight: suffixRect && (suffix || loading) ? suffixRect.width + 12 : undefined,
           }}
         />
 

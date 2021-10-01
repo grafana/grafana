@@ -67,6 +67,7 @@ const AlertGroups = () => {
             </React.Fragment>
           );
         })}
+      {results && !filteredAlertGroups.length && <p>No results.</p>}
     </AlertingPageWrapper>
   );
 };
