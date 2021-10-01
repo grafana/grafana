@@ -1,13 +1,5 @@
 import React, { ChangeEvent, FC, FormEvent, useEffect, useState } from 'react';
-import {
-  EventsWithValidation,
-  InlineFormLabel,
-  LegacyForms,
-  ValidationEvents,
-  Button,
-  Select,
-  InlineField,
-} from '@grafana/ui';
+import { EventsWithValidation, LegacyForms, ValidationEvents, Button, Select, InlineField } from '@grafana/ui';
 import { NewApiKey, OrgRole } from '../../types';
 import { rangeUtil, SelectableValue } from '@grafana/data';
 import { SlideDown } from '../../core/components/Animations/SlideDown';
@@ -88,19 +80,26 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
             </div>
             <div className="gf-form">
               <InlineField label="Role">
-                <Select inputId="role-select" value={role} onChange={onRoleChange} options={ROLE_OPTIONS} />
+                <Select
+                  inputId="role-select"
+                  value={role}
+                  onChange={onRoleChange}
+                  options={ROLE_OPTIONS}
+                  menuShouldPortal
+                />
               </InlineField>
             </div>
             <div className="gf-form max-width-21">
-              <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
-              <Input
-                type="text"
-                className="gf-form-input"
-                placeholder="1d"
-                validationEvents={timeRangeValidationEvents}
-                value={secondsToLive}
-                onChange={onSecondsToLiveChange}
-              />
+              <InlineField tooltip={tooltipText} label="Time to live">
+                <Input
+                  id="time-to-live-input"
+                  type="text"
+                  placeholder="1d"
+                  validationEvents={timeRangeValidationEvents}
+                  value={secondsToLive}
+                  onChange={onSecondsToLiveChange}
+                />
+              </InlineField>
             </div>
             <div className="gf-form">
               <Button>Add</Button>
