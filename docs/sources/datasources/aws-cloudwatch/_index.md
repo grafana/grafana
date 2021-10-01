@@ -29,6 +29,18 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 | `Assume Role Arn`          | Specify the ARN of the role to assume                                                                                   |
 | `External ID`              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
+### X-Ray trace links
+
+Link an X-Ray data source in the "X-Ray trace link" section of the configuration page to automatically add links in your logs when the log contains `@xrayTraceId` field. 
+
+![Trace link configuration](/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png "Trace link configuration")
+
+The data source select will contain only existing data source instances of type X-Ray so in order to use this feature you need to have existing X-Ray data source already configured, see [X-Ray docs](https://grafana.com/grafana/plugins/grafana-x-ray-datasource/) for details.
+
+The X-Ray link will then appear in the log details section which is accessible by clicking on the log row either in Explore or in dashboard [Logs panel]({{< relref "../../visualizations/logs-panel.md" >}}). To log the `@xrayTraceId` in your logs see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana your log queries also have to contain the `@xrayTraceId` field, for example using query `fields @message, @xrayTraceId`.
+
+![Trace link in log details](/static/img/docs/cloudwatch/xray-link-log-details-8-2.png "Trace link in log details")
+
 ## Authentication
 
 For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic.
