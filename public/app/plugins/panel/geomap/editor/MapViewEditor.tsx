@@ -4,10 +4,10 @@ import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@gra
 import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { lastGeomapPanelInstance } from '../GeomapPanel';
 import { toLonLat } from 'ol/proj';
+import { GeomapPanel } from '../GeomapPanel';
 
-export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions>> = ({
+export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions, GeomapPanel>> = ({
   value,
   onChange,
   context,
@@ -25,7 +25,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
   }, [value?.id]);
 
   const onSetCurrentView = useCallback(() => {
-    const map = lastGeomapPanelInstance?.map;
+    const map = context.instanceState?.map;
     if (map) {
       const view = map.getView();
       const coords = view.getCenter();
@@ -40,7 +40,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
         });
       }
     }
-  }, [value, onChange]);
+  }, [value, onChange, context.instanceState]);
 
   const onSelectView = useCallback(
     (selection: SelectableValue<string>) => {
