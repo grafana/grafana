@@ -47,8 +47,7 @@ def pr_pipelines(edition):
     steps = [
         test_frontend_step(),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
-        rebuild_cache_step('yarn'),
-        rebuild_cache_step('node_modules'),
+        rebuild_cache_step(),
     ]
 
     trigger = {

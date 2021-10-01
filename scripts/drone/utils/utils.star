@@ -27,7 +27,7 @@ def pipeline(
             }
         }
 
-    finalSteps = [restore_cache_step('yarn'), restore_cache_step('node_modules')]
+    finalSteps = [restore_cache_step()]
 
     pipeline = {
         'kind': 'pipeline',

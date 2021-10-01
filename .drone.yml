@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 steps:
-- name: restore-cache-yarn
+- name: restore-cache
   pull: always
   image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
   settings:
@@ -24,21 +24,6 @@ steps:
   volumes:
   - name: cache
     path: /cache
-  depends_on:
-  - clone
-
-- name: restore-cache-node-modules
-  pull: always
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
-  settings:
-    backend: gcs
-    bucket: test-julien
-    cache_key: node_modules
-    json_key:
-      from_secret: tf_google_credentials
-    mount:
-    - node_modules
-    restore: true
   depends_on:
   - clone
 
@@ -47,54 +32,66 @@ steps:
   commands:
   - echo $DRONE_RUNNER_NAME
 
-- name: initialize
-  image: grafana/build-container:1.4.3
-  commands:
-  - echo test
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
-  - chmod +x bin/grabpl
-  - yarn config set cache-folder /cache/yarn
-  - yarn cache dir
-  - echo "ls /cache"
-  - ls /cache
-  - echo "ls /cache/v6"
-  - ls /cache/v6
-  - find . -type d | grep cache
-  - yarn install --frozen-lockfile --no-progress
-  - ls /cache/v6
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
-    YARN_CACHE_FOLDER: /cache
+- name: restore-cache
+  pull: always
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
+  settings:
+    backend: gcs
+    bucket: test-julien
+    cache_key: test123
+    json_key:
+      from_secret: tf_google_credentials
+    local_root: /cache
+    mount:
+    - yarn
+    restore: true
   volumes:
   - name: cache
     path: /cache
   depends_on:
-  - restore-cache-yarn
-  - restore-cache-node-modules
+  - clone
+
+- name: initialize
+  image: grafana/build-container:1.4.2
+  commands:
+  - echo test
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - chmod +x bin/grabpl
+  - yarn cache dir
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - yarn install --frozen-lockfile --no-progress
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+    YARN_CACHE_FOLDER: /cache/yarn
+  volumes:
+  - name: cache
+    path: /cache
+  depends_on:
+  - restore-cache
 
 - name: test-frontend
-  image: grafana/build-container:1.4.3
+  image: grafana/build-container:1.4.2
   commands:
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
-    YARN_CACHE_FOLDER: /cache
+    YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - restore-cache-yarn
-  - restore-cache-node-modules
   - initialize
 
 - name: build-frontend
-  image: grafana/build-container:1.4.3
+  image: grafana/build-container:1.4.2
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:
-    YARN_CACHE_FOLDER: /cache
+    YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - test-frontend
+  - initialize
 
-- name: rebuild-cache-yarn
+- name: rebuild-cache
   pull: always
   image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
   settings:
@@ -114,25 +111,7 @@ steps:
     event:
     - pull_request
   depends_on:
-  - build-frontend
-
-- name: rebuild-cache-node-modules
-  pull: always
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
-  settings:
-    backend: gcs
-    bucket: test-julien
-    cache_key: node_modules
-    json_key:
-      from_secret: tf_google_credentials
-    mount:
-    - node_modules
-    rebuild: true
-  when:
-    event:
-    - pull_request
-  depends_on:
-  - build-frontend
+  - initialize
 
 volumes:
 - name: cache
@@ -192,6 +171,6 @@ get:
 
 ---
 kind: signature
-hmac: 9533714bc534c20057ac0e481c50125412509283883bfae4deabe1e76d58de36
+hmac: 799dbe5b4685b15e939f92e1483b9f04eb178b69ad7167d08b434258e6f9e2d3
 
 ...
