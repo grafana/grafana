@@ -10,9 +10,9 @@ aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 
 After you have [installed Grafana]({{< relref "../installation/_index.md" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/getting-started.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../auth/_index.md" >}}).
 
-The following sections provide an overview of things you might want to do with your Grafana instance and links to product documentation to help you learn more. For more guidance and ideas, check out the [Grafana Community forums](https://community.grafana.com/).
+In the following sections, you can get an overview of the capabilities of Grafana features as well as links to the product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
-## Explore metrics and logs
+## Explore metrics, logs, and traces
 
 Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. Refer to [Explore]({{< relref "../explore/_index.md" >}}) for more information.
 
