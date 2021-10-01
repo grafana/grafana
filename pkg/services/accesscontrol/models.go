@@ -81,9 +81,9 @@ func (r Role) GetFallbackDisplayName() string {
 
 // heuristic for fallback display name
 func fallbackDisplayNameHeuristic(rName string) string {
-	displayName := strings.Replace(rName, ":", " ", -1)
 	// removing prefix for fixed roles
-	return strings.Replace(displayName, FixedRolePrefix, "", 1)
+	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
+	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
