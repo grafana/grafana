@@ -98,7 +98,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     return {
       init: () => vectorLayer,
       legend: legend,
-      update: (data: PanelData, ctx: DimensionContext) => {
+      update: (data: PanelData, ctx: DimensionContext | undefined) => {
         if (!data.series?.length) {
           return; // ignore empty
         }
@@ -109,7 +109,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           if (svgMatches) {
             shape = markerMakers.getIfExists(svgMatches) ?? circleMarker;
           } else {
-            iconPath = ctx.getResource(config.iconPath).value();
+            iconPath = ctx?.getResource(config.iconPath).value();
           }
         }
 
