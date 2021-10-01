@@ -63,7 +63,7 @@ The following image shows a dashboard with three panels showing some system metr
 
 <img width="850px" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
 
-Here are some resources to learn more:
+To learn more:
 
 - Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus.md" >}})
 - Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
