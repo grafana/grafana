@@ -43,6 +43,9 @@ describe('AddBackupModal::utils', () => {
         description: '',
         location: { label: locationName, value: locationId },
         vendor: DATABASE_LABELS[Databases.mysql],
+        retryInterval: 30,
+        retryMode: RetryMode.MANUAL,
+        retryTimes: 2,
       });
     });
 

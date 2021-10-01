@@ -118,6 +118,9 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       backupName: name,
       description,
       location: { label: locationName, value: locationId },
+      retryMode: RetryMode.MANUAL,
+      retryTimes: 2,
+      retryInterval: 30,
     };
   }
 };
