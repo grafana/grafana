@@ -77,8 +77,8 @@ type ChannelData struct {
 // will try to take current rule Processor and Outputter. If channel is not empty
 // then frame processing will be redirected to a corresponding channel rule.
 type ChannelFrame struct {
-	Channel string
-	Frame   *data.Frame
+	Channel string      `json:"channel"`
+	Frame   *data.Frame `json:"frame"`
 }
 
 // Vars has some helpful things pipeline entities could use.
@@ -188,7 +188,6 @@ type Pipeline struct {
 
 // New creates new Pipeline.
 func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
-	logger.Info("Live pipeline initialization")
 	p := &Pipeline{
 		ruleGetter: ruleGetter,
 	}
@@ -269,7 +268,7 @@ func (p *Pipeline) processInput(ctx context.Context, orgID int64, channelID stri
 	if rule.Converter == nil {
 		return false, nil
 	}
-	channelFrames, err := p.dataToChannelFrames(ctx, *rule, orgID, channelID, body)
+	channelFrames, err := p.DataToChannelFrames(ctx, *rule, orgID, channelID, body)
 	if err != nil {
 		return false, err
 	}
@@ -280,7 +279,7 @@ func (p *Pipeline) processInput(ctx context.Context, orgID int64, channelID stri
 	return true, nil
 }
 
-func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, error) {
+func (p *Pipeline) DataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, error) {
 	var span trace.Span
 	if p.tracer != nil {
 		ctx, span = p.tracer.Start(ctx, "live.pipeline.convert_"+rule.Converter.Type())
