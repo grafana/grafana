@@ -43,7 +43,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Include the unique ID in the configuration file:
 
-     ```json
+```json
      "appRoles": [
      		{
      			"allowedMemberTypes": [
@@ -82,7 +82,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
      			"value": "Editor"
      		}
      	],
-     ```
+```
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
