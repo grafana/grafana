@@ -24,6 +24,7 @@ load(
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
     'validate_scuemata_step',
+    'ensure_cuetsified_step',
     'test_a11y_frontend_step_pr',
 )
 

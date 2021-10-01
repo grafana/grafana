@@ -30,7 +30,8 @@ load(
     'upload_packages_step',
     'publish_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step'
+    'validate_scuemata_step',
+    'ensure_cuetsified_step'
 )
 
 load(

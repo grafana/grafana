@@ -32,6 +32,7 @@ load(
     'publish_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
+    'ensure_cuetsified_step',
     'test_a11y_frontend_step'
 )
 
