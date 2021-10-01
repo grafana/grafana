@@ -59,7 +59,7 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
-export interface PanelProps<T = any> {
+export interface PanelProps<T = any, S = any> {
   /** ID of the panel within the current dashboard */
   id: number;
 

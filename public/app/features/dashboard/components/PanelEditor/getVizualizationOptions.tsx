@@ -10,12 +10,12 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
 export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard } = props;
+  const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard, instanceState } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
 
-  const context: StandardEditorContext<any> = {
+  const context: StandardEditorContext<any, any> = {
     data: data?.series || [],
     replaceVariables: panel.replaceVariables,
     options: currentOptions,
@@ -23,6 +23,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     getSuggestions: (scope?: VariableSuggestionsScope) => {
       return data ? getDataLinksVariableSuggestions(data.series, scope) : [];
     },
+    instanceState,
   };
 
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
@@ -109,7 +110,7 @@ export function fillOptionsPaneItems(
   optionEditors: PanelOptionsEditorItem[],
   getOptionsPaneCategory: categoryGetter,
   onValueChanged: (path: string, value: any) => void,
-  context: StandardEditorContext<any>
+  context: StandardEditorContext<any, any>
 ) {
   for (const pluginOption of optionEditors) {
     if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
