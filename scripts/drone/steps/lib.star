@@ -1027,6 +1027,7 @@ def ensure_cuetsified_step():
         'commands': [
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
             'git diff --stat --exit-code',
+            'touch shouldfail',
             'u="$(git ls-files --others --exclude-standard)" && test -z "$u"',
         ],
     }
