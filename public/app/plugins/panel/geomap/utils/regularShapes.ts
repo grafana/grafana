@@ -1,5 +1,6 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
+import { ResourceDimensionConfig } from 'app/features/dimensions/types';
 
 interface MarkerMaker extends RegistryItem {
   make: (color: string, fillColor: string, radius: number) => Style;
@@ -108,3 +109,21 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
 ]);
+
+export enum SVGMarkerType {
+  circle = 'img/icons/geo/circle.svg',
+  square = 'img/icons/geo/square-shape.svg',
+  triangle = 'img/icons/geo/triangle.svg',
+  star = 'img/icons/geo/star.svg',
+  cross = 'img/icons/geo/plus.svg',
+  x = 'img/icons/geo/circle.svg',
+}
+
+export const svgMarkerMatch = (svgPath: ResourceDimensionConfig): string | undefined => {
+  for (const [key, val] of Object.entries(SVGMarkerType)) {
+    if (val === svgPath.fixed) {
+      return key;
+    }
+  }
+  return undefined;
+};

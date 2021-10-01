@@ -66,6 +66,7 @@ export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 /** Places that use the value */
 export interface ResourceDimensionOptions {
   resourceType: 'icon' | 'image';
+  folderIndex: number;
 }
 
 export enum ResourceDimensionMode {

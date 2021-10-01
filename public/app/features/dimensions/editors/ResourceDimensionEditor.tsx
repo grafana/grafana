@@ -59,12 +59,18 @@ export const ResourceDimensionEditor: FC<
 
   const mode = value?.mode ?? ResourceDimensionMode.Fixed;
   const mediaType = item.settings?.resourceType ?? 'icon';
+  const folderIndex = item.settings?.folderIndex ?? 0;
 
   return (
     <>
       {isOpen && (
         <Modal isOpen={isOpen} title={`Select ${mediaType}`} onDismiss={() => setOpen(false)} closeOnEscape>
-          <ResourcePicker onChange={onFixedChange} value={value?.fixed} mediaType={mediaType} />
+          <ResourcePicker
+            onChange={onFixedChange}
+            value={value?.fixed}
+            mediaType={mediaType}
+            folderIndex={folderIndex}
+          />
         </Modal>
       )}
 

@@ -21,7 +21,7 @@ import {
 import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { circleMarker, markerMakers } from '../../utils/regularShapes';
+import { circleMarker, markerMakers, svgMarkerMatch } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 import { MapLayerRegistryItem } from '../../types';
 
@@ -92,7 +92,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (config.showLegend) {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
-    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
+
+    let shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
 
     return {
       init: () => vectorLayer,
@@ -104,7 +105,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
         let iconPath: string | undefined = undefined;
         if (config.iconPath) {
-          iconPath = ctx.getResource(config.iconPath).value();
+          const svgMatches = svgMarkerMatch(config.iconPath);
+          if (svgMatches) {
+            shape = markerMakers.getIfExists(svgMatches) ?? circleMarker;
+          } else {
+            iconPath = ctx.getResource(config.iconPath).value();
+          }
         }
 
         const features: Feature<Point>[] = [];
@@ -223,6 +229,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         editor: ResourceDimensionEditor,
         settings: {
           resourceType: 'icon',
+          folderIndex: 2,
         },
       })
       .addBooleanSwitch({

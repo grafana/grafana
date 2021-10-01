@@ -23,6 +23,7 @@ interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
+  folderIndex: number;
 }
 
 interface ResourceItem {
@@ -33,12 +34,17 @@ interface ResourceItem {
 }
 
 export function ResourcePicker(props: Props) {
-  const { value, onChange, mediaType } = props;
-  const folders = (mediaType === 'icon' ? ['img/icons/unicons', 'img/icons/iot'] : ['img/bg']).map((v) => ({
-    label: v,
-    value: v,
-  }));
-  const folderOfCurrentValue = value ? folders.filter((folder) => value.indexOf(folder.value) > -1)[0] : folders[0];
+  const { value, onChange, mediaType, folderIndex } = props;
+  const folders = (mediaType === 'icon' ? ['img/icons/unicons', 'img/icons/iot', 'img/icons/geo'] : ['img/bg']).map(
+    (v) => ({
+      label: v,
+      value: v,
+    })
+  );
+
+  const folderOfCurrentValue = value
+    ? folders.filter((folder) => value.indexOf(folder.value) > -1)[0]
+    : folders[folderIndex];
   const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
   const [tabs, setTabs] = useState([
     { label: 'Select', active: true },

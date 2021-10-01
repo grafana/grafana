@@ -134,6 +134,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     return layersChanged;
   }
+
   /**
    * Called when PanelData changes (query results etc)
    */
