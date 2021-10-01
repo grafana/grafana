@@ -10,11 +10,13 @@ list = false
 
 # What’s new in Grafana v8.2
 
-> **Note:** This topic will be updated frequently between now and the final release. Additionally, not all features listed here may be present in all the beta releases.
+Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics *for everyone*. 
 
-Grafana 8.2 continues to build on the foundation laid out in Grafana 8.0 & 8.1. We’ve continued to extend the GeoMap panel and bring new features to the Time Series panel. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics _for everyone_.
+The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave, or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters to make it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles. 
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can checkout the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
+
+We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 # OSS
 
@@ -22,21 +24,24 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 We’ve taken our first, measured but important steps towards improving the accessibility of Grafana, with much needed tweaks to keyboard navigation, accessibility labeling for UI elements for Grafana viewers and an accessibility statement (link coming soon) for Grafana laying out what you can expect from a Grafana focused on making our project accessible to all.
 
+## Dashboards 
+
+The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time tange controls. quarters as time ranges, which can be helpful for business-focused and executive dashboards as well as (https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information, please see the [time range controls documentation].
+
+{{< figure src="/static/img/docs/time-range-controls/fiscal_year-8-2.png" max-width="1200px" caption="Fiscal Year Time Range Settings" >}}
+
+## Plugins management
+
+The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. The new plugin catalog experience is now at feature parity with the default plugin experience. 
+
+A significant benefit of using the plugins catalog is managing (install/uninstall/update) your plugins directly from the UI without needing the Grafana CLI.
+
+
 ## Grafana 8 Alerting
 
 We’ve continued to bolster the new, unified alerting system which we launched in Grafana 8. This release includes significant improvements including an AlertManager notification panel allowing users to explore alerts via a dashboard panel. We’ve also added custom grouping for alert manager notifications and a number of small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on enabling the unified alerting in your instance of Grafana.
 
 {{< figure src="/static/img/docs/alerting/unified/alert-manager-panel-alpha.png" max-width="1200px" caption="Alert manager panel" >}}
-
-## Panels
-
-A number of new visualizations and features are included in Grafana 8.2 including the XY Chart, commonly called a Scatter plot.
-
-### XY Chart [beta]
-
-The XY Chart panel, aka. scatter panel, is available in beta form. This chart is all about first-class support for data where x does not equate to time.
-
-{{< figure src="/static/img/docs/scatter-panel/scatter-placeholder.png" max-width="1200px" caption="Scatter Panel" >}}
 
 # Grafana Enterprise
 
