@@ -10,7 +10,7 @@ weight = 300
 
 Prometheus is an open source systems monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
 
-> **Note:**  You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs)  to help you get started.
+> **Note:**  You can configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. A [free forever plan](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) provides 10,000 active series for metrics.
 
 {{< docs/shared "getting-started/first-step.md" >}}
 
@@ -63,7 +63,7 @@ The following image shows a dashboard with three panels showing some system metr
 
 <img width="850px" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
 
-Here are some resources to learn more:
+To learn more:
 
 - Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus.md" >}})
 - Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
