@@ -3,27 +3,32 @@ import { IconButton, InlineLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { PrometheusDatasource } from '../datasource';
-import { filter } from 'rxjs/operators';
+import { PromQuery } from '../types';
 
 interface Props {
   isEnabled: boolean;
   onChange: (isEnabled: boolean) => void;
   datasource: PrometheusDatasource;
   refId: string;
+  query: PromQuery;
 }
 
-export function PromExemplarField({ datasource, onChange, isEnabled, refId }: Props) {
+export function PromExemplarField({ datasource, onChange, isEnabled, refId, query }: Props) {
   const [error, setError] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const subscription = datasource.exemplarErrors.pipe(filter((value) => refId === value.refId)).subscribe((err) => {
-      setError(err.error);
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [datasource, refId]);
+    if (!datasource.exemplarsAvailable) {
+      setError('Exemplars for this query are not available');
+      onChange(false);
+    } else if (query.instant && query.exemplar && !query.range) {
+      setError('Exemplars are not available for instant queries');
+      onChange(false);
+    } else {
+      setError(null);
+      onChange(true);
+    }
+  }, [datasource.exemplarsAvailable, query.exemplar, query.instant, query.range, onChange]);
 
   const iconButtonStyles = cx(
     {

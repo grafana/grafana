@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, Subject, throwError } from 'rxjs';
+import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import LRU from 'lru-cache';
 import {
@@ -43,7 +43,6 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this query are not available.';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
@@ -63,7 +62,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  exemplarErrors: Subject<{ refId: string; error: string | null }> = new Subject();
+  exemplarsAvailable: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -88,10 +87,12 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
+    this.exemplarsAvailable = true;
   }
 
-  init = () => {
+  init = async () => {
     this.loadRules();
+    this.exemplarsAvailable = await this.areExemplarsAvailable();
   };
 
   getQueryDisplayText(query: PromQuery) {
@@ -271,12 +272,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
             exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
-            this.exemplarErrors.next({ refId: exemplarTarget.refId, error: null });
           }
           target.exemplar = false;
-        }
-        if (target.exemplar && target.instant) {
-          this.exemplarErrors.next({ refId: target.refId, error: 'Exemplars are not available for instant queries.' });
         }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
@@ -292,6 +289,10 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   shouldRunExemplarQuery(target: PromQuery): boolean {
     // If exemplar or range param is false, return false. For Grafana UI, it makes sense to run exemplar query only when we also run range query.
     if (!target.exemplar || !target.range) {
+      return false;
+    }
+
+    if (!this.exemplarsAvailable) {
       return false;
     }
     // If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
@@ -434,7 +435,6 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     if (query.exemplar) {
       return this.getExemplars(query).pipe(
         catchError(() => {
-          this.exemplarErrors.next({ refId: query.refId, error: EXEMPLARS_NOT_AVAILABLE });
           return of({
             data: [],
             state: LoadingState.Done,
@@ -812,6 +812,18 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     } catch (e) {
       console.log('Rules API is experimental. Ignore next error.');
       console.error(e);
+    }
+  }
+
+  async areExemplarsAvailable() {
+    try {
+      const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
+      if (res.statusText === 'OK') {
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
     }
   }
 

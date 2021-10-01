@@ -202,6 +202,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               isEnabled={exemplar}
               onChange={this.onExemplarChange}
               datasource={datasource}
+              query={query}
             />
           </div>
         }
