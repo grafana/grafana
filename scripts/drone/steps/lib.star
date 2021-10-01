@@ -117,12 +117,11 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     steps = [
         identify_runner_step,
-        restore_cache_step(),
         {
             'name': 'initialize',
             'image': build_image,
             'depends_on': [
-                   'restore-cache'
+                   'clone'
                 ],
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
@@ -340,7 +339,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
             'YARN_CACHE_FOLDER': '/cache/yarn',
         },
         'depends_on': [
-            'initialize',
+            'test-frontend',
         ],
         'commands': cmds,
     }
@@ -406,6 +405,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
+            'restore-cache',
             'initialize'
         ],
         'environment': {
@@ -416,6 +416,7 @@ def test_frontend_step():
             'yarn run ci:test-frontend',
         ],
     }
+
 
 def restore_cache_step():
     return {
@@ -428,7 +429,7 @@ def restore_cache_step():
             'bucket': 'test-julien',
             'restore': 'true',
             'cache_key': "test123",
-            'local_root': '/cache/yarn',
+            'local_root': '/cache',
             'mount': [
                 'yarn'
             ],
@@ -455,7 +456,7 @@ def rebuild_cache_step():
             'bucket': 'test-julien',
             'cache_key': "test123",
             'rebuild': 'true',
-            'local_root': '/cache/yarn',
+            'local_root': '/cache',
             'mount': [
                 'yarn'
             ],

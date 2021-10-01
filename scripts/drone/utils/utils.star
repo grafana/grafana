@@ -1,6 +1,5 @@
 load(
     'scripts/drone/steps/lib.star',
-    'restore_cache_step',
     'initialize_step',
     'slack_step',
 )

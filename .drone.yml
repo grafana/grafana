@@ -13,25 +13,6 @@ steps:
   commands:
   - echo $DRONE_RUNNER_NAME
 
-- name: restore-cache
-  pull: always
-  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
-  settings:
-    backend: gcs
-    bucket: test-julien
-    cache_key: test123
-    json_key:
-      from_secret: tf_google_credentials
-    local_root: /cache/yarn
-    mount:
-    - yarn
-    restore: true
-  volumes:
-  - name: cache
-    path: /cache
-  depends_on:
-  - clone
-
 - name: initialize
   image: grafana/build-container:1.4.2
   commands:
@@ -51,7 +32,49 @@ steps:
   - name: cache
     path: /cache
   depends_on:
-  - restore-cache
+  - clone
+
+- name: codespell
+  image: grafana/build-container:1.4.2
+  commands:
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
+  - codespell -I words_to_ignore.txt docs/
+  depends_on:
+  - initialize
+
+- name: shellcheck
+  image: grafana/build-container:1.4.2
+  commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+
+- name: restore-cache
+  pull: always
+  image: jduchesnegrafana/drone-cache:v1.2.0-rc0-dirtytest
+  settings:
+    backend: gcs
+    bucket: test-julien
+    cache_key: test123
+    json_key:
+      from_secret: tf_google_credentials
+    local_root: /cache
+    mount:
+    - yarn
+    restore: true
+  volumes:
+  - name: cache
+    path: /cache
+  depends_on:
+  - clone
+
+- name: lint-backend
+  image: grafana/build-container:1.4.2
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
 
 - name: test-frontend
   image: grafana/build-container:1.4.2
@@ -61,6 +84,7 @@ steps:
     TEST_MAX_WORKERS: 50%
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
+  - restore-cache
   - initialize
 
 - name: build-frontend
@@ -70,7 +94,7 @@ steps:
   environment:
     YARN_CACHE_FOLDER: /cache/yarn
   depends_on:
-  - initialize
+  - test-frontend
 
 - name: rebuild-cache
   pull: always
@@ -81,7 +105,7 @@ steps:
     cache_key: test123
     json_key:
       from_secret: tf_google_credentials
-    local_root: /cache/yarn
+    local_root: /cache
     mount:
     - yarn
     rebuild: true
@@ -152,6 +176,6 @@ get:
 
 ---
 kind: signature
-hmac: 24ab6d9c5ce9d4e01abce81bc80e26df3f4721239032d9573332a5fae4c952ae
+hmac: 0f75ff7999f74b8ee0717fad8faad40304444b505b2558f83f5c7e3219c3babe
 
 ...
