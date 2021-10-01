@@ -31,7 +31,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
 
-- CloudWatch
+- CloudWatch Metrics
 - Google Cloud Monitoring
 - InfluxDB
 - Microsoft SQL Server

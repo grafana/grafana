@@ -1,4 +1,4 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -12,6 +12,7 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
+  DataQueryResponse,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -44,6 +45,11 @@ export interface ExploreState {
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
+
+  /**
+   * Auto-loading logs volume after running the query
+   */
+  autoLoadLogsVolume: boolean;
 }
 
 export interface ExploreItemState {
@@ -149,6 +155,12 @@ export interface ExploreItemState {
    * We are currently caching last 5 query responses.
    */
   cache: Array<{ key: string; value: PanelData }>;
+
+  // properties below should be more generic if we add more providers
+  // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+  logsVolumeDataSubscription?: SubscriptionLike;
+  logsVolumeData?: DataQueryResponse;
 }
 
 export interface ExploreUpdateState {

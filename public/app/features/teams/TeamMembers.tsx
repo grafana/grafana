@@ -12,7 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { Button, FilterInput } from '@grafana/ui';
+import { Button, FilterInput, Label } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 function mapStateToProps(state: any) {
@@ -97,10 +97,10 @@ export class TeamMembers extends PureComponent<Props, State> {
 
         <SlideDown in={isAdding}>
           <div className="cta-form">
-            <CloseButton onClick={this.onToggleAdding} />
-            <h5>Add team member</h5>
+            <CloseButton aria-label="Close 'Add team member' dialogue" onClick={this.onToggleAdding} />
+            <Label htmlFor="user-picker">Add team member</Label>
             <div className="gf-form-inline">
-              <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
+              <UserPicker inputId="user-picker" onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
                 <Button type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
