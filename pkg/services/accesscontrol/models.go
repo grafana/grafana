@@ -64,27 +64,26 @@ func (r Role) Global() bool {
 }
 
 func (r RoleDTO) IsFixed() bool {
-	// TODO: eleijonmarck
-	// Do not like the "fixed" being used at times
-	// would be great to have a variable definiting this string, maybe there is one
-	return strings.HasPrefix(r.Name, "fixed")
+	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
 func (r Role) IsFixed() bool {
-	// TODO: eleijonmarck
-	// Do not like the "fixed" being used at times
-	// would be great to have a variable definiting this string, maybe there is one
-	return strings.HasPrefix(r.Name, "fixed")
+	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
 func (r RoleDTO) GetFallbackDisplayName() string {
-	// TODO: eleijonmarck remove the fixed prefix
-	return strings.Replace(r.Name, ":", " ", -1)
+	return fallbackDisplayNameHeuristic(r.Name)
 }
 
 func (r Role) GetFallbackDisplayName() string {
-	// TODO: eleijonmarck remove the fixed prefix
-	return strings.Replace(r.Name, ":", " ", -1)
+	return fallbackDisplayNameHeuristic(r.Name)
+}
+
+// heuristic for fallback display name
+func fallbackDisplayNameHeuristic(rName string) string {
+	displayName := strings.Replace(rName, ":", " ", -1)
+	// removing prefix for fixed roles
+	return strings.Replace(displayName, FixedRolePrefix, "", 1)
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
