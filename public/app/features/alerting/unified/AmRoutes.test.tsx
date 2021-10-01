@@ -27,8 +27,9 @@ const mocks = {
   },
 };
 
-const renderAmRoutes = () => {
+const renderAmRoutes = (location = '') => {
   const store = configureStore();
+  locationService.push(location);
 
   return render(
     <Provider store={store}>
@@ -121,6 +122,11 @@ describe('AmRoutes', () => {
       receiver: 'another-receiver',
     },
   ];
+
+  const simpleRoute: Route = {
+    receiver: 'simple-receiver',
+    matchers: ['hello=world', 'foo!=bar'],
+  };
 
   const rootRoute: Route = {
     receiver: 'default-receiver',
@@ -325,6 +331,142 @@ describe('AmRoutes', () => {
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
     expect(ui.rootReceiver.query()).not.toBeInTheDocument();
     expect(ui.editButton.query()).not.toBeInTheDocument();
+  });
+
+  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [simpleRoute],
+          group_interval: '4m',
+          group_wait: '1m',
+          repeat_interval: '5h',
+        },
+        templates: [],
+      },
+      template_files: {},
+    };
+
+    const currentConfig = { current: defaultConfig };
+    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
+      currentConfig.current = newConfig;
+      return Promise.resolve();
+    });
+
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve(currentConfig.current);
+    });
+
+    await renderAmRoutes();
+    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
+    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+
+    // Toggle a save to test new object_matchers
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    userEvent.click(ui.editButton.get(rootRouteContainer));
+    userEvent.click(ui.saveButton.get(rootRouteContainer));
+
+    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          group_by: ['alertname'],
+          group_interval: '4m',
+          group_wait: '1m',
+          receiver: 'default',
+          repeat_interval: '5h',
+          routes: [
+            {
+              continue: false,
+              group_by: [],
+              object_matchers: [
+                ['hello', '=', 'world'],
+                ['foo', '!=', 'bar'],
+              ],
+              receiver: 'simple-receiver',
+              routes: [],
+            },
+          ],
+        },
+        templates: [],
+      },
+      template_files: {},
+    });
+  });
+
+  it('Keeps matchers for non-grafana alertmanager sources', async () => {
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [simpleRoute],
+          group_interval: '4m',
+          group_wait: '1m',
+          repeat_interval: '5h',
+        },
+        templates: [],
+      },
+      template_files: {},
+    };
+
+    const currentConfig = { current: defaultConfig };
+    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
+      currentConfig.current = newConfig;
+      return Promise.resolve();
+    });
+
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve(currentConfig.current);
+    });
+
+    await renderAmRoutes(`?alertmanager=${dataSources.am.name}`);
+    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
+    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+
+    // Toggle a save to test new object_matchers
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    userEvent.click(ui.editButton.get(rootRouteContainer));
+    userEvent.click(ui.saveButton.get(rootRouteContainer));
+
+    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(dataSources.am.name, {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          group_by: ['alertname'],
+          group_interval: '4m',
+          group_wait: '1m',
+          matchers: [],
+          receiver: 'default',
+          repeat_interval: '5h',
+          routes: [
+            {
+              continue: false,
+              group_by: [],
+              matchers: ['hello=world', 'foo!=bar'],
+              receiver: 'simple-receiver',
+              routes: [],
+            },
+          ],
+        },
+        templates: [],
+      },
+      template_files: {},
+    });
   });
 });
 
