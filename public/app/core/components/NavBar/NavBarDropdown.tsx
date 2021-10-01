@@ -71,14 +71,14 @@ const getStyles = (
   reverseDirection: Props['reverseDirection'],
   filteredItems: Props['items']
 ) => {
-  const hasNoChildren = filteredItems!.length === 0;
+  const adjustHeightForBorder = filteredItems!.length === 0;
 
   return {
     header: css`
       background-color: ${theme.colors.background.secondary};
       border: none;
       color: ${theme.colors.text.primary};
-      height: ${theme.components.sidemenu.width - (hasNoChildren ? 2 : 1)}px;
+      height: ${theme.components.sidemenu.width - (adjustHeightForBorder ? 2 : 1)}px;
       font-size: ${theme.typography.h4.fontSize};
       font-weight: ${theme.typography.h4.fontWeight};
       padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)} !important;
