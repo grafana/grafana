@@ -75,6 +75,7 @@ export function setOptionImmutably<T extends object>(options: T, path: string | 
     let current = (options as Record<string, any>)[propKey];
     const arr = Array.isArray(current) ? [...current] : [];
     if (splat.length) {
+      current = arr[index];
       if (current == null || typeof current !== 'object') {
         current = {};
       }

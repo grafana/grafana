@@ -120,7 +120,7 @@ func TestAddConfigData(t *testing.T) {
 	frame := data.Frame{
 		Fields: []*data.Field{&field},
 	}
-	frameWithLink := addConfigData(frame, "http://ds")
+	frameWithLink := addConfigLinks(frame, "http://ds")
 	expectedFrameWithLink := data.Frame{
 		Fields: []*data.Field{
 			{

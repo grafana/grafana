@@ -49,16 +49,16 @@ NavBar.displayName = 'NavBar';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sidemenu: css`
-    border-right: 1px solid ${theme.components.panel.borderColor};
     display: flex;
     flex-direction: column;
     position: fixed;
-    width: ${theme.components.sidemenu.width}px;
     z-index: ${theme.zIndex.sidemenu};
 
     ${theme.breakpoints.up('md')} {
       background-color: ${theme.colors.background.primary};
+      border-right: 1px solid ${theme.components.panel.borderColor};
       position: relative;
+      width: ${theme.components.sidemenu.width}px;
     }
 
     .sidemenu-hidden & {

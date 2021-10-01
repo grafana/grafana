@@ -85,7 +85,7 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').type('gdev-testdata').type('{enter}');
+        e2e.components.DataSourcePicker.input().should('be.visible').type('gdev-testdata').type('{enter}');
       });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
@@ -139,7 +139,7 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').type('gdev-testdata').type('{enter}');
+        e2e.components.DataSourcePicker.input().should('be.visible').type('gdev-testdata').type('{enter}');
       });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()

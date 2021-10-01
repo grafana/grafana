@@ -377,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications',
-      roles: config.featureToggles.ngalert ? () => ['Editor', 'Admin'] : undefined,
+      roles: config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),

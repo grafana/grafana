@@ -200,8 +200,12 @@ export const Components = {
   FolderPicker: {
     container: 'Folder picker select container',
   },
+  ReadonlyFolderPicker: {
+    container: 'data-testid Readonly folder picker select container',
+  },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    input: () => 'input[id="data-source-picker"]',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
@@ -242,5 +246,8 @@ export const Components = {
   ImportDashboardForm: {
     name: 'data-testid-import-dashboard-title',
     submit: 'data-testid-import-dashboard-submit',
+  },
+  PanelAlertTabContent: {
+    content: 'Unified alert editor tab content',
   },
 };

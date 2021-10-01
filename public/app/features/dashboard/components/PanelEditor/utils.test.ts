@@ -98,6 +98,7 @@ describe('setOptionImmutably', () => {
     ${{}}                     | ${'a.b[2]'}   | ${'x'}    | ${{ a: { b: [undefined, undefined, 'x'] } }}
     ${{}}                     | ${'a[0]'}     | ${1}      | ${{ a: [1] }}
     ${{}}                     | ${'a[0].b.c'} | ${1}      | ${{ a: [{ b: { c: 1 } }] }}
+    ${{ a: [{ b: 1 }] }}      | ${'a[0].c'}   | ${2}      | ${{ a: [{ b: 1, c: 2 }] }}
   `('property value:${value', ({ source, path, value, expected }) => {
     expect(setOptionImmutably(source, path, value)).toEqual(expected);
   });

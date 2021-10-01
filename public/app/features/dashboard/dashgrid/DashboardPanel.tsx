@@ -36,10 +36,13 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 
   return {
     plugin: panelState.plugin,
+    instanceState: panelState.instanceState,
   };
 };
 
-const mapDispatchToProps = { initDashboardPanel };
+const mapDispatchToProps = {
+  initDashboardPanel,
+};
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
