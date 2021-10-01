@@ -57,7 +57,11 @@ export const ResourceDimensionEditor: FC<
     setOpen(true);
   }, []);
 
+  console.log('source', value?.showSourceRadio);
+  console.log('mode', value?.mode);
+
   const mode = value?.mode ?? ResourceDimensionMode.Fixed;
+  const showSourceRadio = value?.showSourceRadio ?? true;
   const mediaType = item.settings?.resourceType ?? 'icon';
   const folderIndex = item.settings?.folderIndex ?? 0;
 
@@ -73,12 +77,13 @@ export const ResourceDimensionEditor: FC<
           />
         </Modal>
       )}
-
-      <InlineFieldRow>
-        <InlineField label="Source" labelWidth={labelWidth} grow={true}>
-          <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
-        </InlineField>
-      </InlineFieldRow>
+      {showSourceRadio && (
+        <InlineFieldRow>
+          <InlineField label="Source" labelWidth={labelWidth} grow={true}>
+            <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {mode !== ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
           <InlineField label="Field" labelWidth={labelWidth} grow={true}>

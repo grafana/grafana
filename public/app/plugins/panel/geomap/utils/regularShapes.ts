@@ -112,11 +112,11 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
 
 export enum SVGMarkerType {
   circle = 'img/icons/geo/circle.svg',
-  square = 'img/icons/geo/square-shape.svg',
+  square = 'img/icons/geo/square.svg',
   triangle = 'img/icons/geo/triangle.svg',
   star = 'img/icons/geo/star.svg',
-  cross = 'img/icons/geo/plus.svg',
-  x = 'img/icons/geo/circle.svg',
+  cross = 'img/icons/geo/cross.svg',
+  x = 'img/icons/geo/x-mark.svg',
 }
 
 export const svgMarkerMatch = (svgPath: ResourceDimensionConfig): string | undefined => {

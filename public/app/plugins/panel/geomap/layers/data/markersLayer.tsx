@@ -49,6 +49,7 @@ const defaultOptions: MarkersConfig = {
   showLegend: true,
   iconPath: {
     mode: ResourceDimensionMode.Fixed,
+    showSourceRadio: false,
     fixed: '',
   },
 };
@@ -150,6 +151,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
                     src: iconPath,
                     color,
                     opacity,
+                    scale: (10 + radius - 5) / 100,
                   }),
                 })
               );
@@ -192,14 +194,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 20,
         },
       })
-      .addSelect({
-        path: 'config.shape',
-        name: 'Marker Shape',
-        settings: {
-          options: markerMakers.selectOptions().options,
-        },
-        defaultValue: 'circle',
-      })
       .addCustomEditor({
         id: 'config.color',
         path: 'config.color',
@@ -227,6 +221,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         path: 'config.iconPath',
         name: 'Icon Path',
         editor: ResourceDimensionEditor,
+        default: defaultOptions.iconPath,
         settings: {
           resourceType: 'icon',
           folderIndex: 2,

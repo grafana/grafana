@@ -79,4 +79,5 @@ export enum ResourceDimensionMode {
 /** Get the path to a resource (URL) */
 export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
   mode: ResourceDimensionMode;
+  showSourceRadio?: boolean;
 }
