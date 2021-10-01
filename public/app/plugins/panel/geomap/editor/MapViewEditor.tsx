@@ -39,10 +39,8 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
           zoom: +view.getZoom()!.toFixed(2),
         });
       }
-    } else {
-      console.log('onSetCurrentView', context);
     }
-  }, [value, onChange, context]);
+  }, [value, onChange, context.instanceState]);
 
   const onSelectView = useCallback(
     (selection: SelectableValue<string>) => {
