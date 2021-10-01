@@ -93,24 +93,24 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 1. Add the following to the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}):
 
 ```
-	[auth.azuread]
-	name = Azure AD
-	enabled = true
-	allow_sign_up = true
-	client_id = APPLICATION_ID
-	client_secret = CLIENT_SECRET
-	scopes = openid email profile
-	auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
-	token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
-	allowed_domains =
-	allowed_groups =
+[auth.azuread]
+name = Azure AD
+enabled = true
+allow_sign_up = true
+client_id = APPLICATION_ID
+client_secret = CLIENT_SECRET
+scopes = openid email profile
+auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
+token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
+allowed_domains =
+allowed_groups =
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
 
 ```
-	GF_AUTH_AZUREAD_CLIENT_ID
-	GF_AUTH_AZUREAD_CLIENT_SECRET
+GF_AUTH_AZUREAD_CLIENT_ID
+GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
 **Note:** Verify that the Grafana [root_url]({{< relref "../administration/configuration/#root-url" >}}) is set in your Azure Application Redirect URLs.
