@@ -577,7 +577,8 @@ type Config struct {
 	Templates    []string              `yaml:"templates" json:"templates"`
 }
 
-// A Route is a node that contains definitions of how to handle alerts.
+// A Route is a node that contains definitions of how to handle alerts. This is modified
+// from the upstream alertmanager in that it adds the ObjectMatchers property.
 type Route struct {
 	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
 
@@ -643,8 +644,8 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// Return an alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
 func (r *Route) AsAMRoute() *config.Route {
-	//TODO: Am I going to duplicate entries with this?
 	amRoute := &config.Route{
 		Receiver:          r.Receiver,
 		GroupByStr:        r.GroupByStr,
@@ -669,6 +670,7 @@ func (r *Route) AsAMRoute() *config.Route {
 	return amRoute
 }
 
+// Return a Grafana route from an alertmanager route. The Matchers are converted to ObjectMatchers.
 func AsGrafanaRoute(r *config.Route) *Route {
 	gRoute := &Route{
 		Receiver:          r.Receiver,
