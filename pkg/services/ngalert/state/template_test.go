@@ -331,10 +331,6 @@ func TestExpandTemplate(t *testing.T) {
 		text:     `{{ match "a+" "aa" }} {{ match "a+" "b" }}`,
 		expected: "true false",
 	}, {
-		name:     "match",
-		text:     `{{ match "a+" "aa" }} {{ match "a+" "b" }}`,
-		expected: "true false",
-	}, {
 		name:     "regex replacement",
 		text:     "{{ reReplaceAll \"(a)b\" \"x$1\" \"ab\" }}",
 		expected: "xa",
