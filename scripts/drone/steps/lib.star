@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.4.6'
-build_image = 'grafana/build-container:1.4.2'
+build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -63,8 +63,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30',
-            'mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list',
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition in ('enterprise', 'enterprise2'):
@@ -698,8 +696,6 @@ def postgres_integration_tests_step():
             'POSTGRES_HOST': 'postgres',
         },
         'commands': [
-            'mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30',
-            'mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list',
             'apt-get install -yq postgresql-client',
             './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
@@ -723,8 +719,6 @@ def mysql_integration_tests_step():
             'MYSQL_HOST': 'mysql',
         },
         'commands': [
-            'mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30',
-            'mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list',
             'apt-get install -yq default-mysql-client',
             './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
