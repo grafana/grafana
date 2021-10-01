@@ -84,7 +84,7 @@
     "optimize-css-assets-webpack-plugin": "^5.0.3",
     "ora": "^4.0.3",
     "pixelmatch": "^5.1.0",
-    "pngjs": "^3.4.0",
+    "pngjs": "^6.0.0",
     "postcss-flexbugs-fixes": "4.2.0",
     "postcss-loader": "3.0.0",
     "postcss-preset-env": "6.7.0",

@@ -52,7 +52,7 @@ steps:
   commands:
   - echo test
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - yarn config set cache-folder /cache/yarn
   - yarn cache dir
