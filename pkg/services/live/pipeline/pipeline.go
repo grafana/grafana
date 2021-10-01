@@ -61,7 +61,7 @@ type ChannelData struct {
 
 // ChannelFrame is a wrapper over data.Frame with additional channel information.
 // Channel is used for rule routing, if the channel is empty then frame processing
-// will try to take current rule Processor and Outputter. If channel is not empty
+// will try to take current rule FrameProcessor and FrameOutputter. If channel is not empty
 // then frame processing will be redirected to a corresponding channel rule.
 type ChannelFrame struct {
 	Channel string      `json:"channel"`
@@ -91,17 +91,17 @@ type Converter interface {
 	Convert(ctx context.Context, vars Vars, body []byte) ([]*ChannelFrame, error)
 }
 
-// Processor can modify data.Frame in a custom way before it will be outputted.
-type Processor interface {
+// FrameProcessor can modify data.Frame in a custom way before it will be outputted.
+type FrameProcessor interface {
 	Type() string
-	Process(ctx context.Context, vars Vars, frame *data.Frame) (*data.Frame, error)
+	ProcessFrame(ctx context.Context, vars Vars, frame *data.Frame) (*data.Frame, error)
 }
 
-// Outputter outputs data.Frame to a custom destination. Or simply
+// FrameOutputter outputs data.Frame to a custom destination. Or simply
 // do nothing if some conditions not met.
-type Outputter interface {
+type FrameOutputter interface {
 	Type() string
-	Output(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error)
+	OutputFrame(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error)
 }
 
 // Subscriber can handle channel subscribe events.
@@ -120,18 +120,18 @@ type SubscribeAuthChecker interface {
 	CanSubscribe(ctx context.Context, u *models.SignedInUser) (bool, error)
 }
 
-// LiveChannelRule is an in-memory representation of each specific rule, with Converter, Processor
-// and Outputter to be executed by Pipeline.
+// LiveChannelRule is an in-memory representation of each specific rule, with Converter, FrameProcessor
+// and FrameOutputter to be executed by Pipeline.
 type LiveChannelRule struct {
-	OrgId          int64
-	Pattern        string
-	PublishAuth    PublishAuthChecker
-	SubscribeAuth  SubscribeAuthChecker
-	DataOutputters []DataOutputter
-	Converter      Converter
-	Processors     []Processor
-	Outputters     []Outputter
-	Subscribers    []Subscriber
+	OrgId           int64
+	Pattern         string
+	PublishAuth     PublishAuthChecker
+	SubscribeAuth   SubscribeAuthChecker
+	Subscribers     []Subscriber
+	DataOutputters  []DataOutputter
+	Converter       Converter
+	FrameProcessors []FrameProcessor
+	FrameOutputters []FrameOutputter
 }
 
 // Label ...
@@ -384,8 +384,8 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 		Path:      ch.Path,
 	}
 
-	if len(rule.Processors) > 0 {
-		for _, proc := range rule.Processors {
+	if len(rule.FrameProcessors) > 0 {
+		for _, proc := range rule.FrameProcessors {
 			frame, err = p.execProcessor(ctx, proc, vars, frame)
 			if err != nil {
 				logger.Error("Error processing frame", "error", err)
@@ -397,9 +397,9 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 		}
 	}
 
-	if len(rule.Outputters) > 0 {
+	if len(rule.FrameOutputters) > 0 {
 		var resultingFrames []*ChannelFrame
-		for _, out := range rule.Outputters {
+		for _, out := range rule.FrameOutputters {
 			frames, err := p.processFrameOutput(ctx, out, vars, frame)
 			if err != nil {
 				logger.Error("Error outputting frame", "error", err)
@@ -413,7 +413,7 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 	return nil, nil
 }
 
-func (p *Pipeline) execProcessor(ctx context.Context, proc Processor, vars Vars, frame *data.Frame) (*data.Frame, error) {
+func (p *Pipeline) execProcessor(ctx context.Context, proc FrameProcessor, vars Vars, frame *data.Frame) (*data.Frame, error) {
 	var span trace.Span
 	if p.tracer != nil {
 		ctx, span = p.tracer.Start(ctx, "live.pipeline.apply_processor_"+proc.Type())
@@ -430,10 +430,10 @@ func (p *Pipeline) execProcessor(ctx context.Context, proc Processor, vars Vars,
 		// Note: we can also visualize resulting frame here.
 		defer span.End()
 	}
-	return proc.Process(ctx, vars, frame)
+	return proc.ProcessFrame(ctx, vars, frame)
 }
 
-func (p *Pipeline) processFrameOutput(ctx context.Context, out Outputter, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (p *Pipeline) processFrameOutput(ctx context.Context, out FrameOutputter, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	var span trace.Span
 	if p.tracer != nil {
 		ctx, span = p.tracer.Start(ctx, "live.pipeline.frame_output_"+out.Type())
@@ -449,7 +449,7 @@ func (p *Pipeline) processFrameOutput(ctx context.Context, out Outputter, vars V
 		)
 		defer span.End()
 	}
-	return out.Output(ctx, vars, frame)
+	return out.OutputFrame(ctx, vars, frame)
 }
 
 func (p *Pipeline) processData(ctx context.Context, orgID int64, channelID string, data []byte) ([]*ChannelData, error) {

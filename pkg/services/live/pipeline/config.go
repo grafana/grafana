@@ -22,33 +22,33 @@ type ConverterConfig struct {
 	JsonFrameConverterConfig  *JsonFrameConverterConfig  `json:"jsonFrame,omitempty"`
 }
 
-type ProcessorConfig struct {
-	Type                      string                     `json:"type"`
-	DropFieldsProcessorConfig *DropFieldsProcessorConfig `json:"dropFields,omitempty"`
-	KeepFieldsProcessorConfig *KeepFieldsProcessorConfig `json:"keepFields,omitempty"`
-	MultipleProcessorConfig   *MultipleProcessorConfig   `json:"multiple,omitempty"`
+type FrameProcessorConfig struct {
+	Type                      string                          `json:"type"`
+	DropFieldsProcessorConfig *DropFieldsFrameProcessorConfig `json:"dropFields,omitempty"`
+	KeepFieldsProcessorConfig *KeepFieldsFrameProcessorConfig `json:"keepFields,omitempty"`
+	MultipleProcessorConfig   *MultipleFrameProcessorConfig   `json:"multiple,omitempty"`
 }
 
-type MultipleProcessorConfig struct {
-	Processors []ProcessorConfig `json:"processors"`
+type MultipleFrameProcessorConfig struct {
+	Processors []FrameProcessorConfig `json:"processors"`
 }
 
 type MultipleOutputterConfig struct {
-	Outputters []OutputterConfig `json:"outputs"`
+	Outputters []FrameOutputterConfig `json:"outputs"`
 }
 
 type ManagedStreamOutputConfig struct{}
 
 type ConditionalOutputConfig struct {
-	Condition *ConditionCheckerConfig `json:"condition"`
-	Outputter *OutputterConfig        `json:"output"`
+	Condition *FrameConditionCheckerConfig `json:"condition"`
+	Outputter *FrameOutputterConfig        `json:"output"`
 }
 
 type RemoteWriteOutputConfig struct {
 	UID string `json:"uid"`
 }
 
-type OutputterConfig struct {
+type FrameOutputterConfig struct {
 	Type                    string                     `json:"type"`
 	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
 	MultipleOutputterConfig *MultipleOutputterConfig   `json:"multiple,omitempty"`
@@ -87,12 +87,12 @@ type ChannelAuthConfig struct {
 }
 
 type ChannelRuleSettings struct {
-	Auth           *ChannelAuthConfig     `json:"auth,omitempty"`
-	DataOutputters []*DataOutputterConfig `json:"dataOutputs,omitempty"`
-	Converter      *ConverterConfig       `json:"converter,omitempty"`
-	Processors     []*ProcessorConfig     `json:"processors,omitempty"`
-	Outputters     []*OutputterConfig     `json:"outputs,omitempty"`
-	Subscribers    []*SubscriberConfig    `json:"subscribers,omitempty"`
+	Auth            *ChannelAuthConfig      `json:"auth,omitempty"`
+	Subscribers     []*SubscriberConfig     `json:"subscribers,omitempty"`
+	DataOutputters  []*DataOutputterConfig  `json:"dataOutputs,omitempty"`
+	Converter       *ConverterConfig        `json:"converter,omitempty"`
+	FrameProcessors []*FrameProcessorConfig `json:"frameProcessors,omitempty"`
+	FrameOutputters []*FrameOutputterConfig `json:"frameOutputs,omitempty"`
 }
 
 type ChannelRule struct {
@@ -118,16 +118,16 @@ func (r ChannelRule) Valid() (bool, string) {
 			}
 		}
 	}
-	if len(r.Settings.Processors) > 0 {
-		for _, proc := range r.Settings.Processors {
-			if !typeRegistered(proc.Type, ProcessorsRegistry) {
+	if len(r.Settings.FrameProcessors) > 0 {
+		for _, proc := range r.Settings.FrameProcessors {
+			if !typeRegistered(proc.Type, FrameProcessorsRegistry) {
 				return false, fmt.Sprintf("unknown processor type: %s", proc.Type)
 			}
 		}
 	}
-	if len(r.Settings.Outputters) > 0 {
-		for _, out := range r.Settings.Outputters {
-			if !typeRegistered(out.Type, OutputsRegistry) {
+	if len(r.Settings.FrameOutputters) > 0 {
+		for _, out := range r.Settings.FrameOutputters {
+			if !typeRegistered(out.Type, FrameOutputsRegistry) {
 				return false, fmt.Sprintf("unknown output type: %s", out.Type)
 			}
 		}
@@ -175,21 +175,21 @@ func checkRulesValid(orgID int64, rules []ChannelRule) (ok bool, reason string) 
 	return ok, reason
 }
 
-type MultipleConditionCheckerConfig struct {
-	Type       ConditionType            `json:"type"`
-	Conditions []ConditionCheckerConfig `json:"conditions"`
+type MultipleFrameConditionCheckerConfig struct {
+	Type       ConditionType                 `json:"type"`
+	Conditions []FrameConditionCheckerConfig `json:"conditions"`
 }
 
-type NumberCompareConditionConfig struct {
+type NumberCompareFrameConditionConfig struct {
 	FieldName string          `json:"fieldName"`
 	Op        NumberCompareOp `json:"op"`
 	Value     float64         `json:"value"`
 }
 
-type ConditionCheckerConfig struct {
-	Type                           string                          `json:"type"`
-	MultipleConditionCheckerConfig *MultipleConditionCheckerConfig `json:"multiple,omitempty"`
-	NumberCompareConditionConfig   *NumberCompareConditionConfig   `json:"numberCompare,omitempty"`
+type FrameConditionCheckerConfig struct {
+	Type                           string                               `json:"type"`
+	MultipleConditionCheckerConfig *MultipleFrameConditionCheckerConfig `json:"multiple,omitempty"`
+	NumberCompareConditionConfig   *NumberCompareFrameConditionConfig   `json:"numberCompare,omitempty"`
 }
 
 type RuleStorage interface {
@@ -268,120 +268,120 @@ func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converte
 	}
 }
 
-func (f *StorageRuleBuilder) extractProcessor(config *ProcessorConfig) (Processor, error) {
+func (f *StorageRuleBuilder) extractFrameProcessor(config *FrameProcessorConfig) (FrameProcessor, error) {
 	if config == nil {
 		return nil, nil
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case ProcessorTypeDropFields:
+	case FrameProcessorTypeDropFields:
 		if config.DropFieldsProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewDropFieldsProcessor(*config.DropFieldsProcessorConfig), nil
-	case ProcessorTypeKeepFields:
+		return NewDropFieldsFrameProcessor(*config.DropFieldsProcessorConfig), nil
+	case FrameProcessorTypeKeepFields:
 		if config.KeepFieldsProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewKeepFieldsProcessor(*config.KeepFieldsProcessorConfig), nil
-	case ProcessorTypeMultiple:
+		return NewKeepFieldsFrameProcessor(*config.KeepFieldsProcessorConfig), nil
+	case FrameProcessorTypeMultiple:
 		if config.MultipleProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
-		var processors []Processor
+		var processors []FrameProcessor
 		for _, outConf := range config.MultipleProcessorConfig.Processors {
 			out := outConf
-			proc, err := f.extractProcessor(&out)
+			proc, err := f.extractFrameProcessor(&out)
 			if err != nil {
 				return nil, err
 			}
 			processors = append(processors, proc)
 		}
-		return NewMultipleProcessor(processors...), nil
+		return NewMultipleFrameProcessor(processors...), nil
 	default:
 		return nil, fmt.Errorf("unknown processor type: %s", config.Type)
 	}
 }
 
-func (f *StorageRuleBuilder) extractConditionChecker(config *ConditionCheckerConfig) (ConditionChecker, error) {
+func (f *StorageRuleBuilder) extractFrameConditionChecker(config *FrameConditionCheckerConfig) (FrameConditionChecker, error) {
 	if config == nil {
 		return nil, nil
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case ConditionCheckerTypeNumberCompare:
+	case FrameConditionCheckerTypeNumberCompare:
 		if config.NumberCompareConditionConfig == nil {
 			return nil, missingConfiguration
 		}
 		c := *config.NumberCompareConditionConfig
-		return NewNumberCompareCondition(c.FieldName, c.Op, c.Value), nil
-	case ConditionCheckerTypeMultiple:
-		var conditions []ConditionChecker
+		return NewFrameNumberCompareCondition(c.FieldName, c.Op, c.Value), nil
+	case FrameConditionCheckerTypeMultiple:
+		var conditions []FrameConditionChecker
 		if config.MultipleConditionCheckerConfig == nil {
 			return nil, missingConfiguration
 		}
 		for _, outConf := range config.MultipleConditionCheckerConfig.Conditions {
 			out := outConf
-			cond, err := f.extractConditionChecker(&out)
+			cond, err := f.extractFrameConditionChecker(&out)
 			if err != nil {
 				return nil, err
 			}
 			conditions = append(conditions, cond)
 		}
-		return NewMultipleConditionChecker(config.MultipleConditionCheckerConfig.Type, conditions...), nil
+		return NewMultipleFrameConditionChecker(config.MultipleConditionCheckerConfig.Type, conditions...), nil
 	default:
 		return nil, fmt.Errorf("unknown condition type: %s", config.Type)
 	}
 }
 
-func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWriteBackends []RemoteWriteBackend) (Outputter, error) {
+func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig, remoteWriteBackends []RemoteWriteBackend) (FrameOutputter, error) {
 	if config == nil {
 		return nil, nil
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case OutputTypeRedirect:
+	case FrameOutputTypeRedirect:
 		if config.RedirectOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewRedirectOutput(*config.RedirectOutputConfig), nil
-	case OutputTypeMultiple:
+		return NewRedirectFrameOutput(*config.RedirectOutputConfig), nil
+	case FrameOutputTypeMultiple:
 		if config.MultipleOutputterConfig == nil {
 			return nil, missingConfiguration
 		}
-		var outputters []Outputter
+		var outputters []FrameOutputter
 		for _, outConf := range config.MultipleOutputterConfig.Outputters {
 			out := outConf
-			outputter, err := f.extractOutputter(&out, remoteWriteBackends)
+			outputter, err := f.extractFrameOutputter(&out, remoteWriteBackends)
 			if err != nil {
 				return nil, err
 			}
 			outputters = append(outputters, outputter)
 		}
-		return NewMultipleOutput(outputters...), nil
-	case OutputTypeManagedStream:
-		return NewManagedStreamOutput(f.ManagedStream), nil
-	case OutputTypeLocalSubscribers:
-		return NewLocalSubscribersOutput(f.Node), nil
-	case OutputTypeConditional:
+		return NewMultipleFrameOutput(outputters...), nil
+	case FrameOutputTypeManagedStream:
+		return NewManagedStreamFrameOutput(f.ManagedStream), nil
+	case FrameOutputTypeLocalSubscribers:
+		return NewLocalSubscribersFrameOutput(f.Node), nil
+	case FrameOutputTypeConditional:
 		if config.ConditionalOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		condition, err := f.extractConditionChecker(config.ConditionalOutputConfig.Condition)
+		condition, err := f.extractFrameConditionChecker(config.ConditionalOutputConfig.Condition)
 		if err != nil {
 			return nil, err
 		}
-		outputter, err := f.extractOutputter(config.ConditionalOutputConfig.Outputter, remoteWriteBackends)
+		outputter, err := f.extractFrameOutputter(config.ConditionalOutputConfig.Outputter, remoteWriteBackends)
 		if err != nil {
 			return nil, err
 		}
 		return NewConditionalOutput(condition, outputter), nil
-	case OutputTypeThreshold:
+	case FrameOutputTypeThreshold:
 		if config.ThresholdOutputConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewThresholdOutput(f.FrameStorage, *config.ThresholdOutputConfig), nil
-	case OutputTypeRemoteWrite:
+	case FrameOutputTypeRemoteWrite:
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -389,12 +389,12 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
-		return NewRemoteWriteOutput(*remoteWriteConfig), nil
-	case OutputTypeChangeLog:
+		return NewRemoteWriteFrameOutput(*remoteWriteConfig), nil
+	case FrameOutputTypeChangeLog:
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewChangeLogOutput(f.FrameStorage, *config.ChangeLogOutputConfig), nil
+		return NewChangeLogFrameOutput(f.FrameStorage, *config.ChangeLogOutputConfig), nil
 	default:
 		return nil, fmt.Errorf("unknown output type: %s", config.Type)
 	}
@@ -461,15 +461,15 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			return nil, err
 		}
 
-		var processors []Processor
-		for _, procConfig := range ruleConfig.Settings.Processors {
-			proc, err := f.extractProcessor(procConfig)
+		var processors []FrameProcessor
+		for _, procConfig := range ruleConfig.Settings.FrameProcessors {
+			proc, err := f.extractFrameProcessor(procConfig)
 			if err != nil {
 				return nil, err
 			}
 			processors = append(processors, proc)
 		}
-		rule.Processors = processors
+		rule.FrameProcessors = processors
 
 		var dataOutputters []DataOutputter
 		for _, outConfig := range ruleConfig.Settings.DataOutputters {
@@ -481,15 +481,15 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 		}
 		rule.DataOutputters = dataOutputters
 
-		var outputters []Outputter
-		for _, outConfig := range ruleConfig.Settings.Outputters {
-			out, err := f.extractOutputter(outConfig, remoteWriteBackends)
+		var outputters []FrameOutputter
+		for _, outConfig := range ruleConfig.Settings.FrameOutputters {
+			out, err := f.extractFrameOutputter(outConfig, remoteWriteBackends)
 			if err != nil {
 				return nil, err
 			}
 			outputters = append(outputters, out)
 		}
-		rule.Outputters = outputters
+		rule.FrameOutputters = outputters
 
 		var subscribers []Subscriber
 		for _, subConfig := range ruleConfig.Settings.Subscribers {

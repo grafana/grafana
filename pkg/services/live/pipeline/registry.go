@@ -17,31 +17,31 @@ var SubscribersRegistry = []EntityInfo{
 	},
 }
 
-var OutputsRegistry = []EntityInfo{
+var FrameOutputsRegistry = []EntityInfo{
 	{
-		Type:        OutputTypeManagedStream,
+		Type:        FrameOutputTypeManagedStream,
 		Description: "only send schema when structure changes (note this also requires a matching subscriber)",
 		Example:     ManagedStreamOutputConfig{},
 	},
 	{
-		Type:        OutputTypeConditional,
+		Type:        FrameOutputTypeConditional,
 		Description: "send to an output depending on frame values",
 		Example:     ConditionalOutputConfig{},
 	},
 	{
-		Type:        OutputTypeRedirect,
+		Type:        FrameOutputTypeRedirect,
 		Description: "redirect for processing by another channel rule",
 	},
 	{
-		Type:        OutputTypeThreshold,
+		Type:        FrameOutputTypeThreshold,
 		Description: "output field threshold boundaries cross into new channel",
 	},
 	{
-		Type:        OutputTypeChangeLog,
+		Type:        FrameOutputTypeChangeLog,
 		Description: "output field changes into new channel",
 	},
 	{
-		Type:        OutputTypeRemoteWrite,
+		Type:        FrameOutputTypeRemoteWrite,
 		Description: "output to remote write endpoint",
 	},
 }
@@ -66,15 +66,26 @@ var ConvertersRegistry = []EntityInfo{
 	},
 }
 
-var ProcessorsRegistry = []EntityInfo{
+var FrameProcessorsRegistry = []EntityInfo{
 	{
-		Type:        ProcessorTypeKeepFields,
+		Type:        FrameProcessorTypeKeepFields,
 		Description: "list the fields that should stay",
-		Example:     KeepFieldsProcessorConfig{},
+		Example:     KeepFieldsFrameProcessorConfig{},
 	},
 	{
-		Type:        ProcessorTypeDropFields,
+		Type:        FrameProcessorTypeDropFields,
 		Description: "list the fields that should be removed",
-		Example:     DropFieldsProcessorConfig{},
+		Example:     DropFieldsFrameProcessorConfig{},
+	},
+}
+
+var DataOutputsRegistry = []EntityInfo{
+	{
+		Type:        DataOutputTypeBuiltin,
+		Description: "use builtin publish handler",
+	},
+	{
+		Type:        DataOutputTypeRedirect,
+		Description: "redirect data processing to another channel rule",
 	},
 }
