@@ -3,13 +3,18 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { AlertManagerCortexConfig, Route } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+  Route,
+} from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
@@ -50,6 +55,13 @@ const dataSources = {
   am: mockDataSource({
     name: 'Alertmanager',
     type: DataSourceType.Alertmanager,
+  }),
+  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
+    name: 'PromManager',
+    type: DataSourceType.Alertmanager,
+    jsonData: {
+      implementation: AlertManagerImplementation.prometheus,
+    },
   }),
 };
 
@@ -477,6 +489,24 @@ describe('AmRoutes', () => {
       },
       template_files: {},
     });
+  });
+
+  it('Prometheus Alertmanager routes cannot be edited', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: someCloudAlertManagerConfig.alertmanager_config,
+    });
+    await renderAmRoutes(dataSources.promAlertManager.name);
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
+    const rows = await ui.row.findAll();
+    expect(rows).toHaveLength(2);
+    expect(ui.editRouteButton.query()).not.toBeInTheDocument();
+    expect(ui.deleteRouteButton.query()).not.toBeInTheDocument();
+    expect(ui.saveButton.query()).not.toBeInTheDocument();
+
+    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });
 });
 
