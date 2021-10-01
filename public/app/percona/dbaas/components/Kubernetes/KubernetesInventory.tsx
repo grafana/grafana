@@ -92,7 +92,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
       <AddClusterButton
         label={Messages.kubernetes.addAction}
         action={() => setAddModalVisible(!addModalVisible)}
-        data-qa="kubernetes-new-cluster-button"
+        data-testid="kubernetes-new-cluster-button"
       />
     ),
     [addModalVisible]
@@ -136,7 +136,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
 
                 <HorizontalGroup justify="center" spacing="md">
                   <Button
-                    data-qa="kubernetes-add-cluster-button"
+                    data-testid="kubernetes-add-cluster-button"
                     size="md"
                     variant="primary"
                     disabled={!valid || pristine}
@@ -166,7 +166,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
                     variant="secondary"
                     size="md"
                     onClick={() => setDeleteModalVisible(false)}
-                    data-qa="cancel-delete-kubernetes-button"
+                    data-testid="cancel-delete-kubernetes-button"
                   >
                     {Messages.kubernetes.deleteModal.cancel}
                   </Button>
@@ -174,7 +174,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
                     variant="destructive"
                     size="md"
                     onClick={() => deleteKubernetesCluster(Boolean(form.getState().values.force))}
-                    data-qa="delete-kubernetes-button"
+                    data-testid="delete-kubernetes-button"
                   >
                     {Messages.kubernetes.deleteModal.confirm}
                   </Button>

@@ -13,7 +13,7 @@ xdescribe('StepProgress::', () => {
         </div>
       ),
       fields: ['name', 'email'],
-      dataQa: 'step-1',
+      dataTestId: 'step-1',
     },
     {
       render: () => (
@@ -23,14 +23,14 @@ xdescribe('StepProgress::', () => {
         </div>
       ),
       fields: ['description'],
-      dataQa: 'step-2',
+      dataTestId: 'step-2',
     },
   ];
 
-  const isCurrentStep = (wrapper: ReactWrapper, dataQa: string) =>
+  const isCurrentStep = (wrapper: ReactWrapper, dataTestId: string) =>
     wrapper
-      .find(`[data-qa="${dataQa}"]`)
-      .find('[data-qa="step-content"]')
+      .find(`[data-testid="${dataTestId}"]`)
+      .find('[data-testid="step-content"]')
       .find('div')
       .at(1)
       .prop('className')
@@ -42,7 +42,7 @@ xdescribe('StepProgress::', () => {
     expect(wrapper.find('input').length).toBe(2);
     expect(wrapper.find('textarea').length).toBe(1);
     expect(wrapper.find('button').length).toBe(2);
-    expect(wrapper.find('[data-qa="step-header"]').length).toBe(2);
+    expect(wrapper.find('[data-testid="step-header"]').length).toBe(2);
     expect(isCurrentStep(wrapper, 'step-1')).toBeTruthy();
   });
   it('renders steps correctly with initial values', () => {
@@ -66,7 +66,7 @@ xdescribe('StepProgress::', () => {
 
     expect(isCurrentStep(wrapper, 'step-1')).toBeTruthy();
 
-    wrapper.find('[data-qa="step-2"]').find('[data-qa="step-header"]').simulate('click');
+    wrapper.find('[data-testid="step-2"]').find('[data-testid="step-header"]').simulate('click');
 
     expect(isCurrentStep(wrapper, 'step-1')).toBeFalsy();
     expect(isCurrentStep(wrapper, 'step-2')).toBeTruthy();

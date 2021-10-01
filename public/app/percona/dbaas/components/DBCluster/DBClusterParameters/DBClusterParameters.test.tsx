@@ -1,5 +1,5 @@
 import React from 'react';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { DBClusterParameters } from './DBClusterParameters';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
@@ -12,12 +12,12 @@ describe('DBClusterParameters::', () => {
   it('renders parameters items correctly', async () => {
     const root = await getMount(<DBClusterParameters dbCluster={dbClustersStub[0]} />);
 
-    expect(root.find(dataQa('cluster-parameters-cluster-name'))).toBeTruthy();
+    expect(root.find(dataTestId('cluster-parameters-cluster-name'))).toBeTruthy();
 
-    const memory = root.find(dataQa('cluster-parameters-memory'));
-    const cpu = root.find(dataQa('cluster-parameters-cpu'));
-    const disk = root.find(dataQa('cluster-parameters-disk'));
-    const expose = root.find(dataQa('cluster-parameters-expose'));
+    const memory = root.find(dataTestId('cluster-parameters-memory'));
+    const cpu = root.find(dataTestId('cluster-parameters-cpu'));
+    const disk = root.find(dataTestId('cluster-parameters-disk'));
+    const expose = root.find(dataTestId('cluster-parameters-expose'));
 
     expect(memory).toBeTruthy();
     expect(memory.text()).toContain('Memory:1024 GB');
@@ -34,12 +34,12 @@ describe('DBClusterParameters::', () => {
 
     root.update();
 
-    expect(root.find(dataQa('cluster-parameters-cluster-name'))).toBeTruthy();
+    expect(root.find(dataTestId('cluster-parameters-cluster-name'))).toBeTruthy();
 
-    const memory = root.find(dataQa('cluster-parameters-memory'));
-    const cpu = root.find(dataQa('cluster-parameters-cpu'));
-    const disk = root.find(dataQa('cluster-parameters-disk'));
-    const expose = root.find(dataQa('cluster-parameters-expose'));
+    const memory = root.find(dataTestId('cluster-parameters-memory'));
+    const cpu = root.find(dataTestId('cluster-parameters-cpu'));
+    const disk = root.find(dataTestId('cluster-parameters-disk'));
+    const expose = root.find(dataTestId('cluster-parameters-expose'));
 
     expect(memory).toBeTruthy();
     expect(memory.text()).toContain('Memory:0 GB');

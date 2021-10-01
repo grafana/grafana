@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { Slack } from './Slack';
 
 xdescribe('Slack::', () => {
@@ -14,7 +14,7 @@ xdescribe('Slack::', () => {
       />
     );
 
-    expect(root.find(dataQa('url-text-input')).prop('value')).toEqual('test');
+    expect(root.find(dataTestId('url-text-input')).prop('value')).toEqual('test');
   });
 
   it('Disables apply changes on initial values', () => {
@@ -42,7 +42,7 @@ xdescribe('Slack::', () => {
       />
     );
 
-    root.find(dataQa('url-text-input')).simulate('change', { target: { value: 'new key' } });
+    root.find(dataTestId('url-text-input')).simulate('change', { target: { value: 'new key' } });
     root.find('form').simulate('submit');
 
     expect(updateSettings).toHaveBeenCalled();

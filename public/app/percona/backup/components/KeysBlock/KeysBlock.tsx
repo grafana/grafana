@@ -10,11 +10,11 @@ export const KeysBlock: FC<KeysBlockProps> = ({ accessKey, secretKey }) => {
 
   return (
     <div className={styles.keysWrapper}>
-      <div data-qa="access-key">
+      <div data-testid="access-key">
         <span className={styles.keyLabel}>{Messages.accessKey}</span>
         {accessKey}
       </div>
-      <div data-qa="secret-key">
+      <div data-testid="secret-key">
         <span className={styles.keyLabel}>{Messages.secretKey}</span>
         <span className={styles.secretTogglerWrapper}>
           <SecretToggler small secret={secretKey} />

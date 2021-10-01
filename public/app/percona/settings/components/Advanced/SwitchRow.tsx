@@ -12,7 +12,7 @@ export const SwitchRow: FC<SwitchRowProps> = ({
   link = '',
   disabled,
   className,
-  dataQa,
+  dataTestId,
   input,
 }) => {
   const theme = useTheme();
@@ -20,7 +20,7 @@ export const SwitchRow: FC<SwitchRowProps> = ({
   const styles = getStyles(theme);
 
   return (
-    <div className={styles.advancedRow} data-qa={dataQa}>
+    <div className={styles.advancedRow} data-testid={dataTestId}>
       <div className={styles.advancedCol}>
         <div className={settingsStyles.labelWrapper}>
           <span>{label}</span>

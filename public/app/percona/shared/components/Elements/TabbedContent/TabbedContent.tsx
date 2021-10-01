@@ -11,8 +11,8 @@ export const TabbedContent: FC<TabbedContentProps> = ({
   basePath,
   orientation = TabOrientation.Horizontal,
   className,
-  tabsDataQa = 'tabs',
-  contentDataQa = 'tab-content',
+  tabsdataTestId = 'tabs',
+  contentdataTestId = 'tab-content',
   renderTab,
 }) => {
   const routeUpdated = useRef(false);
@@ -41,20 +41,20 @@ export const TabbedContent: FC<TabbedContentProps> = ({
         tabs={tabs}
         activeTabKey={activeTab?.key}
         className={className}
-        dataQa={tabsDataQa}
+        dataTestId={tabsdataTestId}
         tabClick={selectTab}
       ></OrientedTabs>
       {routeUpdated.current ? null : renderTab ? (
         renderTab({
           Content: ({ className }) => (
-            <TabContent data-qa={contentDataQa} className={className}>
+            <TabContent data-testid={contentdataTestId} className={className}>
               {activeTab?.component}
             </TabContent>
           ),
           tab: activeTab,
         })
       ) : (
-        <TabContent data-qa={contentDataQa} className={className}>
+        <TabContent data-testid={contentdataTestId} className={className}>
           {activeTab?.component}
         </TabContent>
       )}

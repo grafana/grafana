@@ -56,7 +56,7 @@ const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance })
             <Button variant="secondary" onClick={() => selectInstance({ type: '' })} icon="arrow-left">
               {Messages.form.toMenuButton}
             </Button>
-            <Button type="submit" data-qa="credentials-search-button" className={styles.credentialsSubmit}>
+            <Button type="submit" data-testid="credentials-search-button" className={styles.credentialsSubmit}>
               {Messages.form.submitButton}
             </Button>
             <Button type="button" variant="link" onClick={() => window.open(SECURITY_CREDENTIALS_DOC_LINK, '_blank')}>

@@ -42,7 +42,7 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
 
   return (
     <Modal
-      data-qa="change-check-interval-modal"
+      data-testid="change-check-interval-modal"
       title={Messages.title}
       isVisible={isVisible}
       onClose={() => setVisible(false)}
@@ -53,8 +53,8 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
           onSubmit={changeInterval}
           initialValues={initialValues}
           render={({ handleSubmit, submitting, pristine }) => (
-            <form data-qa="change-check-interval-form" onSubmit={handleSubmit}>
-              <div data-qa="change-check-interval-radio-group-wrapper" className={styles.intervalRadioWrapper}>
+            <form data-testid="change-check-interval-form" onSubmit={handleSubmit}>
+              <div data-testid="change-check-interval-radio-group-wrapper" className={styles.intervalRadioWrapper}>
                 <RadioButtonGroupField name="interval" options={checkIntervalOptions} />
               </div>
               <HorizontalGroup justify="center" spacing="md">
@@ -63,7 +63,7 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
                   loading={submitting}
                   variant="destructive"
                   size="md"
-                  data-qa="change-check-interval-modal-save"
+                  data-testid="change-check-interval-modal-save"
                 >
                   {Messages.save}
                 </LoaderButton>
@@ -71,7 +71,7 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
                   variant="secondary"
                   size="md"
                   onClick={() => setVisible(false)}
-                  data-qa="change-check-interval-modal-cancel"
+                  data-testid="change-check-interval-modal-cancel"
                 >
                   {Messages.cancel}
                 </Button>

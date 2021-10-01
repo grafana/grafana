@@ -1,3 +1,3 @@
 export interface EmptyBlockProps {
-  dataQa?: string;
+  dataTestId?: string;
 }

@@ -40,8 +40,8 @@ export const CheckPermissions: FC<CheckPermissionsProps> = ({
 
   return (
     <div className={styles.emptyBlock}>
-      <EmptyBlock dataQa="empty-block">
-        {loadingSettings ? <Spinner /> : hasNoAccess && <div data-qa="unauthorized">{Messages.unauthorized}</div>}
+      <EmptyBlock dataTestId="empty-block">
+        {loadingSettings ? <Spinner /> : hasNoAccess && <div data-testid="unauthorized">{Messages.unauthorized}</div>}
       </EmptyBlock>
     </div>
   );

@@ -24,7 +24,7 @@ const KubernetesOption: FC<KubernetesOptionProps> = ({
     description={disabledOperators.length ? Messages.dbcluster.addModal.validationMessages.notInstalledOperator : ''}
     tags={availableOperators.map((databaseType) => DatabaseOperators[databaseType])}
     disabledTags={disabledOperators.map((databaseType) => DatabaseOperators[databaseType])}
-    dataQa="kubernetes-option"
+    dataTestId="kubernetes-option"
   />
 );
 

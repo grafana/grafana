@@ -70,7 +70,7 @@ export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
         <pre ref={outputRef}>{kubeconfig}</pre>
       </Overlay>
       <HorizontalGroup justify="flex-end" spacing="md">
-        <Button variant="destructive" size="md" onClick={() => setVisible(false)} data-qa="delete-dbcluster-button">
+        <Button variant="destructive" size="md" onClick={() => setVisible(false)} data-testid="delete-dbcluster-button">
           Close
         </Button>
       </HorizontalGroup>

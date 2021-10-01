@@ -7,7 +7,7 @@ import { SelectFieldProps } from './SelectField.types';
 
 const SelectFieldWrapper: FC<SelectFieldProps & SelectCommonProps<any>> = ({ label, name, ...props }) => (
   <>
-    <Label label={label} dataQa={`${name}-select-label`} />
+    <Label label={label} dataTestId={`${name}-select-label`} />
     <Select {...props} />
   </>
 );

@@ -10,7 +10,7 @@ describe('Overlay::', () => {
         <p>Child 2</p>
       </Overlay>
     );
-    const wrapper = root.find('[data-qa="pmm-overlay-wrapper"]');
+    const wrapper = root.find('[data-testid="pmm-overlay-wrapper"]');
 
     expect(wrapper.children().length).toEqual(2);
   });
@@ -21,7 +21,7 @@ describe('Overlay::', () => {
         <p>Test</p>
       </Overlay>
     );
-    const wrapper = root.find('[data-qa="pmm-overlay-wrapper"]');
+    const wrapper = root.find('[data-testid="pmm-overlay-wrapper"]');
 
     expect(wrapper.children().length).toBe(2);
     expect(wrapper.childAt(0).find('i')).toBeTruthy();

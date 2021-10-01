@@ -12,7 +12,7 @@ export const SelectFieldAdapter = ({
   options,
   label,
   meta,
-  dataQa,
+  dataTestId,
   showErrorOnBlur = true,
   noOptionsMessage,
   ...props
@@ -23,7 +23,7 @@ export const SelectFieldAdapter = ({
 
   return (
     <Field label={label}>
-      <div data-qa={dataQa}>
+      <div data-testid={dataTestId}>
         <Select
           {...input}
           {...props}
@@ -32,7 +32,7 @@ export const SelectFieldAdapter = ({
           invalid={!!validationError}
           noOptionsMessage={noOptionsMessage}
         />
-        <div data-qa="select-field-error-message" className={styles.errorMessage}>
+        <div data-testid="select-field-error-message" className={styles.errorMessage}>
           {validationError}
         </div>
       </div>
@@ -47,7 +47,7 @@ export const AsyncSelectFieldAdapter: FC<any> = ({
   options,
   label,
   meta,
-  dataQa,
+  dataTestId,
   noOptionsMessage,
   ...props
 }) => {
@@ -56,7 +56,7 @@ export const AsyncSelectFieldAdapter: FC<any> = ({
 
   return (
     <Field label={label}>
-      <div data-qa={dataQa}>
+      <div data-testid={dataTestId}>
         <div className={styles.asyncSelectWrapper}>
           <Select
             {...input}
@@ -68,7 +68,7 @@ export const AsyncSelectFieldAdapter: FC<any> = ({
           />
           {loading && <Spinner className={styles.selectSpinner} />}
         </div>
-        <div data-qa="async-select-field-error-message" className={styles.errorMessage}>
+        <div data-testid="async-select-field-error-message" className={styles.errorMessage}>
           {meta.touched && meta.error}
         </div>
       </div>

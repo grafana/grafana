@@ -37,7 +37,7 @@ const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
             <Button variant="secondary" onClick={() => selectInstance({ type: '' })} icon="arrow-left">
               {Messages.form.toMenuButton}
             </Button>
-            <Button type="submit" data-qa="credentials-search-button" className={styles.credentialsSubmit}>
+            <Button type="submit" data-testid="credentials-search-button" className={styles.credentialsSubmit}>
               {Messages.form.submitButton}
             </Button>
           </div>

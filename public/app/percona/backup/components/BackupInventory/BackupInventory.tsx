@@ -197,7 +197,7 @@ export const BackupInventory: FC = () => {
           size="md"
           icon="plus-square"
           variant="link"
-          data-qa="backup-add-modal-button"
+          data-testid="backup-add-modal-button"
           onClick={() => onBackupClick(null)}
         >
           {Messages.add}

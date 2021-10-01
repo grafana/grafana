@@ -29,16 +29,16 @@ export const OrientedTabs: FC<OrientedTabsProps> = ({
   orientation = TabOrientation.Horizontal,
   tabs = [],
   activeTabKey,
-  dataQa,
+  dataTestId,
   className,
   tabClick = () => null,
 }) =>
   orientation === TabOrientation.Horizontal ? (
-    <TabsBar className={className} data-qa={dataQa}>
+    <TabsBar className={className} data-testid={dataTestId}>
       <OrientedTabContent tabs={tabs} activeTabKey={activeTabKey} tabClick={tabClick} />
     </TabsBar>
   ) : (
-    <TabsVertical className={className} dataQa={dataQa}>
+    <TabsVertical className={className} dataTestId={dataTestId}>
       <OrientedTabContent tabs={tabs} activeTabKey={activeTabKey} tabClick={tabClick} />
     </TabsVertical>
   );

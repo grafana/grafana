@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { Advanced } from './Advanced';
 import { sttCheckIntervalsStub } from './__mocks__/stubs';
 
@@ -18,8 +18,8 @@ xdescribe('Advanced::', () => {
         sttCheckIntervals={sttCheckIntervalsStub}
       />
     );
-    const retentionInput = root.find(dataQa('retention-field-container')).find('input');
-    const publicAddressInput = root.find(dataQa('publicAddress-text-input')).find('input');
+    const retentionInput = root.find(dataTestId('retention-field-container')).find('input');
+    const publicAddressInput = root.find(dataTestId('publicAddress-text-input')).find('input');
 
     expect(retentionInput.prop('value')).toEqual(15);
     expect(publicAddressInput.prop('value')).toEqual('pmmtest.percona.com');
@@ -37,7 +37,7 @@ xdescribe('Advanced::', () => {
         sttCheckIntervals={sttCheckIntervalsStub}
       />
     );
-    const telemetrySwitch = root.find('[data-qa="advanced-telemetry"]').find('input');
+    const telemetrySwitch = root.find('[data-testid="advanced-telemetry"]').find('input');
 
     expect(telemetrySwitch.prop('disabled')).toBeTruthy();
   });
@@ -54,7 +54,7 @@ xdescribe('Advanced::', () => {
         sttCheckIntervals={sttCheckIntervalsStub}
       />
     );
-    const sttSwitch = root.find('[data-qa="advanced-stt"]').find('input');
+    const sttSwitch = root.find('[data-testid="advanced-stt"]').find('input');
 
     expect(sttSwitch.prop('disabled')).toBeTruthy();
   });
@@ -72,7 +72,7 @@ xdescribe('Advanced::', () => {
         sttCheckIntervals={sttCheckIntervalsStub}
       />
     );
-    const alertingSwitch = root.find('[data-qa="advanced-alerting"]').find('input');
+    const alertingSwitch = root.find('[data-testid="advanced-alerting"]').find('input');
 
     expect(alertingSwitch.prop('disabled')).toBeTruthy();
   });
@@ -92,7 +92,7 @@ xdescribe('Advanced::', () => {
     );
 
     root
-      .find('[data-qa="retention-field-container"]')
+      .find('[data-testid="retention-field-container"]')
       .find('input')
       .simulate('change', { target: { value: '70' } });
     root.find('form').simulate('submit');
@@ -121,12 +121,12 @@ xdescribe('Advanced::', () => {
         sttCheckIntervals={sttCheckIntervalsStub}
       />
     );
-    const publicAddressButton = root.find(dataQa('public-address-button')).find('button');
+    const publicAddressButton = root.find(dataTestId('public-address-button')).find('button');
 
     publicAddressButton.simulate('click');
     root.update();
 
-    const publicAddressInput = root.find(dataQa('publicAddress-text-input')).find('input');
+    const publicAddressInput = root.find(dataTestId('publicAddress-text-input')).find('input');
 
     expect(publicAddressInput.prop('value')).toEqual('pmmtest.percona.com');
   });

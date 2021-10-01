@@ -227,7 +227,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               allocated={allocatedResources?.allocated.cpu}
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-cpu"
+              dataTestId="dbcluster-resources-bar-cpu"
             />
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
@@ -236,7 +236,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               allocated={allocatedResources?.allocated.memory}
               expected={expectedResources?.expected.memory}
               className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-memory"
+              dataTestId="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}
@@ -245,7 +245,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               allocated={allocatedResources?.allocated.disk}
               expected={expectedResources?.expected.disk}
               className={styles.resourcesBarLast}
-              dataQa="dbcluster-resources-bar-disk"
+              dataTestId="dbcluster-resources-bar-disk"
             />
           </Overlay>
         </div>

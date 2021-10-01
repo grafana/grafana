@@ -11,7 +11,7 @@ const MultiSelectFieldWrapper: FC<MultiSelectFieldProps & MultiSelectCommonProps
   ...props
 }) => (
   <>
-    <Label label={label} dataQa={`${name}-select-label`} />
+    <Label label={label} dataTestId={`${name}-select-label`} />
     <MultiSelect {...props} />
   </>
 );

@@ -4,12 +4,12 @@ import { Dropdown } from '@percona/platform-core';
 import { MultipleActionsProps } from './MultipleActions.types';
 import { getStyles } from './MultipleActions.styles';
 
-export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, dataQa }) => {
+export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, dataTestId }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const Toggle = React.forwardRef<HTMLButtonElement>((props, ref) => (
-    <IconButton name="ellipsis-v" size="xl" disabled={disabled} data-qa={dataQa} ref={ref} {...props} />
+    <IconButton name="ellipsis-v" size="xl" disabled={disabled} data-testid={dataTestId} ref={ref} {...props} />
   ));
 
   return (

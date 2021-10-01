@@ -108,7 +108,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
           },
         }}
         render={({ form, handleSubmit }) => (
-          <form onSubmit={handleSubmit} data-qa="add-remote-instance-form">
+          <form onSubmit={handleSubmit} data-testid="add-remote-instance-form">
             <h4 className={styles.addRemoteInstanceTitle}>{getHeader(type)}</h4>
             {formParts(form)}
             <div className={styles.addRemoteInstanceButtons}>

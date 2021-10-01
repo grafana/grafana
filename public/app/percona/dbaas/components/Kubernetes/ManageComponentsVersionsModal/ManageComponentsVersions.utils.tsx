@@ -81,7 +81,7 @@ export const parseDefaultVersionsOptions = (options: SelectableValue[]) =>
       <OptionContent
         title={label as string}
         tags={status === DBClusterComponentVersionStatus.recommended ? [Messages.recommended] : []}
-        dataQa="kubernetes-default-version-option"
+        dataTestId="kubernetes-default-version-option"
       />
     ),
   }));

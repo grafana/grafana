@@ -19,11 +19,11 @@ export const Table: FC<TableProps> = ({ columns, data = [] }) => {
     <>
       <div className={styles.wrapper}>
         {isEmpty ? (
-          <div className={styles.empty} data-qa="db-check-panel-table-empty">
+          <div className={styles.empty} data-testid="db-check-panel-table-empty">
             No failed checks.
           </div>
         ) : (
-          <table className={styles.table} data-qa="db-check-panel-table">
+          <table className={styles.table} data-testid="db-check-panel-table">
             <TableHeader columns={columns} />
             <TableBody data={data} />
           </table>

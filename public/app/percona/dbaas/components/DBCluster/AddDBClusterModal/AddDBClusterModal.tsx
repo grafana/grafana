@@ -39,7 +39,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
         title: Messages.dbcluster.addModal.steps.basicOptions,
         fields: [AddDBClusterFields.name, AddDBClusterFields.kubernetesCluster, AddDBClusterFields.databaseType],
         render: ({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetes} form={form} />,
-        dataQa: 'dbcluster-basic-options-step',
+        dataTestId: 'dbcluster-basic-options-step',
       },
       {
         title: Messages.dbcluster.addModal.steps.advancedOptions,
@@ -51,7 +51,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
           AddDBClusterFields.disk,
         ],
         render: (renderProps) => <DBClusterAdvancedOptions {...renderProps} />,
-        dataQa: 'dbcluster-advanced-options-step',
+        dataTestId: 'dbcluster-advanced-options-step',
       },
     ],
     [kubernetes]
@@ -95,7 +95,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
       <Modal title={Messages.dbcluster.addModal.title} isVisible={isVisible} onClose={() => setVisible(false)}>
         <div className={styles.stepProgressWrapper}>
           {showMonitoringWarning && (
-            <div className={styles.warningWrapper} data-qa="add-cluster-monitoring-warning">
+            <div className={styles.warningWrapper} data-testid="add-cluster-monitoring-warning">
               <Icon name="exclamation-triangle" className={styles.warningIcon} />
               <span className={styles.warningMessage}>{buildWarningMessage(styles.settingsLink)}</span>
             </div>

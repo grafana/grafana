@@ -8,11 +8,11 @@ const WarningIconMap: Record<WarningType, IconName> = {
   warning: 'exclamation-triangle',
 };
 
-export const WarningBlock: FC<WarningBlockProps> = ({ message, type = 'info', dataQa = 'warning-block' }) => {
+export const WarningBlock: FC<WarningBlockProps> = ({ message, type = 'info', dataTestId = 'warning-block' }) => {
   const styles = useStyles(getStyles);
 
   return (
-    <div className={styles.warningWrapper} data-qa={dataQa}>
+    <div className={styles.warningWrapper} data-testid={dataTestId}>
       <Icon className={styles.warningIcon} size="xl" name={WarningIconMap[type]} />
       <span>{message}</span>
     </div>

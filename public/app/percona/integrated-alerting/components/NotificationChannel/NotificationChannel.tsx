@@ -98,7 +98,7 @@ export const NotificationChannel: FC = () => {
             setSelectedNotificationChannel(null);
             setAddModalVisible(!addModalVisible);
           }}
-          data-qa="notification-channel-add-modal-button"
+          data-testid="notification-channel-add-modal-button"
         >
           {Messages.addAction}
         </Button>

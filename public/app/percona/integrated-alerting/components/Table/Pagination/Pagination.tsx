@@ -39,12 +39,12 @@ export const Pagination: FC<PaginationProps> = ({
   };
 
   return (
-    <div className={style.pagination} data-qa="pagination">
+    <div className={style.pagination} data-testid="pagination">
       <span className={style.pageSizeContainer}>
         <span>{Messages.rowsPerPage}</span>
         <span>
           <Select
-            data-qa="pagination-size-select"
+            data-testid="pagination-size-select"
             isSearchable={false}
             value={pageSize}
             options={pageSizeOptions}
@@ -53,19 +53,19 @@ export const Pagination: FC<PaginationProps> = ({
         </span>
       </span>
       <span className={style.pageButtonsContainer}>
-        <span data-qa="pagination-items-inverval">
+        <span data-testid="pagination-items-inverval">
           {Messages.getItemsIntervalMessage(leftItemNumber, rightItemNumber, totalItems)}
         </span>
         <span>
           <Button
-            data-qa="first-page-button"
+            data-testid="first-page-button"
             icon={'angle-double-left' as IconName}
             variant="secondary"
             disabled={activePageIndex === 0}
             onClick={() => gotoPage(0)}
           />
           <Button
-            data-qa="previous-page-button"
+            data-testid="previous-page-button"
             icon="angle-left"
             variant="secondary"
             disabled={activePageIndex === 0}
@@ -73,7 +73,7 @@ export const Pagination: FC<PaginationProps> = ({
           />
           {shownPages.map((page) => (
             <Button
-              data-qa="page-button"
+              data-testid="page-button"
               variant={activePageIndex === page ? 'primary' : 'secondary'}
               onClick={() => gotoPage(page)}
               key={page}
@@ -82,7 +82,7 @@ export const Pagination: FC<PaginationProps> = ({
             </Button>
           ))}
           <Button
-            data-qa="next-page-button"
+            data-testid="next-page-button"
             icon="angle-right"
             variant="secondary"
             disabled={activePageIndex === pageCount - 1}
@@ -90,7 +90,7 @@ export const Pagination: FC<PaginationProps> = ({
             className="next-page"
           />
           <Button
-            data-qa="last-page-button"
+            data-testid="last-page-button"
             icon={'angle-double-right' as IconName}
             variant="secondary"
             disabled={activePageIndex === pageCount - 1}

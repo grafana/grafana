@@ -5,16 +5,16 @@ import { getStyles } from './TabsVertical.styles';
 export interface TabsVerticalProps {
   children: ReactNode;
   className?: string;
-  dataQa?: string;
+  dataTestId?: string;
 }
 
-export const TabsVertical: FC<TabsVerticalProps> = ({ children, className, dataQa }) => {
+export const TabsVertical: FC<TabsVerticalProps> = ({ children, className, dataTestId }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
     <div className={className}>
-      <ul data-qa={dataQa} className={styles.tabs}>
+      <ul data-testid={dataTestId} className={styles.tabs}>
         {children}
       </ul>
     </div>

@@ -99,7 +99,7 @@ export const AlertRuleTemplate: FC = () => {
           icon="plus-square"
           variant="link"
           onClick={() => setAddModalVisible(!addModalVisible)}
-          data-qa="alert-rule-template-add-modal-button"
+          data-testid="alert-rule-template-add-modal-button"
         >
           {Messages.alertRuleTemplate.addAction}
         </Button>

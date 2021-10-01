@@ -25,10 +25,10 @@ export const OperatorStatus: FC<OperatorStatusProps> = ({ operator }) => {
   );
 
   return (
-    <span className={cx(styles.status, statusStyles)} data-qa={`cluster-status-${STATUS_DATA_QA[status]}`}>
+    <span className={cx(styles.status, statusStyles)} data-testid={`cluster-status-${STATUS_DATA_QA[status]}`}>
       {operatorStatus[status]}
       {showVersionAvailable && (
-        <span className={styles.versionAvailable} data-qa="operator-version-available">
+        <span className={styles.versionAvailable} data-testid="operator-version-available">
           {operatorStatus.getNewVersionAvailable(availableVersion)}
         </span>
       )}

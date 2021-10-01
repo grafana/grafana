@@ -87,10 +87,10 @@ const VerticalFieldLayout = ({
 );
 
 export const FormElement = (props: any) => {
-  const { dataQa, type, errors, alignLabel } = props;
+  const { dataTestId, type, errors, alignLabel } = props;
 
   return (
-    <div className={style.formElementWrapper} data-qa={dataQa}>
+    <div className={style.formElementWrapper} data-testid={dataTestId}>
       {type === 'horizontal' ? <HorizontalFieldLayout {...props} /> : <VerticalFieldLayout {...props} />}
 
       <div className={getErrorsWrapperStyle(alignLabel)}>

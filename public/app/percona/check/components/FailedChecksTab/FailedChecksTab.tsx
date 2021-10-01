@@ -68,9 +68,9 @@ export const FailedChecksTab: FC = () => {
   return (
     <>
       <div className={styles.header}>
-        <div className={styles.actionButtons} data-qa="db-check-panel-actions">
+        <div className={styles.actionButtons} data-testid="db-check-panel-actions">
           <span className={styles.showAll}>
-            <span data-qa="db-checks-failed-checks-toggle-silenced">
+            <span data-testid="db-checks-failed-checks-toggle-silenced">
               <Switch value={showSilenced} onChange={toggleShowSilenced} />
             </span>
             <span>{Messages.showAll}</span>
@@ -88,7 +88,7 @@ export const FailedChecksTab: FC = () => {
       </div>
       <AlertsReloadContext.Provider value={{ fetchAlerts }}>
         {fetchAlertsPending ? (
-          <div className={styles.spinner} data-qa="db-checks-failed-checks-spinner">
+          <div className={styles.spinner} data-testid="db-checks-failed-checks-spinner">
             <Spinner />
           </div>
         ) : (

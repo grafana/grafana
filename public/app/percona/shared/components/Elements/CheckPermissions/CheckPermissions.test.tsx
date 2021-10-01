@@ -2,7 +2,7 @@ import React from 'react';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { CheckPermissions } from './CheckPermissions';
 import { SettingsService } from 'app/percona/settings/Settings.service';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 
 jest.mock('app/percona/settings/Settings.service');
 jest.mock('@percona/platform-core', () => {
@@ -41,6 +41,6 @@ describe('CheckPermissions::', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('unauthorized'))).not.toBeNull();
+    expect(wrapper.find(dataTestId('unauthorized'))).not.toBeNull();
   });
 });

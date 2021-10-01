@@ -53,7 +53,7 @@ export const KubernetesClusterActions: FC<DBClusterActionsProps> = ({
 
   return (
     <div className={styles.actionsColumn}>
-      <MultipleActions actions={getActions(kubernetesCluster)} dataQa="dbcluster-actions" />
+      <MultipleActions actions={getActions(kubernetesCluster)} dataTestId="dbcluster-actions" />
     </div>
   );
 };

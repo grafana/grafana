@@ -13,7 +13,7 @@ export const NotificationChannelActions: FC<NotificationChannelActionsProps> = (
   return (
     <div className={styles.actionsWrapper}>
       <IconButton
-        data-qa="edit-notification-channel-button"
+        data-testid="edit-notification-channel-button"
         name="pen"
         onClick={() => {
           setSelectedNotificationChannel(notificationChannel);
@@ -21,7 +21,7 @@ export const NotificationChannelActions: FC<NotificationChannelActionsProps> = (
         }}
       />
       <IconButton
-        data-qa="delete-notification-channel-button"
+        data-testid="delete-notification-channel-button"
         name="times"
         onClick={() => {
           setSelectedNotificationChannel(notificationChannel);

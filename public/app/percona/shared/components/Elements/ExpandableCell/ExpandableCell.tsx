@@ -16,9 +16,9 @@ export const ExpandableCell: FC<ExpandableCellProps> = ({
     <div className={styles.expandableCellWrapper} {...restProps}>
       {value}
       {row.isExpanded ? (
-        <IconButton data-qa="hide-details" name={expandedIconName} />
+        <IconButton data-testid="hide-details" name={expandedIconName} />
       ) : (
-        <IconButton data-qa="show-details" name={collapsedIconName} />
+        <IconButton data-testid="show-details" name={collapsedIconName} />
       )}
     </div>
   );

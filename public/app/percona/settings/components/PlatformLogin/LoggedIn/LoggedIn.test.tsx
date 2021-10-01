@@ -9,7 +9,7 @@ describe('LoggedIn::', () => {
     const testEmail = 'test@email';
     const root = shallow(<LoggedIn email={testEmail} getSettings={() => {}} />);
 
-    expect(root.find('[data-qa="logged-in-email"]').text()).toEqual(testEmail);
+    expect(root.find('[data-testid="logged-in-email"]').text()).toEqual(testEmail);
   });
 
   it('Should update settings ', async () => {

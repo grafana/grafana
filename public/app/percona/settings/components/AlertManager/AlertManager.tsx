@@ -59,7 +59,7 @@ export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertMana
         initialValues={initialValues}
         render={({ handleSubmit, pristine }) => (
           <form onSubmit={handleSubmit}>
-            <div className={settingsStyles.labelWrapper} data-qa="alertmanager-url-label">
+            <div className={settingsStyles.labelWrapper} data-testid="alertmanager-url-label">
               <strong className={styles.warning}>
                 {warningPre}{' '}
                 <a className={styles.warningLink} href={AM_WARNING_URL}>
@@ -73,22 +73,24 @@ export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertMana
             <Field
               name="url"
               isEqual={isEqual}
-              render={({ input }) => <Input {...input} className={styles.input} data-qa="alertmanager-url" />}
+              render={({ input }) => <Input {...input} className={styles.input} data-testid="alertmanager-url" />}
             />
-            <div className={cx(settingsStyles.labelWrapper, styles.rulesLabel)} data-qa="alertmanager-rules-label">
+            <div className={cx(settingsStyles.labelWrapper, styles.rulesLabel)} data-testid="alertmanager-rules-label">
               <span>{rulesLabel}</span>
               <LinkTooltip tooltipText={rulesTooltip} link={rulesLink} linkText={tooltipLinkText} icon="info-circle" />
             </div>
             <Field
               name="rules"
               isEqual={isEqual}
-              render={({ input }) => <TextArea {...input} className={styles.textarea} data-qa="alertmanager-rules" />}
+              render={({ input }) => (
+                <TextArea {...input} className={styles.textarea} data-testid="alertmanager-rules" />
+              )}
             />
             <Button
               className={settingsStyles.actionButton}
               type="submit"
               disabled={pristine || loading}
-              data-qa="alertmanager-button"
+              data-testid="alertmanager-button"
             >
               {loading && <Spinner />}
               {action}

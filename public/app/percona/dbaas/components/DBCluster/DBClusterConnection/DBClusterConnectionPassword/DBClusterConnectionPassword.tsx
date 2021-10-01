@@ -5,16 +5,20 @@ import { DBClusterConnectionPasswordProps } from './DBClusterConnectionPassword.
 import { HIDDEN_PASSWORD_LENGTH } from './DBClusterConnectionPassword.constants';
 import { getStyles } from './DBClusterConnectionPassword.styles';
 
-export const DBClusterConnectionPassword: FC<DBClusterConnectionPasswordProps> = ({ label, password, dataQa }) => {
+export const DBClusterConnectionPassword: FC<DBClusterConnectionPasswordProps> = ({ label, password, dataTestId }) => {
   const styles = useStyles(getStyles);
   const [showPassword, setShowPassword] = useState(false);
   const getHiddenPassword = useMemo(() => '*'.repeat(HIDDEN_PASSWORD_LENGTH), []);
 
   return (
     <div className={styles.connectionPasswordWrapper}>
-      <DBClusterConnectionItem label={label} value={showPassword ? password : getHiddenPassword} dataQa={dataQa} />
+      <DBClusterConnectionItem
+        label={label}
+        value={showPassword ? password : getHiddenPassword}
+        dataTestId={dataTestId}
+      />
       <IconButton
-        data-qa="show-password-button"
+        data-testid="show-password-button"
         name={showPassword ? 'eye-slash' : 'eye'}
         onClick={() => setShowPassword(!showPassword)}
         className={styles.showPasswordButton}

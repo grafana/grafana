@@ -13,7 +13,7 @@ describe('DBClusterConnectionPassword::', () => {
   });
   it('should show/hide password', () => {
     const root = mount(<DBClusterConnectionPassword label="test label" password="1234" />);
-    const button = root.find('[data-qa="show-password-button"]').find('button');
+    const button = root.find('[data-testid="show-password-button"]').find('button');
 
     expect(root.text()).toContain('*'.repeat(HIDDEN_PASSWORD_LENGTH));
 

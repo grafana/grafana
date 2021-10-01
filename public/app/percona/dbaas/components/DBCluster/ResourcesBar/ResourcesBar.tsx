@@ -17,7 +17,7 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
   expected,
   resourceLabel,
   icon,
-  dataQa,
+  dataTestId,
   className,
 }) => {
   const styles = useStyles(getStyles);
@@ -34,12 +34,12 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
   };
 
   return (
-    <div data-qa={dataQa} className={cx(styles.resourcesBarWrapper, className)}>
-      <div data-qa="resources-bar-icon" className={styles.iconWrapper}>
+    <div data-testid={dataTestId} className={cx(styles.resourcesBarWrapper, className)}>
+      <div data-testid="resources-bar-icon" className={styles.iconWrapper}>
         {icon}
       </div>
       <div className={styles.resourcesBarContent}>
-        <div data-qa="resources-bar" className={styles.resourcesBarBackground}>
+        <div data-testid="resources-bar" className={styles.resourcesBarBackground}>
           {isResourceInsufficient ? (
             <div className={cx(styles.filled, styles.filledInsufficient, styles.getFilledStyles(100))} />
           ) : (
@@ -62,14 +62,14 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
           )}
         </div>
         {allocated && total && (
-          <span data-qa="resources-bar-label" className={styles.resourcesBarLabel}>
+          <span data-testid="resources-bar-label" className={styles.resourcesBarLabel}>
             {Messages.buildResourcesLabel(formatResources(allocated), allocatedWidth, formatResources(total))}
           </span>
         )}
         {allocated && (
           <div className={styles.captionWrapper}>
             <div className={cx(styles.captionSquare, styles.allocatedSquare)}></div>
-            <span data-qa="resources-bar-allocated-caption" className={styles.captionLabel}>
+            <span data-testid="resources-bar-allocated-caption" className={styles.captionLabel}>
               {Messages.buildAllocatedLabel(resourceLabel)}
             </span>
           </div>
@@ -77,7 +77,7 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
         {expected && expected.value !== 0 && !isResourceInsufficient && (
           <div className={styles.captionWrapper}>
             <div className={cx(styles.captionSquare, expectedSquareStyles)}></div>
-            <span data-qa="resources-bar-expected-caption" className={styles.captionLabel}>
+            <span data-testid="resources-bar-expected-caption" className={styles.captionLabel}>
               {isDownsize
                 ? Messages.buildExpectedAllocatedLabel(formatResources(expectedAllocated), resourceLabel)
                 : Messages.buildExpectedLabel(formatResources(expected), resourceLabel)}
@@ -87,7 +87,7 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
         {expected && isResourceInsufficient && (
           <div className={styles.captionWrapper}>
             <Icon className={styles.insufficientIcon} name="exclamation-triangle" />
-            <span data-qa="resources-bar-insufficient-resources" className={styles.captionLabel}>
+            <span data-testid="resources-bar-insufficient-resources" className={styles.captionLabel}>
               {Messages.buildInsufficientLabel(formatResources(expected), resourceLabel)}
             </span>
           </div>

@@ -8,7 +8,7 @@ export const DiscoveryDocs: FC = () => {
   const styles = useStyles(getStyles);
 
   return (
-    <div data-qa="discovery-docs" className={styles.infoWrapper}>
+    <div data-testid="discovery-docs" className={styles.infoWrapper}>
       <ul className={styles.infoItems}>
         <li>
           <Button type="button" variant="link" onClick={() => window.open(SECURITY_CREDENTIALS_DOC_LINK, '_blank')}>

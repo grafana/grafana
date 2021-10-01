@@ -125,7 +125,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
               className={settingsStyles.actionButton}
               type="submit"
               disabled={!valid || pristine || loading}
-              data-qa="email-settings-submit-button"
+              data-testid="email-settings-submit-button"
             >
               {loading && <Spinner />}
               {Messages.actionButton}

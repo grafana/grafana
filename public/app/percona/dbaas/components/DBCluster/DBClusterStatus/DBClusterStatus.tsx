@@ -56,10 +56,10 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
           finishedSteps={finishedSteps || 0}
           totalSteps={totalSteps || 0}
           message={getProgressMessage(status, prevStatus.current)}
-          dataQa="cluster-progress-bar"
+          dataTestId="cluster-progress-bar"
         />
       ) : (
-        <span className={cx(styles.status, statusStyles)} data-qa={`cluster-status-${STATUS_DATA_QA[status]}`}>
+        <span className={cx(styles.status, statusStyles)} data-testid={`cluster-status-${STATUS_DATA_QA[status]}`}>
           {Messages.dbcluster.table.status[status]}
         </span>
       )}
@@ -69,7 +69,7 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
             {Messages.dbcluster.table.status.logs}
           </a>
           <Tooltip content={<ErrorMessage />} placement="bottom">
-            <span className={cx(styles.statusIcon)} data-qa="cluster-status-error-message">
+            <span className={cx(styles.statusIcon)} data-testid="cluster-status-error-message">
               <Icon name="info-circle" />
             </span>
           </Tooltip>

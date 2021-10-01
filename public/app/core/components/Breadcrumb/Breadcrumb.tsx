@@ -8,7 +8,7 @@ export const Breadcrumb: FC<BreadcrumbProps> = ({ pageModel, currentLocation }) 
   const styles = useStyles(getStyles);
 
   return (
-    <div data-qa="breadcrumb" className={styles.breadcrumb}>
+    <div data-testid="breadcrumb" className={styles.breadcrumb}>
       <BreadcrumbSections pageModel={pageModel} currentLocation={currentLocation} />
     </div>
   );

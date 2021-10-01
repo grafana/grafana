@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { AlertRulesParsedParam } from '../AlertRules.types';
 import { AlertRulesParamsDetails } from './AlertRulesParamsDetails';
 import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 
 describe('AlertRulesParamsDetails', () => {
   it('should display all params', () => {
@@ -31,6 +31,6 @@ describe('AlertRulesParamsDetails', () => {
       },
     ];
     const wrapper = shallow(<AlertRulesParamsDetails params={params} />);
-    expect(wrapper.find(dataQa('alert-rule-param'))).toHaveLength(3);
+    expect(wrapper.find(dataTestId('alert-rule-param'))).toHaveLength(3);
   });
 });

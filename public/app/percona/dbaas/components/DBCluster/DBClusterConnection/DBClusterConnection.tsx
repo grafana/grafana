@@ -45,22 +45,22 @@ export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster })
             <DBClusterConnectionItem
               label={Messages.dbcluster.table.connection.host}
               value={host}
-              dataQa="cluster-connection-host"
+              dataTestId="cluster-connection-host"
             />
             <DBClusterConnectionItem
               label={Messages.dbcluster.table.connection.port}
               value={port}
-              dataQa="cluster-connection-port"
+              dataTestId="cluster-connection-port"
             />
             <DBClusterConnectionItem
               label={Messages.dbcluster.table.connection.username}
               value={username}
-              dataQa="cluster-connection-username"
+              dataTestId="cluster-connection-username"
             />
             <DBClusterConnectionPassword
               label={Messages.dbcluster.table.connection.password}
               password={password}
-              dataQa="cluster-connection-password"
+              dataTestId="cluster-connection-password"
             />
           </>
         )}

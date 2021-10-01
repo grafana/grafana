@@ -143,8 +143,8 @@ export const SettingsPanel: FC = () => {
       <div className={styles.settingsWrapper}>
         {(loading || hasNoAccess) && (
           <div className={styles.emptyBlock}>
-            <EmptyBlock dataQa="empty-block">
-              {loading ? <Spinner /> : hasNoAccess && <div data-qa="unauthorized">{Messages.unauthorized}</div>}
+            <EmptyBlock dataTestId="empty-block">
+              {loading ? <Spinner /> : hasNoAccess && <div data-testid="unauthorized">{Messages.unauthorized}</div>}
             </EmptyBlock>
           </div>
         )}
@@ -155,8 +155,8 @@ export const SettingsPanel: FC = () => {
               tabs={tabs}
               basePath={basePath}
               orientation={TabOrientation.Vertical}
-              tabsDataQa="settings-tabs"
-              contentDataQa="settings-tab-content"
+              tabsdataTestId="settings-tabs"
+              contentdataTestId="settings-tab-content"
               renderTab={({ Content }) => <Content className={styles.tabContentWrapper} />}
             />
             <Diagnostics />

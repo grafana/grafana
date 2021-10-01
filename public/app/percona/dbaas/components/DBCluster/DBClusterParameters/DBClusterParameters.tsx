@@ -22,27 +22,27 @@ export const DBClusterParameters: FC<DBClusterParametersProps> = ({ dbCluster })
           <DBClusterConnectionItem
             label={Messages.dbcluster.table.parameters.clusterName}
             value={dbCluster.kubernetesClusterName}
-            dataQa="cluster-parameters-cluster-name"
+            dataTestId="cluster-parameters-cluster-name"
           />
           <DBClusterConnectionItem
             label={Messages.dbcluster.table.parameters.cpu}
             value={dbCluster.cpu}
-            dataQa="cluster-parameters-cpu"
+            dataTestId="cluster-parameters-cpu"
           />
           <DBClusterConnectionItem
             label={Messages.dbcluster.table.parameters.memory}
             value={`${dbCluster.memory} GB`}
-            dataQa="cluster-parameters-memory"
+            dataTestId="cluster-parameters-memory"
           />
           <DBClusterConnectionItem
             label={Messages.dbcluster.table.parameters.disk}
             value={`${dbCluster.disk} GB`}
-            dataQa="cluster-parameters-disk"
+            dataTestId="cluster-parameters-disk"
           />
           <DBClusterConnectionItem
             label={exposeLabel}
             value={dbCluster.expose ? exposeEnabled : exposeDisabled}
-            dataQa="cluster-parameters-expose"
+            dataTestId="cluster-parameters-expose"
           />
         </div>
       )}

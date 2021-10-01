@@ -15,7 +15,7 @@ export const SelectInstance: FC<SelectInstanceProps> = ({ type, selectInstanceTy
   return (
     <button
       className={styles.navigationButton}
-      data-qa={`${type}-instance`}
+      data-testid={`${type}-instance`}
       onClick={selectInstanceType(type)}
       type="button"
     >

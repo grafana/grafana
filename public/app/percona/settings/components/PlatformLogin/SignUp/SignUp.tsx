@@ -26,7 +26,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   };
 
   const CheckboxLabel: FC = () => (
-    <span data-qa="sign-up-agreement-checkbox-label" className={styles.checkboxLabel}>
+    <span data-testid="sign-up-agreement-checkbox-label" className={styles.checkboxLabel}>
       {`${Messages.agreementFirstPart} `}
       <LinkButton className={styles.link} target="_blank" variant="link" href={TERMS_OF_SERVICE_URL}>
         {Messages.termsOfService}
@@ -39,10 +39,10 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   );
 
   const SignUpForm: FC<FormRenderProps<SignUpCredentials>> = ({ pristine, submitting, valid, handleSubmit }) => (
-    <form data-qa="sign-up-form" className={styles.form} onSubmit={handleSubmit}>
+    <form data-testid="sign-up-form" className={styles.form} onSubmit={handleSubmit}>
       <legend className={styles.legend}>{Messages.signUp}</legend>
       <TextInputField
-        data-qa="sign-up-email-input"
+        data-testid="sign-up-email-input"
         name="email"
         label={Messages.emailLabel}
         validators={[validators.required, validators.validateEmail]}
@@ -50,7 +50,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         parse={(value) => value.trim()}
       />
       <TextInputField
-        data-qa="sign-up-first-name-input"
+        data-testid="sign-up-first-name-input"
         name="firstName"
         label={Messages.firstNameLabel}
         validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
@@ -58,7 +58,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         parse={(value) => value.trim()}
       />
       <TextInputField
-        data-qa="sign-up-last-name-input"
+        data-testid="sign-up-last-name-input"
         name="lastName"
         label={Messages.lastNameLabel}
         validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
@@ -67,12 +67,12 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
       />
       <CheckboxField
         label={<CheckboxLabel />}
-        data-qa="sign-up-agreement-checkbox"
+        data-testid="sign-up-agreement-checkbox"
         validators={[validators.requiredTrue]}
         name="agreement"
       />
       <LoaderButton
-        data-qa="sign-up-submit-button"
+        data-testid="sign-up-submit-button"
         type="submit"
         size="md"
         variant="primary"
@@ -83,7 +83,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         {Messages.signUp}
       </LoaderButton>
       <LoaderButton
-        data-qa="sign-up-to-sign-in-button"
+        data-testid="sign-up-to-sign-in-button"
         type="button"
         size="md"
         variant="link"

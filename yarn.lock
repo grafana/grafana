@@ -5750,13 +5750,13 @@
     "@octokit/openapi-types" "^2.3.1"
     "@types/node" ">= 8"
 
-"@percona/platform-core@^0.8.1":
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/@percona/platform-core/-/platform-core-0.8.1.tgz#5b61fa95f039e0f770b870c4d37550bc71650925"
-  integrity sha512-C2GW1yTQQ3ic0qe9FExf8n/FBIJmrVtGeFuwvBdprsVWoALVgQF0SoqqEmZKvKbfupesDwZLi6yEk0nqa4/W3Q==
+"@percona/platform-core@^0.9.4":
+  version "0.9.4"
+  resolved "https://registry.yarnpkg.com/@percona/platform-core/-/platform-core-0.9.4.tgz#5d686aac74b4f2e1548e2beda89cf0e0f4b8a7f8"
+  integrity sha512-+zulem4rD9rSI/g9jCBwncLIynRSER6pc/nZsxo214irYYpeiW08ucnQ0yU/QJttQx8+yUq2yfB59LsHJXH0Tw==
   dependencies:
-    "@popperjs/core" "^2.5.3"
-    react-popper "^2.2.3"
+    "@popperjs/core" "^2.9.2"
+    react-popper "^2.2.5"
     react-scripts "^4.0.3"
     typescript "4.1.2"
 
@@ -5777,15 +5777,15 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.5.4.tgz#de25b5da9f727985a3757fd59b5d028aba75841a"
   integrity sha512-ZpKr+WTb8zsajqgDkvCEWgp6d5eJT6Q63Ng2neTbzBO76Lbe91vX/iVIW9dikq+Fs3yEo+ls4cxeXABD2LtcbQ==
 
-"@popperjs/core@^2.5.3":
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
-  integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
-
 "@popperjs/core@^2.5.4":
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.6.0.tgz#f022195afdfc942e088ee2101285a1d31c7d727f"
   integrity sha512-cPqjjzuFWNK3BSKLm0abspP0sp/IGOli4p5I5fKFAzdS8fvjdOwDCfZqAaIiXd9lPkOWi3SUUfZof3hEb7J/uw==
+
+"@popperjs/core@^2.9.2":
+  version "2.10.1"
+  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.10.1.tgz#728ecd95ab207aab8a9a4e421f0422db329232be"
+  integrity sha512-HnUhk1Sy9IuKrxEMdIRCxpIqPw6BFsbYSEUO9p/hNw5sMld/+3OLMWQP80F8/db9qsv3qUjs7ZR5bS/R+iinXw==
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
@@ -24197,7 +24197,7 @@ react-popper@2.2.4, react-popper@^2.2.4:
     react-fast-compare "^3.0.1"
     warning "^4.0.2"
 
-react-popper@^2.2.3:
+react-popper@^2.2.5:
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/react-popper/-/react-popper-2.2.5.tgz#1214ef3cec86330a171671a4fbcbeeb65ee58e96"
   integrity sha512-kxGkS80eQGtLl18+uig1UIf9MKixFSyPxglsgLBxlYnyDf65BiY9B3nZSc6C9XUNDgStROB0fMQlTEz1KxGddw==

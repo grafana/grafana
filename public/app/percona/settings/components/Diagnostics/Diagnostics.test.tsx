@@ -11,7 +11,7 @@ describe('Diagnostics::', () => {
     const root = shallow(<Diagnostics />);
 
     expect(root.children().length).toBe(2);
-    expect(root.find('[data-qa="diagnostics-label"]').childAt(0).text()).toBe(label);
-    expect(root.find('[data-qa="diagnostics-button"]').find('span').text()).toBe(action);
+    expect(root.find('[data-testid="diagnostics-label"]').childAt(0).text()).toBe(label);
+    expect(root.find('[data-testid="diagnostics-button"]').find('span').text()).toBe(action);
   });
 });

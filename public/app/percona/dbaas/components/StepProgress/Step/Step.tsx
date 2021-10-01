@@ -9,7 +9,7 @@ export interface StepProps {
   status?: StepStatus;
   disabled?: boolean;
   isLast?: boolean;
-  dataQa?: string;
+  dataTestId?: string;
   onClick: () => void;
 }
 
@@ -27,7 +27,7 @@ export const Step: FC<StepProps> = ({
   status = StepStatus.todo,
   disabled,
   isLast = false,
-  dataQa,
+  dataTestId,
   onClick,
 }) => {
   const styles = useStyles(getStyles);
@@ -46,18 +46,18 @@ export const Step: FC<StepProps> = ({
   }, [status]);
 
   return (
-    <div className={styles.step} data-qa={dataQa}>
+    <div className={styles.step} data-testid={dataTestId}>
       <div
         className={cx(styles.stepHeader, { [styles.stepDisabled]: disabled })}
         onClick={onClick}
-        data-qa="step-header"
+        data-testid="step-header"
       >
         <div className={cx(styles.stepCircle, stepCircleStatusStyles)}>
           {status === StepStatus.done ? <Icon name="check" /> : number}
         </div>
         <div className={styles.stepTitle}>{title}</div>
       </div>
-      <div className={cx(styles.stepContentWrapper, { [styles.stepVerticalLine]: !isLast })} data-qa="step-content">
+      <div className={cx(styles.stepContentWrapper, { [styles.stepVerticalLine]: !isLast })} data-testid="step-content">
         <div
           className={cx(styles.stepContentTransitionWrapper, {
             [styles.stepContentTransitionCurrent(contentHeight)]: status === StepStatus.current,

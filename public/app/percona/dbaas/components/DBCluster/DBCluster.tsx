@@ -77,7 +77,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
       <AddClusterButton
         label={Messages.dbcluster.addAction}
         action={() => setAddModalVisible(!addModalVisible)}
-        data-qa="dbcluster-add-cluster-button"
+        data-testid="dbcluster-add-cluster-button"
       />
     ),
     [addModalVisible, settings]

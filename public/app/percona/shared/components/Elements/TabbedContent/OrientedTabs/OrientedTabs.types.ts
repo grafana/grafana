@@ -5,7 +5,7 @@ export interface OrientedTabsProps {
   tabs: ContentTab[];
   activeTabKey?: string;
   className?: string;
-  dataQa?: string;
+  dataTestId?: string;
   tabClick?: (key: string) => void;
 }
 

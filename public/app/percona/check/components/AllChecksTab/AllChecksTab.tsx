@@ -59,13 +59,13 @@ export const AllChecksTab: FC = () => {
   }, []);
 
   return (
-    <div className={cx(tableStyles.wrapper, styles.wrapper)} data-qa="db-checks-all-checks-wrapper">
+    <div className={cx(tableStyles.wrapper, styles.wrapper)} data-testid="db-checks-all-checks-wrapper">
       {fetchChecksPending ? (
-        <div className={checkPanelStyles.spinner} data-qa="db-checks-all-checks-spinner">
+        <div className={checkPanelStyles.spinner} data-testid="db-checks-all-checks-spinner">
           <Spinner />
         </div>
       ) : (
-        <table className={tableStyles.table} data-qa="db-checks-all-checks-table">
+        <table className={tableStyles.table} data-testid="db-checks-all-checks-table">
           <colgroup>
             <col className={styles.nameColumn} />
             <col />
@@ -73,7 +73,7 @@ export const AllChecksTab: FC = () => {
             <col className={styles.intervalColumn} />
             <col className={styles.actionsColumn} />
           </colgroup>
-          <thead data-qa="db-checks-all-checks-thead">
+          <thead data-testid="db-checks-all-checks-thead">
             <tr>
               <th>{Messages.name}</th>
               <th>{Messages.description}</th>
@@ -82,7 +82,7 @@ export const AllChecksTab: FC = () => {
               <th>{Messages.actions}</th>
             </tr>
           </thead>
-          <tbody data-qa="db-checks-all-checks-tbody">
+          <tbody data-testid="db-checks-all-checks-tbody">
             <ChecksReloadContext.Provider value={{ fetchChecks }}>
               {checks?.map((check) => (
                 <CheckTableRow key={check.name} check={check} onSuccess={updateUI} />

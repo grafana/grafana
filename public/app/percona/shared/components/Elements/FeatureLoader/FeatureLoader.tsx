@@ -13,7 +13,7 @@ import { getStyles } from './FeatureLoader.styles';
 export const FeatureLoader: FC<FeatureLoaderProps> = ({
   featureName,
   featureFlag,
-  messageDataQa = 'settings-link',
+  messagedataTestId = 'settings-link',
   children,
   onError = () => null,
 }) => {
@@ -51,15 +51,15 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
 
   return (
     <div className={styles.emptyBlock}>
-      <EmptyBlock dataQa="empty-block">
+      <EmptyBlock dataTestId="empty-block">
         {loadingSettings ? (
           <Spinner />
         ) : hasNoAccess ? (
-          <div data-qa="unauthorized">{Messages.unauthorized}</div>
+          <div data-testid="unauthorized">{Messages.unauthorized}</div>
         ) : (
           <>
             {Messages.featureDisabled(featureName)}&nbsp;
-            <a data-qa={messageDataQa} className={styles.link} href={PMM_SETTINGS_URL}>
+            <a data-testid={messagedataTestId} className={styles.link} href={PMM_SETTINGS_URL}>
               {Messages.pmmSettings}
             </a>
           </>

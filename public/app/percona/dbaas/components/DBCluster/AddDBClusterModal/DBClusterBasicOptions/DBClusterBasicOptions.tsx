@@ -72,7 +72,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
         validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
       />
       <Field
-        dataQa="dbcluster-kubernetes-cluster-field"
+        dataTestId="dbcluster-kubernetes-cluster-field"
         name={AddDBClusterFields.kubernetesCluster}
         label={Messages.dbcluster.addModal.fields.kubernetesCluster}
         options={kubernetesOptions}
@@ -83,7 +83,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       />
       <Field
         disabled={!form.getState().values[AddDBClusterFields.kubernetesCluster] || !databaseOptions.length}
-        dataQa="dbcluster-database-type-field"
+        dataTestId="dbcluster-database-type-field"
         name={AddDBClusterFields.databaseType}
         label={Messages.dbcluster.addModal.fields.databaseType}
         options={databaseOptions}
@@ -93,7 +93,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       />
       <Field
         disabled={isDatabaseVersionDisabled}
-        dataQa="dbcluster-database-version-field"
+        dataTestId="dbcluster-database-version-field"
         name={AddDBClusterFields.databaseVersion}
         label={Messages.dbcluster.addModal.fields.databaseVersion}
         component={AsyncSelectFieldAdapter}

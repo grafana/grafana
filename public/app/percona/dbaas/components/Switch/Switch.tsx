@@ -24,21 +24,21 @@ export const SwitchField: FC<SwitchFieldProps> = ({
   return (
     <Field<boolean> {...fieldConfig} type="checkbox" name={name} validate={validate}>
       {({ input, meta }: SwitchFieldRenderProps) => (
-        <div className={cx(styles.field, fieldClassName)} data-qa={`${name}-field-container`}>
+        <div className={cx(styles.field, fieldClassName)} data-testid={`${name}-field-container`}>
           {label && (
             <div className={styles.labelWrapper}>
-              <label className={styles.label} htmlFor={inputId} data-qa={`${name}-field-label`}>
+              <label className={styles.label} htmlFor={inputId} data-testid={`${name}-field-label`}>
                 {label}
               </label>
               {tooltip && (
-                <Tooltip content={<span>{tooltip}</span>} data-qa={`${name}-field-tooltip`}>
+                <Tooltip content={<span>{tooltip}</span>} data-testid={`${name}-field-tooltip`}>
                   <Icon name={tooltipIcon} />
                 </Tooltip>
               )}
             </div>
           )}
-          <Switch {...input} value={input.checked} disabled={disabled} data-qa={`${name}-switch`} />
-          <div data-qa={`${name}-field-error-message`} className={styles.errorMessage}>
+          <Switch {...input} value={input.checked} disabled={disabled} data-testid={`${name}-switch`} />
+          <div data-testid={`${name}-field-error-message`} className={styles.errorMessage}>
             {meta.touched && meta.error}
           </div>
         </div>

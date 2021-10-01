@@ -79,9 +79,9 @@ export const AlertRules: FC = () => {
             <div className={styles.nameWrapper} {...restProps}>
               <span>{value}</span>
               {row.isExpanded ? (
-                <IconButton data-qa="hide-alert-rule-details" name="arrow-up" />
+                <IconButton data-testid="hide-alert-rule-details" name="arrow-up" />
               ) : (
-                <IconButton data-qa="show-alert-rule-details" name="arrow-down" />
+                <IconButton data-testid="show-alert-rule-details" name="arrow-down" />
               )}
             </div>
           );
@@ -147,7 +147,7 @@ export const AlertRules: FC = () => {
 
   const renderSelectedSubRow = useCallback(
     ({ original }: Row<AlertRule>) => (
-      <pre data-qa="alert-rules-details" className={styles.details}>
+      <pre data-testid="alert-rules-details" className={styles.details}>
         {original.expr}
       </pre>
     ),
@@ -174,7 +174,7 @@ export const AlertRules: FC = () => {
           icon="plus-square"
           variant="link"
           onClick={handleAddButton}
-          data-qa="alert-rule-template-add-modal-button"
+          data-testid="alert-rule-template-add-modal-button"
         >
           {Messages.alertRuleTemplate.addAction}
         </Button>

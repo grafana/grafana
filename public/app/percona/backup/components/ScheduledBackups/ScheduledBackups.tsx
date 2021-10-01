@@ -281,7 +281,7 @@ export const ScheduledBackups: FC = () => {
           size="md"
           icon="plus-square"
           variant="link"
-          data-qa="scheduled-backup-add-modal-button"
+          data-testid="scheduled-backup-add-modal-button"
           onClick={onAddClick}
         >
           {Messages.add}

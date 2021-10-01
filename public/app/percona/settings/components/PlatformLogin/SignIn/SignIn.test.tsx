@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { SignIn } from './SignIn';
 
 jest.mock('../PlatformLogin.service.ts');
@@ -8,7 +8,7 @@ jest.mock('../PlatformLogin.service.ts');
 xdescribe('SignIn::', () => {
   it('has a "Forgot password" link', () => {
     const wrapper = mount(<SignIn changeMode={jest.fn()} getSettings={jest.fn()} />);
-    const forgotPasswordButton = wrapper.find(dataQa('sign-in-forgot-password-button')).first();
+    const forgotPasswordButton = wrapper.find(dataTestId('sign-in-forgot-password-button')).first();
 
     expect(forgotPasswordButton).not.toBeNull();
   });
@@ -17,7 +17,7 @@ xdescribe('SignIn::', () => {
     const fakeChangeMode = jest.fn();
 
     const wrapper = mount(<SignIn changeMode={fakeChangeMode} getSettings={jest.fn()} />);
-    const switchToSignUpButton = wrapper.find(dataQa('sign-in-to-sign-up-button')).first();
+    const switchToSignUpButton = wrapper.find(dataTestId('sign-in-to-sign-up-button')).first();
 
     switchToSignUpButton.simulate('click');
 

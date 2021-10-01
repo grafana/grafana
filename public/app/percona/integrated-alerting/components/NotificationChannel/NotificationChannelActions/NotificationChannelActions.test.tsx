@@ -1,6 +1,6 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { NotificationChannelActions } from './NotificationChannelActions';
 import { notificationChannelStubs, notificationChannelContextStub } from '../__mocks__/notificationChannelStubs';
 import { NotificationChannelProvider } from '../NotificationChannel.provider';
@@ -9,7 +9,7 @@ describe('NotificationChannelActions', () => {
   it('should render all the actions', () => {
     const wrapper = mount(<NotificationChannelActions notificationChannel={notificationChannelStubs[0]} />);
 
-    expect(wrapper.find(dataQa('edit-notification-channel-button'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('edit-notification-channel-button'))).toBeTruthy();
   });
 
   it('should open edit modal when clicking edit button', () => {
@@ -19,7 +19,7 @@ describe('NotificationChannelActions', () => {
       </NotificationChannelProvider.Provider>
     );
 
-    wrapper.find(dataQa('edit-notification-channel-button')).find('button').simulate('click');
+    wrapper.find(dataTestId('edit-notification-channel-button')).find('button').simulate('click');
 
     expect(notificationChannelContextStub.setSelectedNotificationChannel).toHaveBeenCalled();
     expect(notificationChannelContextStub.setAddModalVisible).toHaveBeenCalled();
@@ -32,7 +32,7 @@ describe('NotificationChannelActions', () => {
       </NotificationChannelProvider.Provider>
     );
 
-    wrapper.find(dataQa('delete-notification-channel-button')).find('button').simulate('click');
+    wrapper.find(dataTestId('delete-notification-channel-button')).find('button').simulate('click');
 
     expect(notificationChannelContextStub.setSelectedNotificationChannel).toHaveBeenCalled();
     expect(notificationChannelContextStub.setDeleteModalVisible).toHaveBeenCalled();

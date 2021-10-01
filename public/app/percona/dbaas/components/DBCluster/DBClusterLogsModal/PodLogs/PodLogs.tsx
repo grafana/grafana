@@ -11,14 +11,14 @@ export const PodLogs: FC<PodLogsProps> = ({ podLogs }) => {
   const [isOpen, setIsOpen] = useState(isPodOpen);
 
   return (
-    <div data-qa="dbcluster-pod-logs">
+    <div data-testid="dbcluster-pod-logs">
       <Collapse collapsible label={name} isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)}>
         <span className={styles.label}>{Messages.events}</span>
-        <pre data-qa="dbcluster-pod-events" className={styles.labelSpacing}>
+        <pre data-testid="dbcluster-pod-events" className={styles.labelSpacing}>
           {events}
         </pre>
         <span className={styles.label}>{Messages.containers}</span>
-        <div data-qa="dbcluster-containers" className={styles.labelSpacing}>
+        <div data-testid="dbcluster-containers" className={styles.labelSpacing}>
           {containers.map((container) => (
             <ContainerLogs key={`${container.name}${container.isOpen}`} containerLogs={container} />
           ))}

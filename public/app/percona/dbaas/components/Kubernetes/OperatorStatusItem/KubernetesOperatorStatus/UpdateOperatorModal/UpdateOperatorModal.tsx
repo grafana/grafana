@@ -43,7 +43,7 @@ export const UpdateOperatorModal: FC<UpdateOperatorModalProps> = ({
   return (
     <div className={styles.modalWrapper}>
       <Modal title={title} isVisible={isVisible} onClose={onClose}>
-        <h4 data-qa="update-operator-message" className={styles.updateModalContent}>
+        <h4 data-testid="update-operator-message" className={styles.updateModalContent}>
           {buildUpdateOperatorMessage(
             operatorTypeLabel,
             <span className={styles.versionHighlight}>{availableVersion}</span>,
@@ -52,10 +52,10 @@ export const UpdateOperatorModal: FC<UpdateOperatorModalProps> = ({
           )}
         </h4>
         <HorizontalGroup justify="space-between" spacing="md">
-          <Button variant="secondary" size="md" onClick={onClose} data-qa="cancel-update-operator-button">
+          <Button variant="secondary" size="md" onClick={onClose} data-testid="cancel-update-operator-button">
             {cancel}
           </Button>
-          <Button size="md" onClick={updateOperator} data-qa="confirm-update-operator-button">
+          <Button size="md" onClick={updateOperator} data-testid="confirm-update-operator-button">
             {confirm}
           </Button>
         </HorizontalGroup>

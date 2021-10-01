@@ -7,17 +7,17 @@ import { styles } from './Overlay.styles';
 export const Overlay: FC<OverlayProps> = ({
   children,
   className,
-  dataQa = 'pmm-overlay-children',
+  dataTestId = 'pmm-overlay-children',
   isPending,
   size = 20,
 }) => (
-  <div className={cx(styles.getOverlayWrapper(size), className)} data-qa="pmm-overlay-wrapper">
+  <div className={cx(styles.getOverlayWrapper(size), className)} data-testid="pmm-overlay-wrapper">
     {isPending ? (
       <>
         <div className={styles.overlay}>
           <Spinner size={size} className={styles.spinner} />
         </div>
-        <div className={styles.childrenWrapper} data-qa={dataQa}>
+        <div className={styles.childrenWrapper} data-testid={dataTestId}>
           {children}
         </div>
       </>

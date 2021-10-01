@@ -106,7 +106,7 @@ export const NodesTab = () => {
                   {selected.length === 1 ? 'node' : 'nodes'}?
                 </h4>
                 <FormElement
-                  dataQa="form-field-force"
+                  dataTestId="form-field-force"
                   label="Force mode"
                   element={
                     <CheckboxField
@@ -136,7 +136,7 @@ export const NodesTab = () => {
           )}
         />
       </Modal>
-      <div className={styles.tableInnerWrapper} data-qa="table-inner-wrapper">
+      <div className={styles.tableInnerWrapper} data-testid="table-inner-wrapper">
         <Table
           className={styles.table}
           columns={NODES_COLUMNS}

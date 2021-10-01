@@ -56,11 +56,11 @@ export const DeleteDBClusterModal: FC<DeleteDBClusterModalProps> = ({
           variant="secondary"
           size="md"
           onClick={() => setVisible(false)}
-          data-qa="cancel-delete-dbcluster-button"
+          data-testid="cancel-delete-dbcluster-button"
         >
           {Messages.dbcluster.deleteModal.cancel}
         </Button>
-        <Button variant="destructive" size="md" onClick={deleteDBCluster} data-qa="delete-dbcluster-button">
+        <Button variant="destructive" size="md" onClick={deleteDBCluster} data-testid="delete-dbcluster-button">
           {Messages.dbcluster.deleteModal.confirm}
         </Button>
       </HorizontalGroup>

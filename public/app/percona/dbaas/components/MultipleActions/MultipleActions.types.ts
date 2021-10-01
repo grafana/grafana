@@ -7,5 +7,5 @@ export interface Action {
 export interface MultipleActionsProps {
   actions: Action[];
   disabled?: boolean;
-  dataQa?: string;
+  dataTestId?: string;
 }

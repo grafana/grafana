@@ -13,7 +13,7 @@ export const RetryModeSelector = ({ retryMode, disabled = false }: RetryModeSele
   const styles = useStyles(getStyles);
 
   return (
-    <div data-qa="retry-mode-selector">
+    <div data-testid="retry-mode-selector">
       <RadioButtonGroupField
         options={RETRY_MODE_OPTIONS}
         name="retryMode"

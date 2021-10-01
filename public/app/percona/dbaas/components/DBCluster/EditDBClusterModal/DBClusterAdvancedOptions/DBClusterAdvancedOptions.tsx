@@ -230,7 +230,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.cpu}
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-cpu"
+              dataTestId="dbcluster-resources-bar-cpu"
             />
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
@@ -239,7 +239,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.memory}
               expected={expectedResources?.expected.memory}
               className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-memory"
+              dataTestId="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}
@@ -248,14 +248,14 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.disk}
               expected={undefined}
               className={cx(resourcesBarStyles, styles.resourcesBarLast)}
-              dataQa="dbcluster-resources-bar-disk"
+              dataTestId="dbcluster-resources-bar-disk"
             />
           </Overlay>
         </div>
       </div>
       <HorizontalGroup justify="center" spacing="md">
         <LoaderButton
-          data-qa="dbcluster-update-cluster-button"
+          data-testid="dbcluster-update-cluster-button"
           size="md"
           variant="primary"
           disabled={!valid || pristine || submitting}
