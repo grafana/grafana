@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
 
@@ -49,6 +50,14 @@ export function getRulesSourceName(rulesSource: RulesSource): string {
 
 export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
+}
+
+export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean {
+  return (
+    name !== GRAFANA_RULES_SOURCE_NAME &&
+    (getDataSourceByName(name)?.jsonData as AlertManagerDataSourceJsonData)?.implementation ===
+      AlertManagerImplementation.prometheus
+  );
 }
 
 export function isGrafanaRulesSource(

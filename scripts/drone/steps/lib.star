@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.4.6'
+grabpl_version = '2.4.8'
 build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -43,6 +43,9 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     ]
     common_cmds = [
         './bin/grabpl verify-drone',
+        # Generate Go code, will install Wire
+        # TODO: Install Wire in Docker image instead
+        'make gen-go',
     ]
 
     if ver_mode == 'release':
@@ -158,9 +161,6 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -391,13 +391,31 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'lint-frontend',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
             'yarn run ci:test-frontend',
+        ],
+    }
+
+def lint_frontend_step():
+    return {
+        'name': 'lint-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
+        'commands': [
+            'yarn run prettier:check',
+            'yarn run lint',
+            'yarn run typecheck',
+            'yarn run check-strict',
         ],
     }
 

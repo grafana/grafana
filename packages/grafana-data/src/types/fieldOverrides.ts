@@ -57,7 +57,7 @@ export interface FieldConfigSource<TOptions extends object = any> {
   overrides: ConfigOverrideRule[];
 }
 
-export interface FieldOverrideContext extends StandardEditorContext<any> {
+export interface FieldOverrideContext extends StandardEditorContext<any, any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
 }

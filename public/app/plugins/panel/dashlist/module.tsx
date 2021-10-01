@@ -1,10 +1,13 @@
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { DashList } from './DashList';
 import { DashListOptions } from './types';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import React from 'react';
 import { TagsInput } from '@grafana/ui';
-import { PermissionLevelString } from '../../../types';
+import {
+  ALL_FOLDER,
+  GENERAL_FOLDER,
+  ReadonlyFolderPicker,
+} from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
   .setPanelOptions((builder) => {
@@ -43,15 +46,13 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         path: 'folderId',
         name: 'Folder',
         id: 'folderId',
-        defaultValue: null,
-        editor: function RenderFolderPicker(props) {
+        defaultValue: undefined,
+        editor: function RenderFolderPicker({ value, onChange }) {
           return (
-            <FolderPicker
-              initialFolderId={props.value}
-              initialTitle="All"
-              enableReset={true}
-              permissionLevel={PermissionLevelString.View}
-              onChange={({ id }) => props.onChange(id)}
+            <ReadonlyFolderPicker
+              initialFolderId={value}
+              onChange={(folder) => onChange(folder?.id)}
+              extraFolders={[ALL_FOLDER, GENERAL_FOLDER]}
             />
           );
         },

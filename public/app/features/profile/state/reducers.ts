@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/core';
 export interface UserState {
   orgId: number;
   timeZone: TimeZone;
+  fiscalYearStartMonth: number;
   user: UserDTO | null;
   teams: Team[];
   orgs: UserOrg[];
@@ -22,6 +23,7 @@ export interface UserState {
 export const initialUserState: UserState = {
   orgId: config.bootData.user.orgId,
   timeZone: config.bootData.user.timezone,
+  fiscalYearStartMonth: 0,
   orgsAreLoading: false,
   sessionsAreLoading: false,
   teamsAreLoading: false,
@@ -38,6 +40,9 @@ export const slice = createSlice({
   reducers: {
     updateTimeZone: (state, action: PayloadAction<{ timeZone: TimeZone }>) => {
       state.timeZone = action.payload.timeZone;
+    },
+    updateFiscalYearStartMonth: (state, action: PayloadAction<{ fiscalYearStartMonth: number }>) => {
+      state.fiscalYearStartMonth = action.payload.fiscalYearStartMonth;
     },
     setUpdating: (state, action: PayloadAction<{ updating: boolean }>) => {
       state.isUpdating = action.payload.updating;
@@ -87,6 +92,13 @@ export const slice = createSlice({
   },
 });
 
+export const updateFiscalYearStartMonthForSession = (fiscalYearStartMonth: number): ThunkResult<void> => {
+  return async (dispatch) => {
+    set(contextSrv, 'user.fiscalYearStartMonth', fiscalYearStartMonth);
+    dispatch(updateFiscalYearStartMonth({ fiscalYearStartMonth }));
+  };
+};
+
 export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> => {
   return async (dispatch) => {
     if (!isString(timeZone) || isEmpty(timeZone)) {
@@ -109,6 +121,7 @@ export const {
   initLoadSessions,
   sessionsLoaded,
   updateTimeZone,
+  updateFiscalYearStartMonth,
 } = slice.actions;
 
 export const userReducer = slice.reducer;

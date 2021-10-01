@@ -87,7 +87,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           onToggle={setIsCollapsed}
           data-testid="group-collapse-toggle"
         />
-        <Icon name={isCollapsed ? 'folder-open' : 'folder'} />
+        <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
           <Tooltip content={rulesSource.name} placement="top">
             <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />

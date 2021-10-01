@@ -30,7 +30,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
                 <td>{key.role}</td>
                 <td>{formatDate(key.expiration, timeZone)}</td>
                 <td>
-                  <DeleteButton size="sm" onConfirm={() => onDelete(key)} />
+                  <DeleteButton aria-label="Delete API key" size="sm" onConfirm={() => onDelete(key)} />
                 </td>
               </tr>
             );
