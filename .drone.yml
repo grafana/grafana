@@ -22,7 +22,7 @@ steps:
     cache_key: test123
     json_key:
       from_secret: tf_google_credentials
-    local_root: /yarn
+    local_root: /cache/yarn
     mount:
     - yarn
     restore: true
@@ -81,7 +81,7 @@ steps:
     cache_key: test123
     json_key:
       from_secret: tf_google_credentials
-    local_root: /yarn
+    local_root: /cache/yarn
     mount:
     - yarn
     rebuild: true
@@ -152,6 +152,6 @@ get:
 
 ---
 kind: signature
-hmac: 21d4e822a3cdcea6854c6f6a84fe0c150e84081e3c13399a42c3d36f787a6010
+hmac: 24ab6d9c5ce9d4e01abce81bc80e26df3f4721239032d9573332a5fae4c952ae
 
 ...
