@@ -89,6 +89,10 @@ func (r Role) GetFallbackDisplayName() string {
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
+
+	if r.IsFixed() && r.DisplayName == "" {
+		r.DisplayName = r.GetFallbackDisplayName()
+	}
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -100,6 +104,10 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 
 func (r Role) MarshalJSON() ([]byte, error) {
 	type Alias Role
+
+	if r.IsFixed() && r.DisplayName == "" {
+		r.DisplayName = r.GetFallbackDisplayName()
+	}
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
