@@ -140,7 +140,7 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
  */
 export interface BackendSrv {
   get(url: string, params?: any, requestId?: string): Promise<any>;
-  delete(url: string): Promise<any>;
+  delete(url: string, data?: any): Promise<any>;
   post(url: string, data?: any): Promise<any>;
   patch(url: string, data?: any): Promise<any>;
   put(url: string, data?: any): Promise<any>;
