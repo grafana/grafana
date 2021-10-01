@@ -33,7 +33,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 	- Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
 	- Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
-1. Click **Certificates & secrets** and then add a new entry under **Client secrets** with the following configuration.
+1. Click **Certificates & secrets**, then add a new entry under **Client secrets** with the following configuration.
    - Description: Grafana OAuth
    - Expires: Never
 
