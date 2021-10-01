@@ -28,7 +28,7 @@ func TestEncryption(t *testing.T) {
 		assert.Equal(t, []byte("grafana"), decrypted)
 	})
 
-	t.Run("decrypting empty payload should not fail", func(t *testing.T) {
+	t.Run("decrypting empty payload should fail", func(t *testing.T) {
 		_, err := Decrypt([]byte(""), "1234")
 		require.Error(t, err)
 
