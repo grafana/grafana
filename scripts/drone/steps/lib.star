@@ -130,7 +130,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 ],
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
-                'YARN_CACHE_FOLDER': '/cache/yarn',
+                'YARN_CACHE_FOLDER': '/cache',
             },
             'commands': ['echo test'] + download_grabpl_cmds + common_cmds,
             'volumes': [
@@ -338,7 +338,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'environment': {
-            'YARN_CACHE_FOLDER': '/cache/yarn',
+            'YARN_CACHE_FOLDER': '/cache',
         },
         'depends_on': [
             'test-frontend',
@@ -413,7 +413,7 @@ def test_frontend_step():
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
-            'YARN_CACHE_FOLDER': '/cache/yarn',
+            'YARN_CACHE_FOLDER': '/cache',
         },
         'commands': [
             'yarn run ci:test-frontend',

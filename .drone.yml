@@ -65,7 +65,7 @@ steps:
   - ls /cache/yarn/v6
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    YARN_CACHE_FOLDER: /cache/yarn
+    YARN_CACHE_FOLDER: /cache
   volumes:
   - name: cache
     path: /cache
@@ -79,7 +79,7 @@ steps:
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
-    YARN_CACHE_FOLDER: /cache/yarn
+    YARN_CACHE_FOLDER: /cache
   depends_on:
   - restore-cache-yarn
   - restore-cache-node-modules
@@ -90,7 +90,7 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:
-    YARN_CACHE_FOLDER: /cache/yarn
+    YARN_CACHE_FOLDER: /cache
   depends_on:
   - test-frontend
 
@@ -192,6 +192,6 @@ get:
 
 ---
 kind: signature
-hmac: f13fd7a64d3f235f0bd8d20606f477ba119a7cfb2497c9dbc9479c80c965647a
+hmac: 37ad62737f2fdecc81633c78b9dd29b8c17e6680c27ec61b617507a4ea3a0a66
 
 ...

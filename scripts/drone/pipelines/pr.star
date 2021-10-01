@@ -2,7 +2,6 @@ load(
     'scripts/drone/steps/lib.star',
     'restore_cache_step',
     'lint_backend_step',
-    'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
     'build_backend_step',
