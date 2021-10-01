@@ -78,3 +78,14 @@ var FrameProcessorsRegistry = []EntityInfo{
 		Example:     DropFieldsFrameProcessorConfig{},
 	},
 }
+
+var DataOutputsRegistry = []EntityInfo{
+	{
+		Type:        DataOutputTypeBuiltin,
+		Description: "use builtin publish handler",
+	},
+	{
+		Type:        DataOutputTypeRedirect,
+		Description: "redirect data processing to another channel rule",
+	},
+}
