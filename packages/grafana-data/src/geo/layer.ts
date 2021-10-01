@@ -1,11 +1,3 @@
-import { RegistryItemWithOptions } from '../utils/Registry';
-import BaseLayer from 'ol/layer/Base';
-import Map from 'ol/Map';
-import { PanelData } from '../types';
-import { GrafanaTheme2 } from '../themes';
-import { PanelOptionsEditorBuilder } from '../utils';
-import { ReactNode } from 'react';
-
 /**
  * @alpha
  */
@@ -61,46 +53,4 @@ export interface MapLayerOptions<TConfig = any> {
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
   opacity?: number;
-}
-
-/**
- * @alpha
- */
-export interface MapLayerHandler {
-  init: () => BaseLayer;
-  update?: (data: PanelData) => void;
-  legend?: ReactNode;
-}
-
-/**
- * Map layer configuration
- *
- * @alpha
- */
-export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
-  /**
-   * This layer can be used as a background
-   */
-  isBaseMap?: boolean;
-
-  /**
-   * Show location controls
-   */
-  showLocation?: boolean;
-
-  /**
-   * Show transparency controls in UI (for non-basemaps)
-   */
-  showOpacity?: boolean;
-
-  /**
-   * Function that configures transformation and returns a transformer
-   * @param options
-   */
-  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
-
-  /**
-   * Show custom elements in the panel edit UI
-   */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }

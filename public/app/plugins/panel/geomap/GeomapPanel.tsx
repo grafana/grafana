@@ -10,7 +10,6 @@ import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
 import {
   PanelData,
-  MapLayerHandler,
   MapLayerOptions,
   PanelProps,
   GrafanaTheme,
@@ -20,7 +19,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
+import { ControlsOptions, GeomapPanelOptions, MapLayerHandler, MapViewConfig } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
@@ -32,6 +31,17 @@ import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 import { GeomapHoverFeature, GeomapHoverPayload } from './event';
 import { DataHoverView } from './components/DataHoverView';
+import {
+  ColorDimensionConfig,
+  DimensionContext,
+  getColorDimensionFromData,
+  getResourceDimensionFromData,
+  getScaleDimensionFromData,
+  getTextDimensionFromData,
+  ResourceDimensionConfig,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
+} from 'app/features/dimensions';
 
 interface MapLayerState {
   config: MapLayerOptions;
@@ -124,14 +134,19 @@ export class GeomapPanel extends Component<Props, State> {
     }
     return layersChanged;
   }
-
   /**
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
+    const context: DimensionContext = {
+      getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(data, color),
+      getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(data, scale),
+      getText: (text: TextDimensionConfig) => getTextDimensionFromData(data, text),
+      getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(data, res),
+    };
     for (const state of this.layers) {
       if (state.handler.update) {
-        state.handler.update(data);
+        state.handler.update(data, context);
       }
     }
   }

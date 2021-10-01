@@ -1,11 +1,5 @@
 import React, { ReactNode } from 'react';
-import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  FrameGeometrySourceMode,
-} from '@grafana/data';
+import { MapLayerOptions, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
@@ -20,12 +14,16 @@ import {
   ScaleDimensionConfig,
   getScaledDimension,
   getColorDimension,
+  ResourceDimensionConfig,
+  ResourceDimensionMode,
+  DimensionContext,
 } from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { circleMarker, markerMakers } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
+import { MapLayerRegistryItem } from '../../types';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -34,8 +32,7 @@ export interface MarkersConfig {
   fillOpacity: number;
   shape?: string;
   showLegend?: boolean;
-  icon?: string;
-  iconScale?: number;
+  iconPath?: ResourceDimensionConfig;
 }
 
 const defaultOptions: MarkersConfig = {
@@ -50,8 +47,10 @@ const defaultOptions: MarkersConfig = {
   fillOpacity: 0.4,
   shape: 'circle',
   showLegend: true,
-  icon: '',
-  iconScale: 1,
+  iconPath: {
+    mode: ResourceDimensionMode.Fixed,
+    fixed: '',
+  },
 };
 
 export const MARKERS_LAYER_ID = 'markers';
@@ -98,9 +97,14 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     return {
       init: () => vectorLayer,
       legend: legend,
-      update: (data: PanelData) => {
+      update: (data: PanelData, ctx: DimensionContext) => {
         if (!data.series?.length) {
           return; // ignore empty
+        }
+
+        let iconPath: string | undefined = undefined;
+        if (config.iconPath) {
+          iconPath = ctx.getResource(config.iconPath).value();
         }
 
         const features: Feature<Point>[] = [];
@@ -115,7 +119,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const colorDim = getColorDimension(frame, config.color, theme);
           const sizeDim = getScaledDimension(frame, config.size);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
-          const icon = config?.icon;
 
           // Map each data value into new points
           for (let i = 0; i < frame.length; i++) {
@@ -132,16 +135,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               frame,
               rowIndex: i,
             });
-            if (!icon) {
+            if (!iconPath) {
               dot.setStyle(shape!.make(color, fillColor, radius));
             } else {
               dot.setStyle(
                 new style.Style({
                   image: new style.Icon({
-                    src: icon,
+                    src: iconPath,
                     color,
                     opacity,
-                    scale: config.iconScale,
                   }),
                 })
               );
@@ -166,7 +168,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     };
   },
   // Marker overlay options
-  registerOptionsUI: (builder) => {
+  registerOptionsUI: (builder: any) => {
     builder
       .addCustomEditor({
         id: 'config.size',
@@ -212,24 +214,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 1,
           step: 0.1,
         },
-        showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
+        showIf: (cfg: any) => markerMakers.getIfExists(cfg.config?.shape)?.hasFill,
       })
-      .addTextInput({
-        path: 'config.icon',
-        name: 'Marker Icon',
-        defaultValue: defaultOptions.icon,
+      .addCustomEditor({
+        id: 'iconSelector',
+        path: 'config.iconPath',
+        name: 'Icon Path',
+        editor: ResourceDimensionEditor,
         settings: {
-          placeholder: 'Enter custom icon url',
-        },
-      })
-      .addSliderInput({
-        path: 'config.iconScale',
-        name: 'Icon scale',
-        defaultValue: defaultOptions.iconScale,
-        settings: {
-          min: 0,
-          max: 20,
-          step: 0.05,
+          resourceType: 'icon',
         },
       })
       .addBooleanSwitch({

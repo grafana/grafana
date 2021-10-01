@@ -1,10 +1,11 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import { MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
 import * as source from 'ol/source';
 import * as layer from 'ol/layer';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { MapLayerRegistryItem } from '../../types';
 
 export interface LastPointConfig {
   icon?: string;

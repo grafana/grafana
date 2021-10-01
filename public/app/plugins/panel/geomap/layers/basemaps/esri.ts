@@ -1,5 +1,6 @@
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
+import { MapLayerOptions, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
 import Map from 'ol/Map';
+import { MapLayerRegistryItem } from '../../types';
 import { xyzTiles, defaultXYZConfig, XYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
@@ -69,7 +70,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
     return xyzTiles.create(map, opts, theme);
   },
 
-  registerOptionsUI: (builder) => {
+  registerOptionsUI: (builder: any) => {
     builder
       .addSelect({
         path: 'config.server',
@@ -85,7 +86,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
         settings: {
           placeholder: defaultXYZConfig.url,
         },
-        showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+        showIf: (cfg: any) => cfg.config?.server === CUSTOM_SERVICE,
       })
       .addTextInput({
         path: 'config.attribution',
@@ -93,7 +94,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
         settings: {
           placeholder: defaultXYZConfig.attribution,
         },
-        showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+        showIf: (cfg: any) => cfg.config?.server === CUSTOM_SERVICE,
       });
   },
 
