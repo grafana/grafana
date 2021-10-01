@@ -1,7 +1,12 @@
 import React from 'react';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
-import { fetchAlertManagerConfig, deleteAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
+import {
+  fetchAlertManagerConfig,
+  deleteAlertManagerConfig,
+  updateAlertManagerConfig,
+  fetchStatus,
+} from './api/alertmanager';
 import { configureStore } from 'app/store/configureStore';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import Admin from './Admin';
@@ -9,13 +14,17 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { render, waitFor } from '@testing-library/react';
-import { byLabelText, byRole } from 'testing-library-selector';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { DataSourceType } from './utils/datasource';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import userEvent from '@testing-library/user-event';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -28,6 +37,7 @@ const mocks = {
     fetchConfig: typeAsJestMock(fetchAlertManagerConfig),
     deleteAlertManagerConfig: typeAsJestMock(deleteAlertManagerConfig),
     updateAlertManagerConfig: typeAsJestMock(updateAlertManagerConfig),
+    fetchStatus: typeAsJestMock(fetchStatus),
   },
 };
 
@@ -53,6 +63,13 @@ const dataSources = {
     name: 'CloudManager',
     type: DataSourceType.Alertmanager,
   }),
+  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
+    name: 'PromManager',
+    type: DataSourceType.Alertmanager,
+    jsonData: {
+      implementation: AlertManagerImplementation.prometheus,
+    },
+  }),
 };
 
 const ui = {
@@ -60,6 +77,7 @@ const ui = {
   resetButton: byRole('button', { name: /Reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   configInput: byLabelText<HTMLTextAreaElement>(/Configuration/),
+  readOnlyConfig: byTestId('readonly-config'),
 };
 
 describe('Alerting Admin', () => {
@@ -116,5 +134,21 @@ describe('Alerting Admin', () => {
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
     await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
     expect(input.value).toEqual(JSON.stringify(newConfig, null, 2));
+  });
+
+  it('Read-only when using Prometheus Alertmanager', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: someCloudAlertManagerConfig.alertmanager_config,
+    });
+    await renderAdminPage(dataSources.promAlertManager.name);
+
+    await ui.readOnlyConfig.find();
+    expect(ui.configInput.query()).not.toBeInTheDocument();
+    expect(ui.resetButton.query()).not.toBeInTheDocument();
+    expect(ui.saveButton.query()).not.toBeInTheDocument();
+
+    expect(mocks.api.fetchConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });
 });

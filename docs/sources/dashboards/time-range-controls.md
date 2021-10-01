@@ -13,31 +13,32 @@ This page describes supported time units and relative ranges, the common time co
 
 ## Time units and relative ranges
 
-The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`.
+The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `Q (quarters)` and `y (years)`.
 
-The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end.
+The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/<time unit>` to the end. To view fiscal periods, use `fQ (fiscal quarter)` and `fy (fiscal year)` time units.
 
 The plus operator allows you to step forward in time relative to now. You might use this feature to look at predicted data in the future, for example.
 
 Here are some examples:
 
-| Example relative range | From:      | To:        |
-| ---------------------- | ---------- | ---------- |
-| Last 5 minutes         | `now-5m`   | `now`      |
-| The day so far         | `now/d`    | `now`      |
-| This week              | `now/w`    | `now/w`    |
-| This week so far       | `now/w`    | `now`      |
-| This month             | `now/M`    | `now/M`    |
-| This month so far      | `now/M`    | `now`      |
-| Previous Month         | `now-1M/M` | `now-1M/M` |
-| This year so far       | `now/Y`    | `now`      |
-| This Year              | `now/Y`    | `now/Y`    |
+| Example relative range | From:       | To:         |
+| ---------------------- | ----------- | ----------- |
+| Last 5 minutes         | `now-5m`    | `now`       |
+| The day so far         | `now/d`     | `now`       |
+| This week              | `now/w`     | `now/w`     |
+| This week so far       | `now/w`     | `now`       |
+| This month             | `now/M`     | `now/M`     |
+| This month so far      | `now/M`     | `now`       |
+| Previous Month         | `now-1M/M`  | `now-1M/M`  |
+| This year so far       | `now/Y`     | `now`       |
+| This Year              | `now/Y`     | `now/Y`     |
+| Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
 ## Common time range controls
 
 The dashboard and panel time controls have a common user interface (UI).
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-8-2.png" max-width="700px">
 
 The options are defined below.
 
@@ -55,7 +56,7 @@ Click on the current time range to change the time range. You can change the cur
 
 ### Relative time range
 
-Select the relative time range from the **Relative time ranges** list. Some examples of time ranges are:
+Select the relative time range from the **Relative time ranges** list. You can filter the list using the input field at the top. Some examples of time ranges are:
 
 - Last 30 minutes
 - Last 12 hours
@@ -95,7 +96,9 @@ By default, Grafana does not automatically refresh the dashboard. Queries run on
 
 Time settings are saved on a per-dashboard basis.
 
-To access the dashboard time settings, click the **Dashboard settings** (gear) icon at the top of the screen. The settings are in the **Time Options** section of the General tab.
+You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
+
+For more advanced time settings, click the **Dashboard settings** (gear) icon at the top of the UI. Then navigate to the **Time Options** section of the General tab.
 
 - **Timezone -** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
   - **Default -** The default selected time zone for the user profile, team, or organization is used. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses local browser time.
