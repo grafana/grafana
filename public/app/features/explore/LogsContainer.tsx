@@ -2,7 +2,14 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, Field, LoadingState, LogRowModel, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  Field,
+  hasLogsContextSupport,
+  LoadingState,
+  LogRowModel,
+  RawTimeRange,
+} from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
@@ -36,7 +43,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance?.getLogRowContext) {
+    if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.getLogRowContext(row, options);
     }
 
@@ -46,7 +53,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   showContextToggle = (row?: LogRowModel): boolean => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance?.showContextToggle) {
+    if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.showContextToggle(row);
     }
 

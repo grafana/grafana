@@ -251,12 +251,27 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * Retrieve context for a given log row
+   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   *
+   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
+   * the same signature in DataSourceWithLogsContextSupport).
+   * This method will be removed from DataSourceApi in the future. Some editors may still show
+   * a deprecation warning which can be ignored for time being.
    */
   getLogRowContext?: <TContextQueryOptions extends {}>(
     row: LogRowModel,
     options?: TContextQueryOptions
   ) => Promise<DataQueryResponse>;
+
+  /**
+   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   *
+   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
+   * the same signature in DataSourceWithLogsContextSupport).
+   * This method will be removed from DataSourceApi in the future. Some editors may still show
+   * a deprecation warning which can be ignored for time being.
+   */
+  showContextToggle?(row?: LogRowModel): boolean;
 
   /**
    * Variable query action.
@@ -306,8 +321,6 @@ abstract class DataSourceApi<
   languageProvider?: any;
 
   getVersion?(optionalOptions?: any): Promise<string>;
-
-  showContextToggle?(row?: LogRowModel): boolean;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 
