@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
 import { useTheme2 } from '@grafana/ui';
-
+const defaultFieldConfig = { defaults: {}, overrides: [] };
 export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,
@@ -18,12 +18,17 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     title,
     onOptionsChange = () => {},
     onChangeTimeRange = () => {},
+    fieldConfig: externalFieldConfig = defaultFieldConfig,
   } = props;
 
-  const [fieldConfig, setFieldConfig] = useFieldConfigState(props);
+  const [localFieldConfig, setFieldConfig] = useState(externalFieldConfig);
   const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
-  const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
+  const optionsWithDefaults = useOptionDefaults(plugin, options, localFieldConfig);
   const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
+
+  useEffect(() => {
+    setFieldConfig((lfc) => ({ ...lfc, ...externalFieldConfig }));
+  }, [externalFieldConfig]);
 
   if (error) {
     return <div>Failed to load plugin: {error.message}</div>;
@@ -51,7 +56,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
       timeRange={dataWithOverrides.timeRange}
       timeZone={timeZone}
       options={optionsWithDefaults!.options}
-      fieldConfig={fieldConfig}
+      fieldConfig={localFieldConfig}
       transparent={false}
       width={width}
       height={height}
@@ -94,11 +99,13 @@ function useFieldOverrides(
   const series = data?.series;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const theme = useTheme2();
+  const structureRev = useRef(0);
 
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
       return;
     }
+    structureRev.current = structureRev.current + 1;
 
     return {
       ...data,
@@ -110,42 +117,11 @@ function useFieldOverrides(
         theme,
         timeZone,
       }),
+      structureRev: structureRev.current,
     };
   }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
 }
 
 function pluginIsLoading(loading: boolean, plugin: PanelPlugin<any, any> | undefined, pluginId: string) {
   return loading || plugin?.meta.id !== pluginId;
-}
-
-function useFieldConfigState(props: PanelRendererProps): [FieldConfigSource, (config: FieldConfigSource) => void] {
-  const {
-    onFieldConfigChange,
-    fieldConfig = {
-      defaults: {},
-      overrides: [],
-    },
-  } = props;
-
-  // First render will detect if the PanelRenderer will manage the
-  // field config state internally or externally by the consuming
-  // component. This will also prevent the way of managing state to
-  // change during the components life cycle.
-  const isManagedInternally = useRef(() => !!onFieldConfigChange);
-  const [internalConfig, setInternalConfig] = useState(fieldConfig);
-
-  const setExternalConfig = useCallback(
-    (config: FieldConfigSource) => {
-      if (!onFieldConfigChange) {
-        return;
-      }
-      onFieldConfigChange(config);
-    },
-    [onFieldConfigChange]
-  );
-
-  if (isManagedInternally) {
-    return [internalConfig, setInternalConfig];
-  }
-  return [fieldConfig, setExternalConfig];
 }

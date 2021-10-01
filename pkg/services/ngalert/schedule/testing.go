@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -109,10 +110,10 @@ func (f *fakeRuleStore) GetRuleGroupAlertRules(q *models.ListRuleGroupAlertRules
 
 	return nil
 }
-func (f *fakeRuleStore) GetNamespaces(_ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *fakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	return nil, nil
 }
-func (f *fakeRuleStore) GetNamespaceByTitle(_ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
 }
 func (f *fakeRuleStore) GetOrgRuleGroups(_ *models.ListOrgRuleGroupsQuery) error { return nil }

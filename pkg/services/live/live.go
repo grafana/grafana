@@ -6,17 +6,22 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -28,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/liveplugin"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
@@ -35,11 +41,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"gopkg.in/redis.v5"
+	"golang.org/x/sync/errgroup"
+	"gopkg.in/macaron.v1"
 )
 
 var (
@@ -57,7 +60,8 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore) (*GrafanaLive, error) {
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
+	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		PluginContextProvider: plugCtxProvider,
@@ -71,6 +75,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
+		usageStatsService: usageStatsService,
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -137,10 +142,64 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		node.SetPresenceManager(presenceManager)
 	}
 
+	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, nil)
+
+	var managedStreamRunner *managedstream.Runner
+	if g.IsHA() {
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: g.Cfg.LiveHAEngineAddress,
+		})
+		cmd := redisClient.Ping(context.TODO())
+		if _, err := cmd.Result(); err != nil {
+			return nil, fmt.Errorf("error pinging Redis: %v", err)
+		}
+		managedStreamRunner = managedstream.NewRunner(
+			g.Publish,
+			channelLocalPublisher,
+			managedstream.NewRedisFrameCache(redisClient),
+		)
+	} else {
+		managedStreamRunner = managedstream.NewRunner(
+			g.Publish,
+			channelLocalPublisher,
+			managedstream.NewMemoryFrameCache(),
+		)
+	}
+
+	g.ManagedStreamRunner = managedStreamRunner
+	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
+		var builder pipeline.RuleBuilder
+		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
+			builder = &pipeline.DevRuleBuilder{
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				ChannelHandlerGetter: g,
+			}
+		} else {
+			storage := &pipeline.FileStorage{
+				DataPath: cfg.DataPath,
+			}
+			g.channelRuleStorage = storage
+			builder = &pipeline.StorageRuleBuilder{
+				Node:                 node,
+				ManagedStream:        g.ManagedStreamRunner,
+				FrameStorage:         pipeline.NewFrameStorage(),
+				RuleStorage:          storage,
+				ChannelHandlerGetter: g,
+			}
+		}
+		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+		g.Pipeline, err = pipeline.New(channelRuleGetter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
-	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node)
+	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
 	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
-	g.runStreamManager = runstream.NewManager(channelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -152,27 +211,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
-	var managedStreamRunner *managedstream.Runner
-	if g.IsHA() {
-		redisClient := redis.NewClient(&redis.Options{
-			Addr: g.Cfg.LiveHAEngineAddress,
-		})
-		cmd := redisClient.Ping()
-		if _, err := cmd.Result(); err != nil {
-			return nil, fmt.Errorf("error pinging Redis: %v", err)
-		}
-		managedStreamRunner = managedstream.NewRunner(
-			g.Publish,
-			managedstream.NewRedisFrameCache(redisClient),
-		)
-	} else {
-		managedStreamRunner = managedstream.NewRunner(
-			g.Publish,
-			managedstream.NewMemoryFrameCache(),
-		)
-	}
-
-	g.ManagedStreamRunner = managedStreamRunner
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
 	if err != nil {
@@ -277,7 +315,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
-		newCtx = livecontext.SetContextStreamID(newCtx, ctx.Params(":streamId"))
+		newCtx = livecontext.SetContextStreamID(newCtx, macaron.Params(ctx.Req)[":streamId"])
 		r := ctx.Req.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
@@ -289,6 +327,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 	}, middleware.ReqOrgAdmin)
+
+	g.registerUsageMetrics()
 
 	return g, nil
 }
@@ -323,15 +363,15 @@ type GrafanaLive struct {
 	GrafanaScope CoreGrafanaScope
 
 	ManagedStreamRunner *managedstream.Runner
+	Pipeline            *pipeline.Pipeline
+	channelRuleStorage  pipeline.RuleStorage
 
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
-}
 
-type UsageStats struct {
-	NumClients int
-	NumUsers   int
+	usageStatsService usagestats.Service
+	usageStats        usageStats
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -347,11 +387,34 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
+	eGroup, eCtx := errgroup.WithContext(ctx)
+
+	eGroup.Go(func() error {
+		updateStatsTicker := time.NewTicker(time.Minute * 30)
+		defer updateStatsTicker.Stop()
+
+		for {
+			select {
+			case <-updateStatsTicker.C:
+				g.sampleLiveStats()
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	})
+
 	if g.runStreamManager != nil {
 		// Only run stream manager if GrafanaLive properly initialized.
-		return g.runStreamManager.Run(ctx)
+		eGroup.Go(func() error {
+			return g.runStreamManager.Run(eCtx)
+		})
 	}
-	return nil
+
+	return eGroup.Wait()
+}
+
+func (g *GrafanaLive) ChannelRuleStorage() pipeline.RuleStorage {
+	return g.channelRuleStorage
 }
 
 func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
@@ -470,22 +533,47 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
 
-	handler, addr, err := g.GetChannelHandler(user, channel)
-	if err != nil {
-		if errors.Is(err, live.ErrInvalidChannelID) {
-			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+	var reply models.SubscribeReply
+	var status backend.SubscribeStreamStatus
+
+	var subscribeRuleFound bool
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		if ok && rule.Subscriber != nil {
+			subscribeRuleFound = true
+			var err error
+			reply, status, err = rule.Subscriber.Subscribe(client.Context(), pipeline.Vars{
+				OrgID:   orgID,
+				Channel: channel,
+			})
+			if err != nil {
+				logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+				return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+			}
+		}
 	}
-	reply, status, err := handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
-		Channel: channel,
-		Path:    addr.Path,
-	})
-	if err != nil {
-		logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+	if !subscribeRuleFound {
+		handler, addr, err := g.GetChannelHandler(user, channel)
+		if err != nil {
+			if errors.Is(err, live.ErrInvalidChannelID) {
+				logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+				return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+			}
+			logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
+		reply, status, err = handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
+			Channel: channel,
+			Path:    addr.Path,
+		})
+		if err != nil {
+			logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		}
 	}
 	if status != backend.SubscribeStreamStatusOK {
 		// using HTTP error codes for WS errors too.
@@ -679,7 +767,7 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, namespace)
+	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, live.ScopeStream, namespace)
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
@@ -713,13 +801,6 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 		return 0, err
 	}
 	return len(p.Presence), nil
-}
-
-func (g *GrafanaLive) UsageStats() UsageStats {
-	clients := g.node.Hub().NumClients()
-	users := g.node.Hub().NumUsers()
-
-	return UsageStats{NumClients: clients, NumUsers: users}
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
@@ -780,7 +861,7 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
-	path := ctx.Params("*")
+	path := macaron.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
 		return response.JSON(200, util.DynMap{
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgId),
@@ -788,6 +869,120 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 	}
 	return response.JSONStreaming(404, util.DynMap{
 		"message": "Info is not supported for this channel",
+	})
+}
+
+// HandleChannelRulesListHTTP ...
+func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.Response {
+	result, err := g.channelRuleStorage.ListChannelRules(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rules": result,
+	})
+}
+
+type configInfo struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Example     interface{} `json:"example,omitempty"`
+}
+
+// HandlePipelineEntitiesListHTTP ...
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"subscribers": []configInfo{
+			{
+				Type:        pipeline.SubscriberTypeBuiltin,
+				Description: "apply builtin feature subscribe logic",
+			},
+			{
+				Type:        pipeline.SubscriberTypeManagedStream,
+				Description: "apply managed stream subscribe logic",
+			},
+			{
+				Type:        pipeline.SubscriberTypeMultiple,
+				Description: "apply multiple subscribers",
+			},
+			{
+				Type:        pipeline.SubscriberTypeAuthorizeRole,
+				Description: "authorize user role",
+			},
+		},
+		"outputs": []configInfo{
+			{
+				Type:        pipeline.OutputTypeManagedStream,
+				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
+				Example:     pipeline.ManagedStreamOutputConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeMultiple,
+				Description: "Send the output to multiple destinations",
+				Example:     pipeline.MultipleOutputterConfig{},
+			},
+			{
+				Type:        pipeline.OutputTypeConditional,
+				Description: "send to an output depending on frame values",
+				Example:     pipeline.ConditionalOutputConfig{},
+			},
+			{
+				Type: pipeline.OutputTypeRedirect,
+			},
+			{
+				Type: pipeline.OutputTypeThreshold,
+			},
+			{
+				Type: pipeline.OutputTypeChangeLog,
+			},
+			{
+				Type: pipeline.OutputTypeRemoteWrite,
+			},
+		},
+		"converters": []configInfo{
+			{
+				Type: pipeline.ConverterTypeJsonAuto,
+			},
+			{
+				Type: pipeline.ConverterTypeJsonExact,
+			},
+			{
+				Type:        pipeline.ConverterTypeInfluxAuto,
+				Description: "accept influx line protocol",
+				Example:     pipeline.AutoInfluxConverterConfig{},
+			},
+			{
+				Type: pipeline.ConverterTypeJsonFrame,
+			},
+		},
+		"processors": []configInfo{
+			{
+				Type:        pipeline.ProcessorTypeKeepFields,
+				Description: "list the fields that should stay",
+				Example:     pipeline.KeepFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeDropFields,
+				Description: "list the fields that should be removed",
+				Example:     pipeline.DropFieldsProcessorConfig{},
+			},
+			{
+				Type:        pipeline.ProcessorTypeMultiple,
+				Description: "apply multiple processors",
+				Example:     pipeline.MultipleProcessorConfig{},
+			},
+		},
+	})
+}
+
+// HandleRemoteWriteBackendsListHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
+	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"remoteWriteBackends": result,
 	})
 }
 
@@ -813,4 +1008,69 @@ func handleLog(msg centrifuge.LogEntry) {
 	default:
 		loggerCF.Debug(msg.Message, arr...)
 	}
+}
+
+func (g *GrafanaLive) sampleLiveStats() {
+	numClients := g.node.Hub().NumClients()
+	numUsers := g.node.Hub().NumUsers()
+
+	g.usageStats.sampleCount++
+	g.usageStats.numClientsSum += numClients
+	g.usageStats.numUsersSum += numUsers
+
+	if numClients > g.usageStats.numClientsMax {
+		g.usageStats.numClientsMax = numClients
+	}
+
+	if numClients < g.usageStats.numClientsMin {
+		g.usageStats.numClientsMin = numClients
+	}
+
+	if numUsers > g.usageStats.numUsersMax {
+		g.usageStats.numUsersMax = numUsers
+	}
+
+	if numUsers < g.usageStats.numUsersMin {
+		g.usageStats.numUsersMin = numUsers
+	}
+}
+
+func (g *GrafanaLive) resetLiveStats() {
+	g.usageStats = usageStats{}
+}
+
+func (g *GrafanaLive) registerUsageMetrics() {
+	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
+
+	g.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+		liveUsersAvg := 0
+		liveClientsAvg := 0
+
+		if g.usageStats.sampleCount > 0 {
+			liveUsersAvg = g.usageStats.numUsersSum / g.usageStats.sampleCount
+			liveClientsAvg = g.usageStats.numClientsSum / g.usageStats.sampleCount
+		}
+
+		metrics := map[string]interface{}{
+			"stats.live_samples.count":     g.usageStats.sampleCount,
+			"stats.live_users_max.count":   g.usageStats.numUsersMax,
+			"stats.live_users_min.count":   g.usageStats.numUsersMin,
+			"stats.live_users_avg.count":   liveUsersAvg,
+			"stats.live_clients_max.count": g.usageStats.numClientsMax,
+			"stats.live_clients_min.count": g.usageStats.numClientsMin,
+			"stats.live_clients_avg.count": liveClientsAvg,
+		}
+
+		return metrics, nil
+	})
+}
+
+type usageStats struct {
+	numClientsMax int
+	numClientsMin int
+	numClientsSum int
+	numUsersMax   int
+	numUsersMin   int
+	numUsersSum   int
+	sampleCount   int
 }

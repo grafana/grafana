@@ -43,9 +43,7 @@ type Context struct {
 	*Router
 	Req      *http.Request
 	Resp     ResponseWriter
-	params   Params
 	template *template.Template
-	Data     map[string]interface{}
 }
 
 func (ctx *Context) handler() Handler {
@@ -64,27 +62,13 @@ func (ctx *Context) Next() {
 	ctx.run()
 }
 
-// Written returns whether the context response has been written to
-func (ctx *Context) Written() bool {
-	return ctx.Resp.Written()
-}
-
 func (ctx *Context) run() {
 	for ctx.index <= len(ctx.handlers) {
-		vals, err := ctx.Invoke(ctx.handler())
-		if err != nil {
+		if _, err := ctx.Invoke(ctx.handler()); err != nil {
 			panic(err)
 		}
 		ctx.index++
-
-		// if the handler returned something, write it to the http response
-		if len(vals) > 0 {
-			ev := ctx.GetVal(reflect.TypeOf(ReturnHandler(nil)))
-			handleReturn := ev.Interface().(ReturnHandler)
-			handleReturn(ctx, vals)
-		}
-
-		if ctx.Written() {
+		if ctx.Resp.Written() {
 			return
 		}
 	}
@@ -195,32 +179,10 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
-// Params returns value of given param name.
-// e.g. ctx.Params(":uid") or ctx.Params("uid")
-func (ctx *Context) Params(name string) string {
-	if len(name) == 0 {
-		return ""
-	}
-	if len(name) > 1 && name[0] != ':' {
-		name = ":" + name
-	}
-	return ctx.params[name]
-}
-
-// AllParams returns all params.
-func (ctx *Context) AllParams() Params {
-	return ctx.params
-}
-
-// ReplaceAllParams replace all current params with given params
-func (ctx *Context) ReplaceAllParams(params Params) {
-	ctx.params = params
-}
-
 // ParamsInt64 returns params result in int64 type.
 // e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
-	n, _ := strconv.ParseInt(ctx.Params(name), 10, 64)
+	n, _ := strconv.ParseInt(Params(ctx.Req)[name], 10, 64)
 	return n
 }
 

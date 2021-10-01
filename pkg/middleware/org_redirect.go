@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
@@ -23,8 +24,8 @@ func OrgRedirect(cfg *setting.Cfg) macaron.Handler {
 			return
 		}
 
-		ctx, ok := c.Data["ctx"].(*models.ReqContext)
-		if !ok || !ctx.IsSignedIn {
+		ctx := contexthandler.FromContext(req.Context())
+		if !ctx.IsSignedIn {
 			return
 		}
 

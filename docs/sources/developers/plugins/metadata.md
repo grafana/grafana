@@ -184,17 +184,17 @@ For data source plugins. Proxy routes used for plugin authentication and adding 
 
 ### Properties
 
-| Property       | Type                    | Required | Description                                                                                             |
-| -------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `body`         | [object](#body)         | No       | For data source plugins. Route headers set the body content and length to the proxied request.          |
-| `headers`      | array                   | No       | For data source plugins. Route headers adds HTTP headers to the proxied request.                        |
-| `jwtTokenAuth` | [object](#jwttokenauth) | No       | For data source plugins. Token authentication section used with an JWT OAuth API.                       |
-| `method`       | string                  | No       | For data source plugins. Route method matches the HTTP verb like GET or POST.                           |
-| `path`         | string                  | No       | For data source plugins. The route path that is replaced by the route URL field when proxying the call. |
-| `reqRole`      | string                  | No       |                                                                                                         |
-| `reqSignedIn`  | boolean                 | No       |                                                                                                         |
-| `tokenAuth`    | [object](#tokenauth)    | No       | For data source plugins. Token authentication section used with an OAuth API.                           |
-| `url`          | string                  | No       | For data source plugins. Route URL is where the request is proxied to.                                  |
+| Property       | Type                    | Required | Description                                                                                                                               |
+| -------------- | ----------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `body`         | [object](#body)         | No       | For data source plugins. Route headers set the body content and length to the proxied request.                                            |
+| `headers`      | array                   | No       | For data source plugins. Route headers adds HTTP headers to the proxied request.                                                          |
+| `jwtTokenAuth` | [object](#jwttokenauth) | No       | For data source plugins. Token authentication section used with an JWT OAuth API.                                                         |
+| `method`       | string                  | No       | For data source plugins. Route method matches the HTTP verb like GET or POST. Multiple methods can be provided as a comma-separated list. |
+| `path`         | string                  | No       | For data source plugins. The route path that is replaced by the route URL field when proxying the call.                                   |
+| `reqRole`      | string                  | No       |                                                                                                                                           |
+| `reqSignedIn`  | boolean                 | No       |                                                                                                                                           |
+| `tokenAuth`    | [object](#tokenauth)    | No       | For data source plugins. Token authentication section used with an OAuth API.                                                             |
+| `url`          | string                  | No       | For data source plugins. Route URL is where the request is proxied to.                                                                    |
 
 ### body
 
@@ -209,11 +209,11 @@ For data source plugins. Token authentication section used with an JWT OAuth API
 
 #### Properties
 
-| Property | Type              | Required | Description                                          |
-| -------- | ----------------- | -------- | ---------------------------------------------------- |
-| `params` | [object](#params) | No       | Parameters for the JWT token authentication request. |
-| `scopes` | string            | No       |                                                      |
-| `url`    | string            | No       | URL to fetch the JWT token.                          |
+| Property | Type              | Required | Description                                                           |
+| -------- | ----------------- | -------- | --------------------------------------------------------------------- |
+| `params` | [object](#params) | No       | Parameters for the JWT token authentication request.                  |
+| `scopes` | string[]          | No       | The list of scopes that your application should be granted access to. |
+| `url`    | string            | No       | URL to fetch the JWT token.                                           |
 
 #### params
 
@@ -221,12 +221,11 @@ Parameters for the JWT token authentication request.
 
 ##### Properties
 
-| Property       | Type     | Required | Description |
-| -------------- | -------- | -------- | ----------- |
-| `client_email` | string   | No       |             |
-| `private_key`  | string   | No       |             |
-| `scopes`       | string[] | No       |             |
-| `token_uri`    | string   | No       |             |
+| Property       | Type   | Required | Description |
+| -------------- | ------ | -------- | ----------- |
+| `client_email` | string | No       |             |
+| `private_key`  | string | No       |             |
+| `token_uri`    | string | No       |             |
 
 ### tokenAuth
 
@@ -234,11 +233,11 @@ For data source plugins. Token authentication section used with an OAuth API.
 
 #### Properties
 
-| Property | Type              | Required | Description                                      |
-| -------- | ----------------- | -------- | ------------------------------------------------ |
-| `params` | [object](#params) | No       | Parameters for the token authentication request. |
-| `scopes` | string            | No       |                                                  |
-| `url`    | string            | No       | URL to fetch the authentication token.           |
+| Property | Type              | Required | Description                                                           |
+| -------- | ----------------- | -------- | --------------------------------------------------------------------- |
+| `params` | [object](#params) | No       | Parameters for the token authentication request.                      |
+| `scopes` | string[]          | No       | The list of scopes that your application should be granted access to. |
+| `url`    | string            | No       | URL to fetch the authentication token.                                |
 
 #### params
 

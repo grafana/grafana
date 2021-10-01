@@ -47,8 +47,8 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaces(int64, *models.SignedInUser) (map[string]*models.Folder, error)
-	GetNamespaceByTitle(string, int64, *models.SignedInUser, bool) (*models.Folder, error)
+	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
+	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -211,7 +211,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				r.New.UID = uid
 
 				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = st.DefaultIntervalSeconds
+					r.New.IntervalSeconds = int64(st.DefaultInterval.Seconds())
 				}
 
 				r.New.Version = 1
@@ -372,13 +372,13 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaces returns the folders that are visible to the user
-func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
+func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	namespaceMap := make(map[string]*models.Folder)
 	var page int64 = 1
 	for {
 		// if limit is negative; it fetches at most 1000
-		folders, err := s.GetFolders(-1, page)
+		folders, err := s.GetFolders(ctx, -1, page)
 		if err != nil {
 			return nil, err
 		}
@@ -396,15 +396,15 @@ func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[str
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByTitle(namespace)
+	folder, err := s.GetFolderByTitle(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	if withCanSave {
-		g := guardian.New(folder.Id, orgID, user)
+		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
 				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
@@ -422,10 +422,12 @@ func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*ngmodels.AlertRule, 0)
 		q := "SELECT uid, org_id, interval_seconds, version FROM alert_rule"
+		if len(query.ExcludeOrgs) > 0 {
+			q = fmt.Sprintf("%s WHERE org_id NOT IN (%s)", q, strings.Join(strings.Split(strings.Trim(fmt.Sprint(query.ExcludeOrgs), "[]"), " "), ","))
+		}
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
-
 		query.Result = alerts
 		return nil
 	})

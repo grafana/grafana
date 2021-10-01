@@ -68,7 +68,7 @@ func (cfg *Cfg) readQuotaSettings() {
 
 	var alertOrgQuota int64
 	var alertGlobalQuota int64
-	if cfg.IsNgAlertEnabled() {
+	if cfg.UnifiedAlerting.Enabled {
 		alertOrgQuota = quota.Key("org_alert_rule").MustInt64(100)
 		alertGlobalQuota = quota.Key("global_alert_rule").MustInt64(-1)
 	}

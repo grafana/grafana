@@ -1,70 +1,77 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 
-import { AppPlugin, GrafanaTheme2, GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PluginTabLabels } from '../types';
+import { CatalogPlugin, PluginTabIds } from '../types';
 import { VersionList } from '../components/VersionList';
+import { usePluginConfig } from '../hooks/usePluginConfig';
 import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
 import { PluginDashboards } from '../../PluginDashboards';
 
-type PluginDetailsBodyProps = {
-  tab: { label: string };
-  plugin: GrafanaPlugin<PluginMeta<{}>> | undefined;
-  remoteVersions: Array<{ version: string; createdAt: string }>;
-  readme: string;
+type Props = {
+  plugin: CatalogPlugin;
+  queryParams: UrlQueryMap;
 };
 
-export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: PluginDetailsBodyProps): JSX.Element | null {
+export function PluginDetailsBody({ plugin, queryParams }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
+  const { value: pluginConfig } = usePluginConfig(plugin);
+  const pageId = queryParams.page;
 
-  if (tab?.label === PluginTabLabels.OVERVIEW) {
+  if (pageId === PluginTabIds.OVERVIEW) {
     return (
       <div
         className={cx(styles.readme, styles.container)}
-        dangerouslySetInnerHTML={{ __html: readme ?? 'No plugin help or readme markdown file was found' }}
+        dangerouslySetInnerHTML={{
+          __html: plugin.details?.readme ?? 'No plugin help or readme markdown file was found',
+        }}
       />
     );
   }
 
-  if (tab?.label === PluginTabLabels.VERSIONS) {
+  if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div className={styles.container}>
-        <VersionList versions={remoteVersions ?? []} />
+        <VersionList versions={plugin.details?.versions} />
       </div>
     );
   }
 
-  if (tab?.label === PluginTabLabels.CONFIG && plugin?.angularConfigCtrl) {
+  if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
     return (
       <div className={styles.container}>
-        <AppConfigCtrlWrapper app={plugin as AppPlugin} />
+        <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
       </div>
     );
   }
 
-  if (plugin?.configPages) {
-    for (const configPage of plugin.configPages) {
-      if (tab?.label === configPage.title) {
+  if (pluginConfig?.configPages) {
+    for (const configPage of pluginConfig.configPages) {
+      if (pageId === configPage.id) {
         return (
           <div className={styles.container}>
-            <configPage.body plugin={plugin} query={{}} />
+            <configPage.body plugin={pluginConfig} query={queryParams} />
           </div>
         );
       }
     }
   }
 
-  if (tab?.label === PluginTabLabels.DASHBOARDS && plugin) {
+  if (pageId === PluginTabIds.DASHBOARDS && pluginConfig) {
     return (
       <div className={styles.container}>
-        <PluginDashboards plugin={plugin.meta} />
+        <PluginDashboards plugin={pluginConfig?.meta} />
       </div>
     );
   }
 
-  return null;
+  return (
+    <div className={styles.container}>
+      <p>Page not found.</p>
+    </div>
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({

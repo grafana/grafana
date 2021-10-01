@@ -12,18 +12,17 @@ In Markdown, the number of "#" symbols creates different heading levels, similar
 - \#\# is \<h2>.
 - \#\#\# is \<h3>.
 
-Start your document with a single ``#`` for the title of the page. Add the sub-headings with two ``##``.
+Start your document with a single `#` for the title of the page. Add the sub-headings with two `##`.
 
 ## Bold and emphasis
 
 - Make text **bold** using two asterisks.
 
-**Example:** It is ``**important**`` to use GitHub-flavored Markdown emoji consistently.
+**Example:** It is `**important**` to use GitHub-flavored Markdown emoji consistently.
 
-- Make text ``_emphasized_`` using single `` _underscores_``. Do not use the single asterisk, it can be easily confused with bold.
+- Make text `_emphasized_` using single ` _underscores_`. Do not use the single asterisk, it can be easily confused with bold.
 
 **Example:** GitHub-flavored markdown emoji should _only_ appear in specific cases.
-
 
 ## Links and references
 
@@ -62,12 +61,13 @@ Write the name of the language after the first set of back tics, no spaces, to s
 ```javascript
 function testNum(a) {
   if (a > 0) {
-    return "positive";
+    return 'positive';
   } else {
-    return "NOT positive";
+    return 'NOT positive';
   }
 }
 ```
+
 ## Tables
 
 Construct a table by typing the table headings, and separating them with a "|" character. Then, add a second line of dashes ("-") separated by another "|" character. When constructing the table cells, separate each cell data with another "|".
@@ -82,9 +82,9 @@ Cell one data| Cell two data
 
 Will publish as:
 
-Heading one | Heading two
-------------|------------
-Cell one data| Cell two data
+| Heading one   | Heading two   |
+| ------------- | ------------- |
+| Cell one data | Cell two data |
 
 ## Lists
 
@@ -126,7 +126,7 @@ Include images in a document using the following syntax:
 
 > **Note:** Alt text does not appear when the user hovers the mouse over the image, but title text does.
 
-**Examples:** 
+**Examples:**
 
 - \!\[Grafana logo](/link/to/grafanalogo/logo.png)
 - \!\[Example](/img/docs/folder_name/alert_test_rule.png)
@@ -134,6 +134,7 @@ Include images in a document using the following syntax:
 This follows the format of "!", alt text wrapped in "[]" and the link URL wrapped in "()".
 
 You can also use HTML such as the following:
+
 ```
 <img src="example.png"
      alt="Example image"

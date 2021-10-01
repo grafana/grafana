@@ -1,33 +1,33 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { locationService } from '@grafana/runtime';
-import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
-import BrowsePage from './Browse';
+import { PluginType } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
-import { LocalPlugin, RemotePlugin, PluginAdminRoutes } from '../types';
-import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
+import { fetchRemotePlugins } from '../state/actions';
+import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../types';
+import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
+import BrowsePage from './Browse';
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as object),
-  getBackendSrv: () => ({
-    get: (path: string) => {
-      switch (path) {
-        case `${GRAFANA_API_ROOT}/plugins`:
-          return Promise.resolve({ items: remote });
-        case API_ROOT:
-          return Promise.resolve(installed);
-        default:
-          return Promise.reject();
-      }
-    },
-  }),
-}));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  const mockedRuntime = { ...original };
 
-function setup(path = '/plugins'): RenderResult {
-  const store = configureStore();
+  mockedRuntime.config.bootData.user.isGrafanaAdmin = true;
+  mockedRuntime.config.buildInfo.version = 'v8.1.0';
+
+  return mockedRuntime;
+});
+
+const renderBrowse = (
+  path = '/plugins',
+  plugins: CatalogPlugin[] = [],
+  pluginsStateOverride?: ReducerState
+): RenderResult => {
+  const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
   locationService.push(path);
   const props = getRouteComponentProps({
     route: { routeName: PluginAdminRoutes.Home } as any,
@@ -40,108 +40,174 @@ function setup(path = '/plugins'): RenderResult {
       </Router>
     </Provider>
   );
-}
+};
 
 describe('Browse list of plugins', () => {
   describe('when filtering', () => {
     it('should list installed plugins by default', async () => {
-      const { queryByText } = setup('/plugins');
+      const { queryByText } = renderBrowse('/plugins', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: false }),
+      ]);
 
-      await waitFor(() => queryByText('Installed'));
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 1')).toBeInTheDocument();
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
 
-      for (const plugin of installed) {
-        expect(queryByText(plugin.name)).toBeInTheDocument();
-      }
-
-      for (const plugin of remote) {
-        expect(queryByText(plugin.name)).toBeNull();
-      }
+      expect(queryByText('Plugin 4')).toBeNull();
     });
 
     it('should list all plugins (except core plugins) when filtering by all', async () => {
-      const { queryByText } = setup('/plugins?filterBy=all&filterByType=all');
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+      ]);
 
-      await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
-      for (const plugin of remote) {
-        expect(queryByText(plugin.name)).toBeInTheDocument();
-      }
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
 
-      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+      // Core plugins should not be listed
+      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
     });
 
     it('should list installed plugins (including core plugins) when filtering by installed', async () => {
-      const { queryByText } = setup('/plugins?filterBy=installed');
+      const { queryByText } = renderBrowse('/plugins?filterBy=installed', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+      ]);
 
-      await waitFor(() => queryByText('Installed'));
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
 
-      for (const plugin of installed) {
-        expect(queryByText(plugin.name)).toBeInTheDocument();
-      }
-
-      for (const plugin of remote) {
-        expect(queryByText(plugin.name)).not.toBeInTheDocument();
-      }
+      // Not showing not installed plugins
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
     });
 
-    it('should list enterprise plugins', async () => {
-      const { queryByText } = setup('/plugins?filterBy=all&q=wavefront');
+    it('should list all plugins (including disabled plugins) when filtering by all', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
+    });
+
+    it('should list installed plugins (including disabled plugins) when filtering by installed', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=installed', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
+
+      // Not showing not installed plugins
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+    });
+
+    it('should list enterprise plugins when querying for them', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=wavefront', [
+        getCatalogPluginMock({ id: 'wavefront', name: 'Wavefront', isInstalled: true, isEnterprise: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: true, isCore: true }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+      ]);
 
       await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
+
+      // Should not show plugins that don't match the query
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
 
     it('should list only datasource plugins when filtering by datasource', async () => {
-      const { queryByText } = setup('/plugins?filterBy=all&filterByType=datasource');
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=datasource', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.panel }),
+      ]);
 
-      await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText('Plugin 2')).toBeInTheDocument());
 
-      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-      expect(queryByText('Diagram')).not.toBeInTheDocument();
-      expect(queryByText('Zabbix')).not.toBeInTheDocument();
-      expect(queryByText('ACE.SVG')).not.toBeInTheDocument();
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 1')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
 
     it('should list only panel plugins when filtering by panel', async () => {
-      const { queryByText } = setup('/plugins?filterBy=all&filterByType=panel');
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=panel', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.panel }),
+      ]);
 
-      await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
-      expect(queryByText('ACE.SVG')).toBeInTheDocument();
+      await waitFor(() => expect(queryByText('Plugin 3')).toBeInTheDocument());
 
-      expect(queryByText('Wavefront')).not.toBeInTheDocument();
-      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-      expect(queryByText('Zabbix')).not.toBeInTheDocument();
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 1')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
     });
 
     it('should list only app plugins when filtering by app', async () => {
-      const { queryByText } = setup('/plugins?filterBy=all&filterByType=app');
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=app', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.panel }),
+      ]);
 
-      await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
 
-      expect(queryByText('Wavefront')).not.toBeInTheDocument();
-      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-      expect(queryByText('Diagram')).not.toBeInTheDocument();
-      expect(queryByText('ACE.SVG')).not.toBeInTheDocument();
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
   });
+
   describe('when searching', () => {
     it('should only list plugins matching search', async () => {
-      const { queryByText } = setup('/plugins?filterBy=all&q=zabbix');
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [
+        getCatalogPluginMock({ id: 'zabbix', name: 'Zabbix' }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+      ]);
 
       await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
 
-      expect(queryByText('Wavefront')).not.toBeInTheDocument();
-      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-      expect(queryByText('Diagram')).not.toBeInTheDocument();
-      expect(queryByText('Redis Application')).not.toBeInTheDocument();
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
   });
 
   describe('when sorting', () => {
     it('should sort plugins by name in ascending alphabetical order', async () => {
-      const { findByTestId } = setup('/plugins?filterBy=all');
+      const { findByTestId } = renderBrowse('/plugins?filterBy=all', [
+        getCatalogPluginMock({ id: 'wavefront', name: 'Wavefront' }),
+        getCatalogPluginMock({ id: 'redis-application', name: 'Redis Application' }),
+        getCatalogPluginMock({ id: 'zabbix', name: 'Zabbix' }),
+        getCatalogPluginMock({ id: 'diagram', name: 'Diagram' }),
+        getCatalogPluginMock({ id: 'acesvg', name: 'ACE.SVG' }),
+      ]);
 
       const pluginList = await findByTestId('plugin-list');
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
-
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'ACE.SVG',
         'Diagram',
@@ -152,11 +218,16 @@ describe('Browse list of plugins', () => {
     });
 
     it('should sort plugins by name in descending alphabetical order', async () => {
-      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=nameDesc');
+      const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=nameDesc', [
+        getCatalogPluginMock({ id: 'wavefront', name: 'Wavefront' }),
+        getCatalogPluginMock({ id: 'redis-application', name: 'Redis Application' }),
+        getCatalogPluginMock({ id: 'zabbix', name: 'Zabbix' }),
+        getCatalogPluginMock({ id: 'diagram', name: 'Diagram' }),
+        getCatalogPluginMock({ id: 'acesvg', name: 'ACE.SVG' }),
+      ]);
 
       const pluginList = await findByTestId('plugin-list');
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
-
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Zabbix',
         'Wavefront',
@@ -167,11 +238,16 @@ describe('Browse list of plugins', () => {
     });
 
     it('should sort plugins by date in ascending updated order', async () => {
-      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=updated');
+      const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=updated', [
+        getCatalogPluginMock({ id: '1', name: 'Wavefront', updatedAt: '2021-04-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '2', name: 'Redis Application', updatedAt: '2021-02-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '3', name: 'Zabbix', updatedAt: '2021-01-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '4', name: 'Diagram', updatedAt: '2021-05-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', updatedAt: '2021-02-01T00:00:00.000Z' }),
+      ]);
 
       const pluginList = await findByTestId('plugin-list');
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
-
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Diagram',
         'Wavefront',
@@ -182,26 +258,36 @@ describe('Browse list of plugins', () => {
     });
 
     it('should sort plugins by date in ascending published order', async () => {
-      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=published');
+      const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=published', [
+        getCatalogPluginMock({ id: '1', name: 'Wavefront', publishedAt: '2021-04-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '2', name: 'Redis Application', publishedAt: '2021-02-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '3', name: 'Zabbix', publishedAt: '2021-01-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '4', name: 'Diagram', publishedAt: '2021-05-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', publishedAt: '2021-02-01T00:00:00.000Z' }),
+      ]);
 
       const pluginList = await findByTestId('plugin-list');
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
-
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Diagram',
+        'Wavefront',
         'Redis Application',
         'ACE.SVG',
-        'Wavefront',
         'Zabbix',
       ]);
     });
 
     it('should sort plugins by number of downloads in ascending order', async () => {
-      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=downloads');
+      const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=downloads', [
+        getCatalogPluginMock({ id: '1', name: 'Wavefront', downloads: 30 }),
+        getCatalogPluginMock({ id: '2', name: 'Redis Application', downloads: 10 }),
+        getCatalogPluginMock({ id: '3', name: 'Zabbix', downloads: 50 }),
+        getCatalogPluginMock({ id: '4', name: 'Diagram', downloads: 20 }),
+        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', downloads: 40 }),
+      ]);
 
       const pluginList = await findByTestId('plugin-list');
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
-
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Zabbix',
         'ACE.SVG',
@@ -211,216 +297,65 @@ describe('Browse list of plugins', () => {
       ]);
     });
   });
+
+  describe('when GCOM api is not available', () => {
+    it('should disable the All / Installed filter', async () => {
+      const plugins = [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 2', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 3', isInstalled: true }),
+      ];
+      const state = getPluginsStateMock(plugins);
+
+      // Mock the store like if the remote plugins request was rejected
+      const stateOverride = {
+        ...state,
+        requests: {
+          ...state.requests,
+          [fetchRemotePlugins.typePrefix]: {
+            status: RequestStatus.Rejected,
+          },
+        },
+      };
+
+      // The radio input for the filters should be disabled
+      const { getByRole } = renderBrowse('/plugins', [], stateOverride);
+      await waitFor(() => expect(getByRole('radio', { name: 'Installed' })).toBeDisabled());
+    });
+  });
+
+  it('should be possible to switch between display modes', async () => {
+    const { findByTestId, getByRole, getByTitle, queryByText } = renderBrowse('/plugins?filterBy=all', [
+      getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1' }),
+      getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
+      getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+    ]);
+
+    await findByTestId('plugin-list');
+
+    const listOptionTitle = 'Display plugins in list';
+    const gridOptionTitle = 'Display plugins in a grid layout';
+    const listOption = getByRole('radio', { name: listOptionTitle });
+    const listOptionLabel = getByTitle(listOptionTitle);
+    const gridOption = getByRole('radio', { name: gridOptionTitle });
+    const gridOptionLabel = getByTitle(gridOptionTitle);
+
+    // All options should be visible
+    expect(listOptionLabel).toBeVisible();
+    expect(gridOptionLabel).toBeVisible();
+
+    // The default display mode should be "grid"
+    expect(gridOption).toBeChecked();
+    expect(listOption).not.toBeChecked();
+
+    // Switch to "list" view
+    userEvent.click(listOption);
+    expect(gridOption).not.toBeChecked();
+    expect(listOption).toBeChecked();
+
+    // All plugins are still visible
+    expect(queryByText('Plugin 1')).toBeInTheDocument();
+    expect(queryByText('Plugin 2')).toBeInTheDocument();
+    expect(queryByText('Plugin 3')).toBeInTheDocument();
+  });
 });
-
-const installed: LocalPlugin[] = [
-  {
-    name: 'Alert Manager',
-    type: PluginType.datasource,
-    id: 'alertmanager',
-    enabled: true,
-    pinned: false,
-    info: {
-      author: {
-        name: 'Prometheus alertmanager',
-        url: 'https://grafana.com',
-      },
-      description: '',
-      links: [
-        {
-          name: 'Learn more',
-          url: 'https://prometheus.io/docs/alerting/latest/alertmanager/',
-        },
-      ],
-      logos: {
-        small: 'public/app/plugins/datasource/alertmanager/img/logo.svg',
-        large: 'public/app/plugins/datasource/alertmanager/img/logo.svg',
-      },
-      build: {},
-      screenshots: null,
-      version: '',
-      updated: '',
-    },
-    latestVersion: '',
-    hasUpdate: false,
-    defaultNavUrl: '/plugins/alertmanager/',
-    category: '',
-    state: 'alpha',
-    signature: PluginSignatureStatus.internal,
-    signatureType: '',
-    signatureOrg: '',
-  },
-  {
-    name: 'Diagram',
-    type: PluginType.panel,
-    id: 'jdbranham-diagram-panel',
-    enabled: true,
-    pinned: false,
-    info: {
-      author: { name: 'Jeremy Branham', url: 'https://savantly.net' },
-      description: 'Display diagrams and charts with colored metric indicators',
-      links: [
-        {
-          name: 'Project site',
-          url: 'https://github.com/jdbranham/grafana-diagram',
-        },
-        {
-          name: 'Apache License',
-          url: 'https://github.com/jdbranham/grafana-diagram/blob/master/LICENSE',
-        },
-      ],
-      logos: {
-        small: 'public/plugins/jdbranham-diagram-panel/img/logo.svg',
-        large: 'public/plugins/jdbranham-diagram-panel/img/logo.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '1.7.3',
-      updated: '2021-07-20',
-    },
-    latestVersion: '1.7.3',
-    hasUpdate: true,
-    defaultNavUrl: '/plugins/jdbranham-diagram-panel/',
-    category: '',
-    state: '',
-    signature: PluginSignatureStatus.missing,
-    signatureType: '',
-    signatureOrg: '',
-  },
-  {
-    name: 'Redis Application',
-    type: PluginType.app,
-    id: 'redis-app',
-    enabled: false,
-    pinned: false,
-    info: {
-      author: {
-        name: 'RedisGrafana',
-        url: 'https://redisgrafana.github.io',
-      },
-      description: 'Provides Application pages and custom panels for Redis Data Source.',
-      links: [
-        { name: 'Website', url: 'https://redisgrafana.github.io' },
-        {
-          name: 'License',
-          url: 'https://github.com/RedisGrafana/grafana-redis-app/blob/master/LICENSE',
-        },
-      ],
-      logos: {
-        small: 'public/plugins/redis-app/img/logo.svg',
-        large: 'public/plugins/redis-app/img/logo.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '2.0.1',
-      updated: '2021-07-07',
-    },
-    latestVersion: '2.0.1',
-    hasUpdate: false,
-    defaultNavUrl: '/plugins/redis-app/',
-    category: '',
-    state: '',
-    signature: PluginSignatureStatus.valid,
-    signatureType: PluginSignatureType.commercial,
-    signatureOrg: 'RedisGrafana',
-  },
-];
-
-const remote: RemotePlugin[] = [
-  {
-    status: 'active',
-    id: 74,
-    typeId: 1,
-    typeName: 'Application',
-    typeCode: PluginType.app,
-    slug: 'alexanderzobnin-zabbix-app',
-    name: 'Zabbix',
-    description: 'Zabbix plugin for Grafana',
-    version: '4.1.5',
-    versionStatus: 'active',
-    versionSignatureType: PluginSignatureType.community,
-    versionSignedByOrg: 'alexanderzobnin',
-    versionSignedByOrgName: 'Alexander Zobnin',
-    userId: 0,
-    orgId: 13056,
-    orgName: 'Alexander Zobnin',
-    orgSlug: 'alexanderzobnin',
-    orgUrl: 'https://github.com/alexanderzobnin',
-    url: 'https://github.com/alexanderzobnin/grafana-zabbix',
-    createdAt: '2016-04-06T20:23:41.000Z',
-    updatedAt: '2021-05-18T14:53:01.000Z',
-    downloads: 34387994,
-    verified: false,
-    featured: 180,
-    internal: false,
-    downloadSlug: 'alexanderzobnin-zabbix-app',
-    popularity: 0.2019,
-    signatureType: PluginSignatureType.community,
-    packages: {},
-    links: [],
-  },
-  {
-    status: 'enterprise',
-    id: 658,
-    typeId: 2,
-    typeName: 'Data Source',
-    typeCode: PluginType.datasource,
-    slug: 'grafana-wavefront-datasource',
-    name: 'Wavefront',
-    description: 'Wavefront Datasource',
-    version: '1.0.8',
-    versionStatus: 'active',
-    versionSignatureType: PluginSignatureType.grafana,
-    versionSignedByOrg: 'grafana',
-    versionSignedByOrgName: 'Grafana Labs',
-    userId: 0,
-    orgId: 5000,
-    orgName: 'Grafana Labs',
-    orgSlug: 'grafana',
-    orgUrl: 'https://grafana.org',
-    url: 'https://github.com/grafana/wavefront-datasource/',
-    createdAt: '2020-09-01T13:02:57.000Z',
-    updatedAt: '2021-07-12T18:41:03.000Z',
-    downloads: 7818,
-    verified: false,
-    featured: 0,
-    internal: false,
-    downloadSlug: 'grafana-wavefront-datasource',
-    popularity: 0.0107,
-    signatureType: PluginSignatureType.grafana,
-    packages: {},
-    links: [],
-  },
-  {
-    status: 'active',
-    id: 659,
-    typeId: 3,
-    typeName: 'Panel',
-    typeCode: PluginType.panel,
-    slug: 'aceiot-svg-panel',
-    name: 'ACE.SVG',
-    description: 'SVG Visualization Panel',
-    version: '0.0.10',
-    versionStatus: 'active',
-    versionSignatureType: PluginSignatureType.community,
-    versionSignedByOrg: 'aceiot',
-    versionSignedByOrgName: 'Andrew Rodgers',
-    userId: 0,
-    orgId: 409764,
-    orgName: 'Andrew Rodgers',
-    orgSlug: 'aceiot',
-    orgUrl: '',
-    url: 'https://github.com/ACE-IoT-Solutions/ace-svg-react',
-    createdAt: '2020-09-01T14:46:44.000Z',
-    updatedAt: '2021-06-28T14:01:36.000Z',
-    downloads: 101569,
-    verified: false,
-    featured: 0,
-    internal: false,
-    downloadSlug: 'aceiot-svg-panel',
-    popularity: 0.0134,
-    signatureType: PluginSignatureType.community,
-    packages: {},
-    links: [],
-  },
-];

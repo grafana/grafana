@@ -56,7 +56,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboardCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -72,7 +72,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboardCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -88,7 +88,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboardCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -103,7 +103,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboardCtx(context.Background(), &query)
 				So(err, ShouldEqual, models.ErrDashboardIdentifierNotSet)
 			})
 
@@ -191,7 +191,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err = GetDashboard(&query)
+				err = GetDashboardCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
 				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
@@ -386,13 +386,13 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
 				starredDash := insertTestDashboard(t, sqlStore, "starred dash", 1, 0, false)
-				err := StarDashboard(&models.StarDashboardCommand{
+				err := sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
 				So(err, ShouldBeNil)
 
-				err = StarDashboard(&models.StarDashboardCommand{
+				err = sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})

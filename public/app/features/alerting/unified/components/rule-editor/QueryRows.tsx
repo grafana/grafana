@@ -1,9 +1,17 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  PanelData,
+  RelativeTimeRange,
+  ThresholdsConfig,
+  ThresholdsMode,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryWrapper } from './QueryWrapper';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
   // The query configuration
@@ -46,6 +54,43 @@ export class QueryRows extends PureComponent<Props, State> {
           ...item,
           relativeTimeRange: timeRange,
         };
+      })
+    );
+  };
+
+  onChangeThreshold = (thresholds: ThresholdsConfig, index: number) => {
+    const { queries, onQueriesChange } = this.props;
+
+    const referencedRefId = queries[index].refId;
+
+    onQueriesChange(
+      queries.map((query) => {
+        if (!isExpressionQuery(query.model)) {
+          return query;
+        }
+
+        if (query.model.conditions && query.model.conditions[0].query.params[0] === referencedRefId) {
+          return {
+            ...query,
+            model: {
+              ...query.model,
+              conditions: query.model.conditions.map((condition, conditionIndex) => {
+                // Only update the first condition for a given refId.
+                if (condition.query.params[0] === referencedRefId && conditionIndex === 0) {
+                  return {
+                    ...condition,
+                    evaluator: {
+                      ...condition.evaluator,
+                      params: [parseFloat(thresholds.steps[1].value.toPrecision(3))],
+                    },
+                  };
+                }
+                return condition;
+              }),
+            },
+          };
+        }
+        return query;
       })
     );
   };
@@ -130,8 +175,53 @@ export class QueryRows extends PureComponent<Props, State> {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
+  getThresholdsForQueries = (queries: AlertQuery[]): Record<string, ThresholdsConfig> => {
+    const record: Record<string, ThresholdsConfig> = {};
+
+    for (const query of queries) {
+      if (!isExpressionQuery(query.model)) {
+        continue;
+      }
+
+      if (!Array.isArray(query.model.conditions)) {
+        continue;
+      }
+
+      query.model.conditions.forEach((condition, index) => {
+        if (index > 0) {
+          return;
+        }
+        const threshold = condition.evaluator.params[0];
+        const refId = condition.query.params[0];
+
+        if (condition.evaluator.type === 'outside_range' || condition.evaluator.type === 'within_range') {
+          return;
+        }
+        if (!record[refId]) {
+          record[refId] = {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              {
+                value: -Infinity,
+                color: 'green',
+              },
+            ],
+          };
+        }
+
+        record[refId].steps.push({
+          value: threshold,
+          color: 'red',
+        });
+      });
+    }
+
+    return record;
+  };
+
   render() {
     const { onDuplicateQuery, onRunQueries, queries } = this.props;
+    const thresholdByRefId = this.getThresholdsForQueries(queries);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -161,6 +251,8 @@ export class QueryRows extends PureComponent<Props, State> {
                       onDuplicateQuery={onDuplicateQuery}
                       onRunQueries={onRunQueries}
                       onChangeTimeRange={this.onChangeTimeRange}
+                      thresholds={thresholdByRefId[query.refId]}
+                      onChangeThreshold={this.onChangeThreshold}
                     />
                   );
                 })}

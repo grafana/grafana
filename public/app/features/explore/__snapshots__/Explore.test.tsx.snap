@@ -16,7 +16,6 @@ exports[`Explore should render component 1`] = `
     >
       <QueryRows
         exploreId="left"
-        queryKeys={Array []}
       />
       <SecondaryActions
         addQueryRowButtonDisabled={false}

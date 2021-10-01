@@ -202,6 +202,7 @@ export const Components = {
   },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    input: () => 'input[id="data-source-picker"]',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
@@ -242,5 +243,8 @@ export const Components = {
   ImportDashboardForm: {
     name: 'data-testid-import-dashboard-title',
     submit: 'data-testid-import-dashboard-submit',
+  },
+  PanelAlertTabContent: {
+    content: 'Unified alert editor tab content',
   },
 };

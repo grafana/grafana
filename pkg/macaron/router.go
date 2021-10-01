@@ -90,11 +90,9 @@ func NewRouter() *Router {
 	}
 }
 
-type Params map[string]string
-
 // Handle is a function that can be registered to a route to handle HTTP requests.
 // Like http.HandlerFunc, but has a third parameter for the values of wildcards (variables).
-type Handle func(http.ResponseWriter, *http.Request, Params)
+type Handle func(http.ResponseWriter, *http.Request, map[string]string)
 
 // handle adds new route to the router tree.
 func (r *Router) handle(method, pattern string, handle Handle) {
@@ -150,9 +148,8 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	}
 	handlers = validateAndWrapHandlers(handlers)
 
-	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
-		c := r.m.createContext(resp, req)
-		c.params = params
+	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params map[string]string) {
+		c := r.m.createContext(resp, SetURLParams(req, params))
 		c.handlers = make([]Handler, 0, len(r.m.handlers)+len(handlers))
 		c.handlers = append(c.handlers, r.m.handlers...)
 		c.handlers = append(c.handlers, handlers...)

@@ -16,7 +16,7 @@ package grafanaschema
 
 import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 
-Family: {
+Panel: {
     lineages: [
         [
             {
@@ -28,9 +28,7 @@ Family: {
                     combine?: bool
                 }
 
-                PanelFieldConfig: {
-                    ui.GraphFieldConfig
-                }
+                PanelFieldConfig: ui.GraphFieldConfig
             }
         ]
     ]

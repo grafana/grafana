@@ -440,7 +440,7 @@ function getOTLPStatus(tags: TraceKeyValuePair[]): SpanStatus | undefined {
 }
 
 function getOTLPEvents(logs: TraceLog[]): collectorTypes.opentelemetryProto.trace.v1.Span.Event[] | undefined {
-  if (!logs.length) {
+  if (!logs || !logs.length) {
     return undefined;
   }
 

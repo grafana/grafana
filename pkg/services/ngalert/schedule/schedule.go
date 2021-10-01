@@ -77,13 +77,15 @@ type schedule struct {
 	appURL string
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
-	metrics          *metrics.Metrics
+	metrics          *metrics.Scheduler
 
 	// Senders help us send alerts to external Alertmanagers.
 	sendersMtx              sync.RWMutex
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
+	disabledOrgs            map[int64]struct{}
+	minRuleInterval         time.Duration
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -100,14 +102,17 @@ type SchedulerCfg struct {
 	InstanceStore           store.InstanceStore
 	AdminConfigStore        store.AdminConfigurationStore
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
-	Metrics                 *metrics.Metrics
+	Metrics                 *metrics.Scheduler
 	AdminConfigPollInterval time.Duration
+	DisabledOrgs            map[int64]struct{}
+	MinRuleInterval         time.Duration
 }
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
+
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
@@ -129,6 +134,8 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
+		disabledOrgs:            cfg.DisabledOrgs,
+		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
 }
@@ -186,6 +193,12 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	sch.sendersMtx.Lock()
 	for _, cfg := range cfgs {
+		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
+		if isDisabledOrg {
+			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
+			continue
+		}
+
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
 		existing, ok := sch.senders[cfg.OrgID]
@@ -314,8 +327,12 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 		select {
 		case tick := <-sch.heartbeat.C:
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			alertRules := sch.fetchAllDetails()
-			sch.log.Debug("alert rules fetched", "count", len(alertRules))
+			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
+			for disabledOrg := range sch.disabledOrgs {
+				disabledOrgs = append(disabledOrgs, disabledOrg)
+			}
+			alertRules := sch.fetchAllDetails(disabledOrgs)
+			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
@@ -334,6 +351,13 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 				itemVersion := item.Version
 				newRoutine := !sch.registry.exists(key)
 				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+
+				// enforce minimum evaluation interval
+				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
+					sch.log.Debug("interval adjusted", "rule_interval_seconds", item.IntervalSeconds, "min_interval_seconds", sch.minRuleInterval.Seconds(), "key", key)
+					item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
+				}
+
 				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
@@ -344,7 +368,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				if invalidInterval {
 					// this is expected to be always false
-					// give that we validate interval during alert rule updates
+					// given that we validate interval during alert rule updates
 					sch.log.Debug("alert rule with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
 					continue
 				}

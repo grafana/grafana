@@ -10,6 +10,7 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { getPluginsAdminRoutes } from 'app/features/plugins/routes';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getLiveRoutes } from 'app/features/live/pages/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -376,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications',
-      roles: config.featureToggles.ngalert ? () => ['Editor', 'Admin'] : undefined,
+      roles: config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
@@ -515,6 +516,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     ...getPluginsAdminRoutes(),
+    ...getLiveRoutes(),
     ...extraRoutes,
     {
       path: '/*',

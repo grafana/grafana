@@ -38,24 +38,19 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		DataPath: dir,
 	}
 
-	m := metrics.NewMetrics(prometheus.NewRegistry())
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
-	store := &store.DBstore{
-		BaseInterval:           10 * time.Second,
-		DefaultIntervalSeconds: 60,
-		SQLStore:               sqlStore,
-		Logger:                 log.New("alertmanager-test"),
+	s := &store.DBstore{
+		BaseInterval:    10 * time.Second,
+		DefaultInterval: 60 * time.Second,
+		SQLStore:        sqlStore,
+		Logger:          log.New("alertmanager-test"),
 	}
 
-	am, err := newAlertmanager(1, cfg, store, m)
+	kvStore := newFakeKVStore(t)
+	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, m)
 	require.NoError(t, err)
 	return am
-}
-
-func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
-	require.NotNil(t, am.config)
 }
 
 func TestPutAlert(t *testing.T) {
@@ -310,7 +305,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}

@@ -6,9 +6,9 @@ weight = 113
 
 # Overview of Grafana 8 alerts
 
-Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
+Grafana 8.0 has a new and improved alerting sub-system that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources into one user interface and API.
 
-> **Note:** Grafana 8 alerts (beta) is an [opt-in]({{< relref"./opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing this new feature.
+> **Note:** Grafana 8 alerts is an [opt-in]({{< relref "../unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
 
 Grafana 8 alerts have four main components:
 
@@ -45,16 +45,18 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 ## Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}}).
 
-| Metric Name                                 | Type      | Description                                                                              |
-| ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `alerting.alerts`                           | gauge     | How many alerts by state                                                                 |
-| `alerting.request_duration_seconds`         | histogram | Histogram of requests to the Alerting API                                                |
-| `alerting.active_configurations`            | gauge     | The number of active, non default Alertmanager configurations for grafana managed alerts |
-| `alerting.rule_evaluations_total`           | counter   | The total number of rule evaluations                                                     |
-| `alerting.rule_evaluation_failures_total`   | counter   | The total number of rule evaluation failures                                             |
-| `alerting.rule_evaluation_duration_seconds` | summary   | The duration for a rule to execute                                                       |
-| `alerting.rule_group_rules`                 | gauge     | The number of rules                                                                      |
+| Metric Name                                       | Type      | Description                                                                              |
+| ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| `grafana_alerting_alerts`                         | gauge     | How many alerts by state                                                                 |
+| `grafana_alerting_request_duration`               | histogram | Histogram of requests to the Alerting API                                                |
+| `grafana_alerting_active_configurations`          | gauge     | The number of active, non default Alertmanager configurations for grafana managed alerts |
+| `grafana_alerting_rule_evaluations_total`         | counter   | The total number of rule evaluations                                                     |
+| `grafana_alerting_rule_evaluation_failures_total` | counter   | The total number of rule evaluation failures                                             |
+| `grafana_alerting_rule_evaluation_duration`       | summary   | The duration for a rule to execute                                                       |
+| `grafana_alerting_rule_group_rules`               | gauge     | The number of rules                                                                      |
 
-- [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
+## Limitation
+
+Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time.
