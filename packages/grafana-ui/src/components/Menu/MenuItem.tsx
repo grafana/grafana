@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode, useState, useRef, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
@@ -25,12 +25,14 @@ export interface MenuItemProps<T = any> {
   active?: boolean;
 
   tabIndex?: number;
+
+  children?: ReactNode;
 }
 
 /** @internal */
 export const MenuItem = React.memo(
   React.forwardRef<HTMLAnchorElement & HTMLButtonElement, MenuItemProps>(
-    ({ url, icon, label, ariaLabel, target, onClick, className, active, tabIndex = -1 }, ref) => {
+    ({ url, icon, label, ariaLabel, target, onClick, className, active, tabIndex = -1, children }, ref) => {
       const styles = useStyles2(getStyles);
       const itemStyle = cx(
         {
@@ -39,8 +41,12 @@ export const MenuItem = React.memo(
         },
         className
       );
+      const [hover, setHover] = useState(false);
+      const subMenuRef = useRef(null);
+      const onMouseEnter = useCallback(() => setHover(true), []);
+      const onMouseLeave = useCallback(() => setHover(false), []);
 
-      const Wrapper = url === undefined ? 'button' : 'a';
+      const Wrapper = children || url === undefined ? 'button' : 'a';
       return (
         <Wrapper
           target={target}
@@ -52,11 +58,14 @@ export const MenuItem = React.memo(
               ? (event) => {
                   if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
                     event.preventDefault();
+                    event.stopPropagation();
                     onClick(event);
                   }
                 }
               : undefined
           }
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
           role={url === undefined ? 'menuitem' : undefined}
           data-role="menuitem" // used to identify menuitem in Menu.tsx
           ref={ref}
@@ -64,6 +73,16 @@ export const MenuItem = React.memo(
           tabIndex={tabIndex}
         >
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />} {label}
+          {children && (
+            <div className={styles.subMenuIconWrapper}>
+              <Icon name="angle-right" className={styles.subMenuIcon} aria-hidden />
+            </div>
+          )}
+          {
+            <div ref={subMenuRef} className={styles.subMenu(!!children && hover, subMenuRef.current)}>
+              {children}
+            </div>
+          }
         </Wrapper>
       );
     }
@@ -75,6 +94,7 @@ MenuItem.displayName = 'MenuItem';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`
+      position: relative;
       background: none;
       cursor: pointer;
       white-space: nowrap;
@@ -101,5 +121,41 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-right: 10px;
       color: ${theme.colors.text.secondary};
     `,
+    subMenuIcon: css`
+      opacity: 0.7;
+      margin-left: 10px;
+      color: ${theme.colors.text.secondary};
+    `,
+    subMenuIconWrapper: css`
+      display: flex;
+      flex: 1;
+      justify-content: end;
+    `,
+    subMenu: (show: boolean, element: HTMLElement | null) => css`
+      position: absolute;
+      top: 0;
+      visibility: ${show ? 'visible' : 'hidden'};
+      z-index: ${theme.zIndex.dropdown};
+      ${getPosition(element)}: 100%;
+    `,
   };
+};
+
+const getPosition = (element: HTMLElement | null) => {
+  if (!element) {
+    return 'left';
+  }
+
+  const wrapperPos = element.parentElement!.getBoundingClientRect();
+  const pos = element.getBoundingClientRect();
+
+  if (pos.width === 0) {
+    return 'left';
+  }
+
+  if (wrapperPos.right + pos.width + 10 > window.innerWidth) {
+    return 'right';
+  } else {
+    return 'left';
+  }
 };

@@ -42,4 +42,19 @@ describe('Menu', () => {
     expect(screen.getByLabelText(selectors.components.Menu.MenuGroup('Test'))).toBeInTheDocument();
     expect(screen.getAllByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveLength(2);
   });
+
+  it('renders submenu', () => {
+    render(
+      <Menu ariaLabel={selectors.components.Menu.MenuComponent('Test')}>
+        <MenuItem ariaLabel={selectors.components.Menu.MenuItem('Test')} label="item1" icon="eye" />
+        <MenuItem ariaLabel={selectors.components.Menu.MenuItem('Test')} label="item2" icon="cube">
+          <Menu ariaLabel={selectors.components.Menu.MenuComponent('Test')}>
+            <MenuItem ariaLabel={selectors.components.Menu.MenuItem('Test')} label="item3" />
+          </Menu>
+        </MenuItem>
+      </Menu>
+    );
+    expect(screen.getAllByLabelText(selectors.components.Menu.MenuComponent('Test'))).toHaveLength(2);
+    expect(screen.getAllByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveLength(3);
+  });
 });
