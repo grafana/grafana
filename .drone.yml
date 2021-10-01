@@ -58,11 +58,11 @@ steps:
   - yarn cache dir
   - echo "ls /cache"
   - ls /cache
-  - echo "ls /cache/yarn/v6"
-  - ls /cache/yarn/v6
+  - echo "ls /cache/v6"
+  - ls /cache/v6
   - find . -type d | grep cache
   - yarn install --frozen-lockfile --no-progress
-  - ls /cache/yarn/v6
+  - ls /cache/v6
   environment:
     DOCKERIZE_VERSION: 0.6.1
     YARN_CACHE_FOLDER: /cache
@@ -192,6 +192,6 @@ get:
 
 ---
 kind: signature
-hmac: e3c8bdae6a9d6a50600ef0e608bd6e06d92492b971f9e1f5d9059da2dfbefae6
+hmac: 9533714bc534c20057ac0e481c50125412509283883bfae4deabe1e76d58de36
 
 ...

@@ -46,8 +46,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'yarn cache dir',
         'echo "ls /cache"',
         'ls /cache',
-        'echo "ls /cache/yarn/v6"',
-        'ls /cache/yarn/v6',
+        'echo "ls /cache/v6"',
+        'ls /cache/v6',
         'find . -type d | grep cache',
     ]
 
@@ -67,7 +67,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     if install_deps:
         common_cmds.extend([
             'yarn install --frozen-lockfile --no-progress',
-            'ls /cache/yarn/v6',
+            'ls /cache/v6',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
