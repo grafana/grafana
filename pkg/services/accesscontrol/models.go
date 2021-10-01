@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type Role struct {
 	Version     int64  `json:"version"`
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
 	Description string `json:"description"`
 
 	Updated time.Time `json:"updated"`
@@ -29,6 +31,7 @@ type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
+	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions,omitempty"`
 
@@ -45,6 +48,7 @@ func (r RoleDTO) Role() Role {
 		OrgID:       r.OrgID,
 		UID:         r.UID,
 		Name:        r.Name,
+		DisplayName: r.DisplayName,
 		Description: r.Description,
 		Updated:     r.Updated,
 		Created:     r.Created,
@@ -57,6 +61,30 @@ func (r RoleDTO) Global() bool {
 
 func (r Role) Global() bool {
 	return r.OrgID == GlobalOrgID
+}
+
+func (r RoleDTO) IsFixed() bool {
+	// TODO: eleijonmarck
+	// Do not like the "fixed" being used at times
+	// would be great to have a variable definiting this string, maybe there is one
+	return strings.HasPrefix(r.Name, "fixed")
+}
+
+func (r Role) IsFixed() bool {
+	// TODO: eleijonmarck
+	// Do not like the "fixed" being used at times
+	// would be great to have a variable definiting this string, maybe there is one
+	return strings.HasPrefix(r.Name, "fixed")
+}
+
+func (r RoleDTO) GetFallbackDisplayName() string {
+	// TODO: eleijonmarck remove the fixed prefix
+	return strings.Replace(r.Name, ":", " ", -1)
+}
+
+func (r Role) GetFallbackDisplayName() string {
+	// TODO: eleijonmarck remove the fixed prefix
+	return strings.Replace(r.Name, ":", " ", -1)
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
