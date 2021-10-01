@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -122,13 +123,20 @@ func (ng *AlertNG) init() error {
 		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
+		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval:         ng.getRuleMinInterval(),
 	}
+
+	appUrl, err := url.Parse(ng.Cfg.AppURL)
+	if err != nil {
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
+		appUrl = nil
+	}
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), store, store)
-	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, ng.DataService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
-	ng.schedule = schedule
+	ng.schedule = scheduler
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -173,7 +181,7 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.IsNgAlertEnabled()
+	return !ng.Cfg.UnifiedAlerting.Enabled
 }
 
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.

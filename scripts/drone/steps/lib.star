@@ -174,9 +174,6 @@ def lint_backend_step(edition):
             'CGO_ENABLED': '1',
         },
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -422,7 +419,6 @@ def test_frontend_step():
             'yarn run ci:test-frontend',
         ],
     }
-
 
 def restore_cache_step(cache):
     name = ''

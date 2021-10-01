@@ -34,7 +34,7 @@
     "@grafana/ui": "8.3.0-pre",
     "@types/command-exists": "^1.2.0",
     "@types/expect-puppeteer": "3.3.1",
-    "@types/fs-extra": "^8.1.0",
+    "@types/fs-extra": "^9.0.13",
     "@types/inquirer": "^6.0.3",
     "@types/jest": "26.0.15",
     "@types/node": "^12.0.4",

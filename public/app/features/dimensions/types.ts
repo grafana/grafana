@@ -32,6 +32,11 @@ export interface DimensionSupplier<T = any> {
   get: (index: number) => T;
 }
 
+export enum ScaleDimensionMode {
+  Linear = 'linear',
+  Quadratic = 'quad',
+}
+
 /** This will map the field value% to a scaled value within the range */
 export interface ScaleDimensionConfig extends BaseDimensionConfig<number> {
   min: number;
