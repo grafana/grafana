@@ -44,7 +44,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
-  samlName = 'SAML';
+  samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: any;
