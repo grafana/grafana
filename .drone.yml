@@ -56,8 +56,8 @@ steps:
   - chmod +x bin/grabpl
   - yarn config set cache-folder /cache/yarn
   - yarn cache dir
-  - echo "ls /cache/yarn"
-  - ls /cache/yarn
+  - echo "ls /cache"
+  - ls /cache
   - echo "ls /cache/yarn/v6"
   - ls /cache/yarn/v6
   - find . -type d | grep cache
@@ -192,6 +192,6 @@ get:
 
 ---
 kind: signature
-hmac: 37ad62737f2fdecc81633c78b9dd29b8c17e6680c27ec61b617507a4ea3a0a66
+hmac: e3c8bdae6a9d6a50600ef0e608bd6e06d92492b971f9e1f5d9059da2dfbefae6
 
 ...

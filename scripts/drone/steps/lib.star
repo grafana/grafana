@@ -44,8 +44,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     common_cmds = [
         'yarn config set cache-folder /cache/yarn',
         'yarn cache dir',
-        'echo "ls /cache/yarn"',
-        'ls /cache/yarn',
+        'echo "ls /cache"',
+        'ls /cache',
         'echo "ls /cache/yarn/v6"',
         'ls /cache/yarn/v6',
         'find . -type d | grep cache',
