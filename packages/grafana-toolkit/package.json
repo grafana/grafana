@@ -82,7 +82,7 @@
     "md5-file": "^4.0.0",
     "mini-css-extract-plugin": "^0.7.0",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
-    "ora": "^4.0.3",
+    "ora": "^6.0.1",
     "pixelmatch": "^5.1.0",
     "pngjs": "^6.0.0",
     "postcss-flexbugs-fixes": "4.2.0",
