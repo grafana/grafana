@@ -30,14 +30,14 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           {({ register }) => (
             <>
               <Field label="Name">
-                <Input {...register('name', { required: true })} />
+                <Input {...register('name', { required: true })} id="name-input" />
               </Field>
 
               <Field
                 label="Email"
                 description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
               >
-                <Input {...register('email')} placeholder="team@email.com" type="email" />
+                <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
               </Field>
               <Button type="submit">Update</Button>
             </>
