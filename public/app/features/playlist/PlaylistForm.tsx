@@ -52,7 +52,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
                 <h3 className="page-headering">Add dashboards</h3>
 
                 <Field label="Add by title">
-                  <DashboardPickerByID onChange={addById} isClearable />
+                  <DashboardPickerByID onChange={addById} id="dashboard-picker" isClearable />
                 </Field>
 
                 <Field label="Add by tag">

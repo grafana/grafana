@@ -42,7 +42,11 @@ export const SearchResultsFilter: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      {editable && <Checkbox value={allChecked} onChange={onToggleAllChecked} />}
+      {editable && (
+        <div className={styles.checkboxWrapper}>
+          <Checkbox label="Select all" value={allChecked} onChange={onToggleAllChecked} />
+        </div>
+      )}
       {showActions ? (
         <HorizontalGroup spacing="md">
           <Button disabled={!canMove} onClick={moveTo} icon="exchange-alt" variant="secondary">
@@ -75,13 +79,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       height: 35px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: ${theme.spacing.md};
       align-items: center;
       margin-bottom: ${sm};
 
       > label {
         height: 20px;
         margin: 0 ${md} 0 ${sm};
+      }
+    `,
+    checkboxWrapper: css`
+      label {
+        line-height: 1.2;
+        width: max-content;
       }
     `,
   };
