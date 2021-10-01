@@ -96,7 +96,7 @@ type notificationService struct {
 }
 
 func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
-	notifierStates, err := n.getNeededNotifiers(evalCtx.Rule.OrgID, evalCtx.Rule.Notifications, evalCtx)
+	notifierStates, err := n.getNeededNotifiers(evalCtx.Ctx, evalCtx.Rule.OrgID, evalCtx.Rule.Notifications, evalCtx)
 	if err != nil {
 		n.log.Error("Failed to get alert notifiers", "error", err)
 		return err
@@ -241,10 +241,10 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
+func (n *notificationService) getNeededNotifiers(ctx context.Context, orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(ctx, query); err != nil {
 		return nil, err
 	}
 

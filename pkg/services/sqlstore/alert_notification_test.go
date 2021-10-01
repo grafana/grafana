@@ -150,7 +150,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Name:  "email",
 			}
 
-			err := GetAlertNotifications(cmd)
+			err := GetAlertNotifications(context.Background(), cmd)
 			So(err, ShouldBeNil)
 			So(cmd.Result, ShouldBeNil)
 		})
@@ -165,14 +165,14 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			}
 
 			Convey("and missing frequency", func() {
-				err := CreateAlertNotificationCommand(cmd)
+				err := CreateAlertNotificationCommand(context.Background(), cmd)
 				So(err, ShouldEqual, models.ErrNotificationFrequencyNotFound)
 			})
 
 			Convey("invalid frequency", func() {
 				cmd.Frequency = "invalid duration"
 
-				err := CreateAlertNotificationCommand(cmd)
+				err := CreateAlertNotificationCommand(context.Background(), cmd)
 				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 					err.Error()), ShouldBeTrue)
 			})
@@ -187,7 +187,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     simplejson.New(),
 			}
 
-			err := CreateAlertNotificationCommand(cmd)
+			err := CreateAlertNotificationCommand(context.Background(), cmd)
 			So(err, ShouldBeNil)
 
 			updateCmd := &models.UpdateAlertNotificationCommand{
@@ -196,14 +196,14 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			}
 
 			Convey("and missing frequency", func() {
-				err := UpdateAlertNotification(updateCmd)
+				err := UpdateAlertNotification(context.Background(), updateCmd)
 				So(err, ShouldEqual, models.ErrNotificationFrequencyNotFound)
 			})
 
 			Convey("invalid frequency", func() {
 				updateCmd.Frequency = "invalid duration"
 
-				err := UpdateAlertNotification(updateCmd)
+				err := UpdateAlertNotification(context.Background(), updateCmd)
 				So(err, ShouldNotBeNil)
 				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 					err.Error()), ShouldBeTrue)
@@ -220,7 +220,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     simplejson.New(),
 			}
 
-			err := CreateAlertNotificationCommand(cmd)
+			err := CreateAlertNotificationCommand(context.Background(), cmd)
 			So(err, ShouldBeNil)
 			So(cmd.Result.Id, ShouldNotEqual, 0)
 			So(cmd.Result.OrgId, ShouldNotEqual, 0)
@@ -230,7 +230,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result.Uid, ShouldNotBeEmpty)
 
 			Convey("Cannot save Alert Notification with the same name", func() {
-				err = CreateAlertNotificationCommand(cmd)
+				err = CreateAlertNotificationCommand(context.Background(), cmd)
 				So(err, ShouldNotBeNil)
 			})
 			Convey("Cannot save Alert Notification with the same name and another uid", func() {
@@ -243,7 +243,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Settings:     cmd.Settings,
 					Uid:          "notifier1",
 				}
-				err = CreateAlertNotificationCommand(anotherUidCmd)
+				err = CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
 				So(err, ShouldNotBeNil)
 			})
 			Convey("Can save Alert Notification with another name and another uid", func() {
@@ -256,7 +256,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Settings:     cmd.Settings,
 					Uid:          "notifier2",
 				}
-				err = CreateAlertNotificationCommand(anotherUidCmd)
+				err = CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
 				So(err, ShouldBeNil)
 			})
 
@@ -271,7 +271,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Settings:              simplejson.New(),
 					Id:                    cmd.Result.Id,
 				}
-				err := UpdateAlertNotification(newCmd)
+				err := UpdateAlertNotification(context.Background(), newCmd)
 				So(err, ShouldBeNil)
 				So(newCmd.Result.Name, ShouldEqual, "NewName")
 				So(newCmd.Result.Frequency, ShouldEqual, 60*time.Second)
@@ -287,7 +287,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Settings:     simplejson.New(),
 					Id:           cmd.Result.Id,
 				}
-				err := UpdateAlertNotification(newCmd)
+				err := UpdateAlertNotification(context.Background(), newCmd)
 				So(err, ShouldBeNil)
 				So(newCmd.Result.SendReminder, ShouldBeFalse)
 			})
@@ -301,11 +301,11 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
-			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&cmd3), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&cmd4), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&otherOrg), ShouldBeNil)
+			So(CreateAlertNotificationCommand(context.Background(), &cmd1), ShouldBeNil)
+			So(CreateAlertNotificationCommand(context.Background(), &cmd2), ShouldBeNil)
+			So(CreateAlertNotificationCommand(context.Background(), &cmd3), ShouldBeNil)
+			So(CreateAlertNotificationCommand(context.Background(), &cmd4), ShouldBeNil)
+			So(CreateAlertNotificationCommand(context.Background(), &otherOrg), ShouldBeNil)
 
 			Convey("search", func() {
 				query := &models.GetAlertNotificationsWithUidToSendQuery{
@@ -313,7 +313,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetAlertNotificationsWithUidToSend(query)
+				err := GetAlertNotificationsWithUidToSend(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 3)
 			})
@@ -323,7 +323,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetAllAlertNotifications(query)
+				err := GetAllAlertNotifications(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
 				So(query.Result[0].Name, ShouldEqual, cmd4.Name)
@@ -337,7 +337,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			ss := InitTestDB(t)
 
 			notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
-			err := CreateAlertNotificationCommand(notification)
+			err := CreateAlertNotificationCommand(context.Background(), notification)
 			So(err, ShouldBeNil)
 
 			byUidQuery := &models.GetAlertNotificationsWithUidQuery{
@@ -345,7 +345,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: notification.OrgId,
 			}
 
-			notificationByUidErr := GetAlertNotificationsWithUid(byUidQuery)
+			notificationByUidErr := GetAlertNotificationsWithUid(context.Background(), byUidQuery)
 			So(notificationByUidErr, ShouldBeNil)
 
 			Convey("Can cache notification Uid", func() {
@@ -360,7 +360,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				So(foundBeforeCaching, ShouldBeFalse)
 				So(resultBeforeCaching, ShouldBeNil)
 
-				notificationByIdErr := ss.GetAlertNotificationUidWithId(byIdQuery)
+				notificationByIdErr := ss.GetAlertNotificationUidWithId(context.Background(), byIdQuery)
 				So(notificationByIdErr, ShouldBeNil)
 
 				resultAfterCaching, foundAfterCaching := ss.CacheService.Get(cacheKey)
@@ -376,7 +376,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 				ss.CacheService.Set(cacheKey, "a-cached-uid", -1)
 
-				err := ss.GetAlertNotificationUidWithId(query)
+				err := ss.GetAlertNotificationUidWithId(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldEqual, "a-cached-uid")
 			})
@@ -387,7 +387,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					OrgId: 100,
 				}
 
-				err := ss.GetAlertNotificationUidWithId(query)
+				err := ss.GetAlertNotificationUidWithId(context.Background(), query)
 				So(query.Result, ShouldEqual, "")
 				So(err, ShouldNotBeNil)
 				So(errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID), ShouldBeTrue)
@@ -410,7 +410,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:              simplejson.New(),
 				Id:                    1,
 			}
-			err := UpdateAlertNotification(updateCmd)
+			err := UpdateAlertNotification(context.Background(), updateCmd)
 			So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
 
 			Convey("using UID", func() {
@@ -425,7 +425,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Uid:                   "uid",
 					NewUid:                "newUid",
 				}
-				err := UpdateAlertNotificationWithUid(updateWithUidCmd)
+				err := UpdateAlertNotificationWithUid(context.Background(), updateWithUidCmd)
 				So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
 			})
 		})
@@ -439,25 +439,25 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     simplejson.New(),
 			}
 
-			err := CreateAlertNotificationCommand(cmd)
+			err := CreateAlertNotificationCommand(context.Background(), cmd)
 			So(err, ShouldBeNil)
 
 			deleteCmd := &models.DeleteAlertNotificationCommand{
 				Id:    cmd.Result.Id,
 				OrgId: 1,
 			}
-			err = DeleteAlertNotification(deleteCmd)
+			err = DeleteAlertNotification(context.Background(), deleteCmd)
 			So(err, ShouldBeNil)
 
 			Convey("using UID", func() {
-				err := CreateAlertNotificationCommand(cmd)
+				err := CreateAlertNotificationCommand(context.Background(), cmd)
 				So(err, ShouldBeNil)
 
 				deleteWithUidCmd := &models.DeleteAlertNotificationWithUidCommand{
 					Uid:   cmd.Result.Uid,
 					OrgId: 1,
 				}
-				err = DeleteAlertNotificationWithUid(deleteWithUidCmd)
+				err = DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 				So(err, ShouldBeNil)
 				So(deleteWithUidCmd.DeletedAlertNotificationId, ShouldEqual, cmd.Result.Id)
 			})
@@ -468,7 +468,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Id:    1,
 				OrgId: 1,
 			}
-			err := DeleteAlertNotification(deleteCmd)
+			err := DeleteAlertNotification(context.Background(), deleteCmd)
 			So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
 
 			Convey("using UID", func() {
@@ -476,7 +476,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Uid:   "uid",
 					OrgId: 1,
 				}
-				err = DeleteAlertNotificationWithUid(deleteWithUidCmd)
+				err = DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 				So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
 			})
 		})
