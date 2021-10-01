@@ -66,7 +66,7 @@ Here is a minimal policy example:
         "cloudwatch:DescribeAlarms",
         "cloudwatch:ListMetrics",
         "cloudwatch:GetMetricStatistics",
-        "cloudwatch:GetMetricData"
+        "cloudwatch:GetMetricData",
         "cloudwatch:GetInsightRuleReport"
       ],
       "Resource": "*"
