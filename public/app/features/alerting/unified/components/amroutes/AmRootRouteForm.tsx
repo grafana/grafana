@@ -188,12 +188,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 <div className={cx(styles.container, styles.timingContainer)}>
                   <InputControl
                     render={({ field, fieldState: { invalid } }) => (
-                      <Input
-                        {...field}
-                        className={styles.smallInput}
-                        invalid={invalid}
-                        placeholder={'Default 4 hours'}
-                      />
+                      <Input {...field} className={styles.smallInput} invalid={invalid} placeholder="Default 4 hours" />
                     )}
                     control={control}
                     name="repeatIntervalValue"
