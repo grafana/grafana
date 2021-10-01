@@ -253,7 +253,7 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		OrgId: alertRule.OrgID,
 	}
 
-	err = sqlstore.GetDashboardCtx(context.TODO(), query)
+	err = sqlstore.GetDashboard(context.TODO(), query)
 	if err != nil {
 		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 		return

@@ -28,7 +28,6 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 func init() {
 	bus.AddHandlerCtx("sql", GetDashboard)
 	bus.AddHandlerCtx("sql", GetDashboards)
-	bus.AddHandlerCtx("sql", GetDashboardCtx)
 	bus.AddHandlerCtx("sql", DeleteDashboard)
 	bus.AddHandlerCtx("sql", SearchDashboards)
 	bus.AddHandlerCtx("sql", GetDashboardTags)
@@ -232,12 +231,7 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 	return &dashboard, nil
 }
 
-// TODO: Remove me
 func GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return GetDashboardCtx(context.TODO(), query)
-}
-
-func GetDashboardCtx(ctx context.Context, query *models.GetDashboardQuery) error {
 	return withDbSession(ctx, x, func(dbSession *DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
