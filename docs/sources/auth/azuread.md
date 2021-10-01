@@ -30,7 +30,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click **Endpoints** from the top menu. 
 
-	- Note down the **OAuth 2.0 authorization endpoint (v2)** URL. This is the auth URL.
+	- Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
 	- Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
 1. Click **Certificates & secrets** and then add a new entry under **Client secrets** with the following configuration.
