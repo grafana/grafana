@@ -18,7 +18,7 @@ import {
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { fetchNotifiers } from './api/grafana';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
@@ -87,7 +87,7 @@ const ui = {
   channelFormContainer: byTestId('item-container'),
 
   inputs: {
-    name: byLabelText('Name'),
+    name: byPlaceholderText('Name'),
     email: {
       addresses: byLabelText(/Addresses/),
       toEmails: byLabelText(/To/),
@@ -213,7 +213,7 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    await userEvent.type(byLabelText('Name').get(), 'my new receiver');
+    await userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
     await ui.inputs.email.addresses.find();

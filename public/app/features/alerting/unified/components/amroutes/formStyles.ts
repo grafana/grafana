@@ -21,5 +21,13 @@ export const getFormStyles = (theme: GrafanaTheme2) => {
     smallInput: css`
       width: ${theme.spacing(6.5)};
     `,
+    linkText: css`
+      text-decoration: underline;
+    `,
+    collapse: css`
+      border: none;
+      background: none;
+      color: ${theme.colors.text.primary};
+    `,
   };
 };
