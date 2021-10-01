@@ -2,19 +2,17 @@ import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 
-export const processHistogramLabels = (labels: string[]) => {
+export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
   const regexp = new RegExp('_bucket($|:)');
-  for (let index = 0; index < labels.length; index++) {
-    const label = labels[index];
-    const isHistogramValue = regexp.test(label);
+  for (let index = 0; index < metrics.length; index++) {
+    const metric = metrics[index];
+    const isHistogramValue = regexp.test(metric);
     if (isHistogramValue) {
-      resultSet.add(label);
+      resultSet.add(metric);
     }
   }
-  const result = [...resultSet];
-
-  return { values: { __name__: result } };
+  return [...resultSet];
 };
 
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {

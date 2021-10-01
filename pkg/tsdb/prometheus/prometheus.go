@@ -167,12 +167,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			}
 			response[Instant] = instantResponse
 		}
-
+		// Exemplars are always run in combination with range query.
+		// If exemplar query throws error, pass it to result, but continue with parsing of other responses
+		var exemplarError error
 		if query.ExemplarQuery {
 			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				//If we get error here, exemplars are not supported and we want to return nil response
-				exemplarResponse = nil
+				exemplarError = fmt.Errorf("exemplar query: %s failed with: %v", query.Expr, err)
 			}
 			response[Exemplar] = exemplarResponse
 		}
@@ -184,6 +185,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frames,
+			Error:  exemplarError,
 		}
 	}
 

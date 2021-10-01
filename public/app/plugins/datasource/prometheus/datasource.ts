@@ -289,16 +289,41 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
+  shouldRunExemplarQuery(target: PromQuery): boolean {
+    // If exemplar or range param is false, return false. For Grafana UI, it makes sense to run exemplar query only when we also run range query.
+    if (!target.exemplar || !target.range) {
+      return false;
+    }
+    // If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
+    // If we have processed histogram metrics, check if it is part of query expr.
+    const histogramMetrics = this.languageProvider.histogramMetrics;
+    if (
+      (!histogramMetrics.length && target.expr.includes('_bucket')) ||
+      histogramMetrics.find((metric) => target.expr.includes(metric))
+    ) {
+      return true;
+    }
+    // For other cases, return the same value
+    return !!target.exemplar;
+  }
+
+  processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    const processedTarget = {
+      ...target,
+      exemplar: this.shouldRunExemplarQuery(target),
+      requestId: request.panelId + target.refId,
+      // We need to pass utcOffsetSec to backend to calculate aligned range
+      utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+    };
+    return processedTarget;
+  }
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
     const shouldRunBackendQuery = this.access === 'proxy' && request.app === CoreApp.Explore;
 
     if (shouldRunBackendQuery) {
-      const targets = request.targets.map((target) => ({
-        ...target,
-        // We need to pass utcOffsetSec to backend to calculate aligned range
-        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
-      }));
+      const targets = request.targets.map((target) => this.processTargetV2(target, request));
       return super
         .query({ ...request, targets })
         .pipe(
