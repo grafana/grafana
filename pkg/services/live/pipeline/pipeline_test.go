@@ -62,7 +62,7 @@ func (t *testProcessor) Type() string {
 	return "test"
 }
 
-func (t *testProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+func (t *testProcessor) Process(_ context.Context, _ Vars, frame *data.Frame) (*data.Frame, error) {
 	return frame, nil
 }
 
@@ -75,7 +75,7 @@ func (t *testOutputter) Type() string {
 	return "test"
 }
 
-func (t *testOutputter) Output(_ context.Context, _ OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (t *testOutputter) Output(_ context.Context, _ Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if t.err != nil {
 		return nil, t.err
 	}

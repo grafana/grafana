@@ -34,7 +34,7 @@ func (p *KeepFieldsProcessor) Type() string {
 	return ProcessorTypeKeepFields
 }
 
-func (p *KeepFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+func (p *KeepFieldsProcessor) Process(_ context.Context, _ Vars, frame *data.Frame) (*data.Frame, error) {
 	var fieldsToKeep []*data.Field
 	for _, field := range frame.Fields {
 		if stringInSlice(field.Name, p.config.FieldNames) {

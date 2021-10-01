@@ -29,7 +29,7 @@ func (p *DropFieldsProcessor) Type() string {
 	return ProcessorTypeDropFields
 }
 
-func (p *DropFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+func (p *DropFieldsProcessor) Process(_ context.Context, _ Vars, frame *data.Frame) (*data.Frame, error) {
 	for _, f := range p.config.FieldNames {
 	inner:
 		for i, field := range frame.Fields {

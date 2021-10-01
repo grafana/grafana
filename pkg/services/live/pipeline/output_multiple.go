@@ -18,7 +18,7 @@ func (out *MultipleOutput) Type() string {
 	return OutputTypeMultiple
 }
 
-func (out MultipleOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out MultipleOutput) Output(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	var frames []*ChannelFrame
 	for _, out := range out.Outputters {
 		f, err := out.Output(ctx, vars, frame)

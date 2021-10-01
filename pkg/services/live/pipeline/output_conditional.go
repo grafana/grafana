@@ -21,7 +21,7 @@ func (out *ConditionalOutput) Type() string {
 	return OutputTypeConditional
 }
 
-func (out ConditionalOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out ConditionalOutput) Output(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	ok, err := out.Condition.CheckCondition(ctx, frame)
 	if err != nil {
 		return nil, err

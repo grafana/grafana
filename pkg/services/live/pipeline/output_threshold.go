@@ -37,7 +37,7 @@ func (out *ThresholdOutput) Type() string {
 	return OutputTypeThreshold
 }
 
-func (out *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *ThresholdOutput) Output(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if frame == nil {
 		return nil, nil
 	}

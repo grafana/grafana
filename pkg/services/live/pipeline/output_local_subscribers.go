@@ -26,7 +26,7 @@ func (out *LocalSubscribersOutput) Type() string {
 	return OutputTypeLocalSubscribers
 }
 
-func (out *LocalSubscribersOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *LocalSubscribersOutput) Output(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	channelID := vars.Channel
 	channel := orgchannel.PrependOrgID(vars.OrgID, channelID)
 	frameJSON, err := json.Marshal(frame)

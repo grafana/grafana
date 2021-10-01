@@ -50,19 +50,6 @@ func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
 	return tp, nil
 }
 
-// TODO: some things to implement and ideas to consider.
-// * Can return ChannelData from Frame Outputter – thus starting corresponding rule from processing input step.
-// * Better error communication with WS/HTTP? Currently we can't return nothing beyond InternalError.
-// * Better copy data and Frame on redirects? (at least for safety, but no real problem exists yet).
-// * How to deal with auth on redirects? What if publish auth configured for a rule in redirect? Currently auth skipped.
-// * Avoid ProcessorVars, OutputVars – use Vars everywhere.
-// * Rename:
-//		* Converter => FrameConverter
-//		* Outputter => FrameOutputter
-//		* Processor => FrameProcessor
-//		* ConditionChecker => FrameConditionChecker.
-// * Put SignedInUser into Vars.
-
 // ChannelData is a wrapper over raw data with additional channel information.
 // Channel is used for rule routing, if the channel is empty then data processing
 // stops. If channel is not empty then data processing will be redirected to a
@@ -90,16 +77,6 @@ type Vars struct {
 	Path      string
 }
 
-// ProcessorVars has some helpful things Processor entities could use.
-type ProcessorVars struct {
-	Vars
-}
-
-// OutputVars has some helpful things Outputter entities could use.
-type OutputVars struct {
-	ProcessorVars
-}
-
 // DataOutputter can output incoming data before conversion to frames.
 type DataOutputter interface {
 	Type() string
@@ -117,14 +94,14 @@ type Converter interface {
 // Processor can modify data.Frame in a custom way before it will be outputted.
 type Processor interface {
 	Type() string
-	Process(ctx context.Context, vars ProcessorVars, frame *data.Frame) (*data.Frame, error)
+	Process(ctx context.Context, vars Vars, frame *data.Frame) (*data.Frame, error)
 }
 
 // Outputter outputs data.Frame to a custom destination. Or simply
 // do nothing if some conditions not met.
 type Outputter interface {
 	Type() string
-	Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error)
+	Output(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error)
 }
 
 // Subscriber can handle channel subscribe events.
@@ -399,14 +376,12 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 		return nil, err
 	}
 
-	vars := ProcessorVars{
-		Vars: Vars{
-			OrgID:     orgID,
-			Channel:   channelID,
-			Scope:     ch.Scope,
-			Namespace: ch.Namespace,
-			Path:      ch.Path,
-		},
+	vars := Vars{
+		OrgID:     orgID,
+		Channel:   channelID,
+		Scope:     ch.Scope,
+		Namespace: ch.Namespace,
+		Path:      ch.Path,
 	}
 
 	if len(rule.Processors) > 0 {
@@ -422,14 +397,10 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 		}
 	}
 
-	outputVars := OutputVars{
-		ProcessorVars: vars,
-	}
-
 	if len(rule.Outputters) > 0 {
 		var resultingFrames []*ChannelFrame
 		for _, out := range rule.Outputters {
-			frames, err := p.processFrameOutput(ctx, out, outputVars, frame)
+			frames, err := p.processFrameOutput(ctx, out, vars, frame)
 			if err != nil {
 				logger.Error("Error outputting frame", "error", err)
 				return nil, err
@@ -442,7 +413,7 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 	return nil, nil
 }
 
-func (p *Pipeline) execProcessor(ctx context.Context, proc Processor, vars ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+func (p *Pipeline) execProcessor(ctx context.Context, proc Processor, vars Vars, frame *data.Frame) (*data.Frame, error) {
 	var span trace.Span
 	if p.tracer != nil {
 		ctx, span = p.tracer.Start(ctx, "live.pipeline.apply_processor_"+proc.Type())
@@ -462,7 +433,7 @@ func (p *Pipeline) execProcessor(ctx context.Context, proc Processor, vars Proce
 	return proc.Process(ctx, vars, frame)
 }
 
-func (p *Pipeline) processFrameOutput(ctx context.Context, out Outputter, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (p *Pipeline) processFrameOutput(ctx context.Context, out Outputter, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	var span trace.Span
 	if p.tracer != nil {
 		ctx, span = p.tracer.Start(ctx, "live.pipeline.frame_output_"+out.Type())

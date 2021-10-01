@@ -30,7 +30,7 @@ func (out *ChangeLogOutput) Type() string {
 	return OutputTypeChangeLog
 }
 
-func (out *ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *ChangeLogOutput) Output(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	previousFrame, previousFrameOK, err := out.frameStorage.Get(vars.OrgID, out.config.Channel)
 	if err != nil {
 		return nil, err

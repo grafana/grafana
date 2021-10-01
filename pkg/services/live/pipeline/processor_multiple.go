@@ -18,7 +18,7 @@ func (p *MultipleProcessor) Type() string {
 	return ProcessorTypeMultiple
 }
 
-func (p *MultipleProcessor) Process(ctx context.Context, vars ProcessorVars, frame *data.Frame) (*data.Frame, error) {
+func (p *MultipleProcessor) Process(ctx context.Context, vars Vars, frame *data.Frame) (*data.Frame, error) {
 	for _, p := range p.Processors {
 		var err error
 		frame, err = p.Process(ctx, vars, frame)

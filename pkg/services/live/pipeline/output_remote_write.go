@@ -100,7 +100,7 @@ func (out *RemoteWriteOutput) flush(timeSeries []prompb.TimeSeries) error {
 	return nil
 }
 
-func (out *RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *RemoteWriteOutput) Output(_ context.Context, _ Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if out.config.Endpoint == "" {
 		logger.Debug("Skip sending to remote write: no url")
 		return nil, nil

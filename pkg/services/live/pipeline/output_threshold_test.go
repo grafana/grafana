@@ -17,7 +17,7 @@ func TestThresholdOutput_Output(t *testing.T) {
 	}
 	type args struct {
 		in0   context.Context
-		vars  OutputVars
+		vars  Vars
 		frame *data.Frame
 	}
 	tests := []struct {
@@ -34,7 +34,7 @@ func TestThresholdOutput_Output(t *testing.T) {
 					Channel: "test",
 				},
 			},
-			args:    args{in0: context.Background(), vars: OutputVars{}, frame: nil},
+			args:    args{in0: context.Background(), vars: Vars{}, frame: nil},
 			wantErr: false,
 		},
 	}
@@ -88,7 +88,7 @@ func TestThresholdOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), Vars{}, frame)
 	require.NoError(t, err)
 
 	require.Len(t, channelFrames, 1)
@@ -139,7 +139,7 @@ func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), Vars{}, frame)
 	require.NoError(t, err)
 	require.Len(t, channelFrames, 1)
 
@@ -198,7 +198,7 @@ func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), Vars{}, frame)
 	require.NoError(t, err)
 	require.Len(t, channelFrames, 0)
 }
@@ -248,7 +248,7 @@ func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), Vars{}, frame)
 	require.NoError(t, err)
 	require.Len(t, channelFrames, 1)
 }

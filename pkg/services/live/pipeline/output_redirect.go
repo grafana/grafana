@@ -28,7 +28,7 @@ func (out *RedirectOutput) Type() string {
 	return OutputTypeRedirect
 }
 
-func (out *RedirectOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *RedirectOutput) Output(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if vars.Channel == out.config.Channel {
 		return nil, fmt.Errorf("redirect to the same channel: %s", out.config.Channel)
 	}
