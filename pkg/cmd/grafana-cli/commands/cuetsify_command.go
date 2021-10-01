@@ -48,7 +48,7 @@ var skipPaths = []string{
 	"public/app/plugins/panel/state-timeline/models.cue",
 	"public/app/plugins/panel/status-history/models.cue",
 	"public/app/plugins/panel/table/models.cue",
-	"public/app/plugins/panel/text/models.cue",
+	// "public/app/plugins/panel/text/models.cue",
 	"public/app/plugins/panel/timeseries/models.cue",
 	// All the cue files in this dir have to be individually excluded, even
 	// though the generator currently smooshes them all together
