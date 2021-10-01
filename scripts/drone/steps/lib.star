@@ -1016,3 +1016,17 @@ def validate_scuemata_step():
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
         ],
     }
+
+def ensure_cuetsified_step():
+    return {
+        'name': 'ensure-cuetsified',
+        'image': build_image,
+        'depends_on': [
+            'validate-scuemata',
+        ],
+        'commands': [
+            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
+            'git diff --stat --exit-code',
+            'u="$(git ls-files --others --exclude-standard)" && test -z "$u"',
+        ],
+    }

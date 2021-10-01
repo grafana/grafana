@@ -91,6 +91,7 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
