@@ -59,6 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
   `,
   externalLinkIcon: css`
+    color: ${theme.colors.text.secondary};
     margin-left: ${theme.spacing(1)};
   `,
   icon: css`
