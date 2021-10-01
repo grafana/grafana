@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -183,10 +184,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
 		sqlstore.InitTestDB(t)
 		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-		err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
+		err = sqlstore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 		require.Nil(t, err)
 		secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-		err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
+		err = sqlstore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 		require.Nil(t, err)
 
 		json, err := ioutil.ReadFile("./testdata/influxdb-alert.json")
