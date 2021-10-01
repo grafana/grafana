@@ -200,6 +200,9 @@ export const Components = {
   FolderPicker: {
     container: 'Folder picker select container',
   },
+  ReadonlyFolderPicker: {
+    container: 'data-testid Readonly folder picker select container',
+  },
   DataSourcePicker: {
     container: 'Data source picker select container',
     input: () => 'input[id="data-source-picker"]',
