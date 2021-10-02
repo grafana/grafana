@@ -72,15 +72,15 @@ func (r Role) IsFixed() bool {
 }
 
 func (r RoleDTO) GetFallbackDisplayName() string {
-	return fallbackDisplayNameHeuristic(r.Name)
+	return fallbackDisplayName(r.Name)
 }
 
 func (r Role) GetFallbackDisplayName() string {
-	return fallbackDisplayNameHeuristic(r.Name)
+	return fallbackDisplayName(r.Name)
 }
 
 // heuristic for fallback display name
-func fallbackDisplayNameHeuristic(rName string) string {
+func fallbackDisplayName(rName string) string {
 	// removing prefix for fixed roles
 	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
 	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
