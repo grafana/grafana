@@ -109,9 +109,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -392,9 +393,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -878,9 +880,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -1266,9 +1269,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -1856,9 +1860,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -2233,9 +2238,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -2813,9 +2819,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -3161,9 +3168,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
-  - git diff --stat --exit-code
-  - git ls-files --others --exclude-standard
-  - u="$(git ls-files --others --exclude-standard)" && test -z "$u"
+  - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
+  - "# It is required that the generated Typescript be in sync with the input CUE files."
+  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
 
@@ -3622,6 +3630,6 @@ get:
 
 ---
 kind: signature
-hmac: 5237fccbd3eb1fb753ffe2d52c75559311dc57df6b8875b24246cfc266d5895e
+hmac: d95d67dc5351f8fe032b36a905da6f7b4a240237e136045f6f0009ee52087890
 
 ...

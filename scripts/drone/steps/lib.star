@@ -1026,8 +1026,9 @@ def ensure_cuetsified_step():
         ],
         'commands': [
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
-            'git diff --stat --exit-code',
-            'git ls-files --others --exclude-standard',
-            'u="$(git ls-files --others --exclude-standard)" && test -z "$u"',
+            '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
+            '# It is required that the generated Typescript be in sync with the input CUE files.',
+            '# If any files are emitted by the next script, run the generator command locally and commit the result.',
+            './scripts/clean-git-or-error.sh',
         ],
     }
