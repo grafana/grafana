@@ -119,7 +119,7 @@ steps:
     event:
     - pull_request
   depends_on:
-  - initialize
+  - restore-cache
 
 volumes:
 - name: cache
@@ -179,6 +179,6 @@ get:
 
 ---
 kind: signature
-hmac: 44190ef7db616694b3b047971b257a43f97ae92cfdb586eb1e62d30af94abfcb
+hmac: cd78195a5b83764e3fae2c9e83ade25106fe3501c8305bd628da35683361760c
 
 ...

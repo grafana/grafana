@@ -466,7 +466,7 @@ def rebuild_cache_step():
             ],
          },
          'depends_on': [
-            'initialize',
+            'restore-cache',
          ],
          'volumes': [
             {
