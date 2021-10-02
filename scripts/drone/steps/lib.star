@@ -168,6 +168,9 @@ def lint_backend_step(edition):
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
         },
+        'depends_on': [
+                    'initialize',
+                ],
         'commands': [
             # Generate Go code, will install Wire
             # TODO: Install Wire in Docker image instead

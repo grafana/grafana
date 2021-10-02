@@ -75,6 +75,8 @@ steps:
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
 
 - name: test-frontend
   image: grafana/build-container:1.4.2
@@ -176,6 +178,6 @@ get:
 
 ---
 kind: signature
-hmac: ec5c5b62817e70f36b6d9966bbd2767e7e49da75437f7dfee710ffcd85ba3711
+hmac: a52c43035b33e4c6991ce3e91510e7c4116a5095a3c541013d4a2771960adcfe
 
 ...
