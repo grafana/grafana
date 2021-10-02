@@ -220,7 +220,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and targetResource in ($res)\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -252,7 +252,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" \r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res)) \r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -284,7 +284,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" \r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -375,7 +375,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and properties.conditions.targetResourceGroup in ($res)\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and properties.conditions.targetResourceGroup in ($res) and tolower(targetResource) in tolower(($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "insightsAnalytics": {

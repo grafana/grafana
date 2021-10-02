@@ -165,7 +165,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and targetResource in ($res) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res)) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
             "resultFormat": "table"
           },
           "hide": false,
@@ -197,7 +197,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and targetResource in ($res) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res)) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
             "resultFormat": "table"
           },
           "hide": false,
@@ -229,7 +229,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.insights/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and targetResource in ($res) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
+            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.insights/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res)) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
             "resultFormat": "table"
           },
           "hide": false,
