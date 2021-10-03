@@ -28,6 +28,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -309,6 +310,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -793,6 +795,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -1182,6 +1185,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -1773,6 +1777,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -2151,6 +2156,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -2735,6 +2741,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -3084,6 +3091,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -3630,6 +3638,6 @@ get:
 
 ---
 kind: signature
-hmac: d95d67dc5351f8fe032b36a905da6f7b4a240237e136045f6f0009ee52087890
+hmac: 8092310cf3c24f1ec144f134eec6a9ce061157e079bdd5d4cfd4fe0dbd3b87d1
 
 ...
