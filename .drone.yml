@@ -112,7 +112,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -397,7 +399,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -885,7 +889,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -1275,7 +1281,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -1867,7 +1875,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -2246,7 +2256,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -2828,7 +2840,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -3178,7 +3192,9 @@ steps:
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
-  - "# If any files are emitted by the next script, run the generator command locally and commit the result."
+  - "# ...Modulo eslint auto-fixes...:"
+  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - "# If any filenames are emitted by the below script, run the generator command locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
   - validate-scuemata
@@ -3638,6 +3654,6 @@ get:
 
 ---
 kind: signature
-hmac: 8092310cf3c24f1ec144f134eec6a9ce061157e079bdd5d4cfd4fe0dbd3b87d1
+hmac: 420ae2fe877e5de11d7d6a2ba3c892b5b11499cc085a433e7bc84e77a49a05ed
 
 ...

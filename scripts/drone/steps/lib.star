@@ -1029,7 +1029,9 @@ def ensure_cuetsified_step():
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
             '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# If any files are emitted by the next script, run the generator command locally and commit the result.',
+            '# ...Modulo eslint auto-fixes...:',
+            './node_modules/.bin/eslint . --ext .gen.ts --fix',
+            '# If any filenames are emitted by the below script, run the generator command locally and commit the result.',
             './scripts/clean-git-or-error.sh',
         ],
     }
