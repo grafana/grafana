@@ -536,38 +536,6 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		"interval": "1m",
 		"rules": [{
 			"expr": "",
-			"grafana_alert": {
-				"id": 2,
-				"orgId": 1,
-				"title": "AlwaysFiringButSilenced",
-				"condition": "A",
-				"data": [{
-					"refId": "A",
-					"queryType": "",
-					"relativeTimeRange": {
-						"from": 18000,
-						"to": 10800
-					},
-					"datasourceUid": "-100",
-					"model": {
-						"expression": "2 + 3 \u003e 1",
-						"intervalMs": 1000,
-						"maxDataPoints": 43200,
-						"type": "math"
-					}
-				}],
-				"updated": "2021-02-21T01:10:30Z",
-				"intervalSeconds": 60,
-				"version": 1,
-				"uid": "uid",
-				"namespace_uid": "nsuid",
-				"namespace_id": 1,
-				"rule_group": "anotherrulegroup",
-				"no_data_state": "Alerting",
-				"exec_err_state": "Alerting"
-			}
-		}, {
-			"expr": "",
 			"for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
@@ -601,6 +569,38 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
+				"exec_err_state": "Alerting"
+			}
+		}, {
+			"expr": "",
+			"grafana_alert": {
+				"id": 2,
+				"orgId": 1,
+				"title": "AlwaysFiringButSilenced",
+				"condition": "A",
+				"data": [{
+					"refId": "A",
+					"queryType": "",
+					"relativeTimeRange": {
+						"from": 18000,
+						"to": 10800
+					},
+					"datasourceUid": "-100",
+					"model": {
+						"expression": "2 + 3 \u003e 1",
+						"intervalMs": 1000,
+						"maxDataPoints": 43200,
+						"type": "math"
+					}
+				}],
+				"updated": "2021-02-21T01:10:30Z",
+				"intervalSeconds": 60,
+				"version": 1,
+				"uid": "uid",
+				"namespace_uid": "nsuid",
+				"namespace_id": 1,
+				"rule_group": "anotherrulegroup",
+				"no_data_state": "Alerting",
 				"exec_err_state": "Alerting"
 			}
 		}]

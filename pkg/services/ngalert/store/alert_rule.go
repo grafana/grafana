@@ -342,6 +342,8 @@ func (st DBstore) GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error {
 			}
 		}
 
+		q = fmt.Sprintf("%s ORDER BY id ASC", q)
+
 		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
 			return err
 		}
