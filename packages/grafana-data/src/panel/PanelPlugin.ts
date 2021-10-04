@@ -253,7 +253,7 @@ export class PanelPlugin<
   }
 
   /**
-   * This is used while building the panel optione editor.
+   * This is used while building the panel options editor.
    *
    * @internal
    */
