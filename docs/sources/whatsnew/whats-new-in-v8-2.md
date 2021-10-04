@@ -32,8 +32,6 @@ The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurab
 
 ## Plugins management
 
-## Plugins management
-
 We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. You can use the plugin catalog to find, install and uninstall  your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
 
 {{< figure src="/static/img/docs/plugins/plugins-catalog-browse-8-1.png" max-width="1200px" caption="Plugins Catalog Browsers" >}}
@@ -61,15 +59,17 @@ Fine-grained access control now covers data source and provisioning permissions.
 
 ## Export usage insights logs as server logs
 
-Usage Insights Logs contain valuable information about user dashboard visits, queries, and front-end errors that are otherwise impossible to track in Grafana. You can now export those logs alongside your regular server logs, in order to identify problematic dashboards and data sources and improve users’ experience with Grafana. Previously, these metrics could only be exported directly to Loki. Learn more in the [docs](https://grafana.com/docs/grafana/latest/enterprise/usage-insights/export-logs/)
+Usage Insights Logs contain valuable information about user dashboard visits, queries, and front-end errors that are otherwise impossible to track in Grafana. You can now export those logs alongside your regular server logsr to identify problematic dashboards and data sources and improve users’ experience with Grafana. Previously, these metrics could only be exported directly to Loki. Learn more in the [documentation about exporting logs](https://grafana.com/docs/grafana/latest/enterprise/usage-insights/export-logs/)
 
 {{< figure src="/static/img/docs/enterprise/8_2_export_usage_insights.png" max-width="1200px" caption="Stats and licensing" >}}
 
 ## Create a report from the dashboard Share dialogue
 
-Reports are a powerful way to deliver insights directly to people’s email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. Learn more about Reporting in the [docs](​​https://grafana.com/docs/grafana/latest/enterprise/reporting/).
+Reports are a powerful way to deliver insights directly to people’s email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. Learn more about Reporting in the [documentation about reporting](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
+
+{{< figure src="/static/img/docs/enterprise/enterprise-report-from-share-8-2.png" max-width="1200px" caption="Create a report from the dashboard share dialogue" >}}
 
 ## Image Renderer performance improvements and measurement
 
-You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. These images are used for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and included guidance in our documentation to help you configure it for the best mix of performance and resource usage. In our tests, we were able to reduce image load time from a 95th percentile of 10 seconds to less than 3 seconds under normal load.
+You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. These images are used for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation](https://grafana.com/docs/grafana/next/image-rendering/#rendering-mode) to help you configure it for the best mix of performance and resource usage. In our tests, we were able to reduce image load time from a 95th percentile of 10 seconds to less than 3 seconds under normal load.
 
