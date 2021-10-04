@@ -41,7 +41,6 @@ func DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotific
 		if err != nil {
 			return err
 		}
-
 		if rowsAffected == 0 {
 			return models.ErrAlertNotificationNotFound
 		}
@@ -69,7 +68,7 @@ func DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlert
 		Id:    existingNotification.Result.Id,
 		OrgId: existingNotification.Result.OrgId,
 	}
-	if err := bus.Dispatch(deleteCommand); err != nil {
+	if err := bus.DispatchCtx(ctx, deleteCommand); err != nil {
 		return err
 	}
 
@@ -471,7 +470,7 @@ func UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlert
 		OrgId: cmd.OrgId,
 	}
 
-	if err := bus.Dispatch(updateNotification); err != nil {
+	if err := bus.DispatchCtx(ctx, updateNotification); err != nil {
 		return err
 	}
 
