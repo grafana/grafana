@@ -85,16 +85,15 @@ If measurements are taken at regular intervals, most of these delta-of-deltas wi
 
 Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. Here's an example of the [InfluxDB data format](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/#syntax) that demonstrates how each measurement is stored.
 
-
-  ```
-  weather,location=us-midwest temperature=82 1465839830100400200
-    |    -------------------- --------------  |
-    |             |             |             |
-    |             |             |             |
-  +-----------+--------+-+---------+-+---------+
-  |measurement|,tag_set| |field_set| |timestamp|
-  +-----------+--------+-+---------+-+---------+
-  ```
+```
+weather,location=us-midwest temperature=82 1465839830100400200
+  |    -------------------- --------------  |
+  |             |             |             |
+  |             |             |             |
++-----------+--------+-+---------+-+---------+
+|measurement|,tag_set| |field_set| |timestamp|
++-----------+--------+-+---------+-+---------+
+```
 
 Here are some of the TSDBs supported by Grafana:
 
