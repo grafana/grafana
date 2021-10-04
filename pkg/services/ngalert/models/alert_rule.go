@@ -46,6 +46,9 @@ const (
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
+
+	DashboardUIDAnnotation = "__dashboardUid__"
+	PanelIDAnnotation      = "__panelId__"
 )
 
 // AlertRule is the model for alert rules in unified alerting.
