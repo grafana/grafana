@@ -302,6 +302,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             </div>
             <ExploreGraph
               data={logsSeries}
+              allowStyleSelect={false}
               height={150}
               width={width}
               tooltipDisplayMode={TooltipDisplayMode.Multi}

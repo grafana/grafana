@@ -62,6 +62,7 @@ export function LogsVolumePanel(props: Props) {
         <ExploreGraph
           loadingState={LoadingState.Done}
           data={logsVolumeData.data}
+          allowStyleSelect={false}
           height={height}
           width={width - spacing}
           absoluteRange={absoluteRange}

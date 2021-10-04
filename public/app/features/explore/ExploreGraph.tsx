@@ -7,8 +7,6 @@ import {
   createFieldConfigRegistry,
   DataFrame,
   dateTime,
-  FieldColorModeId,
-  FieldConfigSource,
   getFrameDisplayName,
   GrafanaTheme2,
   LoadingState,
@@ -16,7 +14,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
@@ -32,6 +30,8 @@ import { identity } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { getInitialFieldConfig } from './exploreGraphStyle';
+import { ExploreGraphStyleSelect } from './ExploreGraphStyleSelect';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -47,6 +47,7 @@ interface Props {
   tooltipDisplayMode?: TooltipDisplayMode;
   splitOpenFn?: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
+  allowStyleSelect: boolean;
 }
 
 export function ExploreGraph({
@@ -61,6 +62,7 @@ export function ExploreGraph({
   onHiddenSeriesChanged,
   splitOpenFn,
   tooltipDisplayMode = TooltipDisplayMode.Single,
+  allowStyleSelect,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -75,19 +77,7 @@ export function ExploreGraph({
 
   const structureRev = baseStructureRev + structureChangesRef.current;
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
-    defaults: {
-      color: {
-        mode: FieldColorModeId.PaletteClassic,
-      },
-      custom: {
-        drawStyle: GraphDrawStyle.Line,
-        fillOpacity: 0,
-        pointSize: 5,
-      },
-    },
-    overrides: [],
-  });
+  const [fieldConfig, setFieldConfig] = useState(() => getInitialFieldConfig(allowStyleSelect));
 
   const style = useStyles2(getStyles);
   const timeRange = {
@@ -150,6 +140,7 @@ export function ExploreGraph({
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
+      {allowStyleSelect && <ExploreGraphStyleSelect fieldConfig={fieldConfig} onChange={setFieldConfig} />}
       <PanelRenderer
         data={{ series: seriesToShow, timeRange, structureRev, state: loadingState, annotations }}
         pluginId="timeseries"

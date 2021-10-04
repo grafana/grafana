@@ -200,6 +200,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return (
       <Collapse label="Graph" loading={loading} isOpen>
         <ExploreGraph
+          allowStyleSelect
           data={graphResult!}
           height={400}
           width={width - spacing}
