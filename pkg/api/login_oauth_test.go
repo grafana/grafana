@@ -85,7 +85,10 @@ func TestOAuthLogin_Base(t *testing.T) {
 	assert.False(t, u.Query().Has("code_challenge"))
 	assert.False(t, u.Query().Has("code_challenge_method"))
 
-	cookies := recorder.Result().Cookies()
+	resp := recorder.Result()
+	require.NoError(t, resp.Body.Close())
+
+	cookies := resp.Cookies()
 	var stateCookie *http.Cookie
 	for _, c := range cookies {
 		if c.Name == OauthStateCookieName {
@@ -138,8 +141,11 @@ func TestOAuthLogin_UsePKCE(t *testing.T) {
 	assert.True(t, u.Query().Has("code_challenge"))
 	assert.Equal(t, "S256", u.Query().Get("code_challenge_method"))
 
+	resp := recorder.Result()
+	require.NoError(t, resp.Body.Close())
+
 	var oauthCookie *http.Cookie
-	for _, cookie := range recorder.Result().Cookies() {
+	for _, cookie := range resp.Cookies() {
 		if cookie.Name == OauthPKCECookieName {
 			oauthCookie = cookie
 		}
