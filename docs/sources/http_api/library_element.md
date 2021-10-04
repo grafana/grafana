@@ -11,7 +11,7 @@ aliases = ["/docs/grafana/latest/http_api/library_element/"]
 
 The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.
 
-The unique identifier (uid) of a library element can be used for uniquely identify library element between multiple Grafana installs. It's automatically generated if not provided when creating a library element. The uid allows having consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.
+The unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It's automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.
 
 The maximum length of a UID is 40 characters.
 
