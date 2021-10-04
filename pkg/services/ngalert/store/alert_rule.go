@@ -32,7 +32,7 @@ type UpdateRuleGroupCmd struct {
 	RuleGroupConfig apimodels.PostableRuleGroupConfig
 }
 
-type UpsertRule struct {
+type upsertRule struct {
 	Existing *ngmodels.AlertRule
 	New      ngmodels.AlertRule
 }
@@ -184,7 +184,7 @@ func (st DBstore) GetAlertRuleByUID(query *ngmodels.GetAlertRuleByUIDQuery) erro
 }
 
 // upsertAlertRules is a handler for creating/updating alert rules. Returns the set of RuleID that were added or updated
-func (st DBstore) upsertAlertRules(rules []UpsertRule) error {
+func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
