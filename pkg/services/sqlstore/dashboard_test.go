@@ -55,11 +55,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-<<<<<<< HEAD
 				err := GetDashboard(context.Background(), &query)
-=======
-				err := GetDashboardCtx(context.Background(), &query)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 				require.NoError(t, err)
 
 				require.Equal(t, query.Result.Title, "test dash 23")
@@ -75,11 +71,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-<<<<<<< HEAD
 				err := GetDashboard(context.Background(), &query)
-=======
-				err := GetDashboardCtx(context.Background(), &query)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 				require.NoError(t, err)
 
 				require.Equal(t, query.Result.Title, "test dash 23")
@@ -95,11 +87,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-<<<<<<< HEAD
 				err := GetDashboard(context.Background(), &query)
-=======
-				err := GetDashboardCtx(context.Background(), &query)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 				require.NoError(t, err)
 
 				require.Equal(t, query.Result.Title, "test dash 23")
@@ -114,11 +102,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-<<<<<<< HEAD
 				err := GetDashboard(context.Background(), &query)
-=======
-				err := GetDashboardCtx(context.Background(), &query)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 				require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 			})
 
@@ -206,11 +190,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-<<<<<<< HEAD
 				err = GetDashboard(context.Background(), &query)
-=======
-				err = GetDashboardCtx(context.Background(), &query)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 				require.NoError(t, err)
 				require.Equal(t, query.Result.FolderId, 0)
 				require.Equal(t, query.Result.CreatedBy, savedDash.CreatedBy)
@@ -224,43 +204,19 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 				err := DeleteDashboard(context.Background(), deleteCmd)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 			})
 
 			t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
 				err := DeleteDashboard(context.Background(), deleteCmd)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
-=======
-				So(errors.Is(err, models.ErrFolderContainsAlertRules), ShouldBeTrue)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 			})
 
 			t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
 				err := DeleteDashboard(context.Background(), deleteCmd)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
@@ -269,15 +225,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err = SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				require.Equal(t, len(query.Result), 0)
 
@@ -329,15 +277,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := models.GetDashboardTagsQuery{OrgId: 1}
 
 				err := GetDashboardTags(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				fmt.Println("dashboard tag", query.Result)
 				require.Equal(t, len(query.Result), 2)
@@ -351,15 +291,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				require.Equal(t, len(query.Result), 1)
 				hit := query.Result[0]
@@ -376,15 +308,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				require.Equal(t, len(query.Result), 1)
 				require.EqualValues(t, query.Result[0].Title, "1 test dash folder")
@@ -399,15 +323,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				require.Equal(t, len(query.Result), 1)
 				require.EqualValues(t, query.Result[0].Title, "test dash 23")
@@ -422,15 +338,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				require.Equal(t, len(query.Result), 3)
 				require.Equal(t, query.Result[0].Title, "test dash 23")
@@ -444,15 +352,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
-=======
-				So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 				require.Equal(t, len(query.Result), 2)
 				hit := query.Result[0]
@@ -472,15 +372,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}
 
 					err := SearchDashboards(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 					require.NoError(t, err)
-=======
-					So(err, ShouldBeNil)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-					require.NoError(t, err)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 
 					require.Equal(t, len(query.Result), 2)
 
@@ -534,18 +426,8 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := GetDashboardsByPluginId(context.Background(), &query)
-<<<<<<< HEAD
-<<<<<<< HEAD
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 2)
-=======
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 2)
->>>>>>> bd1c6e0ff0 (Add context for dashboards)
-=======
-				require.NoError(t, err)
-				require.Equal(t, len(query.Result), 2)
->>>>>>> 848fd3ad1f (Remove Convey from dashboards)
 			})
 		})
 	})
