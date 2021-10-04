@@ -130,6 +130,8 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                               dashboard/folder permissions.{' '}
                               <a
                                 className={styles.link}
+                                target="_blank"
+                                rel="noreferrer noopener"
                                 href={
                                   'https://grafana.com/docs/grafana/next/enterprise/license/license-restrictions/#active-users-limit'
                                 }
