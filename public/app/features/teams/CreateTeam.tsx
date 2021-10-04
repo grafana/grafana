@@ -33,7 +33,7 @@ export class CreateTeam extends PureComponent<Props> {
             {({ register }) => (
               <FieldSet label="New Team">
                 <Field label="Name">
-                  <Input {...register('name', { required: true })} width={60} />
+                  <Input {...register('name', { required: true })} id="team-name" width={60} />
                 </Field>
                 <Field
                   label={

@@ -341,10 +341,10 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSour
   return queryKeys;
 };
 
-export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
+export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any)!,
-    to: dateMath.parse(rawRange.to, true, timeZone as any)!,
+    from: dateMath.parse(rawRange.from, false, timeZone as any, fiscalYearStartMonth)!,
+    to: dateMath.parse(rawRange.to, true, timeZone as any, fiscalYearStartMonth)!,
     raw: rawRange,
   };
 };
@@ -387,7 +387,11 @@ const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   return null;
 };
 
-export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
+export const getTimeRangeFromUrl = (
+  range: RawTimeRange,
+  timeZone: TimeZone,
+  fiscalYearStartMonth: number
+): TimeRange => {
   const raw = {
     from: parseRawTime(range.from)!,
     to: parseRawTime(range.to)!,

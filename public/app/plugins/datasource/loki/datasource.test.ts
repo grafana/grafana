@@ -920,6 +920,38 @@ describe('LokiDatasource', () => {
       expect(contextQuery.expr).not.toContain('uniqueParsedLabel');
     });
   });
+
+  describe('logs volume data provider', () => {
+    it('creates provider for logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{label=value}', refId: 'A' }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+    });
+
+    it('does not create provider for metrics query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: 'rate({label=value}[1m])', refId: 'A' }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
+    });
+
+    it('creates provider if at least one query is a logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'rate({label=value}[1m])', refId: 'A' },
+          { expr: '{label=value}', refId: 'B' },
+        ],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+    });
+  });
 });
 
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {

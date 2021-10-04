@@ -16,7 +16,7 @@ const OrgProfile: FC<Props> = ({ onSubmit, orgName }) => {
       {({ register }) => (
         <FieldSet label="Organization profile">
           <Field label="Organization name">
-            <Input type="text" {...register('orgName', { required: true })} />
+            <Input id="org-name-input" type="text" {...register('orgName', { required: true })} />
           </Field>
 
           <Button type="submit">Update organization name</Button>

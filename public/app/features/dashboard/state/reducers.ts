@@ -78,6 +78,9 @@ const dashbardSlice = createSlice({
     cleanUpEditPanel: (state) => {
       delete state.panels[EDIT_PANEL_ID];
     },
+    setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
+      updatePanelState(state, action.payload.panelId, { instanceState: action.payload.value });
+    },
     setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
     },
@@ -105,6 +108,11 @@ export interface SetPanelAngularComponentPayload {
   angularComponent: AngularComponent | null;
 }
 
+export interface SetPanelInstanceStatePayload {
+  panelId: number;
+  value: any;
+}
+
 export const {
   loadDashboardPermissions,
   dashboardInitFetching,
@@ -119,6 +127,7 @@ export const {
   addPanel,
   cleanUpEditPanel,
   setPanelAngularComponent,
+  setPanelInstanceState,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

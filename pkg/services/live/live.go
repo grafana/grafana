@@ -2,8 +2,10 @@ package live
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -883,95 +885,156 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	})
 }
 
-type configInfo struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Example     interface{} `json:"example,omitempty"`
+type ConvertDryRunRequest struct {
+	ChannelRules []pipeline.ChannelRule `json:"channelRules"`
+	Channel      string                 `json:"channel"`
+	Data         string                 `json:"data"`
+}
+
+type ConvertDryRunResponse struct {
+	ChannelFrames []*pipeline.ChannelFrame `json:"channelFrames"`
+}
+
+type DryRunRuleStorage struct {
+	ChannelRules []pipeline.ChannelRule
+}
+
+func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ string) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) ListRemoteWriteBackends(_ context.Context, _ int64) ([]pipeline.RemoteWriteBackend, error) {
+	return nil, nil
+}
+
+func (s *DryRunRuleStorage) ListChannelRules(_ context.Context, _ int64) ([]pipeline.ChannelRule, error) {
+	return s.ChannelRules, nil
+}
+
+// HandlePipelineConvertTestHTTP ...
+func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var req ConvertDryRunRequest
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding request", err)
+	}
+	storage := &DryRunRuleStorage{
+		ChannelRules: req.ChannelRules,
+	}
+	builder := &pipeline.StorageRuleBuilder{
+		Node:                 g.node,
+		ManagedStream:        g.ManagedStreamRunner,
+		FrameStorage:         pipeline.NewFrameStorage(),
+		RuleStorage:          storage,
+		ChannelHandlerGetter: g,
+	}
+	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+	pipe, err := pipeline.New(channelRuleGetter)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error creating pipeline", err)
+	}
+	rule, ok, err := channelRuleGetter.Get(c.OrgId, req.Channel)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error getting channel rule", err)
+	}
+	if !ok {
+		return response.Error(http.StatusNotFound, "No rule found", nil)
+	}
+	channelFrames, ok, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, []byte(req.Data))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error converting data", err)
+	}
+	if !ok {
+		return response.Error(http.StatusNotFound, "No converter found", nil)
+	}
+	return response.JSON(http.StatusOK, ConvertDryRunResponse{
+		ChannelFrames: channelFrames,
+	})
+}
+
+// HandleChannelRulesPostHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	result, err := g.channelRuleStorage.CreateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": result,
+	})
+}
+
+// HandleChannelRulesPutHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": rule,
+	})
+}
+
+// HandleChannelRulesDeleteHTTP ...
+func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
 // HandlePipelineEntitiesListHTTP ...
 func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"subscribers": []configInfo{
-			{
-				Type:        pipeline.SubscriberTypeBuiltin,
-				Description: "apply builtin feature subscribe logic",
-			},
-			{
-				Type:        pipeline.SubscriberTypeManagedStream,
-				Description: "apply managed stream subscribe logic",
-			},
-			{
-				Type:        pipeline.SubscriberTypeMultiple,
-				Description: "apply multiple subscribers",
-			},
-			{
-				Type:        pipeline.SubscriberTypeAuthorizeRole,
-				Description: "authorize user role",
-			},
-		},
-		"outputs": []configInfo{
-			{
-				Type:        pipeline.OutputTypeManagedStream,
-				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
-				Example:     pipeline.ManagedStreamOutputConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeMultiple,
-				Description: "Send the output to multiple destinations",
-				Example:     pipeline.MultipleOutputterConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeConditional,
-				Description: "send to an output depending on frame values",
-				Example:     pipeline.ConditionalOutputConfig{},
-			},
-			{
-				Type: pipeline.OutputTypeRedirect,
-			},
-			{
-				Type: pipeline.OutputTypeThreshold,
-			},
-			{
-				Type: pipeline.OutputTypeChangeLog,
-			},
-			{
-				Type: pipeline.OutputTypeRemoteWrite,
-			},
-		},
-		"converters": []configInfo{
-			{
-				Type: pipeline.ConverterTypeJsonAuto,
-			},
-			{
-				Type: pipeline.ConverterTypeJsonExact,
-			},
-			{
-				Type:        pipeline.ConverterTypeInfluxAuto,
-				Description: "accept influx line protocol",
-				Example:     pipeline.AutoInfluxConverterConfig{},
-			},
-			{
-				Type: pipeline.ConverterTypeJsonFrame,
-			},
-		},
-		"processors": []configInfo{
-			{
-				Type:        pipeline.ProcessorTypeKeepFields,
-				Description: "list the fields that should stay",
-				Example:     pipeline.KeepFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeDropFields,
-				Description: "list the fields that should be removed",
-				Example:     pipeline.DropFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeMultiple,
-				Description: "apply multiple processors",
-				Example:     pipeline.MultipleProcessorConfig{},
-			},
-		},
+		"subscribers": pipeline.SubscribersRegistry,
+		"outputs":     pipeline.OutputsRegistry,
+		"converters":  pipeline.ConvertersRegistry,
+		"processors":  pipeline.ProcessorsRegistry,
 	})
 }
 
