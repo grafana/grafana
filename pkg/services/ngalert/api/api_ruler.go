@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -23,11 +25,12 @@ import (
 )
 
 type RulerSrv struct {
-	store           store.RuleStore
-	DatasourceCache datasources.CacheService
-	QuotaService    *quota.QuotaService
-	manager         *state.Manager
-	log             log.Logger
+	store                store.RuleStore
+	DatasourceCache      datasources.CacheService
+	QuotaService         *quota.QuotaService
+	manager              *state.Manager
+	log                  log.Logger
+	multiOrgAlertmanager *notifier.MultiOrgAlertmanager
 }
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
@@ -292,8 +295,18 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }
 
-// resetAlertsStatus clean up the state manager cache of rules' states
+// resetAlertsStatus stops firing alerts that belong to the provided alert rule IDs and clean up the state manager cache
 func (srv RulerSrv) resetAlertsStatus(orgID int64, alertRuleUIDs map[string]struct{}) {
+	am, err := srv.multiOrgAlertmanager.AlertmanagerFor(orgID)
+	if err != nil {
+		srv.log.Warn("Can't get alertmanager instance for organization", "org", orgID, "error", err)
+	} else {
+		err = am.StopAlertsForRules(alertRuleUIDs)
+		if err != nil {
+			srv.log.Warn("Can't stop firing alerts for a rules", "org", orgID, "error", err, "rules", alertRuleUIDs)
+		}
+	}
+
 	for uid := range alertRuleUIDs {
 		srv.manager.RemoveByRuleUID(orgID, uid)
 	}
