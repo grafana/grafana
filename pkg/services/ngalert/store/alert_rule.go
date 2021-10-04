@@ -524,7 +524,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			existingGroupRulesUIDs[r.UID] = *r
 		}
 
-		upsertRules := make([]UpsertRule, 0)
+		upsertRules := make([]upsertRule, 0)
 		for _, r := range cmd.RuleGroupConfig.Rules {
 			if r.GrafanaManagedAlert == nil {
 				continue
@@ -561,7 +561,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				new.PanelID = &panelID
 			}
 
-			upsertRule := UpsertRule{
+			upsertRule := upsertRule{
 				New: new,
 			}
 
