@@ -70,7 +70,7 @@ The following list contains fine-grained access control actions.
 | `licensing:read`           | n/a                                                                                     | Read licensing information.                                                      |
 | `licensing:update`         | n/a                                                                                     | Update the license token.                                                        |
 | `licensing:delete`         | n/a                                                                                     | Delete the license token.                                                        |
-| `licensing:reports:read`   | n/a                                                                                     | Get custom permission reports.                                                   |
+| `licensing.reports:read`   | n/a                                                                                     | Get custom permission reports.                                                   |
 
 ## Scope definitions
 
