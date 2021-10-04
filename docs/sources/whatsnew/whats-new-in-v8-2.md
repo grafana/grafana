@@ -26,7 +26,7 @@ Grafana 8.2 includes a number of important community contributions including sup
 
 ## Accessibility
 
-We’ve taken our first, measured but important steps towards improving the accessibility of Grafana, with much needed tweaks to keyboard navigation, accessibility labeling for UI elements for Grafana viewers and an accessibility statement for Grafana laying out what you can expect from a Grafana focused on making our project accessible to all.
+We’ve taken our first, measured but important steps towards improving the accessibility of Grafana, with much needed tweaks to keyboard navigation, accessibility labeling for UI elements for Grafana viewers and an [accessibility statement](https://grafana.com/accessibility/) for Grafana laying out what you can expect from a Grafana focused on making our project accessible to all.
 
 ## Dashboards 
 
