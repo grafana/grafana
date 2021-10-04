@@ -186,7 +186,7 @@ func (st DBstore) GetAlertRuleByUID(query *ngmodels.GetAlertRuleByUIDQuery) erro
 // upsertAlertRules is a handler for creating/updating alert rules. Returns the set of RuleID that were added or updated
 func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		newRules := make([]ngmodels.AlertRule, 0, len(rules))
+		newRules := make([]*ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
 			if r.Existing == nil && r.New.UID != "" {
@@ -230,7 +230,7 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 					return err
 				}
 
-				if err := (&r.New).PreSave(TimeNow); err != nil {
+				if err := r.New.PreSave(TimeNow); err != nil {
 					return err
 				}
 
@@ -268,7 +268,7 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 					return err
 				}
 
-				if err := (&r.New).PreSave(TimeNow); err != nil {
+				if err := r.New.PreSave(TimeNow); err != nil {
 					return err
 				}
 
@@ -475,7 +475,7 @@ var GenerateNewAlertRuleUID = func(sess *sqlstore.DBSession, orgID int64, ruleTi
 }
 
 // validateAlertRule validates the alert rule interval and organisation.
-func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
+func (st DBstore) validateAlertRule(alertRule *ngmodels.AlertRule) error {
 	if len(alertRule.Data) == 0 {
 		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
 	}
@@ -530,7 +530,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				continue
 			}
 
-			new := ngmodels.AlertRule{
+			new := &ngmodels.AlertRule{
 				OrgID:           cmd.OrgID,
 				Title:           r.GrafanaManagedAlert.Title,
 				Condition:       r.GrafanaManagedAlert.Condition,
