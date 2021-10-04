@@ -16,7 +16,7 @@ The Azure AD authentication allows you to use an Azure Active Directory tenant a
 
 To enable the Azure AD OAuth2, register your application with Azure AD.
 
-1. Log in to [Azure Portal](https://portal.azure.com), then click **Azure Active Directory** in the side menu. 
+1. Log in to [Azure Portal](https://portal.azure.com), then click **Azure Active Directory** in the side menu.
 
 1. If you have access to more than one tenant, select your account in the upper right. Set your session to the Azure AD tenant you wish to use.
 
@@ -24,16 +24,17 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Under **Redirect URI**, select the app type **Web**.
 
-1. Add the following redirect URLs `https://<grafana domain>/login/azuread` and `https://<grafana domain>` then click **Register**. The app's **Overview** page opens. 
+1. Add the following redirect URLs `https://<grafana domain>/login/azuread` and `https://<grafana domain>` then click **Register**. The app's **Overview** page opens.
 
 1. Note the **Application ID**. This is the OAuth client ID.
 
-1. Click **Endpoints** from the top menu. 
+1. Click **Endpoints** from the top menu.
 
-	- Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
-	- Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
+   - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
+   - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
 1. Click **Certificates & secrets**, then add a new entry under **Client secrets** with the following configuration.
+
    - Description: Grafana OAuth
    - Expires: Never
 
@@ -122,15 +123,15 @@ to a comma- or space-separated list of group object IDs. You can find object IDs
 
 1. Go to **Azure Active Directory -> Groups**. If you want to only give access to members of the group `example` with an ID of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
-	```
-	allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
-    ```
+   ```
+   allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
+   ```
 
 1. Verify that [group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) is enabled in your Azure AD Application Registration manifest file by navigating to **Azure Portal** > **Azure Active Directory** > **Application Registrations** > **Select Application** -> **Manifest**, and set the following:
 
-	```
-	"groupMembershipClaims": "ApplicationGroup, SecurityGroup"
-    ```
+   ```
+   "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
+   ```
 
 ### Configure allowed domains
 
