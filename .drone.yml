@@ -108,7 +108,7 @@ steps:
     event:
     - pull_request
   depends_on:
-  - restore-cache
+  - initialize
 
 trigger:
   event:
@@ -164,6 +164,6 @@ get:
 
 ---
 kind: signature
-hmac: d444836493020504289c09c3a9279d4e6668f6ab80cd6bafa3f29b27bf947f9c
+hmac: 9262f6f5e3b106273c16129d173ba0c34ba62af18982fe58642379e5d23259e4
 
 ...
