@@ -1,23 +1,65 @@
-import React, { useState } from 'react';
-import { Modal, TabContent, TabsBar, Tab, CodeEditor } from '@grafana/ui';
-import { Rule } from './types';
+import React, { useState, useMemo } from 'react';
+import { Modal, TabContent, TabsBar, Tab, Button, useStyles } from '@grafana/ui';
+import { Rule, RuleType, PipeLineEntitiesInfo, RuleSetting } from './types';
+import { getBackendSrv } from '@grafana/runtime';
+import { css } from '@emotion/css';
+import { GrafanaTheme } from '@grafana/data';
+import { RuleSettingsEditor } from './RuleSettingsEditor';
+import { getPipeLineEntities } from './utils';
 
 interface Props {
   rule: Rule;
   isOpen: boolean;
   onClose: () => void;
+  clickColumn: RuleType;
 }
-
-const tabs = [
+interface TabType {
+  label: string;
+  value: RuleType;
+}
+const tabs: TabType[] = [
   { label: 'Converter', value: 'converter' },
   { label: 'Processor', value: 'processor' },
   { label: 'Output', value: 'output' },
 ];
-const height = 600;
 
 export const RuleModal: React.FC<Props> = (props) => {
-  const { rule, isOpen, onClose } = props;
-  const [activeTab, setActiveTab] = useState<string>('converter');
+  const { isOpen, onClose, clickColumn } = props;
+  const [rule, setRule] = useState<Rule>(props.rule);
+  const [activeTab, setActiveTab] = useState<RuleType>(clickColumn);
+  // to show color of Save button
+  const [hasChange, setChange] = useState<boolean>(false);
+  const [ruleSetting, setRuleSetting] = useState<any>(rule?.settings?.[activeTab]);
+  const [entitiesInfo, setEntitiesInfo] = useState<PipeLineEntitiesInfo>();
+  const styles = useStyles(getStyles);
+
+  const onRuleSettingChange = (value: RuleSetting) => {
+    setChange(true);
+    setRule({
+      ...rule,
+      settings: {
+        ...rule.settings,
+        [activeTab]: value,
+      },
+    });
+    setRuleSetting(value);
+  };
+
+  // load pipeline entities info
+  useMemo(() => {
+    getPipeLineEntities().then((data) => {
+      setEntitiesInfo(data);
+    });
+  }, []);
+
+  const onSave = () => {
+    getBackendSrv()
+      .put(`api/live/channel-rules`, rule)
+      .then(() => {
+        setChange(false);
+      })
+      .catch((e) => console.error(e));
+  };
 
   return (
     <Modal isOpen={isOpen} title={rule.pattern} onDismiss={onClose} closeOnEscape>
@@ -30,70 +72,34 @@ export const RuleModal: React.FC<Props> = (props) => {
               active={tab.value === activeTab}
               onChangeTab={() => {
                 setActiveTab(tab.value);
+                // to notify children of the new rule
+                setRuleSetting(rule?.settings?.[tab.value]);
               }}
             />
           );
         })}
       </TabsBar>
       <TabContent>
-        {activeTab === 'converter' && <ConverterEditor {...props} />}
-        {activeTab === 'processor' && <ProcessorEditor {...props} />}
-        {activeTab === 'output' && <OutputEditor {...props} />}
+        {entitiesInfo && rule && (
+          <RuleSettingsEditor
+            onChange={onRuleSettingChange}
+            value={ruleSetting}
+            ruleType={activeTab}
+            entitiesInfo={entitiesInfo}
+          />
+        )}
+        <Button onClick={onSave} className={styles.save} variant={hasChange ? 'primary' : 'secondary'}>
+          Save
+        </Button>
       </TabContent>
     </Modal>
   );
 };
 
-export const ConverterEditor: React.FC<Props> = ({ rule }) => {
-  const { converter } = rule.settings;
-  if (!converter) {
-    return <div>No converter defined</div>;
-  }
-
-  return (
-    <CodeEditor
-      height={height}
-      value={JSON.stringify(converter, null, '\t')}
-      showLineNumbers={true}
-      readOnly={true}
-      language="json"
-      showMiniMap={false}
-    />
-  );
-};
-
-export const ProcessorEditor: React.FC<Props> = ({ rule }) => {
-  const { processor } = rule.settings;
-  if (!processor) {
-    return <div>No processor defined</div>;
-  }
-
-  return (
-    <CodeEditor
-      height={height}
-      value={JSON.stringify(processor, null, '\t')}
-      showLineNumbers={true}
-      readOnly={true}
-      language="json"
-      showMiniMap={false}
-    />
-  );
-};
-
-export const OutputEditor: React.FC<Props> = ({ rule }) => {
-  const { output } = rule.settings;
-  if (!output) {
-    return <div>No output defined</div>;
-  }
-
-  return (
-    <CodeEditor
-      height={height}
-      value={JSON.stringify(output, null, '\t')}
-      showLineNumbers={true}
-      readOnly={true}
-      language="json"
-      showMiniMap={false}
-    />
-  );
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    save: css`
+      margin-top: 5px;
+    `,
+  };
 };

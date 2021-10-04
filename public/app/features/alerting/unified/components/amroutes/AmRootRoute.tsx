@@ -5,6 +5,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 
 export interface AmRootRouteProps {
   isEditMode: boolean;
@@ -27,13 +28,15 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
 
+  const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+
   return (
     <div className={styles.container} data-testid="am-root-route-container">
       <div className={styles.titleContainer}>
         <h5 className={styles.title}>
           Root policy - <i>default for all alerts</i>
         </h5>
-        {!isEditMode && (
+        {!isEditMode && !isReadOnly && (
           <Button icon="pen" onClick={onEnterEditMode} size="sm" type="button" variant="secondary">
             Edit
           </Button>

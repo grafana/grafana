@@ -67,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     recordedQueries: false,
     prometheusMonaco: false,
     newNavigation: false,
+    fullRangeLogsVolume: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -80,7 +81,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     sampleRate: 1,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
-  pluginAdminEnabled = false;
+  pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   expressionsEnabled = false;
   customTheme?: any;
