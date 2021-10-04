@@ -342,7 +342,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         }
       ],
       "title": "V1 Alerts",
