@@ -6,12 +6,13 @@ import {
   getDefaultRelativeTimeRange,
   TimeRange,
   IntervalValues,
+  DatasourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -189,7 +190,10 @@ const getDefaultExpression = (refId: string): AlertQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
-    datasource: ExpressionDatasourceID,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: 'grafana-expression',
+    },
     conditions: [
       {
         type: 'query',
@@ -223,14 +227,15 @@ const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},
-  datasourceName?: string,
+  panelDataSourceRef?: DatasourceRef,
   maxDataPoints?: number,
   minInterval?: string
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
+
   for (const target of queries) {
-    const dsName = target.datasource || datasourceName;
-    const datasource = await getDataSourceSrv().get(dsName);
+    const dsRef = target.datasource || panelDataSourceRef;
+    const datasource = await getDataSourceSrv().get(dsRef);
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
     const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
@@ -239,12 +244,14 @@ const dataQueriesToGrafanaQueries = async (
       __interval_ms: { text: intervalMs, value: intervalMs },
       ...scopedVars,
     };
+
     const interpolatedTarget = datasource.interpolateVariablesInQueries
       ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
-    if (dsName) {
+
+    if (panelDataSourceRef) {
       // expressions
-      if (dsName === ExpressionDatasourceID) {
+      if (panelDataSourceRef.uid === ExpressionDatasourceUID) {
         const newQuery: AlertQuery = {
           refId: interpolatedTarget.refId,
           queryType: '',
@@ -255,7 +262,7 @@ const dataQueriesToGrafanaQueries = async (
         result.push(newQuery);
         // queries
       } else {
-        const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsName);
+        const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
         if (datasourceSettings && datasourceSettings.meta.alerting) {
           const newQuery: AlertQuery = {
             refId: interpolatedTarget.refId,
