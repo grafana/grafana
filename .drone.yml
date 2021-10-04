@@ -19,6 +19,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     restore: true
   depends_on:
   - clone
@@ -102,6 +103,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     rebuild: true
   when:
     event:
@@ -163,6 +165,6 @@ get:
 
 ---
 kind: signature
-hmac: 380c0580099c2663c55706d68e14cf766050bf18568176c7fc7b10afc46a45ca
+hmac: 0b90e34b25ffd62ec6ef0a54f20c4ef7baa90088620b362f5f3af5e58b9e0f32
 
 ...

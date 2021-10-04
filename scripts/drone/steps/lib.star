@@ -427,7 +427,8 @@ def restore_cache_step():
             'restore': 'true',
             'cache_key': "test123",
             'mount': [
-                'yarncache'
+                'yarncache',
+                'node_modules'
             ],
          },
          'depends_on': [
@@ -447,7 +448,8 @@ def rebuild_cache_step():
             'cache_key': "test123",
             'rebuild': 'true',
             'mount': [
-                'yarncache'
+                'yarncache',
+                'node_modules'
             ],
          },
          'depends_on': [
