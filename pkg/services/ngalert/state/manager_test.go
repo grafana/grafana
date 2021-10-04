@@ -851,7 +851,7 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, nil)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(tc.alertRule, res)
@@ -947,7 +947,7 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), dbstore, dbstore)
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
 		st.Warm()
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
