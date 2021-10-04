@@ -32,9 +32,11 @@ The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurab
 
 ## Plugins management
 
-The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. The new plugin catalog experience is now at feature parity with the default plugin experience. 
+## Plugins management
 
-A significant benefit of using the plugins catalog is managing (install/uninstall/update) your plugins directly from the UI without needing the Grafana CLI.
+We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. You can use the plugin catalog to find, install and uninstall  your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
+
+{{< figure src="/static/img/docs/plugins/plugins-catalog-browse-8-1.png" max-width="1200px" caption="Plugins Catalog Browsers" >}}
 
 
 ## Grafana 8 Alerting
@@ -70,3 +72,4 @@ Reports are a powerful way to deliver insights directly to people’s email inbo
 ## Image Renderer performance improvements and measurement
 
 You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. These images are used for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and included guidance in our documentation to help you configure it for the best mix of performance and resource usage. In our tests, we were able to reduce image load time from a 95th percentile of 10 seconds to less than 3 seconds under normal load.
+
