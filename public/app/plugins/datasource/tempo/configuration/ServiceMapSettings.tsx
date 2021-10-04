@@ -3,7 +3,7 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePlugi
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
 import React from 'react';
-import { TempoJsonData } from './datasource';
+import { TempoJsonData } from '../datasource';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
