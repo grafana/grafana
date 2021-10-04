@@ -34,7 +34,7 @@ export enum SortOrder {
  * Side-effect: store history in local storage
  */
 
-export const MAX_HISTORY_ITEMS = 10000000000;
+export const MAX_HISTORY_ITEMS = 10000;
 
 export function addToRichHistory(
   richHistory: RichHistoryQuery[],
