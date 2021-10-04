@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/models"
 	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -43,12 +44,12 @@ func ProvideBackgroundServiceRegistry(
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
 	backendPM *backendmanager.Manager, metrics *metrics.InternalMetricsService,
-	usageStats *usagestats.UsageStatsService, tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
+	usageStats *uss.UsageStats, tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
-	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service,
-	_ *postgres.Service, _ *mysql.Service, _ *mssql.Service, _ *cloudmonitoring.Service, _ *grafanads.Service,
+	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ secrets.SecretsService,
+	_ *postgres.Service, _ *mysql.Service, _ *mssql.Service, _ *grafanads.Service, _ *cloudmonitoring.Service,
 
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(

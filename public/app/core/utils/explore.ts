@@ -165,11 +165,10 @@ export function buildQueryTransaction(
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
-    latency: 0,
   };
 }
 
-export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
+export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
 const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
   props.some((prop) => segment.hasOwnProperty(prop));
@@ -286,7 +285,7 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
  * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
  */
 const validKeys = ['refId', 'key', 'context'];
-export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
+export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
     queries.some((query: any) => {
@@ -302,7 +301,7 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory<T extends DataQuery = any>(
+export function updateHistory<T extends DataQuery>(
   history: Array<HistoryItem<T>>,
   datasourceId: string,
   queries: T[]
@@ -342,10 +341,10 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSour
   return queryKeys;
 };
 
-export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
+export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any)!,
-    to: dateMath.parse(rawRange.to, true, timeZone as any)!,
+    from: dateMath.parse(rawRange.from, false, timeZone as any, fiscalYearStartMonth)!,
+    to: dateMath.parse(rawRange.to, true, timeZone as any, fiscalYearStartMonth)!,
     raw: rawRange,
   };
 };
@@ -388,7 +387,11 @@ const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   return null;
 };
 
-export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
+export const getTimeRangeFromUrl = (
+  range: RawTimeRange,
+  timeZone: TimeZone,
+  fiscalYearStartMonth: number
+): TimeRange => {
   const raw = {
     from: parseRawTime(range.from)!,
     to: parseRawTime(range.to)!,

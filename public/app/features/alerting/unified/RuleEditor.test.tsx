@@ -281,6 +281,19 @@ describe('RuleEditor', () => {
     await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
     await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
+    // try to save, find out that recording rule name is invalid
+    userEvent.click(ui.buttons.save.get());
+    expect(
+      await byText(
+        'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+      ).find()
+    ).toBeInTheDocument();
+    expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
+
+    // fix name and re-submit
+    await userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
+    userEvent.click(ui.buttons.save.get());
+
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
@@ -288,7 +301,7 @@ describe('RuleEditor', () => {
       name: 'group2',
       rules: [
         {
-          record: 'my great new recording rule',
+          record: 'my:great:new:recording:rule',
           labels: { team: 'the a-team' },
           expr: 'up == 1',
         },

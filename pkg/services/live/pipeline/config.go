@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
+
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
 
 	"github.com/centrifugal/centrifuge"
 )
@@ -56,16 +59,64 @@ type OutputterConfig struct {
 	ChangeLogOutputConfig   *ChangeLogOutputConfig     `json:"changeLog,omitempty"`
 }
 
+type MultipleSubscriberConfig struct {
+	Subscribers []SubscriberConfig `json:"subscribers"`
+}
+
+type SubscriberConfig struct {
+	Type                          string                         `json:"type"`
+	MultipleSubscriberConfig      *MultipleSubscriberConfig      `json:"multiple,omitempty"`
+	AuthorizeRoleSubscriberConfig *AuthorizeRoleSubscriberConfig `json:"authorizeRole,omitempty"`
+}
+
 type ChannelRuleSettings struct {
-	Converter *ConverterConfig `json:"converter,omitempty"`
-	Processor *ProcessorConfig `json:"processor,omitempty"`
-	Outputter *OutputterConfig `json:"output,omitempty"`
+	Subscriber *SubscriberConfig `json:"subscriber,omitempty"`
+	Converter  *ConverterConfig  `json:"converter,omitempty"`
+	Processor  *ProcessorConfig  `json:"processor,omitempty"`
+	Outputter  *OutputterConfig  `json:"output,omitempty"`
 }
 
 type ChannelRule struct {
 	OrgId    int64               `json:"-"`
 	Pattern  string              `json:"pattern"`
 	Settings ChannelRuleSettings `json:"settings"`
+}
+
+func (r ChannelRule) Valid() (bool, string) {
+	ok, reason := pattern.Valid(r.Pattern)
+	if !ok {
+		return false, fmt.Sprintf("invalid pattern: %s", reason)
+	}
+	if r.Settings.Converter != nil {
+		if !typeRegistered(r.Settings.Converter.Type, ConvertersRegistry) {
+			return false, fmt.Sprintf("unknown converter type: %s", r.Settings.Converter.Type)
+		}
+	}
+	if r.Settings.Subscriber != nil {
+		if !typeRegistered(r.Settings.Subscriber.Type, SubscribersRegistry) {
+			return false, fmt.Sprintf("unknown subscriber type: %s", r.Settings.Subscriber.Type)
+		}
+	}
+	if r.Settings.Processor != nil {
+		if !typeRegistered(r.Settings.Processor.Type, ProcessorsRegistry) {
+			return false, fmt.Sprintf("unknown processor type: %s", r.Settings.Processor.Type)
+		}
+	}
+	if r.Settings.Outputter != nil {
+		if !typeRegistered(r.Settings.Outputter.Type, OutputsRegistry) {
+			return false, fmt.Sprintf("unknown output type: %s", r.Settings.Outputter.Type)
+		}
+	}
+	return true, ""
+}
+
+func typeRegistered(entityType string, registry []EntityInfo) bool {
+	for _, info := range registry {
+		if info.Type == entityType {
+			return true
+		}
+	}
+	return false
 }
 
 type RemoteWriteBackend struct {
@@ -80,6 +131,23 @@ type RemoteWriteBackends struct {
 
 type ChannelRules struct {
 	Rules []ChannelRule `json:"rules"`
+}
+
+func checkRulesValid(orgID int64, rules []ChannelRule) (ok bool, reason string) {
+	t := tree.New()
+	defer func() {
+		if r := recover(); r != nil {
+			reason = fmt.Sprintf("%v", r)
+			ok = false
+		}
+	}()
+	for _, rule := range rules {
+		if rule.OrgId == orgID || (rule.OrgId == 0 && orgID == 1) {
+			t.AddRoute("/"+rule.Pattern, struct{}{})
+		}
+	}
+	ok = true
+	return ok, reason
 }
 
 type MultipleConditionCheckerConfig struct {
@@ -102,13 +170,51 @@ type ConditionCheckerConfig struct {
 type RuleStorage interface {
 	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
+	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
+	UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
+	DeleteChannelRule(_ context.Context, orgID int64, pattern string) error
 }
 
 type StorageRuleBuilder struct {
-	Node          *centrifuge.Node
-	ManagedStream *managedstream.Runner
-	FrameStorage  *FrameStorage
-	RuleStorage   RuleStorage
+	Node                 *centrifuge.Node
+	ManagedStream        *managedstream.Runner
+	FrameStorage         *FrameStorage
+	RuleStorage          RuleStorage
+	ChannelHandlerGetter ChannelHandlerGetter
+}
+
+func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscriber, error) {
+	if config == nil {
+		return nil, nil
+	}
+	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
+	switch config.Type {
+	case SubscriberTypeBuiltin:
+		return NewBuiltinSubscriber(f.ChannelHandlerGetter), nil
+	case SubscriberTypeManagedStream:
+		return NewManagedStreamSubscriber(f.ManagedStream), nil
+	case SubscriberTypeAuthorizeRole:
+		if config.AuthorizeRoleSubscriberConfig == nil {
+			return nil, missingConfiguration
+		}
+		return NewAuthorizeRoleSubscriber(*config.AuthorizeRoleSubscriberConfig), nil
+	case SubscriberTypeMultiple:
+		if config.MultipleSubscriberConfig == nil {
+			return nil, missingConfiguration
+		}
+		var subscribers []Subscriber
+		for _, outConf := range config.MultipleSubscriberConfig.Subscribers {
+			out := outConf
+			sub, err := f.extractSubscriber(&out)
+			if err != nil {
+				return nil, err
+			}
+			subscribers = append(subscribers, sub)
+		}
+		return NewMultipleSubscriber(subscribers...), nil
+	default:
+		return nil, fmt.Errorf("unknown subscriber type: %s", config.Type)
+	}
 }
 
 func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converter, error) {
@@ -117,22 +223,22 @@ func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converte
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "jsonAuto":
+	case ConverterTypeJsonAuto:
 		if config.AutoJsonConverterConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewAutoJsonConverter(*config.AutoJsonConverterConfig), nil
-	case "jsonExact":
+	case ConverterTypeJsonExact:
 		if config.ExactJsonConverterConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewExactJsonConverter(*config.ExactJsonConverterConfig), nil
-	case "jsonFrame":
+	case ConverterTypeJsonFrame:
 		if config.JsonFrameConverterConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewJsonFrameConverter(*config.JsonFrameConverterConfig), nil
-	case "influxAuto":
+	case ConverterTypeInfluxAuto:
 		if config.AutoInfluxConverterConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -148,17 +254,17 @@ func (f *StorageRuleBuilder) extractProcessor(config *ProcessorConfig) (Processo
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "dropFields":
+	case ProcessorTypeDropFields:
 		if config.DropFieldsProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewDropFieldsProcessor(*config.DropFieldsProcessorConfig), nil
-	case "keepFields":
+	case ProcessorTypeKeepFields:
 		if config.KeepFieldsProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewKeepFieldsProcessor(*config.KeepFieldsProcessorConfig), nil
-	case "multiple":
+	case ProcessorTypeMultiple:
 		if config.MultipleProcessorConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -183,13 +289,13 @@ func (f *StorageRuleBuilder) extractConditionChecker(config *ConditionCheckerCon
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "numberCompare":
+	case ConditionCheckerTypeNumberCompare:
 		if config.NumberCompareConditionConfig == nil {
 			return nil, missingConfiguration
 		}
 		c := *config.NumberCompareConditionConfig
 		return NewNumberCompareCondition(c.FieldName, c.Op, c.Value), nil
-	case "multiple":
+	case ConditionCheckerTypeMultiple:
 		var conditions []ConditionChecker
 		if config.MultipleConditionCheckerConfig == nil {
 			return nil, missingConfiguration
@@ -214,12 +320,12 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 	}
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
-	case "redirect":
+	case OutputTypeRedirect:
 		if config.RedirectOutputConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewRedirectOutput(*config.RedirectOutputConfig), nil
-	case "multiple":
+	case OutputTypeMultiple:
 		if config.MultipleOutputterConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -233,11 +339,11 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 			outputters = append(outputters, outputter)
 		}
 		return NewMultipleOutput(outputters...), nil
-	case "managedStream":
+	case OutputTypeManagedStream:
 		return NewManagedStreamOutput(f.ManagedStream), nil
-	case "localSubscribers":
+	case OutputTypeLocalSubscribers:
 		return NewLocalSubscribersOutput(f.Node), nil
-	case "conditional":
+	case OutputTypeConditional:
 		if config.ConditionalOutputConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -250,12 +356,12 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 			return nil, err
 		}
 		return NewConditionalOutput(condition, outputter), nil
-	case "threshold":
+	case OutputTypeThreshold:
 		if config.ThresholdOutputConfig == nil {
 			return nil, missingConfiguration
 		}
 		return NewThresholdOutput(f.FrameStorage, *config.ThresholdOutputConfig), nil
-	case "remoteWrite":
+	case OutputTypeRemoteWrite:
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -264,7 +370,7 @@ func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWri
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
 		return NewRemoteWriteOutput(*remoteWriteConfig), nil
-	case "changeLog":
+	case OutputTypeChangeLog:
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -302,6 +408,10 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 			Pattern: ruleConfig.Pattern,
 		}
 		var err error
+		rule.Subscriber, err = f.extractSubscriber(ruleConfig.Settings.Subscriber)
+		if err != nil {
+			return nil, err
+		}
 		rule.Converter, err = f.extractConverter(ruleConfig.Settings.Converter)
 		if err != nil {
 			return nil, err

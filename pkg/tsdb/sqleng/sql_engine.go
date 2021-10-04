@@ -41,17 +41,6 @@ type SqlQueryResultTransformer interface {
 	GetConverterList() []sqlutil.StringConverter
 }
 
-type engineCacheType struct {
-	cache   map[int64]*xorm.Engine
-	updates map[int64]time.Time
-	sync.Mutex
-}
-
-var engineCache = engineCacheType{
-	cache:   make(map[int64]*xorm.Engine),
-	updates: make(map[int64]time.Time),
-}
-
 var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
@@ -129,6 +118,11 @@ func (e *DataSourceHandler) transformQueryError(err error) error {
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
+	log.Debug("Creating engine...")
+	defer func() {
+		log.Debug("Engine created")
+	}()
+
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
@@ -146,16 +140,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	engineCache.Lock()
-	defer engineCache.Unlock()
-
-	if engine, present := engineCache.cache[config.DSInfo.ID]; present {
-		if updateTime := engineCache.updates[config.DSInfo.ID]; updateTime.Before(config.DSInfo.Updated) {
-			queryDataHandler.engine = engine
-			return &queryDataHandler, nil
-		}
-	}
-
 	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
 	if err != nil {
 		return nil, err
@@ -165,8 +149,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-	engineCache.updates[config.DSInfo.ID] = config.DSInfo.Updated
-	engineCache.cache[config.DSInfo.ID] = engine
 	queryDataHandler.engine = engine
 	return &queryDataHandler, nil
 }
@@ -174,6 +156,16 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 type DBDataResponse struct {
 	dataResponse backend.DataResponse
 	refID        string
+}
+
+func (e *DataSourceHandler) Dispose() {
+	e.log.Debug("Disposing engine...")
+	if e.engine != nil {
+		if err := e.engine.Close(); err != nil {
+			e.log.Error("Failed to dispose engine", "error", err)
+		}
+	}
+	e.log.Debug("Engine disposed")
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

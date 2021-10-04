@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/searchusers"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -68,7 +69,6 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	UsageStatsService      usagestats.UsageStats
 	PluginContextProvider  *plugincontext.Provider
 	RouteRegister          routing.RouteRegister
 	Bus                    bus.Bus
@@ -109,6 +109,7 @@ type HTTPServer struct {
 	cleanUpService         *cleanup.CleanUpService
 	tracingService         *tracing.TracingService
 	internalMetricsSvc     *metrics.InternalMetricsService
+	searchUsersService     searchusers.Service
 }
 
 type ServerOptions struct {
@@ -118,8 +119,7 @@ type ServerOptions struct {
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
-	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
-	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
+	dataService *tsdb.Service, alertEngine *alerting.AlertEngine, pluginRequestValidator models.PluginRequestValidator,
 	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
@@ -133,7 +133,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service) (*HTTPServer, error) {
+	encryptionService encryption.Service, searchUsersService searchusers.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 
@@ -148,7 +148,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:               sqlStore,
 		DataService:            dataService,
 		AlertEngine:            alertEngine,
-		UsageStatsService:      usageStatsService,
 		PluginRequestValidator: pluginRequestValidator,
 		PluginManager:          pluginManager,
 		BackendPluginManager:   backendPM,
@@ -181,6 +180,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:          socialService,
 		OAuthTokenService:      oauthTokenService,
 		EncryptionService:      encryptionService,
+		searchUsersService:     searchUsersService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

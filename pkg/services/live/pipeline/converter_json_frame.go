@@ -20,6 +20,12 @@ func NewJsonFrameConverter(c JsonFrameConverterConfig) *JsonFrameConverter {
 	}
 }
 
+const ConverterTypeJsonFrame = "jsonFrame"
+
+func (c *JsonFrameConverter) Type() string {
+	return ConverterTypeJsonFrame
+}
+
 func (c *JsonFrameConverter) Convert(_ context.Context, _ Vars, body []byte) ([]*ChannelFrame, error) {
 	var frame data.Frame
 	err := json.Unmarshal(body, &frame)

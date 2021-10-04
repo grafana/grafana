@@ -18,12 +18,13 @@ import {
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { fetchNotifiers } from './api/grafana';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { selectOptionInTest } from '@grafana/ui';
+import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -63,6 +64,13 @@ const dataSources = {
     name: 'CloudManager',
     type: DataSourceType.Alertmanager,
   }),
+  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
+    name: 'PromManager',
+    type: DataSourceType.Alertmanager,
+    jsonData: {
+      implementation: AlertManagerImplementation.prometheus,
+    },
+  }),
 };
 
 const ui = {
@@ -70,6 +78,7 @@ const ui = {
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
   testContactPointButton: byRole('button', { name: /Test/ }),
+  cancelButton: byTestId('cancel-button'),
 
   receiversTable: byTestId('receivers-table'),
   templatesTable: byTestId('templates-table'),
@@ -78,9 +87,10 @@ const ui = {
   channelFormContainer: byTestId('item-container'),
 
   inputs: {
-    name: byLabelText('Name'),
+    name: byPlaceholderText('Name'),
     email: {
       addresses: byLabelText(/Addresses/),
+      toEmails: byLabelText(/To/),
     },
     hipchat: {
       url: byLabelText('Hip Chat Url'),
@@ -203,7 +213,7 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    await userEvent.type(byLabelText('Name').get(), 'my new receiver');
+    await userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
     await ui.inputs.email.addresses.find();
@@ -351,6 +361,42 @@ describe('Receivers', () => {
         ],
       },
     });
+  }, 10000);
+
+  it('Prometheus Alertmanager receiver cannot be edited', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: someCloudAlertManagerConfig.alertmanager_config,
+    });
+    await renderReceivers(dataSources.promAlertManager.name);
+
+    const receiversTable = await ui.receiversTable.find();
+    // there's no templates table for vanilla prom, API does not return templates
+    expect(ui.templatesTable.query()).not.toBeInTheDocument();
+
+    // click view button on the receiver
+    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
+    expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
+    await userEvent.click(byTestId('view').get(receiverRows[0]));
+
+    // check that form is open
+    await byRole('heading', { name: /contact point/i }).find();
+    expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/cloud-receiver/edit');
+    const channelForms = ui.channelFormContainer.queryAll();
+    expect(channelForms).toHaveLength(2);
+
+    // check that inputs are disabled and there is no save button
+    expect(ui.inputs.name.queryAll()[0]).toHaveAttribute('readonly');
+    expect(ui.inputs.email.toEmails.get(channelForms[0])).toHaveAttribute('readonly');
+    expect(ui.inputs.slack.webhookURL.get(channelForms[1])).toHaveAttribute('readonly');
+    expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
+    expect(ui.testContactPointButton.query()).not.toBeInTheDocument();
+    expect(ui.saveContactButton.query()).not.toBeInTheDocument();
+    expect(ui.cancelButton.query()).toBeInTheDocument();
+
+    expect(mocks.api.fetchConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   }, 10000);
 
   it('Loads config from status endpoint if there is no user config', async () => {

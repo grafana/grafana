@@ -2,7 +2,7 @@ import { prepareGraphableFrames, preparePlotConfigBuilder, preparePlotFrame } fr
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
-  BarValueVisibility,
+  VisibilityMode,
   GraphGradientMode,
   StackingMode,
 } from '@grafana/schema';
@@ -81,7 +81,7 @@ describe('BarChart utils', () => {
       orientation: VizOrientation.Auto,
       groupWidth: 20,
       barWidth: 2,
-      showValue: BarValueVisibility.Always,
+      showValue: VisibilityMode.Always,
       legend: {
         displayMode: LegendDisplayMode.List,
         placement: 'bottom',
@@ -111,7 +111,7 @@ describe('BarChart utils', () => {
       expect(result).toMatchSnapshot();
     });
 
-    it.each([BarValueVisibility.Always, BarValueVisibility.Auto])('value visibility', (v) => {
+    it.each([VisibilityMode.Always, VisibilityMode.Auto])('value visibility', (v) => {
       expect(
         preparePlotConfigBuilder({
           ...config,

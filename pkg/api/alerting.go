@@ -235,7 +235,7 @@ func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotific
 func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64("notificationId"),
+		Id:    c.ParamsInt64(":notificationId"),
 	}
 
 	if query.Id == 0 {
@@ -393,7 +393,7 @@ func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidC
 func DeleteAlertNotification(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
-		Id:    c.ParamsInt64("notificationId"),
+		Id:    c.ParamsInt64(":notificationId"),
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -453,7 +453,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) re
 
 // POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) response.Response {
-	alertID := c.ParamsInt64("alertId")
+	alertID := c.ParamsInt64(":alertId")
 	result := make(map[string]interface{})
 	result["alertId"] = alertID
 
@@ -462,7 +462,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) response.Respo
 		return response.Error(500, "Get Alert failed", err)
 	}
 
-	guardian := guardian.New(query.Result.DashboardId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgId, c.SignedInUser)
 	if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 		if err != nil {
 			return response.Error(500, "Error while checking permissions for Alert", err)

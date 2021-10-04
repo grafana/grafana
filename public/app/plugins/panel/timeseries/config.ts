@@ -13,7 +13,7 @@ import {
   GraphGradientMode,
   LineInterpolation,
   LineStyle,
-  PointVisibility,
+  VisibilityMode,
   StackingMode,
   GraphTresholdsStyleMode,
 } from '@grafana/schema';
@@ -174,7 +174,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 40,
             step: 1,
           },
-          showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === GraphDrawStyle.Points,
+          showIf: (c) => c.showPoints !== VisibilityMode.Never || c.drawStyle === GraphDrawStyle.Points,
         });
 
       commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);

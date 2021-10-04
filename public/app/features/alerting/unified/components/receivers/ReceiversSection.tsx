@@ -10,6 +10,7 @@ interface Props {
   addButtonLabel: string;
   addButtonTo: string;
   className?: string;
+  showButton?: boolean;
 }
 
 export const ReceiversSection: FC<Props> = ({
@@ -19,6 +20,7 @@ export const ReceiversSection: FC<Props> = ({
   addButtonLabel,
   addButtonTo,
   children,
+  showButton = true,
 }) => {
   const styles = useStyles2(getStyles);
   return (
@@ -28,9 +30,11 @@ export const ReceiversSection: FC<Props> = ({
           <h4>{title}</h4>
           <p className={styles.description}>{description}</p>
         </div>
-        <Link to={addButtonTo}>
-          <Button icon="plus">{addButtonLabel}</Button>
-        </Link>
+        {showButton && (
+          <Link to={addButtonTo}>
+            <Button icon="plus">{addButtonLabel}</Button>
+          </Link>
+        )}
       </div>
       {children}
     </>

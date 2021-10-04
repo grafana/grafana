@@ -2,20 +2,8 @@ import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import {
-  catchError,
-  concatMap,
-  filter,
-  finalize,
-  map,
-  mergeMap,
-  repeat,
-  scan,
-  share,
-  takeWhile,
-  tap,
-} from 'rxjs/operators';
-import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
@@ -23,10 +11,8 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceWithLogsContextSupport,
   dateMath,
-  LiveChannelEvent,
-  LiveChannelMessageEvent,
-  LiveChannelScope,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -64,7 +50,6 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import config from 'app/core/config';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
@@ -89,7 +74,9 @@ const displayCustomError = (title: string, message: string) =>
 
 export const MAX_ATTEMPTS = 5;
 
-export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData> {
+export class CloudWatchDatasource
+  extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
+  implements DataSourceWithLogsContextSupport {
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;
@@ -147,6 +134,12 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return merge(...dataQueryResponses);
   }
 
+  /**
+   * Handle log query. The log query works by starting the query on the CloudWatch and then periodically polling for
+   * results.
+   * @param logQueries
+   * @param options
+   */
   handleLogQueries = (
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
@@ -161,11 +154,30 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       return of({ data: [], state: LoadingState.Done });
     }
 
-    const response = config.liveEnabled
-      ? this.handleLiveLogQueries(validLogQueries, options)
-      : this.handleLegacyLogQueries(validLogQueries, options);
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+      queryString: target.expression,
+      refId: target.refId,
+      logGroupNames: target.logGroupNames,
+      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
+    }));
 
-    return response.pipe(
+    // This first starts the query which returns queryId which can be used to retrieve results.
+    return this.makeLogActionRequest('StartQuery', queryParams, {
+      scopedVars: options.scopedVars,
+      skipCache: true,
+    }).pipe(
+      mergeMap((dataFrames) =>
+        // This queries for the results
+        this.logsQuery(
+          dataFrames.map((dataFrame) => ({
+            queryId: dataFrame.fields[0].values.get(0),
+            region: dataFrame.meta?.custom?.['Region'] ?? 'default',
+            refId: dataFrame.refId!,
+            statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
+              .statsGroups,
+          }))
+        )
+      ),
       mergeMap((dataQueryResponse) => {
         return from(
           (async () => {
@@ -182,105 +194,6 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           })()
         );
       })
-    );
-  };
-
-  /**
-   * Handle log query using grafana live feature. This means the backend will return a websocket channel name and it
-   * will listen on it for partial responses until it's terminated. This should give quicker partial data to the user
-   * as the log query can be long running. This requires that config.liveEnabled === true as that controls whether
-   * websocket connections can be made.
-   * @param logQueries
-   * @param options
-   */
-  private handleLiveLogQueries = (
-    logQueries: CloudWatchLogsQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
-  ): Observable<DataQueryResponse> => {
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      intervalMs: 1, // dummy
-      maxDataPoints: 1, // dummy
-      datasourceId: this.id,
-      queryString: this.replace(target.expression, options.scopedVars, true),
-      refId: target.refId,
-      logGroupNames: target.logGroupNames?.map((logGroup) =>
-        this.replace(logGroup, options.scopedVars, true, 'log groups')
-      ),
-      statsGroups: target.statsGroups,
-      region: this.getActualRegion(this.replace(target.region, options.scopedVars, true, 'region')),
-      type: 'liveLogAction',
-    }));
-
-    const range = this.timeSrv.timeRange();
-
-    const requestParams = {
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-      queries: queryParams,
-    };
-
-    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
-      mergeMap((response: TSDBResponse) => {
-        const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
-        const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
-        return getGrafanaLiveSrv().getStream({
-          scope: LiveChannelScope.Plugin,
-          namespace: 'cloudwatch',
-          path: channelName,
-        });
-      }),
-      filter((e: LiveChannelEvent<any>) => e.type === 'message'),
-      map(({ message }: LiveChannelMessageEvent<TSDBResponse>) => {
-        const dataQueryResponse = toDataQueryResponse({
-          data: message,
-        });
-        dataQueryResponse.state = dataQueryResponse.data.every((dataFrame) =>
-          statusIsTerminated(dataFrame.meta?.custom?.['Status'])
-        )
-          ? LoadingState.Done
-          : LoadingState.Loading;
-        dataQueryResponse.key = message.results[Object.keys(message.results)[0]].refId;
-        return dataQueryResponse;
-      }),
-      catchError((err) => {
-        if (err.data?.error) {
-          throw err.data.error;
-        }
-
-        throw err;
-      })
-    );
-  };
-
-  /**
-   * Handle query the old way (see handleLiveLogQueries) when websockets are not enabled. As enabling websockets is
-   * configurable we will have to be able to degrade gracefully for the time being.
-   * @param logQueries
-   * @param options
-   */
-  private handleLegacyLogQueries = (
-    logQueries: CloudWatchLogsQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
-  ): Observable<DataQueryResponse> => {
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression,
-      refId: target.refId,
-      logGroupNames: target.logGroupNames,
-      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
-    }));
-
-    return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
-      mergeMap((dataFrames) =>
-        this.logsQuery(
-          dataFrames.map((dataFrame) => ({
-            queryId: dataFrame.fields[0].values.get(0),
-            region: dataFrame.meta?.custom?.['Region'] ?? 'default',
-            refId: dataFrame.refId!,
-            statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
-              .statsGroups,
-          }))
-        )
-      )
     );
   };
 
@@ -328,6 +241,10 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return this.performTimeSeriesQuery(request, options.range);
   };
 
+  /**
+   * Checks progress and polls data of a started logs query with some retry logic.
+   * @param queryParams
+   */
   logsQuery(
     queryParams: Array<{
       queryId: string;
@@ -347,7 +264,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     });
 
     const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
-      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams)),
+      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams, { skipCache: true })),
       repeat(),
       share()
     );
@@ -426,8 +343,10 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       this.makeLogActionRequest(
         'StopQuery',
         Object.values(this.logQueries).map((logQuery) => ({ queryId: logQuery.id, region: logQuery.region })),
-        undefined,
-        false
+        {
+          makeReplacements: false,
+          skipCache: true,
+        }
       ).pipe(
         finalize(() => {
           this.logQueries = {};
@@ -600,8 +519,14 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
   makeLogActionRequest(
     subtype: LogAction,
     queryParams: any[],
-    scopedVars?: ScopedVars,
-    makeReplacements = true
+    options: {
+      scopedVars?: ScopedVars;
+      makeReplacements?: boolean;
+      skipCache?: boolean;
+    } = {
+      makeReplacements: true,
+      skipCache: false,
+    }
   ): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
 
@@ -619,26 +544,32 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       })),
     };
 
-    if (makeReplacements) {
+    if (options.makeReplacements) {
       requestParams.queries.forEach((query) => {
         if (query.hasOwnProperty('queryString')) {
-          query.queryString = this.replace(query.queryString, scopedVars, true);
+          query.queryString = this.replace(query.queryString, options.scopedVars, true);
         }
-        query.region = this.replace(query.region, scopedVars, true, 'region');
+        query.region = this.replace(query.region, options.scopedVars, true, 'region');
         query.region = this.getActualRegion(query.region);
 
         // interpolate log groups
         if (query.logGroupNames) {
           query.logGroupNames = query.logGroupNames.map((logGroup: string) =>
-            this.replace(logGroup, scopedVars, true, 'log groups')
+            this.replace(logGroup, options.scopedVars, true, 'log groups')
           );
         }
       });
     }
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
+    let headers = {};
+    if (options.skipCache) {
+      headers = {
+        'X-Cache-Skip': true,
+      };
+    }
 
-    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err) => {
         if (err.data?.error) {
@@ -883,11 +814,12 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     }
   }
 
-  awsRequest(url: string, data: MetricRequest): Observable<TSDBResponse> {
+  awsRequest(url: string, data: MetricRequest, headers: Record<string, any> = {}): Observable<TSDBResponse> {
     const options = {
       method: 'POST',
       url,
       data,
+      headers,
     };
 
     return getBackendSrv()
@@ -1040,13 +972,4 @@ function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => v
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.substr(colonIndex + 1);
-}
-
-function statusIsTerminated(status: string | CloudWatchLogsQueryStatus) {
-  return [
-    CloudWatchLogsQueryStatus.Complete,
-    CloudWatchLogsQueryStatus.Cancelled,
-    CloudWatchLogsQueryStatus.Failed,
-    CloudWatchLogsQueryStatus.Timeout,
-  ].includes(status as CloudWatchLogsQueryStatus);
 }
