@@ -346,7 +346,7 @@ JSON Body schema:
 
 - **folderId** – The folder id of the folder where the library element is stored.
 - **name** –Name of the library element.
-- **model** – The json model for the library element.
+- **model** – The JSON model for the library element.
 - **kind** – Kind of element to create, `1` for library panels or `2` for library variables.
 - **version** – Version of the library element being updated.
 - **uid** – Optional [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
