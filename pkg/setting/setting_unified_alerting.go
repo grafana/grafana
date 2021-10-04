@@ -1,10 +1,13 @@
 package setting
 
 import (
+	"errors"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
@@ -60,6 +63,8 @@ type UnifiedAlertingSettings struct {
 	EvaluationTimeout              time.Duration
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
+	Enabled                        bool
+	DisabledOrgs                   map[int64]struct{}
 }
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
@@ -67,6 +72,29 @@ type UnifiedAlertingSettings struct {
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg := UnifiedAlertingSettings{}
 	ua := iniFile.Section("unified_alerting")
+	uaCfg.Enabled = ua.Key("enabled").MustBool(false)
+
+	// TODO: Deprecate this in v8.4, if the old feature toggle ngalert is set, enable Grafana 8 Unified Alerting anyway.
+	if !uaCfg.Enabled && cfg.FeatureToggles["ngalert"] {
+		cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
+		uaCfg.Enabled = true
+		AlertingEnabled = false
+	}
+
+	if uaCfg.Enabled && AlertingEnabled {
+		return errors.New("both legacy and Grafana 8 Alerts are enabled")
+	}
+
+	uaCfg.DisabledOrgs = make(map[int64]struct{})
+	orgsStr := valueAsString(ua, "disabled_orgs", "")
+	for _, org := range util.SplitString(orgsStr) {
+		orgID, err := strconv.ParseInt(org, 10, 64)
+		if err != nil {
+			return err
+		}
+		uaCfg.DisabledOrgs[orgID] = struct{}{}
+	}
+
 	var err error
 	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
 	if err != nil {

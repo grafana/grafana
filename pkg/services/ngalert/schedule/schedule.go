@@ -74,7 +74,7 @@ type schedule struct {
 
 	stateManager *state.Manager
 
-	appURL string
+	appURL *url.URL
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
 	metrics          *metrics.Scheduler
@@ -84,6 +84,7 @@ type schedule struct {
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
+	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
 }
 
@@ -103,12 +104,14 @@ type SchedulerCfg struct {
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
 	Metrics                 *metrics.Scheduler
 	AdminConfigPollInterval time.Duration
+	DisabledOrgs            map[int64]struct{}
 	MinRuleInterval         time.Duration
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+
 	sch := schedule{
 
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
@@ -132,6 +135,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
+		disabledOrgs:            cfg.DisabledOrgs,
 		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
@@ -190,6 +194,12 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	sch.sendersMtx.Lock()
 	for _, cfg := range cfgs {
+		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
+		if isDisabledOrg {
+			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
+			continue
+		}
+
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
 		existing, ok := sch.senders[cfg.OrgID]
@@ -318,8 +328,12 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 		select {
 		case tick := <-sch.heartbeat.C:
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			alertRules := sch.fetchAllDetails()
-			sch.log.Debug("alert rules fetched", "count", len(alertRules))
+			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
+			for disabledOrg := range sch.disabledOrgs {
+				disabledOrgs = append(disabledOrgs, disabledOrg)
+			}
+			alertRules := sch.fetchAllDetails(disabledOrgs)
+			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
@@ -462,7 +476,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 				processedStates := sch.stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
-				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, sch.stateManager, sch.appURL)
+				alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+
+				if len(alerts.PostableAlerts) == 0 {
+					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
+					return nil
+				}
 
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
 				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)

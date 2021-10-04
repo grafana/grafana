@@ -14,12 +14,14 @@ interface Props {
   invalid?: boolean;
   pathPrefix: string;
   error?: FieldError | DeepMap<any, FieldError>;
+  readOnly?: boolean;
 }
 
-export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue }) => {
+export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue, readOnly = false }) => {
   if (option.element === 'subform') {
     return (
       <SubformField
+        readOnly={readOnly}
         defaultValue={defaultValue}
         option={option}
         errors={error as DeepMap<any, FieldError> | undefined}
@@ -30,6 +32,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
   if (option.element === 'subform_array') {
     return (
       <SubformArrayField
+        readOnly={readOnly}
         defaultValues={defaultValue}
         option={option}
         pathPrefix={pathPrefix}
@@ -50,12 +53,13 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         option={option}
         invalid={invalid}
         pathPrefix={pathPrefix}
+        readOnly={readOnly}
       />
     </Field>
   );
 };
 
-const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '' }) => {
+const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '', readOnly = false }) => {
   const { control, register, unregister } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
@@ -71,6 +75,8 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
       return (
         <Checkbox
           id={id}
+          readOnly={readOnly}
+          disabled={readOnly}
           className={styles.checkbox}
           {...register(name)}
           label={option.label}
@@ -81,6 +87,7 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
       return (
         <Input
           id={id}
+          readOnly={readOnly}
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
@@ -96,6 +103,7 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
         <InputControl
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
+              disabled={readOnly}
               menuShouldPortal
               {...field}
               options={option.selectOptions ?? undefined}
@@ -112,6 +120,7 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
       return (
         <TextArea
           id={id}
+          readOnly={readOnly}
           invalid={invalid}
           {...register(name, {
             required: option.required ? 'Required' : false,
@@ -122,7 +131,9 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
     case 'string_array':
       return (
         <InputControl
-          render={({ field: { value, onChange } }) => <StringArrayInput value={value} onChange={onChange} />}
+          render={({ field: { value, onChange } }) => (
+            <StringArrayInput readOnly={readOnly} value={value} onChange={onChange} />
+          )}
           control={control}
           name={name}
         />
@@ -130,7 +141,9 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
     case 'key_value_map':
       return (
         <InputControl
-          render={({ field: { value, onChange } }) => <KeyValueMapInput value={value} onChange={onChange} />}
+          render={({ field: { value, onChange } }) => (
+            <KeyValueMapInput readOnly={readOnly} value={value} onChange={onChange} />
+          )}
           control={control}
           name={name}
         />

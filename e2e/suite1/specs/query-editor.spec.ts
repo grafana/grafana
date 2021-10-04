@@ -11,7 +11,7 @@ e2e.scenario({
     e2e.components.DataSourcePicker.container()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').click();
+        e2e.components.DataSourcePicker.input().should('be.visible').click();
       });
 
     cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();

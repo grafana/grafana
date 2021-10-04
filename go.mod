@@ -11,6 +11,10 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
+// For now we are using a Grafana fork of alertmanager until the ability to bypass label name/key validation
+// is merged into upstream (2021-10-01).
+replace github.com/prometheus/alertmanager => github.com/grafana/alertmanager v0.21.1-0.20210929114340-613e5cc2a4ee
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.4.0
@@ -49,6 +53,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
+	github.com/grafana/cuetsy v0.0.0-20210928021233-5ddfb47f9a7d
 	github.com/grafana/grafana-aws-sdk v0.7.0
 	github.com/grafana/grafana-plugin-sdk-go v0.114.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
@@ -139,7 +144,7 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
+	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/deepmap/oapi-codegen v1.6.0 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
@@ -235,7 +240,7 @@ require (
 	go.uber.org/goleak v1.1.10 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/sys v0.0.0-20210906170528-6f6e22806c34 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83 // indirect

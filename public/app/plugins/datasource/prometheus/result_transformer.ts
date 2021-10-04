@@ -16,6 +16,7 @@ import {
   DataQueryResponse,
   DataQueryRequest,
   PreferredVisualisationType,
+  CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { partition } from 'lodash';
@@ -41,12 +42,25 @@ interface TimeAndValue {
   [TIME_SERIES_VALUE_FIELD_NAME]: number;
 }
 
+const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+  // We want to process instant results in Explore as table
+  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.queryType) === 'instant') {
+    return true;
+  }
+
+  // We want to process all dataFrames with target.format === 'table' as table
+  const target = options.targets.find((target) => target.refId === dataFrame.refId);
+  if (target?.format === 'table') {
+    return true;
+  }
+
+  return false;
+};
+
 // V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
-  // Get refIds that have table format as we need to process those to table reuslts
-  const tableRefIds = options.targets.filter((target) => target.format === 'table').map((target) => target.refId);
   const [tableResults, otherResults]: [DataFrame[], DataFrame[]] = partition(response.data, (dataFrame) =>
-    dataFrame.refId ? tableRefIds.includes(dataFrame.refId) : false
+    isTableResult(dataFrame, options)
   );
 
   // For table results, we need to transform data frames to table data frames

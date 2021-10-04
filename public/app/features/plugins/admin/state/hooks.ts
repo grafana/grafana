@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { setDisplayMode } from './reducer';
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
-import { CatalogPlugin, PluginCatalogStoreState } from '../types';
+import { CatalogPlugin, PluginCatalogStoreState, PluginListDisplayMode } from '../types';
 import {
   find,
   selectAll,
@@ -9,6 +10,7 @@ import {
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
+  selectDisplayMode,
 } from './selectors';
 import { sortPlugins, Sorters } from '../helpers';
 
@@ -115,4 +117,14 @@ export const useFetchDetails = (id: string) => {
   useEffect(() => {
     shouldFetch && dispatch(fetchDetails(id));
   }, [plugin]); // eslint-disable-line
+};
+
+export const useDisplayMode = () => {
+  const dispatch = useDispatch();
+  const displayMode = useSelector(selectDisplayMode);
+
+  return {
+    displayMode,
+    setDisplayMode: (v: PluginListDisplayMode) => dispatch(setDisplayMode(v)),
+  };
 };
