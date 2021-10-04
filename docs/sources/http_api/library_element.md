@@ -26,7 +26,7 @@ Query parameters:
 - **searchString** – Part of the name or description searched for
 - **kind** – Kind of element to search for. Use `1` for library panels or `2` for library variables.
 - **sortDirection** – Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
-- **typeFilter** – Comma separated list of types to filter elements by
+- **typeFilter** – A comma separated list of types to filter the elements by.
 - **excludeUid** – Element UID to exclude from results
 - **folderFilter** – Comma separated list of folder id's to filter elements by
 - **perPage** – Limit the number of returned results per page (default 100)
