@@ -124,8 +124,8 @@ describe('ApiKeysPage', () => {
       deleteApiKeyMock.mockClear();
       expect(within(firstRow).getByRole('cell', { name: /cancel delete/i })).toBeInTheDocument();
       userEvent.click(within(firstRow).getByRole('cell', { name: /cancel delete/i }));
-      expect(within(firstRow).getByRole('button', { name: /delete/i })).toBeInTheDocument();
-      userEvent.click(within(firstRow).getByRole('button', { name: /delete/i }));
+      expect(within(firstRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
+      userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(1, false);
 
@@ -134,8 +134,8 @@ describe('ApiKeysPage', () => {
       deleteApiKeyMock.mockClear();
       expect(within(secondRow).getByRole('cell', { name: /cancel delete/i })).toBeInTheDocument();
       userEvent.click(within(secondRow).getByRole('cell', { name: /cancel delete/i }));
-      expect(within(secondRow).getByRole('button', { name: /delete/i })).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByRole('button', { name: /delete/i }));
+      expect(within(secondRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
+      userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }));
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(2, true);
     });
@@ -194,7 +194,6 @@ function toggleShowExpired() {
 async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: boolean) {
   expect(screen.getByRole('heading', { name: /add api key/i })).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/name/i)).toBeInTheDocument();
-  expect(screen.getByRole('combobox')).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/1d/i)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /^add$/i })).toBeInTheDocument();
 
