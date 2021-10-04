@@ -421,7 +421,9 @@ Status Codes:
 
 `DELETE /api/library-elements/:uid`
 
-Deletes an existing library element identified by UID. Will not succeed if the library element is connected. This operation cannot be reverted.
+Deletes an existing library element as specified by the UID. This operation cannot be reverted.
+
+>**Note:** You cannot delete a library element that is connected. This operation cannot be reverted.
 
 **Example Request**:
 
