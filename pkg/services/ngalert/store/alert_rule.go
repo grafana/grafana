@@ -34,7 +34,7 @@ type UpdateRuleGroupCmd struct {
 
 type upsertRule struct {
 	Existing *ngmodels.AlertRule
-	New      ngmodels.AlertRule
+	New      *ngmodels.AlertRule
 }
 
 // Store is the interface for persisting alert rules and instances
