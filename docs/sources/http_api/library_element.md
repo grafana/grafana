@@ -332,7 +332,7 @@ Content-Type: application/json
 Status Codes:
 
 - **200** – Created
-- **400** – Errors (name or uid already exists, invalid json, missing or invalid fields, etc.)
+- **400** – Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
 - **401** – Unauthorized
 - **403** – Access Denied
 
