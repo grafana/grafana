@@ -262,7 +262,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(err, ShouldEqual, models.ErrTeamNotFound)
 
 				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				err = GetDashboardAclInfoList(permQuery)
+				err = sqlStore.GetDashboardAclInfoList(context.Background(), permQuery)
 				So(err, ShouldBeNil)
 
 				So(len(permQuery.Result), ShouldEqual, 0)

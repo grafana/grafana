@@ -27,7 +27,7 @@ describe('preparePlotData', () => {
   });
 
   it('creates array from DataFrame', () => {
-    expect(preparePlotData(df)).toMatchInlineSnapshot(`
+    expect(preparePlotData([df])).toMatchInlineSnapshot(`
       Array [
         Array [
           9997,
@@ -75,7 +75,7 @@ describe('preparePlotData', () => {
           },
         ],
       });
-      expect(preparePlotData(df)).toMatchInlineSnapshot(`
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
               Array [
                 Array [
                   9997,
@@ -122,7 +122,7 @@ describe('preparePlotData', () => {
           },
         ],
       });
-      expect(preparePlotData(df)).toMatchInlineSnapshot(`
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -185,7 +185,7 @@ describe('preparePlotData', () => {
         ],
       });
 
-      expect(preparePlotData(df)).toMatchInlineSnapshot(`
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,
@@ -260,7 +260,7 @@ describe('preparePlotData', () => {
         ],
       });
 
-      expect(preparePlotData(df)).toMatchInlineSnapshot(`
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
         Array [
           Array [
             9997,

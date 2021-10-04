@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"gopkg.in/ini.v1"
@@ -426,4 +427,254 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
 	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
+}
+
+func TestAlertingEnabled(t *testing.T) {
+	testCases := []struct {
+		desc                   string
+		unifiedAlertingEnabled string
+		legacyAlertingEnabled  string
+		featureToggleSet       bool
+		verifyCfg              func(*testing.T, Cfg, *ini.File)
+	}{
+		{
+			desc:                   "when legacy alerting is enabled and unified is disabled",
+			legacyAlertingEnabled:  "true",
+			unifiedAlertingEnabled: "false",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, AlertingEnabled, true)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is disabled and unified is enabled",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "true",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+		{
+			desc:                   "when both alerting are enabled, it should error",
+			legacyAlertingEnabled:  "true",
+			unifiedAlertingEnabled: "true",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.Error(t, err)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is invalid and unified is disabled",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "false",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, AlertingEnabled, true)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is invalid and unified is enabled",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "true",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.Error(t, err)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is enabled and unified is invalid",
+			legacyAlertingEnabled:  "true",
+			unifiedAlertingEnabled: "invalid",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, AlertingEnabled, true)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is disabled and unified is invalid",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "invalid",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+		{
+			desc:                   "when both are invalid",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "invalid",
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, AlertingEnabled, true)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is enabled and unified is disabled and feature toggle is set",
+			legacyAlertingEnabled:  "true",
+			unifiedAlertingEnabled: "false",
+			featureToggleSet:       true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is disabled and unified is disabled and feature toggle is set",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "false",
+			featureToggleSet:       true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is disabled and unified is invalid and feature toggle is set",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "invalid",
+			featureToggleSet:       true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is invalid and unified is disabled and feature toggle is set",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "false",
+			featureToggleSet:       true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is invalid and unified is enabled and feature toggle is set",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "true",
+			featureToggleSet:       true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.Error(t, err)
+			},
+		},
+		{
+			desc:                   "when both are invalid and feature toggle is set",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "invalid",
+			featureToggleSet:       true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
+				assert.Equal(t, AlertingEnabled, false)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Cleanup(func() {
+				AlertingEnabled = false
+			})
+
+			f := ini.Empty()
+			cfg := NewCfg()
+			unifiedAlertingSec, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSec.NewKey("enabled", tc.unifiedAlertingEnabled)
+			require.NoError(t, err)
+
+			alertingSec, err := f.NewSection("alerting")
+			require.NoError(t, err)
+			_, err = alertingSec.NewKey("enabled", tc.legacyAlertingEnabled)
+			require.NoError(t, err)
+
+			if tc.featureToggleSet {
+				alertingSec, err := f.NewSection("feature_toggles")
+				require.NoError(t, err)
+				_, err = alertingSec.NewKey("enable", "ngalert")
+				require.NoError(t, err)
+			}
+
+			tc.verifyCfg(t, *cfg, f)
+		})
+	}
 }

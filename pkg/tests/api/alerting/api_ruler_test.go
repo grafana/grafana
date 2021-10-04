@@ -22,8 +22,9 @@ import (
 func TestAlertRulePermissions(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -306,10 +307,11 @@ func createRule(t *testing.T, grafanaListedAddr string, folder string, user, pas
 func TestAlertRuleConflictingTitle(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		EnableQuota:          true,
-		DisableAnonymous:     true,
-		ViewersCanEdit:       true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		ViewersCanEdit:        true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

@@ -8,11 +8,12 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	errs "cuelang.org/go/cue/errors"
 	cuejson "cuelang.org/go/pkg/encoding/json"
 )
 
-var rt = &cue.Runtime{}
+var ctx = cuecontext.New()
 
 // CueError wraps Errors caused by malformed cue files.
 type CueError struct {
@@ -281,11 +282,11 @@ func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rv, err := rt.Compile(name, r.Value)
-	if err != nil {
-		return r, err
+	rv := ctx.CompileString(r.Value.(string), cue.Filename(name))
+	if rv.Err() != nil {
+		return r, rv.Err()
 	}
-	rvUnified := rv.Value().Unify(scue)
+	rvUnified := rv.Unify(scue)
 	re, err := convertCUEValueToString(rvUnified)
 	if err != nil {
 		return r, err
@@ -314,11 +315,11 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rvInstance, err := rt.Compile(name, r.Value)
-	if err != nil {
-		return r, err
+	rvInstance := ctx.CompileString(r.Value.(string), cue.Filename(name))
+	if rvInstance.Err() != nil {
+		return r, rvInstance.Err()
 	}
-	rv, _, err := removeDefaultHelper(scue, rvInstance.Value())
+	rv, _, err := removeDefaultHelper(scue, rvInstance)
 	if err != nil {
 		return r, err
 	}
@@ -337,9 +338,9 @@ func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
 	// To include all optional fields, we need to use inputdef for iteration,
 	// since the lookuppath with optional field doesn't work very well
-	rvInstance, err := rt.Compile("helper", []byte{})
-	if err != nil {
-		return input, false, err
+	rvInstance := ctx.CompileString("", cue.Filename("helper"))
+	if rvInstance.Err() != nil {
+		return input, false, rvInstance.Err()
 	}
 	rv := rvInstance.Value()
 
@@ -404,11 +405,11 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 			}
 		}
 		iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-		liInstance, err := rt.Compile("resource", []byte(iterlistContent))
-		if err != nil {
+		liInstance := ctx.CompileString(iterlistContent, cue.Filename("resource"))
+		if liInstance.Err() != nil {
 			return rv, false, err
 		}
-		return liInstance.Value(), false, nil
+		return liInstance, false, nil
 	default:
 		if isCueValueEqual(inputdef, input) {
 			return input, true, nil

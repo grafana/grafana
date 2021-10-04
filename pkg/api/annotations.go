@@ -265,7 +265,7 @@ func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error)
 	}
 
 	if dashboardID != 0 {
-		guard := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
+		guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 		if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 			return false, err
 		}
