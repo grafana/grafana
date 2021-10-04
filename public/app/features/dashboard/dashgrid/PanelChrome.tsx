@@ -18,7 +18,13 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import {
+  ErrorBoundary,
+  PanelContext,
+  PanelContextProvider,
+  SeriesVisibilityChangeMode,
+  PanelContextContainer,
+} from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -87,6 +93,7 @@ export class PanelChrome extends Component<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
+        container: this.getPanelContextContainer(),
       },
       data: this.getInitialPanelDataState(),
     };
@@ -103,6 +110,17 @@ export class PanelChrome extends Component<Props, State> {
     // Set redux panel state so panel options can get notified
     store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
   };
+
+  getPanelContextContainer() {
+    if (this.props.isEditing) {
+      return PanelContextContainer.PanelEditor;
+    }
+    if (this.props.isViewing) {
+      return PanelContextContainer.PanelViewer;
+    }
+
+    return PanelContextContainer.Dashboard;
+  }
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
@@ -177,20 +195,18 @@ export class PanelChrome extends Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { isInView, isEditing, width } = this.props;
+    const { context } = this.state;
 
-    if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
-      this.setState((s) => {
-        return {
-          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
-        };
-      });
-    }
+    const container = this.getPanelContextContainer();
+    const sync = isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip;
 
-    if (isEditing !== prevProps.isEditing) {
-      this.setState((s) => {
-        return {
-          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
-        };
+    if (context.sync !== sync || context.container !== container) {
+      this.setState({
+        context: {
+          ...context,
+          sync,
+          container,
+        },
       });
     }
 
