@@ -344,7 +344,7 @@ Updates an existing library element identified by uid.
 
 JSON Body schema:
 
-- **folderId** – The folder id of the folder where the library element is stored.
+- **folderId** – ID of the folder where the library element is stored.
 - **name** –Name of the library element.
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create. Use `1` for library panels or `2` for library variables.
