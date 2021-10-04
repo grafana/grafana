@@ -161,7 +161,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
           </td>
         ) : (
           <td className="width-25">
-            <RolePicker role={org.role} onChange={() => {}} />
+            <RolePicker role={org.role} onChange={() => {}} onBuiltinRoleChange={() => {}} />
           </td>
         )}
         <td colSpan={1}>
