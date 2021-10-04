@@ -138,7 +138,7 @@ The following template functions are available when expanding annotations and la
 | query              | query string               | []sample               | Not supported.                                                                                                                     |
 | first              | []sample                   | sample                 | Not supported.                                                                                                                     |
 | label              | label, sample              | string                 | Not supported.                                                                                                                     |
-| strvalue           | []sample                   | string                 | Returns the "\_\_value\_\_" label.                                                                                                 |
+| strvalue           | []sample                   | string                 | Not supported.                                                                                                                     |
 | value              | sample                     | float64                | Not supported.                                                                                                                     |
 | sortByLabel        | label, []samples           | []sample               | Not supported.                                                                                                                     |
 

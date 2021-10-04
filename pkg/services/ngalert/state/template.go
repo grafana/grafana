@@ -56,10 +56,10 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	)
 
 	expander.Funcs(text_template.FuncMap{
+		// These three functions are no-ops for now.
 		"strvalue": func(value templateCaptureValue) string {
-			return value.Labels["__value__"]
+			return ""
 		},
-		// These two functions are no-ops for now.
 		"graphLink": func() string {
 			return ""
 		},

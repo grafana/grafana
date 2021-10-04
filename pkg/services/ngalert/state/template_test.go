@@ -367,7 +367,7 @@ func TestExpandTemplate(t *testing.T) {
 		text:     "{{ query \"metric{__value__='a'}\" | sortByLabel }}",
 		expected: "",
 	}, {
-		name: "strvalue",
+		name: "check that strvalue returns an empty string (for now)",
 		text: "{{ $values.A | strvalue }}",
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
@@ -377,7 +377,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "foo",
+		expected: "",
 	}, {
 		name:     "check that safeHtml doesn't error or panic",
 		text:     "{{ \"<b>\" | safeHtml }}",
