@@ -349,7 +349,7 @@ JSON Body schema:
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create. Use `1` for library panels or `2` for library variables.
 - **version** – Version of the library element you are updating.
-- **uid** – Optional [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- **uid** – Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 
