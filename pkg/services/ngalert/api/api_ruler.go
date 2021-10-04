@@ -42,9 +42,11 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
 	}
 
+	uidsMap := make(map[string]struct{}, len(uids))
 	for _, uid := range uids {
-		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+		uidsMap[uid] = struct{}{}
 	}
+	srv.resetAlertsStatus(c.SignedInUser.OrgId, uidsMap)
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
 }
@@ -65,9 +67,11 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
+	uidsMap := make(map[string]struct{}, len(uids))
 	for _, uid := range uids {
-		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+		uidsMap[uid] = struct{}{}
 	}
+	srv.resetAlertsStatus(c.SignedInUser.OrgId, uidsMap)
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
 }
@@ -283,11 +287,16 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for uid := range alertRuleUIDs {
-		srv.manager.RemoveByRuleUID(c.OrgId, uid)
-	}
+	srv.resetAlertsStatus(c.SignedInUser.OrgId, alertRuleUIDs)
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
+}
+
+// resetAlertsStatus clean up the state manager cache of rules' states
+func (srv RulerSrv) resetAlertsStatus(orgID int64, alertRuleUIDs map[string]struct{}) {
+	for uid := range alertRuleUIDs {
+		srv.manager.RemoveByRuleUID(orgID, uid)
+	}
 }
 
 func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimodels.GettableExtendedRuleNode {
