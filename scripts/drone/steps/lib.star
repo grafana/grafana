@@ -126,15 +126,9 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 ],
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
-                'YARN_CACHE_FOLDER': '/cache/yarn',
+                'YARN_CACHE_FOLDER': '/drone/src/yarncache',
             },
             'commands': ['echo test'] + download_grabpl_cmds + common_cmds,
-            'volumes': [
-            {
-                'name': 'cache',
-                'path': '/cache',
-            },
-         ],
         },
     ]
 
@@ -340,7 +334,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'environment': {
-            'YARN_CACHE_FOLDER': '/cache/yarn',
+            'YARN_CACHE_FOLDER': '/drone/src/yarncache',
         },
         'depends_on': [
             'test-frontend',
@@ -414,7 +408,7 @@ def test_frontend_step():
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
-            'YARN_CACHE_FOLDER': '/cache/yarn',
+            'YARN_CACHE_FOLDER': '/drone/src/yarncache',
         },
         'commands': [
             'yarn run ci:test-frontend',
@@ -433,19 +427,12 @@ def restore_cache_step():
             'bucket': 'test-julien',
             'restore': 'true',
             'cache_key': "test123",
-            'local_root': '/cache',
             'mount': [
-                'yarn'
+                'yarncache'
             ],
          },
          'depends_on': [
             'clone'
-         ],
-         'volumes': [
-            {
-                'name': 'cache',
-                'path': '/cache',
-            },
          ],
     }
 
@@ -460,19 +447,12 @@ def rebuild_cache_step():
             'bucket': 'test-julien',
             'cache_key': "test123",
             'rebuild': 'true',
-            'local_root': '/cache',
             'mount': [
-                'yarn'
+                'yarncache'
             ],
          },
          'depends_on': [
             'restore-cache',
-         ],
-         'volumes': [
-            {
-               'name': 'cache',
-               'path': '/cache',
-            },
          ],
          'when': {
             'event': 'pull_request',

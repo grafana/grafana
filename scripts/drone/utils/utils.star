@@ -39,12 +39,6 @@ def pipeline(
             edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
         ) + steps,
         'depends_on': depends_on,
-        'volumes': [
-            {
-                'name': 'cache',
-                'temp': {},
-            },
-        ],
     }
     pipeline.update(platform_conf)
 
