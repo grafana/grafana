@@ -162,7 +162,7 @@ const (
 	ActionLicensingRead        = "licensing:read"
 	ActionLicensingUpdate      = "licensing:update"
 	ActionLicensingDelete      = "licensing:delete"
-	ActionLicensingReportsRead = "licensing:reports:read"
+	ActionLicensingReportsRead = "licensing.reports:read"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
