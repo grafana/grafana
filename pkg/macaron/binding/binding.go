@@ -90,7 +90,6 @@ type Validator interface {
 func validate(obj interface{}) error {
 	// If type has a Validate() method - use that
 	if validator, ok := obj.(Validator); ok {
-		fmt.Println("VALIDATOR", obj)
 		return validator.Validate()
 	}
 	// Otherwise, use relfection to match `binding:"Required"` struct field tags.
