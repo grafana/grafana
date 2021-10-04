@@ -1,4 +1,3 @@
-+++
 title = "What's new in Grafana v8.2"
 description = "Feature and improvement highlights for Grafana v8.2"
 keywords = ["grafana", "new", "documentation", "8.2", "release notes"]
@@ -6,6 +5,7 @@ weight = -33
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-2/"]
 [_build]
 list = false
+
 +++
 
 # What’s new in Grafana v8.2
@@ -20,9 +20,13 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 # OSS
 
+## Community Contributions
+
+Grafana 8.2 includes a number of important community contributions including support for OAuth role mapping with GitLab accounts ([#30025](https://github.com/grafana/grafana/pull/30025)), a new wide-to-long function ([#38670](https://github.com/grafana/grafana/pull/38670)) included in the [prepare time series transformation](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#prepare-time-series). A number of additions to the Azure Monitor data source were submitted, including a overview dashboard([#38801](https://github.com/grafana/grafana/pull/38801)), and support for parsing numeric fields in the Azure Resource Graph([#38728](https://github.com/grafana/grafana/pull/38728)). Contributions also included [regular-expression based value mapping](https://grafana.com/docs/grafana/next/panels/value-mappings/#map-a-regular-expression) ([#38931](https://github.com/grafana/grafana/pull/38931)) and improvements to our systemd unit for Grafana installations ([#38109](https://github.com/grafana/grafana/pull/38109)). This list is by no means exaustive or comprehensive and we greatly appreciate all the contributions submitted for inclusion in Grafana.
+
 ## Accessibility
 
-We’ve taken our first, measured but important steps towards improving the accessibility of Grafana, with much needed tweaks to keyboard navigation, accessibility labeling for UI elements for Grafana viewers and an accessibility statement (link coming soon) for Grafana laying out what you can expect from a Grafana focused on making our project accessible to all.
+We’ve taken our first, measured but important steps towards improving the accessibility of Grafana, with much needed tweaks to keyboard navigation, accessibility labeling for UI elements for Grafana viewers and an accessibility statement for Grafana laying out what you can expect from a Grafana focused on making our project accessible to all.
 
 ## Dashboards 
 
@@ -72,4 +76,3 @@ Reports are a powerful way to deliver insights directly to people’s email inbo
 ## Image Renderer performance improvements and measurement
 
 You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. These images are used for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation](https://grafana.com/docs/grafana/next/image-rendering/#rendering-mode) to help you configure it for the best mix of performance and resource usage. In our tests, we were able to reduce image load time from a 95th percentile of 10 seconds to less than 3 seconds under normal load.
-
