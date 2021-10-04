@@ -88,7 +88,7 @@ type AlertingRule struct {
 	Query    string  `json:"query,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
 	// required: true
-	Annotations labels `json:"annotations,omitempty"`
+	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true
 	Alerts []*Alert `json:"alerts,omitempty"`
 	Rule
@@ -100,8 +100,8 @@ type Rule struct {
 	// required: true
 	Name string `json:"name"`
 	// required: true
-	Query  string `json:"query"`
-	Labels labels `json:"labels"`
+	Query  string         `json:"query"`
+	Labels overrideLabels `json:"labels"`
 	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError"`
@@ -115,9 +115,9 @@ type Rule struct {
 // swagger:model
 type Alert struct {
 	// required: true
-	Labels labels `json:"labels"`
+	Labels overrideLabels `json:"labels"`
 	// required: true
-	Annotations labels `json:"annotations"`
+	Annotations overrideLabels `json:"annotations"`
 	// required: true
 	State    string     `json:"state"`
 	ActiveAt *time.Time `json:"activeAt"`
@@ -127,4 +127,4 @@ type Alert struct {
 
 // override the labels type with a map for generation.
 // The custom marshaling for labels.Labels ends up doing this anyways.
-type labels map[string]string
+type overrideLabels map[string]string

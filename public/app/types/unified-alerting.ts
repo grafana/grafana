@@ -133,7 +133,7 @@ export interface FilterState {
   dataSource?: string;
   alertState?: string;
   groupBy?: string[];
-  silenceState?: string;
+  ruleType?: string;
 }
 
 export interface SilenceFilterState {

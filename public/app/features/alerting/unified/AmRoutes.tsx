@@ -59,6 +59,7 @@ const AmRoutes: FC = () => {
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
   const handleSave = (data: Partial<FormAmRoute>) => {
     const newData = formAmRouteToAmRoute(
+      alertManagerSourceName,
       {
         ...rootRoute,
         ...data,
@@ -132,6 +133,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     height: 0;
     margin-bottom: ${theme.spacing(2)};
-    border-bottom: solid 1px ${theme.colors.border.medium};
   `,
 });
