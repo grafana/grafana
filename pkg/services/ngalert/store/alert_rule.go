@@ -557,7 +557,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			if s := newAlertRule.Annotations[ngmodels.PanelIDAnnotation]; s != "" {
 				panelID, err := strconv.ParseInt(s, 10, 64)
 				if err != nil {
-					return fmt.Errorf("the __panelId__ annotation does not contain a valid Panel ID: %w", err)
+					return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
 				}
 				newAlertRule.PanelID = &panelID
 			}

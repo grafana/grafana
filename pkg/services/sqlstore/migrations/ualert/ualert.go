@@ -156,7 +156,7 @@ func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrat
 		if s, ok := next.Annotations[ngmodels.PanelIDAnnotation]; ok {
 			i, err := strconv.ParseInt(s, 10, 64)
 			if err != nil {
-				return fmt.Errorf("the __panelId__ annotation does not contain a valid Panel ID: %w", err)
+				return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
 			}
 			panelID = &i
 		}
