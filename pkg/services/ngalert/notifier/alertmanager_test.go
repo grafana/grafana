@@ -3,29 +3,36 @@ package notifier
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"math"
+	"math/rand"
 	"os"
 	"sort"
+	"strconv"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util"
+
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
-	"github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/provider/mem"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
-
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/provider/mem"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 )
 
 func setupAMTest(t *testing.T) *Alertmanager {
@@ -342,5 +349,152 @@ func TestPutAlert(t *testing.T) {
 
 			require.Equal(t, expAlerts, alerts)
 		})
+	}
+}
+
+func TestStopAlertsForRules(t *testing.T) {
+	seed := time.Now().UnixNano()
+	t.Logf("Random seed is %d", seed)
+	rand.Seed(seed)
+
+	am := setupAMTest(t)
+	r := prometheus.NewRegistry()
+	am.marker = types.NewMarker(r)
+	var err error
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
+	require.NoError(t, err)
+	// startTime := time.Now()
+	// endTime := startTime.Add(2 * time.Hour)
+
+	t.Run("should do nothing if no active alerts", func(t *testing.T) {
+		toDelete := map[string]struct{}{
+			util.GenerateShortUID(): {},
+			util.GenerateShortUID(): {},
+		}
+
+		err := am.StopAlertsForRules(toDelete)
+		require.NoError(t, err)
+	})
+	t.Run("should do nothing if no alerts to stop", func(t *testing.T) {
+		toDelete := make(map[string]struct{})
+		err := am.StopAlertsForRules(toDelete)
+		require.NoError(t, err)
+
+		err = am.StopAlertsForRules(nil)
+		require.NoError(t, err)
+	})
+	t.Run("should set EndsAt for alert", func(t *testing.T) {
+		alerts := make([]models.PostableAlert, 0, rand.Intn(4)+1)
+		ruleIds := make(map[string]struct{}, cap(alerts))
+		for i := 0; i < cap(alerts); i++ {
+			ruleId := util.GenerateShortUID()
+			ruleIds[ruleId] = struct{}{}
+			alert := generatePostableAlert()
+			alert.EndsAt = strfmt.DateTime(time.Now().Add(time.Duration(rand.Intn(120)+5) * time.Second))
+			alert.Labels[ngModels.RuleUIDLabel] = ruleId
+		}
+		err = am.PutAlerts(apimodels.PostableAlerts{PostableAlerts: alerts})
+		require.NoError(t, err)
+
+		err = am.StopAlertsForRules(ruleIds)
+		require.NoError(t, err)
+
+		err = am.iterateAlerts(func(f *types.Alert) {
+			ID, ok := f.Labels[ngModels.RuleUIDLabel]
+			if !ok {
+				return
+			}
+			_, ok = ruleIds[string(ID)]
+			if !ok {
+				return
+			}
+			require.True(t, f.EndsAt.Before(time.Now()), "Alert's EndAt is supposed to be in the past")
+		})
+		require.NoError(t, err)
+	})
+	t.Run("should not update alert that is already expired", func(t *testing.T) {
+		alerts := make([]models.PostableAlert, 0, rand.Intn(4)+1)
+		ruleIds := make(map[string]struct{}, cap(alerts))
+		expectedTime := time.Now().Add(-time.Duration(rand.Intn(120)+1) * time.Second)
+		for i := 0; i < cap(alerts); i++ {
+			ruleId := util.GenerateShortUID()
+			ruleIds[ruleId] = struct{}{}
+			alert := generatePostableAlert()
+			alert.EndsAt = strfmt.DateTime(expectedTime)
+			alert.Labels[ngModels.RuleUIDLabel] = ruleId
+		}
+		err = am.PutAlerts(apimodels.PostableAlerts{PostableAlerts: alerts})
+		require.NoError(t, err)
+
+		err = am.StopAlertsForRules(ruleIds)
+		require.NoError(t, err)
+
+		err = am.iterateAlerts(func(f *types.Alert) {
+			ID, ok := f.Labels[ngModels.RuleUIDLabel]
+			if !ok {
+				return
+			}
+			_, ok = ruleIds[string(ID)]
+			if !ok {
+				return
+			}
+			require.Equal(t, expectedTime, f.EndsAt)
+		})
+		require.NoError(t, err)
+	})
+	t.Run(fmt.Sprintf("should not update alert that does not have label %s", ngModels.RuleUIDLabel), func(t *testing.T) {
+		alerts := make([]models.PostableAlert, 0, rand.Intn(4)+1)
+		ruleIds := make(map[string]struct{}, cap(alerts))
+		for i := 0; i < rand.Intn(3)+1; i++ {
+			ruleIds[util.GenerateShortUID()] = struct{}{}
+		}
+		expectedEndTime := strfmt.DateTime(time.Now().Add(time.Duration(rand.Intn(120)+5) * time.Second))
+		for i := 0; i < cap(alerts); i++ {
+			alert := generatePostableAlert()
+			alert.EndsAt = expectedEndTime
+			alert.Labels["SOME_ID"] = util.GenerateShortUID()
+		}
+		err = am.PutAlerts(apimodels.PostableAlerts{PostableAlerts: alerts})
+		require.NoError(t, err)
+
+		err = am.StopAlertsForRules(ruleIds)
+		require.NoError(t, err)
+
+		err = am.iterateAlerts(func(f *types.Alert) {
+			ID, ok := f.Labels["SOME_ID"]
+			if !ok {
+				return
+			}
+			_, ok = ruleIds[string(ID)]
+			if !ok {
+				return
+			}
+			require.Equal(t, expectedEndTime, f.EndsAt)
+		})
+		require.NoError(t, err)
+	})
+}
+
+func generatePostableAlert() *models.PostableAlert {
+	generateLabelSet := func() models.LabelSet {
+		result := make(map[string]string, rand.Intn(5))
+		for i := 0; i < len(result); i++ {
+			result[strconv.FormatInt(rand.Int63(), 10)] = strconv.FormatFloat(rand.Float64(), 'E', -1, 64)
+		}
+		return result
+	}
+
+	start := time.Unix(rand.Int63n(time.Now().Unix()), 0)
+	diff := int64(math.Min(time.Since(start).Seconds(), 60.0))
+	end := time.Now().Add(time.Duration(rand.Int63n(120)-diff) * time.Second)
+
+	return &models.PostableAlert{
+		Annotations: generateLabelSet(),
+		EndsAt:      strfmt.DateTime(end),
+		StartsAt:    strfmt.DateTime(start),
+		Alert: models.Alert{
+			GeneratorURL: strfmt.URI(fmt.Sprintf("http://localhost/%d", rand.Int63())),
+			Labels:       generateLabelSet(),
+		},
 	}
 }

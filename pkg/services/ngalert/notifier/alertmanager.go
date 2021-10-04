@@ -624,6 +624,55 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 	return nil
 }
 
+// iterateAlerts subscribes to the Alertmanager and reads all active alerts and executes a provided function for every alert
+func (am *Alertmanager) iterateAlerts(f func(f *types.Alert)) error {
+	alertsChan := am.alerts.Subscribe()
+	if alertsChan.Err() != nil {
+		return fmt.Errorf("failed to get list of active alerts from Alertmanager: %w", alertsChan.Err())
+	}
+	defer alertsChan.Close()
+	for {
+		select {
+		case alert, ok := <-alertsChan.Next():
+			if !ok {
+				return nil
+			}
+			f(alert)
+		default:
+			return nil
+		}
+	}
+}
+
+// StopAlertsForRules stops all active alerts that have rule ID label that matches one of the provided ruleIDs.
+// To stop an alert it changes the alert's field EndAt to be the time.Now
+func (am *Alertmanager) StopAlertsForRules(alertRuleUIDs map[string]struct{}) error {
+	if len(alertRuleUIDs) == 0 {
+		return nil
+	}
+	am.logger.Info("Stopping all firing alerts for rules", "rules", alertRuleUIDs)
+	return am.iterateAlerts(func(alert *types.Alert) {
+		now := time.Now()
+		// if alert is already expired, do nothing
+		if alert.EndsAt.Before(now) {
+			return
+		}
+		am.logger.Debug("Checking alert", "alert", alert.Name(), "labels", alert.Labels)
+		// getting rule ID from the alert. It is expected to be there
+		ruleId, ok := alert.Labels[ngmodels.RuleUIDLabel]
+		if ok {
+			_, exists := alertRuleUIDs[string(ruleId)]
+			if exists {
+				am.logger.Info("Stopping alert from firing", "alert", alert.Name(), "labels", alert.Labels)
+				// we cannot remove an alert. Instead, we can force it to stop firing. The alert will be collected later by AM's GC
+				alert.EndsAt = now
+			}
+			return
+		}
+		am.logger.Warn(fmt.Sprintf("Alert does not have label '%s' that is supposed to be available for every alert", ngmodels.RuleUIDLabel), "alert", alert.Name())
+	})
+}
+
 // validateAlert is a.Validate() while additionally allowing
 // space for label and annotation names.
 func validateAlert(a *types.Alert) error {
