@@ -17,13 +17,9 @@ steps:
     cache_key: test123
     json_key:
       from_secret: tf_google_credentials
-    local_root: /cache
     mount:
-    - yarn
+    - yarncache
     restore: true
-  volumes:
-  - name: cache
-    path: /cache
   depends_on:
   - clone
 
@@ -47,10 +43,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    YARN_CACHE_FOLDER: /cache/yarn
-  volumes:
-  - name: cache
-    path: /cache
+    YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
   - restore-cache
 
@@ -85,7 +78,7 @@ steps:
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
-    YARN_CACHE_FOLDER: /cache/yarn
+    YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
   - restore-cache
   - initialize
@@ -95,7 +88,7 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:
-    YARN_CACHE_FOLDER: /cache/yarn
+    YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
   - test-frontend
 
@@ -108,22 +101,14 @@ steps:
     cache_key: test123
     json_key:
       from_secret: tf_google_credentials
-    local_root: /cache
     mount:
-    - yarn
+    - yarncache
     rebuild: true
-  volumes:
-  - name: cache
-    path: /cache
   when:
     event:
     - pull_request
   depends_on:
   - restore-cache
-
-volumes:
-- name: cache
-  temp: {}
 
 trigger:
   event:
@@ -179,6 +164,6 @@ get:
 
 ---
 kind: signature
-hmac: cd78195a5b83764e3fae2c9e83ade25106fe3501c8305bd628da35683361760c
+hmac: d444836493020504289c09c3a9279d4e6668f6ab80cd6bafa3f29b27bf947f9c
 
 ...
