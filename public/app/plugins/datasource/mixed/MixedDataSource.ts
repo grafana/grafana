@@ -1,7 +1,3 @@
-import { cloneDeep, groupBy } from 'lodash';
-import { combineLatest, from, Observable, of } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap } from 'rxjs/operators';
-
 import {
   DataQuery,
   DataQueryRequest,
@@ -11,6 +7,9 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { cloneDeep, groupBy } from 'lodash';
+import { concatMap, from, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -52,40 +51,53 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   }
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const runningQueries = mixed.filter(this.isQueryable).map((query, i) =>
-      from(query.datasource).pipe(
-        mergeMap((api: DataSourceApi) => {
-          const dsRequest = cloneDeep(request);
-          dsRequest.requestId = `mixed-${i}-${dsRequest.requestId || ''}`;
-          dsRequest.targets = query.targets;
+    const runnableQueries = mixed.filter(this.isQueryable);
+    let firstError: DataQueryResponse | undefined;
 
-          return from(api.query(dsRequest)).pipe(
-            map((response) => {
-              return {
-                ...response,
-                data: response.data || [],
-                state: LoadingState.Loading,
-                key: `mixed-${i}-${response.key || ''}`,
-              } as DataQueryResponse;
-            }),
-            catchError((err) => {
-              err = toDataQueryError(err);
+    // Convert array to an observable so we can iterate through the items and map them to DataQueryResponse
+    return from(runnableQueries).pipe(
+      concatMap((query, i) =>
+        // Get the datasource, this is async this is why we need observables here
+        from(query.datasource).pipe(
+          concatMap((api: DataSourceApi) => {
+            const dsRequest = cloneDeep(request);
+            dsRequest.requestId = `mixed-${i}-${dsRequest.requestId || ''}`;
+            dsRequest.targets = query.targets;
 
-              err.message = `${api.name}: ${err.message}`;
+            return from(api.query(dsRequest)).pipe(
+              map((response) => {
+                // If there was an error we should return that as a last result
+                if (i === runnableQueries.length - 1 && firstError) {
+                  return firstError;
+                }
+                return {
+                  ...response,
+                  data: response.data || [],
+                  state: i === runnableQueries.length - 1 ? LoadingState.Done : LoadingState.Loading,
+                  key: `mixed-${i}-${response.key || ''}`,
+                } as DataQueryResponse;
+              }),
+              catchError((err) => {
+                err = toDataQueryError(err);
 
-              return of({
-                data: [],
-                state: LoadingState.Error,
-                error: err,
-                key: `mixed-${i}-${dsRequest.requestId || ''}`,
-              });
-            })
-          );
-        })
+                err.message = `${api.name}: ${err.message}`;
+
+                const errorResponse = {
+                  data: [],
+                  state: LoadingState.Error,
+                  error: err,
+                  key: `mixed-${i}-${dsRequest.requestId || ''}`,
+                } as DataQueryResponse;
+                if (!firstError) {
+                  firstError = errorResponse;
+                }
+                return of(errorResponse);
+              })
+            );
+          })
+        )
       )
     );
-
-    return combineLatest(runningQueries).pipe(map(this.finalizeResponses), mergeAll());
   }
 
   testDatasource() {
@@ -94,22 +106,5 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
   private isQueryable(query: BatchedQueries): boolean {
     return query && Array.isArray(query.targets) && query.targets.length > 0;
-  }
-
-  private finalizeResponses(responses: DataQueryResponse[]): DataQueryResponse[] {
-    const { length } = responses;
-
-    if (length === 0) {
-      return responses;
-    }
-
-    const error = responses.find((response) => response.state === LoadingState.Error);
-    if (error) {
-      responses.push(error); // adds the first found error entry so error shows up in the panel
-    } else {
-      responses[length - 1].state = LoadingState.Done;
-    }
-
-    return responses;
   }
 }
