@@ -117,7 +117,7 @@ func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64
 	return nil, nil
 }
 func (f *fakeRuleStore) GetOrgRuleGroups(_ *models.ListOrgRuleGroupsQuery) error { return nil }
-func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
+func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) (map[string]store.Action, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	rgs, ok := f.rules[cmd.OrgID]
@@ -135,6 +135,7 @@ func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 		f.rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = []*models.AlertRule{}
 	}
 
+	actions := make(map[string]store.Action)
 	rules := []*models.AlertRule{}
 	for _, r := range cmd.RuleGroupConfig.Rules {
 		//TODO: Not sure why this is not being set properly, where is the code that sets this?
@@ -174,10 +175,11 @@ func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 		require.NoError(f.t, err)
 
 		rules = append(rules, new)
+		actions[new.UID] = store.Inserted
 	}
 
 	f.rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = rules
-	return nil
+	return actions, nil
 }
 
 type fakeInstanceStore struct{}

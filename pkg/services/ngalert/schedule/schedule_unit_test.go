@@ -261,7 +261,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *fakeRuleStore, intervalSeconds i
 
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
-	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	_, err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{

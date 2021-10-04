@@ -277,11 +277,13 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		}
 	}
 
-	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	updated, err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
 		NamespaceUID:    namespace.Uid,
 		RuleGroupConfig: ruleGroupConfig,
-	}); err != nil {
+	})
+
+	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
@@ -290,7 +292,16 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	srv.resetAlertsStatus(c.SignedInUser.OrgId, alertRuleUIDs)
+	var toCleanup map[string]struct{}
+
+	for s, action := range updated {
+		if action == store.Noop || action == store.Inserted {
+			continue
+		}
+		toCleanup[s] = struct{}{}
+	}
+	
+	srv.resetAlertsStatus(c.SignedInUser.OrgId, toCleanup)
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }

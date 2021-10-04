@@ -47,7 +47,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
-	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	_, err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
@@ -114,7 +114,7 @@ func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 		},
 	}
 
-	err := dbstore.UpdateRuleGroup(cmd)
+	_, err := dbstore.UpdateRuleGroup(cmd)
 	require.NoError(t, err)
 
 	q := models.ListRuleGroupAlertRulesQuery{

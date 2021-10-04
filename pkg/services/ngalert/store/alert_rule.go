@@ -38,6 +38,15 @@ type upsertRule struct {
 	New      *ngmodels.AlertRule
 }
 
+type Action int
+
+const (
+	Noop Action = iota
+	Inserted
+	Updated
+	Deleted
+)
+
 // Store is the interface for persisting alert rules and instances
 type RuleStore interface {
 	DeleteAlertRuleByUID(orgID int64, ruleUID string) error
@@ -52,7 +61,7 @@ type RuleStore interface {
 	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
-	UpdateRuleGroup(UpdateRuleGroupCmd) error
+	UpdateRuleGroup(UpdateRuleGroupCmd) (map[string]Action, error)
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -185,8 +194,9 @@ func (st DBstore) GetAlertRuleByUID(query *ngmodels.GetAlertRuleByUIDQuery) erro
 }
 
 // upsertAlertRules is a handler for creating/updating alert rules. Returns the set of RuleID that were added or updated
-func (st DBstore) upsertAlertRules(rules []upsertRule) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) upsertAlertRules(rules []upsertRule) (map[string]Action, error) {
+	var result = make(map[string]Action, len(rules))
+	err := st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		newRules := make([]*ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
@@ -236,6 +246,7 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 				}
 
 				newRules = append(newRules, r.New)
+				result[uid] = Inserted
 			default:
 				// explicitly set the existing properties if missing
 				// do not rely on xorm
@@ -272,6 +283,7 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 				r.New.Updated = r.Existing.Updated // fixing the field for comparison
 				if reflect.DeepEqual(r.New, r.Existing) {
 					st.Logger.Info("Skip updating the rule because it is identical to the current one", "rule_uid", r.Existing.UID)
+					result[r.New.UID] = Noop
 					continue
 				}
 				r.New.Version += 1
@@ -286,6 +298,7 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 					return fmt.Errorf("failed to update rule %s: %w", r.New.Title, err)
 				}
 
+				result[r.New.UID] = Updated
 				parentVersion = r.Existing.Version
 			}
 
@@ -323,6 +336,10 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetOrgAlertRules is a handler for retrieving alert rules of specific organisation.
@@ -515,8 +532,9 @@ func (st DBstore) validateAlertRule(alertRule *ngmodels.AlertRule) error {
 }
 
 // UpdateRuleGroup creates new rules and updates and/or deletes existing rules
-func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) (map[string]Action, error) {
+	var updatedRules map[string]Action
+	err := st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		ruleGroup := cmd.RuleGroupConfig.Name
 		q := &ngmodels.ListRuleGroupAlertRulesQuery{
 			OrgID:        cmd.OrgID,
@@ -582,7 +600,9 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			upsertRules = append(upsertRules, upsertRule)
 		}
 
-		if err := st.UpsertAlertRules(upsertRules); err != nil {
+		var err error
+		updatedRules, err = st.upsertAlertRules(upsertRules)
+		if err != nil {
 			if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return ngmodels.ErrAlertRuleUniqueConstraintViolation
 			}
@@ -603,9 +623,14 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			if err := st.DeleteAlertRuleByUID(cmd.OrgID, ruleUID); err != nil {
 				return err
 			}
+			updatedRules[ruleUID] = Deleted
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return updatedRules, nil
 }
 
 func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
