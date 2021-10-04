@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -254,7 +255,7 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 				r.New.OrgID = r.Existing.OrgID
 				r.New.NamespaceUID = r.Existing.NamespaceUID
 				r.New.RuleGroup = r.Existing.RuleGroup
-				r.New.Version = r.Existing.Version + 1
+				r.New.Version = r.Existing.Version // it will be increased later, after comparison
 
 				if r.New.ExecErrState == "" {
 					r.New.ExecErrState = r.Existing.ExecErrState
@@ -267,6 +268,14 @@ func (st DBstore) upsertAlertRules(rules []upsertRule) error {
 				if err := st.validateAlertRule(r.New); err != nil {
 					return err
 				}
+
+				r.New.Updated = r.Existing.Updated // fixing the field for comparison
+				if reflect.DeepEqual(r.New, r.Existing) {
+					st.Logger.Info("Skip updating the rule because it is identical to the current one", "rule_uid", r.Existing.UID)
+					continue
+				}
+				r.New.Version += 1
+				r.New.Updated = time.Time{} // back to the default value, which was before the fixing
 
 				if err := r.New.PreSave(TimeNow); err != nil {
 					return err
