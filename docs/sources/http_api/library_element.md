@@ -19,7 +19,7 @@ The maximum length of a UID is 40 characters.
 
 `GET /api/library-elements`
 
-Returns all library elements that the authenticated user has permission to view. You can control the maximum number of library elements returned through the `perPage` query parameter, the default is 100. You can also pass the `page` query parameter for fetching library elements from a page other than the first one.
+Returns a list of all library elements the authenticated user has permission to view. Use `perPage` query parameter to control the maximum number of library elements returned; the default limit is 100. You can also use the `page` query parameter to fetch library elements from any page other than the first one.
 
 Query parameters:
 
