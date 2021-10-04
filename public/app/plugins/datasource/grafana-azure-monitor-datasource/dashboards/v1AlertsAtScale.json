@@ -31,7 +31,22 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "links": [],
+  "id": 72,
+  "iteration": 1633364342735,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Available dashboards",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
   "panels": [
     {
       "datasource": "${AZ_MON}",
@@ -57,26 +72,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "count_"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "targetBlank": true,
-                    "title": "",
-                    "url": "https://jcolladokuri-grafana.scus.azgrafana.io/d/5DLst5N7k/alert-consumption?orgId=1&var-sub=${sub}&var-rg=${rg}&var-ns=${ns}&var-res=${res}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev1&var-sev=Sev0&var-sev=Sev2&var-sev=Sev3&var-sev=Sev4&${__url_time_range}"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 5,
@@ -129,7 +125,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         }
       ],
       "title": "Total alerts",
@@ -158,26 +154,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "count_"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "targetBlank": true,
-                    "title": "",
-                    "url": "https://jcolladokuri-grafana.scus.azgrafana.io/d/Pxwf9wN7k/alert-rules-overview?orgId=1&var-sub=${sub}&var-rg=${rg}&var-ns=${ns}&var-res=${res}&var-sig_type=metrics&var-sig_type=logsearch&var-sig_type=activitylog&var-sig_type=smartdetectoralertrules&var-sig_type=advisor&var-sig_type=servicehealth&var-sig_type=resourcehealth&var-stat=Enabled&var-stat=Disabled"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 5,
@@ -220,7 +197,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -231,7 +208,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Smart detector rules",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -252,7 +229,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res)) \r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -263,7 +240,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Resource health alert rules",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         },
         {
           "appInsights": {
@@ -284,7 +261,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in tolower(($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -295,7 +272,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Insights alert rules",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         }
       ],
       "title": "Total alert rules",
@@ -375,7 +352,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and properties.conditions.targetResourceGroup in ($res) and tolower(targetResource) in tolower(($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and properties.conditions.targetResourceGroup in ($res) and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
             "resultFormat": "table"
           },
           "insightsAnalytics": {
@@ -385,7 +362,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         }
       ],
       "title": "Action rules",
@@ -463,16 +440,6 @@
                       }
                     },
                     "type": "value"
-                  }
-                ]
-              },
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "targetBlank": true,
-                    "title": "",
-                    "url": "https://jcolladokuri-grafana.scus.azgrafana.io/d/5DLst5N7k/alert-consumption?orgId=1&var-sub=${sub}&var-rg=${rg}&var-ns=${ns}&var-res=${res}&var-mc=Fired&var-mc=Resolved&var-as=New&var-sev=${__data.fields.properties_essentials_severity}&${__url_time_range}"
                   }
                 ]
               },
@@ -646,7 +613,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": ["$sub"]
+          "subscriptions": []
         }
       ],
       "title": "Alerts by Severity",
@@ -663,7 +630,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "RTD-Experimental",
           "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
         },
@@ -711,7 +678,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "Application Insights",
           "value": "microsoft.insights/components"
         },
@@ -765,6 +732,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "Alert Consumption At Scale",
-  "uid": "QddYFyNnk",
-  "version": 21
+  "uid": "hcsp8ND7k",
+  "version": 5
 }
