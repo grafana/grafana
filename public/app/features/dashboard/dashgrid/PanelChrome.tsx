@@ -79,8 +79,9 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
-        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
+        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
+        app: this.getPanelContextApp(),
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
         onAnnotationCreate: this.onAnnotationCreate,
@@ -88,7 +89,6 @@ export class PanelChrome extends Component<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
-        container: this.getPanelContextApp(),
       },
       data: this.getInitialPanelDataState(),
     };
