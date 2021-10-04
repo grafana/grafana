@@ -24,7 +24,7 @@ Returns a list of all library elements the authenticated user has permission to 
 Query parameters:
 
 - **searchString** – Part of the name or description searched for
-- **kind** – Kind of element to search for, `1` for library panels or `2` for library variables
+- **kind** – Kind of element to search for. Use `1` for library panels or `2` for library variables.
 - **sortDirection** – Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
 - **typeFilter** – Comma separated list of types to filter elements by
 - **excludeUid** – Element UID to exclude from results
