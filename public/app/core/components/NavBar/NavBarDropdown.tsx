@@ -75,6 +75,7 @@ const getStyles = (
 
   return {
     header: css`
+      align-items: center;
       background-color: ${theme.colors.background.secondary};
       border: none;
       color: ${theme.colors.text.primary};
