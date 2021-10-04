@@ -448,6 +448,6 @@ Status Codes:
 
 - **200** – Deleted
 - **401** – Unauthorized
-- **400** – Bad Request
+- **400** – Bad request
 - **403** – Access Denied
 - **404** – Library element not found
