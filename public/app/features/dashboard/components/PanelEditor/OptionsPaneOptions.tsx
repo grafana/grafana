@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
@@ -13,18 +12,9 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
+import { OptionPaneRenderProps } from './types';
 
-interface Props {
-  plugin: PanelPlugin;
-  panel: PanelModel;
-  dashboard: DashboardModel;
-  data?: PanelData;
-  onFieldConfigsChange: (config: FieldConfigSource) => void;
-  onPanelOptionsChanged: (options: any) => void;
-  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
-}
-
-export const OptionsPaneOptions: React.FC<Props> = (props) => {
+export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const { plugin, dashboard, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
@@ -39,7 +29,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data]
+    [panel.configRev, props.data, props.instanceState]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
