@@ -9,7 +9,7 @@ weight = 250
 
 {{< docs/shared "influxdb/intro.md" >}}
 
-> **Note:**  You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs)  to help you get started.
+> **Note:** You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help you get started.
 
 {{< docs/shared "getting-started/first-step.md" >}}
 
