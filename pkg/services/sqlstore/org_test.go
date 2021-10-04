@@ -87,9 +87,9 @@ func TestAccountDataAccess(t *testing.T) {
 
 				q1 := models.GetUserOrgListQuery{UserId: ac1.Id}
 				q2 := models.GetUserOrgListQuery{UserId: ac2.Id}
-				err = GetUserOrgList(&q1)
+				err = GetUserOrgList(context.Background(), &q1)
 				require.NoError(t, err)
-				err = GetUserOrgList(&q2)
+				err = GetUserOrgList(context.Background(), &q2)
 				require.NoError(t, err)
 
 				require.Equal(t, q1.Result[0].OrgId, q2.Result[0].OrgId)
@@ -149,7 +149,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to read user info projection", func(t *testing.T) {
 				query := models.GetUserProfileQuery{UserId: ac1.Id}
-				err = GetUserProfile(&query)
+				err = sqlStore.GetUserProfile(context.Background(), &query)
 
 				require.NoError(t, err)
 				require.Equal(t, query.Result.Email, "ac1@test.com")
@@ -158,7 +158,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Can search users", func(t *testing.T) {
 				query := models.SearchUsersQuery{Query: ""}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				require.NoError(t, err)
 				require.Equal(t, query.Result.Users[0].Email, "ac1@test.com")
@@ -205,7 +205,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Can get user organizations", func(t *testing.T) {
 					query := models.GetUserOrgListQuery{UserId: ac2.Id}
-					err := GetUserOrgList(&query)
+					err := GetUserOrgList(context.Background(), &query)
 
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
@@ -247,7 +247,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Can set using org", func(t *testing.T) {
 					cmd := models.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
-					err := SetUsingOrg(&cmd)
+					err := SetUsingOrg(context.Background(), &cmd)
 					require.NoError(t, err)
 
 					t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
