@@ -98,7 +98,7 @@ export function ReceiverForm<R extends ChannelValues>({
         <h4 className={styles.heading}>
           {readOnly ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
         </h4>
-        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
+        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
             readOnly={readOnly}
             id="name"
@@ -107,6 +107,7 @@ export function ReceiverForm<R extends ChannelValues>({
               validate: { nameIsAvailable: validateNameIsAvailable },
             })}
             width={39}
+            placeholder="Name"
           />
         </Field>
         {fields.map((field, index) => {

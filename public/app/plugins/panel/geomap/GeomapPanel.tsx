@@ -25,7 +25,7 @@ import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
 import { css } from '@emotion/css';
-import { Portal, stylesFactory, VizTooltipContainer } from '@grafana/ui';
+import { PanelContext, PanelContextRoot, Portal, stylesFactory, VizTooltipContainer } from '@grafana/ui';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
@@ -41,7 +41,6 @@ interface MapLayerState {
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
-export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
@@ -49,6 +48,9 @@ interface State extends OverlayProps {
 }
 
 export class GeomapPanel extends Component<Props, State> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
   globalCSS = getGlobalStyles(config.theme2);
 
   counter = 0;
@@ -66,7 +68,10 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    lastGeomapPanelInstance = this;
+    this.panelContext = this.context as PanelContext;
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange(this);
+    }
   }
 
   shouldComponentUpdate(nextProps: Props) {

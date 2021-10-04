@@ -189,7 +189,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="groupWaitValue"
@@ -223,7 +223,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="groupIntervalValue"
@@ -257,7 +257,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="repeatIntervalValue"
