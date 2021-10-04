@@ -85,7 +85,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
      	],
 ```
 
-1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it
+1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
 1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
