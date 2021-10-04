@@ -29,7 +29,7 @@ Query parameters:
 - **typeFilter** – A comma separated list of types to filter the elements by.
 - **excludeUid** – Element UID to exclude from search results.
 - **folderFilter** – A comma separated list of folder ID(s) to filter the elements by.
-- **perPage** – Limit the number of returned results per page (default 100)
+- **perPage** – Limit the number of results per page; default is 100.
 - **page** – Use this parameter to access hits beyond `perPage`. Numbering starts at 1. `perPage` param acts as page size.
 
 **Example Request**:
