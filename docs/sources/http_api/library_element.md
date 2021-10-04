@@ -449,5 +449,5 @@ Status Codes:
 - **200** – Deleted
 - **401** – Unauthorized
 - **400** – Bad request
-- **403** – Access Denied
+- **403** – Access denied
 - **404** – Library element not found
