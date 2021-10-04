@@ -51,7 +51,6 @@ type RuleStore interface {
 	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
-	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
 }
 
@@ -184,8 +183,8 @@ func (st DBstore) GetAlertRuleByUID(query *ngmodels.GetAlertRuleByUIDQuery) erro
 	})
 }
 
-// UpsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
+// upsertAlertRules is a handler for creating/updating alert rules. Returns the set of RuleID that were added or updated
+func (st DBstore) upsertAlertRules(rules []UpsertRule) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))

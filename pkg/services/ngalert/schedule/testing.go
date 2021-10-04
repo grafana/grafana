@@ -117,7 +117,6 @@ func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64
 	return nil, nil
 }
 func (f *fakeRuleStore) GetOrgRuleGroups(_ *models.ListOrgRuleGroupsQuery) error { return nil }
-func (f *fakeRuleStore) UpsertAlertRules(_ []store.UpsertRule) error             { return nil }
 func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
