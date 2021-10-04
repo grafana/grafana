@@ -28,7 +28,7 @@ Query parameters:
 - **sortDirection** – Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
 - **typeFilter** – A comma separated list of types to filter the elements by.
 - **excludeUid** – Element UID to exclude from search results.
-- **folderFilter** – Comma separated list of folder id's to filter elements by
+- **folderFilter** – A comma separated list of folder ID(s) to filter the elements by.
 - **perPage** – Limit the number of returned results per page (default 100)
 - **page** – Use this parameter to access hits beyond `perPage`. Numbering starts at 1. `perPage` param acts as page size.
 
