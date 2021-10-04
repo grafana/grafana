@@ -267,11 +267,11 @@ Creates a new library element.
 
 JSON Body schema:
 
-- **folderId** – The folder id of the folder where the library element is stored.
-- **name** – The name of the library element.
-- **model** – The json model for the library element.
-- **kind** – Kind of element to create, `1` for library panels or `2` for library variables.
-- **uid** – Optional [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- **folderId** – ID of the folder where the library element is stored.
+- **name** – Name of the library element.
+- **model** – The JSON model for the library element.
+- **kind** – Kind of element to create, Use `1` for library panels or `2` for library variables.
+- **uid** – Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 
@@ -345,7 +345,7 @@ Updates an existing library element identified by uid.
 JSON Body schema:
 
 - **folderId** – ID of the folder where the library element is stored.
-- **name** –Name of the library element.
+- **name** – Name of the library element.
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create. Use `1` for library panels or `2` for library variables.
 - **version** – Version of the library element you are updating.
@@ -423,7 +423,7 @@ Status Codes:
 
 Deletes an existing library element as specified by the UID. This operation cannot be reverted.
 
->**Note:** You cannot delete a library element that is connected. This operation cannot be reverted.
+> **Note:** You cannot delete a library element that is connected. This operation cannot be reverted.
 
 **Example Request**:
 
