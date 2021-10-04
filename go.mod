@@ -11,6 +11,10 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
+// For now we are using a Grafana fork of alertmanager until the ability to bypass label name/key validation
+// is merged into upstream (2021-10-01).
+replace github.com/prometheus/alertmanager => github.com/grafana/alertmanager v0.21.1-0.20210929114340-613e5cc2a4ee
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
@@ -116,6 +120,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	xorm.io/builder v0.3.6
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -238,7 +243,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210805201207-89edb61ffb67 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
-	xorm.io/builder v0.3.6 // indirect
 )
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
