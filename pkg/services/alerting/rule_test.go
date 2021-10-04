@@ -84,16 +84,16 @@ func TestAlertRuleForParsing(t *testing.T) {
 }
 
 func TestAlertRuleModel(t *testing.T) {
-	sqlstore.InitTestDB(t)
+	ss := sqlstore.InitTestDB(t)
 	RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 		return &FakeCondition{}, nil
 	})
 
 	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-	err := sqlstore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
+	err := ss.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 	require.Nil(t, err)
 	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-	err = sqlstore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
+	err = ss.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {

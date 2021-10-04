@@ -78,7 +78,3 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 func inTransaction(callback dbTransactionFunc) error {
 	return inTransactionWithRetry(callback, 0)
 }
-
-func inTransactionCtx(ctx context.Context, callback dbTransactionFunc) error {
-	return inTransactionWithRetryCtx(ctx, x, callback, 0)
-}

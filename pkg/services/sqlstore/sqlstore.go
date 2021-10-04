@@ -110,13 +110,13 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
-	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
 	ss.addDashboardQueryAndCommandHandlers()
 	ss.addDashboardACLQueryAndCommandHandlers()
 	ss.addQuotaQueryAndCommandHandlers()
 	ss.addOrgUsersQueryAndCommandHandlers()
 	ss.addStarQueryAndCommandHandlers()
+	ss.addAlertNotificationQueryAndCommandHandlers()
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
