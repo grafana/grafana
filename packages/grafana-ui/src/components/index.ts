@@ -107,7 +107,6 @@ export {
   PanelContextProvider,
   PanelContext,
   PanelContextRoot,
-  PanelContextContainer,
   usePanelContext,
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';

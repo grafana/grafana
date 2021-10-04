@@ -8,6 +8,8 @@ export enum CoreApp {
   Explore = 'explore',
   Unknown = 'unknown',
   CloudAlerting = 'cloud-alerting',
+  PanelEditor = 'panel-editor',
+  PanelViewer = 'panel-viewer',
 }
 
 export interface AppRootProps<T = KeyValue> {

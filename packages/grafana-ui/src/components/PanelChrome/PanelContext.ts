@@ -5,6 +5,7 @@ import {
   AnnotationEventUIModel,
   ThresholdsConfig,
   SplitOpen,
+  CoreApp,
 } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
@@ -17,7 +18,7 @@ export interface PanelContext {
   sync?: DashboardCursorSync;
 
   /** Information on what the outer container is */
-  container?: PanelContextContainer | 'string';
+  app?: CoreApp | 'string';
 
   /**
    * Called when a component wants to change the color for a series
@@ -58,17 +59,6 @@ export interface PanelContext {
 
   /** Update instance state, this is only supported in dashboard panel context currently */
   onInstanceStateChange?: (state: any) => void;
-}
-
-/** @alpha
- * Represents the outer container for the panel
- */
-export enum PanelContextContainer {
-  Dashboard = 'dashboard',
-  PanelEditor = 'panel-editor',
-  PanelViewer = 'panel-viewer',
-  AlertingQuery = 'alerting-query',
-  Explore = 'explore',
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
