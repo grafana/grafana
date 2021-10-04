@@ -32,7 +32,7 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction, stateSave, storeAutoLoadLogsVolumeAction } from './main';
+import { localStorageFullAction, richHistoryUpdatedAction, stateSave, storeAutoLoadLogsVolumeAction } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
@@ -415,17 +415,21 @@ export const runQueries = (
             if (!data.error && firstResponse) {
               // Side-effect: Saving history in localstorage
               const nextHistory = updateHistory(history, datasourceId, queries);
-              const nextRichHistory = addToRichHistory(
+              const { richHistory: nextRichHistory, localStorageFull } = addToRichHistory(
                 richHistory || [],
                 datasourceId,
                 datasourceName,
                 queries,
                 false,
                 '',
-                ''
+                '',
+                !getState().explore.localStorageFull
               );
               dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
               dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+              if (localStorageFull) {
+                dispatch(localStorageFullAction());
+              }
 
               // We save queries to the URL here so that only successfully run queries change the URL.
               dispatch(stateSave({ replace: options?.replaceUrl }));

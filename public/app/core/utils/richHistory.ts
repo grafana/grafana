@@ -34,6 +34,8 @@ export enum SortOrder {
  * Side-effect: store history in local storage
  */
 
+export const MAX_HISTORY_ITEMS = 10000000000;
+
 export function addToRichHistory(
   richHistory: RichHistoryQuery[],
   datasourceId: string,
@@ -41,8 +43,9 @@ export function addToRichHistory(
   queries: DataQuery[],
   starred: boolean,
   comment: string | null,
-  sessionName: string
-): any {
+  sessionName: string,
+  showError: boolean
+): { richHistory: RichHistoryQuery[]; localStorageFull?: boolean } {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
@@ -52,7 +55,8 @@ export function addToRichHistory(
   /* Keep only queries, that are within the selected retention period or that are starred.
    * If no queries, initialize with empty array
    */
-  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
+  const queriesToKeep =
+    richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true).splice(0, MAX_HISTORY_ITEMS) || [];
 
   if (newQueriesToSave.length > 0) {
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
@@ -66,24 +70,32 @@ export function addToRichHistory(
       });
 
     if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
-      return richHistory;
+      return { richHistory };
     }
 
-    let updatedHistory = [
-      { queries: newQueriesToSave, ts, datasourceId, datasourceName, starred, comment, sessionName },
+    let updatedHistory: RichHistoryQuery[] = [
+      {
+        queries: newQueriesToSave,
+        ts,
+        datasourceId,
+        datasourceName: datasourceName ?? '',
+        starred,
+        comment: comment ?? '',
+        sessionName,
+      },
       ...queriesToKeep,
     ];
 
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
-      return updatedHistory;
+      return { richHistory: updatedHistory };
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-      return richHistory;
+      showError && dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      return { richHistory, localStorageFull: error.name === 'QuotaExceededError' };
     }
   }
 
-  return richHistory;
+  return { richHistory };
 }
 
 export function getRichHistory(): RichHistoryQuery[] {

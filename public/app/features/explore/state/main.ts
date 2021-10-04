@@ -21,6 +21,7 @@ export interface SyncTimesPayload {
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
+export const localStorageFullAction = createAction('explore/localStorageFullAction');
 
 /**
  * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
@@ -172,6 +173,7 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
+  localStorageFull: false,
   autoLoadLogsVolume: store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false),
 };
 
@@ -224,6 +226,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       richHistory: action.payload.richHistory,
+    };
+  }
+
+  if (localStorageFullAction.match(action)) {
+    return {
+      ...state,
+      localStorageFull: true,
     };
   }
 
