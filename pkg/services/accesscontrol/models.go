@@ -27,6 +27,34 @@ type Role struct {
 	Created time.Time `json:"created"`
 }
 
+func (r Role) Global() bool {
+	return r.OrgID == GlobalOrgID
+}
+
+func (r Role) IsFixed() bool {
+	return strings.HasPrefix(r.Name, FixedRolePrefix)
+}
+
+func (r Role) GetDisplayName() string {
+	if r.IsFixed() && r.DisplayName == "" {
+		r.DisplayName = fallbackDisplayName(r.Name)
+	}
+	return r.DisplayName
+}
+
+func (r Role) MarshalJSON() ([]byte, error) {
+	type Alias Role
+
+	r.DisplayName = r.GetDisplayName()
+	return json.Marshal(&struct {
+		Alias
+		Global bool `json:"global" xorm:"-"`
+	}{
+		Alias:  (Alias)(r),
+		Global: r.Global(),
+	})
+}
+
 type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
@@ -59,39 +87,20 @@ func (r RoleDTO) Global() bool {
 	return r.OrgID == GlobalOrgID
 }
 
-func (r Role) Global() bool {
-	return r.OrgID == GlobalOrgID
-}
-
 func (r RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
-func (r Role) IsFixed() bool {
-	return strings.HasPrefix(r.Name, FixedRolePrefix)
-}
-
-func (r RoleDTO) GetFallbackDisplayName() string {
-	return fallbackDisplayName(r.Name)
-}
-
-func (r Role) GetFallbackDisplayName() string {
-	return fallbackDisplayName(r.Name)
-}
-
-// heuristic for fallback display name
-func fallbackDisplayName(rName string) string {
-	// removing prefix for fixed roles
-	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
+func (r RoleDTO) GetDisplayName() string {
+	if r.IsFixed() && r.DisplayName == "" {
+		r.DisplayName = fallbackDisplayName(r.Name)
+	}
+	return r.DisplayName
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = r.GetFallbackDisplayName()
-	}
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -101,19 +110,15 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (r Role) MarshalJSON() ([]byte, error) {
-	type Alias Role
-
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = r.GetFallbackDisplayName()
-	}
-	return json.Marshal(&struct {
-		Alias
-		Global bool `json:"global" xorm:"-"`
-	}{
-		Alias:  (Alias)(r),
-		Global: r.Global(),
-	})
+// fallbackDisplayName provides a fallback name for role
+// that can be displayed in the ui for better readability
+// example: currently this would give:
+// fixed:datasources:name -> datasources name
+// datasources:admin      -> datasources admin
+func fallbackDisplayName(rName string) string {
+	// removing prefix for fixed roles
+	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
+	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
 // Permission is the model for access control permissions.
