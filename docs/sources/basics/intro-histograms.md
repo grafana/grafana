@@ -8,8 +8,8 @@ weight = 700
 
 # Introduction to histograms and heatmaps
 
-A histogram is a graphical representation of the distribution of numerical data. It groups values into _buckets_
-(sometimes also called _bins_) and then counts how many values fall into each bucket.
+A histogram is a graphical representation of the distribution of numerical data. It groups values into buckets
+(sometimes also called bins) and then counts how many values fall into each bucket.
 
 Instead of graphing the actual values, histograms graph the buckets. Each bar represents a bucket,
 and the bar height represents the frequency (such as count) of values that fell into that bucket's interval.
