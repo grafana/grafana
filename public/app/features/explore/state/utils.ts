@@ -1,4 +1,5 @@
 import {
+  AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
   ExploreUrlState,
@@ -6,7 +7,6 @@ import {
   HistoryItem,
   LoadingState,
   PanelData,
-  AbsoluteTimeRange,
 } from '@grafana/data';
 
 import { ExploreItemState } from 'app/types/explore';
@@ -50,6 +50,8 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsResult: null,
   eventBridge: (null as unknown) as EventBusExtended,
   cache: [],
+  logsVolumeDataProvider: undefined,
+  logsVolumeData: undefined,
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({

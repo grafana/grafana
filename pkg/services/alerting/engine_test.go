@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/require"
 )
 
 type FakeEvalHandler struct {
@@ -41,38 +40,10 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 	return nil
 }
 
-type usageStatsMock struct {
-	t            *testing.T
-	metricsFuncs []usagestats.MetricsFunc
-}
-
-func (usm *usageStatsMock) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
-	usm.metricsFuncs = append(usm.metricsFuncs, fn)
-}
-
-func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.Report, error) {
-	all := make(map[string]interface{})
-	for _, fn := range usm.metricsFuncs {
-		fnMetrics, err := fn()
-		require.NoError(usm.t, err)
-
-		for name, value := range fnMetrics {
-			all[name] = value
-		}
-	}
-	return usagestats.Report{Metrics: all}, nil
-}
-
-func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
-	return true
-}
-
-func (usm *usageStatsMock) RegisterSendReportCallback(_ usagestats.SendReportCallbackFunc) {}
-
 func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
 		bus := bus.New()
-		usMock := &usageStatsMock{t: t}
+		usMock := &usagestats.UsageStatsMock{T: t}
 		engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, setting.NewCfg())
 		setting.AlertingEvaluationTimeout = 30 * time.Second
 		setting.AlertingNotificationTimeout = 30 * time.Second

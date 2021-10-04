@@ -386,13 +386,13 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
 				starredDash := insertTestDashboard(t, sqlStore, "starred dash", 1, 0, false)
-				err := StarDashboard(&models.StarDashboardCommand{
+				err := sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
 				So(err, ShouldBeNil)
 
-				err = StarDashboard(&models.StarDashboardCommand{
+				err = sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})
@@ -595,7 +595,7 @@ func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAd
 	require.NoError(t, err)
 
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
-	err = GetUserOrgList(&q1)
+	err = GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 

@@ -101,7 +101,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
 
     ${theme.breakpoints.up('md')} {
-      display: block;
+      display: flex;
+      flex-direction: inherit;
       margin-bottom: ${theme.spacing(2)};
     }
 

@@ -1,5 +1,5 @@
 import { from, merge, Observable, of, throwError } from 'rxjs';
-import { map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
   DataQueryRequest,
@@ -7,6 +7,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
+  isValidGoDuration,
   LoadingState,
 } from '@grafana/data';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
@@ -35,6 +36,9 @@ export interface TempoJsonData extends DataSourceJsonData {
   serviceMap?: {
     datasourceUid?: string;
   };
+  search?: {
+    hide?: boolean;
+  };
 }
 
 export type TempoQuery = {
@@ -55,12 +59,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   serviceMap?: {
     datasourceUid?: string;
   };
+  search?: {
+    hide?: boolean;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
+    this.search = instanceSettings.jsonData.search;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -102,16 +110,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (targets.nativeSearch?.length) {
-      const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
-      subQueries.push(
-        this._request('/api/search', searchQuery).pipe(
-          map((response) => {
-            return {
-              data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
-            };
-          })
-        )
-      );
+      try {
+        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+        subQueries.push(
+          this._request('/api/search', searchQuery).pipe(
+            map((response) => {
+              return {
+                data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
+        );
+      } catch (error) {
+        return of({ error: { message: error.message }, data: [] });
+      }
     }
 
     if (targets.upload?.length) {
@@ -197,6 +212,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
       // Ensure there is a valid key value pair with accurate types
       if (
+        token &&
+        lookupToken &&
         typeof token !== 'string' &&
         token.type === 'key' &&
         typeof token.content === 'string' &&
@@ -211,12 +228,37 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
     // Remove empty properties
     tempoQuery = pickBy(tempoQuery, identity);
+
     if (query.serviceName) {
       tagsQuery.push({ ['service.name']: query.serviceName });
     }
     if (query.spanName) {
       tagsQuery.push({ ['name']: query.spanName });
     }
+
+    // Set default limit
+    if (!tempoQuery.limit) {
+      tempoQuery.limit = 100;
+    }
+
+    // Validate query inputs and remove spaces if valid
+    if (tempoQuery.minDuration) {
+      if (!isValidGoDuration(tempoQuery.minDuration)) {
+        throw new Error('Please enter a valid min duration.');
+      }
+      tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
+    }
+    if (tempoQuery.maxDuration) {
+      if (!isValidGoDuration(tempoQuery.maxDuration)) {
+        throw new Error('Please enter a valid max duration.');
+      }
+      tempoQuery.maxDuration = tempoQuery.maxDuration.replace(/\s/g, '');
+    }
+
+    if (!Number.isInteger(tempoQuery.limit) || tempoQuery.limit <= 0) {
+      throw new Error('Please enter a valid limit.');
+    }
+
     const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
     return { ...tagsQueryObject, ...tempoQuery };
   }

@@ -1,11 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
-import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -14,41 +12,24 @@ import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
-import { useObservable } from 'react-use';
-import { PanelOptionsReloadEvent } from 'app/types/events';
-import { map } from 'rxjs';
+import { OptionPaneRenderProps } from './types';
 
-interface Props {
-  plugin: PanelPlugin;
-  panel: PanelModel;
-  dashboard: DashboardModel;
-  data?: PanelData;
-  onFieldConfigsChange: (config: FieldConfigSource) => void;
-  onPanelOptionsChanged: (options: any) => void;
-  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
-}
-
-export const OptionsPaneOptions: React.FC<Props> = (props) => {
+export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {
   const { plugin, dashboard, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
 
-  const v = useObservable<number>(dashboard.events.getStream(PanelOptionsReloadEvent).pipe(map((v) => Date.now())));
-
   const [panelFrameOptions, vizOptions, justOverrides, libraryPanelOptions] = useMemo(
-    () => {
-      console.log('RELOAD options: ', v);
-      return [
-        getPanelFrameCategory(props),
-        getVizualizationOptions(props),
-        getFieldOverrideCategories(props),
-        getLibraryPanelOptionsCategory(props),
-      ];
-    },
+    () => [
+      getPanelFrameCategory(props),
+      getVizualizationOptions(props),
+      getFieldOverrideCategories(props),
+      getLibraryPanelOptionsCategory(props),
+    ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data, v]
+    [panel.configRev, props.data, props.instanceState]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

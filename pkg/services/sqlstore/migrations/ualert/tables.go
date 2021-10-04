@@ -204,6 +204,33 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, &migrator.Index{
 		Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex,
 	}))
+
+	mg.AddMigration("add dashboard_uid column to alert_rule", migrator.NewAddColumnMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Column{
+			Name:     "dashboard_uid",
+			Type:     migrator.DB_NVarchar,
+			Length:   40,
+			Nullable: true,
+		},
+	))
+
+	mg.AddMigration("add panel_id column to alert_rule", migrator.NewAddColumnMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Column{
+			Name:     "panel_id",
+			Type:     migrator.DB_BigInt,
+			Nullable: true,
+		},
+	))
+
+	mg.AddMigration("add index in alert_rule on org_id, dashboard_uid and panel_id columns", migrator.NewAddIndexMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Index{
+			Name: "IDX_alert_rule_org_id_dashboard_uid_panel_id",
+			Cols: []string{"org_id", "dashboard_uid", "panel_id"},
+		},
+	))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
