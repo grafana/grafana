@@ -249,9 +249,9 @@ const dataQueriesToGrafanaQueries = async (
       ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
 
-    if (panelDataSourceRef) {
+    if (dsRef) {
       // expressions
-      if (panelDataSourceRef.uid === ExpressionDatasourceUID) {
+      if (dsRef.uid === ExpressionDatasourceUID) {
         const newQuery: AlertQuery = {
           refId: interpolatedTarget.refId,
           queryType: '',

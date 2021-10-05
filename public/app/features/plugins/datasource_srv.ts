@@ -72,6 +72,7 @@ export class DatasourceSrv implements DataSourceService {
   getInstanceSettings(ref: string | null | undefined | DatasourceRef): DataSourceInstanceSettings | undefined {
     const isstring = typeof ref === 'string';
     let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
+
     if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
       if (!isstring && ref) {
         const type = (ref as any)?.type as string;

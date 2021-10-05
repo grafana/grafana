@@ -139,8 +139,12 @@ const dashboard = {
     folderTitle: 'super folder',
   },
 } as DashboardModel;
+
 const panel = ({
-  datasource: dataSources.prometheus.uid,
+  datasource: {
+    type: 'prometheus',
+    uid: dataSources.prometheus.uid,
+  },
   title: 'mypanel',
   editSourceId: 34,
   targets: [
@@ -161,7 +165,7 @@ describe('PanelAlertTabContent', () => {
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
-    dsService.datasources[dataSources.prometheus.name] = new PrometheusDatasource(
+    dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
       dataSources.prometheus
     ) as DataSourceApi<any, any>;
     setDataSourceSrv(dsService);
@@ -173,15 +177,19 @@ describe('PanelAlertTabContent', () => {
       maxDataPoints: 100,
       interval: '10s',
     } as any) as PanelModel);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults.queries[0].model).toEqual({
       expr: 'sum(some_metric [5m])) by (app)',
       refId: 'A',
-      datasource: 'Prometheus',
+      datasource: {
+        uid: 'mock-ds-2',
+      },
       interval: '',
       intervalMs: 300000,
       maxDataPoints: 100,
@@ -189,21 +197,25 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account datasource minInterval', async () => {
-    ((getDatasourceSrv() as any) as MockDataSourceSrv).datasources[dataSources.prometheus.name].interval = '7m';
+    ((getDatasourceSrv() as any) as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
     await renderAlertTabContent(dashboard, ({
       ...panel,
       maxDataPoints: 100,
     } as any) as PanelModel);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults.queries[0].model).toEqual({
       expr: 'sum(some_metric [7m])) by (app)',
       refId: 'A',
-      datasource: 'Prometheus',
+      datasource: {
+        uid: 'mock-ds-2',
+      },
       interval: '',
       intervalMs: 420000,
       maxDataPoints: 100,
@@ -220,10 +232,12 @@ describe('PanelAlertTabContent', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toHaveTextContent(/dashboardrule1/);
     expect(rows[0]).not.toHaveTextContent(/dashboardrule2/);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults).toEqual({
       type: 'grafana',
@@ -237,7 +251,9 @@ describe('PanelAlertTabContent', () => {
           model: {
             expr: 'sum(some_metric [15s])) by (app)',
             refId: 'A',
-            datasource: 'Prometheus',
+            datasource: {
+              uid: 'mock-ds-2',
+            },
             interval: '',
             intervalMs: 15000,
           },
@@ -250,7 +266,10 @@ describe('PanelAlertTabContent', () => {
             refId: 'B',
             hide: false,
             type: 'classic_conditions',
-            datasource: '__expr__',
+            datasource: {
+              type: 'grafana-expression',
+              uid: '-100',
+            },
             conditions: [
               {
                 type: 'query',
