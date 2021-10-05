@@ -144,13 +144,17 @@ const MonacoQueryField = (props: Props) => {
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
 
-          // handle: shift + enter
-          // FIXME: maybe move this functionality into CodeEditor?
-          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
+          const keyboardShortcutSubmit = () => {
             const text = editor.getValue();
             props.onChange(text);
             props.onRunQuery();
-          });
+          };
+
+          // handle: shift + enter
+          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, keyboardShortcutSubmit);
+
+          // handle: ctrl + enter
+          editor.addCommand(monaco.KeyMod.WinCtrl | monaco.KeyCode.Enter, keyboardShortcutSubmit);
         }}
       />
     </div>
