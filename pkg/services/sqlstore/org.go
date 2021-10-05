@@ -31,9 +31,10 @@ func init() {
 	bus.AddHandler("sql", DeleteOrg)
 }
 
-// AppendOrganizationDeleteQueries can be used to append aueries that should be
-// called when an organization gets deleted. The auery can have placeholder
+// AppendOrganizationDeleteQueries can be used to append queries that should be
+// executed when an organization gets deleted. The query can have a placeholder
 // which will be populated with the organization ID.
+// i.e. "DELETE FROM x WHERE org_id = ?"
 func AppendOrganizationDeleteQueries(queries []string) {
 	organizationDeleteQueriesLock.Lock()
 	defer organizationDeleteQueriesLock.Unlock()
