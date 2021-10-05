@@ -217,7 +217,7 @@ export const TimePickerCalendar = memo<Props>((props) => {
         <section
           className={styles.container}
           onClick={stopPropagation}
-          aria-label={selectors.components.TimePicker.calendar}
+          aria-label={selectors.components.TimePicker.calendar.label}
           ref={ref}
           {...overlayProps}
         >
@@ -232,7 +232,7 @@ export const TimePickerCalendar = memo<Props>((props) => {
     <Portal>
       <FocusScope contain autoFocus restoreFocus>
         <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps}>
-          <div className={styles.content} aria-label={selectors.components.TimePicker.calendar}>
+          <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
             <Header {...props} />
             <Body {...props} />
             <Footer {...props} />
@@ -253,7 +253,12 @@ const Header = memo<Props>(({ onClose }) => {
   return (
     <div className={styles.container}>
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <Button icon="times" variant="secondary" onClick={onClose} />
+      <Button
+        aria-label={selectors.components.TimePicker.calendar.closeButton}
+        icon="times"
+        variant="secondary"
+        onClick={onClose}
+      />
     </div>
   );
 });

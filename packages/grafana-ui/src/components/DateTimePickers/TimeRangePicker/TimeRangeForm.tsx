@@ -102,7 +102,14 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     </div>
   );
 
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const icon = (
+    <Button
+      aria-label={selectors.components.TimePicker.calendar.openButton}
+      icon="calendar-alt"
+      variant="secondary"
+      onClick={onOpen}
+    />
+  );
 
   return (
     <ClickOutsideWrapper includeButtonPress={false} onClick={() => setOpen(false)}>
