@@ -192,6 +192,22 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+
+		// Pre-build/validate channel rules for all organizations on start.
+		// This can be unreasonable to have in production scenario with many
+		// organizations.
+		query := &models.SearchOrgsQuery{}
+		err := sqlstore.SearchOrgs(query)
+		if err != nil {
+			return nil, fmt.Errorf("can't get org list: %w", err)
+		}
+		for _, org := range query.Result {
+			_, _, err := channelRuleGetter.Get(org.Id, "")
+			if err != nil {
+				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.Id, err)
+			}
+		}
+
 		g.Pipeline, err = pipeline.New(channelRuleGetter)
 		if err != nil {
 			return nil, err

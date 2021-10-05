@@ -245,7 +245,7 @@ func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converte
 	switch config.Type {
 	case ConverterTypeJsonAuto:
 		if config.AutoJsonConverterConfig == nil {
-			return nil, missingConfiguration
+			config.AutoJsonConverterConfig = &AutoJsonConverterConfig{}
 		}
 		return NewAutoJsonConverter(*config.AutoJsonConverterConfig), nil
 	case ConverterTypeJsonExact:
@@ -255,7 +255,7 @@ func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converte
 		return NewExactJsonConverter(*config.ExactJsonConverterConfig), nil
 	case ConverterTypeJsonFrame:
 		if config.JsonFrameConverterConfig == nil {
-			return nil, missingConfiguration
+			config.JsonFrameConverterConfig = &JsonFrameConverterConfig{}
 		}
 		return NewJsonFrameConverter(*config.JsonFrameConverterConfig), nil
 	case ConverterTypeInfluxAuto:
@@ -458,14 +458,14 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 
 		rule.Converter, err = f.extractConverter(ruleConfig.Settings.Converter)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error building converter for %s: %w", rule.Pattern, err)
 		}
 
 		var processors []FrameProcessor
 		for _, procConfig := range ruleConfig.Settings.FrameProcessors {
 			proc, err := f.extractFrameProcessor(procConfig)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error building processor for %s: %w", rule.Pattern, err)
 			}
 			processors = append(processors, proc)
 		}
@@ -475,7 +475,7 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 		for _, outConfig := range ruleConfig.Settings.DataOutputters {
 			out, err := f.extractDataOutputter(outConfig)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error building data outputter for %s: %w", rule.Pattern, err)
 			}
 			dataOutputters = append(dataOutputters, out)
 		}
@@ -485,7 +485,7 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 		for _, outConfig := range ruleConfig.Settings.FrameOutputters {
 			out, err := f.extractFrameOutputter(outConfig, remoteWriteBackends)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error building frame outputter for %s: %w", rule.Pattern, err)
 			}
 			outputters = append(outputters, out)
 		}
@@ -495,7 +495,7 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 		for _, subConfig := range ruleConfig.Settings.Subscribers {
 			sub, err := f.extractSubscriber(subConfig)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error building subscriber for %s: %w", rule.Pattern, err)
 			}
 			subscribers = append(subscribers, sub)
 		}
