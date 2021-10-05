@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const webpack = require('webpack');
-
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 class CopyUniconsPlugin {
@@ -11,7 +10,13 @@ class CopyUniconsPlugin {
 
       if (!fs.pathExistsSync(destDir)) {
         let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/unicons/svg/line');
-        fs.copySync(srcDir, destDir);
+        const uniconsPath = path.resolve(__dirname, '../../packages/grafana-ui/src/types/unicons.ts');
+        // Tremendously hacky, please forgive me :(
+        const unicons = fs.readFileSync(uniconsPath, 'utf-8').replace(/[', ]/g, '').split('\n').slice(1, -2);
+        fs.mkdirSync(destDir);
+        unicons.forEach((iconName) => {
+          fs.copyFileSync(path.resolve(srcDir, iconName + '.svg'), path.resolve(destDir, iconName + '.svg'));
+        });
       }
     });
   }
@@ -116,15 +121,15 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
-      // for pre-caching SVGs as part of the JS bundles
-      {
-        test: /\.svg$/,
-        use: 'raw-loader',
-      },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
-        loader: 'file-loader',
-        options: { name: 'static/img/[name].[hash:8].[ext]' },
+        type: 'asset/resource',
+        generator: { filename: 'static/img/[name].[hash:8].[ext]' },
+      },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /(unicons|mono|custom)[\\/].*\.svg$/,
+        type: 'asset/source',
       },
       {
         test: /\.worker\.js$/,
@@ -145,12 +150,6 @@ module.exports = {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
-        unicons: {
-          test: /[\\/]node_modules[\\/]@iconscout[\\/]react-unicons[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
         moment: {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',

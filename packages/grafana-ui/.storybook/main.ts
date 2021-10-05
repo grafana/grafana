@@ -110,7 +110,7 @@ module.exports = {
       // for pre-caching SVGs as part of the JS bundles
       {
         test: /\.svg$/,
-        use: 'raw-loader',
+        type: 'asset/source',
       },
       {
         test: require.resolve('jquery'),

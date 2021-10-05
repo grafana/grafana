@@ -3,11 +3,9 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import { IconName, IconType, IconSize, alwaysMonoIcons } from '../../types/icon';
 import SVG from 'react-inlinesvg';
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
-
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -36,7 +34,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
 function getIconSubDir(name: IconName, type: string): string {
   return name?.startsWith('gf-')
     ? 'custom'
-    : alwaysMonoIcons.includes(name)
+    : alwaysMonoIcons.includes(name as typeof alwaysMonoIcons[number])
     ? 'mono'
     : type === 'default'
     ? 'unicons'
