@@ -49,6 +49,7 @@ function setup(queries: DataQuery[]) {
     right: undefined,
     richHistory: [],
     autoLoadLogsVolume: false,
+    localStorageFull: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 
