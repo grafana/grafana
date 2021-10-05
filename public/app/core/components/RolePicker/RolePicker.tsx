@@ -17,12 +17,19 @@ export interface Props {
 
 export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) => {
   const [isOpen, setOpen] = useState(false);
-  const [roleOptions, setRoleOptions] = useState([]);
+  const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     async function fetchOptions() {
-      const options = await getRolesOptions();
+      let options = await getRolesOptions();
+      options = options.filter((option) => {
+        return (
+          !option.label?.startsWith('grafana:') &&
+          !option.label?.startsWith('fixed:') &&
+          !option.label?.startsWith('managed:')
+        );
+      });
       setRoleOptions(options);
     }
     fetchOptions();
@@ -63,7 +70,7 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
   );
 };
 
-const getRolesOptions = async (query?: string) => {
+const getRolesOptions = async (query?: string): Promise<Array<SelectableValue<string>>> => {
   const roles = await getBackendSrv().get('/api/access-control/roles');
   if (!roles || !roles.length) {
     return [];
