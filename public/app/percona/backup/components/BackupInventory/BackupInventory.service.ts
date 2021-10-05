@@ -1,6 +1,7 @@
 import { DBServiceList, ServiceListPayload } from 'app/percona/inventory/Inventory.types';
 import { api } from 'app/percona/shared/helpers/api';
 import { CancelToken } from 'axios';
+import { BackupLogResponse, BackupLogs } from '../../Backup.types';
 import { Backup, BackupResponse } from './BackupInventory.types';
 
 const BASE_URL = '/v1/management/backup';
@@ -70,6 +71,23 @@ export const BackupInventoryService = {
   },
   async delete(artifactId: string, removeFiles: boolean) {
     return api.post(`${BASE_URL}/Artifacts/Delete`, { artifact_id: artifactId, remove_files: removeFiles });
+  },
+  async getLogs(artifactId: string, offset: number, limit: number, token?: CancelToken): Promise<BackupLogs> {
+    const { logs = [], end } = await api.post<BackupLogResponse, any>(
+      `${BASE_URL}/Backups/GetLogs`,
+      {
+        artifact_id: artifactId,
+        offset,
+        limit,
+      },
+      false,
+      token
+    );
+
+    return {
+      logs: logs.map(({ chunk_id = 0, data, time }) => ({ id: chunk_id, data, time })),
+      end,
+    };
   },
   async listCompatibleServices(artifactId: string): Promise<DBServiceList> {
     const { mysql = [], mongodb = [] } = await api.post<ServiceListPayload, any>(
