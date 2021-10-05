@@ -172,6 +172,5 @@ const FixedRolePrefix = "fixed:"
 // LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
 var LicensingPageReaderAccess = EvalAny(
 	EvalPermission(ActionLicensingRead),
-	EvalPermission(ActionLicensingReportsRead),
 	EvalPermission(ActionServerStatsRead),
 )
