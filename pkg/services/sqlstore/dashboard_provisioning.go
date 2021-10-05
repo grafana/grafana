@@ -9,8 +9,8 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", UnprovisionDashboard)
-	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
+	bus.AddHandlerCtx("sql", UnprovisionDashboard)
+	bus.AddHandlerCtx("sql", DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {
@@ -80,14 +80,14 @@ func (ss *SQLStore) GetProvisionedDashboardData(name string) ([]*models.Dashboar
 
 // UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
 // The dashboard will still have `created_by = -1` to see it was not created by any particular user.
-func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
+func UnprovisionDashboard(ctx context.Context, cmd *models.UnprovisionDashboardCommand) error {
 	if _, err := x.Where("dashboard_id = ?", cmd.Id).Delete(&models.DashboardProvisioning{}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+func DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	var result []*models.DashboardProvisioning
 
 	convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
@@ -101,7 +101,7 @@ func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDa
 	}
 
 	for _, deleteDashCommand := range result {
-		err := DeleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		err := DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
 		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 			return err
 		}

@@ -2,8 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -51,6 +54,13 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, alertResponse)
 }
 
+func getPanelIDFromRequest(r *http.Request) (int64, error) {
+	if s := strings.TrimSpace(r.URL.Query().Get("panel_id")); s != "" {
+		return strconv.ParseInt(s, 10, 64)
+	}
+	return 0, nil
+}
+
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -71,9 +81,20 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
 	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
 		OrgID:         c.SignedInUser.OrgId,
 		NamespaceUIDs: namespaceUIDs,
+		DashboardUID:  dashboardUID,
+		PanelID:       panelID,
 	}
 	if err := srv.store.GetOrgRuleGroups(&ruleGroupQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
@@ -83,7 +104,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID: c.SignedInUser.OrgId,
+		OrgID:        c.SignedInUser.OrgId,
+		DashboardUID: dashboardUID,
+		PanelID:      panelID,
 	}
 	if err := srv.store.GetOrgAlertRules(&alertRuleQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"

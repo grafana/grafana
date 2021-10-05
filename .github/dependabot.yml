@@ -23,6 +23,7 @@ updates:
       - dependency-name: "slate-plain-serializer"
       - dependency-name: "systemjs"
       - dependency-name: "ts-loader" # we should remove ts-loader and use babel-loader instead
+      - dependency-name: "ora" # we should bump this once we move to esm modules
     reviewers:
       - "grafana/frontend-ops"
     versioning-strategy: "increase-if-necessary"

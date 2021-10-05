@@ -10,9 +10,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 )
 
 const (
@@ -56,6 +59,24 @@ const (
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
 )
+
+func init() {
+	silence.ValidateMatcher = func(m *pb.Matcher) error {
+		switch m.Type {
+		case pb.Matcher_EQUAL, pb.Matcher_NOT_EQUAL:
+			if !model.LabelValue(m.Pattern).IsValid() {
+				return fmt.Errorf("invalid label value %q", m.Pattern)
+			}
+		case pb.Matcher_REGEXP, pb.Matcher_NOT_REGEXP:
+			if _, err := regexp.Compile(m.Pattern); err != nil {
+				return fmt.Errorf("invalid regular expression %q: %s", m.Pattern, err)
+			}
+		default:
+			return fmt.Errorf("unknown matcher type %q", m.Type)
+		}
+		return nil
+	}
+}
 
 type ClusterPeer interface {
 	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
@@ -392,7 +413,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, inhibitionStage, stage}
 	}
 
-	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
@@ -638,22 +659,14 @@ func validateLabelSet(ls model.LabelSet) error {
 	return nil
 }
 
-// isValidLabelName is ln.IsValid() while additionally allowing spaces.
-// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
-// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+// isValidLabelName is ln.IsValid() without restrictions other than it can not be empty.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$.
 func isValidLabelName(ln model.LabelName) bool {
 	if len(ln) == 0 {
 		return false
 	}
-	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') ||
-			(b >= 'A' && b <= 'Z') ||
-			b == '_' ||
-			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
-			return false
-		}
-	}
-	return true
+
+	return utf8.ValidString(string(ln))
 }
 
 // AlertValidationError is the error capturing the validation errors

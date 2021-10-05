@@ -13,9 +13,11 @@ export function StateView(props: PanelProps<DebugPanelOptions>) {
   };
 
   return (
-    <Field label="State name">
-      <Input value={context.instanceState?.name ?? ''} onChange={onChangeName} />
-    </Field>
+    <>
+      <Field label="State name">
+        <Input value={context.instanceState?.name ?? ''} onChange={onChangeName} />
+      </Field>
+    </>
   );
 }
 
