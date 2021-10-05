@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -32,9 +33,9 @@ type Manager struct {
 	instanceStore store.InstanceStore
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics),
+		cache:         newCache(logger, metrics, externalURL),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,

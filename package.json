@@ -237,7 +237,7 @@
     "@reduxjs/toolkit": "1.6.1",
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
-    "@sentry/utils": "5.24.2",
+    "@sentry/utils": "6.13.2",
     "@types/ol": "^6.5.1",
     "@visx/event": "2.1.0",
     "@visx/gradient": "2.1.0",

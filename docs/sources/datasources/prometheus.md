@@ -117,13 +117,13 @@ types of template variables.
 Variable of the type _Query_ allows you to query Prometheus for a list of metrics, labels or label values. The Prometheus data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                          | Description                                                             |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `label_names()`               | Returns a list of label names.                                          |
-| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         |
-| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. |
-| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        |
-| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              |
+| Name                          | Description                                                             | Used API endpoints                |
+| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
+| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                    |
+| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values      |
+| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series                    |
+| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values |
+| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                     |
 
 For details of what _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
