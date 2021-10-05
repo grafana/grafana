@@ -65,10 +65,6 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
-func (f *FakeOrgStore) DeleteOrgEntries(_ context.Context, _ int64) error {
-	return nil
-}
-
 type FakeKVStore struct {
 	mtx   sync.Mutex
 	store map[int64]map[string]map[string]string

@@ -159,6 +159,19 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
+	deleteQueries := []string{
+		"DELETE FROM ngalert_configuration WHERE org_id = ?",
+		"DELETE FROM alert_configuration WHERE org_id = ?",
+		"DELETE FROM alert_instance WHERE rule_org_id = ?",
+		"DELETE FROM alert_notification WHERE org_id = ?",
+		"DELETE FROM alert_notification_state WHERE org_id = ?",
+		"DELETE FROM alert_rule WHERE org_id = ?",
+		"DELETE FROM alert_rule_tag WHERE EXISTS (SELECT 1 FROM alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+		"DELETE FROM alert_rule_version WHERE rule_org_id = ?",
+	}
+
+	sqlstore.AppendOrganizationDeleteQueries(deleteQueries)
+
 	return nil
 }
 

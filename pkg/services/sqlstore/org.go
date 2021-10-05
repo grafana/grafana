@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -15,6 +16,11 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
+var (
+	organizationDeleteQueries     = []string{}
+	organizationDeleteQueriesLock sync.Mutex
+)
+
 func init() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
@@ -23,6 +29,15 @@ func init() {
 	bus.AddHandler("sql", GetOrgByName)
 	bus.AddHandler("sql", SearchOrgs)
 	bus.AddHandler("sql", DeleteOrg)
+}
+
+// AppendOrganizationDeleteQueries can be used to append aueries that should be
+// called when an organization gets deleted. The auery can have placeholder
+// which will be populated with the organization ID.
+func AppendOrganizationDeleteQueries(queries []string) {
+	organizationDeleteQueriesLock.Lock()
+	defer organizationDeleteQueriesLock.Unlock()
+	organizationDeleteQueries = append(organizationDeleteQueries, queries...)
 }
 
 func SearchOrgs(query *models.SearchOrgsQuery) error {
@@ -242,6 +257,7 @@ func DeleteOrg(cmd *models.DeleteOrgCommand) error {
 			"DELETE FROM org WHERE id = ?",
 			"DELETE FROM temp_user WHERE org_id = ?",
 		}
+		deletes = append(deletes, organizationDeleteQueries...)
 
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.Id)
