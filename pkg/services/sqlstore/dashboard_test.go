@@ -595,7 +595,7 @@ func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAd
 	require.NoError(t, err)
 
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
-	err = GetUserOrgList(&q1)
+	err = GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 

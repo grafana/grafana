@@ -97,6 +97,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["samlEnabled"] = hs.samlEnabled()
+	viewData.Settings["samlName"] = hs.samlName()
 
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
@@ -344,6 +345,10 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 
 func (hs *HTTPServer) samlEnabled() bool {
 	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.HasValidLicense()
+}
+
+func (hs *HTTPServer) samlName() string {
+	return hs.SettingsProvider.KeyValue("auth.saml", "name").MustString("SAML")
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {

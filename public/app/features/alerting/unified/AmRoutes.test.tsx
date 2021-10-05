@@ -3,17 +3,23 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { AlertManagerCortexConfig, Route } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+  Route,
+} from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 import AmRoutes from './AmRoutes';
-import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
+import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from '@grafana/ui';
+import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
@@ -24,11 +30,17 @@ const mocks = {
   api: {
     fetchAlertManagerConfig: typeAsJestMock(fetchAlertManagerConfig),
     updateAlertManagerConfig: typeAsJestMock(updateAlertManagerConfig),
+    fetchStatus: typeAsJestMock(fetchStatus),
   },
 };
 
-const renderAmRoutes = () => {
+const renderAmRoutes = (alertManagerSourceName?: string) => {
   const store = configureStore();
+  locationService.push(location);
+
+  locationService.push(
+    '/alerting/routes' + (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
+  );
 
   return render(
     <Provider store={store}>
@@ -44,6 +56,13 @@ const dataSources = {
     name: 'Alertmanager',
     type: DataSourceType.Alertmanager,
   }),
+  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
+    name: 'PromManager',
+    type: DataSourceType.Alertmanager,
+    jsonData: {
+      implementation: AlertManagerImplementation.prometheus,
+    },
+  }),
 };
 
 const ui = {
@@ -56,6 +75,10 @@ const ui = {
 
   editButton: byRole('button', { name: 'Edit' }),
   saveButton: byRole('button', { name: 'Save' }),
+
+  editRouteButton: byTestId('edit-route'),
+  deleteRouteButton: byTestId('delete-route'),
+  newPolicyButton: byRole('button', { name: /New policy/ }),
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
@@ -121,6 +144,11 @@ describe('AmRoutes', () => {
       receiver: 'another-receiver',
     },
   ];
+
+  const simpleRoute: Route = {
+    receiver: 'simple-receiver',
+    matchers: ['hello=world', 'foo!=bar'],
+  };
 
   const rootRoute: Route = {
     receiver: 'default-receiver',
@@ -313,7 +341,7 @@ describe('AmRoutes', () => {
     });
   });
 
-  it('Show error message if loading Alermanager config fails', async () => {
+  it('Show error message if loading Alertmanager config fails', async () => {
     mocks.api.fetchAlertManagerConfig.mockRejectedValue({
       status: 500,
       data: {
@@ -325,6 +353,160 @@ describe('AmRoutes', () => {
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
     expect(ui.rootReceiver.query()).not.toBeInTheDocument();
     expect(ui.editButton.query()).not.toBeInTheDocument();
+  });
+
+  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [simpleRoute],
+          group_interval: '4m',
+          group_wait: '1m',
+          repeat_interval: '5h',
+        },
+        templates: [],
+      },
+      template_files: {},
+    };
+
+    const currentConfig = { current: defaultConfig };
+    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
+      currentConfig.current = newConfig;
+      return Promise.resolve();
+    });
+
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve(currentConfig.current);
+    });
+
+    await renderAmRoutes(GRAFANA_RULES_SOURCE_NAME);
+    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
+    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+
+    // Toggle a save to test new object_matchers
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    userEvent.click(ui.editButton.get(rootRouteContainer));
+    userEvent.click(ui.saveButton.get(rootRouteContainer));
+
+    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          group_by: ['alertname'],
+          group_interval: '4m',
+          group_wait: '1m',
+          receiver: 'default',
+          repeat_interval: '5h',
+          routes: [
+            {
+              continue: false,
+              group_by: [],
+              object_matchers: [
+                ['hello', '=', 'world'],
+                ['foo', '!=', 'bar'],
+              ],
+              receiver: 'simple-receiver',
+              routes: [],
+            },
+          ],
+        },
+        templates: [],
+      },
+      template_files: {},
+    });
+  });
+
+  it('Keeps matchers for non-grafana alertmanager sources', async () => {
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [simpleRoute],
+          group_interval: '4m',
+          group_wait: '1m',
+          repeat_interval: '5h',
+        },
+        templates: [],
+      },
+      template_files: {},
+    };
+
+    const currentConfig = { current: defaultConfig };
+    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
+      currentConfig.current = newConfig;
+      return Promise.resolve();
+    });
+
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve(currentConfig.current);
+    });
+
+    await renderAmRoutes(dataSources.am.name);
+    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
+    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+
+    // Toggle a save to test new object_matchers
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    userEvent.click(ui.editButton.get(rootRouteContainer));
+    userEvent.click(ui.saveButton.get(rootRouteContainer));
+
+    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(dataSources.am.name, {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          group_by: ['alertname'],
+          group_interval: '4m',
+          group_wait: '1m',
+          matchers: [],
+          receiver: 'default',
+          repeat_interval: '5h',
+          routes: [
+            {
+              continue: false,
+              group_by: [],
+              matchers: ['hello=world', 'foo!=bar'],
+              receiver: 'simple-receiver',
+              routes: [],
+            },
+          ],
+        },
+        templates: [],
+      },
+      template_files: {},
+    });
+  });
+
+  it('Prometheus Alertmanager routes cannot be edited', async () => {
+    mocks.api.fetchStatus.mockResolvedValue({
+      ...someCloudAlertManagerStatus,
+      config: someCloudAlertManagerConfig.alertmanager_config,
+    });
+    await renderAmRoutes(dataSources.promAlertManager.name);
+    const rootRouteContainer = await ui.rootRouteContainer.find();
+    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
+    const rows = await ui.row.findAll();
+    expect(rows).toHaveLength(2);
+    expect(ui.editRouteButton.query()).not.toBeInTheDocument();
+    expect(ui.deleteRouteButton.query()).not.toBeInTheDocument();
+    expect(ui.saveButton.query()).not.toBeInTheDocument();
+
+    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });
 });
 

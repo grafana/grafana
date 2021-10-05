@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -15,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 )
 
@@ -180,6 +183,14 @@ type GetSilencesParams struct {
 	Filter []string `json:"filter"`
 }
 
+// swagger:parameters RouteGetRuleStatuses
+type GetRuleStatusesParams struct {
+	// in: query
+	DashboardUID string
+	// in: query
+	PanelID int64
+}
+
 // swagger:model
 type GettableStatus struct {
 	// cluster
@@ -214,7 +225,7 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 	s.Cluster = amStatus.Cluster
 	s.Config = &PostableApiAlertingConfig{Config: Config{
 		Global:       c.Global,
-		Route:        c.Route,
+		Route:        AsGrafanaRoute(c.Route),
 		InhibitRules: c.InhibitRules,
 		Templates:    c.Templates,
 	}}
@@ -556,7 +567,7 @@ func (c *GettableApiAlertingConfig) validate() error {
 		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
 	}
 
-	for _, receiver := range AllReceivers(c.Route) {
+	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {
 		_, ok := receivers[receiver]
 		if !ok {
 			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
@@ -569,9 +580,122 @@ func (c *GettableApiAlertingConfig) validate() error {
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
 	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
-	Route        *config.Route         `yaml:"route,omitempty" json:"route,omitempty"`
+	Route        *Route                `yaml:"route,omitempty" json:"route,omitempty"`
 	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
 	Templates    []string              `yaml:"templates" json:"templates"`
+}
+
+// A Route is a node that contains definitions of how to handle alerts. This is modified
+// from the upstream alertmanager in that it adds the ObjectMatchers property.
+type Route struct {
+	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+
+	GroupByStr []string          `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	GroupBy    []model.LabelName `yaml:"-" json:"-"`
+	GroupByAll bool              `yaml:"-" json:"-"`
+	// Deprecated. Remove before v1.0 release.
+	Match map[string]string `yaml:"match,omitempty" json:"match,omitempty"`
+	// Deprecated. Remove before v1.0 release.
+	MatchRE           config.MatchRegexps `yaml:"match_re,omitempty" json:"match_re,omitempty"`
+	Matchers          config.Matchers     `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	ObjectMatchers    ObjectMatchers      `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
+	MuteTimeIntervals []string            `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty"`
+	Continue          bool                `yaml:"continue" json:"continue,omitempty"`
+	Routes            []*Route            `yaml:"routes,omitempty" json:"routes,omitempty"`
+
+	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
+	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
+	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface for Route. This is a copy of alertmanager's upstream except it removes validation on the label key.
+func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain Route
+	if err := unmarshal((*plain)(r)); err != nil {
+		return err
+	}
+
+	for _, l := range r.GroupByStr {
+		if l == "..." {
+			r.GroupByAll = true
+		} else {
+			r.GroupBy = append(r.GroupBy, model.LabelName(l))
+		}
+	}
+
+	if len(r.GroupBy) > 0 && r.GroupByAll {
+		return fmt.Errorf("cannot have wildcard group_by (`...`) and other other labels at the same time")
+	}
+
+	groupBy := map[model.LabelName]struct{}{}
+
+	for _, ln := range r.GroupBy {
+		if _, ok := groupBy[ln]; ok {
+			return fmt.Errorf("duplicated label %q in group_by", ln)
+		}
+		groupBy[ln] = struct{}{}
+	}
+
+	if r.GroupInterval != nil && time.Duration(*r.GroupInterval) == time.Duration(0) {
+		return fmt.Errorf("group_interval cannot be zero")
+	}
+	if r.RepeatInterval != nil && time.Duration(*r.RepeatInterval) == time.Duration(0) {
+		return fmt.Errorf("repeat_interval cannot be zero")
+	}
+
+	return nil
+}
+
+// Return an alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
+func (r *Route) AsAMRoute() *config.Route {
+	amRoute := &config.Route{
+		Receiver:          r.Receiver,
+		GroupByStr:        r.GroupByStr,
+		GroupBy:           r.GroupBy,
+		GroupByAll:        r.GroupByAll,
+		Match:             r.Match,
+		MatchRE:           r.MatchRE,
+		Matchers:          append(r.Matchers, r.ObjectMatchers...),
+		MuteTimeIntervals: r.MuteTimeIntervals,
+		Continue:          r.Continue,
+
+		GroupWait:      r.GroupWait,
+		GroupInterval:  r.GroupInterval,
+		RepeatInterval: r.RepeatInterval,
+
+		Routes: make([]*config.Route, 0, len(r.Routes)),
+	}
+	for _, rt := range r.Routes {
+		amRoute.Routes = append(amRoute.Routes, rt.AsAMRoute())
+	}
+
+	return amRoute
+}
+
+// Return a Grafana route from an alertmanager route. The Matchers are converted to ObjectMatchers.
+func AsGrafanaRoute(r *config.Route) *Route {
+	gRoute := &Route{
+		Receiver:          r.Receiver,
+		GroupByStr:        r.GroupByStr,
+		GroupBy:           r.GroupBy,
+		GroupByAll:        r.GroupByAll,
+		Match:             r.Match,
+		MatchRE:           r.MatchRE,
+		ObjectMatchers:    ObjectMatchers(r.Matchers),
+		MuteTimeIntervals: r.MuteTimeIntervals,
+		Continue:          r.Continue,
+
+		GroupWait:      r.GroupWait,
+		GroupInterval:  r.GroupInterval,
+		RepeatInterval: r.RepeatInterval,
+
+		Routes: make([]*Route, 0, len(r.Routes)),
+	}
+	for _, rt := range r.Routes {
+		gRoute.Routes = append(gRoute.Routes, AsGrafanaRoute(rt))
+	}
+
+	return gRoute
 }
 
 // Config is the entrypoint for the embedded Alertmanager config with the exception of receivers.
@@ -686,7 +810,7 @@ func (c *PostableApiAlertingConfig) validate() error {
 		}
 	}
 
-	for _, receiver := range AllReceivers(c.Route) {
+	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {
 		_, ok := receivers[receiver]
 		if !ok {
 			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
@@ -957,4 +1081,91 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 		}
 	}
 	return nil
+}
+
+// ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects
+// that have already been parsed.
+type ObjectMatchers labels.Matchers
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface for Matchers.
+func (m *ObjectMatchers) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var rawMatchers [][3]string
+	if err := unmarshal(&rawMatchers); err != nil {
+		return err
+	}
+	for _, rawMatcher := range rawMatchers {
+		var matchType labels.MatchType
+		switch rawMatcher[1] {
+		case "=":
+			matchType = labels.MatchEqual
+		case "!=":
+			matchType = labels.MatchNotEqual
+		case "=~":
+			matchType = labels.MatchRegexp
+		case "!~":
+			matchType = labels.MatchNotRegexp
+		default:
+			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
+		}
+
+		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
+		if err != nil {
+			return err
+		}
+		*m = append(*m, matcher)
+	}
+	sort.Sort(labels.Matchers(*m))
+	return nil
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface for Matchers.
+func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
+	var rawMatchers [][3]string
+	if err := json.Unmarshal(data, &rawMatchers); err != nil {
+		return err
+	}
+	for _, rawMatcher := range rawMatchers {
+		var matchType labels.MatchType
+		switch rawMatcher[1] {
+		case "=":
+			matchType = labels.MatchEqual
+		case "!=":
+			matchType = labels.MatchNotEqual
+		case "=~":
+			matchType = labels.MatchRegexp
+		case "!~":
+			matchType = labels.MatchNotRegexp
+		default:
+			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
+		}
+
+		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
+		if err != nil {
+			return err
+		}
+		*m = append(*m, matcher)
+	}
+	sort.Sort(labels.Matchers(*m))
+	return nil
+}
+
+// MarshalYAML implements the yaml.Marshaler interface for Matchers.
+func (m ObjectMatchers) MarshalYAML() (interface{}, error) {
+	result := make([][3]string, len(m))
+	for i, matcher := range m {
+		result[i] = [3]string{matcher.Name, matcher.Type.String(), matcher.Value}
+	}
+	return result, nil
+}
+
+// MarshalJSON implements the json.Marshaler interface for Matchers.
+func (m ObjectMatchers) MarshalJSON() ([]byte, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	result := make([][3]string, len(m))
+	for i, matcher := range m {
+		result[i] = [3]string{matcher.Name, matcher.Type.String(), matcher.Value}
+	}
+	return json.Marshal(result)
 }

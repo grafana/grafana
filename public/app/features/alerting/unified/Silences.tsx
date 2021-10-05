@@ -58,7 +58,7 @@ const Silences: FC = () => {
         </Alert>
       )}
       {alertsRequest?.error && !alertsRequest?.loading && (
-        <Alert severity="error" title="Error loading alert manager alerts">
+        <Alert severity="error" title="Error loading Alertmanager alerts">
           {alertsRequest.error?.message || 'Unknown error.'}
         </Alert>
       )}

@@ -1,5 +1,5 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import { HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -17,14 +17,19 @@ import { EditCloudGroupModal } from './EditCloudGroupModal';
 interface Props {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
+  expandAll: boolean;
 }
 
-export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
+export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }) => {
   const { rulesSource } = namespace;
   const styles = useStyles2(getStyles);
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isEditingGroup, setIsEditingGroup] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(!expandAll);
+
+  useEffect(() => {
+    setIsCollapsed(!expandAll);
+  }, [expandAll]);
 
   const hasRuler = useHasRuler();
   const rulerRule = group.rules[0]?.rulerRule;
