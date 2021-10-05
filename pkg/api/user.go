@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,18 +14,18 @@ import (
 
 // GET /api/user  (current authenticated user)
 func GetSignedInUser(c *models.ReqContext) response.Response {
-	return getUserUserProfile(c.UserId)
+	return getUserUserProfile(c.Req.Context(), c.UserId)
 }
 
 // GET /api/users/:id
 func GetUserByID(c *models.ReqContext) response.Response {
-	return getUserUserProfile(c.ParamsInt64(":id"))
+	return getUserUserProfile(c.Req.Context(), c.ParamsInt64(":id"))
 }
 
-func getUserUserProfile(userID int64) response.Response {
+func getUserUserProfile(ctx context.Context, userID int64) response.Response {
 	query := models.GetUserProfileQuery{UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -33,7 +34,7 @@ func getUserUserProfile(userID int64) response.Response {
 
 	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
-	if err := bus.Dispatch(&getAuthQuery); err == nil {
+	if err := bus.DispatchCtx(ctx, &getAuthQuery); err == nil {
 		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true
@@ -47,7 +48,7 @@ func getUserUserProfile(userID int64) response.Response {
 // GET /api/users/lookup
 func GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -79,13 +80,13 @@ func UpdateSignedInUser(c *models.ReqContext, cmd models.UpdateUserCommand) resp
 		}
 	}
 	cmd.UserId = c.UserId
-	return handleUpdateUser(cmd)
+	return handleUpdateUser(c.Req.Context(), cmd)
 }
 
 // POST /api/users/:id
 func UpdateUser(c *models.ReqContext, cmd models.UpdateUserCommand) response.Response {
 	cmd.UserId = c.ParamsInt64(":id")
-	return handleUpdateUser(cmd)
+	return handleUpdateUser(c.Req.Context(), cmd)
 }
 
 // POST /api/users/:id/using/:orgId
@@ -93,20 +94,20 @@ func UpdateUserActiveOrg(c *models.ReqContext) response.Response {
 	userID := c.ParamsInt64(":id")
 	orgID := c.ParamsInt64(":orgId")
 
-	if !validateUsingOrg(userID, orgID) {
+	if !validateUsingOrg(c.Req.Context(), userID, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
 	cmd := models.SetUsingOrgCommand{UserId: userID, OrgId: orgID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
 	}
 
 	return response.Success("Active organization changed")
 }
 
-func handleUpdateUser(cmd models.UpdateUserCommand) response.Response {
+func handleUpdateUser(ctx context.Context, cmd models.UpdateUserCommand) response.Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
@@ -114,7 +115,7 @@ func handleUpdateUser(cmd models.UpdateUserCommand) response.Response {
 		}
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 		return response.Error(500, "Failed to update user", err)
 	}
 
@@ -123,23 +124,23 @@ func handleUpdateUser(cmd models.UpdateUserCommand) response.Response {
 
 // GET /api/user/orgs
 func GetSignedInUserOrgList(c *models.ReqContext) response.Response {
-	return getUserOrgList(c.UserId)
+	return getUserOrgList(c.Req.Context(), c.UserId)
 }
 
 // GET /api/user/teams
 func GetSignedInUserTeamList(c *models.ReqContext) response.Response {
-	return getUserTeamList(c.OrgId, c.UserId)
+	return getUserTeamList(c.Req.Context(), c.OrgId, c.UserId)
 }
 
 // GET /api/users/:id/teams
 func GetUserTeams(c *models.ReqContext) response.Response {
-	return getUserTeamList(c.OrgId, c.ParamsInt64(":id"))
+	return getUserTeamList(c.Req.Context(), c.OrgId, c.ParamsInt64(":id"))
 }
 
-func getUserTeamList(orgID int64, userID int64) response.Response {
+func getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Response {
 	query := models.GetTeamsByUserQuery{OrgId: orgID, UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return response.Error(500, "Failed to get user teams", err)
 	}
 
@@ -151,23 +152,23 @@ func getUserTeamList(orgID int64, userID int64) response.Response {
 
 // GET /api/users/:id/orgs
 func GetUserOrgList(c *models.ReqContext) response.Response {
-	return getUserOrgList(c.ParamsInt64(":id"))
+	return getUserOrgList(c.Req.Context(), c.ParamsInt64(":id"))
 }
 
-func getUserOrgList(userID int64) response.Response {
+func getUserOrgList(ctx context.Context, userID int64) response.Response {
 	query := models.GetUserOrgListQuery{UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return response.Error(500, "Failed to get user organizations", err)
 	}
 
 	return response.JSON(200, query.Result)
 }
 
-func validateUsingOrg(userID int64, orgID int64) bool {
+func validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
 	query := models.GetUserOrgListQuery{UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return false
 	}
 
@@ -186,13 +187,13 @@ func validateUsingOrg(userID int64, orgID int64) bool {
 func UserSetUsingOrg(c *models.ReqContext) response.Response {
 	orgID := c.ParamsInt64(":id")
 
-	if !validateUsingOrg(c.UserId, orgID) {
+	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
 	cmd := models.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
 	}
 
@@ -203,13 +204,13 @@ func UserSetUsingOrg(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 	orgID := c.ParamsInt64(":id")
 
-	if !validateUsingOrg(c.UserId, orgID) {
+	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
 		hs.NotFoundHandler(c)
 	}
 
 	cmd := models.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		hs.NotFoundHandler(c)
 	}
 
@@ -246,7 +247,7 @@ func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordComma
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 
@@ -269,7 +270,7 @@ func SetHelpFlag(c *models.ReqContext) response.Response {
 		HelpFlags1: *bitmask,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
@@ -282,7 +283,7 @@ func ClearHelpFlags(c *models.ReqContext) response.Response {
 		HelpFlags1: models.HelpFlags1(0),
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
