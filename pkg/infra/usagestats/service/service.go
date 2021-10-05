@@ -49,7 +49,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, 
 }
 
 func (uss *UsageStats) Run(ctx context.Context) error {
-	uss.updateTotalStats()
+	uss.updateTotalStats(ctx)
 
 	// try to load last sent time from kv store
 	lastSent := time.Now()
@@ -97,7 +97,7 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 				callback()
 			}
 		case <-updateStatsTicker.C:
-			uss.updateTotalStats()
+			uss.updateTotalStats(ctx)
 		case <-ctx.Done():
 			return ctx.Err()
 		}

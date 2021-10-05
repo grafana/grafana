@@ -51,19 +51,19 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
           {/* @ts-ignore-check: react-hook-form made me do this */}
-          <FieldArray name="matchers" control={control}>
+          <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
                 <div>Matching labels</div>
                 <div className={styles.matchersContainer}>
                   {fields.map((field, index) => {
-                    const localPath = `matchers[${index}]`;
+                    const localPath = `object_matchers[${index}]`;
                     return (
                       <HorizontalGroup key={field.id} align="flex-start">
                         <Field
                           label="Label"
-                          invalid={!!errors.matchers?.[index]?.name}
-                          error={errors.matchers?.[index]?.name?.message}
+                          invalid={!!errors.object_matchers?.[index]?.name}
+                          error={errors.object_matchers?.[index]?.name?.message}
                         >
                           <Input
                             {...register(`${localPath}.name`, { required: 'Field is required' })}
@@ -89,8 +89,8 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                         </Field>
                         <Field
                           label="Value"
-                          invalid={!!errors.matchers?.[index]?.value}
-                          error={errors.matchers?.[index]?.value?.message}
+                          invalid={!!errors.object_matchers?.[index]?.value}
+                          error={errors.object_matchers?.[index]?.value?.message}
                         >
                           <Input
                             {...register(`${localPath}.value`, { required: 'Field is required' })}
@@ -189,7 +189,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="groupWaitValue"
@@ -223,7 +223,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="groupIntervalValue"
@@ -257,7 +257,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   <div className={cx(formStyles.container, formStyles.timingContainer)}>
                     <InputControl
                       render={({ field, fieldState: { invalid } }) => (
-                        <Input {...field} className={formStyles.smallInput} invalid={invalid} />
+                        <Input {...field} className={formStyles.smallInput} invalid={invalid} placeholder="Time" />
                       )}
                       control={control}
                       name="repeatIntervalValue"

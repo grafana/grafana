@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/searchusers"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -134,7 +136,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		sc.handlerFunc = SearchUsers
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		assert.Equal(t, 1000, sentLimit)
@@ -157,7 +160,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		sc.handlerFunc = SearchUsers
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
 		assert.Equal(t, 10, sentLimit)
@@ -176,7 +180,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		sc.handlerFunc = SearchUsersWithPaging
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		assert.Equal(t, 1000, sentLimit)
@@ -201,7 +206,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		sc.handlerFunc = SearchUsersWithPaging
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus())
+		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
 		assert.Equal(t, 10, sentLimit)
