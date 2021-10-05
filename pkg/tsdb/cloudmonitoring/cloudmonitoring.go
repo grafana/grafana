@@ -157,7 +157,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
-// the time series or table format
+// the data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {

@@ -166,10 +166,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           const dataQueryResponse = toDataQueryResponse({
             data: data,
           });
-          if (dataQueryResponse.data.length !== 0 && dataQueryResponse.data[0].meta) {
-            return dataQueryResponse.data[0].meta.custom ? dataQueryResponse.data[0].meta.custom.labels : {};
-          }
-          return {};
+          return dataQueryResponse?.data[0]?.meta?.custom?.labels ?? {};
         })
       )
     );
@@ -224,15 +221,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             const dataQueryResponse = toDataQueryResponse({
               data: data,
             });
-
-            if (dataQueryResponse.data.length !== 0 && dataQueryResponse.data[0].meta) {
-              return dataQueryResponse.data[0].meta.custom
-                ? dataQueryResponse.data[0].meta.custom['defaultProject']
-                : '';
-            }
-            return '';
+            return dataQueryResponse?.data[0]?.meta?.custom?.defaultProject ?? '';
           }),
-
           catchError((err) => {
             return throwError(err.data.error);
           })
