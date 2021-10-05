@@ -18,11 +18,11 @@ import {
 // Types
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery, locationUtil } from '@grafana/data';
+import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
@@ -208,6 +208,13 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboardWatcher.watch(dashboard.uid);
     } else {
       dashboardWatcher.leave();
+    }
+
+    // set week start
+    if (dashboard.weekStart !== -1) {
+      setWeekStart(dashboard.weekStart);
+    } else {
+      setWeekStart(config.bootData.user.weekStart);
     }
 
     // yay we are done

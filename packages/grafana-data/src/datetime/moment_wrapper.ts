@@ -120,3 +120,14 @@ export const dateTimeForTimeZone = (
 
   return dateTime(input, formatInput);
 };
+
+export const setWeekStart = (weekStart: number) => {
+  if (weekStart !== -1) {
+    const language = getLocale();
+    moment.updateLocale(language, {
+      week: {
+        dow: weekStart,
+      },
+    });
+  }
+};

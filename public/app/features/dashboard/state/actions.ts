@@ -5,7 +5,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { loadPluginDashboards } from '../../plugins/state/actions';
 import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
 import { notifyApp } from 'app/core/actions';
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { cancelVariables } from '../../variables/state/actions';
@@ -129,5 +129,10 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
 
 export const updateTimeZoneDashboard = (timeZone: TimeZone): ThunkResult<void> => (dispatch) => {
   dispatch(updateTimeZoneForSession(timeZone));
+  getTimeSrv().refreshDashboard();
+};
+
+export const updateWeekStartDashboard = (weekStart: number): ThunkResult<void> => (dispatch) => {
+  dispatch(updateWeekStartForSession(weekStart));
   getTimeSrv().refreshDashboard();
 };

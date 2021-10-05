@@ -8,7 +8,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 import { TimePickerSettings } from './TimePickerSettings';
 
-import { updateTimeZoneDashboard } from 'app/features/dashboard/state/actions';
+import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -22,7 +22,7 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props): JSX.Element {
+export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
@@ -62,6 +62,12 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
     dashboard.timezone = timeZone;
     setRenderCounter(renderCounter + 1);
     updateTimeZone(timeZone);
+  };
+
+  const onWeekStartChange = (weekStart: number) => {
+    dashboard.weekStart = weekStart;
+    setRenderCounter(renderCounter + 1);
+    updateWeekStart(weekStart);
   };
 
   const onTagsChange = (tags: string[]) => {
@@ -115,6 +121,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
 
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}
+        onWeekStartChange={onWeekStartChange}
         onRefreshIntervalChange={onRefreshIntervalChange}
         onNowDelayChange={onNowDelayChange}
         onHideTimePickerChange={onHideTimePickerChange}
@@ -123,6 +130,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
         timePickerHidden={dashboard.timepicker.hidden}
         nowDelay={dashboard.timepicker.nowDelay}
         timezone={dashboard.timezone}
+        weekStart={dashboard.weekStart}
         liveNow={dashboard.liveNow}
       />
 
@@ -144,6 +152,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
 
 const mapDispatchToProps = {
   updateTimeZone: updateTimeZoneDashboard,
+  updateWeekStart: updateWeekStartDashboard,
 };
 
 const connector = connect(null, mapDispatchToProps);

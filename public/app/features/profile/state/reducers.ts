@@ -1,6 +1,6 @@
-import { isEmpty, isString, set } from 'lodash';
+import { isEmpty, isString, isNumber, set } from 'lodash';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { dateTimeFormat, dateTimeFormatTimeAgo, TimeZone } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo, setWeekStart, TimeZone } from '@grafana/data';
 
 import { Team, ThunkResult, UserDTO, UserOrg, UserSession } from 'app/types';
 import config from 'app/core/config';
@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/core';
 export interface UserState {
   orgId: number;
   timeZone: TimeZone;
+  weekStart: number;
   fiscalYearStartMonth: number;
   user: UserDTO | null;
   teams: Team[];
@@ -23,6 +24,7 @@ export interface UserState {
 export const initialUserState: UserState = {
   orgId: config.bootData.user.orgId,
   timeZone: config.bootData.user.timezone,
+  weekStart: config.bootData.user.weekStart,
   fiscalYearStartMonth: 0,
   orgsAreLoading: false,
   sessionsAreLoading: false,
@@ -40,6 +42,10 @@ export const slice = createSlice({
   reducers: {
     updateTimeZone: (state, action: PayloadAction<{ timeZone: TimeZone }>) => {
       state.timeZone = action.payload.timeZone;
+    },
+    updateWeekStart: (state, action: PayloadAction<{ weekStart: number }>) => {
+      state.weekStart = action.payload.weekStart;
+      setWeekStart(action.payload.weekStart);
     },
     updateFiscalYearStartMonth: (state, action: PayloadAction<{ fiscalYearStartMonth: number }>) => {
       state.fiscalYearStartMonth = action.payload.fiscalYearStartMonth;
@@ -110,6 +116,17 @@ export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> 
   };
 };
 
+export const updateWeekStartForSession = (weekStart: number): ThunkResult<void> => {
+  return async (dispatch) => {
+    if (!isNumber(weekStart) || weekStart === -1) {
+      weekStart = config?.bootData?.user?.weekStart;
+    }
+
+    set(contextSrv, 'user.weekStart', weekStart);
+    dispatch(updateWeekStart({ weekStart }));
+  };
+};
+
 export const {
   setUpdating,
   initLoadOrgs,
@@ -121,6 +138,7 @@ export const {
   initLoadSessions,
   sessionsLoaded,
   updateTimeZone,
+  updateWeekStart,
   updateFiscalYearStartMonth,
 } = slice.actions;
 
