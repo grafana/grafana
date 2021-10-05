@@ -78,7 +78,7 @@ func TestPermission_Evaluate(t *testing.T) {
 func TestPermission_Inject(t *testing.T) {
 	tests := []injectTestCase{
 		{
-			desc:      "should inject extra param",
+			desc:      "should inject field",
 			expected:  true,
 			evaluator: EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
 			params: ScopeParams{
@@ -221,7 +221,7 @@ func TestAll_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should inject extra and url param",
+			desc:     "should inject field and URL param",
 			expected: true,
 			evaluator: EvalAll(
 				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
@@ -343,7 +343,7 @@ func TestAny_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should inject extra and url param",
+			desc:     "should inject field and URL param",
 			expected: true,
 			evaluator: EvalAny(
 				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
