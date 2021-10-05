@@ -18,7 +18,7 @@ func Scope(parts ...string) string {
 	return b.String()
 }
 
-// Parameter returns injectable scope part, based on the URL parameter
+// Parameter returns injectable scope part, based on URL parameters.
 // e.g. Scope("users", Parameter(":id")) or "users:" + Parameter(":id")
 func Parameter(key string) string {
 	return fmt.Sprintf(`{{ index .UrlParams "%s" }}`, key)
