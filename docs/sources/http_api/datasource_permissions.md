@@ -9,6 +9,9 @@ aliases = ["/docs/grafana/latest/http_api/datasourcepermissions/"]
 
 > The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
+> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> Refer to specific resources to understand what permissions are required.
+
 This API can be used to enable, disable, list, add and remove permissions for a data source.
 
 Permissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.
@@ -22,6 +25,16 @@ The permission levels for the permission field:
 `POST /api/datasources/:id/enable-permissions`
 
 Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+
+| Action                         | Scope                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| datasources.permissions:toggle | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
 
 **Example request:**
 
@@ -58,6 +71,16 @@ Status codes:
 
 Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
 
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+
+| Action                         | Scope                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| datasources.permissions:toggle | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
+
 **Example request:**
 
 ```http
@@ -92,6 +115,16 @@ Status codes:
 `GET /api/datasources/:id/permissions`
 
 Gets all existing permissions for the data source with the given `id`.
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+
+| Action                       | Scope                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| datasources.permissions:read | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
 
 **Example request:**
 
@@ -153,6 +186,16 @@ Status codes:
 `POST /api/datasources/:id/permissions`
 
 Adds a user permission for the data source with the given `id`.
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+
+| Action                         | Scope                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| datasources.permissions:create | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
 
 **Example request:**
 
@@ -217,6 +260,16 @@ Status codes:
 `DELETE /api/datasources/:id/permissions/:permissionId`
 
 Removes the permission with the given `permissionId` for the data source with the given `id`.
+
+### Required permissions
+
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+
+| Action                         | Scope                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| datasources.permissions:delete | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+
+### Examples
 
 **Example request:**
 
