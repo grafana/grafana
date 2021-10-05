@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -493,7 +492,7 @@ func (t *testLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
+func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return ""
 }
 
