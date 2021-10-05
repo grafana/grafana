@@ -57,7 +57,7 @@ export class CanvasPanel extends Component<Props, State> {
         });
 
         this.subs.add(
-          this.scene.getSelected().subscribe({
+          this.scene.selected.subscribe({
             next: (v) => {
               this.panelContext.onInstanceStateChange!({
                 scene: this.scene,

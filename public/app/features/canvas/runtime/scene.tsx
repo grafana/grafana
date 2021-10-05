@@ -24,11 +24,8 @@ import { ElementState } from './element';
 export class Scene {
   private root: GroupState;
   private lookup = new Map<number, ElementState>();
-  private selectedX = new ReplaySubject<ElementState | undefined>(undefined);
-  private selectedUID = 0; // nothing selected
-
   styles = getStyles(config.theme2);
-
+  readonly selected = new ReplaySubject<ElementState | undefined>(undefined);
   revId = 0;
 
   width = 0;
@@ -50,20 +47,15 @@ export class Scene {
     );
 
     // Build the scene registry
-    let first: ElementState | undefined = undefined;
     this.lookup.clear();
     this.root.visit((v) => {
       this.lookup.set(v.UID, v);
 
       // HACK! select the first/only item
-      if (!first && v.item.id !== 'group') {
-        first = v;
-        this.selectItem(v.UID);
+      if (v.item.id !== 'group') {
+        this.selected.next(v);
       }
     });
-    if (!first) {
-      this.selectItem(-1);
-    }
     return this.root;
   }
 
@@ -73,23 +65,6 @@ export class Scene {
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
   };
-
-  getElement(uid: number) {
-    return this.lookup.get(uid);
-  }
-
-  getSelectedItem() {
-    return this.lookup.get(this.selectedUID);
-  }
-
-  getSelected() {
-    return this.selectedX.asObservable();
-  }
-
-  selectItem(uid?: number) {
-    this.selectedUID = uid ?? -1;
-    this.selectedX.next(this.getSelectedItem());
-  }
 
   updateData(data: PanelData) {
     this.data = data;
@@ -112,7 +87,6 @@ export class Scene {
     elem.onChange(cfg);
     elem.updateData(this.context); // Refresh any data that may have changed
     this.save();
-    console.log('SCENE ELEMENT CHANGED', uid, elem.revId, cfg);
   }
 
   save() {
