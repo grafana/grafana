@@ -56,7 +56,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboardCtx(context.Background(), &query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -72,7 +72,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboardCtx(context.Background(), &query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -88,7 +88,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboardCtx(context.Background(), &query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -103,14 +103,14 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboardCtx(context.Background(), &query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldEqual, models.ErrDashboardIdentifierNotSet)
 			})
 
 			Convey("Should be able to delete dashboard", func() {
 				dash := insertTestDashboard(t, sqlStore, "delete me", 1, 0, false, "delete this")
 
-				err := DeleteDashboard(&models.DeleteDashboardCommand{
+				err := DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 					Id:    dash.Id,
 					OrgId: 1,
 				})
@@ -191,7 +191,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err = GetDashboardCtx(context.Background(), &query)
+				err = GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
 				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
@@ -204,19 +204,19 @@ func TestDashboardDataAccess(t *testing.T) {
 				emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
-				err := DeleteDashboard(deleteCmd)
+				err := DeleteDashboard(context.Background(), deleteCmd)
 				So(err, ShouldBeNil)
 			})
 
 			Convey("Should be not able to delete a dashboard if force delete rules is disabled", func() {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
-				err := DeleteDashboard(deleteCmd)
+				err := DeleteDashboard(context.Background(), deleteCmd)
 				So(errors.Is(err, models.ErrFolderContainsAlertRules), ShouldBeTrue)
 			})
 
 			Convey("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func() {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
-				err := DeleteDashboard(deleteCmd)
+				err := DeleteDashboard(context.Background(), deleteCmd)
 				So(err, ShouldBeNil)
 
 				query := search.FindPersistedDashboardsQuery{
@@ -225,7 +225,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &models.SignedInUser{},
 				}
 
-				err = SearchDashboards(&query)
+				err = SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 0)
@@ -277,7 +277,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should be able to get dashboard tags", func() {
 				query := models.GetDashboardTagsQuery{OrgId: 1}
 
-				err := GetDashboardTags(&query)
+				err := GetDashboardTags(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)
@@ -290,7 +290,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -307,7 +307,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -322,7 +322,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -337,7 +337,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 3)
@@ -351,7 +351,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)
@@ -371,7 +371,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -403,7 +403,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: 10, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 						IsStarred:    true,
 					}
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
@@ -425,7 +425,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId:    1,
 				}
 
-				err := GetDashboardsByPluginId(&query)
+				err := GetDashboardsByPluginId(context.Background(), &query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 2)
 			})
@@ -595,7 +595,7 @@ func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAd
 	require.NoError(t, err)
 
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
-	err = GetUserOrgList(&q1)
+	err = GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 

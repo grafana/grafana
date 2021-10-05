@@ -75,28 +75,29 @@ export class CustomEndpointTransport implements BaseTransport {
     }
 
     return this._buffer.add(
-      new SyncPromise<Response>((resolve, reject) => {
-        window
-          .fetch(sentryReq.url, options)
-          .then((response) => {
-            const status = Status.fromHttpCode(response.status);
+      () =>
+        new SyncPromise<Response>((resolve, reject) => {
+          window
+            .fetch(sentryReq.url, options)
+            .then((response) => {
+              const status = Status.fromHttpCode(response.status);
 
-            if (status === Status.Success) {
-              resolve({ status });
-              return;
-            }
+              if (status === Status.Success) {
+                resolve({ status });
+                return;
+              }
 
-            if (status === Status.RateLimit) {
-              const now = Date.now();
-              const retryAfterHeader = response.headers.get('Retry-After');
-              this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
-              logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
-            }
+              if (status === Status.RateLimit) {
+                const now = Date.now();
+                const retryAfterHeader = response.headers.get('Retry-After');
+                this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
+                logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
+              }
 
-            reject(response);
-          })
-          .catch(reject);
-      })
+              reject(response);
+            })
+            .catch(reject);
+        })
     );
   }
 }

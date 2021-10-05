@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -332,6 +333,17 @@ func (st DBstore) GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error {
 			q = fmt.Sprintf("%s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
 		}
 
+		if query.DashboardUID != "" {
+			params = append(params, query.DashboardUID)
+			q = fmt.Sprintf("%s AND dashboard_uid = ?", q)
+			if query.PanelID != 0 {
+				params = append(params, query.PanelID)
+				q = fmt.Sprintf("%s AND panel_id = ?", q)
+			}
+		}
+
+		q = fmt.Sprintf("%s ORDER BY id ASC", q)
+
 		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
 			return err
 		}
@@ -359,10 +371,20 @@ func (st DBstore) GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRules
 // GetRuleGroupAlertRules is a handler for retrieving rule group alert rules of specific organisation.
 func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertRules := make([]*ngmodels.AlertRule, 0)
-
 		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?"
-		if err := sess.SQL(q, query.OrgID, query.NamespaceUID, query.RuleGroup).Find(&alertRules); err != nil {
+		args := []interface{}{query.OrgID, query.NamespaceUID, query.RuleGroup}
+
+		if query.DashboardUID != "" {
+			q = fmt.Sprintf("%s and dashboard_uid = ?", q)
+			args = append(args, query.DashboardUID)
+			if query.PanelID != 0 {
+				q = fmt.Sprintf("%s and panel_id = ?", q)
+				args = append(args, query.PanelID)
+			}
+		}
+
+		alertRules := make([]*ngmodels.AlertRule, 0)
+		if err := sess.SQL(q, args...).Find(&alertRules); err != nil {
 			return err
 		}
 
@@ -528,6 +550,18 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				new.Labels = r.ApiRuleNode.Labels
 			}
 
+			if s := new.Annotations["__dashboardUid__"]; s != "" {
+				new.DashboardUID = &s
+			}
+
+			if s := new.Annotations["__panelId__"]; s != "" {
+				panelID, err := strconv.ParseInt(s, 10, 64)
+				if err != nil {
+					return fmt.Errorf("the __panelId__ annotation does not contain a valid Panel ID: %w", err)
+				}
+				new.PanelID = &panelID
+			}
+
 			upsertRule := UpsertRule{
 				New: new,
 			}
@@ -569,7 +603,19 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		var ruleGroups [][]string
-		q := "SELECT DISTINCT rule_group, namespace_uid, (select title from dashboard where org_id = alert_rule.org_id and uid = alert_rule.namespace_uid) AS namespace_title FROM alert_rule WHERE org_id = ?"
+		q := `
+SELECT DISTINCT
+	rule_group,
+	namespace_uid,
+	(
+		SELECT title
+		FROM dashboard
+		WHERE
+			org_id = alert_rule.org_id AND
+			uid = alert_rule.namespace_uid
+	) AS namespace_title
+FROM alert_rule
+WHERE org_id = ?`
 		params := []interface{}{query.OrgID}
 
 		if len(query.NamespaceUIDs) > 0 {
@@ -580,6 +626,16 @@ func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 			}
 			q = fmt.Sprintf(" %s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
 		}
+
+		if query.DashboardUID != "" {
+			q = fmt.Sprintf("%s and dashboard_uid = ?", q)
+			params = append(params, query.DashboardUID)
+			if query.PanelID != 0 {
+				q = fmt.Sprintf("%s and panel_id = ?", q)
+				params = append(params, query.PanelID)
+			}
+		}
+
 		q = fmt.Sprintf(" %s ORDER BY namespace_title", q)
 
 		if err := sess.SQL(q, params...).Find(&ruleGroups); err != nil {

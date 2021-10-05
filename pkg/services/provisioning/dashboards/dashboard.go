@@ -19,7 +19,7 @@ type DashboardProvisioner interface {
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
-	CleanUpOrphanedDashboards()
+	CleanUpOrphanedDashboards(ctx context.Context)
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
@@ -77,14 +77,14 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 }
 
 // CleanUpOrphanedDashboards deletes provisioned dashboards missing a linked reader.
-func (provider *Provisioner) CleanUpOrphanedDashboards() {
+func (provider *Provisioner) CleanUpOrphanedDashboards(ctx context.Context) {
 	currentReaders := make([]string, len(provider.fileReaders))
 
 	for index, reader := range provider.fileReaders {
 		currentReaders[index] = reader.Cfg.Name
 	}
 
-	if err := bus.Dispatch(&models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+	if err := bus.DispatchCtx(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
 		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
 	}
 }

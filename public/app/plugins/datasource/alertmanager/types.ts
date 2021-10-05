@@ -89,12 +89,17 @@ export type Receiver = {
   [key: string]: any;
 };
 
+type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+
 export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
+  object_matchers?: ObjectMatcher[];
   matchers?: string[];
+  /** @deprecated use `object_matchers` */
   match?: Record<string, string>;
+  /** @deprecated use `object_matchers` */
   match_re?: Record<string, string>;
   group_wait?: string;
   group_interval?: string;
