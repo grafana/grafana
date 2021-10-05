@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -213,6 +214,18 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
+		moa.cleanupResources(ctx, orgID, am.WorkingDirPath())
+	}
+}
+
+// cleanupResources deletes all records from the database and removes all
+// files from the filesystem that corepsond to the organization
+func (moa *MultiOrgAlertmanager) cleanupResources(ctx context.Context, orgID int64, workDir string) {
+	if err := moa.orgStore.DeleteOrgEntries(ctx, orgID); err != nil {
+		moa.logger.Warn("failed to cleanup resources from database", "err", err)
+	}
+	if err := os.RemoveAll(workDir); err != nil {
+		moa.logger.Warn("failed to cleanup resources from filesystem", "err", err)
 	}
 }
 
