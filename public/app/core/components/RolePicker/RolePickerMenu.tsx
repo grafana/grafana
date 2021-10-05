@@ -21,7 +21,6 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
   const { builtInRole, options, onChange, onBuiltinRoleChange } = props;
-  console.log(props);
 
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">

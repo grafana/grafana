@@ -89,7 +89,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
           border-radius: 3px;
           background: transparent;
           top: 50%;
-          transform: translate3d(4.5px, -50%, 0);
+          transform: translate3d(4px, -50%, 0);
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
         }
       }
