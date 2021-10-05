@@ -24,7 +24,7 @@ func Parameter(key string) string {
 	return fmt.Sprintf(`{{ index .UrlParams "%s" }}`, key)
 }
 
-// ExtraParameter returns injectable scope part, based on ScopeParams fields
+// ExtraParameter returns an injectable scope part for selected fields from the request's context available in accesscontrol.ScopeParams.
 // e.g. Scope("orgs", Parameter("OrgID")) or "orgs:" + Parameter("OrgID")
 func ExtraParameter(key string) string {
 	return fmt.Sprintf(`{{ .%s }}`, key)
