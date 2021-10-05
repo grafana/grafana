@@ -483,7 +483,7 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            ' Skip test-frontend',
+            'echo Skip test-frontend',
         ],
     }
 

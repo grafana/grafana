@@ -73,7 +73,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -318,7 +318,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -764,7 +764,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -1130,7 +1130,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -1662,7 +1662,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -2017,7 +2017,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -2542,7 +2542,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -2868,7 +2868,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - " Skip test-frontend"
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
