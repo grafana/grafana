@@ -9,27 +9,38 @@ weight = 4
 
 A playlist displays a list of dashboards that are in a sequence. Use a playlist to build situational awareness or to present your metrics to your team or visitors. Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens. This topic has the following sections:
 
-## Access playlist
+- [Access, share, and control a playlist](#access-share-and-control-a-playlist)
+- [Create a playlist](#create-a-playlist)
+- [Edit or delete a playlist](#edit-or-delete-a-playlist)
+- [Share a playlist](#share-a-playlist-in-a-view-mode)
+
+## Access, share, and control a playlist
+
+Use the information in this section to access existing playlists. Start a playlist using one of the five available modes and control the display.
+
+### Access playlist
 
 1. Hover your cursor over Grafana’s side menu.
 1. Click **Playlists**. You will see a list of existing playlists.
 
-## Start a playlist
+### Start a playlist
 
-1. Hover your cursor over Grafana’s side menu, the click **Playlists**. You will see a list of existing playlists.
-1. Select your playlist mode based on the information in the following table.
+1. [Access](#access-playlist) the playlist page to see a list of existing playlists.
+1. Find the playlist you want to start, then click **Start playlist**. The start playlist dialog opens.
+1. Select one of the five playlist modes available based on the information in the following table.
+1. Click **Start <playlist name>**.
 
-| Mode                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Normal mode                       | <ul><li>The side menu remains visible.</li></ul><ul><li>The navbar, row and panel controls appear at the top of the screen.</li></ul>                                                                                                                                                                                                                                                                                                 |
-| TV mode                           | <ul><li>The side menu is hidden or removed.</li></ul><ul><li>The navbar, row and panel controls appear at the top of the screen.</li></ul><ul><li>Enabled automatically after one minute of user inactivity.</li></ul><ul><li>Enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL.</li></ul><ul><li>Disable it with any mouse movement or keyboard action.</li></ul> |
-| TV mode (with auto fit panels)    | <ul><li>The side menu is hidden or removed.</li></ul><ul><li>The navbar, row and panel controls appear at the top of the screen.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul><ul>                                                                                                                                                                                                    |
-| Kiosk mode                        | <ul><li>The side menu, navbar, row and panel controls are completely hidden/removed from view.</li></ul><ul><li>You can enable it manually using the `d v` sequence shortcut after the playlist has started.</li></ul><ul><li>You can disable it manually with the same shortcut.</li></ul>                                                                                                                                           |
-| Kiosk mode (with auto fit panels) | <ul><li>The side menu, navbar, row and panel controls are completely hidden/removed from view.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul>                                                                                                                                                                                                                                          |
+The playlist displays each dashboard for the time specified in the `Interval` field, set when creating or editing a playlist. Once a playlist starts, you can [control](#control-a-playlist) it using the navbar at the top of your screen.
 
-By default, each dashboard displays for the amount of time entered in the Interval field, which can be set while creating or editing a playlist. Once a playlist is started, you can [control it](#control-a-playlist) using the navbar at the top of your screen.
+| Mode                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Normal mode                       | <ul><li>The side menu remains visible.</li></ul><ul><li>The navbar, row and panel controls appear at the top of the screen.</li></ul>                                                                                                                                                                                                                                                                                                                                |
+| TV mode                           | <ul><li>The side menu and variable selection option are hidden or removed.</li></ul><ul><li>The navbar, row and panel controls appear at the top of the screen.</li></ul><ul><li>Enabled automatically after one minute of user inactivity.</li></ul><ul><li>Enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL.</li></ul><ul><li>Disable it with any mouse movement or keyboard action.</li></ul> |
+| TV mode (with auto fit panels)    | <ul><li>The side menu and variable selection are hidden or removed.</li></ul><ul><li>The navbar, row and panel controls appear at the top of the screen.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul><ul>                                                                                                                                                                                                           |
+| Kiosk mode                        | <ul><li>The side menu, navbar, row and panel controls are completely hidden/removed from view.</li></ul><ul><li>You can enable it manually using the `d v` sequence shortcut after the playlist has started.</li></ul><ul><li>You can disable it manually with the same shortcut.</li></ul>                                                                                                                                                                          |
+| Kiosk mode (with auto fit panels) | <ul><li>The side menu, navbar, row and panel controls are completely hidden/removed from view.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul>                                                                                                                                                                                                                                                                         |
 
-## Control a playlist
+### Control a playlist
 
 You can control a playlist in **Normal** or **TV** mode after it's started, using the navigation bar at the top of your screen. Press the Esc key in your keyboard to stop the playlist.
 
@@ -46,75 +57,33 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 
 You can create a playlist to present dashboards in a sequence, with a set order and time interval between dashboards.
 
-1. In the playlist page, click **New playlist**.
-1. In the **Name** text box, enter a name for your playlist.
-1. In the **Interval** text box, enter a time interval.
+1. In the playlist page, click **New playlist**. The New playlist page opens.
+1. In the **Name** text box, enter a descriptive name.
+1. In the **Interval** text bos, enter a time interval. Grafana displays a particular dashboard for the interval of time specified here before moving on to the next dashboard.
+1. In Dashboards, add existing dashboards to the playlist using **Add by title** and **Add by tag** drop-down options. The dashboards you add are listed in a sequential order.
+1. If needed:
+   - Search for a dashboard by its name, a regular expression, or a tag.
+   - Filter your results by starred status or tags.
+1. If needed, rearrange the order of the dashboard you have added using the up and down arrow icon.
+1. Optionally, remove a dashboard from the playlist by clicking the x icon beside dashboard.
+1. Click **Save**.
 
-The time interval is the amount of time for Grafana to stay on a particular dashboard before advancing to the next one on the playlist.
+## Edit or delete a playlist
 
-1. Next to the dashboard(s) you want to add to your playlist, click **Add to playlist**.
-1. Click **Create**.
+You can edit a playlist by updating its name, interval time, and by adding, removing, and rearranging the order of dashboards. On the rare occasion when you no longer need a playlist, you can delete it.
 
-## Edit a playlist
+### Edit a playlist
 
-You can edit playlists while creating them or after saving them.
-
-1. To access the Playlist feature, hover your cursor over Grafana's side menu.
-1. Click **Playlists**.
-1. Click on the Playlist that you want to edit.
-
-### Edit the Name of a playlist
-
-1. Double-click within the **Name** text box.
-1. Enter a name.
+1. In the playlist page, click **Edit playlist**. The Edit playlist page opens.
+1. Update the name, time interval and add or remove dashboards from the playlist using instructions in [Create a playist](#create-a-playlist).
 1. Click **Save** to save your changes.
 
 {{< figure src="/static/img/docs/v50/playlist.png" max-width="25rem">}}
 
-### Edit the Interval of a playlist
-
-1. Double-click within the **Interval** text box.
-1. Enter a time interval.
-1. Click **Save** to save your changes.
-
-### Add a dashboard to a playlist
-
-1. Next to the dashboard you want to add, click **Add to playlist**.
-1. Click **Save** to save your changes.
-
-### Search for a dashboard to add
-
-1. Click the **Search dashboards by name** text box.
-1. Search for the playlist by name or regular expression.
-1. If needed, filter your results by starred status or tags.
-   By default, your starred dashboards will appear as options to add to the Playlist.
-1. Click **Save** to save your changes.
-
-### Rearrange dashboard order
-
-1. Next to the dashboard you want to move, click the up or down arrow.
-1. Click **Save** to save your changes.
-
-### Remove a dashboard
-
-1. Click **Remove[x]** to remove a dashboard from the playlist.
-1. Click **Save** to save your changes.
-
 ### Delete a playlist
 
-1. Click **Playlists**.
-1. Next to the Playlist you want to delete, click **Remove[x]**.
-
-## Save a playlist
-
-You can save a playlist to add it to your **Playlists** page, where you can start it. Be sure that all the dashboards you want to appear in your playlist are added when creating or editing the playlist before saving it.
-
-1. To access the Playlist feature, hover your cursor over Grafana's side menu.
-1. Click **Playlists**.
-1. Click on the playlist.
-1. Edit the playlist.
-   - Ensure that your playlist has a **Name**, **Interval**, and at least one **Dashboard** added to it.
-1. Click **Save**.
+1. In the playlist page, click **Edit playlist**. A prompts opens asking you to confirm the action.
+1. Click **delete**.
 
 ## Share a playlist in a view mode
 
