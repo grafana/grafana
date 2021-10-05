@@ -35,6 +35,7 @@ export const Messages = {
     },
     deleteModalTitle: 'Delete backup artifact',
     deleteFromStorage: 'Delete from storage',
+    getLogsTitle: (name: string) => `Backup logs for ${name}`,
     getDeleteMessage: (name: string) => `Are you sure you want to delete "${name}"?`,
   },
   restoreHistory: {

@@ -38,3 +38,23 @@ export enum BackupType {
   FULL = 'Full',
   INCREMENTAL = 'Incremental',
 }
+
+export interface RawBackupLog {
+  chunk_id: number;
+  data: string;
+  time: string;
+}
+
+export interface BackupLogResponse {
+  logs: RawBackupLog[];
+  end: boolean;
+}
+
+export interface BackupLogChunk extends Omit<RawBackupLog, 'chunk_id'> {
+  id: number;
+}
+
+export interface BackupLogs {
+  logs: BackupLogChunk[];
+  end: boolean;
+}
