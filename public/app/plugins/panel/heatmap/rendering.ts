@@ -714,7 +714,7 @@ export class HeatmapRenderer {
 
   onMouseLeave() {
     this.ctrl.dashboard.events.publish(new LegacyGraphHoverClearEvent());
-    this.ctrl.dashboard.events.publish(new DataHoverClearEvent({ point: {} }));
+    this.ctrl.dashboard.events.publish(new DataHoverClearEvent());
     this.clearCrosshair();
   }
 

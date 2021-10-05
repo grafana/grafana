@@ -161,7 +161,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     }
     // TODO: for backwards compatibility with old panels. Should be removed when old graph panel is removed.
     dashboard.events.publish(new LegacyGraphHoverClearEvent());
-    dashboard.events.publish(new DataHoverClearEvent({ point: {} }));
+    dashboard.events.publish(new DataHoverClearEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {

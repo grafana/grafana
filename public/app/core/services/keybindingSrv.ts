@@ -185,7 +185,7 @@ export class KeybindingSrv {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       // TODO: for backwards compatibility with old panels. Should be removed when old graph panel is removed.
       dashboard.events.publish(new LegacyGraphHoverClearEvent());
-      dashboard.events.publish(new DataHoverClearEvent({ point: {} }));
+      dashboard.events.publish(new DataHoverClearEvent());
       dashboard.startRefresh();
     });
 

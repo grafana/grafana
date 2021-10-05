@@ -42,7 +42,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
-        eventBus.publish(new DataHoverClearEvent({ point: {} }));
+        eventBus.publish(new DataHoverClearEvent());
       } else {
         eventBus.publish(
           new DataHoverEvent({
