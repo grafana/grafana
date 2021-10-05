@@ -11,7 +11,7 @@ test_release_ver = 'v7.3.0-test'
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
     is_downstream=False, install_deps=True,
-    ):
+):
     if platform != 'windows':
         platform_conf = {
             'platform': {
@@ -43,7 +43,6 @@ def pipeline(
         ) + steps,
         'depends_on': depends_on,
     }
-    pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
         # We have a custom clone step for enterprise
@@ -167,13 +166,13 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                     'clone',
                 ],
                 'commands': [
-                    'mv bin/grabpl /tmp/',
-                    'rmdir bin',
-                    'mv grafana-enterprise /tmp/',
-                    '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
-                    'mkdir bin',
-                    'mv /tmp/grabpl bin/'
-                ] + common_cmds,
+                                'mv bin/grabpl /tmp/',
+                                'rmdir bin',
+                                'mv grafana-enterprise /tmp/',
+                                '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
+                                'mkdir bin',
+                                'mv /tmp/grabpl bin/'
+                            ] + common_cmds,
             },
         ]
 
@@ -240,7 +239,7 @@ def benchmark_ldap_step():
             'initialize',
         ],
         'environment': {
-	  'LDAP_HOSTNAME': 'ldap',
+            'LDAP_HOSTNAME': 'ldap',
         },
         'commands': [
             './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
@@ -253,9 +252,9 @@ def ldap_service():
         'name': 'ldap',
         'image': 'osixia/openldap:1.4.0',
         'environment': {
-          'LDAP_ADMIN_PASSWORD': 'grafana',
-          'LDAP_DOMAIN': 'grafana.org',
-          'SLAPD_ADDITIONAL_MODULES': 'memberof',
+            'LDAP_ADMIN_PASSWORD': 'grafana',
+            'LDAP_DOMAIN': 'grafana.org',
+            'SLAPD_ADDITIONAL_MODULES': 'memberof',
         },
     }
 
@@ -294,12 +293,12 @@ def publish_storybook_step(edition, ver_mode):
         else:
             channels = ['canary',]
         commands.extend([
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-        ] + [
-            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/{}'.format(c)
-            for c in channels
-        ])
+                            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+                            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
+                        ] + [
+                            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/{}'.format(c)
+                            for c in channels
+                        ])
 
     return {
         'name': 'publish-storybook',
@@ -322,14 +321,14 @@ def upload_cdn(edition):
         'image': publish_image,
         'depends_on': [
             'package' + enterprise2_sfx(edition),
-        ],
+            ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
             },
         },
         'commands': [
-             './bin/grabpl upload-cdn --edition {} --bucket "grafana-static-assets"'.format(edition),
+            './bin/grabpl upload-cdn --edition {} --bucket "grafana-static-assets"'.format(edition),
         ],
     }
 
@@ -380,7 +379,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             'initialize',
             'lint-backend' + enterprise2_sfx(edition),
             'test-backend' + enterprise2_sfx(edition),
-        ],
+            ],
         'environment': env,
         'commands': cmds,
     }
@@ -395,18 +394,18 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'release':
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-                '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
-        ]
+            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            ]
     elif ver_mode == 'test-release':
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-                '--edition {} --no-pull-enterprise {}'.format(edition, test_release_ver),
+            '--edition {} --no-pull-enterprise {}'.format(edition, test_release_ver),
             ]
     else:
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) + \
-                '--build-id {} --no-pull-enterprise'.format(build_no),
-        ]
+            '--build-id {} --no-pull-enterprise'.format(build_no),
+            ]
 
     return {
         'name': 'build-frontend',
@@ -462,7 +461,7 @@ def test_backend_step(edition):
         'depends_on': [
             'initialize',
             'lint-backend' + enterprise2_sfx(edition),
-        ],
+            ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
@@ -484,7 +483,7 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            'echo Skip test-frontend',
+            'yarn run ci:test-frontend',
         ],
     }
 
@@ -564,7 +563,7 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
         deps.extend([
             'build-backend' + sfx,
             'test-backend' + sfx,
-        ])
+            ])
 
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
@@ -621,17 +620,17 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     if ver_mode == 'release':
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-                '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
-                    sign_args
-                ),
-        ]
+            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
+                sign_args
+            ),
+            ]
     elif ver_mode == 'test-release':
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-                '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
-                    sign_args, test_release_ver,
-                ),
-        ]
+            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
+                sign_args, test_release_ver,
+            ),
+            ]
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
@@ -639,8 +638,8 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
             build_no = '$${SOURCE_BUILD_NUMBER}'
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-                '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
-        ]
+            '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
+            ]
 
     return {
         'name': 'package' + enterprise2_sfx(edition),
@@ -674,7 +673,7 @@ def e2e_tests_server_step(edition, port=3001):
         'detach': True,
         'depends_on': [
             'package' + enterprise2_sfx(edition),
-        ],
+            ],
         'environment': environment,
         'commands': [
             './e2e/start-server',
@@ -690,14 +689,15 @@ def e2e_tests_step(edition, port=3001, tries=None):
         'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
             'end-to-end-tests-server' + enterprise2_sfx(edition),
-        ],
+            ],
         'environment': {
             'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
         },
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            'echo Skip e2e-tests',
+            './node_modules/.bin/cypress install',
+            cmd,
         ],
     }
 
@@ -774,8 +774,16 @@ def postgres_integration_tests_step():
             'POSTGRES_HOST': 'postgres',
         },
         'commands': [
-            'echo Skip postgres-integration-tests',
-        ],
+            'mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30',
+            'mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list',
+            'apt-get install -yq postgresql-client',
+            './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
+            'devenv/docker/blocks/postgres_tests/setup.sql',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+            './bin/grabpl integration-tests --database postgres',
+            ],
     }
 
 def mysql_integration_tests_step():
@@ -791,7 +799,14 @@ def mysql_integration_tests_step():
             'MYSQL_HOST': 'mysql',
         },
         'commands': [
-            'echo Skip postgres-integration-tests',
+            'mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30',
+            'mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list',
+            'apt-get install -yq default-mysql-client',
+            './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+            './bin/grabpl integration-tests --database mysql',
         ],
     }
 
@@ -848,7 +863,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
-            '--packages-bucket grafana-downloads-test'
+              '--packages-bucket grafana-downloads-test'
     else:
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
@@ -860,7 +875,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
             'end-to-end-tests' + enterprise2_sfx(edition),
             'mysql-integration-tests',
             'postgres-integration-tests',
-        ],
+            ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
@@ -872,10 +887,10 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 def publish_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
-            '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
-                test_release_ver,
-            )
+              '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
+              'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
+                  test_release_ver,
+              )
     elif ver_mode == 'release':
         cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
@@ -886,7 +901,7 @@ def publish_packages_step(edition, ver_mode, is_downstream=False):
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
         cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-                edition, build_no,
+            edition, build_no,
         )
     else:
         fail('Unexpected version mode {}'.format(ver_mode))
@@ -1042,14 +1057,14 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     return steps
 
 def integration_test_services():
-   return [
+    return [
         {
             'name': 'postgres',
             'image': 'postgres:12.3-alpine',
             'environment': {
-              'POSTGRES_USER': 'grafanatest',
-              'POSTGRES_PASSWORD': 'grafanatest',
-              'POSTGRES_DB': 'grafanatest',
+                'POSTGRES_USER': 'grafanatest',
+                'POSTGRES_PASSWORD': 'grafanatest',
+                'POSTGRES_DB': 'grafanatest',
             },
         },
         {
