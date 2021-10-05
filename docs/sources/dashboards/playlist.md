@@ -75,7 +75,7 @@ You can edit a playlist by updating its name, interval time, and by adding, remo
 ### Edit a playlist
 
 1. In the playlist page, click **Edit playlist**. The Edit playlist page opens.
-1. Update the name, time interval and add or remove dashboards from the playlist using instructions in [Create a playist](#create-a-playlist).
+1. Update the name and time interval, then add or remove dashboards from the playlist using instructions in [Create a playlist](#create-a-playlist).
 1. Click **Save** to save your changes.
 
 {{< figure src="/static/img/docs/v50/playlist.png" max-width="25rem">}}
