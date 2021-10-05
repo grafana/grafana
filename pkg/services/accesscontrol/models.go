@@ -197,8 +197,20 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll = "settings:*"
+
+	// Licensing related actions
+	ActionLicensingRead        = "licensing:read"
+	ActionLicensingUpdate      = "licensing:update"
+	ActionLicensingDelete      = "licensing:delete"
+	ActionLicensingReportsRead = "licensing.reports:read"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
 
 const FixedRolePrefix = "fixed:"
+
+// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
+var LicensingPageReaderAccess = EvalAny(
+	EvalPermission(ActionLicensingRead),
+	EvalPermission(ActionServerStatsRead),
+)
