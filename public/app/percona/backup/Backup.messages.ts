@@ -17,6 +17,7 @@ export const Messages = {
         vendor: 'Vendor',
         status: 'Status',
         actions: 'Actions',
+        type: 'Type',
       },
       status: {
         invalid: 'Invalid',
@@ -99,5 +100,11 @@ export const Messages = {
     invalid: 'Invalid',
     physical: 'Physical',
     logical: 'Logical',
+  },
+  backupMode: {
+    full: 'Full',
+    incremental: 'Incremental',
+    pitr: 'PITR',
+    invalid: 'Invalid',
   },
 };

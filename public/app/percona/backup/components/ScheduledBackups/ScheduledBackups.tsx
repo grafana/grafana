@@ -17,6 +17,7 @@ import { getCronStringFromValues } from 'app/percona/shared/helpers/cron/cron';
 
 import { Messages } from '../../Backup.messages';
 import { RetryMode } from '../../Backup.types';
+import { formatBackupMode } from '../../Backup.utils';
 import { AddBackupModal } from '../AddBackupModal';
 import { AddBackupFormProps } from '../AddBackupModal/AddBackupModal.types';
 import { DetailedDate } from '../DetailedDate';
@@ -50,6 +51,65 @@ export const ScheduledBackups: FC = () => {
 
     return `${n} backup${n > 1 ? 's' : ''}`;
   }, []);
+
+  const getData = useCallback(async () => {
+    setPending(true);
+    try {
+      const backups = await ScheduledBackupsService.list(generateToken(LIST_SCHEDULED_BACKUPS_CANCEL_TOKEN));
+      setData(backups);
+    } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
+    }
+    setPending(false);
+  }, [generateToken]);
+
+  const handleToggle = useCallback(
+    async ({ id, enabled }: ScheduledBackup) => {
+      setActionPending(true);
+      try {
+        await ScheduledBackupsService.toggle(id, !enabled);
+        getData();
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setActionPending(false);
+      }
+    },
+    [getData]
+  );
+
+  const handleCopy = useCallback(
+    async (backup: ScheduledBackup) => {
+      const { serviceId, locationId, cronExpression, name, description, retention, retryInterval, retryTimes, mode } =
+        backup;
+      const newName = `${Messages.scheduledBackups.copyOf} ${name}`;
+      setActionPending(true);
+      try {
+        await ScheduledBackupsService.schedule(
+          serviceId,
+          locationId,
+          cronExpression,
+          newName,
+          description,
+          retryInterval,
+          retryTimes,
+          retention,
+          false,
+          mode
+        );
+        getData();
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setActionPending(false);
+      }
+    },
+    [getData]
+  );
+
   const columns = useMemo(
     (): Array<Column<ScheduledBackup>> => [
       {
@@ -75,7 +135,8 @@ export const ScheduledBackups: FC = () => {
       },
       {
         Header: Messages.scheduledBackups.table.columns.type,
-        accessor: 'type',
+        accessor: 'mode',
+        Cell: ({ value }) => formatBackupMode(value),
       },
       {
         Header: Messages.scheduledBackups.table.columns.location,
@@ -104,20 +165,6 @@ export const ScheduledBackups: FC = () => {
     ],
     [actionPending, handleCopy, handleToggle, retentionValue]
   );
-
-  const getData = useCallback(async () => {
-    setPending(true);
-    try {
-      const backups = await ScheduledBackupsService.list(generateToken(LIST_SCHEDULED_BACKUPS_CANCEL_TOKEN));
-      setData(backups);
-    } catch (e) {
-      if (isApiCancelError(e)) {
-        return;
-      }
-      logger.error(e);
-    }
-    setPending(false);
-  }, [generateToken]);
 
   const renderSelectedSubRow = React.useCallback(
     (row: Row<ScheduledBackup>) => (
@@ -153,6 +200,7 @@ export const ScheduledBackups: FC = () => {
       retryTimes,
       active,
       retention,
+      mode,
     } = backup;
     try {
       const cronExpression = getCronStringFromValues(
@@ -180,15 +228,16 @@ export const ScheduledBackups: FC = () => {
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.getEditSuccess(backupName)]);
       } else {
         await ScheduledBackupsService.schedule(
-          service.value?.id!,
-          location.value!,
+          service!.value?.id!,
+          location!.value!,
           cronExpression,
           backupName,
           description,
           strRetryInterval,
           resultRetryTimes!,
           retention!,
-          active!
+          active!,
+          mode
         );
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.addSuccess]);
       }
@@ -199,48 +248,6 @@ export const ScheduledBackups: FC = () => {
       logger.error(e);
     }
   };
-
-  const handleCopy = useCallback(
-    async (backup: ScheduledBackup) => {
-      const { serviceId, locationId, cronExpression, name, description, retention, retryInterval, retryTimes } = backup;
-      const newName = `${Messages.scheduledBackups.copyOf} ${name}`;
-      setActionPending(true);
-      try {
-        await ScheduledBackupsService.schedule(
-          serviceId,
-          locationId,
-          cronExpression,
-          newName,
-          description,
-          retryInterval,
-          retryTimes,
-          retention,
-          false
-        );
-        getData();
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        setActionPending(false);
-      }
-    },
-    [getData]
-  );
-
-  const handleToggle = useCallback(
-    async ({ id, enabled }: ScheduledBackup) => {
-      setActionPending(true);
-      try {
-        await ScheduledBackupsService.toggle(id, !enabled);
-        getData();
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        setActionPending(false);
-      }
-    },
-    [getData]
-  );
 
   const onDeleteClick = (backup: ScheduledBackup) => {
     setDeleteModalVisible(true);

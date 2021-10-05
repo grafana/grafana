@@ -1,6 +1,6 @@
 import { Databases } from 'app/percona/shared/core';
 
-import { DataModel, BackupStatus } from '../../Backup.types';
+import { DataModel, BackupStatus, BackupMode } from '../../Backup.types';
 export interface Backup {
   id: string;
   name: string;
@@ -12,6 +12,7 @@ export interface Backup {
   dataModel: DataModel;
   status: BackupStatus;
   vendor: Databases;
+  mode: BackupMode;
 }
 
 export interface RawBackup {
@@ -25,6 +26,7 @@ export interface RawBackup {
   data_model: DataModel;
   status: BackupStatus;
   vendor: Databases;
+  mode: BackupMode;
 }
 
 export interface BackupResponse {

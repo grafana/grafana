@@ -14,6 +14,7 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../Backup.messages';
 import { RetryMode } from '../../Backup.types';
+import { formatBackupMode } from '../../Backup.utils';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
 import { AddBackupModal } from '../AddBackupModal';
 import { AddBackupFormProps } from '../AddBackupModal/AddBackupModal.types';
@@ -27,7 +28,6 @@ import {
   DATA_INTERVAL,
 } from './BackupInventory.constants';
 import { BackupInventoryService } from './BackupInventory.service';
-import { getStyles } from './BackupInventory.styles';
 import { Backup } from './BackupInventory.types';
 import { BackupInventoryActions } from './BackupInventoryActions';
 import { BackupInventoryDetails } from './BackupInventoryDetails';
@@ -63,6 +63,11 @@ export const BackupInventory: FC = () => {
         Header: Messages.backupInventory.table.columns.created,
         accessor: 'created',
         Cell: ({ value }) => <DetailedDate date={value} />,
+      },
+      {
+        Header: Messages.backupInventory.table.columns.type,
+        accessor: 'mode',
+        Cell: ({ value }) => formatBackupMode(value),
       },
       {
         Header: Messages.backupInventory.table.columns.location,
@@ -199,8 +204,8 @@ export const BackupInventory: FC = () => {
     let resultRetryTimes = retryMode === RetryMode.MANUAL ? 0 : retryTimes;
     try {
       await BackupInventoryService.backup(
-        service.value?.id || '',
-        location.value || '',
+        service!.value?.id || '',
+        location!.value || '',
         backupName,
         description,
         strRetryInterval,

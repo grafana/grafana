@@ -1,4 +1,4 @@
-import { BackupType, DataModel } from 'app/percona/backup/Backup.types';
+import { BackupMode, DataModel } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
 
 import * as service from '../ScheduledBackups.service';
@@ -19,7 +19,7 @@ export const stubs: ScheduledBackup[] = [
     lastBackup: 1623424776147,
     dataModel: DataModel.PHYSICAL,
     description: 'Description',
-    type: BackupType.FULL,
+    mode: BackupMode.SNAPSHOT,
     enabled: true,
     retryInterval: '10s',
     retryTimes: 1,
@@ -38,7 +38,7 @@ export const stubs: ScheduledBackup[] = [
     lastBackup: 1623424776147,
     dataModel: DataModel.LOGICAL,
     description: 'Description',
-    type: BackupType.FULL,
+    mode: BackupMode.SNAPSHOT,
     enabled: true,
     retryInterval: '0s',
     retryTimes: 1,
