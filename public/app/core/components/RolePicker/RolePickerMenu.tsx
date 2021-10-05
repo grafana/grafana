@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { CustomScrollbar, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Checkbox, CustomScrollbar, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -22,6 +22,19 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
   const customStyles = useStyles2(getStyles);
   const { builtInRole, options, onChange, onBuiltinRoleChange } = props;
 
+  const [selectedOptions, setSelectedOptions] = useState({} as any);
+
+  const onSelect = (option: SelectableValue<string>) => {
+    if (option.value) {
+      if (selectedOptions[option.value]) {
+        const { [option.value]: deselected, ...restOptions } = selectedOptions;
+        setSelectedOptions(restOptions);
+      } else {
+        setSelectedOptions({ ...selectedOptions, [option.value]: option });
+      }
+    }
+  };
+
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
       <div className={customStyles.groupHeader}>Built-in roles</div>
@@ -31,7 +44,12 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
       <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
         <div className={styles.optionBody}>
           {options.map((option, i) => (
-            <SelectMenuOptions data={option} key={i} />
+            <SelectMenuOptions
+              data={option}
+              key={i}
+              isSelected={option.value && selectedOptions[option.value]}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       </CustomScrollbar>
@@ -45,13 +63,16 @@ interface SelectMenuOptionProps<T> {
   isSelected?: boolean;
   // innerProps: any;
   data: SelectableValue<T>;
+  onSelect: (value: SelectableValue<T>) => void;
 }
 
 export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuOptionProps<any>>>(
   (props, ref) => {
+    const { data, isFocused, isSelected, onSelect } = props;
+
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
-    const { data, isFocused, isSelected } = props;
+    const customStyles = useStyles2(getStyles);
 
     return (
       <div
@@ -59,7 +80,9 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
         className={cx(styles.option, isFocused && styles.optionFocused, isSelected && styles.optionSelected)}
         // {...innerProps}
         aria-label="Select option"
+        onClick={() => onSelect(data)}
       >
+        <Checkbox value={isSelected} className={customStyles.menuOptionCheckbox} />
         {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
         {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} />}
         <div className={styles.optionBody}>
@@ -83,7 +106,7 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       overflow: hidden;
     `,
     groupHeader: css`
-      padding: ${theme.spacing(0, 1)};
+      padding: ${theme.spacing(0, 4)};
       display: flex;
       align-items: center;
       color: ${theme.colors.primary.text};
@@ -94,6 +117,10 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       border-radius: ${theme.shape.borderRadius(1)};
       background-color: ${theme.colors.background.primary};
       z-index: ${theme.zIndex.modal};
+    `,
+    menuOptionCheckbox: css`
+      display: flex;
+      margin: ${theme.spacing(0, 1, 0, 0.25)};
     `,
   };
 };
