@@ -31,7 +31,10 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 58,
+  "iteration": 1633446508183,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "datasource": "${AZ_MON}",
@@ -141,10 +144,15 @@
       },
       "id": 2,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
           "appInsights": {
@@ -165,7 +173,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res)) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
             "resultFormat": "table"
           },
           "hide": false,
@@ -176,7 +184,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Smart detector alert rules",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         },
         {
           "appInsights": {
@@ -197,7 +205,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res)) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.alertsmanagement/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
             "resultFormat": "table"
           },
           "hide": false,
@@ -208,7 +216,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Resource health alert rules",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         },
         {
           "appInsights": {
@@ -229,7 +237,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.insights/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res)) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
+            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| parse type with * 'microsoft.insights/' signalType \r\n| parse properties.detector.supportedResourceTypes with * '[\"' resourceType '\"]' *\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg) and signalType in ($sig_type)\r\nand properties.state in ($stat)\r\n| project name, tostring(properties.state), targetResource, tostring(properties.detector.supportedResourceTypes[0]), signalType\r\n",
             "resultFormat": "table"
           },
           "hide": false,
@@ -240,7 +248,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Alert rules",
@@ -271,7 +279,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 30,
+  "schemaVersion": 31,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -280,8 +288,8 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "RTD-Experimental",
-          "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
+          "text": "",
+          "value": ""
         },
         "datasource": "Azure Monitor",
         "definition": "Subscriptions()",
@@ -303,9 +311,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "development",
-          "value": "development"
+          "selected": true,
+          "text": ["development"],
+          "value": ["development"]
         },
         "datasource": "Azure Monitor",
         "definition": "ResourceGroups($sub)",
@@ -314,58 +322,10 @@
         "hide": 0,
         "includeAll": false,
         "label": "Resource Group",
-        "multi": false,
+        "multi": true,
         "name": "rg",
         "options": [],
         "query": "ResourceGroups($sub)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "Application Insights",
-          "value": "microsoft.insights/components"
-        },
-        "datasource": "Azure Monitor",
-        "definition": "Namespaces($sub, $rg)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource Type",
-        "multi": false,
-        "name": "ns",
-        "options": [],
-        "query": "Namespaces($sub, $rg)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": false,
-          "text": ["rtd-development"],
-          "value": ["rtd-development"]
-        },
-        "datasource": "Azure Monitor",
-        "definition": "ResourceNames($sub, $rg, $ns)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource",
-        "multi": true,
-        "name": "res",
-        "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -446,5 +406,5 @@
   "timezone": "",
   "title": "Alert rules overview",
   "uid": "Pxwf9wN7k",
-  "version": 9
+  "version": 3
 }

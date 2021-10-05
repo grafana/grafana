@@ -31,22 +31,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 72,
-  "iteration": 1633364342735,
-  "links": [
-    {
-      "asDropdown": true,
-      "icon": "external link",
-      "includeVars": true,
-      "keepTime": true,
-      "tags": [],
-      "targetBlank": true,
-      "title": "Available dashboards",
-      "tooltip": "",
-      "type": "dashboards",
-      "url": ""
-    }
-  ],
+  "links": [],
+  "liveNow": false,
   "panels": [
     {
       "datasource": "${AZ_MON}",
@@ -72,7 +58,26 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count_"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "d/5DLst5N7k/alert-consumption?${sub:queryparam}﻿﻿﻿﻿﻿&﻿﻿﻿﻿﻿${rg:queryparam}﻿﻿﻿﻿﻿&﻿﻿﻿﻿﻿${__url_time_range}﻿﻿﻿﻿﻿&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&var-sev=Sev1&var-sev=Sev2&var-sev=Sev3&var-sev=Sev4&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 5,
@@ -94,7 +99,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
           "appInsights": {
@@ -115,7 +120,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup == \"$rg\"\r\n| summarize count()",
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup in ($rg)\r\n| summarize count()",
             "resultFormat": "table"
           },
           "insightsAnalytics": {
@@ -125,7 +130,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Total alerts",
@@ -154,7 +159,26 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "d/Pxwf9wN7k/alert-rules-overview?${sub:queryparam}﻿﻿﻿﻿﻿&﻿﻿﻿﻿﻿${rg:queryparam}﻿﻿﻿﻿﻿&var-sig_type=smartdetectoralertrules&var-sig_type=resourcehealth&var-stat=Enabled&var-stat=Disabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 5,
@@ -176,7 +200,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
           "appInsights": {
@@ -197,7 +221,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/smartdetectoralertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg)\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -208,7 +232,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Smart detector rules",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         },
         {
           "appInsights": {
@@ -229,7 +253,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/resourcehealthalertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg)\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -240,7 +264,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "Resource health alert rules",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         },
         {
           "appInsights": {
@@ -261,7 +285,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.insights/alertrules\"\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg)\r\n| summarize count()",
             "resultFormat": "table"
           },
           "hide": false,
@@ -272,15 +296,101 @@
           "queryType": "Azure Resource Graph",
           "refId": "Insights alert rules",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
+        },
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where type == \"microsoft.insights/metricalerts\"\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg)\r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "hide": false,
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "Metrics alert rules",
+          "subscription": "",
+          "subscriptions": ["$sub"]
+        },
+        {
+          "appInsights": {
+            "dimension": [],
+            "metricName": "select",
+            "timeGrain": "auto"
+          },
+          "azureLogAnalytics": {
+            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          },
+          "azureMonitor": {
+            "aggOptions": [],
+            "dimensionFilter": "*",
+            "dimensionFilters": [],
+            "timeGrain": "auto",
+            "timeGrains": [],
+            "top": "10"
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| where type == \"microsoft.insights/activitylogalerts\"\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg)\r\n| summarize count()",
+            "resultFormat": "table"
+          },
+          "hide": false,
+          "insightsAnalytics": {
+            "query": "",
+            "resultFormat": "time_series"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "Log alert rules",
+          "subscription": "",
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Total alert rules",
       "transformations": [
         {
-          "id": "seriesToColumns",
+          "id": "concatenate",
+          "options": {}
+        },
+        {
+          "id": "calculateField",
           "options": {
-            "byField": "count_"
+            "mode": "reduceRow",
+            "reduce": {
+              "include": [],
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "count_ 1": true,
+              "count_ 2": true,
+              "count_ 3": true,
+              "count_ 4": true,
+              "count_ 5": true
+            },
+            "indexByName": {},
+            "renameByName": {}
           }
         }
       ],
@@ -331,7 +441,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
           "appInsights": {
@@ -352,7 +462,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup == \"$rg\" and properties.conditions.targetResourceGroup in ($res) and tolower(targetResource) in (tolower($res))\r\n| summarize count()",
+            "query": "resources\r\n| where type == \"microsoft.alertsmanagement/actionrules\"\r\n| parse properties.scope with * 'components/' targetResource '\"' *\r\n| where subscriptionId == \"$sub\" and resourceGroup in ($rg)\r\n| summarize count()",
             "resultFormat": "table"
           },
           "insightsAnalytics": {
@@ -362,7 +472,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Action rules",
@@ -446,6 +556,16 @@
               {
                 "id": "custom.displayMode",
                 "value": "color-text"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "",
+                    "url": "d/5DLst5N7k/alert-consumption?${sub:queryparam}﻿﻿﻿﻿﻿&﻿﻿﻿﻿﻿${rg:queryparam}﻿﻿﻿﻿﻿&﻿﻿﻿﻿﻿${__url_time_range}﻿﻿﻿﻿﻿&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=${__data.fields.properties_essentials_severity}&${__url_time_range}"
+                  }
+                ]
               }
             ]
           },
@@ -582,7 +702,7 @@
           }
         ]
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
           "appInsights": {
@@ -603,7 +723,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup == \"$rg\" and properties.essentials.targetResourceType == \"$ns\"\r\nand properties.essentials.targetResourceName in ($res)\r\n| summarize total = count(),\r\n            mcFired = countif(properties.essentials.monitorCondition == \"Fired\"),\r\n            mcResolved = countif(properties.essentials.monitorCondition == \"Resolved\"),\r\n            asNew = countif(properties.essentials.alertState == \"New\"),\r\n            asAcknowledged = countif(properties.essentials.alertState == \"Acknowledged\"),\r\n            asClosed = countif(properties.essentials.alertState == \"Closed\")\r\nby tostring(properties.essentials.severity)",
+            "query": "alertsmanagementresources\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup in ($rg)\r\n| summarize total = count(),\r\n            mcFired = countif(properties.essentials.monitorCondition == \"Fired\"),\r\n            mcResolved = countif(properties.essentials.monitorCondition == \"Resolved\"),\r\n            asNew = countif(properties.essentials.alertState == \"New\"),\r\n            asAcknowledged = countif(properties.essentials.alertState == \"Acknowledged\"),\r\n            asClosed = countif(properties.essentials.alertState == \"Closed\")\r\nby tostring(properties.essentials.severity)",
             "resultFormat": "table"
           },
           "insightsAnalytics": {
@@ -613,7 +733,7 @@
           "queryType": "Azure Resource Graph",
           "refId": "A",
           "subscription": "",
-          "subscriptions": []
+          "subscriptions": ["$sub"]
         }
       ],
       "title": "Alerts by Severity",
@@ -622,7 +742,7 @@
       "type": "table"
     }
   ],
-  "schemaVersion": 30,
+  "schemaVersion": 31,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -630,7 +750,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "RTD-Experimental",
           "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
         },
@@ -655,8 +775,8 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "development",
-          "value": "development"
+          "text": [],
+          "value": []
         },
         "datasource": "Azure Monitor",
         "definition": "ResourceGroups($sub)",
@@ -665,58 +785,10 @@
         "hide": 0,
         "includeAll": false,
         "label": "Resource Group",
-        "multi": false,
+        "multi": true,
         "name": "rg",
         "options": [],
         "query": "ResourceGroups($sub)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": true,
-          "text": "Application Insights",
-          "value": "microsoft.insights/components"
-        },
-        "datasource": "Azure Monitor",
-        "definition": "Namespaces($sub, $rg)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource type",
-        "multi": false,
-        "name": "ns",
-        "options": [],
-        "query": "Namespaces($sub, $rg)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "rtd-development",
-          "value": "rtd-development"
-        },
-        "datasource": "Azure Monitor",
-        "definition": "ResourceNames($sub, $rg, $ns)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource",
-        "multi": true,
-        "name": "res",
-        "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -733,5 +805,5 @@
   "timezone": "",
   "title": "Alert Consumption At Scale",
   "uid": "hcsp8ND7k",
-  "version": 5
+  "version": 8
 }

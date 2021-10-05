@@ -31,7 +31,10 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 59,
+  "iteration": 1633448629564,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "datasource": "${AZ_MON}",
@@ -202,16 +205,6 @@
               {
                 "id": "custom.displayMode",
                 "value": "color-text"
-              },
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "targetBlank": true,
-                    "title": "",
-                    "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourcegroups/${rg}/providers/${ns}/${__data.fields.properties_essentials_targetResourceName}/overview"
-                  }
-                ]
               }
             ]
           },
@@ -311,7 +304,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.0-pre",
       "targets": [
         {
           "appInsights": {
@@ -332,7 +325,7 @@
             "top": "10"
           },
           "azureResourceGraph": {
-            "query": "alertsmanagementresources\r\n| join kind=leftouter (ResourceContainers | where type=='microsoft.resources/subscriptions' | project SubName=name, subscriptionId) on subscriptionId\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup == \"$rg\" and properties.essentials.targetResourceType == \"$ns\"\r\nand properties.essentials.targetResourceName == \"$res\" and properties.essentials.monitorCondition in ($mc)\r\nand properties.essentials.alertState in ($as) and properties.essentials.severity in ($sev)\r\nand todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| parse id with * \"alerts/\" alertId\r\n| project name, properties.essentials.severity, tostring(properties.essentials.monitorCondition), \r\ntostring(properties.essentials.alertState), tostring(properties.essentials.targetResourceName),\r\n tostring(properties.essentials.monitorService), tostring(properties.essentials.signalType),\r\n  todatetime(properties.essentials.lastModifiedDateTime), tostring(SubName), alertId, id\r\n",
+            "query": "alertsmanagementresources\r\n| join kind=leftouter (ResourceContainers | where type=='microsoft.resources/subscriptions' | project SubName=name, subscriptionId) on subscriptionId\r\n| where type == \"microsoft.alertsmanagement/alerts\"\r\n| where subscriptionId == \"$sub\" and properties.essentials.targetResourceGroup in ($rg) and properties.essentials.monitorCondition in ($mc)\r\nand properties.essentials.alertState in ($as) and properties.essentials.severity in ($sev)\r\nand todatetime(properties.essentials.lastModifiedDateTime) >= $__timeFrom and todatetime(properties.essentials.lastModifiedDateTime) <= $__timeTo\r\n| parse id with * \"alerts/\" alertId\r\n| project name, properties.essentials.severity, tostring(properties.essentials.monitorCondition), \r\ntostring(properties.essentials.alertState), tostring(properties.essentials.targetResourceName),\r\n tostring(properties.essentials.monitorService), tostring(properties.essentials.signalType),\r\n  todatetime(properties.essentials.lastModifiedDateTime), tostring(SubName), alertId, id\r\n",
             "resultFormat": "table"
           },
           "insightsAnalytics": {
@@ -382,7 +375,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 30,
+  "schemaVersion": 31,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -394,7 +387,7 @@
           "text": "RTD-Experimental",
           "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
         },
-        "datasource": "Azure Monitor",
+        "datasource": "${AZ_MON}",
         "definition": "subscriptions()",
         "description": null,
         "error": null,
@@ -425,58 +418,10 @@
         "hide": 0,
         "includeAll": false,
         "label": "Resource group",
-        "multi": false,
+        "multi": true,
         "name": "rg",
         "options": [],
         "query": "ResourceGroups($sub)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "Application Insights",
-          "value": "microsoft.insights/components"
-        },
-        "datasource": "Azure Monitor",
-        "definition": "Namespaces($sub, $rg)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource type",
-        "multi": false,
-        "name": "ns",
-        "options": [],
-        "query": "Namespaces($sub, $rg)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "rtd-development",
-          "value": "rtd-development"
-        },
-        "datasource": "Azure Monitor",
-        "definition": "ResourceNames($sub, $rg, $ns)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource",
-        "multi": false,
-        "name": "res",
-        "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -609,5 +554,5 @@
   "timezone": "",
   "title": "Alert consumption",
   "uid": "5DLst5N7k",
-  "version": 23
+  "version": 2
 }
