@@ -101,6 +101,7 @@ func (r RoleDTO) GetDisplayName() string {
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
+	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
