@@ -16,7 +16,7 @@ A playlist displays a list of dashboards that are in a sequence. Use a playlist 
 
 ## Access, share, and control a playlist
 
-Use the information in this section to access existing playlists. Start a playlist using one of the five available modes and control the display.
+Use the information in this section to access existing playlists. Start and control the display of a playlist using one of the five available modes.
 
 ### Access playlist
 
