@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
+
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
 
 	"github.com/centrifugal/centrifuge"
 )
@@ -79,6 +82,43 @@ type ChannelRule struct {
 	Settings ChannelRuleSettings `json:"settings"`
 }
 
+func (r ChannelRule) Valid() (bool, string) {
+	ok, reason := pattern.Valid(r.Pattern)
+	if !ok {
+		return false, fmt.Sprintf("invalid pattern: %s", reason)
+	}
+	if r.Settings.Converter != nil {
+		if !typeRegistered(r.Settings.Converter.Type, ConvertersRegistry) {
+			return false, fmt.Sprintf("unknown converter type: %s", r.Settings.Converter.Type)
+		}
+	}
+	if r.Settings.Subscriber != nil {
+		if !typeRegistered(r.Settings.Subscriber.Type, SubscribersRegistry) {
+			return false, fmt.Sprintf("unknown subscriber type: %s", r.Settings.Subscriber.Type)
+		}
+	}
+	if r.Settings.Processor != nil {
+		if !typeRegistered(r.Settings.Processor.Type, ProcessorsRegistry) {
+			return false, fmt.Sprintf("unknown processor type: %s", r.Settings.Processor.Type)
+		}
+	}
+	if r.Settings.Outputter != nil {
+		if !typeRegistered(r.Settings.Outputter.Type, OutputsRegistry) {
+			return false, fmt.Sprintf("unknown output type: %s", r.Settings.Outputter.Type)
+		}
+	}
+	return true, ""
+}
+
+func typeRegistered(entityType string, registry []EntityInfo) bool {
+	for _, info := range registry {
+		if info.Type == entityType {
+			return true
+		}
+	}
+	return false
+}
+
 type RemoteWriteBackend struct {
 	OrgId    int64              `json:"-"`
 	UID      string             `json:"uid"`
@@ -91,6 +131,23 @@ type RemoteWriteBackends struct {
 
 type ChannelRules struct {
 	Rules []ChannelRule `json:"rules"`
+}
+
+func checkRulesValid(orgID int64, rules []ChannelRule) (ok bool, reason string) {
+	t := tree.New()
+	defer func() {
+		if r := recover(); r != nil {
+			reason = fmt.Sprintf("%v", r)
+			ok = false
+		}
+	}()
+	for _, rule := range rules {
+		if rule.OrgId == orgID || (rule.OrgId == 0 && orgID == 1) {
+			t.AddRoute("/"+rule.Pattern, struct{}{})
+		}
+	}
+	ok = true
+	return ok, reason
 }
 
 type MultipleConditionCheckerConfig struct {
@@ -113,6 +170,9 @@ type ConditionCheckerConfig struct {
 type RuleStorage interface {
 	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
+	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
+	UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
+	DeleteChannelRule(_ context.Context, orgID int64, pattern string) error
 }
 
 type StorageRuleBuilder struct {

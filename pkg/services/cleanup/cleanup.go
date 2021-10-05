@@ -53,7 +53,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.expireOldUserInvites()
 			srv.deleteStaleShortURLs()
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
-				time.Minute*10, func() {
+				time.Minute*10, func(context.Context) {
 					srv.deleteOldLoginAttempts()
 				})
 			if err != nil {

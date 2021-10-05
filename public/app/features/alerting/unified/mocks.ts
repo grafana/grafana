@@ -1,4 +1,10 @@
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourcePluginMeta,
+  ScopedVars,
+} from '@grafana/data';
 import {
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
@@ -25,10 +31,10 @@ import {
 
 let nextDataSourceId = 1;
 
-export const mockDataSource = (
-  partial: Partial<DataSourceInstanceSettings> = {},
+export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData>(
+  partial: Partial<DataSourceInstanceSettings<T>> = {},
   meta: Partial<DataSourcePluginMeta> = {}
-): DataSourceInstanceSettings<any> => {
+): DataSourceInstanceSettings<T> {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -37,7 +43,7 @@ export const mockDataSource = (
     type: 'prometheus',
     name: `Prometheus-${id}`,
     access: 'proxy',
-    jsonData: {},
+    jsonData: {} as T,
     meta: ({
       info: {
         logos: {
@@ -49,7 +55,7 @@ export const mockDataSource = (
     } as any) as DataSourcePluginMeta,
     ...partial,
   };
-};
+}
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   activeAt: '2021-03-18T13:47:05.04938691Z',
@@ -351,6 +357,14 @@ export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     route: {
       receiver: 'cloud-receiver',
+      routes: [
+        {
+          receiver: 'foo-receiver',
+        },
+        {
+          receiver: 'bar-receiver',
+        },
+      ],
     },
     receivers: [
       {
