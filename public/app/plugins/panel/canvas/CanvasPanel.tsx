@@ -1,10 +1,12 @@
 import { Component } from 'react';
-import { PanelProps } from '@grafana/data';
+import { CoreApp, PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Subscription } from 'rxjs';
-import { PanelEditExitedEvent, PanelOptionsReloadEvent } from 'app/types/events';
+import { PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -12,10 +14,15 @@ interface State {
   refresh: number;
 }
 
-// Used to pass the scene to the editor functions
-export let lastLoadedScene: Scene | undefined = undefined;
+export interface InstanceState {
+  scene: Scene;
+  selected?: ElementState;
+}
 
 export class CanvasPanel extends Component<Props, State> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
   readonly scene: Scene;
   private subs = new Subscription();
   needsReload = false;
@@ -28,7 +35,7 @@ export class CanvasPanel extends Component<Props, State> {
 
     // Only the initial options are ever used.
     // later changs are all controled by the scene
-    this.scene = lastLoadedScene = new Scene(this.props.options.root, this.onUpdateScene);
+    this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
 
@@ -42,18 +49,24 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    lastLoadedScene = this.scene;
-    if (window.location.href.indexOf('editPanel=') > 0) {
-      console.log('componentDidMount! trigger panel options change');
-      // Trigger reloading the editor... now pointing pointing to the loaded scene
-      this.props.eventBus.publish(new PanelOptionsReloadEvent());
+    this.panelContext = this.context as PanelContext;
+    if (this.panelContext.onInstanceStateChange) {
+      if (this.panelContext.app === CoreApp.PanelEditor) {
+        this.panelContext.onInstanceStateChange({
+          scene: this.scene,
+        });
 
-      // reload the settings when layer selection changes
-      this.subs.add(
-        this.scene.getSelected().subscribe({
-          next: () => this.props.eventBus.publish(new PanelOptionsReloadEvent()),
-        })
-      );
+        this.subs.add(
+          this.scene.getSelected().subscribe({
+            next: (v) => {
+              this.panelContext.onInstanceStateChange!({
+                scene: this.scene,
+                selected: v,
+              });
+            },
+          })
+        );
+      }
     }
   }
 
@@ -92,7 +105,6 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.load(nextProps.options.root);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
-      lastLoadedScene = this.scene;
       changed = true;
     }
 

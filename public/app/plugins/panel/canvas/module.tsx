@@ -1,15 +1,16 @@
 import { PanelPlugin } from '@grafana/data';
 
-import { CanvasPanel, lastLoadedScene } from './CanvasPanel';
+import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { PanelOptions } from './models.gen';
-import { CanvasElementOptions } from 'app/features/canvas';
 import { getElementEditor } from './editor/elementEditor';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig()
   .setPanelOptions((builder, context) => {
-    console.log('BUILD canvas editors', lastLoadedScene, context.options);
+    const state: InstanceState = context.instanceState;
+
+    console.log('BUILD canvas editors', state, context.options);
 
     builder.addBooleanSwitch({
       path: 'inlineEditing',
@@ -18,19 +19,13 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
       defaultValue: true,
     });
 
-    if (lastLoadedScene) {
-      const selected = lastLoadedScene.getSelectedItem();
-      if (selected) {
-        const uid = selected.UID;
-        builder.addNestedOptions(
-          getElementEditor({
-            category: ['Selected element'],
-            getOptions: () => lastLoadedScene!.getElement(uid)!.options,
-            onChange: (v: CanvasElementOptions) => {
-              lastLoadedScene?.onChange(uid, v);
-            },
-          })
-        );
-      }
+    if (state?.selected) {
+      builder.addNestedOptions(
+        getElementEditor({
+          category: ['Selected element'],
+          elemment: state.selected,
+          scene: state.scene,
+        })
+      );
     }
   });

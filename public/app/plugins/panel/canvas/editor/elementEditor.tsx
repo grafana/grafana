@@ -3,11 +3,13 @@ import { optionBuilder } from './options';
 import { CanvasElementOptions, canvasElementRegistry, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
 export interface CanvasEditorOptions {
-  category: string[];
-  getOptions: () => CanvasElementOptions;
-  onChange: (v: CanvasElementOptions) => void;
+  elemment: ElementState;
+  scene: Scene;
+  category?: string[];
 }
 
 export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<CanvasElementOptions> {
@@ -18,10 +20,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
     // Note that canvas editor writes things to the scene!
     values: (parent: NestedValueAccess) => ({
       getValue: (path: string) => {
-        return lodashGet(opts.getOptions(), path);
+        return lodashGet(opts.elemment.options, path);
       },
       onChange: (path: string, value: any) => {
-        let options = opts.getOptions();
+        let options = opts.elemment.options;
         if (path === 'type' && value) {
           const layer = canvasElementRegistry.getIfExists(value);
           if (!layer) {
@@ -36,14 +38,13 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         } else {
           options = setOptionImmutably(options, path, value);
         }
-        opts.onChange(options);
+        opts.scene.onChange(opts.elemment.UID, options);
       },
     }),
 
     // Dynamically fill the selected element
     build: (builder, context) => {
-      const { options } = context;
-
+      const { options } = opts.elemment;
       const layerTypes = canvasElementRegistry.selectOptions(
         options?.type // the selected value
           ? [options.type] // as an array
