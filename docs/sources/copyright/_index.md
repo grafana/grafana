@@ -1,5 +1,5 @@
 +++
-title = "Copyright Notice"
+title = "Copyright notice"
 aliases = ["/docs/grafana/latest/copyright-notice"]
 +++
 
