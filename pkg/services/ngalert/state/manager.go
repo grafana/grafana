@@ -1,7 +1,9 @@
 package state
 
 import (
+	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -31,9 +33,9 @@ type Manager struct {
 	instanceStore store.InstanceStore
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics),
+		cache:         newCache(logger, metrics, externalURL),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,
@@ -204,7 +206,7 @@ func (st *Manager) recordMetrics() {
 	for {
 		select {
 		case <-ticker.C:
-			st.log.Info("recording state cache metrics", "now", time.Now())
+			st.log.Debug("recording state cache metrics", "now", time.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
 			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
@@ -251,7 +253,7 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		OrgId: alertRule.OrgID,
 	}
 
-	err = sqlstore.GetDashboard(query)
+	err = sqlstore.GetDashboardCtx(context.TODO(), query)
 	if err != nil {
 		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 		return

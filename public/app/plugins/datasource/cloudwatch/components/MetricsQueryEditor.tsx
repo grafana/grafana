@@ -1,13 +1,13 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
-import { ExploreQueryFieldProps, PanelData } from '@grafana/data';
+import { QueryEditorProps, PanelData } from '@grafana/data';
 import { LegacyForms, ValidationEvents, EventsWithValidation, Icon } from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
 import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchJsonData, ExecutedQueryPreview } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryField, Alias, MetricsQueryFieldsEditor } from './';
 
-export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
 interface State {
   showMeta: boolean;

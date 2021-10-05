@@ -16,10 +16,10 @@
      "x-go-name": "ActiveAt"
     },
     "annotations": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "labels": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "state": {
      "type": "string",
@@ -179,7 +179,7 @@
      "x-go-name": "Alerts"
     },
     "annotations": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "duration": {
      "format": "double",
@@ -196,7 +196,7 @@
      "x-go-name": "Health"
     },
     "labels": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "lastError": {
      "type": "string",
@@ -606,6 +606,13 @@
      },
      "type": "array",
      "x-go-name": "SlackConfigs"
+    },
+    "sns_configs": {
+     "items": {
+      "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array",
+     "x-go-name": "SNSConfigs"
     },
     "victorops_configs": {
      "items": {
@@ -1164,6 +1171,10 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/common/config"
   },
+  "ObjectMatchers": {
+   "$ref": "#/definitions/Matchers",
+   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+  },
   "OpsGenieConfig": {
    "properties": {
     "api_key": {
@@ -1216,6 +1227,10 @@
     "tags": {
      "type": "string",
      "x-go-name": "Tags"
+    },
+    "update_alerts": {
+     "type": "boolean",
+     "x-go-name": "UpdateAlerts"
     }
    },
    "title": "OpsGenieConfig configures notifications via OpsGenie.",
@@ -1453,6 +1468,13 @@
      },
      "type": "array",
      "x-go-name": "SlackConfigs"
+    },
+    "sns_configs": {
+     "items": {
+      "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array",
+     "x-go-name": "SNSConfigs"
     },
     "victorops_configs": {
      "items": {
@@ -1747,6 +1769,13 @@
      "type": "array",
      "x-go-name": "SlackConfigs"
     },
+    "sns_configs": {
+     "items": {
+      "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array",
+     "x-go-name": "SNSConfigs"
+    },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
@@ -1803,6 +1832,7 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Route": {
+   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "continue": {
      "type": "boolean",
@@ -1842,6 +1872,9 @@
      "type": "array",
      "x-go-name": "MuteTimeIntervals"
     },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
     "receiver": {
      "type": "string",
      "x-go-name": "Receiver"
@@ -1857,9 +1890,8 @@
      "x-go-name": "Routes"
     }
    },
-   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Rule": {
    "description": "adapted from cortex",
@@ -1874,7 +1906,7 @@
      "x-go-name": "Health"
     },
     "labels": {
-     "$ref": "#/definitions/labels"
+     "$ref": "#/definitions/overrideLabels"
     },
     "lastError": {
      "type": "string",
@@ -2013,6 +2045,53 @@
    "type": "string",
    "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
+  "SNSConfig": {
+   "properties": {
+    "api_url": {
+     "type": "string",
+     "x-go-name": "APIUrl"
+    },
+    "attributes": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Attributes"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message": {
+     "type": "string",
+     "x-go-name": "Message"
+    },
+    "phone_number": {
+     "type": "string",
+     "x-go-name": "PhoneNumber"
+    },
+    "send_resolved": {
+     "type": "boolean",
+     "x-go-name": "VSendResolved"
+    },
+    "sigv4": {
+     "$ref": "#/definitions/SigV4Config"
+    },
+    "subject": {
+     "type": "string",
+     "x-go-name": "Subject"
+    },
+    "target_arn": {
+     "type": "string",
+     "x-go-name": "TargetARN"
+    },
+    "topic_arn": {
+     "type": "string",
+     "x-go-name": "TopicARN"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
   "Sample": {
    "properties": {
     "Metric": {
@@ -2039,6 +2118,28 @@
   "SecretURL": {
    "$ref": "#/definitions/URL",
    "title": "SecretURL is a URL that must not be revealed on marshaling."
+  },
+  "SigV4Config": {
+   "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
+   "properties": {
+    "AccessKey": {
+     "type": "string"
+    },
+    "Profile": {
+     "type": "string"
+    },
+    "Region": {
+     "type": "string"
+    },
+    "RoleARN": {
+     "type": "string"
+    },
+    "SecretKey": {
+     "$ref": "#/definitions/Secret"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/sigv4"
   },
   "SlackAction": {
    "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -2548,7 +2649,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2570,14 +2670,17 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -2697,6 +2800,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -2755,19 +2859,17 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2819,17 +2921,14 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -2839,15 +2938,6 @@
    "type": "object",
    "x-go-name": "LabelSet",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
-  },
-  "labels": {
-   "additionalProperties": {
-    "type": "string"
-   },
-   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-   "title": "override the labels type with a map for generation.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "matcher": {
    "description": "Matcher matcher",
@@ -2890,6 +2980,15 @@
    "type": "array",
    "x-go-name": "Matchers",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+  },
+  "overrideLabels": {
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
+   "title": "override the labels type with a map for generation.",
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "peerStatus": {
    "description": "PeerStatus peer status",
@@ -2958,7 +3057,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2998,9 +3096,12 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3011,9 +3112,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -3701,6 +3800,17 @@
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
      {
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
+     },
+     {
       "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
       "name": "Recipient",
@@ -3732,6 +3842,17 @@
       "name": "Recipient",
       "required": true,
       "type": "string"
+     },
+     {
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
      }
     ],
     "produces": [

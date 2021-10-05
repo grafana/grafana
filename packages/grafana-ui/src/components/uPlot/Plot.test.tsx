@@ -55,7 +55,7 @@ const mockData = () => {
 
   const config = new UPlotConfigBuilder();
   config.addSeries({} as SeriesProps);
-  return { data, timeRange, config };
+  return { data: [data], timeRange, config };
 };
 
 describe('UPlotChart', () => {
@@ -104,7 +104,7 @@ describe('UPlotChart', () => {
 
       expect(uPlot).toBeCalledTimes(1);
 
-      data.fields[1].values.set(0, 1);
+      data[0].fields[1].values.set(0, 1);
 
       rerender(
         <UPlotChart

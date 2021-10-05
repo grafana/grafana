@@ -1,6 +1,7 @@
 package guardian
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"runtime"
@@ -701,7 +702,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				UserId: 1,
 				Login:  "user1",
 			}
-			g := New(dashboardID, orgID, user)
+			g := New(context.Background(), dashboardID, orgID, user)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			So(err, ShouldBeNil)
@@ -717,7 +718,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := New(dashboardID, orgID, user)
+			g := New(context.Background(), dashboardID, orgID, user)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			So(err, ShouldBeNil)
@@ -751,7 +752,7 @@ func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 				UserId: 1,
 				Login:  "user1",
 			}
-			g := New(dashboardID, orgID, user)
+			g := New(context.Background(), dashboardID, orgID, user)
 
 			acl, err := g.GetACLWithoutDuplicates()
 			require.NoError(t, err)

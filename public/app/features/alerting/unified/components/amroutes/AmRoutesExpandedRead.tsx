@@ -11,9 +11,15 @@ export interface AmRoutesExpandedReadProps {
   onChange: (routes: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
+  readOnly?: boolean;
 }
 
-export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, receivers, routes }) => {
+export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
+  onChange,
+  receivers,
+  routes,
+  readOnly = false,
+}) => {
   const styles = useStyles2(getStyles);
   const gridStyles = useStyles2(getGridStyles);
 
@@ -66,7 +72,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
         ) : (
           <p>No nested policies configured.</p>
         )}
-        {!isAddMode && (
+        {!isAddMode && !readOnly && (
           <Button
             className={styles.addNestedRoutingBtn}
             icon="plus"

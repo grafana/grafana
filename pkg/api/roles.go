@@ -13,7 +13,7 @@ const (
 	ActionDatasourcesCreate = "datasources:create"
 	ActionDatasourcesWrite  = "datasources:write"
 	ActionDatasourcesDelete = "datasources:delete"
-	ActionDatasourcesIDRead = "datasources:id:read"
+	ActionDatasourcesIDRead = "datasources.id:read"
 )
 
 // API related scopes
@@ -74,7 +74,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:datasources:id:viewer",
 				Description: "Gives access to read datasources ID",
 				Permissions: []accesscontrol.Permission{
@@ -90,3 +90,29 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	return hs.AccessControl.DeclareFixedRoles(registrations...)
 }
+
+// Evaluators
+// here is the list of complex evaluators we use in this package
+
+// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
+var dataSourcesConfigurationAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(ActionDatasourcesCreate),
+		accesscontrol.EvalPermission(ActionDatasourcesDelete),
+		accesscontrol.EvalPermission(ActionDatasourcesWrite),
+	),
+)
+
+// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
+var dataSourcesNewAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesCreate),
+	accesscontrol.EvalPermission(ActionDatasourcesWrite),
+)
+
+// dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
+var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesWrite),
+)

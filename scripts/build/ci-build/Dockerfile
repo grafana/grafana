@@ -96,6 +96,11 @@ RUN curl -fLO https://github.com/cuelang/cue/releases/download/v${CUE_VERSION}/c
 RUN echo $CUE_CHKSUM cue_${CUE_VERSION}_Linux_x86_64.tar.gz | sha256sum --check --strict --status
 RUN tar xf cue_${CUE_VERSION}_Linux_x86_64.tar.gz -C /tmp cue
 
+ARG DOCKERIZE_VERSION=0.6.1
+RUN curl -fLO https://github.com/jwilder/dockerize/releases/download/v${DOCKERIZE_VERSION}/dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
+RUN tar -xzvf dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz -C /tmp/
+RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
+
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20210208
@@ -103,7 +108,7 @@ FROM debian:stretch-20210208
 ENV GOVERSION=1.17 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=14.17.5-1nodesource1 \
+    NODEVERSION=14.17.6-1nodesource1 \
     YARNVERSION=1.22.5-1
 
 # Use ARG so as not to persist environment variable in image
@@ -113,6 +118,7 @@ COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz 
 COPY --from=toolchain /tmp/golangci-lint /usr/local/bin/
 COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
 COPY --from=toolchain /tmp/cue /usr/local/bin/
+COPY --from=toolchain /tmp/dockerize /usr/local/bin/
 
 RUN apt-get update && \
     apt-get install -yq  \

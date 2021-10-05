@@ -16,7 +16,6 @@ export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
-  highlighterExpressions?: string[];
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
@@ -88,7 +87,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       prettifyLogMessage,
       logRows,
       deduplicatedRows,
-      highlighterExpressions,
       timeZone,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -129,7 +127,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 key={row.uid}
                 getRows={getRows}
                 getRowContext={getRowContext}
-                highlighterExpressions={highlighterExpressions}
                 row={row}
                 showContextToggle={showContextToggle}
                 showDuplicates={showDuplicates}

@@ -30,6 +30,7 @@ export interface DataSourcePickerProps {
   variables?: boolean;
   alerting?: boolean;
   pluginId?: string;
+  // If set to true and there is no value select will be empty, otherwise it will preselect default data source
   noDefault?: boolean;
   width?: number;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
@@ -144,6 +145,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
+          inputId="data-source-picker"
           menuShouldPortal
           className={styles.select}
           isMulti={false}

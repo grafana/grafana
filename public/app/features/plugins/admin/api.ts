@@ -1,13 +1,17 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { PluginError, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin, CatalogPluginDetails } from './types';
-import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
-
-export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
-  const [localPlugins, remotePlugins] = await Promise.all([getLocalPlugins(), getRemotePlugins()]);
-
-  return mergeLocalsAndRemotes(localPlugins, remotePlugins);
-}
+import { mergeLocalAndRemote } from './helpers';
+import {
+  PluginDetails,
+  Org,
+  LocalPlugin,
+  RemotePlugin,
+  CatalogPlugin,
+  CatalogPluginDetails,
+  Version,
+  PluginVersion,
+} from './types';
 
 export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
   const { local, remote } = await getPlugin(id);
@@ -19,7 +23,11 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const localPlugins = await getLocalPlugins();
   const local = localPlugins.find((p) => p.id === id);
   const isInstalled = Boolean(local);
-  const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
+  const [remote, versions, localReadme] = await Promise.all([
+    getRemotePlugin(id, isInstalled),
+    getPluginVersions(id),
+    getLocalPluginReadme(id),
+  ]);
   const dependencies = remote?.json?.dependencies;
   // Prepend semver range when we fallback to grafanaVersion (deprecated in favour of grafanaDependency)
   // otherwise plugins cannot be installed.
@@ -33,12 +41,12 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     grafanaDependency,
     pluginDependencies: dependencies?.plugins || [],
     links: remote?.json?.info.links || local?.info.links || [],
-    readme: remote?.readme,
+    readme: localReadme || remote?.readme,
     versions,
   };
 }
 
-async function getRemotePlugins(): Promise<RemotePlugin[]> {
+export async function getRemotePlugins(): Promise<RemotePlugin[]> {
   const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
   return res.items;
 }
@@ -59,26 +67,51 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
   };
 }
 
-async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {
+export async function getPluginErrors(): Promise<PluginError[]> {
   try {
-    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}`);
-  } catch (error) {
-    // this might be a plugin that doesn't exist on gcom.
-    error.isHandled = isInstalled;
-    return;
-  }
-}
-
-async function getPluginVersions(id: string): Promise<any[]> {
-  try {
-    const versions = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}/versions`);
-    return versions.items;
+    return await getBackendSrv().get(`${API_ROOT}/errors`);
   } catch (error) {
     return [];
   }
 }
 
-async function getLocalPlugins(): Promise<LocalPlugin[]> {
+async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {
+  try {
+    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}`, {});
+  } catch (error) {
+    // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+    error.isHandled = true;
+    return;
+  }
+}
+
+async function getPluginVersions(id: string): Promise<Version[]> {
+  try {
+    const versions: { items: PluginVersion[] } = await getBackendSrv().get(
+      `${GRAFANA_API_ROOT}/plugins/${id}/versions`
+    );
+
+    return (versions.items || []).map(({ version, createdAt }) => ({ version, createdAt }));
+  } catch (error) {
+    // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+    error.isHandled = true;
+    return [];
+  }
+}
+
+async function getLocalPluginReadme(id: string): Promise<string> {
+  try {
+    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/help`);
+    const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
+
+    return markdownAsHtml;
+  } catch (error) {
+    error.isHandled = true;
+    return '';
+  }
+}
+
+export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
   return installed;
 }

@@ -6,6 +6,7 @@ import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
   AnnotationEventUIModel,
+  CoreApp,
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
@@ -36,6 +37,8 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
+import { setPanelInstanceState } from '../state/reducers';
+import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -76,17 +79,42 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
-        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
+        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
+        app: this.getPanelContextApp(),
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
         onAnnotationCreate: this.onAnnotationCreate,
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
+        onInstanceStateChange: this.onInstanceStateChange,
       },
       data: this.getInitialPanelDataState(),
     };
+  }
+
+  onInstanceStateChange = (value: any) => {
+    this.setState({
+      context: {
+        ...this.state.context,
+        instanceState: value,
+      },
+    });
+
+    // Set redux panel state so panel options can get notified
+    store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
+  };
+
+  getPanelContextApp() {
+    if (this.props.isEditing) {
+      return CoreApp.PanelEditor;
+    }
+    if (this.props.isViewing) {
+      return CoreApp.PanelViewer;
+    }
+
+    return CoreApp.Dashboard;
   }
 
   onSeriesColorChange = (label: string, color: string) => {
@@ -162,20 +190,18 @@ export class PanelChrome extends Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { isInView, isEditing, width } = this.props;
+    const { context } = this.state;
 
-    if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
-      this.setState((s) => {
-        return {
-          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
-        };
-      });
-    }
+    const app = this.getPanelContextApp();
+    const sync = isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip;
 
-    if (isEditing !== prevProps.isEditing) {
-      this.setState((s) => {
-        return {
-          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
-        };
+    if (context.sync !== sync || context.app !== app) {
+      this.setState({
+        context: {
+          ...context,
+          sync,
+          app,
+        },
       });
     }
 
@@ -449,7 +475,7 @@ export class PanelChrome extends Component<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    let alertState = config.featureToggles.ngalert ? undefined : data.alertState?.state;
+    let alertState = config.unifiedAlertingEnabled ? undefined : data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,

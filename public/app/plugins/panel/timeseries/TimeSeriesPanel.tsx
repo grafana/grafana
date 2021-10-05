@@ -10,6 +10,7 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
+import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -20,10 +21,11 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   width,
   height,
   options,
+  fieldConfig,
   onChangeTimeRange,
   replaceVariables,
 }) => {
-  const { sync, canAddAnnotations, onSplitOpen } = usePanelContext();
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
@@ -108,6 +110,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 exemplars={data.annotations}
                 timeZone={timeZone}
                 getFieldLinks={getFieldLinks}
+              />
+            )}
+
+            {canEditThresholds && onThresholdsChange && (
+              <ThresholdControlsPlugin
+                config={config}
+                fieldConfig={fieldConfig}
+                onThresholdsChange={onThresholdsChange}
               />
             )}
           </>

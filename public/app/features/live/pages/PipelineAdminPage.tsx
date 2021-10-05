@@ -1,12 +1,13 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, Tag, useStyles } from '@grafana/ui';
+import { Input, Tag, useStyles, Button, Modal, IconButton } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Rule, Output } from './types';
+import { Rule, Output, RuleType } from './types';
 import { RuleModal } from './RuleModal';
+import { AddNewRule } from './AddNewRule';
 
 function renderOutputTags(key: string, output?: Output): React.ReactNode {
   if (!output?.type) {
@@ -24,6 +25,9 @@ export default function PipelineAdminPage() {
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [defaultRules, setDefaultRules] = useState<any[]>([]);
   const navModel = useNavModel('live-pipeline');
+  const [isOpenEditor, setOpenEditor] = useState<boolean>(false);
+  const [error, setError] = useState<string>();
+  const [clickColumn, setClickColumn] = useState<RuleType>('converter');
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -33,14 +37,19 @@ export default function PipelineAdminPage() {
         setRules(data.rules);
         setDefaultRules(data.rules);
       })
-      .catch((e) => console.error(e));
-  }, []);
+      .catch((e) => {
+        if (e.data) {
+          setError(JSON.stringify(e.data, null, 2));
+        }
+      });
+  }, [isOpenEditor, isOpen]);
 
   const onRowClick = (event: any) => {
     const pattern = event.target.getAttribute('data-pattern');
     const column = event.target.getAttribute('data-column');
-    console.log('show:', column);
-    // setActiveTab(column);
+    if (column) {
+      setClickColumn(column);
+    }
     setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
     setOpen(true);
   };
@@ -48,18 +57,26 @@ export default function PipelineAdminPage() {
   const onSearchQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
       setRules(rules.filter((rule) => rule.pattern.toLowerCase().includes(e.target.value.toLowerCase())));
-      console.log(e.target.value, rules);
     } else {
       setRules(defaultRules);
     }
   };
 
+  const onRemoveRule = (pattern: string) => {
+    getBackendSrv()
+      .delete(`api/live/channel-rules`, JSON.stringify({ pattern: pattern }))
+      .catch((e) => console.error(e));
+  };
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        {error && <pre>{error}</pre>}
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
             <Input placeholder="Search pattern..." onChange={onSearchQueryChange} />
+            <Button className={styles.addNew} onClick={() => setOpenEditor(true)}>
+              Add Rule
+            </Button>
           </div>
         </div>
         <div className="admin-list-table">
@@ -87,12 +104,29 @@ export default function PipelineAdminPage() {
                   <td data-pattern={rule.pattern} data-column="output">
                     {renderOutputTags('out', rule.settings?.output)}
                   </td>
+                  <td>
+                    <IconButton name="trash-alt" onClick={() => onRemoveRule(rule.pattern)}></IconButton>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {isOpen && selectedRule && <RuleModal rule={selectedRule} isOpen={isOpen} onClose={() => setOpen(false)} />}
+        {isOpenEditor && (
+          <Modal isOpen={isOpenEditor} onDismiss={() => setOpenEditor(false)} title="Add a new rule">
+            <AddNewRule onClose={setOpenEditor} />
+          </Modal>
+        )}
+        {isOpen && selectedRule && (
+          <RuleModal
+            rule={selectedRule}
+            isOpen={isOpen}
+            onClose={() => {
+              setOpen(false);
+            }}
+            clickColumn={clickColumn}
+          />
+        )}
       </Page.Contents>
     </Page>
   );
@@ -102,6 +136,9 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     row: css`
       cursor: pointer;
+    `,
+    addNew: css`
+      margin-left: 10px;
     `,
   };
 };

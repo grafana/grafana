@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"testing"
 	"time"
 
@@ -231,6 +232,8 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 	m := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, nil, log.New("testlogger"))
+	require.NoError(t, err)
 	schedCfg := SchedulerCfg{
 		C:                       mockedClock,
 		BaseInterval:            time.Second,
@@ -239,13 +242,17 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		RuleStore:               rs,
 		InstanceStore:           is,
 		AdminConfigStore:        acs,
-		MultiOrgNotifier:        notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, nil),
+		MultiOrgNotifier:        moa,
 		Logger:                  logger,
 		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), rs, is)
-	return NewScheduler(schedCfg, nil, "http://localhost", st), mockedClock
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is)
+	appUrl := &url.URL{
+		Scheme: "http",
+		Host:   "localhost",
+	}
+	return NewScheduler(schedCfg, nil, appUrl, st), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.

@@ -6,7 +6,7 @@ import (
 )
 
 type AutoJsonConverterConfig struct {
-	FieldTips map[string]Field `json:"fieldTips"`
+	FieldTips map[string]Field `json:"fieldTips,omitempty"`
 }
 
 type AutoJsonConverter struct {
@@ -16,6 +16,12 @@ type AutoJsonConverter struct {
 
 func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
 	return &AutoJsonConverter{config: c}
+}
+
+const ConverterTypeJsonAuto = "jsonAuto"
+
+func (c *AutoJsonConverter) Type() string {
+	return ConverterTypeJsonAuto
 }
 
 // Automatic conversion works this way:

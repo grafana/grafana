@@ -23,3 +23,10 @@ Cypress.Commands.add('readProvisions', (filePaths: string[]) => {
     filePaths,
   });
 });
+
+Cypress.Commands.add('getJSONFilesFromDir', (dirPath: string) => {
+  return cy.task('getJSONFilesFromDir', {
+    projectPath: Cypress.config().parentTestsFolder,
+    relativePath: dirPath,
+  });
+});

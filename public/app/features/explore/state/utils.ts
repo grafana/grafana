@@ -1,4 +1,5 @@
 import {
+  AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
   ExploreUrlState,
@@ -6,7 +7,6 @@ import {
   HistoryItem,
   LoadingState,
   PanelData,
-  AbsoluteTimeRange,
 } from '@grafana/data';
 
 import { ExploreItemState } from 'app/types/explore';
@@ -42,7 +42,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   scanning: false,
   loading: false,
   queryKeys: [],
-  latency: 0,
   isLive: false,
   isPaused: false,
   queryResponse: createEmptyQueryResponse(),
@@ -51,6 +50,8 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsResult: null,
   eventBridge: (null as unknown) as EventBusExtended,
   cache: [],
+  logsVolumeDataProvider: undefined,
+  logsVolumeData: undefined,
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -61,11 +62,11 @@ export const createEmptyQueryResponse = (): PanelData => ({
 
 export async function loadAndInitDatasource(
   orgId: number,
-  datasourceName?: string
+  datasourceUid?: string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
   let instance;
   try {
-    instance = await getDatasourceSrv().get(datasourceName);
+    instance = await getDatasourceSrv().get(datasourceUid);
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been

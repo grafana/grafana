@@ -19,14 +19,7 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { PromQuery, PromOptions } from '../types';
 import { roundMsToMin } from '../language_utils';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import {
-  ExploreQueryFieldProps,
-  QueryHint,
-  isDataFrame,
-  toLegacyResponseData,
-  HistoryItem,
-  TimeRange,
-} from '@grafana/data';
+import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldLazy } from './monaco-query-field/MonacoQueryFieldLazy';
@@ -76,8 +69,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
-  history: Array<HistoryItem<PromQuery>>;
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
@@ -273,6 +265,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       query,
       ExtraFieldElement,
       placeholder = 'Enter a PromQL query (run with Shift+Enter)',
+      history = [],
     } = this.props;
 
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
@@ -302,7 +295,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             {isMonacoEditorEnabled ? (
               <MonacoQueryFieldLazy
                 languageProvider={languageProvider}
-                history={this.props.history}
+                history={history}
                 onChange={this.onChangeQuery}
                 onRunQuery={this.props.onRunQuery}
                 initialValue={query.expr ?? ''}
