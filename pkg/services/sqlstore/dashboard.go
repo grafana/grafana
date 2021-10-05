@@ -410,7 +410,7 @@ func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) 
 	return err
 }
 
-func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
+func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		return deleteDashboard(cmd, sess)
 	})
