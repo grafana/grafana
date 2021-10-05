@@ -43,7 +43,7 @@ We have continued to improve how you manage your plugins within Grafana. The new
 
 ## Grafana 8 Alerting
 
-We’ve continued to bolster the new, unified alerting system which we launched in Grafana 8. This release includes significant improvements including an AlertManager notification panel allowing users to explore alerts via a dashboard panel. We’ve also added custom grouping for alert manager notifications and a number of small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on enabling the unified alerting in your instance of Grafana.
+We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This release includes significant improvements including an AlertManager notification panel allowing users to explore alerts via a dashboard panel. We’ve also added custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on enabling the unified alerting in your instance of Grafana.
 
 {{< figure src="/static/img/docs/alerting/unified/alert-manager-panel-alpha.png" max-width="1200px" caption="Alert manager panel" >}}
 
