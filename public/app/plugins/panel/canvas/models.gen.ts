@@ -10,7 +10,6 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   inlineEditing: boolean;
   root: CanvasGroupOptions;
-  selected?: number; // <-- only used to trigger editor change
 }
 
 export const defaultPanelOptions: PanelOptions = {
