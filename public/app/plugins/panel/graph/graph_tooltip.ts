@@ -1,8 +1,14 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
-import { ClearGraphNGCursorEvent, SetGraphNGCursorEvent } from '@grafana/ui';
+import {
+  textUtil,
+  systemDateFormats,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  DataHoverEvent,
+  DataHoverClearEvent,
+} from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -153,8 +159,9 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         plot.unhighlight();
       }
     }
+    // TODO: for backwards compatibility with old panels. Should be removed when old graph panel is removed.
     dashboard.events.publish(new LegacyGraphHoverClearEvent());
-    dashboard.events.publish(new ClearGraphNGCursorEvent());
+    dashboard.events.publish(new DataHoverClearEvent({ point: {} }));
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
@@ -165,9 +172,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     hoverEvent.payload.pos = pos;
     hoverEvent.payload.panel = panel;
     hoverEvent.payload.point['time'] = (pos as any).x;
+    // TODO: for backwards compatibility with old panels. Should be removed when old graph panel is removed.
     dashboard.events.publish(hoverEvent);
     dashboard.events.publish(
-      new SetGraphNGCursorEvent({
+      new DataHoverEvent({
         point: {
           time: (pos as any).x,
         },

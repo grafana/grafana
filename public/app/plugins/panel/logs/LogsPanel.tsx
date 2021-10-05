@@ -1,14 +1,6 @@
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import {
-  LogRows,
-  CustomScrollbar,
-  LogLabels,
-  useStyles2,
-  usePanelContext,
-  ClearGraphNGCursorEvent,
-  SetGraphNGCursorEvent,
-} from '@grafana/ui';
+import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
   PanelProps,
   Field,
@@ -50,16 +42,8 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
-        eventBus.publish(new ClearGraphNGCursorEvent());
         eventBus.publish(new DataHoverClearEvent({ point: {} }));
       } else {
-        eventBus.publish(
-          new SetGraphNGCursorEvent({
-            point: {
-              time: row.timeEpochMs,
-            },
-          })
-        );
         eventBus.publish(
           new DataHoverEvent({
             point: {

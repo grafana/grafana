@@ -1,6 +1,6 @@
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
-import { locationUtil } from '@grafana/data';
+import { DataHoverClearEvent, LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -23,7 +23,6 @@ import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
 import { HelpModal } from '../components/help/HelpModal';
-import { ClearGraphNGCursorEvent } from '@grafana/ui';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -184,7 +183,9 @@ export class KeybindingSrv {
   setupDashboardBindings(dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
-      dashboard.events.publish(new ClearGraphNGCursorEvent());
+      // TODO: for backwards compatibility with old panels. Should be removed when old graph panel is removed.
+      dashboard.events.publish(new LegacyGraphHoverClearEvent());
+      dashboard.events.publish(new DataHoverClearEvent({ point: {} }));
       dashboard.startRefresh();
     });
 

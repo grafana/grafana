@@ -7,6 +7,8 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 import {
+  DataHoverClearEvent,
+  DataHoverEvent,
   dateTimeFormat,
   formattedValueToString,
   getColorForTheme,
@@ -16,7 +18,7 @@ import {
   PanelEvents,
   toUtc,
 } from '@grafana/data';
-import { graphTimeFormat, SetGraphNGCursorEvent } from '@grafana/ui';
+import { graphTimeFormat } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 const MIN_CARD_SIZE = 1,
@@ -712,6 +714,7 @@ export class HeatmapRenderer {
 
   onMouseLeave() {
     this.ctrl.dashboard.events.publish(new LegacyGraphHoverClearEvent());
+    this.ctrl.dashboard.events.publish(new DataHoverClearEvent({ point: {} }));
     this.clearCrosshair();
   }
 
@@ -763,7 +766,7 @@ export class HeatmapRenderer {
     // for compatibility with panels synchronizing from the old graph panel
     this.ctrl.dashboard.events.publish(this.hoverEvent);
     // for synchronizing cursor between the old graph panel and GraphNG
-    this.ctrl.dashboard.events.publish(new SetGraphNGCursorEvent({ point: { time: (pos as any).x } }));
+    this.ctrl.dashboard.events.publish(new DataHoverEvent({ point: { time: (pos as any).x } }));
   }
 
   limitSelection(x2: number) {
