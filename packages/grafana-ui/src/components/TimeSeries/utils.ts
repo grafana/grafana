@@ -343,9 +343,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent(payload));
+            eventBus.publish(new DataHoverClearEvent());
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);

@@ -33,6 +33,7 @@ export interface Props extends Themeable2 {
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  onLogRowHover?: (row?: LogRowModel) => void;
 }
 
 interface State {
@@ -99,6 +100,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickShowDetectedField,
       onClickHideDetectedField,
       forceEscape,
+      onLogRowHover,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
@@ -144,6 +146,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                onLogRowHover={onLogRowHover}
               />
             ))}
           {hasData &&

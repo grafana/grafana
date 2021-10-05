@@ -5,8 +5,7 @@ import {
   LegacyGraphHoverClearEvent,
   DataHoverEvent,
   DataHoverClearEvent,
-  DataHoverPayload,
-  BusEventWithPayload,
+  BusEventBase,
 } from '@grafana/data';
 import { Subscription } from 'rxjs';
 import { CustomScrollbar } from '@grafana/ui';
@@ -17,7 +16,7 @@ interface Props {
 }
 
 interface State {
-  event?: BusEventWithPayload<DataHoverPayload>;
+  event?: BusEventBase;
 }
 export class CursorView extends Component<Props, State> {
   subscription = new Subscription();
