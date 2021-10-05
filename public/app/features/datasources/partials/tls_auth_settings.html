@@ -19,6 +19,7 @@
         <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured" />
         <button
           type="reset"
+          aria-label="Reset CA Cert"
           class="btn btn-secondary gf-form-btn"
           ng-click="current.secureJsonFields.tlsCACert = false"
         >
@@ -44,6 +45,7 @@
         <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured" />
         <button
           class="btn btn-secondary gf-form-btn"
+          aria-label="Reset Client Cert"
           type="reset"
           ng-click="current.secureJsonFields.tlsClientCert = false"
         >
@@ -68,6 +70,7 @@
         <button
           class="btn btn-secondary gf-form-btn"
           type="reset"
+          aria-label="Reset Client Key"
           ng-click="current.secureJsonFields.tlsClientKey = false"
         >
           reset
