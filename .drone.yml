@@ -73,7 +73,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -138,8 +138,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -192,13 +191,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -210,13 +203,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -239,6 +226,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -331,7 +321,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -421,8 +411,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -492,13 +481,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -510,13 +493,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -573,6 +550,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   branch:
   - master
@@ -580,6 +560,7 @@ trigger:
   - push
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: windows-master
@@ -672,6 +653,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   branch:
@@ -790,7 +774,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -872,8 +856,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -923,13 +906,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -941,13 +918,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1020,11 +991,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: oss-windows-release
@@ -1169,7 +1144,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -1286,8 +1261,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -1327,13 +1301,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1345,13 +1313,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1425,8 +1387,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server-enterprise2
   depends_on:
@@ -1461,11 +1422,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: enterprise-windows-release
@@ -1598,6 +1563,9 @@ steps:
   depends_on:
   - initialize
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1715,7 +1683,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -1797,8 +1765,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -1842,13 +1809,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1860,13 +1821,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1934,11 +1889,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: oss-windows-test-release
@@ -2083,7 +2042,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -2200,8 +2159,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -2235,13 +2193,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2253,13 +2205,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2333,8 +2279,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server-enterprise2
   depends_on:
@@ -2369,11 +2314,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: enterprise-windows-test-release
@@ -2506,6 +2455,9 @@ steps:
   depends_on:
   - initialize
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
@@ -2622,7 +2574,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -2701,8 +2653,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -2746,13 +2697,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2764,13 +2709,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2817,11 +2756,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/heads/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: oss-windows-release-branch
@@ -2961,7 +2904,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - yarn run ci:test-frontend
+  - echo Skip test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -3072,8 +3015,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -3117,13 +3059,7 @@ steps:
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3135,13 +3071,7 @@ steps:
 - name: mysql-integration-tests
   image: grafana/build-container:1.4.1
   commands:
-  - mv /etc/apt/sources.list.d/nodesource.list /etc/apt/sources.list.d/nodesource.list.disabled; apt-get update; apt-get -y upgrade; apt-get  install -y ca-certificates libgnutls30
-  - mv /etc/apt/sources.list.d/nodesource.list.disabled /etc/apt/sources.list.d/nodesource.list
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - echo Skip postgres-integration-tests
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -3215,8 +3145,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3002 --tries 3
+  - echo Skip e2e-tests
   environment:
     HOST: end-to-end-tests-server-enterprise2
   depends_on:
@@ -3251,11 +3180,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/heads/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: enterprise-windows-release-branch
