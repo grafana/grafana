@@ -28,7 +28,7 @@ export const PanelEvents = {
   render: eventFactory<any>('render'),
 };
 
-/** @deprecated */
+/** @deprecated use DataHoverEvent or DataHoverClearEvent instead */
 export interface LegacyGraphHoverEventPayload extends DataHoverPayload {
   pos: any;
   panel: {
