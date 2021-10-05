@@ -1,11 +1,12 @@
 import { SelectableValue } from '@grafana/data';
-import { DataModel, RetryMode } from 'app/percona/backup/Backup.types';
-import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { BackupMode, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
+import { Databases } from 'app/percona/shared/core';
 import { getPeriodFromCronparts, parseCronString } from 'app/percona/shared/helpers/cron/cron';
 import { PeriodType } from 'app/percona/shared/helpers/cron/types';
+import { formatBackupMode } from '../../Backup.utils';
 import { Backup } from '../BackupInventory/BackupInventory.types';
 import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
-import { AddBackupFormProps, SelectableService } from './AddBackupModal.types';
+import { AddBackupFormProps } from './AddBackupModal.types';
 
 export const PERIOD_OPTIONS: Array<SelectableValue<PeriodType>> = [
   {
@@ -41,15 +42,14 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
   if (!backup) {
     return {
       id: '',
-      service: (null as unknown) as SelectableValue<SelectableService>,
+      service: null,
       dataModel: DataModel.PHYSICAL,
-      vendor: '',
       retryMode: RetryMode.MANUAL,
       retryTimes: 2,
       retryInterval: 30,
       backupName: '',
       description: '',
-      location: (null as unknown) as SelectableValue<string>,
+      location: null,
       retention: 7,
       period: { value: 'year', label: 'Year' },
       month: [],
@@ -59,11 +59,12 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       startMinute: [{ value: 0, label: '00' }],
       logs: false,
       active: true,
+      vendor: null,
+      mode: BackupMode.SNAPSHOT,
     };
   }
 
-  const { name, serviceName, serviceId, vendor, dataModel, locationName, locationId, id } = backup;
-  const vendorValue = DATABASE_LABELS[vendor];
+  const { name, serviceName, serviceId, vendor, dataModel, locationName, locationId, id, mode } = backup;
 
   let month: Array<SelectableValue<number>> = [];
   let day: Array<SelectableValue<number>> = [];
@@ -92,7 +93,6 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       id,
       service: { label: serviceName, value: { id: serviceId, vendor } },
       dataModel,
-      vendor: vendorValue,
       backupName: name,
       description,
       location: { label: locationName, value: locationId },
@@ -108,13 +108,16 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       startMinute,
       logs: false,
       active,
+      vendor,
+      mode,
     };
   } else {
     return {
       id,
+      mode,
+      vendor,
       service: { label: serviceName, value: { id: serviceId, vendor } },
       dataModel,
-      vendor: vendorValue,
       backupName: name,
       description,
       location: { label: locationName, value: locationId },
@@ -146,3 +149,18 @@ export const getOptionFromDigit = (value: number): SelectableValue<number> => ({
   value,
   label: value < 10 ? `0${value.toString()}` : value.toString(),
 });
+
+export const getBackupModeOptions = (db: Databases | null): Array<SelectableValue<BackupMode>> => {
+  const pitrDbs: Array<Databases | null> = [Databases.mongodb];
+  const isPitr = pitrDbs.includes(db);
+  const modes = [isPitr ? BackupMode.PITR : BackupMode.INCREMENTAL, BackupMode.SNAPSHOT];
+  return modes.map((mode) => ({
+    value: mode,
+    label: formatBackupMode(mode),
+  }));
+};
+
+export const getDataModelFromVendor = (db: Databases): DataModel => {
+  const logicalDbs = [Databases.mongodb];
+  return logicalDbs.includes(db) ? DataModel.LOGICAL : DataModel.PHYSICAL;
+};

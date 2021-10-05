@@ -27,6 +27,7 @@ import {
 } from './BackupInventory.constants';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { RetryMode } from '../../Backup.types';
+import { formatBackupMode } from '../../Backup.utils';
 import { BackupLogsModal } from './BackupLogsModal/BackupLogsModal';
 import { CancelToken } from 'axios';
 
@@ -59,6 +60,11 @@ export const BackupInventory: FC = () => {
         Header: Messages.backupInventory.table.columns.created,
         accessor: 'created',
         Cell: ({ value }) => <DetailedDate date={value} />,
+      },
+      {
+        Header: Messages.backupInventory.table.columns.type,
+        accessor: 'mode',
+        Cell: ({ value }) => formatBackupMode(value),
       },
       {
         Header: Messages.backupInventory.table.columns.location,
@@ -190,8 +196,8 @@ export const BackupInventory: FC = () => {
     let resultRetryTimes = retryMode === RetryMode.MANUAL ? 0 : retryTimes;
     try {
       await BackupInventoryService.backup(
-        service.value?.id || '',
-        location.value || '',
+        service!.value?.id || '',
+        location!.value || '',
         backupName,
         description,
         strRetryInterval,

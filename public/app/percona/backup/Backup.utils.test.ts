@@ -1,8 +1,8 @@
-import { DataModel, BackupStatus, RestoreStatus } from './Backup.types';
-import { formatStatus, formatDataModel } from './Backup.utils';
+import { DataModel, BackupStatus, RestoreStatus, BackupMode } from './Backup.types';
+import { formatStatus, formatDataModel, formatBackupMode } from './Backup.utils';
 import { Messages } from './Backup.messages';
 
-const { status: statusMsg, dataModel: dataModelMsg } = Messages;
+const { status: statusMsg, dataModel: dataModelMsg, backupMode: backupModeMsg } = Messages;
 
 describe('Backup::utils', () => {
   describe('formatStatus', () => {
@@ -20,6 +20,13 @@ describe('Backup::utils', () => {
       expect(formatDataModel(DataModel.LOGICAL)).toBe(dataModelMsg.logical);
       expect(formatDataModel(DataModel.PHYSICAL)).toBe(dataModelMsg.physical);
       expect(formatDataModel('bla' as DataModel)).toBe('');
+    });
+  });
+
+  describe('formatBackupMode', () => {
+    it('should correctly format backup mode', () => {
+      expect(formatBackupMode(BackupMode.INVALID)).toBe(backupModeMsg.invalid);
+      expect(formatBackupMode('bla' as BackupMode)).toBe(backupModeMsg.invalid);
     });
   });
 });

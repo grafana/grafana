@@ -1,5 +1,5 @@
 import { Backup } from '../BackupInventory.types';
-import { DataModel, BackupStatus } from 'app/percona/backup/Backup.types';
+import { DataModel, BackupStatus, BackupMode } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
 import * as service from '../BackupInventory.service';
 
@@ -15,6 +15,7 @@ export const stubs: Backup[] = [
     dataModel: DataModel.LOGICAL,
     status: BackupStatus.BACKUP_STATUS_SUCCESS,
     vendor: Databases.mysql,
+    mode: BackupMode.SNAPSHOT,
   },
   {
     id: 'backup_2',
@@ -27,6 +28,7 @@ export const stubs: Backup[] = [
     dataModel: DataModel.PHYSICAL,
     status: BackupStatus.BACKUP_STATUS_IN_PROGRESS,
     vendor: Databases.mysql,
+    mode: BackupMode.SNAPSHOT,
   },
 ];
 
