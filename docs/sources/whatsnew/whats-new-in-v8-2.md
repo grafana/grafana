@@ -36,7 +36,7 @@ The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurab
 
 ## Plugins management
 
-We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. You can use the plugin catalog to find, install and uninstall  your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
+We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. You can use the plugin catalog to find, install, and uninstall  your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
 
 {{< figure src="/static/img/docs/plugins/plugins-catalog-browse-8-1.png" max-width="1200px" caption="Plugins Catalog Browsers" >}}
 
