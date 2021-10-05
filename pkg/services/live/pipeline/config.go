@@ -413,6 +413,8 @@ func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig) (
 		return NewRedirectDataOutput(*config.RedirectDataOutputConfig), nil
 	case DataOutputTypeBuiltin:
 		return NewBuiltinDataOutput(f.ChannelHandlerGetter), nil
+	case DataOutputTypeLocalSubscribers:
+		return NewLocalSubscribersDataOutput(f.Node), nil
 	default:
 		return nil, fmt.Errorf("unknown data output type: %s", config.Type)
 	}
