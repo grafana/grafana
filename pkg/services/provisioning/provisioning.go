@@ -40,7 +40,7 @@ type ProvisioningService interface {
 	ProvisionDatasources() error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
-	ProvisionDashboards() error
+	ProvisionDashboards(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
@@ -107,7 +107,7 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners() error {
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
-	err := ps.ProvisionDashboards()
+	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
 		return err
@@ -153,7 +153,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications() error {
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
 
-func (ps *ProvisioningServiceImpl) ProvisionDashboards() error {
+func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
 	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore)
 	if err != nil {
@@ -164,9 +164,9 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards() error {
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
-	dashProvisioner.CleanUpOrphanedDashboards()
+	dashProvisioner.CleanUpOrphanedDashboards(ctx)
 
-	err = dashProvisioner.Provision(context.TODO())
+	err = dashProvisioner.Provision(ctx)
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
