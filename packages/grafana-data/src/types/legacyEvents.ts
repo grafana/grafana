@@ -36,12 +36,16 @@ export interface LegacyGraphHoverEventPayload extends DataHoverPayload {
   };
 }
 
-/** @alpha */
+/**
+ * @deprecated It will be removed with the old graph. For setting cursor on GraphNG please check GraphNG/events.
+ */
 export class LegacyGraphHoverEvent extends BusEventWithPayload<LegacyGraphHoverEventPayload> {
   static type = 'graph-hover';
 }
 
-/** @alpha */
+/**
+ * @deprecated It will be removed with the old graph. For setting cursor on GraphNG please check GraphNG/events.
+ */
 export class LegacyGraphHoverClearEvent extends BusEventBase {
   static type = 'graph-hover-clear';
   payload: DataHoverPayload = { point: {} };
