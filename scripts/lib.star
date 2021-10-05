@@ -43,6 +43,7 @@ def pipeline(
         ) + steps,
         'depends_on': depends_on,
     }
+    pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
         # We have a custom clone step for enterprise

@@ -227,6 +227,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - pull_request
@@ -547,6 +550,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   branch:
   - master
@@ -554,6 +560,7 @@ trigger:
   - push
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: windows-master
@@ -646,6 +653,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   branch:
@@ -981,11 +991,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: oss-windows-release
@@ -1408,11 +1422,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: enterprise-windows-release
@@ -1544,6 +1562,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -1868,11 +1889,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: oss-windows-test-release
@@ -2289,11 +2314,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: enterprise-windows-test-release
@@ -2425,6 +2454,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -2724,11 +2756,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/heads/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: oss-windows-release-branch
@@ -3144,11 +3180,15 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/heads/v*
 
 ---
+version: 1809
 kind: pipeline
 type: docker
 name: enterprise-windows-release-branch
