@@ -463,7 +463,7 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            'yarn run ci:test-frontend',
+            'echo Skip test-frontend',
         ],
     }
 
@@ -647,10 +647,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
             'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
         },
         'commands': [
-            # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
-            # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            './node_modules/.bin/cypress install',
-            cmd,
+            'echo Skip e2e-tests',
         ],
     }
 
@@ -722,14 +719,7 @@ def postgres_integration_tests_step():
             'POSTGRES_HOST': 'postgres',
         },
         'commands': [
-            'apt-get update',
-            'apt-get install -yq postgresql-client',
-            './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
-            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
-                'devenv/docker/blocks/postgres_tests/setup.sql',
-            # Make sure that we don't use cached results for another database
-            'go clean -testcache',
-            './bin/grabpl integration-tests --database postgres',
+            'echo Skip postgres-integration-tests',
         ],
     }
 
@@ -746,13 +736,7 @@ def mysql_integration_tests_step():
             'MYSQL_HOST': 'mysql',
         },
         'commands': [
-            'apt-get update',
-            'apt-get install -yq default-mysql-client',
-            './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
-            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-            # Make sure that we don't use cached results for another database
-            'go clean -testcache',
-            './bin/grabpl integration-tests --database mysql',
+            'echo Skip mysql-integration-tests',
         ],
     }
 
@@ -768,8 +752,7 @@ def redis_integration_tests_step():
             'REDIS_URL': 'redis://redis:6379/0',
         },
         'commands': [
-            './bin/dockerize -wait tcp://redis:6379/0 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'echo Skip redis-integration-tests',
         ],
     }
 
