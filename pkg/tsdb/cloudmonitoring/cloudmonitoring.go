@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -72,12 +71,11 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginManager plugins.Manager,
-	backendPluginManager backendplugin.Manager, dataSourceCache datasources.CacheService) *Service {
+	backendPluginManager backendplugin.Manager) *Service {
 	s := &Service{
 		pluginManager:        pluginManager,
 		backendPluginManager: backendPluginManager,
 		httpClientProvider:   httpClientProvider,
-		dataSourceCache:      dataSourceCache,
 		cfg:                  cfg,
 		im:                   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
@@ -95,7 +93,6 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 type Service struct {
 	pluginManager        plugins.Manager
 	backendPluginManager backendplugin.Manager
-	dataSourceCache      datasources.CacheService
 	httpClientProvider   httpclient.Provider
 	cfg                  *setting.Cfg
 	im                   instancemgmt.InstanceManager
