@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, useCallback, useEffect, useState } from 'react';
+import React, { FC, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -18,6 +18,7 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     async function fetchOptions() {
       const options = await getRolesOptions();
@@ -43,8 +44,8 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
   );
 
   return (
-    <div data-testid="date-time-picker" style={{ position: 'relative' }}>
-      <RolePickerInput role={role} onChange={onChange} onOpen={onOpen} />
+    <div data-testid="role-picker" style={{ position: 'relative' }}>
+      <RolePickerInput role={role} onChange={onChange} onOpen={onOpen} ref={inputRef} />
       {isOpen && (
         <ClickOutsideWrapper onClick={() => setOpen(false)}>
           <RolePickerMenu
