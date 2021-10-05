@@ -3,7 +3,8 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Role } from 'app/types';
-import { RolePickerInput, RolePickerMenu } from './RolePickerMenu';
+import { RolePickerMenu } from './RolePickerMenu';
+import { RolePickerInput } from './RolePickerInput';
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
