@@ -287,25 +287,21 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   };
 
   shouldRunExemplarQuery(target: PromQuery): boolean {
-    // If exemplar or range param is false, return false. For Grafana UI, it makes sense to run exemplar query only when we also run range query.
-    if (!target.exemplar || !target.range) {
-      return false;
+    /* We want to run exemplar query only for histogram metrics: 
+    1. If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
+    2. If we have processed histogram metrics, check if it is part of query expr.
+    */
+    if (target.exemplar) {
+      const histogramMetrics = this.languageProvider.histogramMetrics;
+
+      if (histogramMetrics) {
+        return !!histogramMetrics.find((metric) => target.expr.includes(metric));
+      } else {
+        return target.expr.includes('_bucket');
+      }
     }
 
-    if (!this.exemplarsAvailable) {
-      return false;
-    }
-    // If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
-    // If we have processed histogram metrics, check if it is part of query expr.
-    const histogramMetrics = this.languageProvider.histogramMetrics;
-    if (
-      (!histogramMetrics.length && target.expr.includes('_bucket')) ||
-      histogramMetrics.find((metric) => target.expr.includes(metric))
-    ) {
-      return true;
-    }
-    // For other cases, return the same value
-    return !!target.exemplar;
+    return false;
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
