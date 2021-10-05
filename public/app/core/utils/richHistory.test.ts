@@ -9,9 +9,11 @@ import {
   deleteQueryInRichHistory,
   filterAndSortQueries,
   SortOrder,
+  MAX_HISTORY_ITEMS,
 } from './richHistory';
 import store from 'app/core/store';
 import { dateTime, DataQuery } from '@grafana/data';
+import { RichHistoryQuery } from '../../types';
 
 const mock: any = {
   storedHistory: [
@@ -43,8 +45,14 @@ const key = 'grafana.explore.richHistory';
 
 describe('addToRichHistory', () => {
   beforeEach(() => {
+    jest.useFakeTimers('modern');
+    jest.setSystemTime(new Date(2020, 0, 1));
     deleteAllFromRichHistory();
     expect(store.exists(key)).toBeFalsy();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   const expectedResult = [
@@ -62,14 +70,15 @@ describe('addToRichHistory', () => {
 
   it('should append query to query history', () => {
     Date.now = jest.fn(() => 2);
-    const newHistory = addToRichHistory(
+    const { richHistory: newHistory } = addToRichHistory(
       mock.storedHistory,
       mock.testDatasourceId,
       mock.testDatasourceName,
       mock.testQueries,
       mock.testStarred,
       mock.testComment,
-      mock.testSessionName
+      mock.testSessionName,
+      true
     );
     expect(newHistory).toEqual(expectedResult);
   });
@@ -84,7 +93,8 @@ describe('addToRichHistory', () => {
       mock.testQueries,
       mock.testStarred,
       mock.testComment,
-      mock.testSessionName
+      mock.testSessionName,
+      true
     );
     expect(store.exists(key)).toBeTruthy();
     expect(store.getObject(key)).toMatchObject(expectedResult);
@@ -92,14 +102,15 @@ describe('addToRichHistory', () => {
 
   it('should not append duplicated query to query history', () => {
     Date.now = jest.fn(() => 2);
-    const newHistory = addToRichHistory(
+    const { richHistory: newHistory } = addToRichHistory(
       mock.storedHistory,
       mock.storedHistory[0].datasourceId,
       mock.storedHistory[0].datasourceName,
       [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
       mock.testStarred,
       mock.testComment,
-      mock.testSessionName
+      mock.testSessionName,
+      true
     );
     expect(newHistory).toEqual([mock.storedHistory[0]]);
   });
@@ -113,9 +124,49 @@ describe('addToRichHistory', () => {
       [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
       mock.testStarred,
       mock.testComment,
-      mock.testSessionName
+      mock.testSessionName,
+      true
     );
     expect(store.exists(key)).toBeFalsy();
+  });
+
+  it('should not save more than MAX_HISTORY_ITEMS', () => {
+    Date.now = jest.fn(() => 2);
+    const extraItems = 100;
+
+    // the history has more than MAX
+    let history = [];
+    // history = [ { starred: true, comment: "0" }, { starred: false, comment: "1" }, ... ]
+    for (let i = 0; i < MAX_HISTORY_ITEMS + extraItems; i++) {
+      history.push({
+        starred: i % 2 === 0,
+        comment: i.toString(),
+        queries: [],
+        ts: new Date(2019, 11, 31).getTime(),
+      });
+    }
+
+    const starredItemsInHistory = (MAX_HISTORY_ITEMS + extraItems) / 2;
+    const notStarredItemsInHistory = (MAX_HISTORY_ITEMS + extraItems) / 2;
+
+    expect(history.filter((h) => h.starred)).toHaveLength(starredItemsInHistory);
+    expect(history.filter((h) => !h.starred)).toHaveLength(notStarredItemsInHistory);
+
+    const { richHistory: newHistory } = addToRichHistory(
+      (history as any) as RichHistoryQuery[],
+      mock.storedHistory[0].datasourceId,
+      mock.storedHistory[0].datasourceName,
+      [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
+      true,
+      mock.testComment,
+      mock.testSessionName,
+      true
+    );
+
+    // one not starred replaced with a newly added starred item
+    const removedNotStarredItems = extraItems + 1; // + 1 to make space for the new item
+    expect(newHistory.filter((h) => h.starred)).toHaveLength(starredItemsInHistory + 1); // starred item added
+    expect(newHistory.filter((h) => !h.starred)).toHaveLength(starredItemsInHistory - removedNotStarredItems);
   });
 });
 

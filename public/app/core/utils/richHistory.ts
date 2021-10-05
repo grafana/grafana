@@ -55,8 +55,7 @@ export function addToRichHistory(
   /* Keep only queries, that are within the selected retention period or that are starred.
    * If no queries, initialize with empty array
    */
-  const queriesToKeep =
-    richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true).splice(0, MAX_HISTORY_ITEMS) || [];
+  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
 
   if (newQueriesToSave.length > 0) {
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
@@ -71,6 +70,15 @@ export function addToRichHistory(
 
     if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
       return { richHistory };
+    }
+
+    // remove oldest non-starred items to give space for the recent query
+    let current = queriesToKeep.length - 1;
+    while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
+      if (!queriesToKeep[current].starred) {
+        queriesToKeep.splice(current, 1);
+      }
+      current--;
     }
 
     let updatedHistory: RichHistoryQuery[] = [
@@ -91,7 +99,7 @@ export function addToRichHistory(
       return { richHistory: updatedHistory };
     } catch (error) {
       showError && dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-      return { richHistory, localStorageFull: error.name === 'QuotaExceededError' };
+      return { richHistory: updatedHistory, localStorageFull: error.name === 'QuotaExceededError' };
     }
   }
 
