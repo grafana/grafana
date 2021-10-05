@@ -104,7 +104,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.name })),
+        queries: exploreTargets.map((t) => ({ ...t, datasource: { uid: exploreDatasource.uid } })),
       };
     }
 
