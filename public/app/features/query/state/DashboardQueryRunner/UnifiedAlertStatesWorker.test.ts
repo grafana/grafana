@@ -155,8 +155,14 @@ describe('UnifiedAlertStatesWorker', () => {
           ],
           annotations: [],
         });
-        expect(getMock).toHaveBeenCalledTimes(1);
       });
+
+      expect(getMock).toHaveBeenCalledTimes(1);
+      expect(getMock).toHaveBeenCalledWith(
+        '/api/prometheus/grafana/api/v1/rules',
+        { dashboard_uid: 'a uid' },
+        'dashboard-query-runner-unified-alert-states-an id'
+      );
     });
   });
 

@@ -39,7 +39,9 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     return from(
       getBackendSrv().get(
         '/api/prometheus/grafana/api/v1/rules',
-        {},
+        {
+          dashboard_uid: dashboard.uid,
+        },
         `dashboard-query-runner-unified-alert-states-${dashboard.id}`
       )
     ).pipe(
@@ -49,12 +51,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
           const panelIdToAlertState: Record<number, AlertStateInfo> = {};
           result.data.groups.forEach((group) =>
             group.rules.forEach((rule) => {
-              if (
-                isAlertingRule(rule) &&
-                rule.annotations &&
-                rule.annotations[Annotation.dashboardUID] === dashboard.uid &&
-                rule.annotations[Annotation.panelID]
-              ) {
+              if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
                 this.hasAlertRules[dashboard.uid] = true;
                 const panelId = Number(rule.annotations[Annotation.panelID]);
                 const state = promAlertStateToAlertState(rule.state);
