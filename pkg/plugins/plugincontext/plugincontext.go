@@ -90,7 +90,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
-		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonData())
+		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn())
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to convert datasource", err)
 		}
@@ -122,7 +122,7 @@ func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedI
 	return query.Result, nil
 }
 
-func (p *Provider) decryptSecureJsonData() func(map[string][]byte) map[string]string {
+func (p *Provider) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {
 	return func(m map[string][]byte) map[string]string {
 		decryptedJsonData, err := p.EncryptionService.DecryptJsonData(context.Background(), m, setting.SecretKey)
 		if err != nil {
