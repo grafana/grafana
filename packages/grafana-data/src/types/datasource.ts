@@ -530,7 +530,7 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
-  alertmanager?: string;
+  alertmanagerUid?: string;
 }
 
 /**

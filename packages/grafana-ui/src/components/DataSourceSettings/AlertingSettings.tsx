@@ -21,8 +21,8 @@ export function AlertingSettings<T extends AlertingConfig>({
   const alertmanagerOptions = useMemo(
     () =>
       alertmanagerDataSources.map((ds) => ({
-        label: ds.name.substr(0, 37),
-        value: ds.name,
+        label: ds.name,
+        value: ds.uid,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,
       })),
@@ -48,25 +48,23 @@ export function AlertingSettings<T extends AlertingConfig>({
             />
           </div>
         </div>
-        {(options.type === 'loki' || options.type === 'prometheus') && (
-          <InlineFieldRow>
-            <InlineField
-              tooltip="The alertmanager that manages alerts for this data source"
-              label="Alertmanager data source"
-              labelWidth={26}
-            >
-              <Select
-                width={29}
-                menuShouldPortal
-                options={alertmanagerOptions}
-                onChange={(value) =>
-                  onOptionsChange({ ...options, jsonData: { ...options.jsonData, alertmanager: value?.value } })
-                }
-                value={options.jsonData.alertmanager}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        )}
+        <InlineFieldRow>
+          <InlineField
+            tooltip="The alertmanager that manages alerts for this data source"
+            label="Alertmanager data source"
+            labelWidth={26}
+          >
+            <Select
+              width={29}
+              menuShouldPortal
+              options={alertmanagerOptions}
+              onChange={(value) =>
+                onOptionsChange({ ...options, jsonData: { ...options.jsonData, alertmanagerUid: value?.value } })
+              }
+              value={options.jsonData.alertmanagerUid}
+            />
+          </InlineField>
+        </InlineFieldRow>
       </div>
     </>
   );

@@ -180,3 +180,7 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
 export function getAllAlertmanagerDataSources() {
   return getAllDataSources().filter((ds) => ds.type === DataSourceType.Alertmanager);
 }
+
+export function getAlertmanagerByUid(uid?: string) {
+  return getAllAlertmanagerDataSources().find((ds) => uid === ds.uid);
+}

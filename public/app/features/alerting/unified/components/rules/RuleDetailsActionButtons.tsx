@@ -14,6 +14,7 @@ import { createExploreLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { getAlertmanagerByUid } from '../../utils/alertmanager';
 
 interface Props {
   rule: CombinedRule;
@@ -27,7 +28,9 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
 
-  const alertmanagerSourceName = isGrafanaRulesSource(rulesSource) ? rulesSource : rulesSource.jsonData.alertmanager;
+  const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
+    ? rulesSource
+    : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
@@ -134,9 +137,9 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         icon="bell-slash"
         target="__blank"
         href={
-          `/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
+          `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
           `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
-            .map(([key, value]) => `${key}=${value}`)
+            .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
             .join(',')}`
         }
       >
