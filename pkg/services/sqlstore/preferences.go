@@ -44,6 +44,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 		res := &models.Preferences{
 			Theme:           ss.Cfg.DefaultTheme,
 			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
+			WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
 			HomeDashboardId: 0,
 		}
 
@@ -53,6 +54,9 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			}
 			if p.Timezone != "" {
 				res.Timezone = p.Timezone
+			}
+			if p.WeekStart != -1 {
+				res.WeekStart = p.WeekStart
 			}
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
@@ -96,6 +100,7 @@ func SavePreferences(cmd *models.SavePreferencesCommand) error {
 				TeamId:          cmd.TeamId,
 				HomeDashboardId: cmd.HomeDashboardId,
 				Timezone:        cmd.Timezone,
+				WeekStart:       cmd.WeekStart,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
@@ -104,7 +109,7 @@ func SavePreferences(cmd *models.SavePreferencesCommand) error {
 			return err
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
-		prefs.Timezone = cmd.Timezone
+		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()
 		prefs.Version += 1
