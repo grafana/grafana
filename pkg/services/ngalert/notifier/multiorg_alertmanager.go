@@ -220,11 +220,11 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 
 // cleanupResources deletes all records from the database and removes all
 // files from the filesystem that corepsond to the organization
-func (moa *MultiOrgAlertmanager) cleanupResources(ctx context.Context, orgID int64, workDir string) {
+func (moa *MultiOrgAlertmanager) cleanupResources(ctx context.Context, orgID int64, workingDir string) {
 	if err := moa.orgStore.DeleteOrgEntries(ctx, orgID); err != nil {
 		moa.logger.Warn("failed to cleanup resources from database", "err", err)
 	}
-	if err := os.RemoveAll(workDir); err != nil {
+	if err := os.RemoveAll(workingDir); err != nil {
 		moa.logger.Warn("failed to cleanup resources from filesystem", "err", err)
 	}
 }
