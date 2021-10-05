@@ -21,11 +21,11 @@ func Scope(parts ...string) string {
 // Parameter returns injectable scope part, based on URL parameters.
 // e.g. Scope("users", Parameter(":id")) or "users:" + Parameter(":id")
 func Parameter(key string) string {
-	return fmt.Sprintf(`{{ index .UrlParams "%s" }}`, key)
+	return fmt.Sprintf(`{{ index .URLParams "%s" }}`, key)
 }
 
-// ExtraParameter returns an injectable scope part for selected fields from the request's context available in accesscontrol.ScopeParams.
+// Field returns an injectable scope part for selected fields from the request's context available in accesscontrol.ScopeParams.
 // e.g. Scope("orgs", Parameter("OrgID")) or "orgs:" + Parameter("OrgID")
-func ExtraParameter(key string) string {
+func Field(key string) string {
 	return fmt.Sprintf(`{{ .%s }}`, key)
 }

@@ -73,6 +73,6 @@ func newID() string {
 func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
 	return accesscontrol.ScopeParams{
 		OrgID:     c.OrgId,
-		UrlParams: macaron.Params(c.Req),
+		URLParams: macaron.Params(c.Req),
 	}
 }

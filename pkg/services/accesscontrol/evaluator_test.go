@@ -80,7 +80,7 @@ func TestPermission_Inject(t *testing.T) {
 		{
 			desc:      "should inject extra param",
 			expected:  true,
-			evaluator: EvalPermission("orgs:read", Scope("orgs", ExtraParameter("OrgID"))),
+			evaluator: EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
 			params: ScopeParams{
 				OrgID: 3,
 			},
@@ -95,7 +95,7 @@ func TestPermission_Inject(t *testing.T) {
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 			params: ScopeParams{
-				UrlParams: map[string]string{
+				URLParams: map[string]string{
 					":id":       "10",
 					":reportId": "1",
 				},
@@ -122,7 +122,7 @@ func TestPermission_Inject(t *testing.T) {
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"), Parameter(":reportId2"))),
 			params: ScopeParams{
-				UrlParams: map[string]string{
+				URLParams: map[string]string{
 					":reportId":  "report",
 					":reportId2": "report2",
 				},
@@ -205,7 +205,7 @@ func TestAll_Inject(t *testing.T) {
 				EvalPermission("settings:read", Scope("settings", Parameter(":settingsId"))),
 			),
 			params: ScopeParams{
-				UrlParams: map[string]string{
+				URLParams: map[string]string{
 					":id":         "10",
 					":settingsId": "3",
 					":reportId":   "1",
@@ -224,12 +224,12 @@ func TestAll_Inject(t *testing.T) {
 			desc:     "should inject extra and url param",
 			expected: true,
 			evaluator: EvalAll(
-				EvalPermission("orgs:read", Scope("orgs", ExtraParameter("OrgID"))),
+				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
 				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
 			),
 			params: ScopeParams{
 				OrgID: 3,
-				UrlParams: map[string]string{
+				URLParams: map[string]string{
 					":orgId": "4",
 				},
 			},
@@ -327,7 +327,7 @@ func TestAny_Inject(t *testing.T) {
 				EvalPermission("settings:read", Scope("settings", Parameter(":settingsId"))),
 			),
 			params: ScopeParams{
-				UrlParams: map[string]string{
+				URLParams: map[string]string{
 					":id":         "10",
 					":settingsId": "3",
 					":reportId":   "1",
@@ -346,12 +346,12 @@ func TestAny_Inject(t *testing.T) {
 			desc:     "should inject extra and url param",
 			expected: true,
 			evaluator: EvalAny(
-				EvalPermission("orgs:read", Scope("orgs", ExtraParameter("OrgID"))),
+				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
 				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
 			),
 			params: ScopeParams{
 				OrgID: 3,
-				UrlParams: map[string]string{
+				URLParams: map[string]string{
 					":orgId": "4",
 				},
 			},
