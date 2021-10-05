@@ -12,7 +12,7 @@ list = false
 
 Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics *for everyone*. 
 
-The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave, or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters to make it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles. 
+The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters. This update makes it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles. 
 
 Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
 
