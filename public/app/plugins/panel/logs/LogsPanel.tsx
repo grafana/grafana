@@ -9,7 +9,16 @@ import {
   ClearGraphNGCursorEvent,
   SetGraphNGCursorEvent,
 } from '@grafana/ui';
-import { PanelProps, Field, Labels, GrafanaTheme2, LogsSortOrder, LogRowModel } from '@grafana/data';
+import {
+  PanelProps,
+  Field,
+  Labels,
+  GrafanaTheme2,
+  LogsSortOrder,
+  LogRowModel,
+  DataHoverClearEvent,
+  DataHoverEvent,
+} from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -42,9 +51,17 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     (row?: LogRowModel) => {
       if (!row) {
         eventBus.publish(new ClearGraphNGCursorEvent());
+        eventBus.publish(new DataHoverClearEvent({ point: {} }));
       } else {
         eventBus.publish(
           new SetGraphNGCursorEvent({
+            point: {
+              time: row.timeEpochMs,
+            },
+          })
+        );
+        eventBus.publish(
+          new DataHoverEvent({
             point: {
               time: row.timeEpochMs,
             },
