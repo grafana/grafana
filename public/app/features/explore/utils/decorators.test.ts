@@ -4,6 +4,7 @@ import {
   ArrayVector,
   DataFrame,
   DataQueryRequest,
+  FieldColorModeId,
   FieldType,
   LoadingState,
   PanelData,
@@ -361,6 +362,10 @@ describe('decorateWithLogsResult', () => {
               labels: undefined,
               values: new ArrayVector([3]),
               config: {
+                color: {
+                  fixedColor: '#8e8e8e',
+                  mode: FieldColorModeId.Fixed,
+                },
                 min: 0,
                 decimals: 0,
                 unit: undefined,

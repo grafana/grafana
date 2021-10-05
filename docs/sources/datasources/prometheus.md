@@ -10,6 +10,10 @@ weight = 1300
 
 Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
+## Hosted Prometheus
+
+Run Prometheus on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana). The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=doc-grafana-&plcmt=in-text).
+
 ## Prometheus settings
 
 To access Prometheus settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
@@ -42,19 +46,17 @@ Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key w
 {{< figure src="/static/img/docs/v45/prometheus_query_editor_still.png"
                   animated-gif="/static/img/docs/v45/prometheus_query_editor.gif" >}}
 
-| Name               | Description                                                                                                                                                                                                                                                                                                                                   |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Query expression` | Prometheus query expression. For more information, refer to the [Prometheus documentation](http://prometheus.io/docs/querying/basics/).                                                                                                                                                                                                       |
-| `Legend format`    | Controls the name of the time series, using name or pattern. For example, `{{hostname}}` is replaced by the label value for the label `hostname`.                                                                                                                                                                                             |
-| `Step`             | Use 'Minimum' or 'Maximum' step mode to set the lower or upper bounds respectively on the interval between data points. For example, set "minimum 1h" to hint that measurements are not frequent (taken hourly). Use the 'Exact' step mode to set a precise interval between data points. `$__interval` and `$__rate_interval` are supported. |
-
-| `Resolution` | `1/1` sets both the `$__interval` variable and the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) such that each pixel corresponds to one data point. For better performance, you can pick lower resolutions. `1/2` only retrieves a data point for every other pixel, and `1/10` retrieves one data point per 10 pixels. Both _Min time interval_ and _Step_ limit the final value of `$__interval` and `step`. |
-
-| `Metric lookup` | Search for metric names in this input field. |
-| `Format as` | You can switch between `Table` `Time series` or `Heatmap` options. The `Table` option works only in the Table panel. `Heatmap` displays metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound. |
-| `Instant` | Perform an "instant" query to return only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries. Use them to look up label sets. |
-| `Min time interval` | This value multiplied by the denominator from the _Resolution_ setting sets a lower limit to both the `$__interval` variable and the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries). Defaults to _Scrape interval_ as specified in the data source options. |
-| `Exemplars` | Run and show exemplars in the graph. |
+| Name                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Query expression`  | Prometheus query expression. For more information, refer to the [Prometheus documentation](http://prometheus.io/docs/querying/basics/).                                                                                                                                                                                                                                                                                                                                                    |
+| `Legend format`     | Controls the name of the time series, using name or pattern. For example, `{{hostname}}` is replaced by the label value for the label `hostname`.                                                                                                                                                                                                                                                                                                                                          |
+| `Step`              | Use 'Minimum' or 'Maximum' step mode to set the lower or upper bounds respectively on the interval between data points. For example, set "minimum 1h" to hint that measurements are not frequent (taken hourly). Use the 'Exact' step mode to set a precise interval between data points. `$__interval` and `$__rate_interval` are supported.                                                                                                                                              |
+| `Resolution`        | `1/1` sets both the `$__interval` variable and the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries) such that each pixel corresponds to one data point. For better performance, you can pick lower resolutions. `1/2` only retrieves a data point for every other pixel, and `1/10` retrieves one data point per 10 pixels. Both _Min time interval_ and _Step_ limit the final value of `$__interval` and `step`. |
+| `Metric lookup`     | Search for metric names in this input field.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `Format as`         | You can switch between `Table` `Time series` or `Heatmap` options. The `Table` option works only in the Table panel. `Heatmap` displays metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound.                                                                                                                                                                                          |
+| `Instant`           | Perform an "instant" query to return only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries. Use them to look up label sets.                                                                                                                                                                                                                                                            |
+| `Min time interval` | This value multiplied by the denominator from the _Resolution_ setting sets a lower limit to both the `$__interval` variable and the [`step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries). Defaults to _Scrape interval_ as specified in the data source options.                                                                                                                                                      |
+| `Exemplars`         | Run and show exemplars in the graph.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step. This ensures consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
@@ -115,13 +117,13 @@ types of template variables.
 Variable of the type _Query_ allows you to query Prometheus for a list of metrics, labels or label values. The Prometheus data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                          | Description                                                             |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `label_names()`               | Returns a list of label names.                                          |
-| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         |
-| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. |
-| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        |
-| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              |
+| Name                          | Description                                                             | Used API endpoints                |
+| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
+| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                    |
+| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values      |
+| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series                    |
+| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values |
+| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                     |
 
 For details of what _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 

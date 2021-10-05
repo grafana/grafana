@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import { css } from '@emotion/css';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
@@ -8,7 +7,7 @@ import Page from '../../core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { LicenseChrome } from './LicenseChrome';
 import { StoreState } from '../../types';
-import ServerStats from './ServerStats';
+import { ServerStats } from './ServerStats';
 
 interface Props {
   navModel: NavModel;
@@ -218,7 +217,7 @@ const Item: React.FC<ItemProps> = ({ children, title, image }) => {
 
   return (
     <div className={itemStyle}>
-      <img src={imageUrl} />
+      <img src={imageUrl} alt="" />
       <div>
         <div className={titleStyle}>{title}</div>
         {children}
@@ -231,4 +230,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'upgrading'),
 });
 
-export default hot(module)(connect(mapStateToProps)(UpgradePage));
+export default connect(mapStateToProps)(UpgradePage);

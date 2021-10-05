@@ -76,14 +76,15 @@ const dashbardSlice = createSlice({
       updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
     cleanUpEditPanel: (state) => {
-      // TODO: refactor, since the state should be mutated by copying only
       delete state.panels[EDIT_PANEL_ID];
+    },
+    setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
+      updatePanelState(state, action.payload.panelId, { instanceState: action.payload.value });
     },
     setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
     },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
-      // TODO: refactor, since the state should be mutated by copying only
       state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
   },
@@ -107,6 +108,11 @@ export interface SetPanelAngularComponentPayload {
   angularComponent: AngularComponent | null;
 }
 
+export interface SetPanelInstanceStatePayload {
+  panelId: number;
+  value: any;
+}
+
 export const {
   loadDashboardPermissions,
   dashboardInitFetching,
@@ -121,6 +127,7 @@ export const {
   addPanel,
   cleanUpEditPanel,
   setPanelAngularComponent,
+  setPanelInstanceState,
 } = dashbardSlice.actions;
 
 export const dashboardReducer = dashbardSlice.reducer;

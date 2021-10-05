@@ -5,4 +5,4 @@ VizTextDisplayOptions: {
 	titleSize?: number
 	// Explicit value text size
 	valueSize?: number
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")

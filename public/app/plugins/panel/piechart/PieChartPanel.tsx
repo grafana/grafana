@@ -22,6 +22,7 @@ import {
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
+import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -49,6 +50,14 @@ export function PieChartPanel(props: Props) {
     timeZone,
   });
 
+  if (!hasFrames(fieldDisplayValues)) {
+    return (
+      <div className="panel-empty">
+        <p>No data</p>
+      </div>
+    );
+  }
+
   return (
     <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues)}>
       {(vizWidth: number, vizHeight: number) => {
@@ -74,15 +83,19 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
     return undefined;
   }
-  const total = displayValues
-    .filter((item) => {
-      return !item.field.custom?.hideFrom?.viz;
-    })
-    .reduce((acc, item) => item.display.numeric + acc, 0);
+  const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
   const legendItems = displayValues
     // Since the pie chart is always sorted, let's sort the legend as well.
-    .sort((a, b) => b.display.numeric - a.display.numeric)
+    .sort((a, b) => {
+      if (isNaN(a.display.numeric)) {
+        return 1;
+      } else if (isNaN(b.display.numeric)) {
+        return -1;
+      } else {
+        return b.display.numeric - a.display.numeric;
+      }
+    })
     .map<VizLegendItem>((value, idx) => {
       const hidden = value.field.custom.hideFrom.viz;
       const display = value.display;
@@ -107,8 +120,11 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
             displayValues.push({
               numeric: fractionOfTotal,
               percent: percentOfTotal,
-              text: hidden ? '-' : percentOfTotal.toFixed(0) + '%',
-              title: valuesToShow.length > 1 ? 'Percent' : undefined,
+              text:
+                hidden || isNaN(fractionOfTotal)
+                  ? props.fieldConfig.defaults.noValue ?? '-'
+                  : percentOfTotal.toFixed(0) + '%',
+              title: valuesToShow.length > 1 ? 'Percent' : '',
             });
           }
 
@@ -125,6 +141,10 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       displayMode={legendOptions.displayMode}
     />
   );
+}
+
+function hasFrames(fieldDisplayValues: FieldDisplay[]) {
+  return fieldDisplayValues.some((fd) => fd.view?.dataFrame.length);
 }
 
 function useSliceHighlightState() {

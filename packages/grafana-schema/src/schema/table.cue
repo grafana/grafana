@@ -1,23 +1,13 @@
 package schema
 
 // TODO -- should not be table specific!
-FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
+FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
-// FIXME can't write enums as structs, must use disjunctions
-TableCellDisplayMode: {
-	Auto:            "auto"
-	ColorText:       "color-text"
-	ColorBackground: "color-background"
-	GradientGauge:   "gradient-gauge"
-	LcdGauge:        "lcd-gauge"
-	JSONView:        "json-view"
-	BasicGauge:      "basic"
-	Image:           "image"
-} @cuetsy(targetType="enum")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|GradientGauge|LcdGauge|JSONView|BasicGauge|Image")
 
 TableFieldOptions: {
 	width?:      number
 	align:       FieldTextAlignment | *"auto"
 	displayMode: TableCellDisplayMode | *"auto"
 	hidden?:     bool // ?? default is missing or false ??
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")

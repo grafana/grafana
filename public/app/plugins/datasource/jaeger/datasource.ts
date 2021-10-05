@@ -171,5 +171,8 @@ const emptyTraceDataFrame = new MutableDataFrame({
   ],
   meta: {
     preferredVisualisationType: 'trace',
+    custom: {
+      traceFormat: 'jaeger',
+    },
   },
 });

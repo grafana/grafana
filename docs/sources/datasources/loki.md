@@ -12,19 +12,23 @@ Grafana ships with built-in support for Loki, an open source log aggregation sys
 
 Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-> **Note:** To troubleshoot configuration and other issues, check the log file located at /var/log/grafana/grafana.log on Unix systems or in <grafana_install_dir>/data/log on other platforms and manual installations.
+## Hosted Loki
+
+You can run Loki on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs). The free forever plan includes Grafana, 50 GB of Loki logs, 10K Prometheus series, and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-loki&plcmt=in-text).
 
 ## Loki settings
 
 To access Loki settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click the Loki data source.
 
-| Name                  | Description                                                                                                                                               |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                           |
-| `Default`             | Default data source that is pre-selected for new panels.                                                                                                  |
-| `URL`                 | URL of the Loki instance, e.g., `http://localhost:3100`.                                                                                                  |
-| `Whitelisted Cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                                  |
-| `Maximum lines`       | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
+| Name              | Description                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`            | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                           |
+| `Default`         | Default data source that is pre-selected for new panels.                                                                                                  |
+| `URL`             | URL of the Loki instance, e.g., `http://localhost:3100`.                                                                                                  |
+| `Allowed cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                                  |
+| `Maximum lines`   | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
+
+> **Note:** To troubleshoot configuration and other issues, check the log file located at /var/log/grafana/grafana.log on Unix systems or in <grafana_install_dir>/data/log on other platforms and manual installations.
 
 ### Derived fields
 

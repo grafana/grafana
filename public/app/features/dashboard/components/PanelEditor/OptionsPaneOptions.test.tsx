@@ -96,6 +96,7 @@ class OptionsPaneOptionsTestScenario {
           onFieldConfigsChange={this.onFieldConfigsChange}
           onPanelConfigChange={this.onPanelConfigChange}
           onPanelOptionsChanged={this.onPanelOptionsChanged}
+          instanceState={undefined}
         />
       </Provider>
     );

@@ -25,7 +25,7 @@ import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
 import { css } from '@emotion/css';
-import { Portal, stylesFactory, VizTooltipContainer } from '@grafana/ui';
+import { PanelContext, PanelContextRoot, Portal, stylesFactory, VizTooltipContainer } from '@grafana/ui';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
@@ -41,7 +41,6 @@ interface MapLayerState {
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
-export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
@@ -49,6 +48,9 @@ interface State extends OverlayProps {
 }
 
 export class GeomapPanel extends Component<Props, State> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
   globalCSS = getGlobalStyles(config.theme2);
 
   counter = 0;
@@ -66,7 +68,10 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    lastGeomapPanelInstance = this;
+    this.panelContext = this.context as PanelContext;
+    if (this.panelContext.onInstanceStateChange) {
+      this.panelContext.onInstanceStateChange(this);
+    }
   }
 
   shouldComponentUpdate(nextProps: Props) {
@@ -170,7 +175,7 @@ export class GeomapPanel extends Component<Props, State> {
     });
   };
 
-  pointerMoveListener = (evt: MapBrowserEvent) => {
+  pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
     if (!this.map) {
       return;
     }
@@ -188,6 +193,7 @@ export class GeomapPanel extends Component<Props, State> {
     hoverPayload.data = undefined;
     hoverPayload.columnIndex = undefined;
     hoverPayload.rowIndex = undefined;
+    hoverPayload.feature = undefined;
 
     let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
     const features: GeomapHoverFeature[] = [];
@@ -198,6 +204,8 @@ export class GeomapPanel extends Component<Props, State> {
         if (frame) {
           hoverPayload.data = ttip.data = frame as DataFrame;
           hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
+        } else {
+          hoverPayload.feature = ttip.feature = feature;
         }
       }
       features.push({ feature, layer, geo });
@@ -206,7 +214,11 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     const currentTTip = this.state.ttip;
-    if (ttip.data !== currentTTip?.data || ttip.rowIndex !== currentTTip?.rowIndex) {
+    if (
+      ttip.data !== currentTTip?.data ||
+      ttip.rowIndex !== currentTTip?.rowIndex ||
+      ttip.feature !== currentTTip?.feature
+    ) {
       this.setState({ ttip: { ...hoverPayload } });
     }
   };
@@ -360,7 +372,7 @@ export class GeomapPanel extends Component<Props, State> {
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
         <Portal>
-          {ttip && ttip.data && (
+          {ttip && (ttip.data || ttip.feature) && (
             <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
               <DataHoverView {...ttip} />
             </VizTooltipContainer>

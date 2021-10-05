@@ -1,15 +1,8 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { CatalogPlugin, CatalogPluginsState, PluginsByFilterType, FilteredPluginsState } from '../types';
+import { CatalogPlugin, CatalogPluginsState } from '../types';
 import { api } from '../api';
-import {
-  mapLocalToCatalog,
-  mapRemoteToCatalog,
-  mapToCatalogPlugin,
-  isInstalled,
-  isType,
-  matchesKeyword,
-} from '../helpers';
+import { mapLocalToCatalog, mapRemoteToCatalog, mapToCatalogPlugin } from '../helpers';
 
 export function usePlugins(): CatalogPluginsState {
   const { loading, value, error } = useAsync(async () => {
@@ -54,25 +47,3 @@ export function usePlugins(): CatalogPluginsState {
     plugins,
   };
 }
-
-const URLFilterHandlers = {
-  filterBy: isInstalled,
-  filterByType: isType,
-  searchBy: matchesKeyword,
-};
-
-export const usePluginsByFilter = (queries: PluginsByFilterType): FilteredPluginsState => {
-  const { loading, error, plugins } = usePlugins();
-
-  const filteredPlugins = plugins.filter((plugin) =>
-    (Object.keys(queries) as Array<keyof PluginsByFilterType>).every((query) =>
-      typeof URLFilterHandlers[query] === 'function' ? URLFilterHandlers[query](plugin, queries[query]) : true
-    )
-  );
-
-  return {
-    isLoading: loading,
-    error,
-    plugins: filteredPlugins,
-  };
-};

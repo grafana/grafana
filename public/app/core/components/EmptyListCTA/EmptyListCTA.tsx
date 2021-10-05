@@ -8,6 +8,7 @@ export interface Props {
   buttonIcon: IconName;
   buttonLink?: string;
   buttonTitle: string;
+  buttonDisabled?: boolean;
   onClick?: (event: MouseEvent) => void;
   proTip?: string;
   proTipLink?: string;
@@ -31,6 +32,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
   buttonIcon,
   buttonLink,
   buttonTitle,
+  buttonDisabled,
   onClick,
   proTip,
   proTipLink,
@@ -46,9 +48,11 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
           <span key="proTipFooter">
             <Icon name="rocket" />
             <> ProTip: {proTip} </>
-            <a href={proTipLink} target={proTipTarget} className="text-link">
-              {proTipLinkTitle}
-            </a>
+            {proTipLink && (
+              <a href={proTipLink} target={proTipTarget} className="text-link">
+                {proTipLinkTitle}
+              </a>
+            )}
           </span>
         ) : (
           ''
@@ -79,6 +83,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       icon={buttonIcon}
       className={ctaElementClassName}
       aria-label={selectors.components.CallToActionCard.button(buttonTitle)}
+      disabled={buttonDisabled}
     >
       {buttonTitle}
     </LinkButton>

@@ -29,7 +29,7 @@ export interface State {
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
-  private panelMap: { [id: string]: PanelModel } = {};
+  private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
   private windowWidth = 1920;
@@ -57,8 +57,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
-      const stringId = panel.id.toString();
-      this.panelMap[stringId] = panel;
+      if (!panel.key) {
+        panel.key = `panel-${panel.id}-${Date.now()}`;
+      }
+      this.panelMap[panel.key] = panel;
 
       if (!panel.gridPos) {
         console.log('panel without gridpos');
@@ -66,7 +68,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       }
 
       const panelPos: any = {
-        i: stringId,
+        i: panel.key,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
         w: panel.gridPos.w,
@@ -108,7 +110,9 @@ export class DashboardGrid extends PureComponent<Props, State> {
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
-    this.panelMap[newItem.i!].updateGridPos(newItem);
+    const panel = this.panelMap[newItem.i!];
+    panel.updateGridPos(newItem);
+    panel.configRev++; // trigger change handler
   };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -159,16 +163,15 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-      const itemKey = panel.id.toString();
 
       // Update is in view state
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
         <GrafanaGridItem
-          key={itemKey}
+          key={panel.key}
           className={panelClasses}
-          data-panelid={itemKey}
+          data-panelid={panel.id}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
           windowHeight={this.windowHeight}
@@ -176,7 +179,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height, itemKey);
+            return this.renderPanel(panel, width, height, panel.key);
           }}
         </GrafanaGridItem>
       );

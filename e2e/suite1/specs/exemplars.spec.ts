@@ -12,7 +12,7 @@ const addDataSource = () => {
       e2e.components.DataSourcePicker.container()
         .should('be.visible')
         .within(() => {
-          e2e.components.Select.input().should('be.visible').click({ force: true });
+          e2e.components.DataSourcePicker.input().should('be.visible').click({ force: true });
         });
 
       e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
@@ -53,7 +53,7 @@ describe('Exemplars', () => {
     e2e.components.DataSourcePicker.container()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').click();
+        e2e.components.DataSourcePicker.input().should('be.visible').click();
       });
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
     e2e.components.TimePicker.openButton().click();

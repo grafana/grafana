@@ -87,6 +87,7 @@ interface PluginDependencyInfo {
 }
 
 export interface PluginDependencies {
+  grafanaDependency?: string;
   grafanaVersion: string;
   plugins: PluginDependencyInfo[];
 }

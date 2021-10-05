@@ -38,24 +38,19 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		DataPath: dir,
 	}
 
-	m := metrics.NewMetrics(prometheus.NewRegistry())
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
-	store := &store.DBstore{
-		BaseInterval:           10 * time.Second,
-		DefaultIntervalSeconds: 60,
-		SQLStore:               sqlStore,
-		Logger:                 log.New("alertmanager-test"),
+	s := &store.DBstore{
+		BaseInterval:    10 * time.Second,
+		DefaultInterval: 60 * time.Second,
+		SQLStore:        sqlStore,
+		Logger:          log.New("alertmanager-test"),
 	}
 
-	am, err := newAlertmanager(1, cfg, store, m)
+	kvStore := newFakeKVStore(t)
+	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, m)
 	require.NoError(t, err)
 	return am
-}
-
-func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
-	require.NotNil(t, am.config)
 }
 
 func TestPutAlert(t *testing.T) {
@@ -213,48 +208,57 @@ func TestPutAlert(t *testing.T) {
 				}
 			},
 		}, {
-			title: "Invalid labels",
+			title: "Special characters in labels",
 			postableAlerts: apimodels.PostableAlerts{
 				PostableAlerts: []models.PostableAlert{
 					{
 						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname$": "Alert1"},
+							Labels: models.LabelSet{"alertname$": "Alert1", "az3-- __...++!!!£@@312312": "1"},
 						},
 					},
 				},
 			},
-			expError: &AlertValidationError{
-				Alerts: []models.PostableAlert{
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
 					{
-						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname$": "Alert1"},
+						Alert: model.Alert{
+							Labels:       model.LabelSet{"alertname$": "Alert1", "az3-- __...++!!!£@@312312": "1"},
+							Annotations:  model.LabelSet{},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "",
 						},
+						UpdatedAt: now,
+						Timeout:   true,
 					},
-				},
-				Errors: []error{errors.New("invalid label set: invalid name \"alertname$\"")},
+				}
 			},
 		}, {
-			title: "Invalid annotation",
+			title: "Special characters in annotations",
 			postableAlerts: apimodels.PostableAlerts{
 				PostableAlerts: []models.PostableAlert{
 					{
-						Annotations: models.LabelSet{"msg$": "Alert4 annotation"},
+						Annotations: models.LabelSet{"az3-- __...++!!!£@@312312": "Alert4 annotation"},
 						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname": "Alert1"},
+							Labels: models.LabelSet{"alertname": "Alert4"},
 						},
 					},
 				},
 			},
-			expError: &AlertValidationError{
-				Alerts: []models.PostableAlert{
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
 					{
-						Annotations: models.LabelSet{"msg$": "Alert4 annotation"},
-						Alert: models.Alert{
-							Labels: models.LabelSet{"alertname": "Alert1"},
+						Alert: model.Alert{
+							Labels:       model.LabelSet{"alertname": "Alert4"},
+							Annotations:  model.LabelSet{"az3-- __...++!!!£@@312312": "Alert4 annotation"},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "",
 						},
+						UpdatedAt: now,
+						Timeout:   true,
 					},
-				},
-				Errors: []error{errors.New("invalid annotations: invalid name \"msg$\"")},
+				}
 			},
 		}, {
 			title: "No labels after removing empty",
@@ -310,7 +314,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger)))
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}

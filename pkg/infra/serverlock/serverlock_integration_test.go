@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package serverlock
@@ -14,7 +15,7 @@ func TestServerLok(t *testing.T) {
 	sl := createTestableServerLock(t)
 
 	counter := 0
-	fn := func() { counter++ }
+	fn := func(context.Context) { counter++ }
 	atInterval := time.Second * 1
 	ctx := context.Background()
 

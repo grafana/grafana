@@ -1,3 +1,4 @@
+import { Reducer, AnyAction } from '@reduxjs/toolkit';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { PluginsState } from '../../../types';
 import {
@@ -10,11 +11,21 @@ import {
 } from './reducers';
 import { PluginMetaInfo, PluginType } from '@grafana/data';
 
+// Mock the config to enable the old version of the plugins page
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  const mockedRuntime = { ...original };
+
+  mockedRuntime.config.pluginAdminEnabled = false;
+
+  return mockedRuntime;
+});
+
 describe('pluginsReducer', () => {
   describe('when pluginsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<PluginsState>()
-        .givenReducer(pluginsReducer, { ...initialState })
+        .givenReducer(pluginsReducer as Reducer<PluginsState, AnyAction>, { ...initialState })
         .whenActionIsDispatched(
           pluginsLoaded([
             {
@@ -48,7 +59,7 @@ describe('pluginsReducer', () => {
   describe('when setPluginsSearchQuery is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<PluginsState>()
-        .givenReducer(pluginsReducer, { ...initialState })
+        .givenReducer(pluginsReducer as Reducer<PluginsState, AnyAction>, { ...initialState })
         .whenActionIsDispatched(setPluginsSearchQuery('A query'))
         .thenStateShouldEqual({
           ...initialState,
@@ -60,7 +71,7 @@ describe('pluginsReducer', () => {
   describe('when pluginDashboardsLoad is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<PluginsState>()
-        .givenReducer(pluginsReducer, {
+        .givenReducer(pluginsReducer as Reducer<PluginsState, AnyAction>, {
           ...initialState,
           dashboards: [
             {
@@ -92,7 +103,10 @@ describe('pluginsReducer', () => {
   describe('when pluginDashboardsLoad is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<PluginsState>()
-        .givenReducer(pluginsReducer, { ...initialState, isLoadingPluginDashboards: true })
+        .givenReducer(pluginsReducer as Reducer<PluginsState, AnyAction>, {
+          ...initialState,
+          isLoadingPluginDashboards: true,
+        })
         .whenActionIsDispatched(
           pluginDashboardsLoaded([
             {

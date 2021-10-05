@@ -36,9 +36,18 @@ func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 // family: the 0.0 schema. schema.Find() provides easy traversal to newer schema
 // versions.
 func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
-	overlay, err := defaultOverlay(p)
+	v, err := baseDashboardFamily(p)
 	if err != nil {
 		return nil, err
+	}
+	return buildGenericScuemata(v)
+}
+
+// Helper that gets the entire scuemata family, for reuse by Dist/Instance callers.
+func baseDashboardFamily(p BaseLoadPaths) (cue.Value, error) {
+	overlay, err := defaultOverlay(p)
+	if err != nil {
+		return cue.Value{}, err
 	}
 
 	cfg := &load.Config{
@@ -47,20 +56,20 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 		Module:     "github.com/grafana/grafana",
 		Dir:        filepath.Join(prefix, dashboardDir),
 	}
-	inst, err := rt.Build(load.Instances(nil, cfg)[0])
-	if err != nil {
-		cueError := schema.WrapCUEError(err)
-		if err != nil {
-			return nil, cueError
+	inst := ctx.BuildInstance(load.Instances(nil, cfg)[0])
+	if inst.Err() != nil {
+		cueError := schema.WrapCUEError(inst.Err())
+		if inst.Err() != nil {
+			return cue.Value{}, cueError
 		}
 	}
 
-	famval := inst.Value().LookupPath(cue.MakePath(cue.Str("Family")))
+	famval := inst.LookupPath(cue.MakePath(cue.Str("Family")))
 	if !famval.Exists() {
-		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
+		return cue.Value{}, errors.New("dashboard schema family did not exist at expected path in expected file")
 	}
 
-	return buildGenericScuemata(famval)
+	return famval, nil
 }
 
 // DistDashboardFamily loads the family of schema representing the "Dist"
@@ -73,38 +82,41 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 // family: the 0.0 schema. schema.Find() provides easy traversal to newer schema
 // versions.
 func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
-	head, err := BaseDashboardFamily(p)
+	famval, err := baseDashboardFamily(p)
 	if err != nil {
 		return nil, err
 	}
-	scuemap, err := readPanelModels(p)
+	scuemap, err := loadPanelScuemata(p)
 	if err != nil {
 		return nil, err
 	}
-	dj, err := disjunctPanelScuemata(scuemap)
-	if err != nil {
-		return nil, err
-	}
-	// Stick this into a dummy struct so that we can unify it into place, as
-	// Value.Fill() can't target definitions. Need new method based on cue.Path;
-	// a CL has been merged that creates FillPath and will be in the next
-	// release of CUE.
-	dummy, _ := rt.Compile("glue-unifyPanelDashboard", `
-	obj: {}
-	dummy: {
-		#Panel: obj
-	}
-	`)
 
-	filled := dummy.Value().FillPath(cue.MakePath(cue.Str("obj")), dj)
-	ddj := filled.LookupPath(cue.MakePath(cue.Str("dummy")))
+	// TODO see if unifying into the expected form in a loop, then unifying that
+	// consolidated form improves performance
+	for typ, fam := range scuemap {
+		famval = famval.FillPath(cue.MakePath(cue.Str("compose"), cue.Str("Panel"), cue.Str(typ)), fam)
+	}
+	head, err := buildGenericScuemata(famval)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO sloppy duplicate logic of what's in readPanelModels(), for now
+	all := make(map[string]schema.VersionedCueSchema)
+	for id, val := range scuemap {
+		fam, err := buildGenericScuemata(val)
+		if err != nil {
+			return nil, err
+		}
+		all[id] = fam
+	}
 
 	var first, prev *compositeDashboardSchema
 	for head != nil {
 		cds := &compositeDashboardSchema{
 			base:      head,
-			actual:    head.CUE().Unify(ddj),
-			panelFams: scuemap,
+			actual:    head.CUE(),
+			panelFams: all,
 			// TODO migrations
 			migration: terminalMigrationFunc,
 		}
@@ -118,7 +130,6 @@ func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 		prev = cds
 		head = head.Successor()
 	}
-
 	return first, nil
 }
 
@@ -137,11 +148,11 @@ func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
 	if name == "" {
 		name = "resource"
 	}
-	rv, err := rt.Compile(name, r.Value)
-	if err != nil {
-		return err
+	rv := ctx.CompileString(r.Value.(string), cue.Filename(name))
+	if rv.Err() != nil {
+		return rv.Err()
 	}
-	return cds.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
+	return cds.actual.Unify(rv).Validate(cue.Concrete(true))
 }
 
 // CUE returns the cue.Value representing the actual schema.
@@ -182,6 +193,7 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 	}
 
 	latest := schema.Find(psch, schema.Latest())
+	// FIXME this relies on old sloppiness
 	sch := &genericVersionedSchema{
 		actual: cds.base.CUE().LookupPath(panelSubpath).Unify(mapPanelModel(id, latest)),
 	}

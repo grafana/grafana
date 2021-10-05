@@ -268,7 +268,7 @@ func (p *TestDataPlugin) handleRandomWalkScenario(ctx context.Context, req *back
 
 		for i := 0; i < seriesCount; i++ {
 			respD := resp.Responses[q.RefID]
-			respD.Frames = append(respD.Frames, randomWalk(q, model, i))
+			respD.Frames = append(respD.Frames, RandomWalk(q, model, i))
 			resp.Responses[q.RefID] = respD
 		}
 	}
@@ -354,7 +354,7 @@ func (p *TestDataPlugin) handleRandomWalkWithErrorScenario(ctx context.Context, 
 		}
 
 		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, randomWalk(q, model, 0))
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
 		respD.Error = fmt.Errorf("this is an error and it can include URLs http://grafana.com/")
 		resp.Responses[q.RefID] = respD
 	}
@@ -376,7 +376,7 @@ func (p *TestDataPlugin) handleRandomWalkSlowScenario(ctx context.Context, req *
 		time.Sleep(parsedInterval)
 
 		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, randomWalk(q, model, 0))
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
 		resp.Responses[q.RefID] = respD
 	}
 
@@ -618,7 +618,7 @@ func (p *TestDataPlugin) handleLogsScenario(ctx context.Context, req *backend.Qu
 	return resp, nil
 }
 
-func randomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)

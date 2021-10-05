@@ -13,14 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/ngalert"
-	"github.com/grafana/grafana/pkg/services/notifications"
-
-	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/librarypanels"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/searchusers"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -31,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -40,13 +33,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -56,7 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -70,7 +69,6 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	UsageStatsService      usagestats.UsageStats
 	PluginContextProvider  *plugincontext.Provider
 	RouteRegister          routing.RouteRegister
 	Bus                    bus.Bus
@@ -107,9 +105,11 @@ type HTTPServer struct {
 	SocialService          social.Service
 	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
+	EncryptionService      encryption.Service
 	cleanUpService         *cleanup.CleanUpService
 	tracingService         *tracing.TracingService
 	internalMetricsSvc     *metrics.InternalMetricsService
+	searchUsersService     searchusers.Service
 }
 
 type ServerOptions struct {
@@ -119,8 +119,7 @@ type ServerOptions struct {
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
-	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
-	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
+	dataService *tsdb.Service, alertEngine *alerting.AlertEngine, pluginRequestValidator models.PluginRequestValidator,
 	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
@@ -133,11 +132,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
-	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService) (*HTTPServer, error) {
+	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	encryptionService encryption.Service, searchUsersService searchusers.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
-	// automatically set HEAD for every GET
-	m.SetAutoHead(true)
 
 	hs := &HTTPServer{
 		Cfg:                    cfg,
@@ -150,7 +148,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:               sqlStore,
 		DataService:            dataService,
 		AlertEngine:            alertEngine,
-		UsageStatsService:      usageStatsService,
 		PluginRequestValidator: pluginRequestValidator,
 		PluginManager:          pluginManager,
 		BackendPluginManager:   backendPM,
@@ -182,6 +179,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Listener:               opts.Listener,
 		SocialService:          socialService,
 		OAuthTokenService:      oauthTokenService,
+		EncryptionService:      encryptionService,
+		searchUsersService:     searchUsersService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -458,7 +457,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 
 	promhttp.
 		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
-		ServeHTTP(ctx.Resp, ctx.Req.Request)
+		ServeHTTP(ctx.Resp, ctx.Req)
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running

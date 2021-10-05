@@ -30,13 +30,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	cfg := setting.NewCfg()
 	cfg.AlertingBaseInterval = baseInterval
-	// AlertNG is disabled by default and only if it's enabled
-	// its database migrations run and the relative database tables are created
-	cfg.FeatureToggles = map[string]bool{"ngalert": true}
+	// AlertNG database migrations run and the relative database tables are created only when it's enabled
+	cfg.UnifiedAlerting.Enabled = true
 
-	m := metrics.NewMetrics(prometheus.NewRegistry())
-	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil,
-		m)
+	m := metrics.NewNGAlert(prometheus.NewRegistry())
+	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil, nil, m)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
 		SQLStore:     ng.SQLStore,
@@ -46,11 +44,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
-		OrgID:        1,
+		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
 			Name:     ruleGroup,
@@ -85,7 +83,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 	require.NoError(t, err)
 
 	q := models.ListRuleGroupAlertRulesQuery{
-		OrgID:        1,
+		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroup:    ruleGroup,
 	}

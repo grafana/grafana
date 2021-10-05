@@ -57,6 +57,8 @@ const copyFiles = () => {
     'src/config/eslint.plugin.json',
     'src/config/styles.mock.js',
     'src/config/jest.plugin.config.local.js',
+    'src/config/matchMedia.js',
+    'src/config/react-inlinesvg.tsx',
   ];
 
   return useSpinner(`Moving ${files.join(', ')} files`, async () => {

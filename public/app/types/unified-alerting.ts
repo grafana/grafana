@@ -85,6 +85,7 @@ export interface CombinedRule {
 
 export interface CombinedRuleGroup {
   name: string;
+  interval?: string;
   rules: CombinedRule[];
 }
 
@@ -132,4 +133,10 @@ export interface FilterState {
   dataSource?: string;
   alertState?: string;
   groupBy?: string[];
+  ruleType?: string;
+}
+
+export interface SilenceFilterState {
+  queryString?: string;
+  silenceState?: string;
 }

@@ -16,6 +16,7 @@ import {
   checkIfLotexSupportsEditingRulesAction,
   deleteAlertManagerConfigAction,
   testReceiversAction,
+  updateLotexNamespaceAndGroupAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -50,6 +51,8 @@ export const reducer = combineReducers({
     (source) => source
   ).reducer,
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
+  updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
+    .reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

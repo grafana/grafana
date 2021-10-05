@@ -1,4 +1,4 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -12,6 +12,7 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
+  DataQueryResponse,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -44,6 +45,11 @@ export interface ExploreState {
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
+
+  /**
+   * Auto-loading logs volume after running the query
+   */
+  autoLoadLogsVolume: boolean;
 }
 
 export interface ExploreItemState {
@@ -82,11 +88,6 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Log line substrings to be highlighted as you type in a query field.
-   * Currently supports only the first query row.
-   */
-  logsHighlighterExpressions?: string[];
-  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;
@@ -122,8 +123,6 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
-  latency: number;
-
   /**
    * If true, the view is in live tailing mode.
    */
@@ -156,6 +155,12 @@ export interface ExploreItemState {
    * We are currently caching last 5 query responses.
    */
   cache: Array<{ key: string; value: PanelData }>;
+
+  // properties below should be more generic if we add more providers
+  // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+  logsVolumeDataSubscription?: SubscriptionLike;
+  logsVolumeData?: DataQueryResponse;
 }
 
 export interface ExploreUpdateState {
@@ -176,7 +181,6 @@ export interface QueryTransaction {
   done: boolean;
   error?: string | JSX.Element;
   hints?: QueryHint[];
-  latency: number;
   request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
@@ -204,7 +208,3 @@ export interface ExplorePanelData extends PanelData {
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }
-
-export type SplitOpen = <T extends DataQuery = any>(
-  options?: { datasourceUid: string; query: T; range?: TimeRange } | undefined
-) => void;

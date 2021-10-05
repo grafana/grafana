@@ -5,7 +5,7 @@ import {
   GraphGradientMode,
   AxisPlacement,
   GraphDrawStyle,
-  PointVisibility,
+  VisibilityMode,
   ScaleOrientation,
   ScaleDirection,
   GraphTresholdsStyleMode,
@@ -37,6 +37,8 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "mode": 1,
+          "padding": undefined,
           "scales": Object {},
           "select": undefined,
           "series": Array [
@@ -86,6 +88,8 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "mode": 1,
+          "padding": undefined,
           "scales": Object {
             "scale-x": Object {
               "auto": false,
@@ -164,6 +168,8 @@ describe('UPlotConfigBuilder', () => {
               },
             },
             "hooks": Object {},
+            "mode": 1,
+            "padding": undefined,
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
@@ -215,6 +221,8 @@ describe('UPlotConfigBuilder', () => {
                 },
               },
               "hooks": Object {},
+              "mode": 1,
+              "padding": undefined,
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -267,6 +275,8 @@ describe('UPlotConfigBuilder', () => {
                 },
               },
               "hooks": Object {},
+              "mode": 1,
+              "padding": undefined,
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -329,7 +339,7 @@ describe('UPlotConfigBuilder', () => {
       placement: AxisPlacement.Bottom,
       isTime: false,
       formatValue: () => 'test value',
-      grid: false,
+      grid: { show: false },
       show: true,
       theme: darkTheme,
       values: [],
@@ -382,6 +392,8 @@ describe('UPlotConfigBuilder', () => {
           },
         },
         "hooks": Object {},
+        "mode": 1,
+        "padding": undefined,
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -411,7 +423,6 @@ describe('UPlotConfigBuilder', () => {
 
     expect(builder.getAxisPlacement('y1')).toBe(AxisPlacement.Left);
     expect(builder.getAxisPlacement('y2')).toBe(AxisPlacement.Right);
-    expect(builder.getConfig().axes![1].grid!.show).toBe(false);
   });
 
   it('when fillColor is not set fill', () => {
@@ -474,7 +485,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
-      showPoints: PointVisibility.Auto,
+      showPoints: VisibilityMode.Auto,
       pointSize: 5,
       lineColor: '#0000ff',
       lineWidth: 1,
@@ -500,6 +511,8 @@ describe('UPlotConfigBuilder', () => {
           },
         },
         "hooks": Object {},
+        "mode": 1,
+        "padding": undefined,
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -507,6 +520,7 @@ describe('UPlotConfigBuilder', () => {
             "value": [Function],
           },
           Object {
+            "facets": undefined,
             "fill": [Function],
             "paths": [Function],
             "points": Object {
@@ -538,7 +552,7 @@ describe('UPlotConfigBuilder', () => {
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
-        showPoints: PointVisibility.Auto,
+        showPoints: VisibilityMode.Auto,
         lineColor: '#0000ff',
         lineWidth: 1,
         spanNulls: false,
@@ -549,7 +563,7 @@ describe('UPlotConfigBuilder', () => {
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
-        showPoints: PointVisibility.Auto,
+        showPoints: VisibilityMode.Auto,
         pointSize: 5,
         lineColor: '#00ff00',
         lineWidth: 1,
@@ -562,7 +576,7 @@ describe('UPlotConfigBuilder', () => {
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
-        showPoints: PointVisibility.Auto,
+        showPoints: VisibilityMode.Auto,
         pointSize: 5,
         lineColor: '#ff0000',
         lineWidth: 1,
@@ -613,6 +627,8 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "mode": 1,
+          "padding": undefined,
           "scales": Object {},
           "select": undefined,
           "series": Array [
@@ -620,6 +636,7 @@ describe('UPlotConfigBuilder', () => {
               "value": [Function],
             },
             Object {
+              "facets": undefined,
               "fill": [Function],
               "paths": [Function],
               "points": Object {
@@ -637,6 +654,7 @@ describe('UPlotConfigBuilder', () => {
               "width": 1,
             },
             Object {
+              "facets": undefined,
               "fill": [Function],
               "paths": [Function],
               "points": Object {
@@ -654,6 +672,7 @@ describe('UPlotConfigBuilder', () => {
               "width": 1,
             },
             Object {
+              "facets": undefined,
               "fill": [Function],
               "paths": [Function],
               "points": Object {
@@ -707,6 +726,97 @@ describe('UPlotConfigBuilder', () => {
       });
 
       expect(addHookFn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Grid lines visibility', () => {
+    it('handles auto behaviour', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        theme: darkTheme,
+      });
+      builder.addAxis({
+        scaleKey: 'y3',
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(true);
+      expect(axesConfig[1].grid!.show).toBe(true);
+      expect(axesConfig[2].grid!.show).toBe(false);
+      expect(axesConfig[3].grid!.show).toBe(false);
+    });
+
+    it('handles auto behaviour with explicite grid settings', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        grid: { show: true },
+        theme: darkTheme,
+      });
+      builder.addAxis({
+        scaleKey: 'y3',
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(true);
+      expect(axesConfig[1].grid!.show).toBe(true);
+      expect(axesConfig[2].grid!.show).toBe(true);
+      expect(axesConfig[3].grid!.show).toBe(false);
+    });
+
+    it('handles explicit grid settings', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        grid: { show: false },
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        grid: { show: false },
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        grid: { show: true },
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(false);
+      expect(axesConfig[1].grid!.show).toBe(false);
+      expect(axesConfig[2].grid!.show).toBe(true);
     });
   });
 });
