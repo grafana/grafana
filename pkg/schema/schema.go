@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"math/bits"
-	"strings"
 
 	"cuelang.org/go/cue"
 	errs "cuelang.org/go/cue/errors"
 	cuejson "cuelang.org/go/pkg/encoding/json"
-	internal "github.com/grafana/grafana/pkg/schema/internal/rt"
 )
 
 // CueError wraps Errors caused by malformed cue files.
@@ -280,7 +278,7 @@ func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rv := internal.CueContext.CompileString(r.Value.(string), cue.Filename(name))
+	rv := scue.Context().CompileString(r.Value.(string), cue.Filename(name))
 	if rv.Err() != nil {
 		return r, rv.Err()
 	}
@@ -312,7 +310,7 @@ func applyDefaultHelper(input cue.Value, scue cue.Value) (cue.Value, error) {
 			if err != nil {
 				return input, errors.New("can't apply defaults for list")
 			}
-			var iterlist []string
+			var iterlist []cue.Value
 			for iter.Next() {
 				ref, err := getBranch(ele, iter.Value())
 				if err != nil {
@@ -320,15 +318,10 @@ func applyDefaultHelper(input cue.Value, scue cue.Value) (cue.Value, error) {
 				}
 				re, err := applyDefaultHelper(iter.Value(), ref)
 				if err == nil {
-					reString, err := convertCUEValueToString(re)
-					if err != nil {
-						return input, err
-					}
-					iterlist = append(iterlist, reString)
+					iterlist = append(iterlist, re)
 				}
 			}
-			iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-			liInstance := internal.CueContext.CompileString(iterlistContent, cue.Filename("resource"))
+			liInstance := scue.Context().NewList(iterlist...)
 			if liInstance.Err() != nil {
 				return input, liInstance.Err()
 			}
@@ -385,7 +378,7 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 	if name == "" {
 		name = "resource"
 	}
-	rvInstance := internal.CueContext.CompileString(r.Value.(string), cue.Filename(name))
+	rvInstance := scue.Context().CompileString(r.Value.(string), cue.Filename(name))
 	if rvInstance.Err() != nil {
 		return r, rvInstance.Err()
 	}
@@ -442,7 +435,7 @@ func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
 	// To include all optional fields, we need to use inputdef for iteration,
 	// since the lookuppath with optional field doesn't work very well
-	rv := internal.CueContext.CompileString("", cue.Filename("helper"))
+	rv := inputdef.Context().CompileString("", cue.Filename("helper"))
 	if rv.Err() != nil {
 		return input, false, rv.Err()
 	}
@@ -499,35 +492,22 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 			if err != nil {
 				return rv, true, nil
 			}
-			var iterlist []string
+			var iterlist []cue.Value
 			for iter.Next() {
 				ref, err := getBranch(ele, iter.Value())
 				if err != nil {
-					reString, err := iter.Value().String()
-					if err == nil {
-						iterlist = append(iterlist, reString)
-					}
+					iterlist = append(iterlist, iter.Value())
 					continue
 				}
 				re, isEqual, err := removeDefaultHelper(ref, iter.Value())
 				if err == nil && !isEqual {
-					reString, err := convertCUEValueToString(re)
-					if err != nil {
-						reString, err := iter.Value().String()
-						if err == nil {
-							iterlist = append(iterlist, reString)
-						}
-						continue
-					}
-					iterlist = append(iterlist, reString)
+					iterlist = append(iterlist, re)
+				} else {
+					iterlist = append(iterlist, iter.Value())
 				}
 			}
-			iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-			liInstance := internal.CueContext.CompileString(iterlistContent, cue.Filename("resource"))
-			if liInstance.Err() != nil {
-				return rv, false, liInstance.Err()
-			}
-			return liInstance, false, nil
+			liInstance := inputdef.Context().NewList(iterlist...)
+			return liInstance, false, liInstance.Err()
 		}
 		// now when ele is empty, we don't trim anything
 		return input, false, nil

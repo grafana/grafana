@@ -11,7 +11,6 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
-	internal "github.com/grafana/grafana/pkg/schema/internal/rt"
 )
 
 // mapPanelModel maps a schema from the #PanelModel form in which it's declared
@@ -21,7 +20,7 @@ import (
 func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	maj, min := vcs.Version()
 	// Ignore err return, this can't fail to compile
-	inter := internal.CueContext.CompileString(fmt.Sprintf(`
+	inter := ctx.CompileString(fmt.Sprintf(`
 	in: {
 		type: %q
 		v: {
@@ -109,7 +108,7 @@ func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
 		}
 
 		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
-		imod := internal.CueContext.BuildInstance(li[0])
+		imod := ctx.BuildInstance(li[0])
 		if imod.Err() != nil {
 			return imod.Err()
 		}

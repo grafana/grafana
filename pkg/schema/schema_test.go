@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/google/go-cmp/cmp"
-	internal "github.com/grafana/grafana/pkg/schema/internal/rt"
 	"golang.org/x/tools/txtar"
 )
 
@@ -31,7 +31,8 @@ func TestGenerate(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.Name+" apply defaults", func(t *testing.T) {
-			scmInstance := internal.CueContext.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
+			ctx := cuecontext.New()
+			scmInstance := ctx.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
 				t.Fatal(scmInstance.Err())
 			}
@@ -51,7 +52,8 @@ func TestGenerate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Name+" trim defaults", func(t *testing.T) {
-			scmInstance := internal.CueContext.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
+			ctx := cuecontext.New()
+			scmInstance := ctx.CompileString(c.CUE, cue.Filename(c.Name+".cue"))
 			if scmInstance.Err() != nil {
 				t.Fatal(scmInstance.Err())
 			}

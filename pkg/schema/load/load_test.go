@@ -20,7 +20,6 @@ import (
 	"cuelang.org/go/cue/load"
 	cuejson "cuelang.org/go/pkg/encoding/json"
 	"github.com/grafana/grafana/pkg/schema"
-	internal "github.com/grafana/grafana/pkg/schema/internal/rt"
 	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
 )
@@ -30,18 +29,12 @@ var (
 	update = flag.Bool("update", false, "update golden files")
 )
 
-type testType int
-
-const (
-	dashboardValidity testType = 1
-	trimApplyDefaults testType = 2
-	goldenFileUpdate  testType = 3
-)
+type testfunc func(schema.VersionedCueSchema, []byte, fs.FileInfo, string)
 
 // for now we keep the validdir as input parameter since for trim apply default we can't use devenv directory yet,
 // otherwise we can hardcoded validdir and just pass the testtype is more than enough.
 // TODO: remove validdir once we can test directly with devenv folder
-var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, testtype testType) func(t *testing.T) {
+var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, fn testfunc) func(t *testing.T) {
 	return func(t *testing.T) {
 		t.Parallel()
 		require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
@@ -76,48 +69,7 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, t
 			}
 
 			t.Run(filepath.Base(path), func(t *testing.T) {
-				switch testtype {
-				case trimApplyDefaults:
-					{
-						dsSchema, err := schema.SearchAndValidate(sch, string(byt))
-						require.NoError(t, err)
-
-						// Trimmed default json file
-						trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
-						require.NoError(t, err)
-
-						// store the trimmed result into testdata for easy debug
-						out, err := schema.ApplyDefaults(trimmed, dsSchema.CUE())
-						require.NoError(t, err)
-						require.JSONEq(t, string(byt), out.Value.(string))
-					}
-				case goldenFileUpdate:
-					{
-						dsSchema, err := schema.SearchAndValidate(sch, string(byt))
-						require.NoError(t, err)
-
-						origin, err := schema.ApplyDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
-						require.NoError(t, err)
-
-						var prettyJSON bytes.Buffer
-						err = json.Indent(&prettyJSON, []byte(origin.Value.(string)), "", "\t")
-						require.NoError(t, err)
-
-						err = ioutil.WriteFile(filepath.Join("..", "testdata", "devenvgoldenfiles", d.Name()), prettyJSON.Bytes(), 0644)
-						require.NoError(t, err)
-					}
-				case dashboardValidity:
-					err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
-					if err != nil {
-						// Testify trims errors to short length. We want the full text
-						errstr := errors.Details(err, nil)
-						t.Log(errstr)
-						if strings.Contains(errstr, "null") {
-							t.Log("validation failure appears to involve nulls - see if scripts/stripnulls.sh has any effect?")
-						}
-						t.FailNow()
-					}
-				}
+				fn(sch, byt, d, path)
 			})
 			return nil
 		}))
@@ -160,6 +112,18 @@ func TestDevenvDashboardValidity(t *testing.T) {
 	var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
+	var dashboardValidity = func(sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, path string) {
+		err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
+		if err != nil {
+			// Testify trims errors to short length. We want the full text
+			errstr := errors.Details(err, nil)
+			t.Log(errstr)
+			if strings.Contains(errstr, "null") {
+				t.Log("validation failure appears to involve nulls - see if scripts/stripnulls.sh has any effect?")
+			}
+			t.FailNow()
+		}
+	}
 	t.Run("base", doTestAgainstDevenv(dash, validdir, dashboardValidity))
 
 	ddash, err := DistDashboardFamily(p)
@@ -175,6 +139,20 @@ func TestUpdateDevenvDashboardGoldenFiles(t *testing.T) {
 		ddash, err := DistDashboardFamily(p)
 		require.NoError(t, err, "error while loading dist dashboard scuemata")
 		var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
+		var goldenFileUpdate = func(sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, _ string) {
+			dsSchema, err := schema.SearchAndValidate(sch, string(byt))
+			require.NoError(t, err)
+
+			origin, err := schema.ApplyDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
+			require.NoError(t, err)
+
+			var prettyJSON bytes.Buffer
+			err = json.Indent(&prettyJSON, []byte(origin.Value.(string)), "", "\t")
+			require.NoError(t, err)
+
+			err = ioutil.WriteFile(filepath.Join("..", "testdata", "devenvgoldenfiles", d.Name()), prettyJSON.Bytes(), 0644)
+			require.NoError(t, err)
+		}
 		t.Run("updategoldenfile", doTestAgainstDevenv(ddash, validdir, goldenFileUpdate))
 	}
 }
@@ -185,6 +163,19 @@ func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
 	validdir := filepath.Join("..", "testdata", "devenvgoldenfiles")
+	var trimApplyDefaults = func(sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, path string) {
+		dsSchema, err := schema.SearchAndValidate(sch, string(byt))
+		require.NoError(t, err)
+
+		// Trimmed default json file
+		trimmed, err := schema.TrimDefaults(schema.Resource{Value: string(byt)}, dsSchema.CUE())
+		require.NoError(t, err)
+
+		// store the trimmed result into testdata for easy debug
+		out, err := schema.ApplyDefaults(trimmed, dsSchema.CUE())
+		require.NoError(t, err)
+		require.JSONEq(t, string(byt), out.Value.(string))
+	}
 	t.Run("defaults", doTestAgainstDevenv(ddash, validdir, trimApplyDefaults))
 }
 
@@ -259,10 +250,10 @@ func TestAllPluginsInDist(t *testing.T) {
 		Dir:        filepath.Join(prefix, dashboardDir, "dist"),
 		Package:    "dist",
 	}
-	inst := internal.CueContext.BuildInstance(load.Instances(nil, cfg)[0])
+	inst := ctx.BuildInstance(load.Instances(nil, cfg)[0])
 	require.NoError(t, inst.Err())
 
-	dinst := internal.CueContext.CompileString(`
+	dinst := ctx.CompileString(`
 	Family: compose: Panel: {}
 	typs: [for typ, _ in Family.compose.Panel {typ}]
 	`, cue.Filename("str"))
