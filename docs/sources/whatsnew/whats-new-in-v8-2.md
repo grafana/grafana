@@ -69,7 +69,7 @@ Usage Insights Logs contain valuable information about user dashboard visits, qu
 
 ## Create a report from the dashboard Share dialogue
 
-Reports are a powerful way to deliver insights directly to people’s email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. Learn more about Reporting in the [documentation about reporting](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
+Reports offer a powerful way to deliver insights directly to your email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful when combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. To learn more, see the [reporting documentation](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
 
 {{< figure src="/static/img/docs/enterprise/enterprise-report-from-share-8-2.png" max-width="1200px" caption="Create a report from the dashboard share dialogue" >}}
 
