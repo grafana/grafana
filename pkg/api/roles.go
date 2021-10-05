@@ -13,7 +13,7 @@ const (
 	ActionDatasourcesCreate = "datasources:create"
 	ActionDatasourcesWrite  = "datasources:write"
 	ActionDatasourcesDelete = "datasources:delete"
-	ActionDatasourcesIDRead = "datasources:id:read"
+	ActionDatasourcesIDRead = "datasources.id:read"
 )
 
 // API related scopes
@@ -74,7 +74,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:datasources:id:viewer",
 				Description: "Gives access to read datasources ID",
 				Permissions: []accesscontrol.Permission{
