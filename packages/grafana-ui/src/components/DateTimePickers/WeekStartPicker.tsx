@@ -4,8 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 
 export interface Props {
-  onChange: (weekStart?: number) => void;
-  value?: number;
+  onChange: (weekStart: number) => void;
+  value: number;
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
