@@ -63,7 +63,7 @@ Fine-grained access control now covers data source and provisioning permissions.
 
 ## Export usage insights logs as server logs
 
-Usage Insights Logs contain valuable information about user dashboard visits, queries, and front-end errors that are otherwise impossible to track in Grafana. You can now export those logs alongside your regular server logsr to identify problematic dashboards and data sources and improve users’ experience with Grafana. Previously, these metrics could only be exported directly to Loki. Learn more in the [documentation about exporting logs](https://grafana.com/docs/grafana/latest/enterprise/usage-insights/export-logs/)
+Usage Insights Logs contain valuable information about user dashboard visits, queries, and front-end errors that are otherwise impossible to track in Grafana. You can now export those logs alongside your regular server logs to identify problematic dashboards and data sources and improve users’ experience with Grafana. Previously, these metrics could only be exported directly to Loki. Learn more in the [documentation about exporting logs](https://grafana.com/docs/grafana/latest/enterprise/usage-insights/export-logs/)
 
 {{< figure src="/static/img/docs/enterprise/8_2_export_usage_insights.png" max-width="1200px" caption="Stats and licensing" >}}
 
