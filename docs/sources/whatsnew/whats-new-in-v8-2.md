@@ -30,7 +30,7 @@ We’ve taken our first, measured but important step towards improving the acces
 
 ## Dashboards 
 
-The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time tange controls. quarters as time ranges, which can be helpful for business-focused and executive dashboards as well as (https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information, please see the [time range controls documentation].
+The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time picker. This option enables fiscal quarters as time ranges, which can be helpful for business-focused and executive dashboards in addition to many other common use cases. Please see the [time range controls documentation].(https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information.
 
 {{< figure src="/static/img/docs/time-range-controls/fiscal_year-8-2.png" max-width="1200px" caption="Fiscal Year Time Range Settings" >}}
 
