@@ -78,7 +78,7 @@ export function addToRichHistory(
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
       return updatedHistory;
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(error)));
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
       return richHistory;
     }
   }
@@ -111,7 +111,7 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(error)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -133,7 +133,7 @@ export function updateCommentInRichHistory(
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(error)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
@@ -144,7 +144,7 @@ export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: nu
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification(error)));
+    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
 }
