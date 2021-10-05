@@ -24,6 +24,7 @@ import { getCronStringFromValues } from 'app/percona/shared/helpers/cron/cron';
 import { ScheduledBackupsActions } from './ScheduledBackupsActions';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { RetryMode } from '../../Backup.types';
+import { formatBackupMode } from '../../Backup.utils';
 
 export const ScheduledBackups: FC = () => {
   const [data, setData] = useState<ScheduledBackup[]>([]);
@@ -72,7 +73,8 @@ export const ScheduledBackups: FC = () => {
       },
       {
         Header: Messages.scheduledBackups.table.columns.type,
-        accessor: 'type',
+        accessor: 'mode',
+        Cell: ({ value }) => formatBackupMode(value),
       },
       {
         Header: Messages.scheduledBackups.table.columns.location,
@@ -150,6 +152,7 @@ export const ScheduledBackups: FC = () => {
       retryTimes,
       active,
       retention,
+      mode,
     } = backup;
     try {
       const cronExpression = getCronStringFromValues(
@@ -177,15 +180,16 @@ export const ScheduledBackups: FC = () => {
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.getEditSuccess(backupName)]);
       } else {
         await ScheduledBackupsService.schedule(
-          service.value?.id!,
-          location.value!,
+          service!.value?.id!,
+          location!.value!,
           cronExpression,
           backupName,
           description,
           strRetryInterval,
           resultRetryTimes!,
           retention!,
-          active!
+          active!,
+          mode
         );
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.addSuccess]);
       }
@@ -199,7 +203,17 @@ export const ScheduledBackups: FC = () => {
 
   const handleCopy = useCallback(
     async (backup: ScheduledBackup) => {
-      const { serviceId, locationId, cronExpression, name, description, retention, retryInterval, retryTimes } = backup;
+      const {
+        serviceId,
+        locationId,
+        cronExpression,
+        name,
+        description,
+        retention,
+        retryInterval,
+        retryTimes,
+        mode,
+      } = backup;
       const newName = `${Messages.scheduledBackups.copyOf} ${name}`;
       setActionPending(true);
       try {
@@ -212,7 +226,8 @@ export const ScheduledBackups: FC = () => {
           retryInterval,
           retryTimes,
           retention,
-          false
+          false,
+          mode
         );
         getData();
       } catch (e) {

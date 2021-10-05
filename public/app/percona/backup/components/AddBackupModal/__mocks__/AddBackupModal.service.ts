@@ -10,7 +10,7 @@ export const serviceStubs: Array<SelectableValue<SelectableService>> = [
   },
   {
     label: 'service_2',
-    value: { id: 'Service 2', vendor: Databases.mongodb },
+    value: { id: 'Service 2', vendor: Databases.mysql },
   },
 ];
 export const locationsStubs: Array<SelectableValue<string>> = [

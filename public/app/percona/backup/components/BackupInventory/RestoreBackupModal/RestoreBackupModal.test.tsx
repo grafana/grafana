@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import { dataTestId } from '@percona/platform-core';
 import { Backup } from '../BackupInventory.types';
 import { RestoreBackupModal } from './RestoreBackupModal';
-import { BackupStatus, DataModel } from 'app/percona/backup/Backup.types';
+import { BackupMode, BackupStatus, DataModel } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
 
 xdescribe('RestoreBackupModal', () => {
@@ -18,6 +18,7 @@ xdescribe('RestoreBackupModal', () => {
     dataModel: DataModel.PHYSICAL,
     status: BackupStatus.BACKUP_STATUS_SUCCESS,
     vendor: Databases.mongodb,
+    mode: BackupMode.SNAPSHOT,
   };
 
   it('should render', () => {

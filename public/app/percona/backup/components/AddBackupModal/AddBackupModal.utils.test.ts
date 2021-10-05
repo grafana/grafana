@@ -1,20 +1,27 @@
 import { stubs as backupStubs } from '../BackupInventory/__mocks__/BackupInventory.service';
-import { BackupType, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
+import { BackupMode, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
 import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
 import { AddBackupFormProps } from './AddBackupModal.types';
-import { toFormBackup, isCronFieldDisabled, getOptionFromPeriodType, getOptionFromDigit } from './AddBackupModal.utils';
-import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import {
+  toFormBackup,
+  isCronFieldDisabled,
+  getOptionFromPeriodType,
+  getOptionFromDigit,
+  getBackupModeOptions,
+  getDataModelFromVendor,
+} from './AddBackupModal.utils';
+import { Databases } from 'app/percona/shared/core';
 
 describe('AddBackupModal::utils', () => {
   describe('toFormBackup', () => {
     it('should return default values if a null Backup is passed', () => {
       expect(toFormBackup(null)).toEqual<AddBackupFormProps>({
         id: '',
-        service: null as any,
+        service: null,
         dataModel: DataModel.PHYSICAL,
         backupName: '',
         description: '',
-        location: null as any,
+        location: null,
         retryMode: RetryMode.MANUAL,
         retryTimes: 2,
         retryInterval: 30,
@@ -27,7 +34,8 @@ describe('AddBackupModal::utils', () => {
         retention: 7,
         logs: false,
         active: true,
-        vendor: '',
+        vendor: null,
+        mode: BackupMode.SNAPSHOT,
       });
     });
 
@@ -42,7 +50,8 @@ describe('AddBackupModal::utils', () => {
         backupName: 'Backup 1',
         description: '',
         location: { label: locationName, value: locationId },
-        vendor: DATABASE_LABELS[Databases.mysql],
+        vendor: Databases.mysql,
+        mode: BackupMode.SNAPSHOT,
         retryInterval: 30,
         retryMode: RetryMode.MANUAL,
         retryTimes: 2,
@@ -64,7 +73,7 @@ describe('AddBackupModal::utils', () => {
         lastBackup: 1623584353170,
         dataModel: DataModel.PHYSICAL,
         description: '',
-        type: BackupType.FULL,
+        mode: BackupMode.SNAPSHOT,
         retryInterval: '10s',
         retryTimes: 1,
         enabled: true,
@@ -89,7 +98,8 @@ describe('AddBackupModal::utils', () => {
         retention: 0,
         logs: false,
         active: true,
-        vendor: DATABASE_LABELS[Databases.mongodb],
+        vendor: Databases.mongodb,
+        mode: BackupMode.SNAPSHOT,
       });
     });
   });
@@ -153,6 +163,26 @@ describe('AddBackupModal::utils', () => {
       expect(getOptionFromDigit(8)).toEqual({ value: 8, label: '08' });
       expect(getOptionFromDigit(10)).toEqual({ value: 10, label: '10' });
       expect(getOptionFromDigit(54)).toEqual({ value: 54, label: '54' });
+    });
+  });
+
+  describe('getBackupModeOptions', () => {
+    it('should return backup mode options according to vendor', () => {
+      const mongoOptions = getBackupModeOptions(Databases.mongodb);
+      const mySqlOptions = getBackupModeOptions(Databases.mysql);
+      expect(mongoOptions).toHaveLength(2);
+      expect(mySqlOptions).toHaveLength(2);
+      expect(mongoOptions[0].value).toBe(BackupMode.PITR);
+      expect(mongoOptions[1].value).toBe(BackupMode.SNAPSHOT);
+      expect(mySqlOptions[0].value).toBe(BackupMode.INCREMENTAL);
+      expect(mySqlOptions[1].value).toBe(BackupMode.SNAPSHOT);
+    });
+  });
+
+  describe('getDataModelFromVendor', () => {
+    it('should return data model according to vendor', () => {
+      expect(getDataModelFromVendor(Databases.mongodb)).toBe(DataModel.LOGICAL);
+      expect(getDataModelFromVendor(Databases.mysql)).toBe(DataModel.PHYSICAL);
     });
   });
 });

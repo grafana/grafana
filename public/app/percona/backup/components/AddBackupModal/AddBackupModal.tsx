@@ -16,7 +16,13 @@ import { AddBackupFormProps, AddBackupModalProps, SelectableService } from './Ad
 import { RetryModeSelector } from './RetryModeSelector';
 import { validators as customValidators } from 'app/percona/shared/helpers/validators';
 import { Messages } from './AddBackupModal.messages';
-import { toFormBackup, isCronFieldDisabled, PERIOD_OPTIONS } from './AddBackupModal.utils';
+import {
+  toFormBackup,
+  isCronFieldDisabled,
+  PERIOD_OPTIONS,
+  getBackupModeOptions,
+  getDataModelFromVendor,
+} from './AddBackupModal.utils';
 import { AddBackupModalService } from './AddBackupModal.service';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelectField';
@@ -34,6 +40,7 @@ import {
 import { getStyles } from './AddBackupModal.styles';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
+import { BackupMode } from '../../Backup.types';
 
 export const AddBackupModal: FC<AddBackupModalProps> = ({
   backup,
@@ -59,8 +66,13 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
         initialValues={initialValues}
         onSubmit={handleSubmit}
         mutators={{
-          changeVendor: ([vendor]: [Databases], state, tools) => {
-            tools.changeValue(state, 'vendor', () => DATABASE_LABELS[vendor]);
+          changeVendor: ([vendor]: [Databases, BackupMode], state, tools) => {
+            tools.changeValue(state, 'vendor', () => vendor);
+            tools.changeValue(state, 'dataModel', () => getDataModelFromVendor(vendor));
+            //TODO remove this when we support incremental backups for MySQL
+            if (vendor === Databases.mysql) {
+              tools.changeValue(state, 'mode', () => BackupMode.SNAPSHOT);
+            }
           },
         }}
         render={({ handleSubmit, valid, pristine, submitting, values, form }) => (
@@ -86,7 +98,12 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                     </div>
                   )}
                 </Field>
-                <TextInputField name="vendor" label={Messages.vendor} disabled />
+                <TextInputField
+                  name="vendor"
+                  label={Messages.vendor}
+                  disabled
+                  format={(vendor) => DATABASE_LABELS[vendor as Databases] || ''}
+                />
               </div>
               <div className={styles.formHalf}>
                 <TextInputField name="backupName" label={Messages.backupName} validators={[validators.required]} />
@@ -114,6 +131,16 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
               label={Messages.dataModel}
               fullWidth
             />
+            {scheduleMode && (
+              <RadioButtonGroupField
+                options={getBackupModeOptions(values.vendor)}
+                name="mode"
+                //TODO remove this when we support incremental backups for MySQL
+                disabled={!!backup || values.vendor === Databases.mysql}
+                label={Messages.type}
+                fullWidth
+              />
+            )}
             {!scheduleMode && <RetryModeSelector retryMode={values.retryMode} />}
             <TextareaInputField name="description" label={Messages.description} />
             {scheduleMode && (
