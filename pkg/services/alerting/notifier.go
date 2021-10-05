@@ -293,7 +293,7 @@ func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn) (Noti
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
 // the given key. If the key is not present, then it returns the fallback value.
-type GetDecryptedValueFn func(context.Context, map[string][]byte, string, string, string) string
+type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
 
 // NotifierFactory is a signature for creating notifiers.
 type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn) (Notifier, error)
