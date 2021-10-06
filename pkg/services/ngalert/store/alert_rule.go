@@ -503,6 +503,10 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: no organisation is found", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
+	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
+		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
 	return nil
 }
 
