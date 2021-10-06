@@ -113,7 +113,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
 
   return (
     <ClickOutsideWrapper includeButtonPress={false} onClick={() => setOpen(false)}>
-      <div aria-label="Absolute time ranges">
+      <div>
         <Field label="From" invalid={from.invalid} error={from.errorMessage}>
           <div className={style.fieldContainer}>
             <Input
