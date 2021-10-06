@@ -44,7 +44,7 @@ export const SearchResultsFilter: FC<Props> = ({
     <div className={styles.wrapper}>
       {editable && (
         <div className={styles.checkboxWrapper}>
-          <Checkbox label="Select all" value={allChecked} onChange={onToggleAllChecked} />
+          <Checkbox aria-label="Select all" value={allChecked} onChange={onToggleAllChecked} />
         </div>
       )}
       {showActions ? (
