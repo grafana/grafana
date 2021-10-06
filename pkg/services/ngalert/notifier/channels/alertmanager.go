@@ -12,11 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(model *NotificationChannelConfig, fn alerting.GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
+func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Template, fn alerting.GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Reason: "no settings supplied"}
 	}

@@ -80,7 +80,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 			}
 
 			decryptFn := ossencryption.ProvideService().GetDecryptedValue
-			sn, err := NewAlertmanagerNotifier(m, decryptFn)
+			sn, err := NewAlertmanagerNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
