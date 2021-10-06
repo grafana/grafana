@@ -75,7 +75,7 @@
     "jest-canvas-mock": "2.3.0",
     "jest-coverage-badges": "^1.1.2",
     "jest-environment-jsdom-fifteen": "^1.0.2",
-    "jest-junit": "^6.4.0",
+    "jest-junit": "^13.0.0",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
     "lodash": "4.17.21",
