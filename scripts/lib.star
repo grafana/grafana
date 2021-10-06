@@ -17,14 +17,23 @@ def pipeline(
     ):
     if platform != 'windows':
         platform_conf = {
-            'os': 'linux',
-            'arch': 'amd64',
+            'platform': {
+                'os': 'linux',
+                'arch': 'amd64'
+            },
+            # A shared cache is used on the host
+            # To avoid issues with parallel builds, we run this repo on single build agents
+            'node': {
+                'type': 'no-parallel'
+            }
         }
     else:
         platform_conf = {
-            'os': 'windows',
-            'arch': 'amd64',
-            'version': '1809',
+            'platform': {
+                'os': 'windows',
+                'arch': 'amd64',
+                'version': '1809',
+            }
         }
 
     pipeline = {
@@ -39,6 +48,7 @@ def pipeline(
         ) + steps,
         'depends_on': depends_on,
     }
+    pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
         pipeline['image_pull_secrets'] = [pull_secret]
