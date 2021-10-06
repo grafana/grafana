@@ -18,7 +18,7 @@ import {
   ScopedVars,
   urlUtil,
   PanelModel as IPanelModel,
-  DatasourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -147,7 +147,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   panels?: any;
   declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: DatasourceRef | null = null;
+  datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
 

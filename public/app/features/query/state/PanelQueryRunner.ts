@@ -21,7 +21,7 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
-  DatasourceRef,
+  DataSourceRef,
   DataTransformerConfig,
   LoadingState,
   PanelData,
@@ -39,7 +39,7 @@ export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: DatasourceRef | DataSourceApi<TQuery, TOptions> | null;
+  datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
@@ -322,7 +322,7 @@ export class PanelQueryRunner {
 }
 
 async function getDataSource(
-  datasource: DatasourceRef | string | DataSourceApi | null,
+  datasource: DataSourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
   if (datasource && (datasource as any).query) {

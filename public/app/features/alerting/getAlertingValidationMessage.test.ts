@@ -4,7 +4,7 @@ import {
   PluginMeta,
   DataTransformerConfig,
   DataSourceInstanceSettings,
-  DatasourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 
 import { ElasticsearchQuery } from '../../plugins/datasource/elasticsearch/types';
@@ -28,7 +28,7 @@ describe('getAlertingValidationMessage', () => {
       } as any) as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
-        get: (ref: DatasourceRef) => {
+        get: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
         getList(): DataSourceInstanceSettings[] {
@@ -101,7 +101,7 @@ describe('getAlertingValidationMessage', () => {
       } as any) as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
-        get: (ref: DatasourceRef) => {
+        get: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
         getInstanceSettings: (() => {}) as any,
@@ -134,7 +134,7 @@ describe('getAlertingValidationMessage', () => {
       } as any) as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
-        get: (ref: DatasourceRef) => {
+        get: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
         getInstanceSettings: (() => {}) as any,
@@ -167,7 +167,7 @@ describe('getAlertingValidationMessage', () => {
       } as any) as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
-        get: (ref: DatasourceRef) => {
+        get: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
         getInstanceSettings: (() => {}) as any,

@@ -9,7 +9,7 @@ import { DashboardModel } from './DashboardModel';
 import {
   DataLink,
   DataLinkBuiltInVars,
-  DatasourceRef,
+  DataSourceRef,
   MappingType,
   SpecialValueMatch,
   PanelPlugin,
@@ -1042,7 +1042,7 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-export function migrateDatasourceNameToRef(name: string): DatasourceRef | null {
+export function migrateDatasourceNameToRef(name: string): DataSourceRef | null {
   if (!name || name === 'default') {
     return null;
   }

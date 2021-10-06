@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { Alert, InlineFieldRow, VerticalGroup } from '@grafana/ui';
-import { DatasourceRef, SelectableValue } from '@grafana/data';
+import { DataSourceRef, SelectableValue } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
@@ -32,7 +32,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     this.props.initAdHocVariableEditor();
   }
 
-  onDatasourceChanged = (option: SelectableValue<DatasourceRef>) => {
+  onDatasourceChanged = (option: SelectableValue<DataSourceRef>) => {
     this.props.changeVariableDatasource(option.value);
   };
 

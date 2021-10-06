@@ -16,10 +16,10 @@ import {
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
-import { DatasourceRef } from '@grafana/data';
+import { DataSourceRef } from '@grafana/data';
 
 export interface AdHocTableOptions {
-  datasource: DatasourceRef;
+  datasource: DataSourceRef;
   key: string;
   value: string;
   operator: string;
@@ -82,7 +82,7 @@ export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): T
   };
 };
 
-export const changeVariableDatasource = (datasource?: DatasourceRef): ThunkResult<void> => {
+export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { editor } = getState().templating;
     const variable = getVariable(editor.id, getState());

@@ -7,7 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  DatasourceRef,
+  DataSourceRef,
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
   StreamingFrameOptions,
@@ -40,14 +40,14 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         return json;
       },
       prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
-        let datasource: DatasourceRef | undefined | null = undefined;
+        let datasource: DataSourceRef | undefined | null = undefined;
         if (isString(anno.datasource)) {
           const ref = migrateDatasourceNameToRef(anno.datasource);
           if (ref) {
             datasource = ref;
           }
         } else {
-          datasource = anno.datasource as DatasourceRef;
+          datasource = anno.datasource as DataSourceRef;
         }
 
         return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };

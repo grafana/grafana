@@ -13,7 +13,7 @@ import {
   AppEvents,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DatasourceRef,
+  DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
 } from '@grafana/data';
@@ -69,7 +69,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.settingsMapByUid[uid];
   }
 
-  getInstanceSettings(ref: string | null | undefined | DatasourceRef): DataSourceInstanceSettings | undefined {
+  getInstanceSettings(ref: string | null | undefined | DataSourceRef): DataSourceInstanceSettings | undefined {
     const isstring = typeof ref === 'string';
     let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
 
@@ -113,7 +113,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
   }
 
-  get(ref?: string | DatasourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     let nameOrUid = typeof ref === 'string' ? (ref as string) : ((ref as any)?.uid as string | undefined);
     if (!nameOrUid) {
       return this.get(this.defaultName);

@@ -1,4 +1,4 @@
-import { DataQuery, DatasourceRef, DataTransformerConfig } from '@grafana/data';
+import { DataQuery, DataSourceRef, DataTransformerConfig } from '@grafana/data';
 import { DataSourceSrv } from '@grafana/runtime';
 
 export const getDefaultCondition = () => ({
@@ -13,7 +13,7 @@ export const getAlertingValidationMessage = async (
   transformations: DataTransformerConfig[] | undefined,
   targets: DataQuery[],
   datasourceSrv: DataSourceSrv,
-  datasource: DatasourceRef | null
+  datasource: DataSourceRef | null
 ): Promise<string> => {
   if (targets.length === 0) {
     return 'Could not find any metric queries';

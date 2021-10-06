@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
-import { DataSourceInstanceSettings, DatasourceRef, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 import { css, cx } from '@emotion/css';
@@ -15,7 +15,7 @@ import { css, cx } from '@emotion/css';
  */
 export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: DatasourceRef | string | null; // uid
+  current: DataSourceRef | string | null; // uid
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;

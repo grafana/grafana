@@ -8,7 +8,7 @@ import {
   QueryRunnerOptions,
   QueryRunner as QueryRunnerSrv,
   LoadingState,
-  DatasourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -141,7 +141,7 @@ export class QueryRunner implements QueryRunnerSrv {
 }
 
 async function getDataSource(
-  datasource: DatasourceRef | DataSourceApi | null,
+  datasource: DataSourceRef | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
   if (datasource && (datasource as any).query) {

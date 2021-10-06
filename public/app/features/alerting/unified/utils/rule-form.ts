@@ -6,7 +6,7 @@ import {
   getDefaultRelativeTimeRange,
   TimeRange,
   IntervalValues,
-  DatasourceRef,
+  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -227,7 +227,7 @@ const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},
-  panelDataSourceRef?: DatasourceRef,
+  panelDataSourceRef?: DataSourceRef,
   maxDataPoints?: number,
   minInterval?: string
 ): Promise<AlertQuery[]> => {

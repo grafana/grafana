@@ -6,13 +6,13 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DatasourceRef,
+  DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
 } from '@grafana/data';
 
-export function isSharedDashboardQuery(datasource: string | DatasourceRef | DataSourceApi | null) {
+export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {
     // default datasource
     return false;

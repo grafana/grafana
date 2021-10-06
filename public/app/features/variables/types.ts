@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import {
   DataQuery,
   DataSourceJsonData,
-  DatasourceRef,
+  DataSourceRef,
   LoadingState,
   QueryEditorProps,
   VariableModel as BaseVariableModel,
@@ -49,7 +49,7 @@ export interface AdHocVariableFilter {
 }
 
 export interface AdHocVariableModel extends VariableModel {
-  datasource: DatasourceRef | null;
+  datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
 }
 

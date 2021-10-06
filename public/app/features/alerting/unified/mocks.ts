@@ -3,7 +3,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginMeta,
-  DatasourceRef,
+  DataSourceRef,
   ScopedVars,
 } from '@grafana/data';
 import {
@@ -262,7 +262,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
     }
   }
 
-  get(name?: string | null | DatasourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     return DatasourceSrv.prototype.get.call(this, name, scopedVars);
     //return Promise.reject(new Error('not implemented'));
   }

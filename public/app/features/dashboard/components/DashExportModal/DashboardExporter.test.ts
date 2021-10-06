@@ -2,7 +2,7 @@ import { find } from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
-import { DataSourceInstanceSettings, DatasourceRef, PanelPluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
@@ -291,9 +291,9 @@ describe('given dashboard with repeated panels', () => {
   });
 });
 
-function getStubInstanceSettings(v: string | DatasourceRef): DataSourceInstanceSettings {
+function getStubInstanceSettings(v: string | DataSourceRef): DataSourceInstanceSettings {
   console.log('GET INSTANCE', v);
-  let key = (v as DatasourceRef)?.type ?? v;
+  let key = (v as DataSourceRef)?.type ?? v;
   return (stubs[(key as any) ?? 'gfdb'] ?? stubs['gfdb']) as any;
 }
 

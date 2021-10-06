@@ -12,7 +12,7 @@ export enum DataTopic {
 /**
  * @public
  */
-export interface DatasourceRef {
+export interface DataSourceRef {
   /** The plugin type-id */
   type?: string;
 
@@ -55,5 +55,5 @@ export interface DataQuery {
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
-  datasource?: DatasourceRef;
+  datasource?: DataSourceRef;
 }
