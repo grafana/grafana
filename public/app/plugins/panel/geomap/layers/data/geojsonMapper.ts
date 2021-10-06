@@ -1,4 +1,4 @@
-import { MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -7,7 +7,7 @@ import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import { getGeoMapStyle } from '../../utils/getGeoMapStyle';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { FeatureStyleConfig, MapLayerRegistryItem } from '../../types';
+import { FeatureStyleConfig } from '../../types';
 import { Stroke, Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 export interface GeoJSONMapperConfig {
@@ -78,7 +78,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   },
 
   // Geojson source url
-  registerOptionsUI: (builder: any) => {
+  registerOptionsUI: (builder) => {
     builder.addSelect({
       path: 'config.src',
       name: 'GeoJSON URL',

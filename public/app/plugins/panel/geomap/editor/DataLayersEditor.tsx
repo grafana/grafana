@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { StandardEditorProps, MapLayerOptions, PluginState } from '@grafana/data';
-import { GeomapPanelOptions, MapLayerRegistryItem } from '../types';
+import { StandardEditorProps, MapLayerOptions, PluginState, MapLayerRegistryItem } from '@grafana/data';
+import { GeomapPanelOptions } from '../types';
 import { LayerEditor } from './LayerEditor';
 import { hasAlphaPanels } from 'app/core/config';
 

@@ -3,6 +3,7 @@ import { Select } from '@grafana/ui';
 import {
   MapLayerOptions,
   DataFrame,
+  MapLayerRegistryItem,
   PanelOptionsEditorBuilder,
   StandardEditorContext,
   FrameGeometrySourceMode,
@@ -14,7 +15,6 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
 import { GazetteerPathEditor } from './GazetteerPathEditor';
-import { MapLayerRegistryItem } from '../types';
 
 export interface LayerEditorProps<TConfig = any> {
   options?: MapLayerOptions<TConfig>;

@@ -1,4 +1,11 @@
-import { FieldType, getFieldColorModeForField, GrafanaTheme2, MapLayerOptions, PanelData } from '@grafana/data';
+import {
+  FieldType,
+  getFieldColorModeForField,
+  GrafanaTheme2,
+  MapLayerOptions,
+  MapLayerRegistryItem,
+  PanelData,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -6,7 +13,6 @@ import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
-import { MapLayerRegistryItem } from '../../types';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
@@ -104,7 +110,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
     };
   },
   // Heatmap overlay options
-  registerOptionsUI: (builder: any) => {
+  registerOptionsUI: (builder) => {
     builder
       .addCustomEditor({
         id: 'config.weight',

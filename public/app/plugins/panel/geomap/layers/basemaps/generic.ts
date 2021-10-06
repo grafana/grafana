@@ -1,8 +1,7 @@
-import { MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 import TileLayer from 'ol/layer/Tile';
-import { MapLayerRegistryItem } from '../../types';
 
 export interface XYZConfig {
   url: string;
@@ -40,7 +39,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
     },
   }),
 
-  registerOptionsUI: (builder: any) => {
+  registerOptionsUI: (builder) => {
     builder
       .addTextInput({
         path: 'config.url',

@@ -1,8 +1,7 @@
-import { MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 import TileLayer from 'ol/layer/Tile';
-import { MapLayerRegistryItem } from '../../types';
 
 // https://carto.com/help/building-maps/basemap-list/
 
@@ -53,7 +52,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
     },
   }),
 
-  registerOptionsUI: (builder: any) => {
+  registerOptionsUI: (builder) => {
     builder
       .addRadio({
         path: 'config.theme',

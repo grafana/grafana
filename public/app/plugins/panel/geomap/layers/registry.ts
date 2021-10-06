@@ -1,10 +1,9 @@
-import { Registry, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, Registry, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import { carto } from './basemaps/carto';
 import { config } from 'app/core/config';
 import { basemapLayers } from './basemaps';
 import { dataLayers } from './data';
-import { MapLayerRegistryItem } from '../types';
 
 export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
   type: 'default',
