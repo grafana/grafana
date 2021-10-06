@@ -20,12 +20,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -197,7 +192,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -213,7 +208,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -269,12 +264,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -501,7 +491,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -517,7 +507,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -657,8 +647,6 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -746,12 +734,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -924,7 +907,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -940,7 +923,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -1113,12 +1096,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -1316,7 +1294,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -1332,7 +1310,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -1346,7 +1324,7 @@ steps:
 - name: redis-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     REDIS_URL: redis://redis:6379/0
@@ -1357,7 +1335,7 @@ steps:
 - name: memcached-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     MEMCACHED_HOSTS: memcached:11211
@@ -1580,8 +1558,6 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1688,12 +1664,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -1860,7 +1831,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -1876,7 +1847,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -2044,12 +2015,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -2241,7 +2207,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -2257,7 +2223,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -2271,7 +2237,7 @@ steps:
 - name: redis-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     REDIS_URL: redis://redis:6379/0
@@ -2282,7 +2248,7 @@ steps:
 - name: memcached-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     MEMCACHED_HOSTS: memcached:11211
@@ -2505,8 +2471,6 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2612,12 +2576,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -2781,7 +2740,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -2797,7 +2756,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -2939,12 +2898,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -3140,7 +3094,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -3156,7 +3110,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -3170,7 +3124,7 @@ steps:
 - name: redis-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     REDIS_URL: redis://redis:6379/0
@@ -3181,7 +3135,7 @@ steps:
 - name: memcached-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     MEMCACHED_HOSTS: memcached:11211
@@ -3476,6 +3430,6 @@ get:
 
 ---
 kind: signature
-hmac: eddb32cfb37c2f1126abcb55b3dcf80a4706e39e5d7410530d849c802ac3079c
+hmac: eeeaddc047d301b2d0e6a43a611b2f2991f4b1f82a3958dd5351d2b44a62181d
 
 ...
