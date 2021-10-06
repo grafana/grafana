@@ -115,8 +115,8 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
 
   return (
     <div aria-label="Absolute time ranges">
-      <Field label="From" invalid={from.invalid} error={from.errorMessage}>
-        <div className={style.fieldContainer}>
+      <div className={style.fieldContainer}>
+        <Field label="From" invalid={from.invalid} error={from.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
             onFocus={onFocus}
@@ -125,11 +125,11 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
             aria-label={selectors.components.TimePicker.fromField}
             value={from.value}
           />
-          {fyTooltip}
-        </div>
-      </Field>
-      <Field label="To" invalid={to.invalid} error={to.errorMessage}>
-        <div className={style.fieldContainer}>
+        </Field>
+        {fyTooltip}
+      </div>
+      <div className={style.fieldContainer}>
+        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
             onFocus={onFocus}
@@ -138,9 +138,9 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
             aria-label={selectors.components.TimePicker.toField}
             value={to.value}
           />
-          {fyTooltip}
-        </div>
-      </Field>
+        </Field>
+        {fyTooltip}
+      </div>
       <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
@@ -217,7 +217,7 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     tooltip: css`
       padding-left: ${theme.spacing(1)};
-      padding-top: ${theme.spacing(0.5)};
+      padding-top: ${theme.spacing(3)};
     `,
   };
 }
