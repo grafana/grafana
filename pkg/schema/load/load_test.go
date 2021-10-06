@@ -29,7 +29,7 @@ var (
 	update = flag.Bool("update", false, "update golden files")
 )
 
-type testfunc func(schema.VersionedCueSchema, []byte, fs.FileInfo, string)
+type testfunc func(*testing.T, schema.VersionedCueSchema, []byte, fs.FileInfo, string)
 
 // for now we keep the validdir as input parameter since for trim apply default we can't use devenv directory yet,
 // otherwise we can hardcoded validdir and just pass the testtype is more than enough.
@@ -69,7 +69,7 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, f
 			}
 
 			t.Run(filepath.Base(path), func(t *testing.T) {
-				fn(sch, byt, d, path)
+				fn(t, sch, byt, d, path)
 			})
 			return nil
 		}))
@@ -112,7 +112,7 @@ func TestDevenvDashboardValidity(t *testing.T) {
 	var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
-	var dashboardValidity = func(sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, path string) {
+	dashboardValidity := func(t *testing.T, sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, path string) {
 		err := sch.Validate(schema.Resource{Value: string(byt), Name: path})
 		if err != nil {
 			// Testify trims errors to short length. We want the full text
@@ -139,7 +139,7 @@ func TestUpdateDevenvDashboardGoldenFiles(t *testing.T) {
 		ddash, err := DistDashboardFamily(p)
 		require.NoError(t, err, "error while loading dist dashboard scuemata")
 		var validdir = filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
-		var goldenFileUpdate = func(sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, _ string) {
+		goldenFileUpdate := func(t *testing.T, sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, _ string) {
 			dsSchema, err := schema.SearchAndValidate(sch, string(byt))
 			require.NoError(t, err)
 
@@ -163,7 +163,7 @@ func TestDevenvDashboardTrimApplyDefaults(t *testing.T) {
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
 	validdir := filepath.Join("..", "testdata", "devenvgoldenfiles")
-	var trimApplyDefaults = func(sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, path string) {
+	trimApplyDefaults := func(t *testing.T, sch schema.VersionedCueSchema, byt []byte, d fs.FileInfo, path string) {
 		dsSchema, err := schema.SearchAndValidate(sch, string(byt))
 		require.NoError(t, err)
 
