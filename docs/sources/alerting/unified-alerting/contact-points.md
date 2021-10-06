@@ -11,7 +11,7 @@ Contact points define where to send notifications about alerts that match a part
 
 Grafana alerting UI allows you to configure contact points for the Grafana managed alerts (handled by the embedded Alertmanager) as well as contact points for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}), using the Alertmanager dropdown.
 
-> **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise contact points for the Grafana managed alerts will be visible by all organizations.
+> **Note:** In v8.0 and v8.1, the configuration of the embedded Alertmanager was shared across organisations. Users running one of these versions are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise contact points for the Grafana managed alerts will be visible by all organizations.
 
 ## Add a contact point
 
