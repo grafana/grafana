@@ -2,13 +2,13 @@ import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { BackgroundImageSize, CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
-interface Suppliers {
-  background: PanelOptionsSupplier<CanvasElementOptions>;
-  border: PanelOptionsSupplier<CanvasElementOptions>;
+interface OptionSuppliers {
+  addBackground: PanelOptionsSupplier<CanvasElementOptions>;
+  addBorder: PanelOptionsSupplier<CanvasElementOptions>;
 }
 
-export const optionBuilder: Suppliers = {
-  background: (builder, context) => {
+export const optionBuilder: OptionSuppliers = {
+  addBackground: (builder, context) => {
     const category = ['Background'];
     builder
       .addCustomEditor({
@@ -50,7 +50,7 @@ export const optionBuilder: Suppliers = {
       });
   },
 
-  border: (builder, context) => {
+  addBorder: (builder, context) => {
     const category = ['Border'];
     builder.addSliderInput({
       category,

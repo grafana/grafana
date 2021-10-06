@@ -50,23 +50,21 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    if (this.panelContext.onInstanceStateChange) {
-      if (this.panelContext.app === CoreApp.PanelEditor) {
-        this.panelContext.onInstanceStateChange({
-          scene: this.scene,
-        });
+    if (this.panelContext.onInstanceStateChange && this.panelContext.app === CoreApp.PanelEditor) {
+      this.panelContext.onInstanceStateChange({
+        scene: this.scene,
+      });
 
-        this.subs.add(
-          this.scene.selected.subscribe({
-            next: (v) => {
-              this.panelContext.onInstanceStateChange!({
-                scene: this.scene,
-                selected: v,
-              });
-            },
-          })
-        );
-      }
+      this.subs.add(
+        this.scene.selected.subscribe({
+          next: (v) => {
+            this.panelContext.onInstanceStateChange!({
+              scene: this.scene,
+              selected: v,
+            });
+          },
+        })
+      );
     }
   }
 

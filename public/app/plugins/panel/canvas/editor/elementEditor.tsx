@@ -7,7 +7,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 export interface CanvasEditorOptions {
-  elemment: ElementState;
+  element: ElementState;
   scene: Scene;
   category?: string[];
 }
@@ -20,10 +20,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
     // Note that canvas editor writes things to the scene!
     values: (parent: NestedValueAccess) => ({
       getValue: (path: string) => {
-        return lodashGet(opts.elemment.options, path);
+        return lodashGet(opts.element.options, path);
       },
       onChange: (path: string, value: any) => {
-        let options = opts.elemment.options;
+        let options = opts.element.options;
         if (path === 'type' && value) {
           const layer = canvasElementRegistry.getIfExists(value);
           if (!layer) {
@@ -38,13 +38,13 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         } else {
           options = setOptionImmutably(options, path, value);
         }
-        opts.scene.onChange(opts.elemment.UID, options);
+        opts.scene.onChange(opts.element.UID, options);
       },
     }),
 
     // Dynamically fill the selected element
     build: (builder, context) => {
-      const { options } = opts.elemment;
+      const { options } = opts.element;
       const layerTypes = canvasElementRegistry.selectOptions(
         options?.type // the selected value
           ? [options.type] // as an array
@@ -68,8 +68,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         layer.registerOptionsUI(builder, ctx);
       }
 
-      optionBuilder.background(builder, ctx);
-      optionBuilder.border(builder, ctx);
+      optionBuilder.addBackground(builder, ctx);
+      optionBuilder.addBorder(builder, ctx);
     },
   };
 }
