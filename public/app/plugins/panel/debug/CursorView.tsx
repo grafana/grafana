@@ -64,7 +64,7 @@ export class CursorView extends Component<Props, State> {
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         <h3>Origin: {(origin as any)?.path}</h3>
         <span>Type: {type}</span>
-        {payload && (
+        {Boolean(payload) && (
           <>
             <pre>{JSON.stringify(payload.point, null, '  ')}</pre>
             {payload.data && (

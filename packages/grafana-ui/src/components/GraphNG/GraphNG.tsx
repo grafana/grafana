@@ -4,9 +4,10 @@ import { Themeable2 } from '../../types';
 import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 import {
   DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
   FieldMatcherID,
   fieldMatchers,
-  LegacyGraphHoverClearEvent,
   LegacyGraphHoverEvent,
   TimeRange,
   TimeZone,
@@ -131,6 +132,41 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     this.subscription.add(
       eventBus
+        .getStream(DataHoverEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: (evt) => {
+            if (eventBus === evt.origin) {
+              return;
+            }
+
+            const time = evt.payload?.point?.time;
+            const u = this.plotInstance.current;
+            if (u && time) {
+              // Try finding left position on time axis
+              const left = u.valToPos(time, 'x');
+              let top;
+              if (left) {
+                // find midpoint between points at current idx
+                top = findMidPointYPosition(u, u.posToIdx(left));
+              }
+
+              if (!top || !left) {
+                return;
+              }
+
+              u.setCursor({
+                left,
+                top,
+              });
+            }
+          },
+        })
+    );
+
+    // Legacy events (from flot graph)
+    this.subscription.add(
+      eventBus
         .getStream(LegacyGraphHoverEvent)
         .pipe(throttleTime(50))
         .subscribe({
@@ -160,7 +196,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     this.subscription.add(
       eventBus
-        .getStream(LegacyGraphHoverClearEvent)
+        .getStream(DataHoverClearEvent)
         .pipe(throttleTime(50))
         .subscribe({
           next: () => {
