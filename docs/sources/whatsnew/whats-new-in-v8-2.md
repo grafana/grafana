@@ -16,7 +16,6 @@ The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog
 
 Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
 
->>>>>>> main
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 # OSS
