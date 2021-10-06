@@ -2,7 +2,6 @@ import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
 import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
-import { ClearGraphNGCursorEvent, SetGraphNGCursorEvent } from '@grafana/ui';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -154,7 +153,6 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       }
     }
     dashboard.events.publish(new LegacyGraphHoverClearEvent());
-    dashboard.events.publish(new ClearGraphNGCursorEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
@@ -166,13 +164,6 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     hoverEvent.payload.panel = panel;
     hoverEvent.payload.point['time'] = (pos as any).x;
     dashboard.events.publish(hoverEvent);
-    dashboard.events.publish(
-      new SetGraphNGCursorEvent({
-        point: {
-          time: (pos as any).x,
-        },
-      })
-    );
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

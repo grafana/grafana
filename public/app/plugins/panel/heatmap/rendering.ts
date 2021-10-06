@@ -16,7 +16,7 @@ import {
   PanelEvents,
   toUtc,
 } from '@grafana/data';
-import { graphTimeFormat, SetGraphNGCursorEvent, ClearGraphNGCursorEvent } from '@grafana/ui';
+import { graphTimeFormat } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 const MIN_CARD_SIZE = 1,
@@ -712,7 +712,6 @@ export class HeatmapRenderer {
 
   onMouseLeave() {
     this.ctrl.dashboard.events.publish(new LegacyGraphHoverClearEvent());
-    this.ctrl.dashboard.events.publish(new ClearGraphNGCursorEvent());
     this.clearCrosshair();
   }
 
@@ -761,10 +760,7 @@ export class HeatmapRenderer {
     this.hoverEvent.payload.pos = pos;
     this.hoverEvent.payload.panel = this.panel;
     this.hoverEvent.payload.point['time'] = (pos as any).x;
-    // for compatibility with panels synchronizing from the old graph panel
     this.ctrl.dashboard.events.publish(this.hoverEvent);
-    // for synchronizing cursor between the old graph panel and GraphNG
-    this.ctrl.dashboard.events.publish(new SetGraphNGCursorEvent({ point: { time: (pos as any).x } }));
   }
 
   limitSelection(x2: number) {

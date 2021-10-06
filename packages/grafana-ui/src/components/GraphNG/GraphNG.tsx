@@ -2,7 +2,15 @@ import React from 'react';
 import { AlignedData } from 'uplot';
 import { Themeable2 } from '../../types';
 import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
-import { DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  FieldMatcherID,
+  fieldMatchers,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 import { VizLegendOptions } from '@grafana/schema';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
@@ -12,7 +20,6 @@ import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
-import { ClearGraphNGCursorEvent, SetGraphNGCursorEvent } from './events';
 
 /**
  * @internal -- not a public API
@@ -124,7 +131,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     this.subscription.add(
       eventBus
-        .getStream(SetGraphNGCursorEvent)
+        .getStream(LegacyGraphHoverEvent)
         .pipe(throttleTime(50))
         .subscribe({
           next: (evt) => {
@@ -153,7 +160,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     this.subscription.add(
       eventBus
-        .getStream(ClearGraphNGCursorEvent)
+        .getStream(LegacyGraphHoverClearEvent)
         .pipe(throttleTime(50))
         .subscribe({
           next: () => {

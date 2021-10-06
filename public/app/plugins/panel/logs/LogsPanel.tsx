@@ -1,15 +1,16 @@
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
 import { css } from '@emotion/css';
+import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
-  LogRows,
-  CustomScrollbar,
-  LogLabels,
-  useStyles2,
-  usePanelContext,
-  ClearGraphNGCursorEvent,
-  SetGraphNGCursorEvent,
-} from '@grafana/ui';
-import { PanelProps, Field, Labels, GrafanaTheme2, LogsSortOrder, LogRowModel } from '@grafana/data';
+  PanelProps,
+  Field,
+  Labels,
+  GrafanaTheme2,
+  LogsSortOrder,
+  LogRowModel,
+  DataHoverClearEvent,
+  DataHoverEvent,
+} from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -41,10 +42,10 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
-        eventBus.publish(new ClearGraphNGCursorEvent());
+        eventBus.publish(new DataHoverClearEvent());
       } else {
         eventBus.publish(
-          new SetGraphNGCursorEvent({
+          new DataHoverEvent({
             point: {
               time: row.timeEpochMs,
             },
