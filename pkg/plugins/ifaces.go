@@ -20,7 +20,7 @@ type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(pluginID string) *Plugin
 	// Plugins returns plugins by their requested type.
-	Plugins(pluginType ...Type) []*Plugin
+	Plugins(pluginTypes ...Type) []*Plugin
 
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string, opts InstallOpts) error

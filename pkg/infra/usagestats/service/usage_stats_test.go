@@ -554,14 +554,31 @@ func TestMetrics(t *testing.T) {
 type fakePluginStore struct {
 	plugins.Store
 
-	dataSources map[string]*plugins.Plugin
+	plugins map[string]*plugins.Plugin
+}
+
+func (pr fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
+	return pr.plugins[pluginID]
+}
+
+func (pr fakePluginStore) Plugins(pluginTypes ...plugins.Type) []*plugins.Plugin {
+	var result []*plugins.Plugin
+	for _, v := range pr.plugins {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
+	}
+
+	return result
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStats) {
 	t.Helper()
 
 	uss.pluginStore = &fakePluginStore{
-		dataSources: map[string]*plugins.Plugin{
+		plugins: map[string]*plugins.Plugin{
 			models.DS_ES: {
 				Signature: "internal",
 			},
