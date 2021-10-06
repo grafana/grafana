@@ -76,6 +76,10 @@ The following list contains fine-grained access control actions.
 | `datasources.permissions:create` | `datasources:*`<br>`datasources:id:*`                                                       | Create data source permissions.                                                                                                                            |
 | `datasources.permissions:delete` | `datasources:*`<br>`datasources:id:*`                                                       | Delete data source permissions.                                                                                                                            |
 | `datasources.permissions:toggle` | `datasources:*`<br>`datasources:id:*`                                                       | Enable or disable data source permissions.                                                                                                                 |
+| `licensing:read`                 | n/a                                                                                         | Read licensing information.                                                                                                                                |
+| `licensing:update`               | n/a                                                                                         | Update the license token.                                                                                                                                  |
+| `licensing:delete`               | n/a                                                                                         | Delete the license token.                                                                                                                                  |
+| `licensing.reports:read`         | n/a                                                                                         | Get custom permission reports.                                                                                                                             |
 
 ## Scope definitions
 

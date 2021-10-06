@@ -1,18 +1,17 @@
+import React from 'react';
 import { PanelPlugin } from '@grafana/data';
-import { BaseLayerEditor } from './editor/BaseLayerEditor';
-import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
-import { defaultMarkersConfig } from './layers/data/markersLayer';
-import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
+import { getLayerEditor } from './editor/layerEditor';
+import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .useFieldConfig()
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
     let category = ['Map view'];
     builder.addCustomEditor({
       category,
@@ -32,23 +31,35 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    builder.addCustomEditor({
-      category: ['Base layer'],
-      id: 'basemap',
-      path: 'basemap',
-      name: 'Base layer',
-      editor: BaseLayerEditor,
-      defaultValue: DEFAULT_BASEMAP_CONFIG,
-    });
+    // Check server settings to disable custom basemap settings
+    if (config.geomapDisableCustomBaseLayer) {
+      builder.addCustomEditor({
+        category: ['Base layer'],
+        id: 'layers',
+        path: '',
+        name: '',
+        // eslint-disable-next-line react/display-name
+        editor: () => <div>The base layer is configured by the server admin.</div>,
+      });
+    } else {
+      builder.addNestedOptions(
+        getLayerEditor({
+          category: ['Base layer'],
+          path: 'basemap', // only one for now
+          basemaps: true,
+          current: context.options?.layers?.[0],
+        })
+      );
+    }
 
-    builder.addCustomEditor({
-      category: ['Data layer'],
-      id: 'layers',
-      path: 'layers',
-      name: 'Data layer',
-      editor: DataLayersEditor,
-      defaultValue: [defaultMarkersConfig],
-    });
+    builder.addNestedOptions(
+      getLayerEditor({
+        category: ['Data layer'],
+        path: 'layers[0]', // only one for now
+        basemaps: false,
+        current: context.options?.layers?.[0],
+      })
+    );
 
     // The controls section
     category = ['Map controls'];

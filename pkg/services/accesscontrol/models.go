@@ -101,6 +101,7 @@ func (r RoleDTO) GetDisplayName() string {
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
+	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -137,6 +138,12 @@ func (p Permission) OSSPermission() Permission {
 		Action: p.Action,
 		Scope:  p.Scope,
 	}
+}
+
+// ScopeParams holds the parameters used to fill in scope templates
+type ScopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
 }
 
 const (
@@ -197,8 +204,20 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll = "settings:*"
+
+	// Licensing related actions
+	ActionLicensingRead        = "licensing:read"
+	ActionLicensingUpdate      = "licensing:update"
+	ActionLicensingDelete      = "licensing:delete"
+	ActionLicensingReportsRead = "licensing.reports:read"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
 
 const FixedRolePrefix = "fixed:"
+
+// LicensingPageReaderAccess defines permissions that grant access to the licensing and stats page
+var LicensingPageReaderAccess = EvalAny(
+	EvalPermission(ActionLicensingRead),
+	EvalPermission(ActionServerStatsRead),
+)
