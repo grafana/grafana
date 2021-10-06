@@ -54,6 +54,8 @@ export type TempoQuery = {
   limit?: number;
 } & DataQuery;
 
+export const DEFAULT_LIMIT = 20;
+
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
@@ -238,7 +240,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Set default limit
     if (!tempoQuery.limit) {
-      tempoQuery.limit = 100;
+      tempoQuery.limit = DEFAULT_LIMIT;
     }
 
     // Validate query inputs and remove spaces if valid
