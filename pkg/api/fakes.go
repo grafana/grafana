@@ -6,15 +6,15 @@ type fakePluginStore struct {
 	plugins.Store
 }
 
-func (pr *fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
+func (ps *fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
 	return nil
 }
 
-func (pr *fakePluginStore) Plugins(pluginType ...plugins.Type) []*plugins.Plugin {
+func (ps *fakePluginStore) Plugins(pluginType ...plugins.Type) []*plugins.Plugin {
 	return nil
 }
 
-func (pr *fakePluginStore) Renderer() *plugins.Plugin {
+func (ps *fakePluginStore) Renderer() *plugins.Plugin {
 	return nil
 }
 
@@ -24,6 +24,6 @@ type fakePluginStaticRouteResolver struct {
 	routes []*plugins.PluginStaticRoute
 }
 
-func (pr *fakePluginStaticRouteResolver) Routes() []*plugins.PluginStaticRoute {
-	return pr.routes
+func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.PluginStaticRoute {
+	return psrr.routes
 }

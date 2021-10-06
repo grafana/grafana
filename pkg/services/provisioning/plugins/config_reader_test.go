@@ -35,7 +35,7 @@ func TestConfigReader(t *testing.T) {
 		cfgProvider := newConfigReader(log.New("test logger"), fakePluginStore{})
 		_, err := cfgProvider.readConfig(unknownApp)
 		require.Error(t, err)
-		require.Equal(t, "app plugin not installed: \"nonexisting\"", err.Error())
+		require.Equal(t, "plugin not installed: \"nonexisting\"", err.Error())
 	})
 
 	t.Run("Read incorrect properties", func(t *testing.T) {
@@ -91,4 +91,8 @@ type fakePluginStore struct {
 	plugins.Store
 
 	apps map[string]*plugins.Plugin
+}
+
+func (pr fakePluginStore) Plugin(pluginID string) *plugins.Plugin {
+	return pr.apps[pluginID]
 }
