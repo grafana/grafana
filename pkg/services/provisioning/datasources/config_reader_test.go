@@ -30,12 +30,7 @@ var (
 func TestDatasourceAsConfig(t *testing.T) {
 	Convey("Testing datasource as configuration", t, func() {
 		fakeRepo = &fakeRepository{}
-		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockDelete)
-		bus.AddHandler("test", mockInsert)
-		bus.AddHandler("test", mockUpdate)
-		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetOrg)
+		setupBusHandlers(defaultBusHandlers)
 
 		Convey("apply default values when missing", func() {
 			dc := newDatasourceProvisioner(logger)
@@ -90,6 +85,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("Multiple datasources in different organizations with isDefault in each organization", func() {
+			setupBusHandlers(defaultBusHandlers)
 			dc := newDatasourceProvisioner(logger)
 			err := dc.applyChanges(multipleOrgsWithDefault)
 			Convey("should not raise error", func() {
@@ -110,6 +106,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should have two new datasources", func() {
+					setupBusHandlers(defaultBusHandlers)
 					dc := newDatasourceProvisioner(logger)
 					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
 					if err != nil {
@@ -120,10 +117,43 @@ func TestDatasourceAsConfig(t *testing.T) {
 					So(len(fakeRepo.inserted), ShouldEqual, 2)
 					So(len(fakeRepo.updated), ShouldEqual, 0)
 				})
+
+				Convey("should ignore data source not found errors", func() {
+					overrides := busHandlerMap{"delete": func(cmd *models.DeleteDataSourceCommand) error {
+						if cmd.Name == "old-graphite3" {
+							return mockDelete(cmd)
+						}
+						return models.ErrDataSourceNotFound
+					}}
+					setupBusHandlers(overrides)
+
+					dc := newDatasourceProvisioner(logger)
+					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
+					if err != nil {
+						t.Fatalf("applyChanges return an error %v", err)
+					}
+
+					So(len(fakeRepo.deleted), ShouldEqual, 1)
+					So(len(fakeRepo.inserted), ShouldEqual, 2)
+					So(len(fakeRepo.updated), ShouldEqual, 0)
+				})
+
+				Convey("should fail if another error type is returned", func() {
+					overrides := busHandlerMap{"delete": func(cmd *models.DeleteDataSourceCommand) error {
+						return models.ErrDataSourceIdentifierNotSet
+					}}
+					setupBusHandlers(overrides)
+
+					dc := newDatasourceProvisioner(logger)
+					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
+
+					So(err, ShouldBeError, models.ErrDataSourceIdentifierNotSet)
+				})
 			})
 		})
 
 		Convey("Two configured datasource and purge others = false", func() {
+			setupBusHandlers(defaultBusHandlers)
 			Convey("two other datasources in database", func() {
 				fakeRepo.loadAll = []*models.DataSource{
 					{Name: "Graphite", OrgId: 1, Id: 1},
@@ -145,12 +175,14 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("broken yaml should return error", func() {
+			setupBusHandlers(defaultBusHandlers)
 			reader := &configReader{}
 			_, err := reader.readConfig(brokenYaml)
 			So(err, ShouldNotBeNil)
 		})
 
 		Convey("invalid access should warn about invalid value and return 'proxy'", func() {
+			setupBusHandlers(defaultBusHandlers)
 			reader := &configReader{log: logger}
 			configs, err := reader.readConfig(invalidAccess)
 			So(err, ShouldBeNil)
@@ -158,6 +190,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("skip invalid directory", func() {
+			setupBusHandlers(defaultBusHandlers)
 			cfgProvider := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvider.readConfig("./invalid-directory")
 			if err != nil {
@@ -168,6 +201,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 1", func() {
+			setupBusHandlers(defaultBusHandlers)
 			_ = os.Setenv("TEST_VAR", "name")
 			cfgProvider := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvider.readConfig(allProperties)
@@ -198,6 +232,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 0", func() {
+			setupBusHandlers(defaultBusHandlers)
 			cfgProvider := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvider.readConfig(versionZero)
 			if err != nil {
@@ -294,4 +329,25 @@ func mockGet(cmd *models.GetDataSourceQuery) error {
 
 func mockGetOrg(_ *models.GetOrgByIdQuery) error {
 	return nil
+}
+
+type busHandlerMap map[string]bus.HandlerFunc
+
+var defaultBusHandlers = busHandlerMap{
+	"delete": mockDelete,
+	"insert": mockInsert,
+	"update": mockUpdate,
+	"get":    mockGet,
+	"getOrg": mockGetOrg,
+}
+
+func setupBusHandlers(overrides busHandlerMap) {
+	bus.ClearBusHandlers()
+	for key, handler := range defaultBusHandlers {
+		if overrides != nil && overrides[key] != nil {
+			bus.AddHandler("test", overrides[key])
+		} else {
+			bus.AddHandler("test", handler)
+		}
+	}
 }

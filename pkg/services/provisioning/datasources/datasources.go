@@ -86,6 +86,9 @@ func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*deleteDatasourc
 	for _, ds := range dsToDelete {
 		cmd := &models.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
 		if err := bus.Dispatch(cmd); err != nil {
+			if errors.Is(err, models.ErrDataSourceNotFound) {
+				continue
+			}
 			return err
 		}
 
