@@ -16,7 +16,9 @@ const (
 	ActionDatasourcesDelete = "datasources:delete"
 	ActionDatasourcesIDRead = "datasources.id:read"
 
-	ActionOrgsRead = "orgs:read"
+	ActionOrgsRead            = "orgs:read"
+	ActionOrgsPreferencesRead = "orgs.preferences:read"
+	ActionOrgsQuotasRead      = "orgs.quotas:read"
 )
 
 // API related scopes
@@ -33,8 +35,9 @@ var (
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
 
 	ScopeOrgsAll      = accesscontrol.Scope("orgs", "*")
-	ScopeOrgID        = accesscontrol.Scope("orgs", accesscontrol.Parameter(":orgId"))
-	ScopeOrgCurrentID = accesscontrol.Scope("orgs", accesscontrol.Field("OrgID"))
+	ScopeOrgID        = accesscontrol.Scope("orgs", "id", accesscontrol.Parameter(":orgId"))
+	ScopeOrgCurrentID = accesscontrol.Scope("orgs", "id", accesscontrol.Field("OrgID"))
+	ScopeOrgName      = accesscontrol.Scope("orgs", "name", accesscontrol.Parameter(":name"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their

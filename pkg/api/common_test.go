@@ -248,25 +248,61 @@ type accessControlTestCase struct {
 	permissions  []*accesscontrol.Permission
 }
 
+// accessControlScenarioContext contains the setups for accesscontrol tests
+type accessControlScenarioContext struct {
+	// server we registered hs routes on.
+	server *web.Mux
+
+	// initCtx is used in a middleware to set the initial context
+	// of the request server side. Can be used to pretend sign in.
+	initCtx *models.ReqContext
+
+	// hs is a minimal HTTPServer for the accesscontrol tests to pass.
+	hs *HTTPServer
+
+	// acmock is an accesscontrol mock used to fake users rights.
+	acmock *accesscontrolmock.Mock
+
+	// db is a test database initialized with InitTestDB
+	db *sqlstore.SQLStore
+
+	// cfg is the setting provider
+	cfg *setting.Cfg
+}
+
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission) {
 	acmock.GetUserPermissionsFunc = func(_ context.Context, _ *models.SignedInUser) ([]*accesscontrol.Permission, error) {
 		return perms, nil
 	}
 }
 
-func setupHTTPServer(t *testing.T, enableAccessControl bool, signedInUser *models.SignedInUser) (*macaron.Macaron, *HTTPServer, *accesscontrolmock.Mock) {
-	t.Helper()
+func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
+	initCtx.IsSignedIn = true
+	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_VIEWER, Login: testUserLogin}
+}
 
-	// Use an accesscontrol mock
-	acmock := accesscontrolmock.New()
-	if !enableAccessControl {
-		acmock = acmock.WithDisabled()
-	}
+func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
+	initCtx.IsSignedIn = true
+	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
+}
+
+func setupHTTPServer(t *testing.T, enableAccessControl bool) accessControlScenarioContext {
+	t.Helper()
 
 	// Use a new conf
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = make(map[string]bool)
-	cfg.FeatureToggles["accesscontrol"] = enableAccessControl
+
+	// Use an accesscontrol mock
+	acmock := accesscontrolmock.New()
+
+	// Handle accesscontrol enablement
+	if enableAccessControl {
+		cfg.FeatureToggles["accesscontrol"] = enableAccessControl
+	} else {
+		// Disabling accesscontrol has to be done before registering routes
+		acmock = acmock.WithDisabled()
+	}
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)
@@ -283,33 +319,35 @@ func setupHTTPServer(t *testing.T, enableAccessControl bool, signedInUser *model
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      acmock,
 		SQLStore:           db,
-		searchUsersService: searchusers.ProvideUsersService(bus),
+		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
 	}
 
 	// Instantiate a new Server
-	m := macaron.New()
+	m := web.New()
 
-	// Pretend middleware to sign the user in
-	if signedInUser != nil {
-		m.Use(func(c *macaron.Context) {
-			ctx := &models.ReqContext{
-				Context:      c,
-				IsSignedIn:   true,
-				SignedInUser: signedInUser,
-				Logger:       log.New("api-test"),
-			}
-			c.Map(ctx)
-		})
-	}
+	// middleware to set the test initial context
+	initCtx := &models.ReqContext{}
+	m.Use(func(c *web.Context) {
+		initCtx.Context = c
+		initCtx.Logger = log.New("api-test")
+		c.Map(initCtx)
+	})
 
 	// Register all routes
 	hs.registerRoutes()
 	hs.RouteRegister.Register(m.Router)
 
-	return m, hs, acmock
+	return accessControlScenarioContext{
+		server:  m,
+		initCtx: initCtx,
+		hs:      hs,
+		acmock:  acmock,
+		db:      db,
+		cfg:     cfg,
+	}
 }
 
-func callAPI(server *macaron.Macaron, method, path string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {
+func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method, path, body)
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")

@@ -201,7 +201,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsRead, ScopeOrgCurrentID)), routing.Wrap(GetCurrentOrg))
-			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsRead, ScopeOrgCurrentID)), routing.Wrap(hs.GetCurrentOrgQuotas))
+			orgRoute.Get("/quotas", authorize(reqSignedIn, ac.EvalPermission(ActionOrgsQuotasRead, ScopeOrgCurrentID)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
 		// current org
@@ -221,7 +221,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(RevokeInvite))
 
 			// prefs
-			orgRoute.Get("/preferences", reqOrgAdmin, routing.Wrap(GetOrgPreferences))
+			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead, ScopeOrgCurrentID)), routing.Wrap(GetOrgPreferences))
 			orgRoute.Put("/preferences", reqOrgAdmin, bind(dtos.UpdatePrefsCmd{}), routing.Wrap(UpdateOrgPreferences))
 		})
 
@@ -247,14 +247,12 @@ func (hs *HTTPServer) registerRoutes() {
 			orgsRoute.Post("/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUser))
 			orgsRoute.Patch("/users/:userId", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersRoleUpdate, userIDScope)), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUser))
 			orgsRoute.Delete("/users/:userId", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(RemoveOrgUser))
-			orgsRoute.Get("/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsRead, ScopeOrgID)), routing.Wrap(hs.GetOrgQuotas))
+			orgsRoute.Get("/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsQuotasRead, ScopeOrgID)), routing.Wrap(hs.GetOrgQuotas))
 			orgsRoute.Put("/quotas/:target", reqGrafanaAdmin, bind(models.UpdateOrgQuotaCmd{}), routing.Wrap(UpdateOrgQuota))
 		})
 
 		// orgs (admin routes)
-		apiRoute.Group("/orgs/name/:name", func(orgsRoute routing.RouteRegister) {
-			orgsRoute.Get("/", routing.Wrap(hs.GetOrgByName))
-		}, reqGrafanaAdmin)
+		apiRoute.Get("/orgs/name/:name/", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionOrgsRead, ScopeOrgName)), routing.Wrap(hs.GetOrgByName))
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
