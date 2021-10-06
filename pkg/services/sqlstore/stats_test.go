@@ -119,7 +119,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	updateUserLastSeenAtCmd := &models.UpdateUserLastSeenAtCommand{
 		UserId: users[0].Id,
 	}
-	err = UpdateUserLastSeenAt(updateUserLastSeenAtCmd)
+	err = UpdateUserLastSeenAt(context.Background(), updateUserLastSeenAtCmd)
 	require.NoError(t, err)
 
 	// force renewal of user stats

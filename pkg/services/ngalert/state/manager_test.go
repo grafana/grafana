@@ -1,6 +1,7 @@
 package state_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -851,10 +852,10 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, nil)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(tc.alertRule, res)
+				_ = st.ProcessEvalResults(context.Background(), tc.alertRule, res)
 			}
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
@@ -947,14 +948,14 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), dbstore, dbstore)
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
 		st.Warm()
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
 		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
 		for _, res := range tc.evalResults {
-			st.ProcessEvalResults(rule, res)
+			st.ProcessEvalResults(context.Background(), rule, res)
 			for _, s := range tc.expectedStates {
 				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)

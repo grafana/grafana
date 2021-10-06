@@ -158,9 +158,20 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         c.SignedInUser.OrgId,
 		NamespaceUIDs: namespaceUIDs,
+		DashboardUID:  dashboardUID,
+		PanelID:       panelID,
 	}
 
 	if err := srv.store.GetOrgAlertRules(&q); err != nil {
@@ -210,7 +221,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 			result[namespace] = append(result[namespace], ruleGroupConfig)
 		}
 	}
-	return response.JSON(http.StatusAccepted, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {

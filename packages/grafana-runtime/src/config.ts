@@ -44,6 +44,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
+  samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: any;
@@ -67,6 +68,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     recordedQueries: false,
     prometheusMonaco: false,
     newNavigation: false,
+    fullRangeLogsVolume: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

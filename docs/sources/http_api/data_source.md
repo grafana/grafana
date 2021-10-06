@@ -244,7 +244,7 @@ See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanatio
 
 | Action              | Scope                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------- |
-| datasources:id:read | datasources:\*<br>datasources:name:\*<br>datasources:name:test_datasource (single data source) |
+| datasources.id:read | datasources:\*<br>datasources:name:\*<br>datasources:name:test_datasource (single data source) |
 
 ### Examples
 
