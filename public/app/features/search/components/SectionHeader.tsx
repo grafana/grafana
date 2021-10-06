@@ -53,6 +53,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
         editable={editable}
         checked={section.checked}
         onClick={handleCheckboxClick}
+        aria-label="Select folder"
       />
 
       <div className={styles.icon}>

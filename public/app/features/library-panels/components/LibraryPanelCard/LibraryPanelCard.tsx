@@ -88,7 +88,7 @@ function getStyles(theme: GrafanaTheme2) {
     metaContainer: css`
       display: flex;
       align-items: center;
-      color: ${theme.colors.text.disabled};
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       padding-top: ${theme.spacing(0.5)};
 
