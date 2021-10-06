@@ -6,6 +6,8 @@ import {
   DisplayValue,
   formattedValueToString,
   FormattedValue,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
   DisplayValueAlignmentFactors,
   ThresholdsMode,
   DisplayProcessor,
@@ -122,43 +124,8 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 
-  getCellColor(positionValue: TimeSeriesValue): CellColors {
-    const { value, display } = this.props;
-    if (positionValue === null) {
-      return {
-        background: FALLBACK_COLOR,
-        border: FALLBACK_COLOR,
-      };
-    }
-
-    const color = display ? display(positionValue).color : null;
-
-    if (color) {
-      // if we are past real value the cell is not "on"
-      if (value === null || (positionValue !== null && positionValue > value.numeric)) {
-        return {
-          background: tinycolor(color).setAlpha(0.18).toRgbString(),
-          border: 'transparent',
-          isLit: false,
-        };
-      } else {
-        return {
-          background: tinycolor(color).setAlpha(0.95).toRgbString(),
-          backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
-          border: tinycolor(color).setAlpha(0.9).toRgbString(),
-          isLit: true,
-        };
-      }
-    }
-
-    return {
-      background: FALLBACK_COLOR,
-      border: FALLBACK_COLOR,
-    };
-  }
-
   renderRetroBars(): ReactNode {
-    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
+    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -167,8 +134,8 @@ export class BarGauge extends PureComponent<Props> {
       wrapperWidth,
       wrapperHeight,
     } = calculateBarAndValueDimensions(this.props);
-    const minValue = field.min!;
-    const maxValue = field.max!;
+    const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
+    const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
     const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
@@ -200,7 +167,7 @@ export class BarGauge extends PureComponent<Props> {
 
     for (let i = 0; i < cellCount; i++) {
       const currentValue = minValue + (valueRange / cellCount) * i;
-      const cellColor = this.getCellColor(currentValue);
+      const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
         borderRadius: '2px',
       };
@@ -425,6 +392,44 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
   };
 }
 
+export function getCellColor(
+  positionValue: TimeSeriesValue,
+  value: Props['value'],
+  display: Props['display']
+): CellColors {
+  if (positionValue === null) {
+    return {
+      background: FALLBACK_COLOR,
+      border: FALLBACK_COLOR,
+    };
+  }
+
+  const color = display ? display(positionValue).color : null;
+
+  if (color) {
+    // if we are past real value the cell is not "on"
+    if (value === null || isNaN(value.numeric) || (positionValue !== null && positionValue > value.numeric)) {
+      return {
+        background: tinycolor(color).setAlpha(0.18).toRgbString(),
+        border: 'transparent',
+        isLit: false,
+      };
+    } else {
+      return {
+        background: tinycolor(color).setAlpha(0.95).toRgbString(),
+        backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
+        border: tinycolor(color).setAlpha(0.9).toRgbString(),
+        isLit: true,
+      };
+    }
+  }
+
+  return {
+    background: FALLBACK_COLOR,
+    border: FALLBACK_COLOR,
+  };
+}
+
 export function getValuePercent(value: number, minValue: number, maxValue: number): number {
   return Math.min((value - minValue) / (maxValue - minValue), 1);
 }
@@ -436,7 +441,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
+  const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
+  const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+  const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;

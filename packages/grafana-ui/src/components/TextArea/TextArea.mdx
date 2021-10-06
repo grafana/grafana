@@ -2,6 +2,7 @@ import { Props } from '@storybook/addon-docs/blocks';
 import { TextArea } from './TextArea';
 
 # TextArea
+
 Use for multi line inputs like descriptions.
 
 ### Usage
@@ -21,7 +22,10 @@ Use for multi line inputs like descriptions.
 ```
 
 <Preview>
-  <Field label="Important information" description="This information is very important, so you really need to fill it in">
+  <Field
+    label="Important information"
+    description="This information is very important, so you really need to fill it in"
+  >
     <Textarea name="importantTextarea" required />
   </Field>
 </Preview>

@@ -26,18 +26,17 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandler("sql", GetDashboard)
-	bus.AddHandler("sql", GetDashboards)
-	bus.AddHandlerCtx("sql", GetDashboardCtx)
-	bus.AddHandler("sql", DeleteDashboard)
-	bus.AddHandler("sql", SearchDashboards)
-	bus.AddHandler("sql", GetDashboardTags)
-	bus.AddHandler("sql", GetDashboardSlugById)
-	bus.AddHandler("sql", GetDashboardsByPluginId)
-	bus.AddHandler("sql", GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", GetDashboardsBySlug)
-	bus.AddHandler("sql", HasEditPermissionInFolders)
-	bus.AddHandler("sql", HasAdminPermissionInFolders)
+	bus.AddHandlerCtx("sql", GetDashboard)
+	bus.AddHandlerCtx("sql", GetDashboards)
+	bus.AddHandlerCtx("sql", DeleteDashboard)
+	bus.AddHandlerCtx("sql", SearchDashboards)
+	bus.AddHandlerCtx("sql", GetDashboardTags)
+	bus.AddHandlerCtx("sql", GetDashboardSlugById)
+	bus.AddHandlerCtx("sql", GetDashboardsByPluginId)
+	bus.AddHandlerCtx("sql", GetDashboardPermissionsForUser)
+	bus.AddHandlerCtx("sql", GetDashboardsBySlug)
+	bus.AddHandlerCtx("sql", HasEditPermissionInFolders)
+	bus.AddHandlerCtx("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
 }
@@ -232,12 +231,7 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 	return &dashboard, nil
 }
 
-// TODO: Remove me
-func GetDashboard(query *models.GetDashboardQuery) error {
-	return GetDashboardCtx(context.TODO(), query)
-}
-
-func GetDashboardCtx(ctx context.Context, query *models.GetDashboardQuery) error {
+func GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
 	return withDbSession(ctx, x, func(dbSession *DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
@@ -340,7 +334,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	return res, nil
 }
 
-func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+func SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
 	res, err := findDashboards(query)
 	if err != nil {
 		return err
@@ -400,7 +394,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 	}
 }
 
-func GetDashboardTags(query *models.GetDashboardTagsQuery) error {
+func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	sql := `SELECT
 					  COUNT(*) as count,
 						term
@@ -416,7 +410,7 @@ func GetDashboardTags(query *models.GetDashboardTagsQuery) error {
 	return err
 }
 
-func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
+func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		return deleteDashboard(cmd, sess)
 	})
@@ -515,7 +509,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 	return nil
 }
 
-func GetDashboards(query *models.GetDashboardsQuery) error {
+func GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	if len(query.DashboardIds) == 0 {
 		return models.ErrCommandValidationFailed
 	}
@@ -529,7 +523,7 @@ func GetDashboards(query *models.GetDashboardsQuery) error {
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
 // The function takes in a list of dashboard ids and the user id and role
-func GetDashboardPermissionsForUser(query *models.GetDashboardPermissionsForUserQuery) error {
+func GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
 	if len(query.DashboardIds) == 0 {
 		return models.ErrCommandValidationFailed
 	}
@@ -597,7 +591,7 @@ func GetDashboardPermissionsForUser(query *models.GetDashboardPermissionsForUser
 	return err
 }
 
-func GetDashboardsByPluginId(query *models.GetDashboardsByPluginIdQuery) error {
+func GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 	var dashboards = make([]*models.Dashboard, 0)
 	whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
 
@@ -610,7 +604,7 @@ type DashboardSlugDTO struct {
 	Slug string
 }
 
-func GetDashboardSlugById(query *models.GetDashboardSlugByIdQuery) error {
+func GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
 	var rawSQL = `SELECT slug from dashboard WHERE Id=?`
 	var slug = DashboardSlugDTO{}
 
@@ -626,7 +620,7 @@ func GetDashboardSlugById(query *models.GetDashboardSlugByIdQuery) error {
 	return nil
 }
 
-func GetDashboardsBySlug(query *models.GetDashboardsBySlugQuery) error {
+func GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
 	var dashboards []*models.Dashboard
 
 	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
@@ -805,7 +799,7 @@ func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, ove
 	return isParentFolderChanged, nil
 }
 
-func HasEditPermissionInFolders(query *models.HasEditPermissionInFoldersQuery) error {
+func HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
 		query.Result = true
 		return nil
@@ -830,7 +824,7 @@ func HasEditPermissionInFolders(query *models.HasEditPermissionInFoldersQuery) e
 	return nil
 }
 
-func HasAdminPermissionInFolders(query *models.HasAdminPermissionInFoldersQuery) error {
+func HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
 	if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
 		query.Result = true
 		return nil

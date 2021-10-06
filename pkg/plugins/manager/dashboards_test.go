@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -25,7 +26,7 @@ func TestGetPluginDashboards(t *testing.T) {
 	err := pm.init()
 	require.NoError(t, err)
 
-	bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 		if query.Slug == "nginx-connections" {
 			dash := models.NewDashboard("Nginx Connections")
 			dash.Data.Set("revision", "1.1")
@@ -36,7 +37,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		return models.ErrDashboardNotFound
 	})
 
-	bus.AddHandler("test", func(query *models.GetDashboardsByPluginIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 		var data = simplejson.New()
 		data.Set("title", "Nginx Connections")
 		data.Set("revision", 22)
