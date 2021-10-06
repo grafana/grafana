@@ -7,7 +7,6 @@ grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
 windows_image = 'mcr.microsoft.com/windows:1809'
-dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
@@ -115,9 +114,6 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
 
     if install_deps:
         common_cmds.extend([
-            'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition in ('enterprise', 'enterprise2'):
@@ -150,9 +146,6 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             {
                 'name': 'initialize',
                 'image': build_image,
-                'environment': {
-                    'DOCKERIZE_VERSION': dockerize_version,
-                },
                 'depends_on': [
                     'clone',
                 ],
@@ -175,9 +168,6 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
         {
             'name': 'initialize',
             'image': build_image,
-            'environment': {
-                'DOCKERIZE_VERSION': dockerize_version,
-            },
             'commands': download_grabpl_cmds + common_cmds,
         },
     ]

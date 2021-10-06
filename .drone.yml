@@ -20,12 +20,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.4/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -253,12 +248,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.4/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -628,8 +618,6 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.4/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -714,12 +702,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -1081,12 +1064,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -1549,8 +1527,6 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1654,12 +1630,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -2010,12 +1981,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -2472,8 +2438,6 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2576,12 +2540,7 @@ steps:
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.4/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -2903,12 +2862,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -3441,6 +3395,6 @@ get:
 
 ---
 kind: signature
-hmac: 344cd4f6925147cee6a32670a128e7633afb6f0df83e61f0464a03deaac7ec55
+hmac: b7dfbc79f68660fde74ae5da84fa176172612ed88e15b65b5a5c140f1dc7a772
 
 ...
