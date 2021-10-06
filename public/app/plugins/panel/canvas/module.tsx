@@ -10,8 +10,6 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 
-    console.log('BUILD canvas editors', state, context.options);
-
     builder.addBooleanSwitch({
       path: 'inlineEditing',
       name: 'Inline editing',
@@ -23,7 +21,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
       builder.addNestedOptions(
         getElementEditor({
           category: ['Selected element'],
-          elemment: state.selected,
+          element: state.selected,
           scene: state.scene,
         })
       );
