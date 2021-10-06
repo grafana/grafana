@@ -23,12 +23,12 @@ import {
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ResourceFolderName,
-  getResourceDimension,
+  getPublicOrAbsoluteUrl,
 } from 'app/features/dimensions';
 import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { circleMarker, markerMakers, svgMarkerMatch } from '../../utils/regularShapes';
+import { StyleMaker, getMarkerFromPath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 
 // Configuration options for Circle overlays
@@ -106,8 +106,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (!data.series?.length) {
           return; // ignore empty
         }
-        const svgMatches = svgMarkerMatch(config.markerSymbol);
-        const shape = markerMakers.getIfExists(svgMatches) ?? circleMarker;
+
+        const markerPath =
+          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl('img/icons/geo/circle.svg');
+
+        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
+
+        const makeIconStyle = (color: string, fillColor: string, radius: number) => {
+          return new style.Style({
+            image: new style.Icon({
+              src: markerPath,
+              color,
+              //  opacity,
+              scale: (DEFAULT_SIZE + radius) / 100,
+            }),
+          });
+        };
+
+        const shape: StyleMaker = marker?.make ?? makeIconStyle;
 
         const features: Feature<Point>[] = [];
 
@@ -121,7 +137,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const colorDim = getColorDimension(frame, config.color, theme);
           const sizeDim = getScaledDimension(frame, config.size);
           const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
-          const resourceDim = getResourceDimension(frame, config.markerSymbol);
 
           // Map each data value into new points
           for (let i = 0; i < frame.length; i++) {
@@ -131,7 +146,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
             // Get circle size from user configuration
             const radius = sizeDim.get(i);
-            const markerSymbol = resourceDim.get(i);
 
             // Create a new Feature for each point returned from dataFrameToPoints
             const dot = new Feature(info.points[i]);
@@ -139,20 +153,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               frame,
               rowIndex: i,
             });
-            if (svgMatches) {
-              dot.setStyle(shape!.make(color, fillColor, radius));
-            } else {
-              dot.setStyle(
-                new style.Style({
-                  image: new style.Icon({
-                    src: markerSymbol,
-                    color,
-                    opacity,
-                    scale: (DEFAULT_SIZE + radius) / 100,
-                  }),
-                })
-              );
-            }
+            dot.setStyle(shape(color, fillColor, radius));
             features.push(dot);
           }
 

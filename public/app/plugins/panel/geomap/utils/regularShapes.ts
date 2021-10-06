@@ -1,16 +1,38 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
-import { ResourceDimensionConfig } from 'app/features/dimensions/types';
 
-interface MarkerMaker extends RegistryItem {
-  make: (color: string, fillColor: string, radius: number) => Style;
+export type StyleMaker = (color: string, fillColor: string, radius: number, markerPath?: string) => Style;
+
+export interface MarkerMaker extends RegistryItem {
+  // path to icon that will be shown (but then replaced)
+  aliasIds: string[];
+  make: StyleMaker;
   hasFill: boolean;
 }
 
+export enum RegularShapeId {
+  circle = 'circle',
+  square = 'square',
+  triangle = 'triangle',
+  star = 'star',
+  cross = 'cross',
+  x = 'x',
+}
+
+export const shapeByPathLookup = {
+  'img/icons/geo/circle.svg': RegularShapeId.circle,
+  'img/icons/geo/square.svg': RegularShapeId.square,
+  'img/icons/geo/triangle.svg': RegularShapeId.triangle,
+  'img/icons/geo/star.svg': RegularShapeId.star,
+  'img/icons/geo/cross.svg': RegularShapeId.cross,
+  'img/icons/geo/x-mark.svg': RegularShapeId.x,
+};
+
 export const circleMarker: MarkerMaker = {
-  id: 'circle',
+  id: RegularShapeId.circle,
   name: 'Circle',
   hasFill: true,
+  aliasIds: ['img/icons/geo/circle.svg'],
   make: (color: string, fillColor: string, radius: number) => {
     return new Style({
       image: new Circle({
@@ -22,12 +44,13 @@ export const circleMarker: MarkerMaker = {
   },
 };
 
-export const markerMakers = new Registry<MarkerMaker>(() => [
+const makers: MarkerMaker[] = [
   circleMarker,
   {
-    id: 'square',
+    id: RegularShapeId.square,
     name: 'Square',
     hasFill: true,
+    aliasIds: ['img/icons/geo/square.svg'],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -41,9 +64,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'triangle',
+    id: RegularShapeId.triangle,
     name: 'Triangle',
     hasFill: true,
+    aliasIds: ['img/icons/geo/triangle.svg'],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -58,9 +82,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'star',
+    id: RegularShapeId.star,
     name: 'Star',
     hasFill: true,
+    aliasIds: ['img/icons/geo/star.svg'],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -75,9 +100,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'cross',
+    id: RegularShapeId.cross,
     name: 'Cross',
     hasFill: false,
+    aliasIds: ['img/icons/geo/cross.svg'],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -92,9 +118,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'x',
+    id: RegularShapeId.x,
     name: 'X',
     hasFill: false,
+    aliasIds: ['img/icons/geo/x-mark.svg'],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -108,21 +135,15 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
       });
     },
   },
-]);
+];
 
-export enum SVGMarkerType {
-  circle = 'img/icons/geo/circle.svg',
-  square = 'img/icons/geo/square.svg',
-  triangle = 'img/icons/geo/triangle.svg',
-  star = 'img/icons/geo/star.svg',
-  cross = 'img/icons/geo/cross.svg',
-  x = 'img/icons/geo/x-mark.svg',
-}
+export const markerMakers = new Registry<MarkerMaker>(() => makers);
 
-export const svgMarkerMatch = (svgPath: ResourceDimensionConfig): string | undefined => {
-  for (const [key, val] of Object.entries(SVGMarkerType)) {
-    if (val === svgPath.fixed) {
-      return key;
+export const getMarkerFromPath = (svgPath: string): MarkerMaker | undefined => {
+  for (const [key, val] of Object.entries(shapeByPathLookup)) {
+    if (key === svgPath) {
+      console.log('key', key);
+      return markerMakers.getIfExists(val);
     }
   }
   return undefined;

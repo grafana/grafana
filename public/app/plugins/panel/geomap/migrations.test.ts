@@ -1,5 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
-import { mapPanelChangedHandler } from './migrations';
+import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
 
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -106,3 +106,169 @@ const simpleWorldmapConfig = {
   valueName: 'total',
   datasource: null,
 };
+
+describe('geomap migrations', () => {
+  it('updates marker', () => {
+    const panel = {
+      id: 2,
+      gridPos: {
+        h: 9,
+        w: 12,
+        x: 0,
+        y: 0,
+      },
+      type: 'geomap',
+      title: 'Panel Title',
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+          mappings: [],
+          color: {
+            mode: 'thresholds',
+          },
+        },
+        overrides: [],
+      },
+      options: {
+        view: {
+          id: 'zero',
+          lat: 0,
+          lon: 0,
+          zoom: 1,
+        },
+        basemap: {
+          type: 'default',
+          config: {},
+        },
+        layers: [
+          {
+            config: {
+              color: {
+                fixed: 'dark-green',
+              },
+              fillOpacity: 0.4,
+              markerSymbol: {
+                fixed: '',
+                mode: 'fixed',
+              },
+              shape: 'circle',
+              showLegend: true,
+              size: {
+                fixed: 5,
+                max: 15,
+                min: 2,
+              },
+            },
+            location: {
+              mode: 'auto',
+            },
+            type: 'markers',
+          },
+        ],
+        controls: {
+          showZoom: true,
+          mouseWheelZoom: true,
+          showAttribution: true,
+          showScale: false,
+          showDebug: false,
+        },
+      },
+      pluginVersion: '8.3.0-pre',
+      datasource: null,
+    } as PanelModel;
+    panel.options = mapMigrationHandler(panel);
+
+    expect(JSON.stringify(panel)).toStrictEqual(
+      JSON.stringify({
+        id: 2,
+        gridPos: {
+          h: 9,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        type: 'geomap',
+        title: 'Panel Title',
+        fieldConfig: {
+          defaults: {
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+            mappings: [],
+            color: {
+              mode: 'thresholds',
+            },
+          },
+          overrides: [],
+        },
+        options: {
+          view: {
+            id: 'zero',
+            lat: 0,
+            lon: 0,
+            zoom: 1,
+          },
+          basemap: {
+            type: 'default',
+            config: {},
+          },
+          layers: [
+            {
+              config: {
+                color: {
+                  fixed: 'dark-green',
+                },
+                fillOpacity: 0.4,
+                markerSymbol: {
+                  fixed: 'img/icons/geo/circle.svg',
+                  mode: 'fixed',
+                },
+                showLegend: true,
+                size: {
+                  fixed: 5,
+                  max: 15,
+                  min: 2,
+                },
+              },
+              location: {
+                mode: 'auto',
+              },
+              type: 'markers',
+            },
+          ],
+          controls: {
+            showZoom: true,
+            mouseWheelZoom: true,
+            showAttribution: true,
+            showScale: false,
+            showDebug: false,
+          },
+        },
+        pluginVersion: '8.3.0-pre',
+        datasource: null,
+      })
+    );
+  });
+});
