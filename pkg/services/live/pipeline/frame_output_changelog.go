@@ -13,24 +13,24 @@ type ChangeLogOutputConfig struct {
 	Channel   string `json:"channel"`
 }
 
-// ChangeLogOutput can monitor value changes of the specified field and output
+// ChangeLogFrameOutput can monitor value changes of the specified field and output
 // special change frame to the configured channel.
-type ChangeLogOutput struct {
+type ChangeLogFrameOutput struct {
 	frameStorage FrameGetSetter
 	config       ChangeLogOutputConfig
 }
 
-func NewChangeLogOutput(frameStorage FrameGetSetter, config ChangeLogOutputConfig) *ChangeLogOutput {
-	return &ChangeLogOutput{frameStorage: frameStorage, config: config}
+func NewChangeLogFrameOutput(frameStorage FrameGetSetter, config ChangeLogOutputConfig) *ChangeLogFrameOutput {
+	return &ChangeLogFrameOutput{frameStorage: frameStorage, config: config}
 }
 
-const OutputTypeChangeLog = "changeLog"
+const FrameOutputTypeChangeLog = "changeLog"
 
-func (out *ChangeLogOutput) Type() string {
-	return OutputTypeChangeLog
+func (out *ChangeLogFrameOutput) Type() string {
+	return FrameOutputTypeChangeLog
 }
 
-func (out *ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *ChangeLogFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	previousFrame, previousFrameOK, err := out.frameStorage.Get(vars.OrgID, out.config.Channel)
 	if err != nil {
 		return nil, err
