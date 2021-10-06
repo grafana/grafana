@@ -10,7 +10,7 @@ weight = 700
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
 - [Create the Azure AD application](#create-the-azure-ad-application)
-- [Enable Azure AD OAuth in Grafana](/#enable-azure-ad-oauth-in-grafana)
+- [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
 
 ## Create the Azure AD application
 
