@@ -138,12 +138,12 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
-		s := st.setNextState(alertRule, result)
+		s := st.setNextState(ctx, alertRule, result)
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
@@ -152,7 +152,7 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 }
 
 //Set the current state based on evaluation results
-func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -185,7 +185,7 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.createAlertAnnotation(currentState.State, alertRule, result, oldState)
+		go st.createAlertAnnotation(ctx, currentState.State, alertRule, result, oldState)
 	}
 	return currentState
 }
@@ -233,7 +233,7 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
+func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
 	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
 	if !ok {
@@ -253,7 +253,7 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		OrgId: alertRule.OrgID,
 	}
 
-	err = sqlstore.GetDashboardCtx(context.TODO(), query)
+	err = sqlstore.GetDashboard(ctx, query)
 	if err != nil {
 		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 		return

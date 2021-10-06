@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -74,15 +75,15 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
-				err = GetDashboards(query)
+				err = GetDashboards(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldNotBeNil)
 
 				deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-				So(DeleteOrphanedProvisionedDashboards(deleteCmd), ShouldBeNil)
+				So(DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd), ShouldBeNil)
 
 				query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
-				err = GetDashboards(query)
+				err = GetDashboards(context.Background(), query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -117,7 +118,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 					OrgId: 1,
 				}
 
-				So(DeleteDashboard(deleteCmd), ShouldBeNil)
+				So(DeleteDashboard(context.Background(), deleteCmd), ShouldBeNil)
 
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
 				So(err, ShouldBeNil)
@@ -129,7 +130,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 					Id: dashId,
 				}
 
-				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
+				So(UnprovisionDashboard(context.Background(), unprovisionCmd), ShouldBeNil)
 
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dashId)
 				So(err, ShouldBeNil)
