@@ -54,11 +54,11 @@ func TestRemoteWriteFrameOutput_sample(t *testing.T) {
 	out := NewRemoteWriteFrameOutput(RemoteWriteConfig{
 		SampleMilliseconds: 500,
 	})
-	timeSeries = out.sample(timeSeries)
-	require.Len(t, timeSeries, 2)
+	sampledTimeSeries := out.sample(timeSeries)
+	require.Len(t, sampledTimeSeries, 2)
 
-	require.Len(t, timeSeries[0].Samples, 1)
-	require.Len(t, timeSeries[1].Samples, 1)
+	require.Equal(t, []prompb.Sample{{Timestamp: now, Value: 1}}, sampledTimeSeries[0].Samples)
+	require.Equal(t, []prompb.Sample{{Timestamp: now, Value: 1}}, sampledTimeSeries[1].Samples)
 }
 
 func TestRemoteWriteFrameOutput_sample_merge(t *testing.T) {
@@ -80,6 +80,10 @@ func TestRemoteWriteFrameOutput_sample_merge(t *testing.T) {
 				},
 				{
 					Timestamp: now + 100,
+					Value:     2,
+				},
+				{
+					Timestamp: now + 200,
 					Value:     2,
 				},
 			},
@@ -124,9 +128,23 @@ func TestRemoteWriteFrameOutput_sample_merge(t *testing.T) {
 	out := NewRemoteWriteFrameOutput(RemoteWriteConfig{
 		SampleMilliseconds: 50,
 	})
-	timeSeries = out.sample(timeSeries)
-	require.Len(t, timeSeries, 2)
+	sampledTimeSeries := out.sample(timeSeries)
+	require.Len(t, sampledTimeSeries, 2)
 
-	require.Len(t, timeSeries[0].Samples, 2)
-	require.Len(t, timeSeries[1].Samples, 2)
+	expectedSamples := map[string][]prompb.Sample{
+		"test1": timeSeries[0].Samples,
+		"test2": {
+			{
+				Timestamp: now,
+				Value:     1,
+			},
+			{
+				Timestamp: now + 100,
+				Value:     2,
+			},
+		},
+	}
+
+	require.Equal(t, expectedSamples[sampledTimeSeries[0].Labels[0].Value], sampledTimeSeries[0].Samples)
+	require.Equal(t, expectedSamples[sampledTimeSeries[1].Labels[0].Value], sampledTimeSeries[1].Samples)
 }
