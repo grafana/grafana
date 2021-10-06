@@ -126,11 +126,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		s.glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 
-	_, err = influxql.NewParser(strings.NewReader(rawQuery)).ParseQuery()
-	if err != nil {
-		return &backend.QueryDataResponse{}, fmt.Errorf("error parsing InfluxQL")
-	}
-
 	request, err := s.createRequest(ctx, dsInfo, rawQuery)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
@@ -172,6 +167,11 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceIn
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
+	}
+
+	_, err = influxql.NewParser(strings.NewReader(query)).ParseQuery()
+	if err != nil {
+		return nil, fmt.Errorf("Invalid InfluxQL: %s", err.Error())
 	}
 
 	u.Path = path.Join(u.Path, "query")

@@ -62,4 +62,10 @@ func TestExecutor_createRequest(t *testing.T) {
 		_, err := s.createRequest(context.Background(), datasource, query)
 		require.EqualError(t, err, ErrInvalidHttpMode.Error())
 	})
+
+	t.Run("validate bad request", func(t *testing.T) {
+		datasource.HTTPMode = "GET"
+		_, err := s.createRequest(context.Background(), datasource, "SELECT 'aaa")
+		require.EqualError(t, err, "Invalid InfluxQL: found aaa, expected identifier, string, number, bool at line 1, char 7")
+	})
 }
