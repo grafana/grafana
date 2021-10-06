@@ -26,7 +26,6 @@ COPY build.go package.json ./
 COPY pkg pkg/
 COPY cue cue/
 COPY cue.mod cue.mod/
-COPY packages/grafana-schema packages/grafana-schema/
 COPY public/app/plugins public/app/plugins/
 
 RUN go mod verify
