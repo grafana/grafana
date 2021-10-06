@@ -29,12 +29,12 @@ VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
 OptionsWithTooltip: {
 	// FIXME this field is non-optional in the corresponding TS type
-	tooltip: VizTooltipOptions
+	tooltip?: VizTooltipOptions
 } @cuetsy(kind="interface")
 // TODO copy back to appropriate place
 OptionsWithLegend: {
 	// FIXME this field is non-optional in the corresponding TS type
-	legend: VizLegendOptions
+	legend?: VizLegendOptions
 } @cuetsy(kind="interface")
 // TODO copy back to appropriate place
 OptionsWithTextFormatting: {
