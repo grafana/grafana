@@ -7,33 +7,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// NumberCompareCondition can compare numbers.
-type NumberCompareCondition struct {
+// FrameNumberCompareCondition can compare numbers.
+type FrameNumberCompareCondition struct {
 	FieldName string
 	Op        NumberCompareOp
 	Value     float64
 }
 
-// NumberCompareOp is an comparison operator.
-type NumberCompareOp string
+const FrameConditionCheckerTypeNumberCompare = "numberCompare"
 
-// Known NumberCompareOp types.
-const (
-	NumberCompareOpLt  NumberCompareOp = "lt"
-	NumberCompareOpGt  NumberCompareOp = "gt"
-	NumberCompareOpLte NumberCompareOp = "lte"
-	NumberCompareOpGte NumberCompareOp = "gte"
-	NumberCompareOpEq  NumberCompareOp = "eq"
-	NumberCompareOpNe  NumberCompareOp = "ne"
-)
-
-const ConditionCheckerTypeNumberCompare = "numberCompare"
-
-func (c *NumberCompareCondition) Type() string {
-	return ConditionCheckerTypeNumberCompare
+func (c *FrameNumberCompareCondition) Type() string {
+	return FrameConditionCheckerTypeNumberCompare
 }
 
-func (c *NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Frame) (bool, error) {
+func (c *FrameNumberCompareCondition) CheckFrameCondition(_ context.Context, frame *data.Frame) (bool, error) {
 	for _, field := range frame.Fields {
 		// TODO: support other numeric types.
 		if field.Name == c.FieldName && (field.Type() == data.FieldTypeNullableFloat64) {
@@ -65,6 +52,6 @@ func (c *NumberCompareCondition) CheckCondition(_ context.Context, frame *data.F
 	return false, nil
 }
 
-func NewNumberCompareCondition(fieldName string, op NumberCompareOp, value float64) *NumberCompareCondition {
-	return &NumberCompareCondition{FieldName: fieldName, Op: op, Value: value}
+func NewFrameNumberCompareCondition(fieldName string, op NumberCompareOp, value float64) *FrameNumberCompareCondition {
+	return &FrameNumberCompareCondition{FieldName: fieldName, Op: op, Value: value}
 }

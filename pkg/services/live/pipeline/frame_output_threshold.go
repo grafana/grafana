@@ -13,7 +13,7 @@ type ThresholdOutputConfig struct {
 	Channel   string `json:"channel"`
 }
 
-//go:generate mockgen -destination=output_threshold_mock.go -package=pipeline github.com/grafana/grafana/pkg/services/live/pipeline FrameGetSetter
+//go:generate mockgen -destination=frame_output_threshold_mock.go -package=pipeline github.com/grafana/grafana/pkg/services/live/pipeline FrameGetSetter
 
 type FrameGetSetter interface {
 	Get(orgID int64, channel string) (*data.Frame, bool, error)
@@ -31,13 +31,13 @@ func NewThresholdOutput(frameStorage FrameGetSetter, config ThresholdOutputConfi
 	return &ThresholdOutput{frameStorage: frameStorage, config: config}
 }
 
-const OutputTypeThreshold = "threshold"
+const FrameOutputTypeThreshold = "threshold"
 
 func (out *ThresholdOutput) Type() string {
-	return OutputTypeThreshold
+	return FrameOutputTypeThreshold
 }
 
-func (out *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *ThresholdOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if frame == nil {
 		return nil, nil
 	}

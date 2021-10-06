@@ -11,22 +11,22 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type LocalSubscribersOutput struct {
+type LocalSubscribersFrameOutput struct {
 	// TODO: refactor to depend on interface (avoid Centrifuge dependency here).
 	node *centrifuge.Node
 }
 
-func NewLocalSubscribersOutput(node *centrifuge.Node) *LocalSubscribersOutput {
-	return &LocalSubscribersOutput{node: node}
+func NewLocalSubscribersFrameOutput(node *centrifuge.Node) *LocalSubscribersFrameOutput {
+	return &LocalSubscribersFrameOutput{node: node}
 }
 
-const OutputTypeLocalSubscribers = "localSubscribers"
+const FrameOutputTypeLocalSubscribers = "localSubscribers"
 
-func (out *LocalSubscribersOutput) Type() string {
-	return OutputTypeLocalSubscribers
+func (out *LocalSubscribersFrameOutput) Type() string {
+	return FrameOutputTypeLocalSubscribers
 }
 
-func (out *LocalSubscribersOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *LocalSubscribersFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	channelID := vars.Channel
 	channel := orgchannel.PrependOrgID(vars.OrgID, channelID)
 	frameJSON, err := json.Marshal(frame)

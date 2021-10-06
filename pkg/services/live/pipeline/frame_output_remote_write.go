@@ -23,15 +23,15 @@ type RemoteWriteConfig struct {
 	Password string `json:"password"`
 }
 
-type RemoteWriteOutput struct {
+type RemoteWriteFrameOutput struct {
 	mu         sync.Mutex
 	config     RemoteWriteConfig
 	httpClient *http.Client
 	buffer     []prompb.TimeSeries
 }
 
-func NewRemoteWriteOutput(config RemoteWriteConfig) *RemoteWriteOutput {
-	out := &RemoteWriteOutput{
+func NewRemoteWriteFrameOutput(config RemoteWriteConfig) *RemoteWriteFrameOutput {
+	out := &RemoteWriteFrameOutput{
 		config:     config,
 		httpClient: &http.Client{Timeout: 2 * time.Second},
 	}
@@ -41,13 +41,13 @@ func NewRemoteWriteOutput(config RemoteWriteConfig) *RemoteWriteOutput {
 	return out
 }
 
-const OutputTypeRemoteWrite = "remoteWrite"
+const FrameOutputTypeRemoteWrite = "remoteWrite"
 
-func (out *RemoteWriteOutput) Type() string {
-	return OutputTypeRemoteWrite
+func (out *RemoteWriteFrameOutput) Type() string {
+	return FrameOutputTypeRemoteWrite
 }
 
-func (out *RemoteWriteOutput) flushPeriodically() {
+func (out *RemoteWriteFrameOutput) flushPeriodically() {
 	for range time.NewTicker(15 * time.Second).C {
 		out.mu.Lock()
 		if len(out.buffer) == 0 {
@@ -70,7 +70,7 @@ func (out *RemoteWriteOutput) flushPeriodically() {
 	}
 }
 
-func (out *RemoteWriteOutput) flush(timeSeries []prompb.TimeSeries) error {
+func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
 	logger.Debug("Remote write flush", "num time series", len(timeSeries))
 	remoteWriteData, err := remotewrite.TimeSeriesToBytes(timeSeries)
 	if err != nil {
@@ -100,7 +100,7 @@ func (out *RemoteWriteOutput) flush(timeSeries []prompb.TimeSeries) error {
 	return nil
 }
 
-func (out *RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *RemoteWriteFrameOutput) OutputFrame(_ context.Context, _ Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if out.config.Endpoint == "" {
 		logger.Debug("Skip sending to remote write: no url")
 		return nil, nil
