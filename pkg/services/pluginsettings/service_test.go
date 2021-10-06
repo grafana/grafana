@@ -46,6 +46,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 
 		ps.SecureJsonData = encryptedJsonData
 
+		password, ok = psService.DecryptedValues(&ps)["password"]
 		require.Equal(t, "password", password)
 		require.True(t, ok)
 	})
