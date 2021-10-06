@@ -168,36 +168,13 @@ func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
-		// Open the file
-		fp := filepath.Join(plugin.PluginDir, p)
-
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fp` is based
-		// on the manifest file for a plugin and not user input.
-		f, err := os.Open(fp)
+		err = verifyHash(plugin.ID, filepath.Join(plugin.PluginDir, p), hash)
 		if err != nil {
-			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.ID, "filename", p, "dir", plugin.PluginDir)
 			return plugins.Signature{
 				Status: plugins.SignatureModified,
 			}, nil
 		}
-		h := sha256.New()
-		if _, err := io.Copy(h, f); err != nil {
-			log.Warn("Couldn't read plugin file", "plugin", plugin.ID, "filename", fp)
-			return plugins.Signature{
-				Status: plugins.SignatureModified,
-			}, nil
-		}
-		sum := hex.EncodeToString(h.Sum(nil))
-		if sum != hash {
-			log.Warn("Plugin file has been modified", "plugin", plugin.ID, "filename", fp)
-			return plugins.Signature{
-				Status: plugins.SignatureModified,
-			}, nil
-		}
-		if err := f.Close(); err != nil {
-			log.Warn("Failed to close plugin file", "path", fp, "err", err)
-		}
+
 		manifestFiles[p] = struct{}{}
 	}
 
@@ -232,6 +209,34 @@ func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil
+}
+
+func verifyHash(pluginID string, path string, hash string) error {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` is based
+	// on the path provided in a manifest file for a plugin and not user input.
+	f, err := os.Open(path)
+	if err != nil {
+		log.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
+		return fmt.Errorf("plugin file listed in the manifest was not found")
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warn("Failed to close plugin file", "path", path, "err", err)
+		}
+	}()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("could not calculate plugin file checksum")
+	}
+	sum := hex.EncodeToString(h.Sum(nil))
+	if sum != hash {
+		log.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
+		return fmt.Errorf("plugin file checksum does not match signature checksum")
+	}
+
+	return nil
 }
 
 // pluginFilesRequiringVerification gets plugin filenames that require verification for plugin signing

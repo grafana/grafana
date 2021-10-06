@@ -121,7 +121,6 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
-	reqContext.Data["ctx"] = reqContext
 
 	span.LogFields(
 		ol.String("uname", reqContext.Login),
@@ -133,7 +132,7 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := bus.DispatchCtx(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -299,7 +298,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
-		reqContext.Data["lookupTokenErr"] = err
+		reqContext.LookupTokenErr = err
 		return false
 	}
 

@@ -137,8 +137,8 @@ type LibraryElementConnectionDTO struct {
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
 	errLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
-	// errLibraryElementNotFound is an error for when a library element can't be found.
-	errLibraryElementNotFound = errors.New("library element could not be found")
+	// ErrLibraryElementNotFound is an error for when a library element can't be found.
+	ErrLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
 	errLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
 	// errLibraryElementHasConnections is an error for when an user deletes a library element that is connected.

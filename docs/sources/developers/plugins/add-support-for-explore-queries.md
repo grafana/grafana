@@ -21,12 +21,12 @@ The query editor for Explore is similar to the query editor for the data source 
    ```ts
    import React from 'react';
 
-   import { ExploreQueryFieldProps } from '@grafana/data';
+   import { QueryEditorProps } from '@grafana/data';
    import { QueryField } from '@grafana/ui';
    import { DataSource } from './DataSource';
    import { MyQuery, MyDataSourceOptions } from './types';
 
-   export type Props = ExploreQueryFieldProps<DataSource, MyQuery, MyDataSourceOptions>;
+   export type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
    export default (props: Props) => {
      return <h2>My query editor</h2>;

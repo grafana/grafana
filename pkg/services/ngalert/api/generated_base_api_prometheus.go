@@ -21,7 +21,7 @@ type PrometheusApiService interface {
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService, m *metrics.Metrics) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"),

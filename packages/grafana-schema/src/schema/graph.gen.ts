@@ -11,9 +11,9 @@ export enum AxisPlacement {
   Right = 'right',
   Top = 'top',
 }
-export enum PointVisibility {
-  Always = 'always',
+export enum VisibilityMode {
   Auto = 'auto',
+  Always = 'always',
   Never = 'never',
 }
 export enum GraphDrawStyle {
@@ -45,12 +45,11 @@ export interface LineStyle {
   dash?: number[];
   fill?: 'solid' | 'dash' | 'dot' | 'square';
 }
-
 export interface PointsConfig {
   pointColor?: string;
   pointSize?: number;
   pointSymbol?: string;
-  showPoints?: PointVisibility;
+  showPoints?: VisibilityMode;
 }
 export interface ScaleDistributionConfig {
   log?: number;
@@ -69,15 +68,6 @@ export enum BarAlignment {
   Before = -1,
   Center = 0,
   After = 1,
-}
-
-/**
- * @alpha
- */
-export enum BarValueVisibility {
-  Auto = 'auto',
-  Never = 'never',
-  Always = 'always',
 }
 
 /**

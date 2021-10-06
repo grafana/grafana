@@ -118,7 +118,7 @@ type timeSeriesDescriptor struct {
 type timeSeriesData []struct {
 	LabelValues []struct {
 		BoolValue   bool   `json:"boolValue"`
-		Int64Value  int64  `json:"int64Value"`
+		Int64Value  string `json:"int64Value"`
 		StringValue string `json:"stringValue"`
 	} `json:"labelValues"`
 	PointData []struct {

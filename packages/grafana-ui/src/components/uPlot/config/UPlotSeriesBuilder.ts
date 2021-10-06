@@ -17,7 +17,7 @@ import {
   LineConfig,
   LineInterpolation,
   PointsConfig,
-  PointVisibility,
+  VisibilityMode,
 } from '@grafana/schema';
 import { PlotConfigBuilder } from '../types';
 import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
@@ -26,6 +26,8 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   scaleKey: string;
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
+
+  facets?: uPlot.Series.Facet[];
 
   /** Used when gradientMode is set to Scheme */
   thresholds?: ThresholdsConfig;
@@ -48,6 +50,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const {
+      facets,
       drawStyle,
       pathBuilder,
       pointsBuilder,
@@ -118,13 +121,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       if (drawStyle === GraphDrawStyle.Points) {
         pointsConfig.points!.show = true;
       } else {
-        if (showPoints === PointVisibility.Auto) {
+        if (showPoints === VisibilityMode.Auto) {
           if (drawStyle === GraphDrawStyle.Bars) {
             pointsConfig.points!.show = false;
           }
-        } else if (showPoints === PointVisibility.Never) {
+        } else if (showPoints === VisibilityMode.Never) {
           pointsConfig.points!.show = false;
-        } else if (showPoints === PointVisibility.Always) {
+        } else if (showPoints === VisibilityMode.Always) {
           pointsConfig.points!.show = true;
         }
       }
@@ -132,6 +135,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     return {
       scale: scaleKey,
+      facets,
       spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
       value: () => '',
       pxAlign,

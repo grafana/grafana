@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
@@ -37,7 +37,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
         title={libraryPanel.name}
         description={libraryPanel.description}
         plugin={panelPlugin}
-        onClick={() => onClick(libraryPanel)}
+        onClick={() => onClick?.(libraryPanel)}
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       >
         <FolderLink libraryPanel={libraryPanel} />
@@ -57,8 +57,12 @@ interface FolderLinkProps {
   libraryPanel: LibraryElementDTO;
 }
 
-function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
+function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
   const styles = useStyles2(getStyles);
+
+  if (!libraryPanel.meta.folderUid && !libraryPanel.meta.folderName) {
+    return null;
+  }
 
   if (!libraryPanel.meta.folderUid) {
     return (
@@ -84,7 +88,7 @@ function getStyles(theme: GrafanaTheme2) {
     metaContainer: css`
       display: flex;
       align-items: center;
-      color: ${theme.colors.text.disabled};
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       padding-top: ${theme.spacing(0.5)};
 

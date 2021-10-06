@@ -58,11 +58,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
 	ctx := &models.ReqContext{
-		Context: &macaron.Context{
-			Req:  req,
-			Data: map[string]interface{}{},
-		},
-		Logger: log.New("Test"),
+		Context: &macaron.Context{Req: req},
+		Logger:  log.New("Test"),
 	}
 	req.Header.Set(svc.Cfg.AuthProxyHeaderName, name)
 	h, err := authproxy.HashCacheKey(name)

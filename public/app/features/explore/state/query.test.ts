@@ -3,16 +3,17 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
+  changeAutoLogsVolume,
   clearCache,
   importQueries,
+  loadLogsVolumeData,
   queryReducer,
-  removeQueryRowAction,
   runQueries,
   scanStartAction,
   scanStopAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { interval, of } from 'rxjs';
+import { interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
@@ -34,7 +35,16 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
 
-const QUERY_KEY_REGEX = /Q-(?:[a-z0-9]+-){5}(?:[0-9]+)/;
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  config: {
+    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
+    featureToggles: {
+      fullRangeLogsVolume: true,
+    },
+  },
+}));
+
 const t = toUtc();
 const testRange = {
   from: t,
@@ -71,6 +81,22 @@ const defaultInitialState = {
   },
 };
 
+function setupQueryResponse(state: StoreState) {
+  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+    of({
+      error: { message: 'test error' },
+      data: [
+        new MutableDataFrame({
+          fields: [{ name: 'test', values: new ArrayVector() }],
+          meta: {
+            preferredVisualisationType: 'graph',
+          },
+        }),
+      ],
+    } as DataQueryResponse)
+  );
+}
+
 describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
     setTimeSrv({
@@ -79,19 +105,7 @@ describe('runQueries', () => {
     const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
-      of({
-        error: { message: 'test error' },
-        data: [
-          new MutableDataFrame({
-            fields: [{ name: 'test', values: new ArrayVector() }],
-            meta: {
-              preferredVisualisationType: 'graph',
-            },
-          }),
-        ],
-      } as DataQueryResponse)
-    );
+    setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
@@ -213,55 +227,6 @@ describe('reducer', () => {
           queryKeys: ['mockKey-0'],
         } as unknown) as ExploreItemState);
     });
-    it('removes a query row', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, ({
-          queries: [
-            { refId: 'A', key: 'mockKey' },
-            { refId: 'B', key: 'mockKey' },
-          ],
-          queryKeys: ['mockKey-0', 'mockKey-1'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          removeQueryRowAction({
-            exploreId: ExploreId.left,
-            index: 0,
-          })
-        )
-        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
-          expect(resultingState.queries.length).toBe(1);
-          expect(resultingState.queries[0].refId).toBe('A');
-          expect(resultingState.queries[0].key).toMatch(QUERY_KEY_REGEX);
-          expect(resultingState.queryKeys[0]).toMatch(QUERY_KEY_REGEX);
-          return true;
-        });
-    });
-    it('reassigns query refId after removing a query to keep queries in order', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, ({
-          queries: [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }],
-          queryKeys: ['undefined-0', 'undefined-1', 'undefined-2'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          removeQueryRowAction({
-            exploreId: ExploreId.left,
-            index: 0,
-          })
-        )
-        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
-          expect(resultingState.queries.length).toBe(2);
-          const queriesRefIds = resultingState.queries.map((query) => query.refId);
-          const queriesKeys = resultingState.queries.map((query) => query.key);
-          expect(queriesRefIds).toEqual(['A', 'B']);
-          queriesKeys.forEach((queryKey) => {
-            expect(queryKey).toMatch(QUERY_KEY_REGEX);
-          });
-          resultingState.queryKeys.forEach((queryKey) => {
-            expect(queryKey).toMatch(QUERY_KEY_REGEX);
-          });
-          return true;
-        });
-    });
   });
 
   describe('caching', () => {
@@ -352,6 +317,138 @@ describe('reducer', () => {
       await dispatch(clearCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([]);
+    });
+  });
+
+  describe('logs volume', () => {
+    let dispatch: ThunkDispatch,
+      getState: () => StoreState,
+      mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
+
+    beforeEach(() => {
+      mockLogsVolumeDataProvider = () => {
+        return of(
+          { state: LoadingState.Loading, error: undefined, data: [] },
+          { state: LoadingState.Done, error: undefined, data: [{}] }
+        );
+      };
+
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            autoLoadLogsVolume: false,
+            datasourceInstance: {
+              query: jest.fn(),
+              meta: {
+                id: 'something',
+              },
+              getLogsVolumeDataProvider: () => {
+                return mockLogsVolumeDataProvider();
+              },
+            },
+          },
+        },
+      });
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+    });
+
+    it('should not load logs volume automatically after running the query if auto-loading is disabled', async () => {
+      setupQueryResponse(getState());
+      getState().explore.autoLoadLogsVolume = false;
+
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
+    });
+
+    it('should load logs volume automatically after running the query if auto-loading is enabled', async () => {
+      setupQueryResponse(getState());
+      getState().explore.autoLoadLogsVolume = true;
+
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [{}],
+      });
+    });
+
+    it('when auto-load is enabled after running the query it should load logs volume data after changing auto-load option', async () => {
+      setupQueryResponse(getState());
+
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
+
+      await dispatch(changeAutoLogsVolume(ExploreId.left, true));
+
+      expect(getState().explore.autoLoadLogsVolume).toEqual(true);
+      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [{}],
+      });
+    });
+
+    it('should allow loading logs volume on demand if auto-load is disabled', async () => {
+      setupQueryResponse(getState());
+      getState().explore.autoLoadLogsVolume = false;
+
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+
+      expect(getState().explore.autoLoadLogsVolume).toEqual(false);
+      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [{}],
+      });
+    });
+
+    it('should cancel any unfinished logs volume queries', async () => {
+      setupQueryResponse(getState());
+      let unsubscribes: Function[] = [];
+
+      mockLogsVolumeDataProvider = () => {
+        return ({
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
+          },
+        } as unknown) as Observable<DataQueryResponse>;
+      };
+
+      await dispatch(runQueries(ExploreId.left));
+      // no subscriptions created yet
+      expect(unsubscribes).toHaveLength(0);
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // loading in progress - one subscription created, not cleaned up yet
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).not.toBeCalled();
+
+      setupQueryResponse(getState());
+      await dispatch(runQueries(ExploreId.left));
+      // new query was run - first subscription is cleaned up, no new subscriptions yet
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).toBeCalled();
+
+      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // new subscription is created, only the old was was cleaned up
+      expect(unsubscribes).toHaveLength(2);
+      expect(unsubscribes[0]).toBeCalled();
+      expect(unsubscribes[1]).not.toBeCalled();
     });
   });
 });

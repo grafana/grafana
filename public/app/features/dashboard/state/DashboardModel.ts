@@ -96,6 +96,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  fiscalYearStartMonth?: number;
   private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
@@ -131,26 +132,27 @@ export class DashboardModel {
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;
-    this.title = data.title || 'No Title';
+    this.title = data.title ?? 'No Title';
     this.autoUpdate = data.autoUpdate;
     this.description = data.description;
-    this.tags = data.tags || [];
-    this.style = data.style || 'dark';
-    this.timezone = data.timezone || '';
+    this.tags = data.tags ?? [];
+    this.style = data.style ?? 'dark';
+    this.timezone = data.timezone ?? '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
-    this.time = data.time || { from: 'now-6h', to: 'now' };
-    this.timepicker = data.timepicker || {};
+    this.time = data.time ?? { from: 'now-6h', to: 'now' };
+    this.timepicker = data.timepicker ?? {};
     this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
-    this.schemaVersion = data.schemaVersion || 0;
-    this.version = data.version || 0;
-    this.links = data.links || [];
+    this.schemaVersion = data.schemaVersion ?? 0;
+    this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
+    this.version = data.version ?? 0;
+    this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
-    this.panels = map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -470,7 +472,7 @@ export class DashboardModel {
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
-    return this.meta.canEdit && panel && !panel.repeatPanelId;
+    return Boolean(this.meta.canEdit && panel && !panel.repeatPanelId && panel.type !== 'row');
   }
 
   canEditPanelById(id: number): boolean | undefined | null {
@@ -495,6 +497,22 @@ export class DashboardModel {
         return panelA.gridPos.y - panelB.gridPos.y;
       }
     });
+  }
+
+  clearUnsavedChanges() {
+    for (const panel of this.panels) {
+      panel.configRev = 0;
+    }
+  }
+
+  hasUnsavedChanges() {
+    for (const panel of this.panels) {
+      if (panel.hasChanged) {
+        console.log('Panel has changed', panel);
+        return true;
+      }
+    }
+    return false;
   }
 
   cleanUpRepeats() {
@@ -738,9 +756,11 @@ export class DashboardModel {
         panelBelowIndex = insertPos + rowPanels.length;
       }
 
-      // Update gridPos for panels below
-      for (let i = panelBelowIndex; i < this.panels.length; i++) {
-        this.panels[i].gridPos.y += yPos;
+      // Update gridPos for panels below if we inserted more than 1 repeated row panel
+      if (selectedOptions.length > 1) {
+        for (let i = panelBelowIndex; i < this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
+        }
       }
     }
   }

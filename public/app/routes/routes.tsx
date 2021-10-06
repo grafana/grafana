@@ -10,6 +10,7 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { getPluginsAdminRoutes } from 'app/features/plugins/routes';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getLiveRoutes } from 'app/features/live/pages/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -138,10 +139,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () =>
-        evaluatePermission(
-          () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
-          AccessControlAction.DataSourcesExplore
-        ),
+        contextSrv.evaluatePermission(() => (config.viewersCanEdit ? [] : ['Editor', 'Admin']), [
+          AccessControlAction.DataSourcesExplore,
+        ]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
     },
     {
@@ -376,7 +376,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications',
-      roles: config.featureToggles.ngalert ? () => ['Editor', 'Admin'] : undefined,
+      roles: config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
@@ -515,6 +515,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     ...getPluginsAdminRoutes(),
+    ...getLiveRoutes(),
     ...extraRoutes,
     {
       path: '/*',
@@ -524,16 +525,3 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ...playlistRoutes,
   ];
 }
-
-// evaluates access control permission, using fallback if access control is disabled
-const evaluatePermission = (fallback: () => string[], action: AccessControlAction): string[] => {
-  if (!config.featureToggles['accesscontrol']) {
-    return fallback();
-  }
-  if (contextSrv.hasPermission(action)) {
-    return [];
-  } else {
-    // Hack to reject when user does not have permission
-    return ['Reject'];
-  }
-};

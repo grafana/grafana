@@ -15,14 +15,14 @@ import (
 func TestProvisioningServiceImpl(t *testing.T) {
 	t.Run("Restart dashboard provisioning and stop service", func(t *testing.T) {
 		serviceTest := setup()
-		err := serviceTest.service.ProvisionDashboards()
+		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
 		serviceTest.waitForPollChanges()
 
 		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
-		err = serviceTest.service.ProvisionDashboards()
+		err = serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 
 		serviceTest.waitForPollChanges()
@@ -42,16 +42,16 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
 		serviceTest := setup()
-		err := serviceTest.service.ProvisionDashboards()
+		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
 		serviceTest.waitForPollChanges()
 		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
-		serviceTest.mock.ProvisionFunc = func() error {
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return errors.New("Test error")
 		}
-		err = serviceTest.service.ProvisionDashboards()
+		err = serviceTest.service.ProvisionDashboards(context.Background())
 		assert.NotNil(t, err)
 		serviceTest.waitForPollChanges()
 

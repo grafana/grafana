@@ -13,21 +13,21 @@ const (
 	ActionDatasourcesCreate = "datasources:create"
 	ActionDatasourcesWrite  = "datasources:write"
 	ActionDatasourcesDelete = "datasources:delete"
-	ActionDatasourcesIDRead = "datasources:id:read"
+	ActionDatasourcesIDRead = "datasources.id:read"
 )
 
 // API related scopes
-const (
-	ScopeProvisionersAll           = "provisioners:*"
-	ScopeProvisionersDashboards    = "provisioners:dashboards"
-	ScopeProvisionersPlugins       = "provisioners:plugins"
-	ScopeProvisionersDatasources   = "provisioners:datasources"
-	ScopeProvisionersNotifications = "provisioners:notifications"
+var (
+	ScopeProvisionersAll           = accesscontrol.Scope("provisioners", "*")
+	ScopeProvisionersDashboards    = accesscontrol.Scope("provisioners", "dashboards")
+	ScopeProvisionersPlugins       = accesscontrol.Scope("provisioners", "plugins")
+	ScopeProvisionersDatasources   = accesscontrol.Scope("provisioners", "datasources")
+	ScopeProvisionersNotifications = accesscontrol.Scope("provisioners", "notifications")
 
-	ScopeDatasourcesAll = `datasources:*`
-	ScopeDatasourceID   = `datasources:id:{{ index . ":id" }}`
-	ScopeDatasourceUID  = `datasources:uid:{{ index . ":uid" }}`
-	ScopeDatasourceName = `datasources:name:{{ index . ":name" }}`
+	ScopeDatasourcesAll = accesscontrol.Scope("datasources", "*")
+	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
+	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
+	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -74,7 +74,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		{
 			Role: accesscontrol.RoleDTO{
-				Version:     1,
+				Version:     2,
 				Name:        "fixed:datasources:id:viewer",
 				Description: "Gives access to read datasources ID",
 				Permissions: []accesscontrol.Permission{
@@ -90,3 +90,29 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	return hs.AccessControl.DeclareFixedRoles(registrations...)
 }
+
+// Evaluators
+// here is the list of complex evaluators we use in this package
+
+// dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
+var dataSourcesConfigurationAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(ActionDatasourcesCreate),
+		accesscontrol.EvalPermission(ActionDatasourcesDelete),
+		accesscontrol.EvalPermission(ActionDatasourcesWrite),
+	),
+)
+
+// dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
+var dataSourcesNewAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesCreate),
+	accesscontrol.EvalPermission(ActionDatasourcesWrite),
+)
+
+// dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
+var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesWrite),
+)

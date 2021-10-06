@@ -1,13 +1,12 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.4.5'
-build_image = 'grafana/build-container:1.4.2'
+grabpl_version = '2.4.8'
+build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.14.2'
 windows_image = 'mcr.microsoft.com/windows:1809'
-dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 
@@ -43,6 +42,9 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
     ]
     common_cmds = [
         './bin/grabpl verify-drone',
+        # Generate Go code, will install Wire
+        # TODO: Install Wire in Docker image instead
+        'make gen-go',
     ]
 
     if ver_mode == 'release':
@@ -60,9 +62,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-            'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition in ('enterprise', 'enterprise2'):
@@ -95,9 +94,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             {
                 'name': 'initialize',
                 'image': build_image,
-                'environment': {
-                    'DOCKERIZE_VERSION': dockerize_version,
-                },
                 'depends_on': [
                     'clone',
                 ],
@@ -120,9 +116,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         {
             'name': 'initialize',
             'image': build_image,
-            'environment': {
-                'DOCKERIZE_VERSION': dockerize_version,
-            },
             'commands': download_grabpl_cmds + common_cmds,
         },
     ]
@@ -161,9 +154,6 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -180,7 +170,7 @@ def benchmark_ldap_step():
 	  'LDAP_HOSTNAME': 'ldap',
         },
         'commands': [
-            './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
+            'dockerize -wait tcp://ldap:389 -timeout 120s',
             'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
     }
@@ -394,13 +384,31 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'lint-frontend',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
             'yarn run ci:test-frontend',
+        ],
+    }
+
+def lint_frontend_step():
+    return {
+        'name': 'lint-frontend',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
+        'commands': [
+            'yarn run prettier:check',
+            'yarn run lint',
+            'yarn run typecheck',
+            'yarn run check-strict',
         ],
     }
 
@@ -420,6 +428,25 @@ def test_a11y_frontend_step(edition, port=3001):
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
             'yarn -s test:accessibility --json > pa11y-ci-results.json',
+        ],
+    }
+
+def test_a11y_frontend_step_pr(edition, port=3001):
+    return {
+        'name': 'test-a11y-frontend-pr' + enterprise2_suffix(edition),
+        'image': 'buildkite/puppeteer',
+        'depends_on': [
+          'end-to-end-tests-server' + enterprise2_suffix(edition),
+        ],
+         'environment': {
+            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
+            'HOST': 'end-to-end-tests-server' + enterprise2_suffix(edition),
+            'PORT': port,
+        },
+        'failure': 'ignore',
+        'commands': [
+            'yarn wait-on http://$HOST:$PORT',
+            'yarn -s test:accessibility-pr',
         ],
     }
 
@@ -679,7 +706,7 @@ def postgres_integration_tests_step():
         'commands': [
             'apt-get update',
             'apt-get install -yq postgresql-client',
-            './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                 'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
@@ -703,7 +730,7 @@ def mysql_integration_tests_step():
         'commands': [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
-            './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
@@ -723,7 +750,7 @@ def redis_integration_tests_step():
             'REDIS_URL': 'redis://redis:6379/0',
         },
         'commands': [
-            './bin/dockerize -wait tcp://redis:6379/0 -timeout 120s',
+            'dockerize -wait tcp://redis:6379/0 -timeout 120s',
             './bin/grabpl integration-tests',
         ],
     }
@@ -740,7 +767,7 @@ def memcached_integration_tests_step():
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
         'commands': [
-            './bin/dockerize -wait tcp://memcached:11211 -timeout 120s',
+            'dockerize -wait tcp://memcached:11211 -timeout 120s',
             './bin/grabpl integration-tests',
         ],
     }

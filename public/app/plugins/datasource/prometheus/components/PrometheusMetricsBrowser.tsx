@@ -10,6 +10,7 @@ import {
   BrowserLabel as PromLabel,
 } from '@grafana/ui';
 import PromQlLanguageProvider from '../language_provider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
@@ -65,12 +66,12 @@ export function buildSelector(labels: SelectableLabel[]): string {
     if ((label.name === METRIC_LABEL || label.selected) && label.values && label.values.length > 0) {
       const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
       if (selectedValues.length > 1) {
-        selectedLabels.push(`${label.name}=~"${selectedValues.join('|')}"`);
+        selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
       } else if (selectedValues.length === 1) {
         if (label.name === METRIC_LABEL) {
           singleMetric = selectedValues[0];
         } else {
-          selectedLabels.push(`${label.name}="${selectedValues[0]}"`);
+          selectedLabels.push(`${label.name}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
         }
       }
     }
@@ -404,7 +405,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         const value: FacettableValue = { name: labelValue };
         // Adding type/help text to metrics
         if (name === METRIC_LABEL && metricsMetadata) {
-          const meta = metricsMetadata[labelValue]?.[0];
+          const meta = metricsMetadata[labelValue];
           if (meta) {
             value.details = `(${meta.type}) ${meta.help}`;
           }
