@@ -7,6 +7,7 @@ export const STATUS_DATA_QA = {
   [DBClusterStatus.invalid]: 'invalid',
   [DBClusterStatus.ready]: 'active',
   [DBClusterStatus.suspended]: 'suspended',
+  [DBClusterStatus.upgrading]: 'updating',
   [DBClusterStatus.unknown]: 'unknown',
 };
 

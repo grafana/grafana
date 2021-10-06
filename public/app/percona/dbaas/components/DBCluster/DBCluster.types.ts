@@ -29,6 +29,8 @@ export interface DBCluster {
   totalSteps?: number;
   databaseImage?: string;
   expose?: boolean;
+  installedImage?: string;
+  availableImage?: string;
 }
 
 export enum DBClusterStatus {
@@ -38,6 +40,7 @@ export enum DBClusterStatus {
   failed = 'DB_CLUSTER_STATE_FAILED',
   deleting = 'DB_CLUSTER_STATE_DELETING',
   suspended = 'DB_CLUSTER_STATE_PAUSED',
+  upgrading = 'DB_CLUSTER_STATE_UPGRADING',
   unknown = 'DB_CLUSTER_STATE_UNKNOWN',
 }
 
@@ -135,6 +138,9 @@ export interface DBClusterPayload {
   resume?: boolean;
   expose?: boolean;
   exposed?: boolean;
+  installed_image?: string;
+  available_image?: string;
+  image?: string;
 }
 
 export interface DBClusterActionAPI {

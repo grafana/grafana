@@ -13,10 +13,23 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
   setDeleteModalVisible,
   setEditModalVisible,
   setLogsModalVisible,
+  setUpdateModalVisible,
   getDBClusters,
 }) => {
   const getActions = useCallback(
     (dbCluster: DBCluster) => [
+      {
+        title: Messages.dbcluster.table.actions.updateCluster,
+        disabled:
+          !dbCluster.availableImage ||
+          dbCluster.status === DBClusterStatus.upgrading ||
+          dbCluster.status === DBClusterStatus.deleting ||
+          dbCluster.status === DBClusterStatus.changing,
+        action: () => {
+          setSelectedCluster(dbCluster);
+          setUpdateModalVisible(true);
+        },
+      },
       {
         title: Messages.dbcluster.table.actions.deleteCluster,
         disabled: dbCluster.status === DBClusterStatus.deleting,
@@ -77,7 +90,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
     ],
-    [setSelectedCluster, setDeleteModalVisible, getDBClusters]
+    [setSelectedCluster, setDeleteModalVisible, setUpdateModalVisible, getDBClusters]
   );
 
   return (

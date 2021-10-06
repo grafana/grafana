@@ -8,10 +8,12 @@ import { DBClusterName } from '../DBClusterName/DBClusterName';
 import { DBClusterActions } from '../DBClusterActions/DBClusterActions';
 import { DBClusterActionsProps } from '../DBClusterActions/DBClusterActions.types';
 import { DBClusterStatusProps } from './ColumnRenderers.types';
+import { formatDBClusterVersion } from '../DBCluster.utils';
 
 export const clusterNameRender = (dbCluster: DBCluster) => <DBClusterName dbCluster={dbCluster} />;
 
-export const databaseTypeRender = (dbCluster: DBCluster) => DATABASE_LABELS[dbCluster.databaseType];
+export const databaseTypeRender = (dbCluster: DBCluster) =>
+  `${DATABASE_LABELS[dbCluster.databaseType]} ${formatDBClusterVersion(dbCluster.installedImage)}`;
 
 export const clusterStatusRender = ({ setSelectedCluster, setLogsModalVisible }: DBClusterStatusProps) => (
   dbCluster: DBCluster
@@ -31,6 +33,7 @@ export const clusterActionsRender = ({
   setDeleteModalVisible,
   setEditModalVisible,
   setLogsModalVisible,
+  setUpdateModalVisible,
   getDBClusters,
 }: Omit<DBClusterActionsProps, 'dbCluster'>) => (dbCluster: DBCluster) => (
   <DBClusterActions
@@ -39,6 +42,7 @@ export const clusterActionsRender = ({
     setDeleteModalVisible={setDeleteModalVisible}
     setEditModalVisible={setEditModalVisible}
     setLogsModalVisible={setLogsModalVisible}
+    setUpdateModalVisible={setUpdateModalVisible}
     getDBClusters={getDBClusters}
   />
 );

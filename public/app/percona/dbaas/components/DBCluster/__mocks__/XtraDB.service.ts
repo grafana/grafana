@@ -18,4 +18,8 @@ export class XtraDBService {
   getComponents() {
     return Promise.resolve(xtradbComponentsVersionsStubs);
   }
+
+  updateDBCluster() {
+    return Promise.resolve();
+  }
 }

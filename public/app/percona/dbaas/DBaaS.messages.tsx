@@ -131,7 +131,7 @@ export const Messages = {
     },
     table: {
       nameColumn: 'Name',
-      databaseTypeColumn: 'Database Type',
+      databaseTypeColumn: 'Database',
       connectionColumn: 'Connection',
       clusterParametersColumn: 'DB Cluster Parameters',
       clusterStatusColumn: 'Cluster Status',
@@ -160,6 +160,7 @@ export const Messages = {
         suspend: 'Suspend',
         resume: 'Resume',
         logs: 'View logs',
+        updateCluster: 'Update',
       },
       status: {
         [DBClusterStatus.changing]: 'Pending',
@@ -168,6 +169,7 @@ export const Messages = {
         [DBClusterStatus.invalid]: 'Invalid',
         [DBClusterStatus.ready]: 'Active',
         [DBClusterStatus.suspended]: 'Paused',
+        [DBClusterStatus.upgrading]: 'Updating',
         [DBClusterStatus.unknown]: 'Unknown',
         errorMessage: 'Cluster creation failed',
         logs: 'Logs',
