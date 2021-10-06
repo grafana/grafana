@@ -21,6 +21,8 @@ To enable Grafana 8 alerts:
 
 > **Note:** Before Grafana v8.2, to enable or disable Grafana 8 alerts, users configured the `ngalert` feature toggle. This toggle option is no longer available.
 
+> **Note:** There is no `Keep Last State` option for [`No Data` and `Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana 8 alerts. This option becomes `Alerting` during the legacy rule migration.
+
 Moreover, before v8.2, notification logs and silences were stored on a disk. If you did not use persistent disks, any configured silences and logs would get lost on a restart, resulting in unwanted or duplicate notifications.
 
 As of Grafana 8.2, we no longer require the use of a persistent disk. Instead, the notification logs and silences are stored regularly (every 15 minutes), and a clean shutdown to the database. If you used the file-based approach, Grafana will read the existing file and persisting it eventually.
