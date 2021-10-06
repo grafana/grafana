@@ -49,7 +49,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
        * Render nothing in this case to prevent error.
        * See https://github.com/grafana/support-escalations/issues/932
        */
-      if (alignedData.fields.length - 1 !== data.length || !alignedData.fields[seriesIdx]) {
+      if ((!alignedData.refId && alignedData.fields.length - 1 !== data.length) || !alignedData.fields[seriesIdx]) {
         return null;
       }
 
