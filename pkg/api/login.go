@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	macaron "gopkg.in/macaron.v1"
 )
 
 const (
@@ -173,7 +173,7 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	cmd := dtos.LoginCommand{}
-	if err := binding.Bind(c.Req, &cmd); err != nil {
+	if err := macaron.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
 	}
 	authModule := ""
