@@ -57,7 +57,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiService, m
 		)
 		group.Post(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
-			binding.BindMiddleware(apimodels.PostableNGalertConfig{}),
+			binding.Bind(apimodels.PostableNGalertConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/ngalert/admin_config",

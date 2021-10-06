@@ -34,7 +34,7 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := acmiddleware.Middleware(hs.AccessControl)
 	quota := middleware.Quota(hs.QuotaService)
-	bind := binding.BindMiddleware
+	bind := binding.Bind
 
 	r := hs.RouteRegister
 

@@ -77,7 +77,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiService, m *metrics.API) {
 		)
 		group.Post(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
-			binding.BindMiddleware(apimodels.PostableRuleGroupConfig{}),
+			binding.Bind(apimodels.PostableRuleGroupConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",

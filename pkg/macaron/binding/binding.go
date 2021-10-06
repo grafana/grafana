@@ -18,7 +18,6 @@ package binding
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -32,109 +31,6 @@ import (
 
 	"gopkg.in/macaron.v1"
 )
-
-// JSON deserializes a JSON payload from the request into the struct pointer that is passed in.
-func JSON(req *http.Request, v interface{}) error {
-	if req.Body != nil {
-		defer req.Body.Close()
-		err := json.NewDecoder(req.Body).Decode(v)
-		if err != nil && err != io.EOF {
-			return err
-		}
-	}
-	return validate(v)
-}
-
-// Form deserializes form-urlencoded data from the request.
-// It gets data from the form-urlencoded body, if present, or from the
-// query string. It uses the http.Request.ParseForm() method
-// to perform deserialization, then reflection is used to map each field
-// into the struct with the proper type. Structs with primitive slice types
-// (bool, float, int, string) can support deserialization of repeated form
-// keys, for example: key=val1&key=val2&key=val3
-func Form(req *http.Request, v interface{}) error {
-	if err := req.ParseForm(); err != nil {
-		return err
-	}
-	if err := req.ParseMultipartForm(MaxMemory); err != nil && err != http.ErrNotMultipart {
-		return err
-	}
-	_ = mapForm(reflect.ValueOf(v), req.Form, req.MultipartForm.File, nil)
-	return validate(v)
-}
-
-// Bind deserializes payload from the request using JSON or Form depending on the method and the content type.
-func Bind(req *http.Request, v interface{}) error {
-	contentType := req.Header.Get("Content-Type")
-	if req.Method == "POST" || req.Method == "PUT" || req.Method == "PATCH" || req.Method == "DELETE" {
-		switch {
-		case strings.Contains(contentType, "form-urlencoded"):
-			return Form(req, v)
-		case strings.Contains(contentType, "multipart/form-data"):
-			return Form(req, v)
-		case strings.Contains(contentType, "json"):
-			return JSON(req, v)
-		case contentType == "":
-			return errors.New("empty Content-Type")
-		default:
-			return errors.New("unsupported Content-Type")
-		}
-	}
-	return Form(req, v)
-}
-
-type Validator interface {
-	Validate() error
-}
-
-func validate(obj interface{}) error {
-	// If type has a Validate() method - use that
-	if validator, ok := obj.(Validator); ok {
-		return validator.Validate()
-	}
-	// Otherwise, use relfection to match `binding:"Required"` struct field tags.
-	// Resolve all pointers and interfaces, until we get a concrete type.
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
-	for v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr {
-		t = t.Elem()
-		v = v.Elem()
-	}
-	switch v.Kind() {
-	// For arrays and slices - iterate over each element and validate it recursively
-	case reflect.Slice, reflect.Array:
-		for i := 0; i < v.Len(); i++ {
-			e := v.Index(i).Interface()
-			if err := validate(e); err != nil {
-				return err
-			}
-		}
-	// For structs - iterate over each field, check for the "Required" constraint (Macaron legacy), then validate it recursively
-	case reflect.Struct:
-		for i := 0; i < v.NumField(); i++ {
-			field := t.Field(i)
-			value := v.Field(i)
-			rule := field.Tag.Get("binding")
-			if !value.CanInterface() {
-				continue
-			}
-			if rule == "Required" {
-				zero := reflect.Zero(field.Type).Interface()
-				if value.Kind() == reflect.Slice {
-					if value.Len() == 0 {
-						return fmt.Errorf("required slice %s must not be empty", field.Name)
-					}
-				} else if reflect.DeepEqual(zero, value.Interface()) {
-					return fmt.Errorf("required value %s must not be empty", field.Name)
-				}
-			}
-			if err := validate(value.Interface()); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
 
 func bind(ctx *macaron.Context, obj interface{}, ifacePtr ...interface{}) {
 	contentType := ctx.Req.Header.Get("Content-Type")
@@ -191,15 +87,15 @@ func errorHandler(errs Errors, rw http.ResponseWriter) {
 	}
 }
 
-// BindMiddleware wraps up the functionality of the Form and Json middleware
+// Bind wraps up the functionality of the Form and Json middleware
 // according to the Content-Type and verb of the request.
 // A Content-Type is required for POST and PUT requests.
-// BindMiddleware invokes the ErrorHandler middleware to bail out if errors
+// Bind invokes the ErrorHandler middleware to bail out if errors
 // occurred. If you want to perform your own error handling, use
 // Form or Json middleware directly. An interface pointer can
 // be added as a second argument in order to map the struct to
 // a specific interface.
-func BindMiddleware(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
+func Bind(obj interface{}, ifacePtr ...interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		bind(ctx, obj, ifacePtr...)
 		_, _ = ctx.Invoke(errorHandler)
