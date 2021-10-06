@@ -1,4 +1,3 @@
-+++
 title = "What's new in Grafana v8.2"
 description = "Feature and improvement highlights for Grafana v8.2"
 keywords = ["grafana", "new", "documentation", "8.2", "release notes"]
@@ -6,16 +5,25 @@ weight = -33
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-2/"]
 [_build]
 list = false
+
 +++
 
 # What’s new in Grafana v8.2
 
 Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics _for everyone_.
+<<<<<<< HEAD
 
 The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters. This update makes it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles.
 
 Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
 
+=======
+
+The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters. This update makes it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles.
+
+Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
+
+>>>>>>> main
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 # OSS
@@ -41,9 +49,15 @@ We have continued to improve how you manage your plugins within Grafana. The new
 {{< figure src="/static/img/docs/plugins/plugins-catalog-browse-8-1.png" max-width="1200px" caption="Plugins Catalog Browsers" >}}
 
 ## Grafana 8 Alerting
+<<<<<<< HEAD
 
 We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This release includes significant improvements including an AlertManager notification panel allowing users to explore alerts via a dashboard panel. We’ve also added custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on enabling the unified alerting in your instance of Grafana.
 
+=======
+
+We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This release includes significant improvements including an AlertManager notification panel allowing users to explore alerts via a dashboard panel. We’ve also added custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on enabling the unified alerting in your instance of Grafana.
+
+>>>>>>> main
 {{< figure src="/static/img/docs/alerting/unified/alert-manager-panel-alpha.png" max-width="1200px" caption="Alert manager panel" >}}
 
 # Grafana Enterprise

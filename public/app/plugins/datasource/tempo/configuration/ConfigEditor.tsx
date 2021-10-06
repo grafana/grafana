@@ -5,6 +5,7 @@ import React from 'react';
 import { ServiceMapSettings } from './ServiceMapSettings';
 import { config } from '@grafana/runtime';
 import { SearchSettings } from './SearchSettings';
+import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -31,6 +32,9 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
           <SearchSettings options={options} onOptionsChange={onOptionsChange} />
         </div>
       )}
+      <div className="gf-form-group">
+        <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
     </>
   );
 };
