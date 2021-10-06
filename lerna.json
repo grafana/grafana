@@ -1,6 +1,8 @@
 {
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "packages": ["packages/*"],
-  "version": "8.1.6"
+  "packages": [
+    "packages/*"
+  ],
+  "version": "8.1.7"
 }
