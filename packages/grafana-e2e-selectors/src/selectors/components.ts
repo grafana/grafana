@@ -17,8 +17,8 @@ export const Components = {
     applyTimeRange: 'data-testid TimePicker submit button',
     calendar: {
       label: 'TimePicker calendar',
-      openButton: 'Open TimePicker calendar',
-      closeButton: 'Close TimePicker calendar',
+      openButton: 'Open Calendar',
+      closeButton: 'Close Calendar',
     },
     absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
