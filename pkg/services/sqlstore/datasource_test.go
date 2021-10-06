@@ -226,8 +226,9 @@ func TestDataAccess(t *testing.T) {
 			ds := initDatasource()
 
 			err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
-			require.NoError(t, err)
-			query := models.GetDataSourcesQuery{OrgId: 10}
+			require.Error(t, err)
+
+			query := models.GetDataSourcesQuery{OrgId: ds.OrgId}
 			err = GetDataSources(&query)
 			require.NoError(t, err)
 
@@ -277,7 +278,7 @@ func TestDataAccess(t *testing.T) {
 		})
 
 		err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: 99999999, UID: "example-missing", Name: "example-missing-datasource", OrgID: ds.OrgId})
-		require.NoError(t, err)
+		require.Error(t, err)
 
 		require.Never(t, func() bool {
 			return deleted != nil

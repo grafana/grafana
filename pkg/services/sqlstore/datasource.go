@@ -135,11 +135,10 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 		}
 
 		if err := GetDataSource(query); err != nil {
-			cmd.DeletedDatasourcesCount = 0
-			return nil
+			return err
 		}
 
-		result, err := sess.Exec("DELETE FROM data_source WHERE uid=? and org_id=?", query.Result.Uid, query.Result.OrgId)
+		result, err := sess.Exec("DELETE FROM data_source WHERE id=? and org_id=?", query.Result.Id, query.Result.OrgId)
 		if err != nil {
 			return err
 		}
