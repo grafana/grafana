@@ -212,6 +212,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           ds.components?.ExploreQueryField ||
           ds.components?.QueryEditor
         );
+      case CoreApp.PanelEditor:
       case CoreApp.Dashboard:
       default:
         return ds.components?.QueryEditor;
@@ -219,7 +220,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, app = CoreApp.Dashboard, history } = this.props;
+    const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {

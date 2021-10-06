@@ -115,12 +115,12 @@ func Test_APIReceiverType(t *testing.T) {
 }
 
 func Test_AllReceivers(t *testing.T) {
-	input := &config.Route{
+	input := &Route{
 		Receiver: "foo",
-		Routes: []*config.Route{
+		Routes: []*Route{
 			{
 				Receiver: "bar",
-				Routes: []*config.Route{
+				Routes: []*Route{
 					{
 						Receiver: "bazz",
 					},
@@ -132,11 +132,12 @@ func Test_AllReceivers(t *testing.T) {
 		},
 	}
 
-	require.Equal(t, []string{"foo", "bar", "bazz", "buzz"}, AllReceivers(input))
+	require.Equal(t, []string{"foo", "bar", "bazz", "buzz"}, AllReceivers(input.AsAMRoute()))
 
 	// test empty
 	var empty []string
-	require.Equal(t, empty, AllReceivers(&config.Route{}))
+	emptyRoute := &Route{}
+	require.Equal(t, empty, AllReceivers(emptyRoute.AsAMRoute()))
 }
 
 func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
@@ -149,9 +150,9 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "success am",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
+					Route: &Route{
 						Receiver: "am",
-						Routes: []*config.Route{
+						Routes: []*Route{
 							{
 								Receiver: "am",
 							},
@@ -172,9 +173,9 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "success graf",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
+					Route: &Route{
 						Receiver: "graf",
-						Routes: []*config.Route{
+						Routes: []*Route{
 							{
 								Receiver: "graf",
 							},
@@ -197,9 +198,9 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "failure undefined am receiver",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
+					Route: &Route{
 						Receiver: "am",
-						Routes: []*config.Route{
+						Routes: []*Route{
 							{
 								Receiver: "unmentioned",
 							},
@@ -221,9 +222,9 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "failure undefined graf receiver",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
+					Route: &Route{
 						Receiver: "graf",
-						Routes: []*config.Route{
+						Routes: []*Route{
 							{
 								Receiver: "unmentioned",
 							},
@@ -263,8 +264,8 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "failure graf no default receiver",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
-						Routes: []*config.Route{
+					Route: &Route{
+						Routes: []*Route{
 							{
 								Receiver: "graf",
 							},
@@ -288,9 +289,9 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "failure graf root route with matchers",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
+					Route: &Route{
 						Receiver: "graf",
-						Routes: []*config.Route{
+						Routes: []*Route{
 							{
 								Receiver: "graf",
 							},
@@ -315,9 +316,9 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			desc: "failure graf nested route duplicate group by labels",
 			input: PostableApiAlertingConfig{
 				Config: Config{
-					Route: &config.Route{
+					Route: &Route{
 						Receiver: "graf",
-						Routes: []*config.Route{
+						Routes: []*Route{
 							{
 								Receiver:   "graf",
 								GroupByStr: []string{"foo", "bar", "foo"},
@@ -481,9 +482,9 @@ alertmanager_config: |
 				AlertmanagerConfig: GettableApiAlertingConfig{
 					Config: Config{
 						Templates: []string{},
-						Route: &config.Route{
+						Route: &Route{
 							Receiver: "am",
-							Routes: []*config.Route{
+							Routes: []*Route{
 								{
 									Receiver: "am",
 								},
