@@ -8,8 +8,8 @@ import { SearchSrv } from 'app/core/services/search_srv';
 import { DashboardQuery, SearchLayout } from '../types';
 
 export const layoutOptions = [
-  { value: SearchLayout.Folders, icon: 'folder' },
-  { value: SearchLayout.List, icon: 'list-ul' },
+  { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
+  { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
 ];
 
 const searchSrv = new SearchSrv();
