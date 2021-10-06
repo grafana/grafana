@@ -93,3 +93,24 @@ func TestFileStore_Persist(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "something to marshal", string(b))
 }
+
+func TestFileStore_Delete(t *testing.T) {
+	store := newFakeKVStore(t)
+	state := &fakeState{data: "something to marshal"}
+	workingDir := t.TempDir()
+	fs := NewFileStore(1, store, workingDir)
+	filename := "silences"
+
+	size, err := fs.Persist(context.Background(), filename, state)
+	require.NoError(t, err)
+	require.Equal(t, int64(20), size)
+	require.Len(t, store.store[1]["alertmanager"], 1)
+
+	// also write the file to disk to test both, kv and fs
+	require.NoError(t, fs.WriteFileToDisk(filename, []byte(state.data)))
+	require.True(t, fs.IsExists(filename))
+
+	require.NoError(t, fs.Delete(context.Background(), filename))
+	require.False(t, fs.IsExists(filename))
+	require.Len(t, store.store[1]["alertmanager"], 0)
+}

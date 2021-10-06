@@ -728,7 +728,7 @@ type nilLimits struct{}
 
 func (n nilLimits) MaxNumberOfAggregationGroups() int { return 0 }
 
-// cleanup removes the silences and notification-log from kv store/disk used by this
+// cleanUp removes the silences and notification-log from kv store/disk used by this
 // alertmanager.
 func (am *Alertmanager) cleanUp() {
 	if err := am.fileStore.Delete(context.Background(), silencesFilename); err != nil {

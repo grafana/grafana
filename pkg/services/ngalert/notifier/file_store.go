@@ -98,7 +98,7 @@ func (fs *FileStore) Delete(ctx context.Context, filename string) error {
 // IsExists verifies if the file exists or not.
 func (fs *FileStore) IsExists(fn string) bool {
 	_, err := os.Stat(fs.pathFor(fn))
-	return os.IsExist(err)
+	return !os.IsNotExist(err)
 }
 
 // WriteFileToDisk writes a file with the provided name and contents to the Alertmanager working directory with the default grafana permission.
