@@ -173,6 +173,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                onLogRowHover={onLogRowHover}
               />
             ))}
           {hasData && !renderAll && (
