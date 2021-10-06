@@ -90,7 +90,7 @@ func TestCloudMonitoring(t *testing.T) {
 		t.Run("and alignmentPeriod is set to grafana-auto", func(t *testing.T) {
 			t.Run("and IntervalMS is larger than 60000", func(t *testing.T) {
 				req := baseReq()
-				req.Queries[0].Interval = 1000000
+				req.Queries[0].Interval = 1000000 * time.Millisecond
 				req.Queries[0].JSON = json.RawMessage(`{
 					"alignmentPeriod": "grafana-auto",
 					"filters":    ["key", "=", "value", "AND", "key2", "=", "value2"]
@@ -118,7 +118,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 			t.Run("and IntervalMS is less than 60000", func(t *testing.T) {
 				req := baseReq()
-				req.Queries[0].Interval = 30000
+				req.Queries[0].Interval = 30000 * time.Millisecond
 				req.Queries[0].JSON = json.RawMessage(`{
 					"alignmentPeriod": "grafana-auto",
 					"filters":    ["key", "=", "value", "AND", "key2", "=", "value2"]
