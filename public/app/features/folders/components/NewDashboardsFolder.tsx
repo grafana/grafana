@@ -57,6 +57,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
                   error={errors.folderName && errors.folderName.message}
                 >
                   <Input
+                    id="folder-name-input"
                     {...register('folderName', {
                       required: 'Folder name is required.',
                       validate: async (v) => await this.validateFolderName(v),
