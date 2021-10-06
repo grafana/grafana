@@ -179,15 +179,15 @@ export enum VizOrientation {
 }
 
 export interface OptionsWithTooltip {
-  tooltip?: VizTooltipOptions;
+  tooltip: VizTooltipOptions;
 }
 
 export interface OptionsWithLegend {
-  legend?: VizLegendOptions;
+  legend: VizLegendOptions;
 }
 
 export interface OptionsWithTextFormatting {
-  text?: VizTextDisplayOptions;
+  text: VizTextDisplayOptions;
 }
 
 export enum BigValueColorMode {
@@ -269,7 +269,7 @@ export enum BarGaugeDisplayMode {
 
 export interface TableFieldOptions {
   align: string;
-  displayMode: string;
+  displayMode: TableCellDisplayMode;
   hidden?: boolean;
   minWidth?: number;
   width?: number;
@@ -277,7 +277,7 @@ export interface TableFieldOptions {
 
 export const defaultTableFieldOptions: TableFieldOptions = {
   align: 'auto',
-  displayMode: 'auto',
+  displayMode: TableCellDisplayMode.Auto,
 };
 
 export interface VizTooltipOptions {
