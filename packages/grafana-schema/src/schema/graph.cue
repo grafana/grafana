@@ -51,7 +51,7 @@ AxisConfig: {
 	axisWidth?:         number
 	axisSoftMin?:       number
 	axisSoftMax?:       number
-	axisGridShow?:      bool | *null
+	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
 } @cuetsy(kind="interface")
 HideSeriesConfig: {

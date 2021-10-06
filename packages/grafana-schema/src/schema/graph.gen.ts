@@ -115,8 +115,6 @@ export interface AxisConfig {
   scaleDistribution?: ScaleDistributionConfig;
 }
 
-export const defaultAxisConfig: AxisConfig = {};
-
 export interface HideSeriesConfig {
   legend: boolean;
   tooltip: boolean;
