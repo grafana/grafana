@@ -7,6 +7,7 @@ import {
   setUpdating,
   teamsLoaded,
   updateTimeZone,
+  updateWeekStart,
   userLoaded,
   userReducer,
   userSessionRevoked,
@@ -30,6 +31,15 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState })
         .whenActionIsDispatched(updateTimeZone({ timeZone: 'xyz' }))
         .thenStateShouldEqual({ ...initialUserState, timeZone: 'xyz' });
+    });
+  });
+
+  describe('when updateWeekStart is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<UserState>()
+        .givenReducer(userReducer, { ...initialUserState })
+        .whenActionIsDispatched(updateWeekStart({ weekStart: 2 }))
+        .thenStateShouldEqual({ ...initialUserState, weekStart: 2 });
     });
   });
 
