@@ -19,6 +19,10 @@ LineConfig: {
 	lineWidth?:         number
 	lineInterpolation?: LineInterpolation
 	lineStyle?:         LineStyle
+
+	// Indicate if null values should be treated as gaps or connected.
+	// When the value is a number, it represents the maximum delta in the
+	// X axis that should be considered connected.  For timeseries, this is milliseconds
 	spanNulls?:         bool | number
 } @cuetsy(kind="interface")
 BarConfig: {
@@ -47,6 +51,7 @@ AxisConfig: {
 	axisWidth?:         number
 	axisSoftMin?:       number
 	axisSoftMax?:       number
+	axisGridShow?:      bool | *null
 	scaleDistribution?: ScaleDistributionConfig
 } @cuetsy(kind="interface")
 HideSeriesConfig: {

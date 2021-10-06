@@ -105,6 +105,7 @@ export interface ScaleDistributionConfig {
 }
 
 export interface AxisConfig {
+  axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
   axisSoftMax?: number;
@@ -112,6 +113,8 @@ export interface AxisConfig {
   axisWidth?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
+
+export const defaultAxisConfig: AxisConfig = {};
 
 export interface HideSeriesConfig {
   legend: boolean;
@@ -218,6 +221,7 @@ export enum TableCellDisplayMode {
   Auto = 'auto',
   BasicGauge = 'basic',
   ColorBackground = 'color-background',
+  ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
@@ -257,11 +261,6 @@ export interface VizLegendOptions {
   placement: LegendPlacement;
 }
 
-// export const defaultVizLegendOptions: VizLegendOptions = {
-//   asTable: false,
-//   isVisible: false,
-// };
-
 export enum BarGaugeDisplayMode {
   Basic = 'basic',
   Gradient = 'gradient',
@@ -272,6 +271,7 @@ export interface TableFieldOptions {
   align: string;
   displayMode: string;
   hidden?: boolean;
+  minWidth?: number;
   width?: number;
 }
 
