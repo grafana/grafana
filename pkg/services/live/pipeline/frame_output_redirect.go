@@ -12,23 +12,23 @@ type RedirectOutputConfig struct {
 	Channel string `json:"channel"`
 }
 
-// RedirectOutput passes processing control to the rule defined
+// RedirectFrameOutput passes processing control to the rule defined
 // for a configured channel.
-type RedirectOutput struct {
+type RedirectFrameOutput struct {
 	config RedirectOutputConfig
 }
 
-func NewRedirectOutput(config RedirectOutputConfig) *RedirectOutput {
-	return &RedirectOutput{config: config}
+func NewRedirectFrameOutput(config RedirectOutputConfig) *RedirectFrameOutput {
+	return &RedirectFrameOutput{config: config}
 }
 
-const OutputTypeRedirect = "redirect"
+const FrameOutputTypeRedirect = "redirect"
 
-func (out *RedirectOutput) Type() string {
-	return OutputTypeRedirect
+func (out *RedirectFrameOutput) Type() string {
+	return FrameOutputTypeRedirect
 }
 
-func (out *RedirectOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *RedirectFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if vars.Channel == out.config.Channel {
 		return nil, fmt.Errorf("redirect to the same channel: %s", out.config.Channel)
 	}
