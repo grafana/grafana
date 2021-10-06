@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	macaron "gopkg.in/macaron.v1"
 )
 
 const (
@@ -170,7 +171,11 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+	cmd := dtos.LoginCommand{}
+	if err := macaron.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad login data", err)
+	}
 	authModule := ""
 	var user *models.User
 	var resp *response.NormalResponse

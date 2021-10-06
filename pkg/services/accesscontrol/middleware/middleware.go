@@ -19,7 +19,7 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscont
 		}
 
 		return func(c *models.ReqContext) {
-			injected, err := evaluator.Inject(macaron.Params(c.Req))
+			injected, err := evaluator.Inject(buildScopeParams(c))
 			if err != nil {
 				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 				return
@@ -68,4 +68,11 @@ func newID() string {
 		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 	return "ACE" + id
+}
+
+func buildScopeParams(c *models.ReqContext) accesscontrol.ScopeParams {
+	return accesscontrol.ScopeParams{
+		OrgID:     c.OrgId,
+		URLParams: macaron.Params(c.Req),
+	}
 }

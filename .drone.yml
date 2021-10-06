@@ -22,8 +22,6 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -282,8 +280,6 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -680,8 +676,6 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -771,8 +765,6 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -1149,8 +1141,6 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -1625,8 +1615,6 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1735,8 +1723,6 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -2102,8 +2088,6 @@ steps:
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -2572,8 +2556,6 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2681,8 +2663,6 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -3019,8 +2999,6 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -3564,6 +3542,6 @@ get:
 
 ---
 kind: signature
-hmac: fd746435bdd748cec43565f7ab4230da5a221aa848b11da68346921a3d67ff91
+hmac: 5237fccbd3eb1fb753ffe2d52c75559311dc57df6b8875b24246cfc266d5895e
 
 ...
