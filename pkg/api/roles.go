@@ -33,8 +33,8 @@ var (
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
 
 	ScopeOrgsAll       = accesscontrol.Scope("orgs", "*")
-	ScopeOrgsID        = accesscontrol.Scope("orgs", accesscontrol.Parameter(":orgId"))
-	ScopeOrgsCurrentID = accesscontrol.Scope("orgs", accesscontrol.Field("OrgID"))
+	ScopeOrgID        = accesscontrol.Scope("orgs", accesscontrol.Parameter(":orgId"))
+	ScopeOrgCurrentID = accesscontrol.Scope("orgs", accesscontrol.Field("OrgID"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
