@@ -1,3 +1,22 @@
+<!-- 8.1.7 START -->
+
+# 8.1.7 (2021-10-06)
+
+### Bug fixes
+
+- **Alerting:** Fix alerts with evaluation interval more than 30 seconds resolving before notification. [#39513](https://github.com/grafana/grafana/pull/39513), [@gerobinson](https://github.com/gerobinson)
+- **Elasticsearch/Prometheus:** Fix usage of proper SigV4 service namespace. [#39439](https://github.com/grafana/grafana/pull/39439), [@marefr](https://github.com/marefr)
+
+<!-- 8.1.7 END -->
+
+<!-- 8.1.6 START -->
+
+# 8.1.6 (2021-10-05)
+
+- **Security**: Fixes CVE-2021-39226. For more information, see our [blog](https://grafana.com/blog/2021/10/05/grafana-7.5.11-and-8.1.6-released-with-critical-security-fix/)
+
+<!-- 8.1.6 END -->
+
 <!-- 8.1.5 START -->
 
 # 8.1.5 (2021-09-21)
