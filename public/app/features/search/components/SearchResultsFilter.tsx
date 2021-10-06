@@ -77,7 +77,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const { sm, md } = theme.spacing;
   return {
     wrapper: css`
-      height: 35px;
+      height: ${theme.height.md}px;
       display: flex;
       justify-content: flex-start;
       gap: ${theme.spacing.md};
