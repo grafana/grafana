@@ -30,6 +30,7 @@ const filterTableName = 'Filters';
 export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<void> => {
   return async (dispatch, getState) => {
     let variable = getVariableByOptions(options, getState());
+    console.log('getVariableByOptions', options, getState().templating.variables);
 
     if (!variable) {
       dispatch(createAdHocVariable(options));
@@ -156,6 +157,6 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel => {
   return Object.values(state.templating.variables).find(
-    (v) => isAdHoc(v) && v.datasource === options.datasource
+    (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
   ) as AdHocVariableModel;
 };
