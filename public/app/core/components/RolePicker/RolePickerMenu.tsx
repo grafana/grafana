@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Checkbox, CustomScrollbar, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -35,6 +35,10 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
     }
   };
 
+  const onClear = () => {
+    setSelectedOptions({});
+  };
+
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
       <div className={customStyles.groupHeader}>Built-in roles</div>
@@ -47,20 +51,28 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
             <SelectMenuOptions
               data={option}
               key={i}
-              isSelected={option.value && selectedOptions[option.value]}
+              isSelected={!!(option.value && selectedOptions[option.value])}
               onSelect={onSelect}
             />
           ))}
         </div>
       </CustomScrollbar>
+      <div className={customStyles.menuButtonRow}>
+        <HorizontalGroup justify="flex-end">
+          <Button size="sm" fill="text" onClick={onClear}>
+            Clear all
+          </Button>
+          <Button size="sm">Update</Button>
+        </HorizontalGroup>
+      </div>
     </div>
   );
 };
 
 interface SelectMenuOptionProps<T> {
   // isDisabled: boolean;
+  isSelected: boolean;
   isFocused?: boolean;
-  isSelected?: boolean;
   // innerProps: any;
   data: SelectableValue<T>;
   onSelect: (value: SelectableValue<T>) => void;
@@ -77,7 +89,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     return (
       <div
         ref={ref}
-        className={cx(styles.option, isFocused && styles.optionFocused, isSelected && styles.optionSelected)}
+        className={cx(styles.option, isFocused && styles.optionFocused)}
         // {...innerProps}
         aria-label="Select option"
         onClick={() => onSelect(data)}
@@ -121,6 +133,10 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
     menuOptionCheckbox: css`
       display: flex;
       margin: ${theme.spacing(0, 1, 0, 0.25)};
+    `,
+    menuButtonRow: css`
+      background-color: ${theme.colors.background.primary};
+      padding: ${theme.spacing(1)};
     `,
   };
 };
