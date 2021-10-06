@@ -30,7 +30,7 @@ type RemoteWriteConfig struct {
 	// If not set - then no down-sampling will be performed. If SampleMilliseconds is
 	// greater than flushInterval then each flush will include a point as we only keeping
 	// track of timestamps in terms of each individual flush at the moment.
-	SampleMilliseconds int64
+	SampleMilliseconds int64 `json:"sampleMilliseconds"`
 }
 
 type RemoteWriteFrameOutput struct {
