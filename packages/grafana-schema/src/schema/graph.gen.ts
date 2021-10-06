@@ -187,7 +187,7 @@ export interface OptionsWithLegend {
 }
 
 export interface OptionsWithTextFormatting {
-  text: VizTextDisplayOptions;
+  text?: VizTextDisplayOptions;
 }
 
 export enum BigValueColorMode {
@@ -254,10 +254,10 @@ export interface GraphFieldConfig
 }
 
 export interface VizLegendOptions {
-  asTable: boolean;
+  asTable?: boolean;
   calcs: string[];
   displayMode: LegendDisplayMode;
-  isVisible: boolean;
+  isVisible?: boolean;
   placement: LegendPlacement;
 }
 
