@@ -24,13 +24,14 @@ import { byTestId } from 'testing-library-selector';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { DataSourceApi } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
 jest.mock('./utils/config');
 
 const dataSources = {
-  prometheus: mockDataSource({
+  prometheus: mockDataSource<PromOptions>({
     name: 'Prometheus',
     type: DataSourceType.Prometheus,
   }),

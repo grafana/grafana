@@ -4,9 +4,9 @@ groups:
       - alert: GrafanaRequestsFailing
         for: 5m
         expr: |
-          100 * namespace_job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query", statuscode=~"5.."}
+          100 * namespace_job_handler_statuscode:grafana_http_request_duration_seconds_count:rate5m{handler!~"/api/datasources/proxy/:id.*|/api/ds/query|/api/tsdb/query", status_code=~"5.."}
           /
-          namespace_job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}
+          namespace_job_handler_statuscode:grafana_http_request_duration_seconds_count:rate5m{handler!~"/api/datasources/proxy/:id.*|/api/ds/query|/api/tsdb/query"}
           > 0.5
         labels:
           severity: 'warning'

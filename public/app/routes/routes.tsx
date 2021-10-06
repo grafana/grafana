@@ -139,10 +139,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () =>
-        evaluatePermission(
-          () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
-          AccessControlAction.DataSourcesExplore
-        ),
+        contextSrv.evaluatePermission(() => (config.viewersCanEdit ? [] : ['Editor', 'Admin']), [
+          AccessControlAction.DataSourcesExplore,
+        ]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
     },
     {
@@ -526,16 +525,3 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ...playlistRoutes,
   ];
 }
-
-// evaluates access control permission, using fallback if access control is disabled
-const evaluatePermission = (fallback: () => string[], action: AccessControlAction): string[] => {
-  if (!config.featureToggles['accesscontrol']) {
-    return fallback();
-  }
-  if (contextSrv.hasPermission(action)) {
-    return [];
-  } else {
-    // Hack to reject when user does not have permission
-    return ['Reject'];
-  }
-};
