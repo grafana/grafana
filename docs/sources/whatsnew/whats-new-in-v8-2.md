@@ -10,9 +10,9 @@ list = false
 
 # What’s new in Grafana v8.2
 
-Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics *for everyone*. 
+Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics _for everyone_.
 
-The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters. This update makes it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles. 
+The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters. This update makes it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles.
 
 Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
 
@@ -28,7 +28,7 @@ Grafana 8.2 includes a number of important community contributions including sup
 
 We’ve taken our first, measured but important step towards improving the accessibility of Grafana, with much needed tweaks to keyboard navigation, accessibility labeling for UI elements for Grafana viewers, and an [accessibility statement](https://grafana.com/accessibility/) for Grafana laying out what you can expect from a Grafana focused on making our project accessible to all.
 
-## Dashboards 
+## Dashboards
 
 The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time picker. This option enables fiscal quarters as time ranges, which can be helpful for business-focused and executive dashboards in addition to many other common use cases. Please see the [time range controls documentation].(https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information.
 
@@ -36,10 +36,9 @@ The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurab
 
 ## Plugins management
 
-We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. You can use the plugin catalog to find, install, and uninstall  your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
+We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog](https://grafana.com/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled) is now enabled by default. You can use the plugin catalog to find, install, and uninstall your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
 
 {{< figure src="/static/img/docs/plugins/plugins-catalog-browse-8-1.png" max-width="1200px" caption="Plugins Catalog Browsers" >}}
-
 
 ## Grafana 8 Alerting
 
