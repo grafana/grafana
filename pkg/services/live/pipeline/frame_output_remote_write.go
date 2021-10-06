@@ -99,7 +99,7 @@ func (out *RemoteWriteFrameOutput) sample(timeSeries []prompb.TimeSeries) []prom
 			sample = prompb.TimeSeries{}
 		}
 
-		lastTimestamp, _ := timestamps[name]
+		lastTimestamp := timestamps[name]
 
 		// In-place filtering, see https://github.com/golang/go/wiki/SliceTricks#filter-in-place.
 		n := 0
