@@ -158,11 +158,17 @@ func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrat
 			}
 			panelID = &i
 		}
-		if _, err := sess.Exec(`UPDATE alert_rule SET dashboard_uid = ?, panel_id = ? WHERE id = ?`,
-			dashboardUID,
-			panelID,
-			next.ID); err != nil {
-			return fmt.Errorf("failed to set dashboard_uid and panel_id for alert rule: %w", err)
+		// We do not want to set panel_id to a non-nil value when dashboard_uid is nil
+		// as panel_id is not unique and so cannot be queried without its dashboard_uid.
+		// This can happen where users have deleted the dashboard_uid annotation but kept
+		// the panel_id annotation.
+		if dashboardUID != nil {
+			if _, err := sess.Exec(`UPDATE alert_rule SET dashboard_uid = ?, panel_id = ? WHERE id = ?`,
+				dashboardUID,
+				panelID,
+				next.ID); err != nil {
+				return fmt.Errorf("failed to set dashboard_uid and panel_id for alert rule: %w", err)
+			}
 		}
 	}
 	return nil

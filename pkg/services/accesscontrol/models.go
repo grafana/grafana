@@ -101,6 +101,7 @@ func (r RoleDTO) GetDisplayName() string {
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
+	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -137,6 +138,12 @@ func (p Permission) OSSPermission() Permission {
 		Action: p.Action,
 		Scope:  p.Scope,
 	}
+}
+
+// ScopeParams holds the parameters used to fill in scope templates
+type ScopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
 }
 
 const (
