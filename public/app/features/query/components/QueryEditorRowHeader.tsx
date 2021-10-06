@@ -147,7 +147,6 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
       flex-grow: 1;
       margin-left: ${theme.spacing.xs};
-      overflow: hidden;
 
       &:hover {
         .query-name-wrapper {
