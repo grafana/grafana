@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -17,6 +18,7 @@ type Service struct {
 	SQLStore          *sqlstore.SQLStore
 	EncryptionService encryption.Service
 
+	logger                       log.Logger
 	pluginSettingDecryptionCache secureJSONDecryptionCache
 }
 
@@ -35,6 +37,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		Bus:               bus,
 		SQLStore:          store,
 		EncryptionService: encryptionService,
+		logger:            log.New("pluginsettings"),
 		pluginSettingDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
@@ -75,6 +78,7 @@ func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
 
 	json, err := s.EncryptionService.DecryptJsonData(context.Background(), ps.SecureJsonData, setting.SecretKey)
 	if err != nil {
+		s.logger.Error("Failed to decrypt secure json data", "error", err)
 		return map[string]string{}
 	}
 
