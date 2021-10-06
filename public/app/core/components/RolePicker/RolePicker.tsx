@@ -6,7 +6,7 @@ import { Role } from 'app/types';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 
-const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
+// const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
 export interface Props {
   /** Primary role selected */
@@ -18,6 +18,7 @@ export interface Props {
 export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
+  const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
@@ -31,6 +32,7 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
         );
       });
       setRoleOptions(options);
+      setFilteredOptions(options);
     }
     fetchOptions();
   }, []);
@@ -51,21 +53,32 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
     [setOpen]
   );
 
+  const onInputChange = (query?: string) => {
+    if (query) {
+      setFilteredOptions(
+        roleOptions.filter((option) => {
+          return option.label?.toLowerCase().includes(query.toLowerCase());
+        })
+      );
+    } else {
+      setFilteredOptions(roleOptions);
+    }
+  };
+
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
-      <RolePickerInput role={role} onChange={onChange} onOpen={onOpen} ref={inputRef} />
-      {isOpen && (
-        <ClickOutsideWrapper onClick={() => setOpen(false)}>
+      <ClickOutsideWrapper onClick={() => setOpen(false)}>
+        <RolePickerInput role={role} onChange={onInputChange} onOpen={onOpen} isFocused={isOpen} ref={inputRef} />
+        {isOpen && (
           <RolePickerMenu
             onBuiltinRoleChange={onBuiltinRoleChange}
             onChange={onApply}
             onClose={() => setOpen(false)}
-            options={roleOptions}
+            options={filteredOptions}
             builtInRole={role}
           />
-          <div className="" onClick={stopPropagation} />
-        </ClickOutsideWrapper>
-      )}
+        )}
+      </ClickOutsideWrapper>
     </div>
   );
 };

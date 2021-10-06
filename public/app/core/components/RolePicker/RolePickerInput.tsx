@@ -9,25 +9,25 @@ import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownInd
 
 interface InputProps {
   role?: string;
-  onChange: (role?: string) => void;
+  onChange: (query?: string) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
+  isFocused?: boolean;
   disabled?: boolean;
 }
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
-  const { role, disabled, onChange, onOpen } = props;
-  const [focused, setFocused] = useState(false);
+  const { role, disabled, isFocused, onChange, onOpen } = props;
   const [internalRole] = useState(() => {
     return role;
   });
 
   const theme = useTheme2();
-  const styles = getRolePickerInputStyles(theme, false, focused, !!disabled, false);
+  const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
 
   const onFocus = useCallback(
     (event: FormEvent<HTMLElement>) => {
       event.stopPropagation();
-      setFocused(true);
+      // setFocused(true);
       (ref as any).current.focus();
       onOpen(event);
     },
@@ -35,15 +35,19 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
   );
 
   const onBlur = useCallback(() => {
-    setFocused(false);
     onChange(internalRole);
   }, [internalRole, onChange]);
+
+  const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target?.value;
+    onChange(query);
+  };
 
   return (
     <div className={styles.wrapper} onFocus={onFocus} onClick={onFocus}>
       <div className={styles.builtInRoleValueContainer}>
         <Icon name="user" size="xs" />
-        {internalRole}
+        {role}
       </div>
       <input
         className={styles.input}
@@ -51,13 +55,13 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
         // onClick={stopPropagation}
         // onFocus={onFocus}
         onBlur={onBlur}
-        // onChange={onChangeDate}
+        onChange={onInputChange}
         // value={internalRole}
         data-testid="date-time-input"
         placeholder="Select role"
       />
       <div className={styles.suffix}>
-        <DropdownIndicator isOpen={focused} />
+        <DropdownIndicator isOpen={!!isFocused} />
       </div>
     </div>
   );
