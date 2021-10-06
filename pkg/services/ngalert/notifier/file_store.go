@@ -85,6 +85,16 @@ func (fs *FileStore) Persist(ctx context.Context, filename string, st State) (in
 	return int64(len(bytes)), err
 }
 
+// Delete will remove the file from the filestore.
+func (fs *FileStore) Delete(ctx context.Context, filename string) error {
+	if fs.IsExists(filename) {
+		if err := os.Remove(fs.pathFor(filename)); err != nil {
+			return err
+		}
+	}
+	return fs.kv.Del(ctx, filename)
+}
+
 // IsExists verifies if the file exists or not.
 func (fs *FileStore) IsExists(fn string) bool {
 	_, err := os.Stat(fs.pathFor(fn))

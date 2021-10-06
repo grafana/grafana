@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,11 +15,6 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
-var (
-	organizationDeleteQueries     = []string{}
-	organizationDeleteQueriesLock sync.Mutex
-)
-
 func init() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
@@ -29,16 +23,6 @@ func init() {
 	bus.AddHandler("sql", GetOrgByName)
 	bus.AddHandler("sql", SearchOrgs)
 	bus.AddHandler("sql", DeleteOrg)
-}
-
-// AppendOrganizationDeleteQueries can be used to append queries that should be
-// executed when an organization gets deleted. The query can have a placeholder
-// which will be populated with the organization ID.
-// i.e. "DELETE FROM x WHERE org_id = ?"
-func AppendOrganizationDeleteQueries(queries []string) {
-	organizationDeleteQueriesLock.Lock()
-	defer organizationDeleteQueriesLock.Unlock()
-	organizationDeleteQueries = append(organizationDeleteQueries, queries...)
 }
 
 func SearchOrgs(query *models.SearchOrgsQuery) error {
@@ -257,8 +241,17 @@ func DeleteOrg(cmd *models.DeleteOrgCommand) error {
 			"DELETE FROM org_user WHERE org_id = ?",
 			"DELETE FROM org WHERE id = ?",
 			"DELETE FROM temp_user WHERE org_id = ?",
+			"DELETE FROM ngalert_configuration WHERE org_id = ?",
+			"DELETE FROM alert_configuration WHERE org_id = ?",
+			"DELETE FROM alert_instance WHERE rule_org_id = ?",
+			"DELETE FROM alert_notification WHERE org_id = ?",
+			"DELETE FROM alert_notification_state WHERE org_id = ?",
+			"DELETE FROM alert_rule WHERE org_id = ?",
+			"DELETE FROM alert_rule_tag WHERE EXISTS (SELECT 1 FROM alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+			"DELETE FROM alert_rule_version WHERE rule_org_id = ?",
+			"DELETE FROM alert WHERE org_id = ?",
+			"DELETE FROM annotations WHERE org_id = ?",
 		}
-		deletes = append(deletes, organizationDeleteQueries...)
 
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.Id)

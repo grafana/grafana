@@ -3,7 +3,6 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -214,10 +213,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
-		// Delete all the remaining files from disk.
-		if err := os.RemoveAll(am.WorkingDirPath()); err != nil {
-			moa.logger.Warn("failed to cleanup resources from filesystem", "org", orgID, "err", err)
-		}
+		// Delete all the remaining files from disk and kv store.
+		am.cleanUp()
 	}
 }
 
