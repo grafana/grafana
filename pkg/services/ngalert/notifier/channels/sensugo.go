@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
@@ -33,7 +32,7 @@ type SensuGoNotifier struct {
 }
 
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
-func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, fn alerting.GetDecryptedValueFn) (*SensuGoNotifier, error) {
+func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

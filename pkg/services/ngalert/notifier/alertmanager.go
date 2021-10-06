@@ -17,7 +17,6 @@ import (
 	"unicode/utf8"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/dispatch"
@@ -119,11 +118,11 @@ type Alertmanager struct {
 	configHash      [16]byte
 	orgID           int64
 
-	decryptFn alerting.GetDecryptedValueFn
+	decryptFn channels.GetDecryptedValueFn
 }
 
 func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
-	peer ClusterPeer, decryptFn alerting.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
+	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),

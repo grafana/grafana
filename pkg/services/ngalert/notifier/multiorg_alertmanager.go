@@ -6,10 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -39,13 +40,13 @@ type MultiOrgAlertmanager struct {
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
-	decryptFn alerting.GetDecryptedValueFn
+	decryptFn channels.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, decryptFn alerting.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager, l log.Logger,
+	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager, l log.Logger,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		logger:        l,
