@@ -7,8 +7,8 @@ export async function getPipeLineEntities(): Promise<PipeLineEntitiesInfo> {
     .then((data) => {
       return {
         converter: transformLabel(data, 'converters'),
-        processor: transformLabel(data, 'processors'),
-        output: transformLabel(data, 'outputs'),
+        frameProcessors: transformLabel(data, 'frameProcessors'),
+        frameOutputs: transformLabel(data, 'frameOutputs'),
         getExample: (ruleType, type) => {
           return data[`${ruleType}s`]?.filter((option: PipelineListOption) => option.type === type)?.[0]?.['example'];
         },
