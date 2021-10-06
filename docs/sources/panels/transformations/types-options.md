@@ -429,7 +429,7 @@ Consider the following data set:
 If you **Include** the data points that have a temperature below 30°C, the configuration will look as follows:
 
 - Filter Type: `Include`
-- Condition: Rows where `Temperature` matches `Lower Than` `100`
+- Condition: Rows where `Temperature` matches `Lower Than` `30`
 
 And you will get the following result, where only the temperatures below 30°C are included:
 
