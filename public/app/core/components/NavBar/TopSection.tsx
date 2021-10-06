@@ -53,7 +53,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-grow: 1;
 
     ${theme.breakpoints.up('md')} {
-      display: block;
+      display: flex;
+      flex-direction: inherit;
       margin-top: ${theme.spacing(5)};
     }
 

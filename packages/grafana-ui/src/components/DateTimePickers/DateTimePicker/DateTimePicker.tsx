@@ -1,6 +1,6 @@
 import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useMedia } from 'react-use';
-import Calendar from 'react-calendar/dist/entry.nostyle';
+import Calendar from 'react-calendar';
 import { css, cx } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
 import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';

@@ -132,7 +132,7 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := bus.DispatchCtx(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}

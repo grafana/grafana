@@ -1,4 +1,4 @@
-# Debug Panel -  Native Plugin
+# Debug Panel - Native Plugin
 
 The Debug Panel is **included** with Grafana.
 

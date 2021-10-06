@@ -20,8 +20,8 @@ import (
 // then frame processing will be redirected to a corresponding channel rule.
 // TODO: avoid recursion, increment a counter while frame travels over pipeline steps, make it configurable.
 type ChannelFrame struct {
-	Channel string
-	Frame   *data.Frame
+	Channel string      `json:"channel"`
+	Frame   *data.Frame `json:"frame"`
 }
 
 // Vars has some helpful things pipeline entities could use.
@@ -111,7 +111,6 @@ type Pipeline struct {
 
 // New creates new Pipeline.
 func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
-	logger.Info("Live pipeline initialization")
 	p := &Pipeline{
 		ruleGetter: ruleGetter,
 	}
@@ -133,7 +132,7 @@ func (p *Pipeline) ProcessInput(ctx context.Context, orgID int64, channelID stri
 	if !ok {
 		return false, nil
 	}
-	channelFrames, ok, err := p.dataToChannelFrames(ctx, *rule, orgID, channelID, body)
+	channelFrames, ok, err := p.DataToChannelFrames(ctx, *rule, orgID, channelID, body)
 	if err != nil {
 		return false, err
 	}
@@ -147,7 +146,7 @@ func (p *Pipeline) ProcessInput(ctx context.Context, orgID int64, channelID stri
 	return true, nil
 }
 
-func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, bool, error) {
+func (p *Pipeline) DataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, bool, error) {
 	if rule.Converter == nil {
 		return nil, false, nil
 	}

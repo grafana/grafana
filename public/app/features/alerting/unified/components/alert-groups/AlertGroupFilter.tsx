@@ -79,7 +79,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   filterInput: css`
     width: 340px;
-    margin-left: ${theme.spacing(1)};
+    & + & {
+      margin-left: ${theme.spacing(1)};
+    }
   `,
   clearButton: css`
     margin-left: ${theme.spacing(1)};
