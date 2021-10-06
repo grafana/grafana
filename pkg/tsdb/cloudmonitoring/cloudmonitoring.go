@@ -293,7 +293,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 					RefID:       query.RefID,
 					ProjectName: q.MetricQuery.ProjectName,
 					Query:       q.MetricQuery.Query,
-					IntervalMS:  int64(query.Interval),
+					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
 					timeRange:   req.Queries[0].TimeRange,
 				}
@@ -306,7 +306,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 				}
 				params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
 				params.Add("view", q.MetricQuery.View)
-				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, int64(query.Interval))
+				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.Interval.Milliseconds())
 				queryInterface = cmtsf
 			}
 		case sloQueryType:
@@ -316,7 +316,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 			cmtsf.Service = q.SloQuery.ServiceId
 			cmtsf.Slo = q.SloQuery.SloId
 			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
-			setSloAggParams(&params, &q.SloQuery, durationSeconds, int64(query.Interval))
+			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
 		default:
 			panic(fmt.Sprintf("Unrecognized query type %q", q.QueryType))
