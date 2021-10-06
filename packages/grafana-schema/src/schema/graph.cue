@@ -2,7 +2,7 @@ package schema
 
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
-DrawStyle:          "line" | "bars" | "points"                              @cuetsy(kind="enum")
+GraphDrawStyle:     "line" | "bars" | "points"                              @cuetsy(kind="enum")
 LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
 ScaleDistribution:  "linear" | "log" | "ordinal"                            @cuetsy(kind="enum")
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
@@ -76,7 +76,7 @@ GraphFieldConfig: {
 	BarConfig
 	StackableFieldConfig
 	HideableFieldConfig
-	drawStyle?:       DrawStyle
+	drawStyle?:       GraphDrawStyle
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
 } @cuetsy(kind="interface")
