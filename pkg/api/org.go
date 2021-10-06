@@ -184,7 +184,7 @@ func SearchOrgs(c *models.ReqContext) response.Response {
 		Limit: perPage,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := sqlstore.SearchOrgs(&query); err != nil {
 		return response.Error(500, "Failed to search orgs", err)
 	}
 

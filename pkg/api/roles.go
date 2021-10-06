@@ -32,7 +32,7 @@ var (
 	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
 
-	ScopeOrgsAll       = accesscontrol.Scope("orgs", "*")
+	ScopeOrgsAll      = accesscontrol.Scope("orgs", "*")
 	ScopeOrgID        = accesscontrol.Scope("orgs", accesscontrol.Parameter(":orgId"))
 	ScopeOrgCurrentID = accesscontrol.Scope("orgs", accesscontrol.Field("OrgID"))
 )
