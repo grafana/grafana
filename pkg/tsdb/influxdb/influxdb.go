@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+	"github.com/influxdata/influxql"
 )
 
 type Service struct {
@@ -123,6 +124,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	if setting.Env == setting.Dev {
 		s.glog.Debug("Influxdb query", "raw query", rawQuery)
+	}
+
+	_, err = influxql.NewParser(strings.NewReader(rawQuery)).ParseQuery()
+	if err != nil {
+		return &backend.QueryDataResponse{}, fmt.Errorf("error parsing InfluxQL")
 	}
 
 	request, err := s.createRequest(ctx, dsInfo, rawQuery)
