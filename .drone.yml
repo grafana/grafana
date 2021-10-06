@@ -178,7 +178,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -195,7 +195,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -461,7 +461,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -478,7 +478,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -875,7 +875,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -892,7 +892,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -1261,7 +1261,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -1278,7 +1278,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -1292,7 +1292,7 @@ steps:
 - name: redis-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     REDIS_URL: redis://redis:6379/0
@@ -1303,7 +1303,7 @@ steps:
 - name: memcached-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     MEMCACHED_HOSTS: memcached:11211
@@ -1797,7 +1797,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -1814,7 +1814,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -2172,7 +2172,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -2189,7 +2189,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -2203,7 +2203,7 @@ steps:
 - name: redis-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     REDIS_URL: redis://redis:6379/0
@@ -2214,7 +2214,7 @@ steps:
 - name: memcached-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     MEMCACHED_HOSTS: memcached:11211
@@ -2704,7 +2704,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -2721,7 +2721,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -3057,7 +3057,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
+  - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
@@ -3074,7 +3074,7 @@ steps:
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
@@ -3088,7 +3088,7 @@ steps:
 - name: redis-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://redis:6379/0 -timeout 120s
+  - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     REDIS_URL: redis://redis:6379/0
@@ -3099,7 +3099,7 @@ steps:
 - name: memcached-integration-tests
   image: grafana/build-container:1.4.3
   commands:
-  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   environment:
     MEMCACHED_HOSTS: memcached:11211
@@ -3395,6 +3395,6 @@ get:
 
 ---
 kind: signature
-hmac: b7dfbc79f68660fde74ae5da84fa176172612ed88e15b65b5a5c140f1dc7a772
+hmac: c15f392635eccde32a463d618b922528353b5e6a0d1a96d9f28cc708d74fab10
 
 ...
