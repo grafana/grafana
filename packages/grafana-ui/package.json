@@ -114,7 +114,6 @@
     "@types/tinycolor2": "1.4.1",
     "common-tags": "^1.8.0",
     "mock-raf": "1.0.1",
-    "pretty-format": "25.1.0",
     "react-docgen-typescript-loader": "3.7.2",
     "react-test-renderer": "17.0.1",
     "rollup": "2.33.3",

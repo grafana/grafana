@@ -63,7 +63,7 @@ func (mock *ProvisioningServiceMock) ProvisionNotifications() error {
 	return nil
 }
 
-func (mock *ProvisioningServiceMock) ProvisionDashboards() error {
+func (mock *ProvisioningServiceMock) ProvisionDashboards(ctx context.Context) error {
 	mock.Calls.ProvisionDashboards = append(mock.Calls.ProvisionDashboards, nil)
 	if mock.ProvisionDashboardsFunc != nil {
 		return mock.ProvisionDashboardsFunc()

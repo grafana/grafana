@@ -5,6 +5,7 @@ import {
   AnnotationEventUIModel,
   ThresholdsConfig,
   SplitOpen,
+  CoreApp,
 } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
@@ -15,6 +16,9 @@ export interface PanelContext {
 
   /** Dashboard panels sync */
   sync?: DashboardCursorSync;
+
+  /** Information on what the outer container is */
+  app?: CoreApp | 'string';
 
   /**
    * Called when a component wants to change the color for a series
@@ -43,6 +47,7 @@ export interface PanelContext {
    * @alpha -- experimental
    */
   onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
+
   /**
    * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
    * For example TimeSeries panel.

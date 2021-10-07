@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { RuleSettingsEditor } from './RuleSettingsEditor';
 import { getPipeLineEntities } from './utils';
+import { RuleSettingsArray } from './RuleSettingsArray';
 
 interface Props {
   rule: Rule;
@@ -19,8 +20,8 @@ interface TabType {
 }
 const tabs: TabType[] = [
   { label: 'Converter', value: 'converter' },
-  { label: 'Processor', value: 'processor' },
-  { label: 'Output', value: 'output' },
+  { label: 'Processors', value: 'frameProcessors' },
+  { label: 'Outputs', value: 'frameOutputs' },
 ];
 
 export const RuleModal: React.FC<Props> = (props) => {
@@ -33,7 +34,7 @@ export const RuleModal: React.FC<Props> = (props) => {
   const [entitiesInfo, setEntitiesInfo] = useState<PipeLineEntitiesInfo>();
   const styles = useStyles(getStyles);
 
-  const onRuleSettingChange = (value: RuleSetting) => {
+  const onRuleSettingChange = (value: RuleSetting | RuleSetting[]) => {
     setChange(true);
     setRule({
       ...rule,
@@ -57,6 +58,7 @@ export const RuleModal: React.FC<Props> = (props) => {
       .put(`api/live/channel-rules`, rule)
       .then(() => {
         setChange(false);
+        onClose();
       })
       .catch((e) => console.error(e));
   };
@@ -80,8 +82,16 @@ export const RuleModal: React.FC<Props> = (props) => {
         })}
       </TabsBar>
       <TabContent>
-        {entitiesInfo && rule && (
+        {entitiesInfo && rule && activeTab === 'converter' && (
           <RuleSettingsEditor
+            onChange={onRuleSettingChange}
+            value={ruleSetting}
+            ruleType={activeTab}
+            entitiesInfo={entitiesInfo}
+          />
+        )}
+        {entitiesInfo && rule && activeTab !== 'converter' && (
+          <RuleSettingsArray
             onChange={onRuleSettingChange}
             value={ruleSetting}
             ruleType={activeTab}
