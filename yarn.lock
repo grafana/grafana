@@ -11449,10 +11449,10 @@ expand-brackets@^2.1.4:
     snapdragon "^0.8.1"
     to-regex "^3.0.1"
 
-expect-puppeteer@4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/expect-puppeteer/-/expect-puppeteer-4.1.1.tgz#cda2ab7b6fa27ac24eba273bbb0296a0de538e6d"
-  integrity sha512-xNpu6uYJL9Qrrp4Z31MOpDWK68zAi+2qg5aMQlyOTVZNy7cAgBZiPvKCN0C1JmP3jgPZfcxhetVjZLaw/KcJOQ==
+expect-puppeteer@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/expect-puppeteer/-/expect-puppeteer-6.0.0.tgz#22cd2c312b249a1fe4af17937406f50df92e7869"
+  integrity sha512-qJWHvlHy58+YgI/eMm9BCgR5YmpAITw7Qlzacf6l2ZYv8ej01fto3XtlKTCtk2ik3hMut344aSCGPn09MXtUvA==
 
 expect.js@0.3.1:
   version "0.3.1"
