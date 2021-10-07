@@ -31,7 +31,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -118,9 +117,12 @@ type Alertmanager struct {
 	config          *apimodels.PostableUserConfig
 	configHash      [16]byte
 	orgID           int64
+
+	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore, peer ClusterPeer, m *metrics.Alertmanager) (*Alertmanager, error) {
+func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
@@ -133,6 +135,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		peerTimeout:       cfg.UnifiedAlerting.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
+		decryptFn:         decryptFn,
 	}
 
 	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
@@ -472,7 +475,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 
 func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
 	// secure settings are already encrypted at this point
-	secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
 	for k, v := range r.SecureSettings {
 		d, err := base64.StdEncoding.DecodeString(v)
@@ -501,13 +504,13 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "email":
 		n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 	case "pagerduty":
-		n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+		n, err = channels.NewPagerdutyNotifier(cfg, tmpl, am.decryptFn)
 	case "pushover":
-		n, err = channels.NewPushoverNotifier(cfg, tmpl)
+		n, err = channels.NewPushoverNotifier(cfg, tmpl, am.decryptFn)
 	case "slack":
-		n, err = channels.NewSlackNotifier(cfg, tmpl)
+		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
 	case "telegram":
-		n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		n, err = channels.NewTelegramNotifier(cfg, tmpl, am.decryptFn)
 	case "victorops":
 		n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 	case "teams":
@@ -517,21 +520,21 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "kafka":
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, tmpl)
+		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
-		n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
 		n, err = channels.NewDiscordNotifier(cfg, tmpl)
 	case "googlechat":
 		n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
 	case "LINE":
-		n, err = channels.NewLineNotifier(cfg, tmpl)
+		n, err = channels.NewLineNotifier(cfg, tmpl, am.decryptFn)
 	case "threema":
-		n, err = channels.NewThreemaNotifier(cfg, tmpl)
+		n, err = channels.NewThreemaNotifier(cfg, tmpl, am.decryptFn)
 	case "opsgenie":
-		n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+		n, err = channels.NewOpsgenieNotifier(cfg, tmpl, am.decryptFn)
 	case "prometheus-alertmanager":
-		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
+		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
 	default:
 		return nil, InvalidReceiverError{
 			Receiver: r,

@@ -51,7 +51,7 @@ func init() {
 	})
 }
 
-func newDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func newDiscordNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	avatar := model.Settings.Get("avatar_url").MustString()
 	content := model.Settings.Get("content").MustString()
 	url := model.Settings.Get("url").MustString()

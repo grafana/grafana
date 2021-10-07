@@ -32,7 +32,7 @@ func init() {
 	})
 }
 
-func newGoogleChatNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func newGoogleChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}

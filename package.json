@@ -187,7 +187,6 @@
     "lerna": "^4.0.0",
     "lint-staged": "10.0.7",
     "mini-css-extract-plugin": "2.2.0",
-    "mocha": "7.0.1",
     "module-alias": "2.2.2",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.1.0",
