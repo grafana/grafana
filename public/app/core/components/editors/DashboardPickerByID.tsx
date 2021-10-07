@@ -22,6 +22,7 @@ interface Props {
   isClearable?: boolean;
   invalid?: boolean;
   disabled?: boolean;
+  id?: string;
 }
 
 const getDashboards = (query = '') => {
@@ -38,11 +39,20 @@ const getDashboards = (query = '') => {
 /**
  * @deprecated prefer using dashboard uid rather than id
  */
-export const DashboardPickerByID: FC<Props> = ({ onChange, value, width, isClearable = false, invalid, disabled }) => {
+export const DashboardPickerByID: FC<Props> = ({
+  onChange,
+  value,
+  width,
+  isClearable = false,
+  invalid,
+  disabled,
+  id,
+}) => {
   const debouncedSearch = debounce(getDashboards, 300);
 
   return (
     <AsyncSelect
+      inputId={id}
       menuShouldPortal
       width={width}
       isClearable={isClearable}

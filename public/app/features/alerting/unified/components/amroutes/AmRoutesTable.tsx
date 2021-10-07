@@ -14,12 +14,20 @@ export interface AmRoutesTableProps {
   onCancelAdd: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute[];
+  readOnly?: boolean;
 }
 
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
 type RouteTableItemProps = DynamicTableItemProps<FormAmRoute>;
 
-export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, onChange, receivers, routes }) => {
+export const AmRoutesTable: FC<AmRoutesTableProps> = ({
+  isAddMode,
+  onCancelAdd,
+  onChange,
+  receivers,
+  routes,
+  readOnly = false,
+}) => {
   const [editMode, setEditMode] = useState(false);
 
   const [expandedId, setExpandedId] = useState<string | number>();
@@ -33,7 +41,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
       id: 'matchingCriteria',
       label: 'Matching labels',
       // eslint-disable-next-line react/display-name
-      renderCell: (item) => <Matchers matchers={item.data.matchers.map(matcherFieldToMatcher)} />,
+      renderCell: (item) => <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />,
       size: 10,
     },
     {
@@ -48,41 +56,53 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
       renderCell: (item) => item.data.receiver || '-',
       size: 5,
     },
-    {
-      id: 'actions',
-      label: 'Actions',
-      // eslint-disable-next-line react/display-name
-      renderCell: (item, index) => {
-        if (item.renderExpandedContent) {
-          return null;
-        }
+    ...(readOnly
+      ? []
+      : [
+          {
+            id: 'actions',
+            label: 'Actions',
+            // eslint-disable-next-line react/display-name
+            renderCell: (item, index) => {
+              if (item.renderExpandedContent) {
+                return null;
+              }
 
-        const expandWithCustomContent = () => {
-          expandItem(item);
-          setEditMode(true);
-        };
+              const expandWithCustomContent = () => {
+                expandItem(item);
+                setEditMode(true);
+              };
 
-        return (
-          <HorizontalGroup>
-            <Button icon="pen" onClick={expandWithCustomContent} size="sm" type="button" variant="secondary">
-              Edit
-            </Button>
-            <IconButton
-              name="trash-alt"
-              onClick={() => {
-                const newRoutes = [...routes];
+              return (
+                <HorizontalGroup>
+                  <Button
+                    data-testid="edit-route"
+                    icon="pen"
+                    onClick={expandWithCustomContent}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    Edit
+                  </Button>
+                  <IconButton
+                    data-testid="delete-route"
+                    name="trash-alt"
+                    onClick={() => {
+                      const newRoutes = [...routes];
 
-                newRoutes.splice(index, 1);
+                      newRoutes.splice(index, 1);
 
-                onChange(newRoutes);
-              }}
-              type="button"
-            />
-          </HorizontalGroup>
-        );
-      },
-      size: '100px',
-    },
+                      onChange(newRoutes);
+                    }}
+                    type="button"
+                  />
+                </HorizontalGroup>
+              );
+            },
+            size: '100px',
+          } as RouteTableColumnProps,
+        ]),
   ];
 
   const items = useMemo(() => prepareItems(routes), [routes]);
@@ -139,6 +159,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
             }}
             receivers={receivers}
             routes={item.data}
+            readOnly={readOnly}
           />
         )
       }

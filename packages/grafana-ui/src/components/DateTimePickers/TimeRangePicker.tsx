@@ -66,6 +66,20 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     this.setState({ isOpen: !isOpen });
   };
 
+  componentDidMount() {
+    window.addEventListener('keyup', this.onKeyUp);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keyup', this.onKeyUp);
+  }
+
+  onKeyUp = (event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
+      this.onClose();
+    }
+  };
+
   onClose = () => {
     this.setState({ isOpen: false });
   };

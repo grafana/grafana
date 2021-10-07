@@ -11,6 +11,10 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
+// For now we are using a Grafana fork of alertmanager until the ability to bypass label name/key validation
+// is merged into upstream (2021-10-01).
+replace github.com/prometheus/alertmanager => github.com/grafana/alertmanager v0.21.1-0.20210929114340-613e5cc2a4ee
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.4.0

@@ -121,7 +121,7 @@ export function ResourcePicker(props: Props) {
       <TabContent>
         {tabs[0].active && (
           <div className={styles.tabContent}>
-            <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
+            <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
             <Input placeholder="Search" onChange={onChangeSearch} />
             {filteredIndex ? (
               <div className={styles.cardsWrapper}>
