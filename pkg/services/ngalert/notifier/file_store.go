@@ -90,6 +90,11 @@ func (fileStore *FileStore) WriteFileToDisk(fn string, content []byte) error {
 	return os.WriteFile(fileStore.pathFor(fn), content, 0644)
 }
 
+// CleanUp will remove the working directory from disk
+func (fileStore *FileStore) CleanUp() error {
+	return os.RemoveAll(fileStore.workingDirPath)
+}
+
 func (fileStore *FileStore) pathFor(fn string) string {
 	return filepath.Join(fileStore.workingDirPath, fn)
 }

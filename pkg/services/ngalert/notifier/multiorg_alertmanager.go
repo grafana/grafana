@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -218,7 +217,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
 		// Cleanup all the remaining resources from this alertmanager.
-		moa.cleanUpDir(orgID)
+		if err := am.fileStore.CleanUp(); err != nil {
+			moa.logger.Warn("unable to cleanup filestore", "org", orgID, "err", "err")
+		}
 	}
 
 	// We look for orphan directories and remove them. Orphan directories can
@@ -235,21 +236,17 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		if !file.IsDir() {
 			continue
 		}
-		id, err := strconv.ParseInt(file.Name(), 10, 64)
-		_, exists := orgsFound[id]
+		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
+		_, exists := orgsFound[orgID]
 		if err == nil && !exists {
-			moa.logger.Warn("found orphan organization", "orgID", id)
-			moa.cleanUpDir(id)
+			moa.logger.Warn("found orphan organization", "orgID", orgID)
+			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
+			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
+			// Cleanup all the remaining resources from this alertmanager.
+			if err := fileStore.CleanUp(); err != nil {
+				moa.logger.Warn("unable to cleanup filestore", "org", orgID, "err", "err")
+			}
 		}
-	}
-}
-
-// cleanUpResources makes sure that any resources used by the organizations
-// alertmanger are removed from the node.
-func (moa *MultiOrgAlertmanager) cleanUpDir(orgID int64) {
-	dataPath := filepath.Join(moa.settings.DataPath, workingDir, fmt.Sprintf("%d", orgID))
-	if err := os.RemoveAll(dataPath); err != nil {
-		moa.logger.Warn("failed to cleanup resources from filesystem", "org", orgID, "err", err)
 	}
 }
 
