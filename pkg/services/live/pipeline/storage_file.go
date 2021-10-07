@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -36,21 +38,42 @@ func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([
 	return backends, nil
 }
 
-func (f *FileStorage) CreateRemoteWriteBackend(_ context.Context, orgID int64, backend RemoteWriteBackend) (RemoteWriteBackend, error) {
+func (f *FileStorage) GetRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendGetCmd) (RemoteWriteBackend, bool, error) {
 	remoteWriteBackends, err := f.readRemoteWriteBackends()
 	if err != nil {
-		return backend, fmt.Errorf("can't read remote write backends: %w", err)
+		return RemoteWriteBackend{}, false, fmt.Errorf("can't remote write backends: %w", err)
 	}
-	if backend.UID == "" {
-		backend.UID = util.GenerateShortUID()
+	for _, existingBackend := range remoteWriteBackends.Backends {
+		if uidMatch(orgID, cmd.UID, existingBackend) {
+			return existingBackend, true, nil
+		}
 	}
+	return RemoteWriteBackend{}, false, nil
+}
+
+func (f *FileStorage) CreateRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendCreateCmd) (RemoteWriteBackend, error) {
+	remoteWriteBackends, err := f.readRemoteWriteBackends()
+	if err != nil {
+		return RemoteWriteBackend{}, fmt.Errorf("can't read remote write backends: %w", err)
+	}
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+
+	backend := RemoteWriteBackend{
+		OrgId:          orgID,
+		UID:            cmd.UID,
+		Settings:       cmd.Settings,
+		SecureSettings: securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+	}
+
 	ok, reason := backend.Valid()
 	if !ok {
-		return backend, fmt.Errorf("invalid remote write backend: %s", reason)
+		return RemoteWriteBackend{}, fmt.Errorf("invalid remote write backend: %s", reason)
 	}
 	for _, existingBackend := range remoteWriteBackends.Backends {
 		if uidMatch(orgID, backend.UID, existingBackend) {
-			return backend, fmt.Errorf("backend already exists in org: %s", backend.UID)
+			return RemoteWriteBackend{}, fmt.Errorf("backend already exists in org: %s", backend.UID)
 		}
 	}
 	remoteWriteBackends.Backends = append(remoteWriteBackends.Backends, backend)
@@ -58,15 +81,22 @@ func (f *FileStorage) CreateRemoteWriteBackend(_ context.Context, orgID int64, b
 	return backend, err
 }
 
-func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64, backend RemoteWriteBackend) (RemoteWriteBackend, error) {
+func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64, cmd RemoteWriteBackendUpdateCmd) (RemoteWriteBackend, error) {
 	remoteWriteBackends, err := f.readRemoteWriteBackends()
 	if err != nil {
-		return backend, fmt.Errorf("can't read channel rules: %w", err)
+		return RemoteWriteBackend{}, fmt.Errorf("can't read remote write backends: %w", err)
+	}
+
+	backend := RemoteWriteBackend{
+		OrgId:          orgID,
+		UID:            cmd.UID,
+		Settings:       cmd.Settings,
+		SecureSettings: securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
 	}
 
 	ok, reason := backend.Valid()
 	if !ok {
-		return backend, fmt.Errorf("invalid channel rule: %s", reason)
+		return RemoteWriteBackend{}, fmt.Errorf("invalid channel rule: %s", reason)
 	}
 
 	index := -1
@@ -80,14 +110,18 @@ func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64,
 	if index > -1 {
 		remoteWriteBackends.Backends[index] = backend
 	} else {
-		return f.CreateRemoteWriteBackend(ctx, orgID, backend)
+		return f.CreateRemoteWriteBackend(ctx, orgID, RemoteWriteBackendCreateCmd{
+			UID:            cmd.UID,
+			Settings:       cmd.Settings,
+			SecureSettings: cmd.SecureSettings,
+		})
 	}
 
 	err = f.saveRemoteWriteBackends(orgID, remoteWriteBackends)
 	return backend, err
 }
 
-func (f *FileStorage) DeleteRemoteWriteBackend(_ context.Context, orgID int64, uid string) error {
+func (f *FileStorage) DeleteRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendDeleteCmd) error {
 	remoteWriteBackends, err := f.readRemoteWriteBackends()
 	if err != nil {
 		return fmt.Errorf("can't read remote write backends: %w", err)
@@ -95,7 +129,7 @@ func (f *FileStorage) DeleteRemoteWriteBackend(_ context.Context, orgID int64, u
 
 	index := -1
 	for i, existingBackend := range remoteWriteBackends.Backends {
-		if uidMatch(orgID, uid, existingBackend) {
+		if uidMatch(orgID, cmd.UID, existingBackend) {
 			index = i
 			break
 		}

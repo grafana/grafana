@@ -1004,15 +1004,19 @@ type DryRunRuleStorage struct {
 	ChannelRules []pipeline.ChannelRule
 }
 
-func (s *DryRunRuleStorage) CreateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackend) (pipeline.RemoteWriteBackend, error) {
+func (s *DryRunRuleStorage) GetRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendGetCmd) (pipeline.RemoteWriteBackend, bool, error) {
+	return pipeline.RemoteWriteBackend{}, false, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) CreateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendCreateCmd) (pipeline.RemoteWriteBackend, error) {
 	return pipeline.RemoteWriteBackend{}, errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) UpdateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackend) (pipeline.RemoteWriteBackend, error) {
+func (s *DryRunRuleStorage) UpdateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendUpdateCmd) (pipeline.RemoteWriteBackend, error) {
 	return pipeline.RemoteWriteBackend{}, errors.New("not implemented by dry run rule storage")
 }
 
-func (s *DryRunRuleStorage) DeleteRemoteWriteBackend(_ context.Context, _ int64, _ string) error {
+func (s *DryRunRuleStorage) DeleteRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackendDeleteCmd) error {
 	return errors.New("not implemented by dry run rule storage")
 }
 
@@ -1158,9 +1162,13 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 
 // HandleRemoteWriteBackendsListHTTP ...
 func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
-	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
+	backends, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get remote write backends", err)
+	}
+	result := make([]pipeline.RemoteWriteBackendDto, 0, len(backends))
+	for _, b := range backends {
+		result = append(result, pipeline.RemoteWriteBackendToDto(b))
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
 		"remoteWriteBackends": result,
@@ -1173,17 +1181,17 @@ func (g *GrafanaLive) HandleRemoteWriteBackendsPostHTTP(c *models.ReqContext) re
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var b pipeline.RemoteWriteBackend
-	err = json.Unmarshal(body, &b)
+	var cmd pipeline.RemoteWriteBackendCreateCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
 	}
-	result, err := g.channelRuleStorage.CreateRemoteWriteBackend(c.Req.Context(), c.OrgId, b)
+	result, err := g.channelRuleStorage.CreateRemoteWriteBackend(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create remote write backend", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
-		"remoteWriteBackend": result,
+		"remoteWriteBackend": pipeline.RemoteWriteBackendToDto(result),
 	})
 }
 
@@ -1193,15 +1201,32 @@ func (g *GrafanaLive) HandleRemoteWriteBackendsPutHTTP(c *models.ReqContext) res
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var b pipeline.RemoteWriteBackend
-	err = json.Unmarshal(body, &b)
+	var cmd pipeline.RemoteWriteBackendUpdateCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
 	}
-	if b.UID == "" {
+	if cmd.UID == "" {
 		return response.Error(http.StatusBadRequest, "UID required", nil)
 	}
-	result, err := g.channelRuleStorage.UpdateRemoteWriteBackend(c.Req.Context(), c.OrgId, b)
+	existingBackend, ok, err := g.channelRuleStorage.GetRemoteWriteBackend(c.Req.Context(), c.OrgId, pipeline.RemoteWriteBackendGetCmd{
+		UID: cmd.UID,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get remote write backend", err)
+	}
+	if ok {
+		if cmd.SecureSettings == nil {
+			cmd.SecureSettings = map[string]string{}
+		}
+		secureJSONData := existingBackend.SecureSettings.Decrypt()
+		for k, v := range secureJSONData {
+			if _, ok := cmd.SecureSettings[k]; !ok {
+				cmd.SecureSettings[k] = v
+			}
+		}
+	}
+	result, err := g.channelRuleStorage.UpdateRemoteWriteBackend(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update remote write backend", err)
 	}
@@ -1216,15 +1241,15 @@ func (g *GrafanaLive) HandleRemoteWriteBackendsDeleteHTTP(c *models.ReqContext) 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
-	var b pipeline.RemoteWriteBackend
-	err = json.Unmarshal(body, &b)
+	var cmd pipeline.RemoteWriteBackendDeleteCmd
+	err = json.Unmarshal(body, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
 	}
-	if b.UID == "" {
+	if cmd.UID == "" {
 		return response.Error(http.StatusBadRequest, "UID required", nil)
 	}
-	err = g.channelRuleStorage.DeleteRemoteWriteBackend(c.Req.Context(), c.OrgId, b.UID)
+	err = g.channelRuleStorage.DeleteRemoteWriteBackend(c.Req.Context(), c.OrgId, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete remote write backend", err)
 	}

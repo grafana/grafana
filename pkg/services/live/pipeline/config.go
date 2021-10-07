@@ -2,8 +2,10 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
@@ -145,10 +147,50 @@ func typeRegistered(entityType string, registry []EntityInfo) bool {
 	return false
 }
 
+func RemoteWriteBackendToDto(b RemoteWriteBackend) RemoteWriteBackendDto {
+	secureFields := make(map[string]bool, len(b.SecureSettings))
+	for k := range b.SecureSettings {
+		secureFields[k] = true
+	}
+	return RemoteWriteBackendDto{
+		UID:          b.UID,
+		Settings:     b.Settings,
+		SecureFields: secureFields,
+	}
+}
+
+type RemoteWriteBackendDto struct {
+	UID          string              `json:"uid"`
+	Settings     RemoteWriteSettings `json:"settings"`
+	SecureFields map[string]bool     `json:"secureFields"`
+}
+
+type RemoteWriteBackendGetCmd struct {
+	UID string `json:"uid"`
+}
+
+type RemoteWriteBackendCreateCmd struct {
+	UID            string              `json:"uid"`
+	Settings       RemoteWriteSettings `json:"settings"`
+	SecureSettings map[string]string   `json:"secureSettings"`
+}
+
+// TODO: add version field later.
+type RemoteWriteBackendUpdateCmd struct {
+	UID            string              `json:"uid"`
+	Settings       RemoteWriteSettings `json:"settings"`
+	SecureSettings map[string]string   `json:"secureSettings"`
+}
+
+type RemoteWriteBackendDeleteCmd struct {
+	UID string `json:"uid"`
+}
+
 type RemoteWriteBackend struct {
-	OrgId    int64               `json:"-"`
-	UID      string              `json:"uid"`
-	Settings RemoteWriteSettings `json:"settings"`
+	OrgId          int64                         `json:"-"`
+	UID            string                        `json:"uid"`
+	Settings       RemoteWriteSettings           `json:"settings"`
+	SecureSettings securejsondata.SecureJsonData `json:"secureSettings"`
 }
 
 func (r RemoteWriteBackend) Valid() (bool, string) {
@@ -161,7 +203,7 @@ func (r RemoteWriteBackend) Valid() (bool, string) {
 	if r.Settings.User == "" {
 		return false, "user required"
 	}
-	if r.Settings.Password == "" {
+	if string(r.SecureSettings["password"]) == "" {
 		return false, "password required"
 	}
 	return true, ""
@@ -172,8 +214,6 @@ type RemoteWriteSettings struct {
 	Endpoint string `json:"endpoint"`
 	// User is a user for remote write request.
 	User string `json:"user"`
-	// Password for remote write endpoint.
-	Password string `json:"password"`
 }
 
 type RemoteWriteBackends struct {
@@ -220,9 +260,10 @@ type FrameConditionCheckerConfig struct {
 
 type RuleStorage interface {
 	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
-	CreateRemoteWriteBackend(_ context.Context, orgID int64, backend RemoteWriteBackend) (RemoteWriteBackend, error)
-	UpdateRemoteWriteBackend(_ context.Context, orgID int64, backend RemoteWriteBackend) (RemoteWriteBackend, error)
-	DeleteRemoteWriteBackend(_ context.Context, orgID int64, uid string) error
+	GetRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendGetCmd) (RemoteWriteBackend, bool, error)
+	CreateRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendCreateCmd) (RemoteWriteBackend, error)
+	UpdateRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendUpdateCmd) (RemoteWriteBackend, error)
+	DeleteRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendDeleteCmd) error
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
 	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
 	UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
@@ -418,10 +459,14 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
+		password, ok := remoteWriteBackend.SecureSettings.DecryptedValue("password")
+		if !ok {
+			return nil, errors.New("password not found")
+		}
 		return NewRemoteWriteFrameOutput(
 			remoteWriteBackend.Settings.Endpoint,
 			remoteWriteBackend.Settings.User,
-			remoteWriteBackend.Settings.Password,
+			password,
 			config.RemoteWriteOutputConfig.SampleMilliseconds,
 		), nil
 	case FrameOutputTypeChangeLog:
