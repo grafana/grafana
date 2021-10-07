@@ -14,6 +14,7 @@ systemctl edit grafana-server.service
 Add these additional settings to grant the `CAP_NET_BIND_SERVICE` capability. To read more about capabilities, see [the manual page on capabilities.](https://man7.org/linux/man-pages/man7/capabilities.7.html)
 
 ```
+[Service]
 # Give the CAP_NET_BIND_SERVICE capability
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 AmbientCapabilities=CAP_NET_BIND_SERVICE
