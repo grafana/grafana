@@ -207,7 +207,7 @@
     "sass": "1.32.13",
     "sass-lint": "1.12.1",
     "sass-loader": "12.1.0",
-    "sinon": "8.1.1",
+    "sinon": "11.1.2",
     "style-loader": "3.2.1",
     "terser-webpack-plugin": "5.1.4",
     "testing-library-selector": "^0.1.3",
