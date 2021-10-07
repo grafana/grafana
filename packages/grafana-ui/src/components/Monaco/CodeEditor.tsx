@@ -86,6 +86,13 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   };
 
+  onSave = () => {
+    const { onSave } = this.props;
+    if (onSave) {
+      onSave(this.getEditorValue());
+    }
+  };
+
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
     const { language, theme, getSuggestions, onBeforeEditorMount } = this.props;
@@ -99,15 +106,10 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { onSave, onEditorDidMount } = this.props;
+    const { onEditorDidMount } = this.props;
     this.getEditorValue = () => editor.getValue();
 
-    if (onSave) {
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
-        onSave(this.getEditorValue());
-      });
-    }
-
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, this.onSave);
     const languagePromise = this.loadCustomLanguage();
 
     if (onEditorDidMount) {
