@@ -1,3 +1,4 @@
++++
 title = "What's new in Grafana v8.2"
 description = "Feature and improvement highlights for Grafana v8.2"
 keywords = ["grafana", "new", "documentation", "8.2", "release notes"]
@@ -5,7 +6,6 @@ weight = -33
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-2/"]
 [_build]
 list = false
-
 +++
 
 # What’s new in Grafana v8.2
@@ -16,7 +16,7 @@ The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog
 
 Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the [release notes](https://grafana.com/docs/grafana/next/release-notes/release-notes-8-2-0/) and complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 # OSS
 
@@ -30,7 +30,7 @@ We’ve taken our first, measured but important step towards improving the acces
 
 ## Dashboards
 
-The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time picker. This option enables fiscal quarters as time ranges, which can be helpful for business-focused and executive dashboards in addition to many other common use cases. Please see the [time range controls documentation].(https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information.
+The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time picker. This option enables fiscal quarters as time ranges, which can be helpful for business-focused and executive dashboards in addition to many other common use cases. Please see the [time range controls documentation](https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information.
 
 {{< figure src="/static/img/docs/time-range-controls/fiscal_year-8-2.png" max-width="1200px" caption="Fiscal Year Time Range Settings" >}}
 
@@ -42,9 +42,11 @@ We have continued to improve how you manage your plugins within Grafana. The new
 
 ## Grafana 8 Alerting
 
-We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This release includes significant improvements including an AlertManager notification panel allowing users to explore alerts via a dashboard panel. We’ve also added custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on enabling the unified alerting in your instance of Grafana.
+We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This update includes the addition of a UI to edit the Cortex/Loki namespace, edit the alert group name, and edit the alert group evaluation interval. We've also added a Test button to test an alert notification contact point. There's even more to explore here including custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on how you can enable the unified alerting system in your instance of Grafana.
 
-{{< figure src="/static/img/docs/alerting/unified/alert-manager-panel-alpha.png" max-width="1200px" caption="Alert manager panel" >}}
+## Image Renderer performance improvements and measurement
+
+You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. Use these images for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation](https://grafana.com/docs/grafana/next/image-rendering/#rendering-mode) to help you configure it for the best mix of performance and resource usage. Tests show that we have reduced image load time from the 95th percentile of 10 seconds to less than 3 seconds under normal load.
 
 # Grafana Enterprise
 
@@ -71,7 +73,3 @@ Usage Insights Logs contain valuable information about user dashboard visits, qu
 Reports offer a powerful way to deliver insights directly to your email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful when combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. To learn more, see the [reporting documentation](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
 
 {{< figure src="/static/img/docs/enterprise/enterprise-report-from-share-8-2.png" max-width="1200px" caption="Create a report from the dashboard share dialogue" >}}
-
-## Image Renderer performance improvements and measurement
-
-You can use Grafana’s image renderer to generate JPEG and PDF images of panels and dashboards. Use these images for alert notifications, PDF exports, and reports sent by Grafana. We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation](https://grafana.com/docs/grafana/next/image-rendering/#rendering-mode) to help you configure it for the best mix of performance and resource usage. Tests show that we have reduced image load time from the 95th percentile of 10 seconds to less than 3 seconds under normal load.

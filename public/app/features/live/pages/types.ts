@@ -9,9 +9,6 @@ export interface Processor extends RuleSetting {
 
 export interface Output extends RuleSetting {
   [t: string]: any;
-  multiple?: {
-    outputs: Output[];
-  };
 }
 
 export interface RuleSetting<T = any> {
@@ -20,8 +17,8 @@ export interface RuleSetting<T = any> {
 }
 export interface RuleSettings {
   converter?: Converter;
-  processor?: Processor;
-  output?: Output;
+  frameProcessors?: Processor[];
+  frameOutputs?: Output[];
 }
 
 export interface Rule {
@@ -38,22 +35,22 @@ export interface GrafanaCloudBackend {
   settings: any;
 }
 
-export type RuleType = 'converter' | 'processor' | 'output';
+export type RuleType = 'converter' | 'frameProcessors' | 'frameOutputs';
 
 export interface PipelineListOption {
   type: string;
   description: string;
-  example: object;
+  example?: object;
 }
 export interface EntitiesTypes {
   converters: PipelineListOption[];
-  processors: PipelineListOption[];
-  outputs: PipelineListOption[];
+  frameProcessors: PipelineListOption[];
+  frameOutputs: PipelineListOption[];
 }
 
 export interface PipeLineEntitiesInfo {
   converter: SelectableValue[];
-  processor: SelectableValue[];
-  output: SelectableValue[];
+  frameProcessors: SelectableValue[];
+  frameOutputs: SelectableValue[];
   getExample: (rule: RuleType, type: string) => object;
 }

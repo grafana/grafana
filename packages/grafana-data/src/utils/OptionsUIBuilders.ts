@@ -1,5 +1,5 @@
 import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
-import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
@@ -17,6 +17,7 @@ import {
   unitOverrideProcessor,
   FieldNamePickerConfigSettings,
 } from '../field';
+import { PanelOptionsSupplier } from '../panel/PanelPlugin';
 
 /**
  * Fluent API for declarative creation of field config option editors
@@ -129,6 +130,53 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 }
 
+export interface NestedValueAccess {
+  getValue: (path: string) => any;
+  onChange: (path: string, value: any) => void;
+}
+export interface NestedPanelOptions<TSub = any> {
+  path: string;
+  category?: string[];
+  defaultValue?: TSub;
+  build: PanelOptionsSupplier<TSub>;
+  values?: (parent: NestedValueAccess) => NestedValueAccess;
+}
+
+export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, any, any, any> {
+  path = '';
+  category?: string[];
+  defaultValue?: TSub;
+  id = 'nested-panel-options';
+  name = 'nested';
+  editor = () => null;
+
+  constructor(public cfg: NestedPanelOptions<TSub>) {
+    this.path = cfg.path;
+    this.category = cfg.category;
+    this.defaultValue = cfg.defaultValue;
+  }
+
+  getBuilder = () => {
+    return this.cfg.build;
+  };
+
+  getNestedValueAccess = (parent: NestedValueAccess) => {
+    const values = this.cfg.values;
+    if (values) {
+      return values(parent);
+    }
+    // by default prefix the path
+    return {
+      getValue: (path: string) => parent.getValue(`${this.path}.${path}`),
+      onChange: (path: string, value: any) => parent.onChange(`${this.path}.${path}`, value),
+    };
+  };
+}
+
+export function isNestedPanelOptions(item: any): item is NestedPanelOptionsBuilder {
+  return item.id === 'nested-panel-options';
+}
+
 /**
  * Fluent API for declarative creation of panel options
  */
@@ -137,6 +185,11 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   StandardEditorProps,
   PanelOptionsEditorItem<TOptions>
 > {
+  addNestedOptions<Sub>(opts: NestedPanelOptions<Sub>) {
+    const s = new NestedPanelOptionsBuilder<Sub>(opts);
+    return this.addCustomEditor(s);
+  }
+
   addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
