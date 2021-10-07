@@ -19,7 +19,7 @@ func (w *FileLogWriter) WriteLine(line string) error {
 }
 
 func TestLogFile(t *testing.T) {
-	fileLogWrite := NewFileWriter()
+	fileLogWrite := NewFileHandler()
 	require.NotNil(t, fileLogWrite)
 
 	t.Cleanup(func() {

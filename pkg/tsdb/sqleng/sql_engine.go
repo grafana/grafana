@@ -440,16 +440,17 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 	}
 
 	for i, col := range qm.columnNames {
-		for _, tc := range e.timeColumnNames {
-			if col == tc {
-				qm.timeIndex = i
-				break
+		if qm.Format == dataQueryFormatTable {
+			for _, tc := range e.timeColumnNames {
+				if col == tc {
+					qm.timeIndex = i
+					break
+				}
 			}
-		}
-
-		if qm.Format == dataQueryFormatTable && col == "timeend" {
-			qm.timeEndIndex = i
-			continue
+			if col == "timeend" {
+				qm.timeEndIndex = i
+				continue
+			}
 		}
 
 		switch col {
