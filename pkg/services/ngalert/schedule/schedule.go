@@ -491,8 +491,17 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		return nil
 	}
 
+	retryIfError := func(f func(attempt int64) error) {
+		var attempt int64
+		for attempt = 0; attempt < sch.maxAttempts; attempt++ {
+			err := f(attempt)
+			if err == nil {
+				return
+			}
+		}
+	}
+
 	evalRunning := false
-	var attempt int64
 	var currentRule *models.AlertRule
 	for {
 		select {
@@ -508,22 +517,18 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					sch.evalApplied(key, ctx.now)
 				}()
 
-				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
+				retryIfError(func(attempt int64) error {
 					// fetch latest alert rule version
 					if currentRule == nil || currentRule.Version < ctx.version {
 						newRule, err := updateRule()
 						if err != nil {
-							continue
+							return err
 						}
 						currentRule = newRule
 						sch.log.Debug("new alert rule version fetched", "title", newRule.Title, "key", key, "version", newRule.Version)
 					}
-
-					err := evaluate(currentRule, attempt, ctx)
-					if err == nil {
-						break
-					}
-				}
+					return evaluate(currentRule, attempt, ctx)
+				})
 			}()
 		case <-stopCh:
 			sch.stopApplied(key)
