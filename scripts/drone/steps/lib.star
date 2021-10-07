@@ -103,6 +103,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                     'mv grafana-enterprise /tmp/',
                     '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
                     'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
+                    'mv /tmp/grafana-enterprise/infra_config.json infra_config.json',
                     'mkdir bin',
                     'mv /tmp/grabpl bin/'
                 ] + common_cmds,
@@ -807,6 +808,25 @@ def push_to_deployment_tools_step(edition, is_downstream=False):
             'github_token': from_secret(github_token),
             'images_file': './deployment_tools_config.json',
             'docker_tag_file': './dist/grafana.version'
+        },
+    }
+
+def push_to_infra_step(edition, is_downstream=False):
+    if edition != 'enterprise' or not is_downstream:
+        return None
+
+    return {
+        'name': 'push-to-infra',
+        'image': deploy_docker_image,
+        'depends_on': [
+            'build-docker-images',
+        ],
+        'settings': {
+            'github_token': from_secret(github_token),
+            'images_file': './infra_config.json',
+            'docker_tag_file': './dist/grafana.version',
+            'github_repo': 'hosted-grafana',
+            'git_ref': 'main'
         },
     }
 

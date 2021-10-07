@@ -1135,6 +1135,7 @@ steps:
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mv /tmp/grafana-enterprise/infra_config.json infra_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2082,6 +2083,7 @@ steps:
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mv /tmp/grafana-enterprise/infra_config.json infra_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2994,6 +2996,7 @@ steps:
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mv /tmp/grafana-enterprise/infra_config.json infra_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -3542,6 +3545,6 @@ get:
 
 ---
 kind: signature
-hmac: 5237fccbd3eb1fb753ffe2d52c75559311dc57df6b8875b24246cfc266d5895e
+hmac: 36cd57a7dc602c4e27d244a9624e76f5c4792bc712d38e88159d1753e80ac564
 
 ...

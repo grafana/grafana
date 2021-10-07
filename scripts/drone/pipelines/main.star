@@ -29,6 +29,7 @@ load(
     'release_canary_npm_packages_step',
     'upload_packages_step',
     'push_to_deployment_tools_step',
+    'push_to_infra_step',
     'publish_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
@@ -100,6 +101,7 @@ def get_steps(edition, is_downstream=False):
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         push_to_deployment_tools_step(edition=edition, is_downstream=is_downstream),
+        push_to_infra_step(edition=edition, is_downstream=is_downstream),
         upload_cdn_step(edition=edition)
     ])
 
