@@ -6,6 +6,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
   dateMath,
   DateTime,
   FieldType,
@@ -20,11 +21,21 @@ import { createGraphFrames } from './graphTransform';
 import { JaegerQuery } from './types';
 import { convertTagsLogfmt } from './util';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
-export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
+export interface JaegerJsonData extends DataSourceJsonData {
+  nodeGraph?: NodeGraphOptions;
+}
+
+export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
-  constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
+  nodeGraph?: NodeGraphOptions;
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     super(instanceSettings);
+    this.nodeGraph = instanceSettings.jsonData.nodeGraph;
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
@@ -47,8 +58,12 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
           if (!traceData) {
             return { data: [emptyTraceDataFrame] };
           }
+          let data = [createTraceFrame(traceData)];
+          if (this.nodeGraph?.enabled) {
+            data.push(...createGraphFrames(traceData));
+          }
           return {
-            data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
+            data,
           };
         })
       );
@@ -61,7 +76,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
       try {
         const traceData = JSON.parse(this.uploadedJson as string).data[0];
-        return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
+        let data = [createTraceFrame(traceData)];
+        if (this.nodeGraph?.enabled) {
+          data.push(...createGraphFrames(traceData));
+        }
+        return of({ data });
       } catch (error) {
         return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
       }

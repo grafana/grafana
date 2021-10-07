@@ -102,6 +102,10 @@ require (
 	github.com/yudai/gojsondiff v1.0.0
 	go.opentelemetry.io/collector v0.31.0
 	go.opentelemetry.io/collector/model v0.31.0
+	go.opentelemetry.io/otel v1.0.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
+	go.opentelemetry.io/otel/sdk v1.0.0
+	go.opentelemetry.io/otel/trace v1.0.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f

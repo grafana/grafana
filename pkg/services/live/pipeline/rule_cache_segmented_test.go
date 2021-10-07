@@ -21,9 +21,11 @@ func (t *testBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule
 			Pattern: "stream/telegraf/:metric",
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/telegraf/:metric/:extra",
-			Outputter: NewRedirectOutput(RedirectOutputConfig{}),
+			OrgId:   1,
+			Pattern: "stream/telegraf/:metric/:extra",
+			FrameOutputters: []FrameOutputter{
+				NewRedirectFrameOutput(RedirectOutputConfig{}),
+			},
 		},
 		{
 			OrgId:     1,
@@ -48,7 +50,7 @@ func TestStorage_Get(t *testing.T) {
 	rule, ok, err = s.Get(1, "stream/telegraf/mem/rss")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, OutputTypeRedirect, rule.Outputter.Type())
+	require.Equal(t, FrameOutputTypeRedirect, rule.FrameOutputters[0].Type())
 
 	rule, ok, err = s.Get(1, "stream/booms")
 	require.NoError(t, err)
