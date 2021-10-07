@@ -50,7 +50,6 @@ export function PromExemplarField({ datasource, onChange, query }: Props) {
             disabled={!!error}
             className={iconButtonStyles}
             onClick={() => {
-              console.log(query.exemplar);
               onChange(!query.exemplar);
             }}
           />
