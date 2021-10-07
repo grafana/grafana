@@ -104,9 +104,10 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewRemoteWriteFrameOutput(RemoteWriteConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					Endpoint:           os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					User:               os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					Password:           os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+					SampleMilliseconds: 1000,
 				}),
 			},
 			Subscribers: []Subscriber{

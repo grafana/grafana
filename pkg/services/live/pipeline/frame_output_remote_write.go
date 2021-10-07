@@ -14,6 +14,8 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 )
 
+const flushInterval = 15 * time.Second
+
 type RemoteWriteConfig struct {
 	// Endpoint to send streaming frames to.
 	Endpoint string `json:"endpoint"`
@@ -21,6 +23,14 @@ type RemoteWriteConfig struct {
 	User string `json:"user"`
 	// Password for remote write endpoint.
 	Password string `json:"password"`
+	// SampleMilliseconds allow defining an interval to sample points inside a channel
+	// when outputting to remote write endpoint (on __name__ label basis). For example
+	// when having a 20Hz stream and SampleMilliseconds 1000 then only one point in a
+	// second will be sent to remote write endpoint. This reduces data resolution of course.
+	// If not set - then no down-sampling will be performed. If SampleMilliseconds is
+	// greater than flushInterval then each flush will include a point as we only keeping
+	// track of timestamps in terms of each individual flush at the moment.
+	SampleMilliseconds int64 `json:"sampleMilliseconds"`
 }
 
 type RemoteWriteFrameOutput struct {
@@ -48,7 +58,7 @@ func (out *RemoteWriteFrameOutput) Type() string {
 }
 
 func (out *RemoteWriteFrameOutput) flushPeriodically() {
-	for range time.NewTicker(15 * time.Second).C {
+	for range time.NewTicker(flushInterval).C {
 		out.mu.Lock()
 		if len(out.buffer) == 0 {
 			out.mu.Unlock()
@@ -70,8 +80,66 @@ func (out *RemoteWriteFrameOutput) flushPeriodically() {
 	}
 }
 
+func (out *RemoteWriteFrameOutput) sample(timeSeries []prompb.TimeSeries) []prompb.TimeSeries {
+	samples := map[string]prompb.TimeSeries{}
+	timestamps := map[string]int64{}
+
+	for _, ts := range timeSeries {
+		var name string
+
+		for _, label := range ts.Labels {
+			if label.Name == "__name__" {
+				name = label.Value
+				break
+			}
+		}
+
+		sample, ok := samples[name]
+		if !ok {
+			sample = prompb.TimeSeries{}
+		}
+
+		lastTimestamp := timestamps[name]
+
+		// In-place filtering, see https://github.com/golang/go/wiki/SliceTricks#filter-in-place.
+		n := 0
+		for _, s := range ts.Samples {
+			if lastTimestamp == 0 || s.Timestamp > lastTimestamp+out.config.SampleMilliseconds {
+				ts.Samples[n] = s
+				n++
+				lastTimestamp = s.Timestamp
+			}
+		}
+		filteredSamples := ts.Samples[:n]
+
+		timestamps[name] = lastTimestamp
+
+		sample.Labels = ts.Labels
+		sample.Samples = append(sample.Samples, filteredSamples...)
+		samples[name] = sample
+	}
+	var toReturn []prompb.TimeSeries
+	for _, ts := range samples {
+		toReturn = append(toReturn, ts)
+	}
+	return toReturn
+}
+
 func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
-	logger.Debug("Remote write flush", "num time series", len(timeSeries))
+	numSamples := 0
+	for _, ts := range timeSeries {
+		numSamples += len(ts.Samples)
+	}
+	logger.Debug("Remote write flush", "numTimeSeries", len(timeSeries), "numSamples", numSamples)
+
+	if out.config.SampleMilliseconds > 0 {
+		timeSeries = out.sample(timeSeries)
+		numSamples = 0
+		for _, ts := range timeSeries {
+			numSamples += len(ts.Samples)
+		}
+		logger.Debug("After down-sampling", "numTimeSeries", len(timeSeries), "numSamples", numSamples)
+	}
 	remoteWriteData, err := remotewrite.TimeSeriesToBytes(timeSeries)
 	if err != nil {
 		return fmt.Errorf("error converting time series to bytes: %v", err)
