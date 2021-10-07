@@ -1,5 +1,6 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
+import { MarkerShapePath } from './utils/regularShapes';
 
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -190,7 +191,7 @@ describe('geomap migrations', () => {
     } as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
-    expect(JSON.stringify(panel)).toStrictEqual(
+    expect(JSON.stringify(panel)).toEqual(
       JSON.stringify({
         id: 2,
         gridPos: {
@@ -242,7 +243,7 @@ describe('geomap migrations', () => {
                 },
                 fillOpacity: 0.4,
                 markerSymbol: {
-                  fixed: 'img/icons/geo/circle.svg',
+                  fixed: MarkerShapePath.Circle,
                   mode: 'fixed',
                 },
                 showLegend: true,
