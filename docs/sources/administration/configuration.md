@@ -53,9 +53,11 @@ Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` 
 
 A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
-## Configure with environment variables
+## Override configuration with environment variables
 
-All options in the configuration file can be overridden using environment variables using the syntax:
+Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
+
+To override an option:
 
 ```bash
 GF_<SectionName>_<KeyName>
