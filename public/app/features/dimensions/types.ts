@@ -90,6 +90,6 @@ export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
 export enum ResourceFolderName {
   Icon = 'img/icons/unicons',
   IOT = 'img/icons/iot',
-  Geo = 'img/icons/geo',
+  Marker = 'img/icons/marker',
   BG = 'img/bg',
 }

@@ -175,7 +175,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 
 const getFolders = (mediaType: 'icon' | 'image') => {
   if (mediaType === 'icon') {
-    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Geo];
+    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
   } else {
     return [ResourceFolderName.BG];
   }
