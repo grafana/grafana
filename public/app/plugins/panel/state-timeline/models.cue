@@ -22,18 +22,18 @@ Panel: {
     lineages: [
         [
             {
-                #TimelineMode: "changes" | "samples" @cuetsy(kind="enum")
-                #TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
+                TimelineMode: "changes" | "samples" @cuetsy(kind="enum")
+                TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
                 PanelOptions: {
                     // FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
-                    mode?: #TimelineMode
+                    mode?: TimelineMode
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
                     showValue: ui.VisibilityMode | *"auto"
                     rowHeight: number | *0.9
                     colWidth?: number
                     mergeValues?: bool | *true
-                    alignValue?: #TimelineValueAlignment | *"left"
+                    alignValue?: TimelineValueAlignment | *"left"
                 }
                 PanelFieldConfig: {
                     ui.HideableFieldConfig

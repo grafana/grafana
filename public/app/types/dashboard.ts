@@ -79,6 +79,7 @@ export interface PanelState {
   pluginId: string;
   plugin?: PanelPlugin;
   angularComponent?: AngularComponent | null;
+  instanceState?: any | null;
 }
 
 export interface DashboardState {

@@ -138,7 +138,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     dragIcon: css`
-      cursor: drag;
+      cursor: grab;
       color: ${theme.colors.textWeak};
       &:hover {
         color: ${theme.colors.text};

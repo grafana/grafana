@@ -1,13 +1,13 @@
 +++
-title = "What's New with Grafana 8 Alerts"
+title = "What's New with Grafana 8 alerts"
 description = "What's New with Grafana 8 Alerts"
 keywords = ["grafana", "alerting", "guide"]
 weight = 112
 +++
 
-# What's New with Grafana 8 Alerts
+# What's New with Grafana 8 alerts
 
-The Alerts released with Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible datasources in one UI and API. You are able to create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible datasources in a single, searchable view.
+The alerts released with Grafana 8.0 centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible datasources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible datasources in a single, searchable view.
 
 ## Multi-dimensional alerting
 

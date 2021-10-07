@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/searchusers"
+
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 
@@ -216,13 +218,15 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	cfg.FeatureToggles["accesscontrol"] = true
 	cfg.Quota.Enabled = false
 
+	bus := bus.GetBus()
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		Bus:           bus.GetBus(),
-		Live:          newTestLive(t),
-		QuotaService:  &quota.QuotaService{Cfg: cfg},
-		RouteRegister: routing.NewRouteRegister(),
-		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
+		Cfg:                cfg,
+		Bus:                bus,
+		Live:               newTestLive(t),
+		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		RouteRegister:      routing.NewRouteRegister(),
+		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
+		searchUsersService: searchusers.ProvideUsersService(bus),
 	}
 
 	sc := setupScenarioContext(t, url)

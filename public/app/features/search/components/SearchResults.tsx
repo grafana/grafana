@@ -69,9 +69,9 @@ export const SearchResults: FC<Props> = memo(
                   // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                   // And without this wrapper there is no room for that margin
                   return (
-                    <div style={style}>
+                    <li style={style}>
                       <SearchItem key={item.id} {...itemProps} item={item} />
-                    </div>
+                    </li>
                   );
                 }}
               </FixedSizeList>

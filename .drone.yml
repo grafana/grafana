@@ -17,12 +17,11 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -42,10 +41,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -65,7 +75,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -265,12 +275,11 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -302,10 +311,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -325,7 +345,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -603,7 +623,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -652,11 +672,10 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
+  - make gen-go
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -740,13 +759,12 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -766,10 +784,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -789,7 +818,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -1039,7 +1068,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1089,7 +1118,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1109,10 +1138,9 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -1134,10 +1162,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -1157,7 +1196,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -1196,7 +1235,6 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -1504,7 +1542,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1572,12 +1610,11 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1680,13 +1717,12 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -1706,10 +1742,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -1729,7 +1776,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -1968,7 +2015,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2018,7 +2065,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2038,10 +2085,9 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -2063,10 +2109,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -2086,7 +2143,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -2125,7 +2182,6 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -2427,7 +2483,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout main
@@ -2495,12 +2551,11 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2603,12 +2658,11 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -2628,10 +2682,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -2651,7 +2716,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -2866,7 +2931,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2912,7 +2977,7 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2932,9 +2997,8 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
+  - make gen-go
   - yarn install --frozen-lockfile --no-progress
-  environment:
-    DOCKERIZE_VERSION: 0.6.1
   depends_on:
   - clone
 
@@ -2956,10 +3020,21 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
+- name: lint-frontend
+  image: grafana/build-container:1.4.3
+  commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  environment:
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
@@ -2979,7 +3054,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - lint-backend
+  - lint-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.3
@@ -3015,7 +3090,6 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.3
   commands:
-  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -3324,7 +3398,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.8/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -3468,6 +3542,6 @@ get:
 
 ---
 kind: signature
-hmac: 9d5ee57b9eff4ba3df8f70c8f7625c2ff1e07c2ce438182a97f81e6e8dbbb1dc
+hmac: 5237fccbd3eb1fb753ffe2d52c75559311dc57df6b8875b24246cfc266d5895e
 
 ...
