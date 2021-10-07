@@ -28,9 +28,13 @@ export function createLokiLogsVolumeProvider(
   logsVolumeRequest.targets = logsVolumeRequest.targets
     .filter((target) => target.expr && !isMetricsQuery(target.expr))
     .map((target) => {
+      let expr = target.expr;
+      if (expr.includes('logfmt')) {
+        expr += ' |  __error__!="LogfmtParserErr"';
+      }
       return {
         ...target,
-        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
       };
     });
 
