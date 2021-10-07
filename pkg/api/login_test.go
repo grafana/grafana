@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -336,11 +338,9 @@ func TestLoginPostRedirect(t *testing.T) {
 	hs.Cfg.CookieSecure = true
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
-		cmd := dtos.LoginCommand{
-			User:     "admin",
-			Password: "admin",
-		}
-		return hs.LoginPost(c, cmd)
+		c.Req.Header.Set("Content-Type", "application/json")
+		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
+		return hs.LoginPost(c)
 	})
 
 	bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
@@ -614,11 +614,10 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 	}
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
-		cmd := dtos.LoginCommand{
-			User:     "admin",
-			Password: "admin",
-		}
-		return hs.LoginPost(c, cmd)
+		c.Req.Header.Set("Content-Type", "application/json")
+		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
+		x := hs.LoginPost(c)
+		return x
 	})
 
 	testHook := loginHookTest{}
