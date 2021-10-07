@@ -30,7 +30,7 @@ Query parameters:
 - **excludeUid** – Element UID to exclude from search results.
 - **folderFilter** – A comma separated list of folder ID(s) to filter the elements by.
 - **perPage** – Limit the number of results per page; default is 100.
-- **page** – Use this parameter to access hits beyond `perPage`. Numbering starts at 1. `perPage` param acts as page size.
+- **page** – The page for a set of records, given that only `perPage` records are returned at a time. Numbering starts at `1`.
 
 **Example Request**:
 
@@ -98,7 +98,7 @@ Status Codes:
 
 `GET /api/library-elements/:uid`
 
-Will return the library-element given the uid.
+Returns a library element with the given UID.
 
 **Example Request**:
 
