@@ -27,7 +27,6 @@ import (
 var (
 	ErrNoAlertmanagerForOrg = fmt.Errorf("Alertmanager does not exist for this organization")
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
-	once                    sync.Once
 )
 
 type MultiOrgAlertmanager struct {
@@ -219,46 +218,37 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
 		// Cleanup all the remaining resources from this alertmanager.
-		moa.cleanUpResources(orgID)
+		moa.cleanUpDir(orgID)
 	}
 
 	// We look for orphan directories once at startup and remove them.
 	// orphan directories can occur when some organization is deleted
 	// and the node running Grafana is shutdown before this sync is
 	// executed for the next time.
-	once.Do(func() {
-		dataDir := filepath.Join(moa.settings.DataPath, workingDir)
-		files, err := ioutil.ReadDir(dataDir)
-		if err != nil {
-			moa.logger.Warn("unable to read directory to find orphan directories",
-				"dir", dataDir, "err", err)
-			return
+	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
+	files, err := ioutil.ReadDir(dataDir)
+	if err != nil {
+		moa.logger.Warn("unable to read directory to find orphan directories",
+			"dir", dataDir, "err", err)
+		return
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
 		}
-		for _, file := range files {
-			if !file.IsDir() {
-				continue
-			}
-			id, err := strconv.ParseInt(file.Name(), 10, 64)
-			_, exists := orgsFound[id]
-			if err == nil && !exists {
-				moa.logger.Warn("found orphan organization", "orgID", id)
-				moa.cleanUpResources(id)
-			}
+		id, err := strconv.ParseInt(file.Name(), 10, 64)
+		_, exists := orgsFound[id]
+		if err == nil && !exists {
+			moa.logger.Warn("found orphan organization", "orgID", id)
+			moa.cleanUpDir(id)
 		}
-	})
+	}
 }
 
 // cleanUpResources makes sure that any resources used by the organizations
 // alertmanger are removed from the node.
-func (moa *MultiOrgAlertmanager) cleanUpResources(orgID int64) {
-	dataPath := filepath.Join(moa.settings.DataPath, workingDir, strconv.Itoa((int(orgID))))
-	fileStore := NewFileStore(orgID, moa.kvStore, dataPath)
-	if err := fileStore.Delete(context.Background(), silencesFilename); err != nil {
-		moa.logger.Warn("failed to delete file from filestore", "org", orgID, "file", silencesFilename)
-	}
-	if err := fileStore.Delete(context.Background(), notificationLogFilename); err != nil {
-		moa.logger.Warn("failed to delete file from filestore", "org", orgID, "file", notificationLogFilename)
-	}
+func (moa *MultiOrgAlertmanager) cleanUpDir(orgID int64) {
+	dataPath := filepath.Join(moa.settings.DataPath, workingDir, fmt.Sprintf("%d", orgID))
 	if err := os.RemoveAll(dataPath); err != nil {
 		moa.logger.Warn("failed to cleanup resources from filesystem", "org", orgID, "err", err)
 	}

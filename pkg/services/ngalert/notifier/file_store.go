@@ -3,9 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -41,12 +39,6 @@ func NewFileStore(orgID int64, store kvstore.KVStore, workingDirPath string) *Fi
 // If not, it tries to read the database and if there's no file it no-ops.
 // If there is a file in the database, it decodes it and writes to disk for Alertmanager consumption.
 func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (string, error) {
-	// If a file is already present, we'll use that one and eventually save it to the database.
-	// We don't need to do anything else.
-	if fileStore.IsExists(filename) {
-		return fileStore.pathFor(filename), nil
-	}
-
 	// Then, let's attempt to read it from the database.
 	content, exists, err := fileStore.kv.Get(ctx, filename)
 	if err != nil {
@@ -85,20 +77,6 @@ func (fileStore *FileStore) Persist(ctx context.Context, filename string, st Sta
 	}
 
 	return int64(len(bytes)), err
-}
-
-// Delete will remove the file from the filestore.
-func (fileStore *FileStore) Delete(ctx context.Context, filename string) error {
-	if err := fileStore.kv.Del(ctx, filename); err != nil {
-		return err
-	}
-	return os.Remove(fileStore.pathFor(filename))
-}
-
-// IsExists verifies if the file exists or not.
-func (fileStore *FileStore) IsExists(fn string) bool {
-	_, err := os.Stat(fileStore.pathFor(fn))
-	return !errors.Is(err, fs.ErrNotExist)
 }
 
 // WriteFileToDisk writes a file with the provided name and contents to the Alertmanager working directory with the default grafana permission.
