@@ -96,6 +96,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       height: 100%;
+      padding-bottom: 24px;
     `,
   };
 });
