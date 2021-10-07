@@ -19,7 +19,7 @@ import (
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
 	pm plugins.Manager, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
-	oauthTokenService *oauthtoken.Service) *DataSourceProxyService {
+	oauthTokenService *oauthtoken.Service, dsService *datasources.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -27,6 +27,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 		Cfg:                    cfg,
 		HTTPClientProvider:     httpClientProvider,
 		OAuthTokenService:      oauthTokenService,
+		DataSourcesService:     dsService,
 	}
 }
 
@@ -37,6 +38,7 @@ type DataSourceProxyService struct {
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
+	DataSourcesService     *datasources.Service
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
@@ -73,8 +75,10 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 		return
 	}
 
-	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg, p.HTTPClientProvider, p.OAuthTokenService)
+	proxy, err := pluginproxy.NewDataSourceProxy(
+		ds, plugin, c, getProxyPath(c), p.Cfg, p.HTTPClientProvider, p.OAuthTokenService, p.DataSourcesService,
+	)
+
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
