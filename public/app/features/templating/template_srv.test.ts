@@ -15,7 +15,7 @@ variableAdapters.setInit(() => [
 ]);
 
 describe('templateSrv', () => {
-  //silenceConsoleOutput();
+  silenceConsoleOutput();
   let _templateSrv: any;
 
   describe('init', () => {
