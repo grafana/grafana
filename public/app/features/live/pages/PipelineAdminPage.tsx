@@ -13,9 +13,6 @@ function renderOutputTags(key: string, output?: Output): React.ReactNode {
   if (!output?.type) {
     return null;
   }
-  if (output.multiple?.outputs?.length) {
-    return output.multiple?.outputs.map((v, i) => renderOutputTags(`${key}-${i}`, v));
-  }
   return <Tag key={key} name={output.type} />;
 }
 
@@ -47,7 +44,9 @@ export default function PipelineAdminPage() {
   const onRowClick = (event: any) => {
     const pattern = event.target.getAttribute('data-pattern');
     const column = event.target.getAttribute('data-column');
-    if (column) {
+    if (column === 'pattern') {
+      setClickColumn('converter');
+    } else {
       setClickColumn(column);
     }
     setSelectedRule(rules.filter((rule) => rule.pattern === pattern)[0]);
@@ -99,10 +98,14 @@ export default function PipelineAdminPage() {
                     {rule.settings?.converter?.type}
                   </td>
                   <td data-pattern={rule.pattern} data-column="processor">
-                    {rule.settings?.processor?.type}
+                    {rule.settings?.frameProcessors?.map((processor) => (
+                      <span key={rule.pattern + processor.type}>{processor.type}</span>
+                    ))}
                   </td>
                   <td data-pattern={rule.pattern} data-column="output">
-                    {renderOutputTags('out', rule.settings?.output)}
+                    {rule.settings?.frameOutputs?.map((output) => (
+                      <span key={rule.pattern + output.type}>{renderOutputTags('out', output)}</span>
+                    ))}
                   </td>
                   <td>
                     <IconButton name="trash-alt" onClick={() => onRemoveRule(rule.pattern)}></IconButton>

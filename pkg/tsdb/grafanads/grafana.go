@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -86,7 +85,7 @@ func DataSourceModel(orgId int64) *models.DataSource {
 		Type:           "grafana",
 		OrgId:          orgId,
 		JsonData:       simplejson.New(),
-		SecureJsonData: make(securejsondata.SecureJsonData),
+		SecureJsonData: make(map[string][]byte),
 	}
 }
 

@@ -1,4 +1,5 @@
 import { OrgRole } from '.';
+import { SelectableValue } from '@grafana/data';
 
 export interface OrgUser {
   avatarUrl: string;
@@ -106,6 +107,7 @@ export interface UserAdminError {
   body: string;
 }
 
+export type UserFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface UserListAdminState {
   users: UserDTO[];
   query: string;
@@ -113,6 +115,6 @@ export interface UserListAdminState {
   page: number;
   totalPages: number;
   showPaging: boolean;
-  filter: string;
+  filters: UserFilter[];
   isLoading: boolean;
 }

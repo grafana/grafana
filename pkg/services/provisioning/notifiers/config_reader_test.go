@@ -5,10 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -30,7 +32,8 @@ func TestNotificationAsConfig(t *testing.T) {
 	logger := log.New("fake.log")
 
 	Convey("Testing notification as configuration", t, func() {
-		sqlstore.InitTestDB(t)
+		sqlStore := sqlstore.InitTestDB(t)
+		setupBusHandlers(sqlStore)
 
 		for i := 1; i < 5; i++ {
 			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
@@ -52,7 +55,11 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Can read correct properties", func() {
 			_ = os.Setenv("TEST_VAR", "default")
-			cfgProvider := &configReader{log: log.New("test logger")}
+			cfgProvider := &configReader{
+				encryptionService: ossencryption.ProvideService(),
+				log:               log.New("test logger"),
+			}
+
 			cfg, err := cfgProvider.readConfig(correctProperties)
 			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
@@ -125,13 +132,14 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("One configured notification", func() {
 			Convey("no notification in database", func() {
-				dc := newNotificationProvisioner(logger)
+				dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
+
 				err := dc.applyChanges(twoNotificationsConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
 				So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -144,22 +152,22 @@ func TestNotificationAsConfig(t *testing.T) {
 					Uid:   "notifier1",
 					Type:  "slack",
 				}
-				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+				err := sqlStore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				So(err, ShouldBeNil)
 				So(existingNotificationCmd.Result, ShouldNotBeNil)
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
 				So(len(notificationsQuery.Result), ShouldEqual, 1)
 
 				Convey("should update one notification", func() {
-					dc := newNotificationProvisioner(logger)
+					dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
 					err = dc.applyChanges(twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
-					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+					err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
 					So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -177,12 +185,12 @@ func TestNotificationAsConfig(t *testing.T) {
 				})
 			})
 			Convey("Two notifications with is_default", func() {
-				dc := newNotificationProvisioner(logger)
+				dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
 				err := dc.applyChanges(doubleNotificationsConfig)
 				Convey("should both be inserted", func() {
 					So(err, ShouldBeNil)
 					notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
-					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+					err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
 					So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -201,7 +209,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					Uid:   "notifier0",
 					Type:  "slack",
 				}
-				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+				err := sqlStore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				So(err, ShouldBeNil)
 				existingNotificationCmd = models.CreateAlertNotificationCommand{
 					Name:  "channel3",
@@ -209,23 +217,23 @@ func TestNotificationAsConfig(t *testing.T) {
 					Uid:   "notifier3",
 					Type:  "slack",
 				}
-				err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+				err = sqlStore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				So(err, ShouldBeNil)
 
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
 				So(len(notificationsQuery.Result), ShouldEqual, 2)
 
 				Convey("should have two new notifications", func() {
-					dc := newNotificationProvisioner(logger)
+					dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
 					err := dc.applyChanges(twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
 					notificationsQuery = models.GetAllAlertNotificationsQuery{OrgId: 1}
-					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+					err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
 					So(len(notificationsQuery.Result), ShouldEqual, 4)
@@ -249,17 +257,17 @@ func TestNotificationAsConfig(t *testing.T) {
 				Uid:   "notifier2",
 				Type:  "slack",
 			}
-			err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+			err = sqlStore.CreateAlertNotificationCommand(&existingNotificationCmd)
 			So(err, ShouldBeNil)
 
-			dc := newNotificationProvisioner(logger)
+			dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
 			err = dc.applyChanges(correctPropertiesWithOrgName)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
 			}
 
 			notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: existingOrg2.Result.Id}
-			err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+			err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 			So(err, ShouldBeNil)
 			So(notificationsQuery.Result, ShouldNotBeNil)
 			So(len(notificationsQuery.Result), ShouldEqual, 1)
@@ -270,7 +278,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Config doesn't contain required field", func() {
-			dc := newNotificationProvisioner(logger)
+			dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
 			err := dc.applyChanges(noRequiredFields)
 			So(err, ShouldNotBeNil)
 
@@ -283,26 +291,34 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Empty yaml file", func() {
 			Convey("should have not changed repo", func() {
-				dc := newNotificationProvisioner(logger)
+				dc := newNotificationProvisioner(ossencryption.ProvideService(), logger)
 				err := dc.applyChanges(emptyFile)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlStore.GetAllAlertNotifications(&notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldBeEmpty)
 			})
 		})
 
 		Convey("Broken yaml should return error", func() {
-			reader := &configReader{log: log.New("test logger")}
+			reader := &configReader{
+				encryptionService: ossencryption.ProvideService(),
+				log:               log.New("test logger"),
+			}
+
 			_, err := reader.readConfig(brokenYaml)
 			So(err, ShouldNotBeNil)
 		})
 
 		Convey("Skip invalid directory", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
+			cfgProvider := &configReader{
+				encryptionService: ossencryption.ProvideService(),
+				log:               log.New("test logger"),
+			}
+
 			cfg, err := cfgProvider.readConfig(emptyFolder)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -311,17 +327,53 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Unknown notifier should return error", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
+			cfgProvider := &configReader{
+				encryptionService: ossencryption.ProvideService(),
+				log:               log.New("test logger"),
+			}
 			_, err := cfgProvider.readConfig(unknownNotifier)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, `unsupported notification type "nonexisting"`)
 		})
 
 		Convey("Read incorrect properties", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
+			cfgProvider := &configReader{
+				encryptionService: ossencryption.ProvideService(),
+				log:               log.New("test logger"),
+			}
 			_, err := cfgProvider.readConfig(incorrectSettings)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "alert validation error: token must be specified when using the Slack chat API")
 		})
+	})
+}
+
+func setupBusHandlers(sqlStore *sqlstore.SQLStore) {
+	bus.AddHandler("getOrg", func(q *models.GetOrgByNameQuery) error {
+		return sqlstore.GetOrgByName(q)
+	})
+
+	bus.AddHandler("getAlertNotifications", func(q *models.GetAlertNotificationsWithUidQuery) error {
+		return sqlStore.GetAlertNotificationsWithUid(q)
+	})
+
+	bus.AddHandler("createAlertNotification", func(cmd *models.CreateAlertNotificationCommand) error {
+		return sqlStore.CreateAlertNotificationCommand(cmd)
+	})
+
+	bus.AddHandler("updateAlertNotification", func(cmd *models.UpdateAlertNotificationCommand) error {
+		return sqlStore.UpdateAlertNotification(cmd)
+	})
+
+	bus.AddHandler("updateAlertNotification", func(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+		return sqlStore.UpdateAlertNotificationWithUid(cmd)
+	})
+
+	bus.AddHandler("deleteAlertNotification", func(cmd *models.DeleteAlertNotificationCommand) error {
+		return sqlStore.DeleteAlertNotification(cmd)
+	})
+
+	bus.AddHandler("deleteAlertNotification", func(cmd *models.DeleteAlertNotificationWithUidCommand) error {
+		return sqlStore.DeleteAlertNotificationWithUid(cmd)
 	})
 }

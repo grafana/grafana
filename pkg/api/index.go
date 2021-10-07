@@ -123,6 +123,11 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 	}
 
+	if len(appLinks) > 0 {
+		sort.SliceStable(appLinks, func(i, j int) bool {
+			return appLinks[i].Text < appLinks[j].Text
+		})
+	}
 	return appLinks, nil
 }
 
