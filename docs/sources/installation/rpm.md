@@ -170,7 +170,7 @@ sudo systemctl enable grafana-server
 
 #### Serving Grafana on a port < 1024
 
-{{< docs/shared/systemd "bind-net-capabilities.md" >}}
+{{< docs/shared "systemd/bind-net-capabilities.md" >}}
 
 ### Start the server with init.d
 
