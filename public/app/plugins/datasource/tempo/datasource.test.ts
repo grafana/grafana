@@ -12,7 +12,7 @@ import {
 
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { DEFAULT_LIMIT, TempoDatasource, TempoQuery } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -233,7 +233,7 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings = {
+const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: '0',
   type: 'tracing',
@@ -247,7 +247,11 @@ const defaultSettings: DataSourceInstanceSettings = {
     module: '',
     baseUrl: '',
   },
-  jsonData: {},
+  jsonData: {
+    nodeGraph: {
+      enabled: true,
+    },
+  },
 };
 
 const totalsPromMetric = new MutableDataFrame({

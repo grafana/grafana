@@ -6,6 +6,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
@@ -15,11 +16,18 @@ import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
 import { transformResponse } from './utils/transforms';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
-export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
+export interface ZipkinJsonData extends DataSourceJsonData {
+  nodeGraph?: NodeGraphOptions;
+}
+
+export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
-  constructor(private instanceSettings: DataSourceInstanceSettings) {
+  nodeGraph?: NodeGraphOptions;
+  constructor(private instanceSettings: DataSourceInstanceSettings<ZipkinJsonData>) {
     super(instanceSettings);
+    this.nodeGraph = instanceSettings.jsonData.nodeGraph;
   }
 
   query(options: DataQueryRequest<ZipkinQuery>): Observable<DataQueryResponse> {
@@ -31,7 +39,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
 
       try {
         const traceData = JSON.parse(this.uploadedJson as string);
-        return of(responseToDataQueryResponse({ data: traceData }));
+        return of(responseToDataQueryResponse({ data: traceData }, this.nodeGraph?.enabled));
       } catch (error) {
         return of({ error: { message: 'JSON is not valid Zipkin format' }, data: [] });
       }
@@ -39,7 +47,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
 
     if (target.query) {
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(target.query)}`).pipe(
-        map(responseToDataQueryResponse)
+        map((res) => responseToDataQueryResponse(res, this.nodeGraph?.enabled))
       );
     }
     return of(emptyDataQueryResponse);
@@ -75,9 +83,13 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
   }
 }
 
-function responseToDataQueryResponse(response: { data: ZipkinSpan[] }): DataQueryResponse {
+function responseToDataQueryResponse(response: { data: ZipkinSpan[] }, nodeGraph = false): DataQueryResponse {
+  let data = response?.data ? [transformResponse(response?.data)] : [];
+  if (nodeGraph) {
+    data.push(...createGraphFrames(response?.data));
+  }
   return {
-    data: response?.data ? [transformResponse(response?.data), ...createGraphFrames(response?.data)] : [],
+    data,
   };
 }
 
