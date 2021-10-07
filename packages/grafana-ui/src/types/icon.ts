@@ -7,6 +7,7 @@ export const getAvailableIcons = () =>
   [
     'angle-double-down',
     'angle-double-right',
+    'angle-double-up',
     'angle-down',
     'angle-left',
     'angle-right',
@@ -28,6 +29,7 @@ export const getAvailableIcons = () =>
     'book-open',
     'brackets-curly',
     'bug',
+    'building',
     'calculator-alt',
     'calendar-alt',
     'camera',

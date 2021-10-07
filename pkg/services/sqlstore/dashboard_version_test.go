@@ -52,7 +52,7 @@ func TestGetDashboardVersion(t *testing.T) {
 				Uid:   savedDash.Uid,
 			}
 
-			err = GetDashboardCtx(context.Background(), &dashCmd)
+			err = GetDashboard(context.Background(), &dashCmd)
 			So(err, ShouldBeNil)
 			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 			So(eq, ShouldEqual, true)

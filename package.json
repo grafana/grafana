@@ -8,6 +8,7 @@
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js",
+    "check-strict": "./scripts/ci-check-strict.sh",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
@@ -33,8 +34,8 @@
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
     "precommit": "yarn run lint-staged",
-    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
-    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss,js}\" --write",
+    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss,md,mdx}\"",
+    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss,js,md,mdx}\" --write",
     "prestart": "yarn themes:generate",
     "prestart:hot": "yarn themes:generate",
     "prestart:noTsCheck": "yarn themes:generate",
@@ -48,7 +49,7 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
+    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-2/",
@@ -159,7 +160,7 @@
     "es6-shim": "0.35.5",
     "eslint": "7.21.0",
     "eslint-config-prettier": "7.2.0",
-    "eslint-plugin-jsdoc": "31.6.1",
+    "eslint-plugin-jsdoc": "36.1.0",
     "eslint-plugin-lodash": "^7.2.0",
     "eslint-plugin-no-only-tests": "2.4.0",
     "eslint-plugin-prettier": "3.3.1",
@@ -170,7 +171,7 @@
     "expose-loader": "3.0.0",
     "file-loader": "6.2.0",
     "fork-ts-checker-webpack-plugin": "6.3.2",
-    "fs-extra": "9.1.0",
+    "fs-extra": "10.0.0",
     "gaze": "1.1.3",
     "glob": "7.1.6",
     "html-loader": "2.1.2",
@@ -186,7 +187,6 @@
     "lerna": "^4.0.0",
     "lint-staged": "10.0.7",
     "mini-css-extract-plugin": "2.2.0",
-    "mocha": "7.0.1",
     "module-alias": "2.2.2",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.1.0",
@@ -222,8 +222,7 @@
     "webpack-cli": "4.8.0",
     "webpack-dev-server": "4.0.0",
     "webpack-merge": "5.8.0",
-    "worker-loader": "^3.0.8",
-    "zone.js": "0.7.8"
+    "worker-loader": "^3.0.8"
   },
   "dependencies": {
     "@emotion/css": "11.1.3",
@@ -237,7 +236,7 @@
     "@reduxjs/toolkit": "1.6.1",
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
-    "@sentry/utils": "5.24.2",
+    "@sentry/utils": "6.13.2",
     "@types/ol": "^6.5.1",
     "@visx/event": "2.1.0",
     "@visx/gradient": "2.1.0",
@@ -289,7 +288,7 @@
     "ol": "6.7.0",
     "papaparse": "5.3.0",
     "pluralize": "^8.0.0",
-    "prismjs": "1.24.0",
+    "prismjs": "1.25.0",
     "prop-types": "15.7.2",
     "rc-cascader": "1.5.0",
     "re-resizable": "^6.2.0",
@@ -328,7 +327,6 @@
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772",
     "underscore": "1.12.1"
   },
   "workspaces": {

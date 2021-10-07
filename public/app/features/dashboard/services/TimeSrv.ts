@@ -60,7 +60,11 @@ export class TimeSrv {
     // remember time at load so we can go back to it
     this.timeAtLoad = cloneDeep(this.time);
 
-    const range = rangeUtil.convertRawToRange(this.time, this.dashboard?.getTimezone());
+    const range = rangeUtil.convertRawToRange(
+      this.time,
+      this.dashboard?.getTimezone(),
+      this.dashboard?.fiscalYearStartMonth
+    );
 
     if (range.to.isBefore(range.from)) {
       this.setTime(
@@ -327,8 +331,8 @@ export class TimeSrv {
     const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
-      from: dateMath.parse(raw.from, false, timezone)!,
-      to: dateMath.parse(raw.to, true, timezone)!,
+      from: dateMath.parse(raw.from, false, timezone, this.dashboard?.fiscalYearStartMonth)!,
+      to: dateMath.parse(raw.to, true, timezone, this.dashboard?.fiscalYearStartMonth)!,
       raw: raw,
     };
   }

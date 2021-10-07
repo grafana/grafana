@@ -155,6 +155,22 @@ type argJSONQuery struct {
 	} `json:"azureResourceGraph"`
 }
 
+// metricChartDefinition is the JSON model for a metrics chart definition
+type metricChartDefinition struct {
+	ResourceMetadata    map[string]string   `json:"resourceMetadata"`
+	Name                string              `json:"name"`
+	AggregationType     int                 `json:"aggregationType"`
+	Namespace           string              `json:"namespace"`
+	MetricVisualization metricVisualization `json:"metricVisualization"`
+}
+
+// metricVisualization is the JSON model for the visualization field of a
+// metricChartDefinition
+type metricVisualization struct {
+	DisplayName         string `json:"displayName"`
+	ResourceDisplayName string `json:"resourceDisplayName"`
+}
+
 // InsightsDimensions will unmarshal from a JSON string, or an array of strings,
 // into a string array. This exists to support an older query format which is updated
 // when a user saves the query or it is sent from the front end, but may not be when

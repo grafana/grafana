@@ -1,9 +1,11 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, Unsubscribable, of } from 'rxjs';
+import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   DataQuery,
   DataQueryErrorType,
+  DataQueryResponse,
   DataSourceApi,
+  hasLogsVolumeSupport,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -30,11 +32,12 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction, stateSave } from './main';
+import { richHistoryUpdatedAction, stateSave, storeAutoLoadLogsVolumeAction } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createEmptyQueryResponse, createCacheKey, getResultsFromCache } from './utils';
+import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
+import { config } from '@grafana/runtime';
 
 //
 // Actions and Payloads
@@ -98,9 +101,42 @@ export interface QueryStoreSubscriptionPayload {
   exploreId: ExploreId;
   querySubscription: Unsubscribable;
 }
+
 export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
   'explore/queryStoreSubscription'
 );
+
+export interface StoreLogsVolumeDataProvider {
+  exploreId: ExploreId;
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+}
+
+/**
+ * Stores available logs volume provider after running the query. Used internally by runQueries().
+ */
+const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
+  'explore/storeLogsVolumeDataProviderAction'
+);
+
+export interface StoreLogsVolumeDataSubscriptionPayload {
+  exploreId: ExploreId;
+  logsVolumeDataSubscription?: SubscriptionLike;
+}
+
+/**
+ * Stores current logs volume subscription for given explore pane.
+ */
+const storeLogsVolumeDataSubscriptionAction = createAction<StoreLogsVolumeDataSubscriptionPayload>(
+  'explore/storeLogsVolumeDataSubscriptionAction'
+);
+
+/**
+ * Stores data returned by the provider. Used internally by loadLogsVolumeData().
+ */
+const updateLogsVolumeDataAction = createAction<{
+  exploreId: ExploreId;
+  logsVolumeData: DataQueryResponse;
+}>('explore/updateLogsVolumeDataAction');
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -166,6 +202,7 @@ export interface ClearCachePayload {
   exploreId: ExploreId;
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
+
 //
 // Action creators
 //
@@ -281,7 +318,7 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
-    const richHistory = getState().explore.richHistory;
+    const { richHistory, autoLoadLogsVolume } = getState().explore;
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
@@ -296,6 +333,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
+      logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
 
@@ -304,7 +342,11 @@ export const runQueries = (
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
       newQuerySub = of(cachedValue)
-        .pipe(mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries)))
+        .pipe(
+          mergeMap((data: PanelData) =>
+            decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, !!logsVolumeDataProvider)
+          )
+        )
         .subscribe((data) => {
           if (!data.error) {
             dispatch(stateSave());
@@ -357,7 +399,16 @@ export const runQueries = (
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
           live ? throttleTime(500) : identity,
-          mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries))
+          mergeMap((data: PanelData) =>
+            decorateData(
+              data,
+              queryResponse,
+              absoluteRange,
+              refreshInterval,
+              queries,
+              !!getState().explore[exploreId]!.logsVolumeDataProvider
+            )
+          )
         )
         .subscribe(
           (data) => {
@@ -402,6 +453,26 @@ export const runQueries = (
             console.error(error);
           }
         );
+
+      if (config.featureToggles.fullRangeLogsVolume && hasLogsVolumeSupport(datasourceInstance)) {
+        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
+        dispatch(
+          storeLogsVolumeDataProviderAction({
+            exploreId,
+            logsVolumeDataProvider,
+          })
+        );
+        if (autoLoadLogsVolume && logsVolumeDataProvider) {
+          dispatch(loadLogsVolumeData(exploreId));
+        }
+      } else {
+        dispatch(
+          storeLogsVolumeDataProviderAction({
+            exploreId,
+            logsVolumeDataProvider: undefined,
+          })
+        );
+      }
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
@@ -455,6 +526,40 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
 export function clearCache(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(clearCacheAction({ exploreId }));
+  };
+}
+
+/**
+ * Uses storeLogsVolumeDataProviderAction to update the state and load logs volume when auto-load
+ * is enabled and logs volume hasn't been loaded yet.
+ */
+export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(storeAutoLoadLogsVolumeAction(autoLoadLogsVolume));
+    const state = getState().explore[exploreId]!;
+
+    // load logs volume automatically after switching
+    const logsVolumeData = state.logsVolumeData;
+    if (!logsVolumeData?.data && autoLoadLogsVolume) {
+      dispatch(loadLogsVolumeData(exploreId));
+    }
+  };
+}
+
+/**
+ * Initializes loading logs volume data and stores emitted value.
+ */
+export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const { logsVolumeDataProvider } = getState().explore[exploreId]!;
+    if (logsVolumeDataProvider) {
+      const logsVolumeDataSubscription = logsVolumeDataProvider.subscribe({
+        next: (logsVolumeData: DataQueryResponse) => {
+          dispatch(updateLogsVolumeDataAction({ exploreId, logsVolumeData }));
+        },
+      });
+      dispatch(storeLogsVolumeDataSubscriptionAction({ exploreId, logsVolumeDataSubscription }));
+    }
   };
 }
 
@@ -566,6 +671,37 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       querySubscription,
+    };
+  }
+
+  if (storeLogsVolumeDataProviderAction.match(action)) {
+    let { logsVolumeDataProvider } = action.payload;
+    if (state.logsVolumeDataSubscription) {
+      state.logsVolumeDataSubscription.unsubscribe();
+    }
+    return {
+      ...state,
+      logsVolumeDataProvider,
+      logsVolumeDataSubscription: undefined,
+      // clear previous data, with a new provider the previous data becomes stale
+      logsVolumeData: undefined,
+    };
+  }
+
+  if (storeLogsVolumeDataSubscriptionAction.match(action)) {
+    const { logsVolumeDataSubscription } = action.payload;
+    return {
+      ...state,
+      logsVolumeDataSubscription,
+    };
+  }
+
+  if (updateLogsVolumeDataAction.match(action)) {
+    let { logsVolumeData } = action.payload;
+
+    return {
+      ...state,
+      logsVolumeData,
     };
   }
 

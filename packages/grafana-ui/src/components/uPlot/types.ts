@@ -5,15 +5,19 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotConfig = Pick<
   Options,
-  'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
+  'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
 >;
 
 export interface PlotPluginProps {
   id: string;
 }
 
+export type FacetValues = any[];
+export type FacetSeries = FacetValues[];
+export type FacetedData = [_: null, ...series: FacetSeries];
+
 export interface PlotProps {
-  data: AlignedData;
+  data: AlignedData | FacetedData;
   width: number;
   height: number;
   config: UPlotConfigBuilder;

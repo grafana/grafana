@@ -39,7 +39,8 @@ interface StackMeta {
 }
 
 /** @internal */
-export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta) => void): AlignedData {
+export function preparePlotData(frames: DataFrame[], onStackMeta?: (meta: StackMeta) => void): AlignedData {
+  const frame = frames[0];
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;

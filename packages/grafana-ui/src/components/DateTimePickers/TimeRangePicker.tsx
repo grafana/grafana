@@ -23,7 +23,7 @@ import {
   dateMath,
 } from '@grafana/data';
 import { Themeable } from '../../types';
-import { otherOptions, quickOptions } from './rangeOptions';
+import { quickOptions } from './options';
 import { ButtonGroup, ToolbarButton } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -32,10 +32,12 @@ export interface TimeRangePickerProps extends Themeable {
   hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
+  fiscalYearStartMonth?: number;
   timeSyncButton?: JSX.Element;
   isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  onChangeFiscalYearStartMonth?: (month: number) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
@@ -64,6 +66,20 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     this.setState({ isOpen: !isOpen });
   };
 
+  componentDidMount() {
+    window.addEventListener('keyup', this.onKeyUp);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keyup', this.onKeyUp);
+  }
+
+  onKeyUp = (event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
+      this.onClose();
+    }
+  };
+
   onClose = () => {
     this.setState({ isOpen: false });
   };
@@ -75,11 +91,13 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
       onMoveForward,
       onZoom,
       timeZone,
+      fiscalYearStartMonth,
       timeSyncButton,
       isSynced,
       theme,
       history,
       onChangeTimeZone,
+      onChangeFiscalYearStartMonth,
       hideQuickRanges,
     } = this.props;
 
@@ -117,13 +135,14 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
           <ClickOutsideWrapper includeButtonPress={false} onClick={this.onClose}>
             <TimePickerContent
               timeZone={timeZone}
+              fiscalYearStartMonth={fiscalYearStartMonth}
               value={value}
               onChange={this.onChange}
-              otherOptions={otherOptions}
               quickOptions={quickOptions}
               history={history}
               showHistory
               onChangeTimeZone={onChangeTimeZone}
+              onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               hideQuickRanges={hideQuickRanges}
             />
           </ClickOutsideWrapper>
