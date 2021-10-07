@@ -221,10 +221,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.cleanUpDir(orgID)
 	}
 
-	// We look for orphan directories once at startup and remove them.
-	// orphan directories can occur when some organization is deleted
-	// and the node running Grafana is shutdown before this sync is
-	// executed for the next time.
+	// We look for orphan directories and remove them. Orphan directories can
+	// occur when some organization is deleted and the node running Grafana is
+	// shutdown before this sync is executed for the next time.
 	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
 	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
