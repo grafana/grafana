@@ -41,7 +41,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
 
     const onExemplarChange = useCallback(
       (exemplar: boolean) => {
-        if (!isEqual(query, prevQuery)) {
+        if (!isEqual(query, prevQuery) || exemplar !== query.exemplar) {
           onChange({ ...query, exemplar });
         }
       },
