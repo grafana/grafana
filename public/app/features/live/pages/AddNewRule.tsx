@@ -12,7 +12,7 @@ export function AddNewRule({ onClose }: Props) {
       .post(`api/live/channel-rules`, {
         pattern: formData.pattern,
         settings: {
-          output: formData.settings.output,
+          output: formData.settings.frameOutputs,
           converter: formData.settings.converter,
         },
       })
@@ -31,9 +31,11 @@ export function AddNewRule({ onClose }: Props) {
           converter: {
             type: 'jsonAuto',
           },
-          output: {
-            type: 'managedStream',
-          },
+          frameOutputs: [
+            {
+              type: 'managedStream',
+            },
+          ],
         },
       }}
       onSubmit={onSubmit}

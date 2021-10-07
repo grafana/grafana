@@ -6,6 +6,7 @@ import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
   AnnotationEventUIModel,
+  CoreApp,
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
@@ -78,8 +79,9 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
-        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
+        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
+        app: this.getPanelContextApp(),
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
         onAnnotationCreate: this.onAnnotationCreate,
@@ -103,6 +105,17 @@ export class PanelChrome extends Component<Props, State> {
     // Set redux panel state so panel options can get notified
     store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
   };
+
+  getPanelContextApp() {
+    if (this.props.isEditing) {
+      return CoreApp.PanelEditor;
+    }
+    if (this.props.isViewing) {
+      return CoreApp.PanelViewer;
+    }
+
+    return CoreApp.Dashboard;
+  }
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
@@ -177,20 +190,18 @@ export class PanelChrome extends Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { isInView, isEditing, width } = this.props;
+    const { context } = this.state;
 
-    if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
-      this.setState((s) => {
-        return {
-          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
-        };
-      });
-    }
+    const app = this.getPanelContextApp();
+    const sync = isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip;
 
-    if (isEditing !== prevProps.isEditing) {
-      this.setState((s) => {
-        return {
-          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
-        };
+    if (context.sync !== sync || context.app !== app) {
+      this.setState({
+        context: {
+          ...context,
+          sync,
+          app,
+        },
       });
     }
 

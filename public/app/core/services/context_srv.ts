@@ -89,7 +89,7 @@ export class ContextSrv {
   }
 
   isGrafanaVisible() {
-    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
+    return document.visibilityState === undefined || document.visibilityState === 'visible';
   }
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
@@ -112,6 +112,25 @@ export class ContextSrv {
       return this.hasPermission(AccessControlAction.DataSourcesExplore);
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
+  }
+
+  hasAccess(action: string, fallBack: boolean) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallBack;
+    }
+    return this.hasPermission(action);
+  }
+
+  // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
+  evaluatePermission(fallback: () => string[], actions: string[]) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallback();
+    }
+    if (actions.some((action) => this.hasPermission(action))) {
+      return [];
+    }
+    // Hack to reject when user does not have permission
+    return ['Reject'];
   }
 }
 

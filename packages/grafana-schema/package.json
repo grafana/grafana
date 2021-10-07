@@ -27,7 +27,6 @@
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "10.0.0",
     "@types/rollup-plugin-visualizer": "2.6.0",
-    "pretty-format": "25.1.0",
     "rollup": "2.33.3",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
