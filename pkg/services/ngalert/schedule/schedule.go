@@ -425,30 +425,19 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert rule routine started", "key", key)
-	var alertRule *models.AlertRule
 
-	updateRule := func() error {
+	updateRule := func() (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
 		if err != nil {
 			sch.log.Error("failed to fetch alert rule", "key", key)
-			return err
+			return nil, err
 		}
-		alertRule = q.Result
-		sch.log.Debug("new alert rule version fetched", "title", alertRule.Title, "key", key, "version", alertRule.Version)
-		return nil
+		return q.Result, nil
 	}
 
-	evaluate := func(attempt int64, ctx *evalContext) error {
+	evaluate := func(alertRule *models.AlertRule, attempt int64, ctx *evalContext) error {
 		start := timeNow()
-
-		// fetch latest alert rule version
-		if alertRule == nil || alertRule.Version < ctx.version {
-			err := updateRule()
-			if err != nil {
-				return err
-			}
-		}
 
 		condition := models.Condition{
 			Condition: alertRule.Condition,
@@ -504,7 +493,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 	evalRunning := false
 	var attempt int64
-
+	var currentRule *models.AlertRule
 	for {
 		select {
 		case ctx := <-evalCh:
@@ -520,7 +509,17 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				}()
 
 				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
-					err := evaluate(attempt, ctx)
+					// fetch latest alert rule version
+					if currentRule == nil || currentRule.Version < ctx.version {
+						newRule, err := updateRule()
+						if err != nil {
+							continue
+						}
+						currentRule = newRule
+						sch.log.Debug("new alert rule version fetched", "title", newRule.Title, "key", key, "version", newRule.Version)
+					}
+
+					err := evaluate(currentRule, attempt, ctx)
 					if err == nil {
 						break
 					}
