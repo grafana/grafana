@@ -93,7 +93,6 @@ If a column, or column combination, should be unique, add a corresponding unique
 ## JSON
 
 For most use cases use the standard lib `encoding/json` package. If there is a need for a more performant alternative
-we recommend to use [json-iterator](https://github.com/json-iterator/go); profiling shows that json-iterator may be 3-4 times more efficient for encoding. We haven't profiled its parsing performance yet, but according to json-iterator's own benchmarks, it appears even more superior in this
-department.
+we recommend to use [json-iterator](https://github.com/json-iterator/go); profiling shows that json-iterator may be 3-4 times more efficient for encoding. We haven't profiled its parsing performance yet, but according to json-iterator's own benchmarks, it appears even more superior in this department.
 The simplejson package is used a lot throughout the backend codebase, but it's legacy, so if at all possible
 avoid using it in new code.
