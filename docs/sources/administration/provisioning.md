@@ -143,11 +143,11 @@ Since not all datasources have the same configuration settings we only have the 
 
 | Name                    | Type    | Datasource                                                       | Description                                                                                                                                       |
 | ----------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| tlsAuth                 | boolean | _All_                                                            | Enable TLS authentication using client cert configured in secure json data                                                                        |
-| tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                                                                           |
-| tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.                                                                  |
-| serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
-| timeout                 | string  | _All_                                                            | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                    |
+| tlsAuth                 | boolean | _All HTTP data sources_                                          | Enable TLS authentication using client cert configured in secure json data                                                                        |
+| tlsAuthWithCACert       | boolean | _All HTTP data sources_                                          | Enable TLS authentication using CA cert                                                                                                           |
+| tlsSkipVerify           | boolean | _All HTTP data sources_                                          | Controls whether a client verifies the server's certificate chain and host name.                                                                  |
+| serverName              | string  | _All HTTP data sources_                                          | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
+| timeout                 | string  | _All HTTP data sources_                                          | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                    |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                                                                                  |
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                                                                              |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                                                                       |
@@ -194,11 +194,11 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 
 | Name              | Type   | Datasource                   | Description                                              |
 | ----------------- | ------ | ---------------------------- | -------------------------------------------------------- |
-| tlsCACert         | string | _All_                        | CA cert for out going requests                           |
-| tlsClientCert     | string | _All_                        | TLS Client cert for outgoing requests                    |
-| tlsClientKey      | string | _All_                        | TLS Client key for outgoing requests                     |
-| password          | string | _All_                        | password                                                 |
-| basicAuthPassword | string | _All_                        | password for basic authentication                        |
+| tlsCACert         | string | _All HTTP data sources_      | CA cert for out going requests                           |
+| tlsClientCert     | string | _All HTTP data sources_      | TLS Client cert for outgoing requests                    |
+| tlsClientKey      | string | _All HTTP data sources_      | TLS Client key for outgoing requests                     |
+| password          | string | _All HTTP data sources_      | password                                                 |
+| basicAuthPassword | string | _All HTTP data sources_      | password for basic authentication                        |
 | accessKey         | string | Cloudwatch                   | Access key for connecting to Cloudwatch                  |
 | secretKey         | string | Cloudwatch                   | Secret key for connecting to Cloudwatch                  |
 | sigV4AccessKey    | string | Elasticsearch and Prometheus | SigV4 access key. Required when using keys auth provider |
