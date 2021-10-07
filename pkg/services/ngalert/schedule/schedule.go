@@ -604,6 +604,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				}
 			}()
 		case <-grafanaCtx.Done():
+			clearState()
 			logger.Debug("stopping alert rule routine")
 			return nil
 		}
