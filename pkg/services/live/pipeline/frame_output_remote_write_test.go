@@ -51,7 +51,7 @@ func TestRemoteWriteFrameOutput_sample(t *testing.T) {
 			},
 		},
 	}
-	out := NewRemoteWriteFrameOutput(RemoteWriteConfig{
+	out := NewRemoteWriteFrameOutput(RemoteWriteSettings{
 		SampleMilliseconds: 500,
 	})
 	sampledTimeSeries := out.sample(timeSeries)
@@ -125,7 +125,7 @@ func TestRemoteWriteFrameOutput_sample_merge(t *testing.T) {
 			},
 		},
 	}
-	out := NewRemoteWriteFrameOutput(RemoteWriteConfig{
+	out := NewRemoteWriteFrameOutput(RemoteWriteSettings{
 		SampleMilliseconds: 50,
 	})
 	sampledTimeSeries := out.sample(timeSeries)

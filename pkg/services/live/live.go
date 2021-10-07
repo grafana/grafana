@@ -1004,6 +1004,18 @@ type DryRunRuleStorage struct {
 	ChannelRules []pipeline.ChannelRule
 }
 
+func (s *DryRunRuleStorage) CreateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackend) (pipeline.RemoteWriteBackend, error) {
+	return pipeline.RemoteWriteBackend{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateRemoteWriteBackend(_ context.Context, _ int64, _ pipeline.RemoteWriteBackend) (pipeline.RemoteWriteBackend, error) {
+	return pipeline.RemoteWriteBackend{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteRemoteWriteBackend(_ context.Context, _ int64, _ string) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
 func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
 	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
 }
@@ -1148,11 +1160,75 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
 	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get remote write backends", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
 		"remoteWriteBackends": result,
 	})
+}
+
+// HandleChannelRulesPostHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var b pipeline.RemoteWriteBackend
+	err = json.Unmarshal(body, &b)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
+	}
+	result, err := g.channelRuleStorage.CreateRemoteWriteBackend(c.Req.Context(), c.OrgId, b)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create remote write backend", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"remoteWriteBackend": result,
+	})
+}
+
+// HandleChannelRulesPutHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsPutHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var b pipeline.RemoteWriteBackend
+	err = json.Unmarshal(body, &b)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
+	}
+	if b.UID == "" {
+		return response.Error(http.StatusBadRequest, "UID required", nil)
+	}
+	result, err := g.channelRuleStorage.UpdateRemoteWriteBackend(c.Req.Context(), c.OrgId, b)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update remote write backend", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"remoteWriteBackend": result,
+	})
+}
+
+// HandleChannelRulesDeleteHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsDeleteHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var b pipeline.RemoteWriteBackend
+	err = json.Unmarshal(body, &b)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding remote write backend", err)
+	}
+	if b.UID == "" {
+		return response.Error(http.StatusBadRequest, "UID required", nil)
+	}
+	err = g.channelRuleStorage.DeleteRemoteWriteBackend(c.Req.Context(), c.OrgId, b.UID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete remote write backend", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
 // Write to the standard log15 logger

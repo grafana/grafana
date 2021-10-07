@@ -45,7 +45,8 @@ type ConditionalOutputConfig struct {
 }
 
 type RemoteWriteOutputConfig struct {
-	UID string `json:"uid"`
+	UID                string `json:"uid"`
+	SampleMilliseconds int64  `json:"sampleMilliseconds"`
 }
 
 type FrameOutputterConfig struct {
@@ -145,9 +146,34 @@ func typeRegistered(entityType string, registry []EntityInfo) bool {
 }
 
 type RemoteWriteBackend struct {
-	OrgId    int64              `json:"-"`
-	UID      string             `json:"uid"`
-	Settings *RemoteWriteConfig `json:"settings"`
+	OrgId    int64               `json:"-"`
+	UID      string              `json:"uid"`
+	Settings RemoteWriteSettings `json:"settings"`
+}
+
+func (r RemoteWriteBackend) Valid() (bool, string) {
+	if r.UID == "" {
+		return false, "uid required"
+	}
+	if r.Settings.Endpoint == "" {
+		return false, "endpoint required"
+	}
+	if r.Settings.User == "" {
+		return false, "user required"
+	}
+	if r.Settings.Password == "" {
+		return false, "password required"
+	}
+	return true, ""
+}
+
+type RemoteWriteSettings struct {
+	// Endpoint to send streaming frames to.
+	Endpoint string `json:"endpoint"`
+	// User is a user for remote write request.
+	User string `json:"user"`
+	// Password for remote write endpoint.
+	Password string `json:"password"`
 }
 
 type RemoteWriteBackends struct {
@@ -194,6 +220,9 @@ type FrameConditionCheckerConfig struct {
 
 type RuleStorage interface {
 	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
+	CreateRemoteWriteBackend(_ context.Context, orgID int64, backend RemoteWriteBackend) (RemoteWriteBackend, error)
+	UpdateRemoteWriteBackend(_ context.Context, orgID int64, backend RemoteWriteBackend) (RemoteWriteBackend, error)
+	DeleteRemoteWriteBackend(_ context.Context, orgID int64, uid string) error
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
 	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
 	UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
@@ -385,11 +414,16 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		remoteWriteConfig, ok := f.getRemoteWriteConfig(config.RemoteWriteOutputConfig.UID, remoteWriteBackends)
+		remoteWriteBackend, ok := f.getRemoteWriteBackend(config.RemoteWriteOutputConfig.UID, remoteWriteBackends)
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
-		return NewRemoteWriteFrameOutput(*remoteWriteConfig), nil
+		return NewRemoteWriteFrameOutput(
+			remoteWriteBackend.Settings.Endpoint,
+			remoteWriteBackend.Settings.User,
+			remoteWriteBackend.Settings.Password,
+			config.RemoteWriteOutputConfig.SampleMilliseconds,
+		), nil
 	case FrameOutputTypeChangeLog:
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
@@ -420,13 +454,13 @@ func (f *StorageRuleBuilder) extractDataOutputter(config *DataOutputterConfig) (
 	}
 }
 
-func (f *StorageRuleBuilder) getRemoteWriteConfig(uid string, remoteWriteBackends []RemoteWriteBackend) (*RemoteWriteConfig, bool) {
+func (f *StorageRuleBuilder) getRemoteWriteBackend(uid string, remoteWriteBackends []RemoteWriteBackend) (RemoteWriteBackend, bool) {
 	for _, rwb := range remoteWriteBackends {
 		if rwb.UID == uid {
-			return rwb.Settings, true
+			return rwb, true
 		}
 	}
-	return nil, false
+	return RemoteWriteBackend{}, false
 }
 
 func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*LiveChannelRule, error) {
