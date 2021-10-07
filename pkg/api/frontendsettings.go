@@ -348,30 +348,30 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 		return ep, err
 	}
 
+	apps := map[string]*plugins.Plugin{}
 	for _, app := range hs.pluginStore.Plugins(plugins.App) {
 		if b, ok := pluginSettingMap[app.ID]; ok {
 			app.Pinned = b.Pinned
-			ep[plugins.App] = map[string]*plugins.Plugin{
-				app.ID: app,
-			}
+			apps[app.ID] = app
 		}
 	}
+	ep[plugins.App] = apps
 
+	dataSources := map[string]*plugins.Plugin{}
 	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if _, exists := pluginSettingMap[ds.ID]; exists {
-			ep[plugins.DataSource] = map[string]*plugins.Plugin{
-				ds.ID: ds,
-			}
+			dataSources[ds.ID] = ds
 		}
 	}
+	ep[plugins.DataSource] = dataSources
 
+	panels := map[string]*plugins.Plugin{}
 	for _, p := range hs.pluginStore.Plugins(plugins.Panel) {
 		if _, exists := pluginSettingMap[p.ID]; exists {
-			ep[plugins.Panel] = map[string]*plugins.Plugin{
-				p.ID: p,
-			}
+			panels[p.ID] = p
 		}
 	}
+	ep[plugins.Panel] = panels
 
 	return ep, nil
 }
