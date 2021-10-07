@@ -45,7 +45,7 @@ For example:
 ;http_port = 3000
 ```
 
-## Override configuration settings with environment variables
+## Override configuration with environment variables
 
 Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
 
