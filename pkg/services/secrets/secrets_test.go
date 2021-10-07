@@ -108,6 +108,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 			Provider:      "test",
 			EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
 		}
+
 		err := svc.CreateDataKey(ctx, k)
 		require.Error(t, err)
 
