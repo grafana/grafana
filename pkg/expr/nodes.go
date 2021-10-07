@@ -57,7 +57,7 @@ func (rn *rawNode) GetDatasourceUID() (string, error) {
 		return dsUid, nil
 	}
 
-	return "", fmt.Errorf("No datasource uid found for query, got %T", rn.Query)
+	return "", fmt.Errorf("no datasource uid found for query, got %T", rn.Query)
 }
 
 func (rn *rawNode) IsExpressionQuery() (bool, error) {
