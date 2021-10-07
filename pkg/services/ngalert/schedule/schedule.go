@@ -427,19 +427,27 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	sch.log.Debug("alert rule routine started", "key", key)
 	var alertRule *models.AlertRule
 
+	updateRule := func() error {
+		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
+		err := sch.ruleStore.GetAlertRuleByUID(&q)
+		if err != nil {
+			sch.log.Error("failed to fetch alert rule", "key", key)
+			return err
+		}
+		alertRule = q.Result
+		sch.log.Debug("new alert rule version fetched", "title", alertRule.Title, "key", key, "version", alertRule.Version)
+		return nil
+	}
+
 	evaluate := func(attempt int64, ctx *evalContext) error {
 		start := timeNow()
 
 		// fetch latest alert rule version
 		if alertRule == nil || alertRule.Version < ctx.version {
-			q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
-			err := sch.ruleStore.GetAlertRuleByUID(&q)
+			err := updateRule()
 			if err != nil {
-				sch.log.Error("failed to fetch alert rule", "key", key)
 				return err
 			}
-			alertRule = q.Result
-			sch.log.Debug("new alert rule version fetched", "title", alertRule.Title, "key", key, "version", alertRule.Version)
 		}
 
 		condition := models.Condition{
