@@ -40,7 +40,8 @@ type ScheduleService interface {
 	// DroppedAlertmanagersFor returns all the dropped Alertmanager URLs for the
 	// organization.
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
-
+	// UpdateAlertRule notifies scheduler that a rule has been changed
+	UpdateAlertRule(key models.AlertRuleKey)
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)
 	stopApplied(models.AlertRuleKey)
@@ -308,6 +309,15 @@ func (sch *schedule) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 	return s.DroppedAlertmanagers()
 }
 
+// UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
+func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
+	ruleInfo, err := sch.registry.get(key)
+	if err != nil {
+		return
+	}
+	ruleInfo.update()
+}
+
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
 	for {
 		select {
@@ -370,7 +380,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh)
+						return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
 					})
 				}
 
@@ -433,7 +443,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, updateCh <-chan struct{}) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -545,6 +555,22 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	defer sch.stopApplied(key)
 	for {
 		select {
+		// used by external services (API) to notify that rule is updated.
+		case <-updateCh:
+			logger.Info("fetching new version of the rule")
+			err := retryIfError(func(attempt int64) error {
+				newRule, err := updateRule(currentRule)
+				if err != nil {
+					return err
+				}
+				logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
+				currentRule = newRule
+				return nil
+			})
+			if err != nil {
+				logger.Error("updating rule failed after all retries", "error", err)
+			}
+		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
 				logger.Debug("Evaluation channel has been closed. Exiting")
@@ -682,14 +708,15 @@ func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 }
 
 type alertRuleInfo struct {
-	evalCh chan *evalContext
-	ctx    context.Context
-	stop   context.CancelFunc
+	evalCh   chan *evalContext
+	updateCh chan struct{}
+	ctx      context.Context
+	stop     context.CancelFunc
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, stop: cancel}
+	return &alertRuleInfo{evalCh: make(chan *evalContext), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
@@ -699,6 +726,16 @@ func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
 		now:     t,
 		version: version,
 	}:
+		return true
+	case <-a.ctx.Done():
+		return false
+	}
+}
+
+// update signals the rule evaluation routine to update the internal state. Does nothing if the loop is stopped
+func (a *alertRuleInfo) update() bool {
+	select {
+	case a.updateCh <- struct{}{}:
 		return true
 	case <-a.ctx.Done():
 		return false
