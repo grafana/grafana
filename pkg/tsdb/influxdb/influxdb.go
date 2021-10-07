@@ -171,7 +171,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceIn
 
 	_, err = influxql.NewParser(strings.NewReader(query)).ParseQuery()
 	if err != nil {
-		return nil, fmt.Errorf("Invalid InfluxQL: %s", err.Error())
+		return nil, fmt.Errorf("invalid InfluxQL: %s", err.Error())
 	}
 
 	u.Path = path.Join(u.Path, "query")
