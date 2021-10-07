@@ -425,82 +425,83 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert rule routine started", "key", key)
+	var alertRule *models.AlertRule
+
+	evaluate := func(attempt int64, ctx *evalContext) error {
+		start := timeNow()
+
+		// fetch latest alert rule version
+		if alertRule == nil || alertRule.Version < ctx.version {
+			q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
+			err := sch.ruleStore.GetAlertRuleByUID(&q)
+			if err != nil {
+				sch.log.Error("failed to fetch alert rule", "key", key)
+				return err
+			}
+			alertRule = q.Result
+			sch.log.Debug("new alert rule version fetched", "title", alertRule.Title, "key", key, "version", alertRule.Version)
+		}
+
+		condition := models.Condition{
+			Condition: alertRule.Condition,
+			OrgID:     alertRule.OrgID,
+			Data:      alertRule.Data,
+		}
+		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
+		var (
+			end    = timeNow()
+			tenant = fmt.Sprint(alertRule.OrgID)
+			dur    = end.Sub(start).Seconds()
+		)
+
+		sch.metrics.EvalTotal.WithLabelValues(tenant).Inc()
+		sch.metrics.EvalDuration.WithLabelValues(tenant).Observe(dur)
+		if err != nil {
+			sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
+			// consider saving alert instance on error
+			sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
+				"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+			return err
+		}
+
+		processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
+		sch.saveAlertStates(processedStates)
+		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+
+		if len(alerts.PostableAlerts) == 0 {
+			sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
+			return nil
+		}
+
+		sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
+		n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
+		if err == nil {
+			if err := n.PutAlerts(alerts); err != nil {
+				sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
+			}
+		} else {
+			sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
+		}
+
+		// Send alerts to external Alertmanager(s) if we have a sender for this organization.
+		sch.sendersMtx.RLock()
+		defer sch.sendersMtx.RUnlock()
+		s, ok := sch.senders[alertRule.OrgID]
+		if ok {
+			s.SendAlerts(alerts)
+		}
+
+		return nil
+	}
 
 	evalRunning := false
 	var attempt int64
-	var alertRule *models.AlertRule
+
 	for {
 		select {
 		case ctx := <-evalCh:
 			if evalRunning {
 				continue
-			}
-
-			evaluate := func(attempt int64) error {
-				start := timeNow()
-
-				// fetch latest alert rule version
-				if alertRule == nil || alertRule.Version < ctx.version {
-					q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
-					err := sch.ruleStore.GetAlertRuleByUID(&q)
-					if err != nil {
-						sch.log.Error("failed to fetch alert rule", "key", key)
-						return err
-					}
-					alertRule = q.Result
-					sch.log.Debug("new alert rule version fetched", "title", alertRule.Title, "key", key, "version", alertRule.Version)
-				}
-
-				condition := models.Condition{
-					Condition: alertRule.Condition,
-					OrgID:     alertRule.OrgID,
-					Data:      alertRule.Data,
-				}
-				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
-				var (
-					end    = timeNow()
-					tenant = fmt.Sprint(alertRule.OrgID)
-					dur    = end.Sub(start).Seconds()
-				)
-
-				sch.metrics.EvalTotal.WithLabelValues(tenant).Inc()
-				sch.metrics.EvalDuration.WithLabelValues(tenant).Observe(dur)
-				if err != nil {
-					sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
-					// consider saving alert instance on error
-					sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
-						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
-					return err
-				}
-
-				processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
-				sch.saveAlertStates(processedStates)
-				alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-
-				if len(alerts.PostableAlerts) == 0 {
-					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
-					return nil
-				}
-
-				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
-				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
-				if err == nil {
-					if err := n.PutAlerts(alerts); err != nil {
-						sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
-					}
-				} else {
-					sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
-				}
-
-				// Send alerts to external Alertmanager(s) if we have a sender for this organization.
-				sch.sendersMtx.RLock()
-				defer sch.sendersMtx.RUnlock()
-				s, ok := sch.senders[alertRule.OrgID]
-				if ok {
-					s.SendAlerts(alerts)
-				}
-
-				return nil
 			}
 
 			func() {
@@ -511,7 +512,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				}()
 
 				for attempt = 0; attempt < sch.maxAttempts; attempt++ {
-					err := evaluate(attempt)
+					err := evaluate(attempt, ctx)
 					if err == nil {
 						break
 					}
