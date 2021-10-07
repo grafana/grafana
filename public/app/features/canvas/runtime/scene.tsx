@@ -111,6 +111,7 @@ export class Scene {
 
     const moveable = new Moveable(document.getElementById('canvas-panel')!, {
       draggable: true,
+      resizable: true,
     })
       .on('clickGroup', (e) => {
         selecto.clickTarget(e.inputEvent, e.inputTarget);
@@ -151,6 +152,44 @@ export class Scene {
           target.style.left = `${left}px`;
           placement!.top = top;
           placement!.left = left;
+        });
+      })
+      .on('resize', ({ target, height, width }) => {
+        // TODO: Investigate optimizing this approach
+        const targetedElement = this.root.elements.find((element) => element.div === target);
+
+        let placement = targetedElement!.options.placement;
+        if (!placement) {
+          placement = {
+            left: 0,
+            top: 0,
+          };
+          targetedElement!.options.placement = placement;
+        }
+
+        target.style.height = `${height}px`;
+        target.style.width = `${width}px`;
+        placement!.height = height;
+        placement!.width = width;
+      })
+      .on('resizeGroup', (e) => {
+        e.events.forEach(({ target, height, width }) => {
+          // TODO: Investigate optimizing this approach
+          const targetedElement = this.root.elements.find((element) => element.div === target);
+
+          let placement = targetedElement!.options.placement;
+          if (!placement) {
+            placement = {
+              left: 0,
+              top: 0,
+            };
+            targetedElement!.options.placement = placement;
+          }
+
+          target.style.height = `${height}px`;
+          target.style.width = `${width}px`;
+          placement!.height = height;
+          placement!.width = width;
         });
       });
 
