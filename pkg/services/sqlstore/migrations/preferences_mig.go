@@ -44,6 +44,6 @@ func addPreferencesMigrations(mg *Migrator) {
 		Mysql("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;"))
 
 	mg.AddMigration("Add column week_start in preferences", NewAddColumnMigration(preferencesV2, &Column{
-		Name: "week_start", Type: DB_Int, Nullable: false,
+		Name: "week_start", Type: DB_Int, Nullable: true,
 	}))
 }
