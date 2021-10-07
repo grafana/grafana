@@ -79,13 +79,14 @@ func getOrgHelper(orgID int64) response.Response {
 }
 
 // POST /api/orgs
-func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
-	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
-		return response.Error(403, "Access denied", nil)
+func (hs *HTTPServer) CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
+	_, acEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
+	if !acEnabled && !(setting.AllowUserOrgCreate || c.IsGrafanaAdmin) {
+		return response.Error(403, "Ac!cess denied", nil)
 	}
 
 	cmd.UserId = c.UserId
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := sqlstore.CreateOrg(&cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(409, "Organization name taken", err)
 		}
@@ -152,7 +153,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 	return response.Success("Address updated")
 }
 
-// GET /api/orgs/:orgId
+// DELETE /api/orgs/:orgId
 func DeleteOrgByID(c *models.ReqContext) response.Response {
 	orgID := c.ParamsInt64(":orgId")
 	// before deleting an org, check if user does not belong to the current org
@@ -160,7 +161,7 @@ func DeleteOrgByID(c *models.ReqContext) response.Response {
 		return response.Error(400, "Can not delete org for current user", nil)
 	}
 
-	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: orgID}); err != nil {
+	if err := sqlstore.DeleteOrg(&models.DeleteOrgCommand{Id: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Failed to delete organization. ID not found", nil)
 		}

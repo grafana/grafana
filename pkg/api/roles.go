@@ -22,6 +22,8 @@ const (
 	ActionOrgsWrite            = "orgs:write"
 	ActionOrgsPreferencesWrite = "orgs.preferences:write"
 	ActionOrgsQuotasWrite      = "orgs.quotas:write"
+	ActionOrgsDelete           = "orgs:delete"
+	ActionOrgsCreate           = "orgs:create"
 )
 
 // API related scopes
