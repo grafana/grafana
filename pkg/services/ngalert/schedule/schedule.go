@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -441,6 +442,43 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
+	notify := func(alerts definitions.PostableAlerts, logger log.Logger) {
+		if len(alerts.PostableAlerts) == 0 {
+			logger.Debug("no alerts to put in the notifier")
+			return
+		}
+
+		var localNotifierExist, externalNotifierExist bool
+		logger.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
+		n, err := sch.multiOrgNotifier.AlertmanagerFor(key.OrgID)
+		if err == nil {
+			localNotifierExist = true
+			if err := n.PutAlerts(alerts); err != nil {
+				logger.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "err", err)
+			}
+		} else {
+			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+				logger.Debug("local notifier was not found")
+			} else {
+				logger.Error("local notifier is not available", "err", err)
+			}
+		}
+
+		// Send alerts to external Alertmanager(s) if we have a sender for this organization.
+		sch.sendersMtx.RLock()
+		defer sch.sendersMtx.RUnlock()
+		s, ok := sch.senders[key.OrgID]
+		if ok {
+			logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts))
+			s.SendAlerts(alerts)
+			externalNotifierExist = true
+		}
+
+		if !localNotifierExist && !externalNotifierExist {
+			logger.Error("no external or internal notifier - alerts not delivered!", "count", len(alerts.PostableAlerts))
+		}
+	}
+
 	updateRule := func() (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
@@ -476,40 +514,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		sch.saveAlertStates(processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
-		if len(alerts.PostableAlerts) == 0 {
-			logger.Debug("no alerts to put in the notifier")
-			return nil
-		}
-
-		var localNotifierExist, externalNotifierExist bool
-		logger.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
-		n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
-		if err == nil {
-			localNotifierExist = true
-			if err := n.PutAlerts(alerts); err != nil {
-				logger.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "err", err)
-			}
-		} else {
-			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-				logger.Debug("local notifier was not found")
-			} else {
-				logger.Error("local notifier is not available", "err", err)
-			}
-		}
-
-		// Send alerts to external Alertmanager(s) if we have a sender for this organization.
-		sch.sendersMtx.RLock()
-		defer sch.sendersMtx.RUnlock()
-		s, ok := sch.senders[alertRule.OrgID]
-		if ok {
-			logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts))
-			s.SendAlerts(alerts)
-			externalNotifierExist = true
-		}
-
-		if !localNotifierExist && !externalNotifierExist {
-			logger.Error("no external or internal notifier - alerts not delivered!", "count", len(alerts.PostableAlerts))
-		}
+		notify(alerts, logger)
 		return nil
 	}
 
