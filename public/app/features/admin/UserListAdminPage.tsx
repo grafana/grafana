@@ -342,10 +342,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.disabled};
     `,
     link: css`
-      color: ${theme.colors.text.link};
-      :hover {
-        text-decoration: underline;
-      }
+      color: inherit;
+      cursor: pointer;
+      text-decoration: underline;
     `,
   };
 };
