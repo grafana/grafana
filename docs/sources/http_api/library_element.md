@@ -19,17 +19,17 @@ The maximum length of a UID is 40 characters.
 
 `GET /api/library-elements`
 
-Returns a list of all library elements the authenticated user has permission to view. Use `perPage` query parameter to control the maximum number of library elements returned; the default limit is 100. You can also use the `page` query parameter to fetch library elements from any page other than the first one.
+Returns a list of all library elements the authenticated user has permission to view. Use the `perPage` query parameter to control the maximum number of library elements returned; the default limit is 100. You can also use the `page` query parameter to fetch library elements from any page other than the first one.
 
 Query parameters:
 
-- **searchString** – Part of the name or description searched for
+- **searchString** – Part of the name or description searched for.
 - **kind** – Kind of element to search for. Use `1` for library panels or `2` for library variables.
 - **sortDirection** – Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
 - **typeFilter** – A comma separated list of types to filter the elements by.
 - **excludeUid** – Element UID to exclude from search results.
 - **folderFilter** – A comma separated list of folder ID(s) to filter the elements by.
-- **perPage** – Limit the number of results per page; default is 100.
+- **perPage** – The number of results per page; default is 100.
 - **page** – Use this parameter to access hits beyond `perPage`. Numbering starts at 1. `perPage` param acts as page size.
 
 **Example Request**:
@@ -158,7 +158,7 @@ Status Codes:
 
 `GET /api/library-elements/name/:name`
 
-Will return the library-element given the name.
+Returns a library element with the given name
 
 **Example Request**:
 
@@ -218,7 +218,7 @@ Status Codes:
 
 `GET /api/library-elements/:uid/connections`
 
-Will return a list of connections for a library-element given the uid.
+Returns a list of connections for a library element based on the UID specified.
 
 **Example Request**:
 
