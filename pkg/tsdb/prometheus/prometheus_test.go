@@ -407,7 +407,6 @@ func TestPrometheus_parseResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[1].Len(), 2)
 		require.Equal(t, res[0].Fields[1].At(0), 0.009545445)
 		require.Equal(t, res[0].Fields[1].At(1), 0.003535405)
-
 	})
 
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {

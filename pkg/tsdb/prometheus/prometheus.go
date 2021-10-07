@@ -563,7 +563,6 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			}
 
 			labelsVector[label] = append(labelsVector[label], value)
-
 		}
 	}
 
