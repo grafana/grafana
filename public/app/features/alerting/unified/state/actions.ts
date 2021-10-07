@@ -43,7 +43,12 @@ import {
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import {
+  getAllRulesSourceNames,
+  GRAFANA_RULES_SOURCE_NAME,
+  isGrafanaRulesSource,
+  isVanillaPrometheusAlertManagerDataSource,
+} from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
@@ -70,26 +75,36 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/fetchAmConfig',
   (alertManagerSourceName: string): Promise<AlertManagerCortexConfig> =>
     withSerializedError(
-      retryWhile(
-        () => fetchAlertManagerConfig(alertManagerSourceName),
-        // if config has been recently deleted, it takes a while for cortex start returning the default one.
-        // retry for a short while instead of failing
-        (e) => !!messageFromError(e)?.includes('alertmanager storage object not found'),
-        FETCH_CONFIG_RETRY_TIMEOUT
-      ).then((result) => {
-        // if user config is empty for cortex alertmanager, try to get config from status endpoint
-        if (
-          isEmpty(result.alertmanager_config) &&
-          isEmpty(result.template_files) &&
-          alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
-        ) {
+      (async () => {
+        // for vanilla prometheus, there is no config endpoint. Only fetch config from status
+        if (isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName)) {
           return fetchStatus(alertManagerSourceName).then((status) => ({
             alertmanager_config: status.config,
             template_files: {},
           }));
         }
-        return result;
-      })
+
+        return retryWhile(
+          () => fetchAlertManagerConfig(alertManagerSourceName),
+          // if config has been recently deleted, it takes a while for cortex start returning the default one.
+          // retry for a short while instead of failing
+          (e) => !!messageFromError(e)?.includes('alertmanager storage object not found'),
+          FETCH_CONFIG_RETRY_TIMEOUT
+        ).then((result) => {
+          // if user config is empty for cortex alertmanager, try to get config from status endpoint
+          if (
+            isEmpty(result.alertmanager_config) &&
+            isEmpty(result.template_files) &&
+            alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
+          ) {
+            return fetchStatus(alertManagerSourceName).then((status) => ({
+              alertmanager_config: status.config,
+              template_files: {},
+            }));
+          }
+          return result;
+        });
+      })()
     )
 );
 

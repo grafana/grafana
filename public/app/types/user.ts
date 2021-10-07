@@ -22,6 +22,8 @@ export interface User {
   orgId?: number;
 }
 
+export type Unit = { name: string; url: string };
+
 export interface UserDTO {
   id: number;
   login: string;
@@ -37,6 +39,10 @@ export interface UserDTO {
   avatarUrl?: string;
   orgId?: number;
   lastSeenAtAge?: string;
+  licensedRole?: string;
+  permissions?: string[];
+  teams?: Unit[];
+  orgs?: Unit[];
 }
 
 export interface Invitee {

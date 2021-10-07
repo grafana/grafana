@@ -10,9 +10,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 )
 
 const (
@@ -55,30 +58,25 @@ const (
 	defaultResolveTimeout = 5 * time.Minute
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
-	// To start, the alertmanager needs at least one route defined.
-	// TODO: we should move this to Grafana settings and define this as the default.
-	alertmanagerDefaultConfiguration = `
-{
-	"alertmanager_config": {
-		"route": {
-			"receiver": "grafana-default-email"
-		},
-		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"isDefault": true,
-				"settings": {
-					"addresses": "<example@email.com>"
-				}
-			}]
-		}]
+)
+
+func init() {
+	silence.ValidateMatcher = func(m *pb.Matcher) error {
+		switch m.Type {
+		case pb.Matcher_EQUAL, pb.Matcher_NOT_EQUAL:
+			if !model.LabelValue(m.Pattern).IsValid() {
+				return fmt.Errorf("invalid label value %q", m.Pattern)
+			}
+		case pb.Matcher_REGEXP, pb.Matcher_NOT_REGEXP:
+			if _, err := regexp.Compile(m.Pattern); err != nil {
+				return fmt.Errorf("invalid regular expression %q: %s", m.Pattern, err)
+			}
+		default:
+			return fmt.Errorf("unknown matcher type %q", m.Type)
+		}
+		return nil
 	}
 }
-`
-)
 
 type ClusterPeer interface {
 	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
@@ -89,7 +87,6 @@ type ClusterPeer interface {
 type Alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
-	OrgID       int64
 
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
@@ -162,7 +159,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
-	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
+	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.orgID), am.notificationLog, m.Registerer)
 	am.notificationLog.SetBroadcast(c.Broadcast)
 
 	am.silences, err = newSilences(silencesFilePath, m.Registerer)
@@ -170,7 +167,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
-	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.OrgID), am.silences, m.Registerer)
+	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.orgID), am.silences, m.Registerer)
 	am.silences.SetBroadcast(c.Broadcast)
 
 	am.wg.Add(1)
@@ -252,19 +249,19 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	defer am.reloadConfigMtx.Unlock()
 
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 	}
 
-	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 	if err != nil {
 		return err
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
-		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
 		}
 		return nil
@@ -416,7 +413,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, inhibitionStage, stage}
 	}
 
-	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
@@ -662,22 +659,14 @@ func validateLabelSet(ls model.LabelSet) error {
 	return nil
 }
 
-// isValidLabelName is ln.IsValid() while additionally allowing spaces.
-// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
-// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+// isValidLabelName is ln.IsValid() without restrictions other than it can not be empty.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$.
 func isValidLabelName(ln model.LabelName) bool {
 	if len(ln) == 0 {
 		return false
 	}
-	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') ||
-			(b >= 'A' && b <= 'Z') ||
-			b == '_' ||
-			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
-			return false
-		}
-	}
-	return true
+
+	return utf8.ValidString(string(ln))
 }
 
 // AlertValidationError is the error capturing the validation errors

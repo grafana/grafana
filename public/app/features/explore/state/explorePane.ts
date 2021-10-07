@@ -24,7 +24,7 @@ import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
 // Types
 import { ThunkResult } from 'app/types';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistory } from '../../../core/utils/richHistory';
 import { richHistoryUpdatedAction } from './main';
@@ -153,7 +153,8 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     }
 
     const timeZone = getTimeZone(getState().user);
-    const range = getTimeRangeFromUrl(urlRange, timeZone);
+    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
+    const range = getTimeRangeFromUrl(urlRange, timeZone, fiscalYearStartMonth);
 
     // commit changes based on the diff of new url vs old url
 

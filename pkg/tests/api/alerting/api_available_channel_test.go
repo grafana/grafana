@@ -15,8 +15,9 @@ import (
 
 func TestAvailableChannels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

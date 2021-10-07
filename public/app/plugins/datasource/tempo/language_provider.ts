@@ -13,15 +13,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, defaultValue: any, params = {}) => {
-    try {
-      const res = await this.datasource.metadataRequest(url, params);
-      return res?.data;
-    } catch (error) {
-      console.error(error);
-    }
-
-    return defaultValue;
+  request = async (url: string, params = {}) => {
+    const res = await this.datasource.metadataRequest(url, params);
+    return res?.data;
   };
 
   start = async () => {
@@ -30,12 +24,8 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   async fetchTags() {
-    try {
-      const response = await this.request('/api/search/tags', []);
-      this.tags = response.tagNames;
-    } catch (error) {
-      console.error(error);
-    }
+    const response = await this.request('/api/search/tags', []);
+    this.tags = response.tagNames;
   }
 
   provideCompletionItems = async (
@@ -88,7 +78,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   }
 
   async getOptions(tag: string): Promise<Array<SelectableValue<string>>> {
-    const response = await this.request(`/api/search/tag/${tag}/values`, []);
+    const response = await this.request(`/api/search/tag/${tag}/values`);
     let options: Array<SelectableValue<string>> = [];
 
     if (response && response.tagValues) {

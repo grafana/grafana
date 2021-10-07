@@ -1,16 +1,15 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form } from '@grafana/ui';
+import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { AlertManagerPicker } from '../AlertManagerPicker';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { useDispatch } from 'react-redux';
 import {
   deleteAlertManagerConfigAction,
   fetchAlertManagerConfigAction,
   updateAlertManagerConfigAction,
 } from '../../state/actions';
-import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
 
@@ -18,13 +17,13 @@ interface FormValues {
   configJSON: string;
 }
 
-export const AlertmanagerConfig = () => {
+export default function Admin(): JSX.Element {
   const dispatch = useDispatch();
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
-  const styles = useStyles2(getStyles);
+  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : false;
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -68,8 +67,7 @@ export const AlertmanagerConfig = () => {
   };
 
   return (
-    <div className={styles.wrapper}>
-      <h4>Global Alertmanager config</h4>
+    <AlertingPageWrapper pageId="alerting-admin">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {loadingError && !loading && (
         <Alert severity="error" title="Error loading Alertmanager configuration">
@@ -82,45 +80,53 @@ export const AlertmanagerConfig = () => {
         </Alert>
       )}
       {alertManagerSourceName && config && (
-        <Form defaultValues={defaultValues} onSubmit={onSubmit} key={defaultValues.configJSON} maxWidth={800}>
+        <Form defaultValues={defaultValues} onSubmit={onSubmit} key={defaultValues.configJSON}>
           {({ register, errors }) => (
             <>
-              <Field
-                disabled={loading}
-                label="Configuration"
-                invalid={!!errors.configJSON}
-                error={errors.configJSON?.message}
-              >
-                <TextArea
-                  {...register('configJSON', {
-                    required: { value: true, message: 'Required.' },
-                    validate: (v) => {
-                      try {
-                        JSON.parse(v);
-                        return true;
-                      } catch (e) {
-                        return e.message;
-                      }
-                    },
-                  })}
-                  id="configuration"
-                  rows={15}
-                  cols={15}
-                />
-              </Field>
-              <HorizontalGroup>
-                <Button type="submit" variant="primary" disabled={loading}>
-                  Save
-                </Button>
-                <Button
-                  type="button"
+              {!readOnly && (
+                <Field
                   disabled={loading}
-                  variant="destructive"
-                  onClick={() => setShowConfirmDeleteAMConfig(true)}
+                  label="Configuration"
+                  invalid={!!errors.configJSON}
+                  error={errors.configJSON?.message}
                 >
-                  Reset configuration
-                </Button>
-              </HorizontalGroup>
+                  <TextArea
+                    {...register('configJSON', {
+                      required: { value: true, message: 'Required.' },
+                      validate: (v) => {
+                        try {
+                          JSON.parse(v);
+                          return true;
+                        } catch (e) {
+                          return e.message;
+                        }
+                      },
+                    })}
+                    id="configuration"
+                    rows={25}
+                  />
+                </Field>
+              )}
+              {readOnly && (
+                <Field label="Configuration">
+                  <pre data-testid="readonly-config">{defaultValues.configJSON}</pre>
+                </Field>
+              )}
+              {!readOnly && (
+                <HorizontalGroup>
+                  <Button type="submit" variant="primary" disabled={loading}>
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={loading}
+                    variant="destructive"
+                    onClick={() => setShowConfirmDeleteAMConfig(true)}
+                  >
+                    Reset configuration
+                  </Button>
+                </HorizontalGroup>
+              )}
               {!!showConfirmDeleteAMConfig && (
                 <ConfirmModal
                   isOpen={true}
@@ -139,12 +145,6 @@ export const AlertmanagerConfig = () => {
           )}
         </Form>
       )}
-    </div>
+    </AlertingPageWrapper>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    margin-bottom: ${theme.spacing(5)};
-  `,
-});
+}
