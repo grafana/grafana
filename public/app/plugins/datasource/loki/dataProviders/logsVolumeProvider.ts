@@ -34,6 +34,7 @@ export function createLokiLogsVolumeProvider(
       }
       return {
         ...target,
+        instant: false,
         expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
       };
     });
