@@ -47,7 +47,7 @@ For example:
 
 ## Override configuration settings with environment variables
 
-Do not use environment variables to add new configuration settings. Use them to override existing options.
+Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
 
 To override an option, use the syntax:
 
