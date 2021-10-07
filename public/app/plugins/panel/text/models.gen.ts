@@ -11,12 +11,12 @@ export enum TextMode {
 
 export interface PanelOptions {
   content: string;
-  mode: string;
+  mode: TextMode;
 }
 
 export const defaultPanelOptions: PanelOptions = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
-  mode: 'markdown',
+  mode: TextMode.Markdown,
 };
