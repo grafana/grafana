@@ -6,7 +6,6 @@ import (
 	"time"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	"github.com/grafana/grafana/pkg/util"
 )
 

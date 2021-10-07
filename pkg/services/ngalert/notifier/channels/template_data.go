@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -18,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type ExtendedAlert struct {
