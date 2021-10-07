@@ -722,7 +722,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, 202, resp.StatusCode)
+		assert.Equal(t, 200, resp.StatusCode)
 
 		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
 		b = re.ReplaceAll(b, []byte(`"uid":""`))
@@ -833,7 +833,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		assert.Equal(t, 202, resp.StatusCode)
+		assert.Equal(t, 200, resp.StatusCode)
 		assert.JSONEq(t, "{}", string(b))
 	}
 }

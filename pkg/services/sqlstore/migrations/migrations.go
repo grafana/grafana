@@ -53,6 +53,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	}
 	ualert.RerunDashAlertMigration(mg)
 	addKVStoreMigrations(mg)
+	ualert.AddDashboardUIDPanelIDMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
