@@ -727,17 +727,3 @@ func (am *Alertmanager) timeoutFunc(d time.Duration) time.Duration {
 type nilLimits struct{}
 
 func (n nilLimits) MaxNumberOfAggregationGroups() int { return 0 }
-
-// cleanUp removes the silences and notification-log from kv store/disk used by this
-// alertmanager.
-func (am *Alertmanager) cleanUp() {
-	if err := am.fileStore.Delete(context.Background(), silencesFilename); err != nil {
-		am.logger.Warn("failed to delete file from filestore", "file", silencesFilename)
-	}
-	if err := am.fileStore.Delete(context.Background(), notificationLogFilename); err != nil {
-		am.logger.Warn("failed to delete file from filestore", "file", notificationLogFilename)
-	}
-	if err := os.RemoveAll(am.WorkingDirPath()); err != nil {
-		am.logger.Warn("failed to cleanup resources from filesystem", "err", err)
-	}
-}

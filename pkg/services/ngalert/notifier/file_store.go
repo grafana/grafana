@@ -89,12 +89,10 @@ func (fileStore *FileStore) Persist(ctx context.Context, filename string, st Sta
 
 // Delete will remove the file from the filestore.
 func (fileStore *FileStore) Delete(ctx context.Context, filename string) error {
-	if fileStore.IsExists(filename) {
-		if err := os.Remove(fileStore.pathFor(filename)); err != nil {
-			return err
-		}
+	if err := fileStore.kv.Del(ctx, filename); err != nil {
+		return err
 	}
-	return fileStore.kv.Del(ctx, filename)
+	return os.Remove(fileStore.pathFor(filename))
 }
 
 // IsExists verifies if the file exists or not.
