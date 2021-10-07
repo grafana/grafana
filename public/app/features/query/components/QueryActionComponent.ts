@@ -4,6 +4,7 @@ interface ActionComponentProps {
   query?: DataQuery;
   queries?: Array<Partial<DataQuery>>;
   onAddQuery?: (q: DataQuery) => void;
+  onChangeDataSource?: (newSettings: DataSourceInstanceSettings) => void;
   timeRange?: TimeRange;
   dataSource?: DataSourceInstanceSettings;
 }

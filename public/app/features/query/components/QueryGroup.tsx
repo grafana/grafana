@@ -12,7 +12,7 @@ import {
   stylesFactory,
   Tooltip,
 } from '@grafana/ui';
-import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -115,11 +115,15 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     // switching to mixed
     if (newSettings.meta.mixed) {
-      for (const query of queries) {
-        if (query.datasource !== ExpressionDatasourceID) {
-          query.datasource = dsSettings?.name;
-          if (!query.datasource) {
-            query.datasource = config.defaultDatasource;
+      const isCurrentMixed = dsSettings?.meta?.mixed || false;
+      if (!isCurrentMixed) {
+        // Only update if mixed hasn't already been selected
+        for (const query of queries) {
+          if (query.datasource !== ExpressionDatasourceID) {
+            query.datasource = dsSettings?.name;
+            if (!query.datasource) {
+              query.datasource = config.defaultDatasource;
+            }
           }
         }
       }
@@ -320,6 +324,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           onQueriesChange={this.onQueriesChange}
           onAddQuery={this.onAddQuery}
           onRunQueries={onRunQueries}
+          onChangeParentDataSource={this.onChangeDataSource}
           data={data}
         />
       </div>
@@ -332,7 +337,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   renderExtraActions() {
     return GroupActionComponents.getAllExtraRenderAction().map((c) => {
-      return React.createElement(c, { onAddQuery: this.onAddQuery });
+      return React.createElement(c, { onAddQuery: this.onAddQuery, onChangeDataSource: this.onChangeDataSource });
     });
   }
 
