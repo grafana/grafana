@@ -49,7 +49,7 @@ For example:
 
 Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
 
-To override an option, use the syntax:
+To override an option:
 
 ```bash
 GF_<SectionName>_<KeyName>
