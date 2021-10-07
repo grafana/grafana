@@ -1,5 +1,8 @@
 import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
+import Moveable from 'moveable';
+import Selecto from 'selecto';
+
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
@@ -93,20 +96,84 @@ export class Scene {
     this.onSave(this.root.getSaveModel());
   }
 
-  // make sure this gets called after 'loadScene' and all items have a div
   initMoveable = (div: HTMLDivElement) => {
-    this.root.visit((v) => {
-      this.lookup.set(v.UID, v);
-      // HACK! select the first/only item
-      if (v.item.id !== 'group') {
-        // console.log('ADD', v.div);
-      }
+    const targetElements: HTMLDivElement[] = [];
+    this.root.elements.forEach((element: ElementState) => {
+      targetElements.push(element.div!);
     });
-  };
 
-  // init function on scene (ref on entire scene)
-  // function onSave
-  // Maybe try and implement selecto at this level
+    let targets: Array<HTMLElement | SVGElement> = [];
+
+    const selecto = new Selecto({
+      container: document.getElementById('canvas-panel')!,
+      selectableTargets: targetElements,
+    });
+
+    const moveable = new Moveable(document.getElementById('canvas-panel')!, {
+      draggable: true,
+    })
+      .on('clickGroup', (e) => {
+        selecto.clickTarget(e.inputEvent, e.inputTarget);
+      })
+      .on('drag', ({ target, top, left }) => {
+        // TODO: Investigate optimizing this approach
+        const targetedElement = this.root.elements.find((element) => element.div === target);
+
+        let placement = targetedElement!.options.placement;
+        if (!placement) {
+          placement = {
+            left: 0,
+            top: 0,
+          };
+          targetedElement!.options.placement = placement;
+        }
+
+        target.style.top = `${top}px`;
+        target.style.left = `${left}px`;
+        placement!.top = top;
+        placement!.left = left;
+      })
+      .on('dragGroup', (e) => {
+        e.events.forEach(({ target, top, left }) => {
+          // TODO: Investigate optimizing this approach
+          const targetedElement = this.root.elements.find((element) => element.div === target);
+
+          let placement = targetedElement!.options.placement;
+          if (!placement) {
+            placement = {
+              left: 0,
+              top: 0,
+            };
+            targetedElement!.options.placement = placement;
+          }
+
+          target.style.top = `${top}px`;
+          target.style.left = `${left}px`;
+          placement!.top = top;
+          placement!.left = left;
+        });
+      });
+
+    selecto
+      .on('dragStart', (e) => {
+        const target = e.inputEvent.target;
+        if (moveable.isMoveableElement(target) || targets.some((t) => t === target || t.contains(target))) {
+          e.stop();
+        }
+      })
+      .on('selectEnd', (e) => {
+        targets = e.selected;
+        moveable.target = targets;
+
+        if (e.isDragStart) {
+          e.inputEvent.preventDefault();
+
+          setTimeout(() => {
+            moveable.dragStart(e.inputEvent);
+          });
+        }
+      });
+  };
 
   render() {
     return (

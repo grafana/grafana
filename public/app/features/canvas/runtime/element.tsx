@@ -1,5 +1,4 @@
 import React, { CSSProperties } from 'react';
-import Moveable from 'moveable';
 
 import {
   BackgroundImageSize,
@@ -21,7 +20,7 @@ export class ElementState {
   dataStyle: CSSProperties = {};
 
   // Filled in by react ref
-  // div?: HTMLDivElement;
+  div?: HTMLDivElement;
 
   // Calculated
   width = 100;
@@ -130,50 +129,14 @@ export class ElementState {
     return { ...this.options };
   }
 
-  // initElement = (target: HTMLDivElement) => {
-  //   this.div = target;
-  // };
-
-  setUpMoveable = (elementDiv: HTMLDivElement) => {
-    const moveable = new Moveable(document.getElementById('canvas-panel')!, {
-      target: elementDiv,
-      draggable: true,
-      throttleDrag: 0,
-      throttleDragRotate: 0,
-      resizable: true,
-      throttleResize: 0,
-    });
-
-    let placement = this.options.placement;
-
-    if (!placement) {
-      placement = {
-        left: 0,
-        top: 0,
-      };
-      this.options.placement = placement;
-    }
-
-    moveable.on('drag', ({ target, top, left }) => {
-      target.style.top = `${top}px`;
-      target.style.left = `${left}px`;
-
-      placement!.top = top;
-      placement!.left = left;
-    });
-    moveable.on('resize', ({ target, height, width }) => {
-      target.style.height = `${height}px`;
-      target.style.width = `${width}px`;
-
-      placement!.height = height;
-      placement!.width = width;
-    });
+  initElement = (target: HTMLDivElement) => {
+    this.div = target;
   };
 
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.setUpMoveable}>
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );
