@@ -1,18 +1,21 @@
+import {
+  ArrayVector,
+  DataTransformerConfig,
+  DataTransformerID,
+  Field,
+  FieldType,
+  toDataFrame,
+  transformDataFrame,
+} from '@grafana/data';
+import { GroupingToMatrixTransformerOptions, groupingToMatrixTransformer } from './groupingToMatrix';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../dataframe';
-import { transformDataFrame } from '../transformDataFrame';
-import { ArrayVector } from '../../vector';
-import { groupingToMatrixTransformer, GroupingToMatrixTransformerOptions } from './groupingToMatrix';
-import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Grouping to Matrix', () => {
   beforeAll(() => {
     mockTransformationsRegistry([groupingToMatrixTransformer]);
   });
 
-  it('generate Matrix with default fields', done => {
+  it('generates Matrix with default fields', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
       options: {},
@@ -26,23 +29,40 @@ describe('Grouping to Matrix', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesA]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time\\Time', FieldType.string, [1000, 1001, 1002]),
-          createField('1000', FieldType.number, [1, '', '']),
-          createField('1001', FieldType.number, ['', 2, '']),
-          createField('1002', FieldType.number, ['', '', 3]),
-        ];
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Time\\Time',
+          type: FieldType.string,
+          values: new ArrayVector([1000, 1001, 1002]),
+          config: {},
+        },
+        {
+          name: '1000',
+          type: FieldType.number,
+          values: new ArrayVector([1, '', '']),
+          config: {},
+        },
+        {
+          name: '1001',
+          type: FieldType.number,
+          values: new ArrayVector(['', 2, '']),
+          config: {},
+        },
+        {
+          name: '1002',
+          type: FieldType.number,
+          values: new ArrayVector(['', '', 3]),
+          config: {},
+        },
+      ];
 
-        expect(unwrap(result[0].fields)).toEqual(expected);
-      },
-      done,
+      expect(processed[0].fields).toEqual(expected);
     });
   });
 
-  it('generate Matrix with multiple fields', done => {
+  it('generates Matrix with multiple fields', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
       options: {
@@ -61,22 +81,34 @@ describe('Grouping to Matrix', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesA]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Row\\Column', FieldType.string, ['R1', 'R2']),
-          createField('C1', FieldType.number, [1, 4]),
-          createField('C2', FieldType.number, [5, '']),
-        ];
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Row\\Column',
+          type: FieldType.string,
+          values: new ArrayVector(['R1', 'R2']),
+          config: {},
+        },
+        {
+          name: 'C1',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4]),
+          config: {},
+        },
+        {
+          name: 'C2',
+          type: FieldType.number,
+          values: new ArrayVector([5, '']),
+          config: {},
+        },
+      ];
 
-        expect(unwrap(result[0].fields)).toEqual(expected);
-      },
-      done,
+      expect(processed[0].fields).toEqual(expected);
     });
   });
 
-  it('generate Matrix with multiple fields and value type', done => {
+  it('generates Matrix with multiple fields and value type', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
       options: {
@@ -87,7 +119,7 @@ describe('Grouping to Matrix', () => {
     };
 
     const seriesA = toDataFrame({
-      name: 'A',
+      name: 'C',
       fields: [
         { name: 'Column', type: FieldType.string, values: ['C1', 'C1', 'C2'] },
         { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
@@ -95,33 +127,30 @@ describe('Grouping to Matrix', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesA]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Row\\Column', FieldType.string, ['R1', 'R2']),
-          createField('C1', FieldType.number, [1, 4], { units: 'celsius' }),
-          createField('C2', FieldType.number, [5, ''], { units: 'celsius' }),
-        ];
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Row\\Column',
+          type: FieldType.string,
+          values: new ArrayVector(['R1', 'R2']),
+          config: {},
+        },
+        {
+          name: 'C1',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4]),
+          config: { units: 'celsius' },
+        },
+        {
+          name: 'C2',
+          type: FieldType.number,
+          values: new ArrayVector([5, '']),
+          config: { units: 'celsius' },
+        },
+      ];
 
-        expect(unwrap(result[0].fields)).toEqual(expected);
-      },
-      done,
+      expect(processed[0].fields).toEqual(expected);
     });
   });
 });
-
-const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {
-  return { name, type, values: new ArrayVector(values), config, labels: undefined };
-};
-
-const unwrap = (fields: Field[]): Field[] => {
-  return fields.map(field =>
-    createField(
-      field.name,
-      field.type,
-      field.values.toArray().map((value: any) => value),
-      field.config
-    )
-  );
-};

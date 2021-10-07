@@ -24,9 +24,10 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
     rowField: DEFAULT_ROW_FIELD,
     valueField: DEFAULT_VALUE_FIELD,
   },
-  operator: options => source =>
+
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
         const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
         const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
