@@ -312,7 +312,3 @@ func (p *NilPeer) AddState(string, cluster.State, prometheus.Registerer) cluster
 type NilChannel struct{}
 
 func (c *NilChannel) Broadcast([]byte) {}
-
-func removeOrphans(dir string, orgs []logger) {
-
-}
