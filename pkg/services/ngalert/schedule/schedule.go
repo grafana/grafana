@@ -479,12 +479,22 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		}
 	}
 
-	updateRule := func() (*models.AlertRule, error) {
+	clearState := func() {
+		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
+		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
+		notify(expiredAlerts, logger)
+	}
+
+	updateRule := func(oldRule *models.AlertRule) (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
 		if err != nil {
 			logger.Error("failed to fetch alert rule", "err", err)
 			return nil, err
+		}
+		if oldRule != nil && oldRule.Version < q.Result.Version {
+			clearState()
 		}
 		return q.Result, nil
 	}
@@ -554,7 +564,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				err := retryIfError(func(attempt int64) error {
 					// fetch latest alert rule version
 					if currentRule == nil || currentRule.Version < ctx.version {
-						newRule, err := updateRule()
+						newRule, err := updateRule(currentRule)
 						if err != nil {
 							return err
 						}
