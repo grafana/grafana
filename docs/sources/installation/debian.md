@@ -137,6 +137,10 @@ Configure the Grafana server to start at boot:
 sudo systemctl enable grafana-server.service
 ```
 
+#### Serving Grafana on a port < 1024
+
+{{< docs/shared "systemd/bind-net-capabilities.md" >}}
+
 ### Start the server with init.d
 
 To start the service and verify that the service has started:
