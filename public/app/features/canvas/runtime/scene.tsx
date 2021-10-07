@@ -96,119 +96,69 @@ export class Scene {
     this.onSave(this.root.getSaveModel());
   }
 
-  initMoveable = (div: HTMLDivElement) => {
+  private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+    return this.root.elements.find((element) => element.div === target);
+  };
+
+  initMoveable = (sceneContainer: HTMLDivElement) => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
     });
 
-    let targets: Array<HTMLElement | SVGElement> = [];
-
     const selecto = new Selecto({
-      container: document.getElementById('canvas-panel')!,
+      container: sceneContainer,
       selectableTargets: targetElements,
     });
 
-    const moveable = new Moveable(document.getElementById('canvas-panel')!, {
+    const moveable = new Moveable(sceneContainer, {
       draggable: true,
       resizable: true,
     })
-      .on('clickGroup', (e) => {
-        selecto.clickTarget(e.inputEvent, e.inputTarget);
+      .on('clickGroup', (event) => {
+        selecto.clickTarget(event.inputEvent, event.inputTarget);
       })
-      .on('drag', ({ target, top, left }) => {
-        // TODO: Investigate optimizing this approach
-        const targetedElement = this.root.elements.find((element) => element.div === target);
-
-        let placement = targetedElement!.options.placement;
-        if (!placement) {
-          placement = {
-            left: 0,
-            top: 0,
-          };
-          targetedElement!.options.placement = placement;
-        }
-
-        target.style.top = `${top}px`;
-        target.style.left = `${left}px`;
-        placement!.top = top;
-        placement!.left = left;
+      .on('drag', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        targetedElement!.applyDrag(event);
       })
       .on('dragGroup', (e) => {
-        e.events.forEach(({ target, top, left }) => {
-          // TODO: Investigate optimizing this approach
-          const targetedElement = this.root.elements.find((element) => element.div === target);
-
-          let placement = targetedElement!.options.placement;
-          if (!placement) {
-            placement = {
-              left: 0,
-              top: 0,
-            };
-            targetedElement!.options.placement = placement;
-          }
-
-          target.style.top = `${top}px`;
-          target.style.left = `${left}px`;
-          placement!.top = top;
-          placement!.left = left;
+        e.events.forEach((event) => {
+          const targetedElement = this.findElementByTarget(event.target);
+          targetedElement!.applyDrag(event);
         });
       })
-      .on('resize', ({ target, height, width }) => {
-        // TODO: Investigate optimizing this approach
-        const targetedElement = this.root.elements.find((element) => element.div === target);
-
-        let placement = targetedElement!.options.placement;
-        if (!placement) {
-          placement = {
-            left: 0,
-            top: 0,
-          };
-          targetedElement!.options.placement = placement;
-        }
-
-        target.style.height = `${height}px`;
-        target.style.width = `${width}px`;
-        placement!.height = height;
-        placement!.width = width;
+      .on('resize', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        targetedElement!.applyResize(event);
       })
       .on('resizeGroup', (e) => {
-        e.events.forEach(({ target, height, width }) => {
-          // TODO: Investigate optimizing this approach
-          const targetedElement = this.root.elements.find((element) => element.div === target);
-
-          let placement = targetedElement!.options.placement;
-          if (!placement) {
-            placement = {
-              left: 0,
-              top: 0,
-            };
-            targetedElement!.options.placement = placement;
-          }
-
-          target.style.height = `${height}px`;
-          target.style.width = `${width}px`;
-          placement!.height = height;
-          placement!.width = width;
+        e.events.forEach((event) => {
+          const targetedElement = this.findElementByTarget(event.target);
+          targetedElement!.applyResize(event);
         });
       });
 
+    let targets: Array<HTMLElement | SVGElement> = [];
     selecto
-      .on('dragStart', (e) => {
-        const target = e.inputEvent.target;
-        if (moveable.isMoveableElement(target) || targets.some((t) => t === target || t.contains(target))) {
-          e.stop();
+      .on('dragStart', (event) => {
+        const selectedTarget = event.inputEvent.target;
+        if (
+          moveable.isMoveableElement(selectedTarget) ||
+          targets.some((target) => target === selectedTarget || target.contains(selectedTarget))
+        ) {
+          event.stop();
         }
       })
-      .on('selectEnd', (e) => {
-        targets = e.selected;
+      .on('selectEnd', (event) => {
+        targets = event.selected;
         moveable.target = targets;
 
-        if (e.isDragStart) {
-          e.inputEvent.preventDefault();
+        if (event.isDragStart) {
+          event.inputEvent.preventDefault();
 
           setTimeout(() => {
-            moveable.dragStart(e.inputEvent);
+            moveable.dragStart(event.inputEvent);
           });
         }
       });

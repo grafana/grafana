@@ -9,6 +9,7 @@ import {
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
+import { OnDrag, OnResize } from 'react-moveable/declaration/types';
 
 let counter = 100;
 
@@ -43,7 +44,7 @@ export class ElementState {
       // width,
       // height,
       ...this.options.placement,
-      position: 'relative', // leaf nodes are relative
+      position: 'absolute', // leaf nodes are relative
     };
   }
 
@@ -131,6 +132,33 @@ export class ElementState {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
+
+    let placement = this.options.placement;
+    if (!placement) {
+      placement = {
+        left: 0,
+        top: 0,
+      };
+      this.options.placement = placement;
+    }
+  };
+
+  applyDrag = (event: OnDrag) => {
+    const placement = this.options.placement;
+    placement!.top = event.top;
+    placement!.left = event.left;
+
+    event.target.style.top = `${event.top}px`;
+    event.target.style.left = `${event.left}px`;
+  };
+
+  applyResize = (event: OnResize) => {
+    const placement = this.options.placement;
+    placement!.height = event.height;
+    placement!.width = event.width;
+
+    event.target.style.height = `${event.height}px`;
+    event.target.style.width = `${event.width}px`;
   };
 
   render() {

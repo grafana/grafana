@@ -114,6 +114,6 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   render() {
-    return <div id="canvas-panel">{this.scene.render()}</div>;
+    return <div>{this.scene.render()}</div>;
   }
 }
