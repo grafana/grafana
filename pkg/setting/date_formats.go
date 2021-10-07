@@ -23,20 +23,30 @@ type DateFormatIntervals struct {
 	Year   string `json:"year"`
 }
 
-const localBrowserTimezone = "browser"
+const localBrowser = "browser"
 
 func valueAsTimezone(section *ini.Section, keyName string) (string, error) {
-	timezone := section.Key(keyName).MustString(localBrowserTimezone)
-	if timezone == localBrowserTimezone {
-		return localBrowserTimezone, nil
+	timezone := section.Key(keyName).MustString(localBrowser)
+	if timezone == localBrowser {
+		return localBrowser, nil
 	}
 
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
-		return localBrowserTimezone, err
+		return localBrowser, err
 	}
 
 	return location.String(), nil
+}
+
+func valueAsWeekStart(section *ini.Section, keyName string) int {
+	weekStart := section.Key(keyName).MustString(localBrowser)
+	days := map[string]int{"sunday": 0, "monday": 1, "saturday": 6}
+	if dow, ok := days[weekStart]; ok {
+		return dow
+	}
+
+	return -1
 }
 
 func (cfg *Cfg) readDateFormats() {
@@ -55,5 +65,5 @@ func (cfg *Cfg) readDateFormats() {
 		cfg.Logger.Warn("Unknown timezone as default_timezone", "err", err)
 	}
 	cfg.DateFormats.DefaultTimezone = timezone
-	cfg.DateFormats.DefaultWeekStart = dateFormats.Key("default_week_start").MustInt(-1)
+	cfg.DateFormats.DefaultWeekStart = valueAsWeekStart(dateFormats, "default_week_start")
 }

@@ -1787,7 +1787,7 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 
 ### default_week_start
 
-Set the default start of the week, valid values are: `saturday`, `sunday` or `monday`. Default is `monday`.
+Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
 ## [expressions]
 
