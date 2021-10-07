@@ -42,6 +42,8 @@ type ScheduleService interface {
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 	// UpdateAlertRule notifies scheduler that a rule has been changed
 	UpdateAlertRule(key models.AlertRuleKey)
+	// DeleteAlertRule notifies scheduler that a rule has been changed
+	DeleteAlertRule(key models.AlertRuleKey)
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)
 	stopApplied(models.AlertRuleKey)
@@ -318,6 +320,17 @@ func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
 	ruleInfo.update()
 }
 
+// DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
+func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
+	ruleInfo, ok := sch.registry.del(key)
+	if !ok {
+		sch.log.Info("unable to get alert rule routine information by key", "uid", key.UID, "org_id", key.OrgID)
+		return
+	}
+	// stop rule evaluation
+	ruleInfo.stop()
+}
+
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
 	for {
 		select {
@@ -418,12 +431,7 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 			// unregister and stop routines of the deleted alert rules
 			for key := range registeredDefinitions {
-				ruleInfo, ok := sch.registry.del(key)
-				if !ok {
-					sch.log.Error("unable to delete alert rule routine information because it did not exist", "uid", key.UID, "org_id", key.OrgID)
-					continue
-				}
-				ruleInfo.stop()
+				sch.DeleteAlertRule(key)
 			}
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
