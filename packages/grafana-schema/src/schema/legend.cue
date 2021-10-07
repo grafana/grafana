@@ -7,7 +7,7 @@ LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
 VizLegendOptions: {
 	displayMode: LegendDisplayMode
 	placement:   LegendPlacement
-	asTable:     bool | *false
-	isVisible:   bool | *false
+	asTable?:     bool
+	isVisible?:   bool
 	calcs: [...string]
 } @cuetsy(kind="interface")

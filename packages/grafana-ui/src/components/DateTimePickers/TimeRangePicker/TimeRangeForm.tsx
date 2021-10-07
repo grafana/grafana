@@ -112,49 +112,47 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   );
 
   return (
-    <ClickOutsideWrapper includeButtonPress={false} onClick={() => setOpen(false)}>
-      <div>
+    <div>
+      <div className={style.fieldContainer}>
         <Field label="From" invalid={from.invalid} error={from.errorMessage}>
-          <div className={style.fieldContainer}>
-            <Input
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) => onChange(event.currentTarget.value, to.value)}
-              addonAfter={icon}
-              aria-label={selectors.components.TimePicker.fromField}
-              value={from.value}
-            />
-            {fyTooltip}
-          </div>
+          <Input
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onChange(event.currentTarget.value, to.value)}
+            addonAfter={icon}
+            aria-label={selectors.components.TimePicker.fromField}
+            value={from.value}
+          />
         </Field>
-        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
-          <div className={style.fieldContainer}>
-            <Input
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) => onChange(from.value, event.currentTarget.value)}
-              addonAfter={icon}
-              aria-label={selectors.components.TimePicker.toField}
-              value={to.value}
-            />
-            {fyTooltip}
-          </div>
-        </Field>
-        <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
-          Apply time range
-        </Button>
-
-        <TimePickerCalendar
-          isFullscreen={isFullscreen}
-          isOpen={isOpen}
-          from={dateTimeParse(from.value)}
-          to={dateTimeParse(to.value)}
-          onApply={onApply}
-          onClose={() => setOpen(false)}
-          onChange={onChange}
-          timeZone={timeZone}
-          isReversed={isReversed}
-        />
+        {fyTooltip}
       </div>
-    </ClickOutsideWrapper>
+      <div className={style.fieldContainer}>
+        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
+          <Input
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onChange(from.value, event.currentTarget.value)}
+            addonAfter={icon}
+            aria-label={selectors.components.TimePicker.toField}
+            value={to.value}
+          />
+        </Field>
+        {fyTooltip}
+      </div>
+      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
+        Apply time range
+      </Button>
+
+      <TimePickerCalendar
+        isFullscreen={isFullscreen}
+        isOpen={isOpen}
+        from={dateTimeParse(from.value)}
+        to={dateTimeParse(to.value)}
+        onApply={onApply}
+        onClose={() => setOpen(false)}
+        onChange={onChange}
+        timeZone={timeZone}
+        isReversed={isReversed}
+      />
+    </div>
   );
 };
 
@@ -215,7 +213,7 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     tooltip: css`
       padding-left: ${theme.spacing(1)};
-      padding-top: ${theme.spacing(0.5)};
+      padding-top: ${theme.spacing(3)};
     `,
   };
 }
