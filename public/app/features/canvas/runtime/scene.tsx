@@ -1,5 +1,6 @@
 import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
+import { ReplaySubject } from 'rxjs';
 import Moveable from 'moveable';
 import Selecto from 'selecto';
 
@@ -20,7 +21,6 @@ import {
   getResourceDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { ReplaySubject } from 'rxjs';
 import { GroupState } from './group';
 import { ElementState } from './element';
 
@@ -143,10 +143,13 @@ export class Scene {
     selecto
       .on('dragStart', (event) => {
         const selectedTarget = event.inputEvent.target;
-        if (
+
+        const isTargetMoveableElement =
           moveable.isMoveableElement(selectedTarget) ||
-          targets.some((target) => target === selectedTarget || target.contains(selectedTarget))
-        ) {
+          targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
+
+        if (isTargetMoveableElement) {
+          // Prevent drawing selection box when selected target is a moveable element
           event.stop();
         }
       })
@@ -166,8 +169,10 @@ export class Scene {
 
   render() {
     return (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
-        {this.root.render()}
+      <div>
+        <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
+          {this.root.render()}
+        </div>
       </div>
     );
   }

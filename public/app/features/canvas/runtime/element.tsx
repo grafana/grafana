@@ -20,7 +20,7 @@ export class ElementState {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
-  // Filled in by react ref
+  // Filled in by ref
   div?: HTMLDivElement;
 
   // Calculated
@@ -41,10 +41,8 @@ export class ElementState {
 
     // Update the CSS position
     this.sizeStyle = {
-      // width,
-      // height,
       ...this.options.placement,
-      position: 'absolute', // leaf nodes are relative
+      position: 'absolute',
     };
   }
 
@@ -111,7 +109,6 @@ export class ElementState {
     visitor(this);
   }
 
-  // Something changed
   onChange(options: CanvasElementOptions) {
     if (this.item.id !== options.type) {
       this.item = canvasElementRegistry.getIfExists(options.type) ?? notFoundItem;
