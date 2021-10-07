@@ -1,4 +1,5 @@
 import React, { CSSProperties } from 'react';
+import { OnDrag, OnResize } from 'react-moveable/declaration/types';
 
 import {
   BackgroundImageSize,
@@ -9,7 +10,6 @@ import {
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
-import { OnDrag, OnResize } from 'react-moveable/declaration/types';
 
 let counter = 100;
 
