@@ -45,9 +45,11 @@ For example:
 ;http_port = 3000
 ```
 
-## Configure with environment variables
+## Override configuration settings with environment variables
 
-All options in the configuration file can be overridden using environment variables using the syntax:
+Do not use environment variables to add new configuration settings. Use them to override existing options.
+
+To override an option in the configuration file, use the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
