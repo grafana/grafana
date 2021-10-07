@@ -73,9 +73,14 @@ func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *model
 	return ac.GetUserRoles(ctx, user)
 }
 
-// GetUserRoles returns user permissions based on built-in roles
+// CloneUserToServiceAccount creates a service account with permissions based on a user
 func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error) {
-	return ac.CloneUserToServiceAccount(ctx, user)
+	panic("Unsupported function")
+}
+
+// Link creates a service account with permissions based on a user
+func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(ctx context.Context, user *models.SignedInUser) error {
+	panic("Unsupported function")
 }
 
 // GetUserPermissions returns user permissions based on built-in roles

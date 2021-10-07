@@ -14,14 +14,15 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	CloneUserToServiceAccount []interface{}
-	Evaluate                  []interface{}
-	GetUserPermissions        []interface{}
-	GetUserRoles              []interface{}
-	IsDisabled                []interface{}
-	DeclareFixedRoles         []interface{}
-	GetUserBuiltInRoles       []interface{}
-	RegisterFixedRoles        []interface{}
+	CloneUserToServiceAccount  []interface{}
+	Evaluate                   []interface{}
+	GetUserPermissions         []interface{}
+	GetUserRoles               []interface{}
+	IsDisabled                 []interface{}
+	DeclareFixedRoles          []interface{}
+	GetUserBuiltInRoles        []interface{}
+	RegisterFixedRoles         []interface{}
+	LinkAPIKeyToServiceAccount []interface{}
 }
 
 type Mock struct {
@@ -40,7 +41,8 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	CloneUserToServiceAccountFunc func(ctx context.Context, user *models.SignedInUser) (*models.User, error)
+	CloneUserToServiceAccountFunc func(context.Context, *models.SignedInUser) (*models.User, error)
+	LinkAPIKeyToServiceAccount    func(context.Context, *models.ApiKey, *models.User) error
 	EvaluateFunc                  func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
 	GetUserPermissionsFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
 	GetUserRolesFunc              func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
@@ -125,6 +127,16 @@ func (m *Mock) CloneUserToServiceAccount(ctx context.Context, user *models.Signe
 	}
 	// Otherwise return the user
 	return m.createduser, nil
+}
+
+func (m *Mock) LinkAPIKeyToServiceAccount(ctx context.Context, apikey *models.ApiKey, service_account *models.User) error {
+	m.Calls.CloneUserToServiceAccount = append(m.Calls.LinkAPIKeyToServiceAccount, []interface{}{ctx, apikey, service_account})
+	// Use override if provided
+	if m.LinkAPIKeyToServiceAccount != nil {
+		return m.LinkAPIKeyToServiceAccount(ctx, apikey, service_account)
+	}
+	// Otherwise return the default
+	return nil
 }
 
 // Middleware checks if service disabled or not to switch to fallback authorization.
