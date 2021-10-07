@@ -142,7 +142,6 @@ export const markerMakers = new Registry<MarkerMaker>(() => makers);
 export const getMarkerFromPath = (svgPath: string): MarkerMaker | undefined => {
   for (const [key, val] of Object.entries(shapeByPathLookup)) {
     if (key === svgPath) {
-      console.log('key', key);
       return markerMakers.getIfExists(val);
     }
   }

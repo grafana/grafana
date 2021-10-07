@@ -99,7 +99,6 @@ function asNumber(v: any): number | undefined {
   return isNaN(num) ? undefined : num;
 }
 
-// export const mapMigrationHandler = (panel: PanelModel, ): Partial<GeomapPanelOptions> => {
 export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptions> => {
   const pluginVersion = panel?.pluginVersion;
   if (pluginVersion?.startsWith('8.1') || pluginVersion?.startsWith('8.2') || pluginVersion?.startsWith('8.3')) {
