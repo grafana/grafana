@@ -485,10 +485,12 @@ func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, erro
 func (hs *HTTPServer) pluginSignatureErrors() []plugins.SignatureError {
 	scanningErrs := make([]plugins.SignatureError, 0)
 	for _, p := range hs.pluginStore.Plugins() {
-		scanningErrs = append(scanningErrs, plugins.SignatureError{
-			PluginID: p.ID,
-			Status:   p.SignatureError.SignatureStatus,
-		})
+		if p.SignatureError != nil {
+			scanningErrs = append(scanningErrs, plugins.SignatureError{
+				PluginID: p.ID,
+				Status:   p.SignatureError.SignatureStatus,
+			})
+		}
 	}
 	return scanningErrs
 }
