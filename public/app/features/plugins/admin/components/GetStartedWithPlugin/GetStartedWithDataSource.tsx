@@ -9,7 +9,7 @@ type Props = {
   plugin: CatalogPlugin;
 };
 
-export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement | null {
+export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement {
   const dispatch = useDispatch();
   const onAddDataSource = useCallback(() => {
     const meta = {
