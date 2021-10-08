@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/encryption"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2/google"
 )
@@ -66,11 +68,13 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider) *Service {
+func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider,
+	dsService *datasources.Service) *Service {
 	return &Service{
 		PluginManager:      pluginManager,
 		HTTPClientProvider: httpClientProvider,
 		Cfg:                cfg,
+		dsService:          dsService,
 	}
 }
 
@@ -78,29 +82,32 @@ type Service struct {
 	PluginManager      plugins.Manager
 	HTTPClientProvider httpclient.Provider
 	Cfg                *setting.Cfg
+	dsService          *datasources.Service
 }
 
 // Executor executes queries for the CloudMonitoring datasource.
 type Executor struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
+	httpClient        *http.Client
+	dsInfo            *models.DataSource
+	pluginManager     plugins.Manager
+	encryptionService encryption.Service
+	cfg               *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHTTPClient(s.HTTPClientProvider)
+	httpClient, err := s.dsService.GetHTTPClient(dsInfo, s.HTTPClientProvider)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Executor{
-		httpClient:    httpClient,
-		dsInfo:        dsInfo,
-		pluginManager: s.PluginManager,
-		cfg:           s.Cfg,
+		httpClient:        httpClient,
+		dsInfo:            dsInfo,
+		pluginManager:     s.PluginManager,
+		encryptionService: s.dsService.EncryptionService,
+		cfg:               s.Cfg,
 	}, nil
 }
 
@@ -548,7 +555,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg, e.encryptionService)
 
 	return req, nil
 }

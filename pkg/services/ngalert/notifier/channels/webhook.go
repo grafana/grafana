@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
 // WebhookNotifier is responsible for sending
@@ -30,7 +30,7 @@ type WebhookNotifier struct {
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template) (*WebhookNotifier, error) {
+func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find settings property"}
 	}
@@ -48,7 +48,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template) 
 		}),
 		URL:        url,
 		User:       model.Settings.Get("username").MustString(),
-		Password:   model.DecryptedValue("password", model.Settings.Get("password").MustString()),
+		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey),
 		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
 		log:        log.New("alerting.notifier.webhook"),
