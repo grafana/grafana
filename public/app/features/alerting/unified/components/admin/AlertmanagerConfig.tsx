@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form, useStyles2 } from '@grafana/ui';
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { useDispatch } from 'react-redux';
@@ -17,13 +18,14 @@ interface FormValues {
   configJSON: string;
 }
 
-export default function Admin(): JSX.Element {
+export default function AlertmanagerConfig(): JSX.Element {
   const dispatch = useDispatch();
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : false;
+  const styles = useStyles2(getStyles);
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -67,7 +69,7 @@ export default function Admin(): JSX.Element {
   };
 
   return (
-    <AlertingPageWrapper pageId="alerting-admin">
+    <div className={styles.container}>
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {loadingError && !loading && (
         <Alert severity="error" title="Error loading Alertmanager configuration">
@@ -145,6 +147,12 @@ export default function Admin(): JSX.Element {
           )}
         </Form>
       )}
-    </AlertingPageWrapper>
+    </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    margin-bottom: ${theme.spacing(4)};
+  `,
+});

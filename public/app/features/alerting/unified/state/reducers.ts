@@ -55,7 +55,7 @@ export const reducer = combineReducers({
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
   updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
     .reducer,
-  externalAlertManagers: combineReducers({
+  externalAlertmanagers: combineReducers({
     alertmanagerConfig: createAsyncSlice('alertmanagerConfig', fetchExternalAlertmanagersConfigAction).reducer,
     activeAlertmanagers: createAsyncSlice('activeAlertmanagers', fetchExternalAlertmanagersAction).reducer,
   }),

@@ -3,10 +3,10 @@ import { StoreState } from '../../../../types';
 
 export function useExternalAmSelector(): Array<{ url: string; status: string }> {
   const activeAlertmanagers = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertManagers.activeAlertmanagers.result?.data
+    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.activeAlertmanagers.result?.data
   );
   const alertmanagerConfig = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertManagers.alertmanagerConfig.result?.alertmanagers
+    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagers
   );
 
   if (!activeAlertmanagers || !alertmanagerConfig) {
@@ -21,13 +21,22 @@ export function useExternalAmSelector(): Array<{ url: string; status: string }> 
     })
   );
 
-  for (const alertmanager of activeAlertmanagers.activeAlertManagers) {
-    if (alertmanagerConfig.includes(alertmanager.url)) {
-      enabledAlertmanagers.push({ url: alertmanager.url, status: 'active' });
-    } else {
-      enabledAlertmanagers.push({ url: alertmanager.url, status: 'pending' });
-    }
-  }
+  // const enabledAlertmanagers = activeAlertmanagers.activeAlertManagers.map((alertmanager) => {
+  //   alertmanagerConfig.find((url) => alertmanager.url === `${url}/api/v2/alerts`);
+  //   for (const url in alertmanagerConfig) {
+  //     if (alertmanager.url === `${url}/api/v2/alerts`) {
+  //       return {
+  //         url: alertmanager.url,
+  //         status: 'active',
+  //       };
+  //     } else {
+  //       return {
+  //         url: `${url}/api/v2/alerts`,
+  //         status: 'pending',
+  //       };
+  //     }
+  //   }
+  // });
 
   return [...enabledAlertmanagers, ...droppedAlertmanagers];
 }
