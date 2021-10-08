@@ -97,6 +97,17 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			},
 		}
 
+		jd, err := ds.JsonData.Map()
+		require.NoError(t, err)
+		dsInfo := DSInfo{
+			ID:       ds.Id,
+			Updated:  ds.Updated,
+			JSONData: jd,
+			DecryptedSecureJSONData: map[string]string{
+				"key": "123",
+			},
+		}
+
 		setUp := func() (*models.ReqContext, *http.Request) {
 			req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 			require.NoError(t, err)
@@ -116,7 +127,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				&oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
 			proxy.route = routes[0]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg, ossencryption.ProvideService())
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
 
 			assert.Equal(t, "https://www.google.com/some/method", req.URL.String())
 			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
@@ -128,7 +139,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/common/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
 			proxy.route = routes[3]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg, ossencryption.ProvideService())
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
 
 			assert.Equal(t, "https://dynamic.grafana.com/some/method?apiKey=123", req.URL.String())
 			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
@@ -140,7 +151,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
 			proxy.route = routes[4]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg, ossencryption.ProvideService())
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
 		})
@@ -151,7 +162,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/body", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
 			proxy.route = routes[5]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, cfg, ossencryption.ProvideService())
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
 
 			content, err := ioutil.ReadAll(req.Body)
 			require.NoError(t, err)
@@ -259,10 +270,21 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 				cfg := &setting.Cfg{}
 
+				jd, err := ds.JsonData.Map()
+				require.NoError(t, err)
+				dsInfo := DSInfo{
+					ID:       ds.Id,
+					Updated:  ds.Updated,
+					JSONData: jd,
+					DecryptedSecureJSONData: map[string]string{
+						"clientSecret": "123",
+					},
+				}
+
 				dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 				require.NoError(t, err)
-				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], proxy.ds, cfg, ossencryption.ProvideService())
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, cfg)
 
 				authorizationHeaderCall1 = req.Header.Get("Authorization")
 				assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())
@@ -278,7 +300,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
 					proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken2", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 					require.NoError(t, err)
-					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[1], proxy.ds, cfg, ossencryption.ProvideService())
+					ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[1], dsInfo, cfg)
 
 					authorizationHeaderCall2 = req.Header.Get("Authorization")
 
@@ -295,7 +317,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 						dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
 						proxy, err := NewDataSourceProxy(ds, routes, ctx, "pathwithtoken1", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 						require.NoError(t, err)
-						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], proxy.ds, cfg, ossencryption.ProvideService())
+						ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, routes[0], dsInfo, cfg)
 
 						authorizationHeaderCall3 := req.Header.Get("Authorization")
 						assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())

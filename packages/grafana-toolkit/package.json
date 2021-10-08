@@ -33,13 +33,11 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@grafana/ui": "8.3.0-pre",
     "@types/command-exists": "^1.2.0",
-    "@types/expect-puppeteer": "3.3.1",
     "@types/fs-extra": "^9.0.13",
     "@types/inquirer": "^6.0.3",
     "@types/jest": "26.0.15",
     "@types/node": "^12.0.4",
     "@types/prettier": "^2.4.0",
-    "@types/puppeteer-core": "1.9.0",
     "@types/react-dev-utils": "^9.0.4",
     "@types/rimraf": "^2.0.3",
     "@types/semver": "^6.0.0",
@@ -63,7 +61,6 @@
     "eslint-plugin-prettier": "3.3.1",
     "eslint-plugin-react-hooks": "4.2.0",
     "execa": "^5.1.1",
-    "expect-puppeteer": "4.1.1",
     "file-loader": "5.0.2",
     "fork-ts-checker-webpack-plugin": "1.0.0",
     "fs-extra": "^10.0.0",
@@ -89,7 +86,6 @@
     "postcss-loader": "3.0.0",
     "postcss-preset-env": "6.7.0",
     "prettier": "^2.2.1",
-    "puppeteer-core": "1.18.1",
     "react-dev-utils": "^11.0.4",
     "replace-in-file": "^4.1.0",
     "replace-in-file-webpack-plugin": "^1.0.6",
@@ -107,9 +103,6 @@
     "typescript": "4.4.3",
     "url-loader": "^2.0.1",
     "webpack": "4.41.5"
-  },
-  "_moduleAliases": {
-    "puppeteer": "node_modules/puppeteer-core"
   },
   "volta": {
     "extends": "../../package.json"

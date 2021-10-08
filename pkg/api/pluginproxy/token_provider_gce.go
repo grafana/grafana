@@ -2,25 +2,25 @@ package pluginproxy
 
 import (
 	"context"
+	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/oauth2/google"
 )
 
 type gceAccessTokenProvider struct {
 	datasourceId      int64
-	datasourceVersion int
+	datasourceUpdated time.Time
 	ctx               context.Context
 	route             *plugins.Route
 	authParams        *plugins.JWTTokenAuth
 }
 
-func newGceAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.Route,
+func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.Route,
 	authParams *plugins.JWTTokenAuth) *gceAccessTokenProvider {
 	return &gceAccessTokenProvider{
-		datasourceId:      ds.Id,
-		datasourceVersion: ds.Version,
+		datasourceId:      ds.ID,
+		datasourceUpdated: ds.Updated,
 		ctx:               ctx,
 		route:             pluginRoute,
 		authParams:        authParams,

@@ -238,16 +238,32 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	// Clear Origin and Referer to avoir CORS issues
+	// Clear Origin and Referer to avoid CORS issues
 	req.Header.Del("Origin")
 	req.Header.Del("Referer")
 
+	jsonData := make(map[string]interface{})
+	if proxy.ds.JsonData != nil {
+		jsonData, err = proxy.ds.JsonData.Map()
+		if err != nil {
+			logger.Error("Failed to get json data as map", "jsonData", proxy.ds.JsonData, "error", err)
+			return
+		}
+	}
+
+	secureJsonData, err := proxy.dataSourcesService.EncryptionService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData, setting.SecretKey)
+	if err != nil {
+		logger.Error("Error interpolating proxy url", "error", err)
+		return
+	}
+
 	if proxy.route != nil {
-		ApplyRoute(
-			proxy.ctx.Req.Context(), req, proxy.proxyPath,
-			proxy.route, proxy.ds, proxy.cfg,
-			proxy.dataSourcesService.EncryptionService,
-		)
+		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, DSInfo{
+			ID:                      proxy.ds.Id,
+			Updated:                 proxy.ds.Updated,
+			JSONData:                jsonData,
+			DecryptedSecureJSONData: secureJsonData,
+		}, proxy.cfg)
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
