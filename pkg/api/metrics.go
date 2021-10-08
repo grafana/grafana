@@ -85,7 +85,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	}
 
 	// TODO cloud-monitoring currently skipped
-	req, err := createRequest(ds, request)
+	req, err := hs.createRequest(ds, request)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Request formation error", err)
 	}
@@ -233,8 +233,8 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	return response.JSON(statusCode, &resp)
 }
 
-func createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
-	instanceSettings, err := adapters.ModelToInstanceSettings(ds)
+func (hs *HTTPServer) createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
+	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {
 		return nil, err
 	}
