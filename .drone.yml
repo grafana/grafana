@@ -21,7 +21,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -150,7 +150,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
@@ -171,7 +171,7 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn -s test:accessibility-pr
+  - yarn run test:accessibility-pr
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -293,7 +293,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -448,7 +448,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
@@ -482,7 +482,7 @@ steps:
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
-  - yarn -s test:accessibility --json > pa11y-ci-results.json
+  - yarn run test:accessibility --json > pa11y-ci-results.json
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -792,7 +792,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -938,7 +938,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1182,7 +1182,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
   depends_on:
   - clone
 
@@ -1362,7 +1362,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -1512,7 +1512,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
@@ -1778,7 +1778,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -1924,7 +1924,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2157,7 +2157,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
   depends_on:
   - clone
 
@@ -2337,7 +2337,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -2481,7 +2481,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
@@ -2746,7 +2746,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
 
 - name: codespell
   image: grafana/build-container:1.4.3
@@ -2889,7 +2889,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3096,7 +3096,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - make gen-go
-  - yarn install --frozen-lockfile --no-progress
+  - yarn install --immutable
   depends_on:
   - clone
 
@@ -3270,7 +3270,7 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3001 --tries 3
   environment:
     HOST: end-to-end-tests-server
@@ -3424,7 +3424,7 @@ steps:
 - name: end-to-end-tests-enterprise2
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./node_modules/.bin/cypress install
+  - yarn run cypress install
   - ./bin/grabpl e2e-tests --port 3002 --tries 3
   environment:
     HOST: end-to-end-tests-server-enterprise2
