@@ -1046,10 +1046,12 @@ export function migrateDatasourceNameToRef(name: string): DataSourceRef | null {
   if (!name || name === 'default') {
     return null;
   }
+
   const ds = getDataSourceSrv().getInstanceSettings(name);
   if (!ds) {
     return { uid: name }; // not found
   }
+
   return { type: ds.meta.id, uid: ds.uid };
 }
 
