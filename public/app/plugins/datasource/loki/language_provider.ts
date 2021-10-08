@@ -340,11 +340,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return Promise.all(
         queries.map(async (query) => {
           const expr = await this.importPrometheusQuery((query as PromQuery).expr);
-          const { ...rest } = query as PromQuery;
           return {
-            ...rest,
             expr,
-          };
+            refId: query.refId,
+            range: true,
+          } as LokiQuery;
         })
       );
     }
