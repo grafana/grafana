@@ -338,9 +338,6 @@
       "**/@types/*/**"
     ]
   },
-  "_moduleAliases": {
-    "puppeteer": "node_modules/puppeteer-core"
-  },
   "engines": {
     "node": ">= 14"
   },
