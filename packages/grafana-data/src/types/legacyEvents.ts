@@ -28,9 +28,7 @@ export const PanelEvents = {
   render: eventFactory<any>('render'),
 };
 
-/**
- * @deprecated It will be removed with the old graph. For setting cursor on GraphNG please check GraphNG/events.
- */
+/** @public */
 export interface LegacyGraphHoverEventPayload extends DataHoverPayload {
   pos: any;
   panel: {
@@ -38,16 +36,12 @@ export interface LegacyGraphHoverEventPayload extends DataHoverPayload {
   };
 }
 
-/**
- * @deprecated It will be removed with the old graph. For setting cursor on GraphNG please check GraphNG/events.
- */
+/** @alpha */
 export class LegacyGraphHoverEvent extends BusEventWithPayload<LegacyGraphHoverEventPayload> {
   static type = 'graph-hover';
 }
 
-/**
- * @deprecated It will be removed with the old graph. For setting cursor on GraphNG please check GraphNG/events.
- */
+/** @alpha */
 export class LegacyGraphHoverClearEvent extends BusEventBase {
   static type = 'graph-hover-clear';
   payload: DataHoverPayload = { point: {} };

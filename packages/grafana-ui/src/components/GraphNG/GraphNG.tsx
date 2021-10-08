@@ -126,6 +126,29 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     return state;
   }
 
+  handleCursorUpdate(evt: DataHoverEvent | LegacyGraphHoverEvent) {
+    const time = evt.payload?.point?.time;
+    const u = this.plotInstance.current;
+    if (u && time) {
+      // Try finding left position on time axis
+      const left = u.valToPos(time, 'x');
+      let top;
+      if (left) {
+        // find midpoint between points at current idx
+        top = findMidPointYPosition(u, u.posToIdx(left));
+      }
+
+      if (!top || !left) {
+        return;
+      }
+
+      u.setCursor({
+        left,
+        top,
+      });
+    }
+  }
+
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
     const { eventBus } = this.panelContext;
@@ -139,27 +162,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
             if (eventBus === evt.origin) {
               return;
             }
-
-            const time = evt.payload?.point?.time;
-            const u = this.plotInstance.current;
-            if (u && time) {
-              // Try finding left position on time axis
-              const left = u.valToPos(time, 'x');
-              let top;
-              if (left) {
-                // find midpoint between points at current idx
-                top = findMidPointYPosition(u, u.posToIdx(left));
-              }
-
-              if (!top || !left) {
-                return;
-              }
-
-              u.setCursor({
-                left,
-                top,
-              });
-            }
+            this.handleCursorUpdate(evt);
           },
         })
     );
@@ -170,27 +173,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         .getStream(LegacyGraphHoverEvent)
         .pipe(throttleTime(50))
         .subscribe({
-          next: (evt) => {
-            const u = this.plotInstance.current;
-            if (u) {
-              // Try finding left position on time axis
-              const left = u.valToPos(evt.payload.point.time, 'x');
-              let top;
-              if (left) {
-                // find midpoint between points at current idx
-                top = findMidPointYPosition(u, u.posToIdx(left));
-              }
-
-              if (!top || !left) {
-                return;
-              }
-
-              u.setCursor({
-                left,
-                top,
-              });
-            }
-          },
+          next: (evt) => this.handleCursorUpdate(evt),
         })
     );
 
