@@ -1,7 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
-import { MarkerShapePath } from './utils/regularShapes';
-
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
 
