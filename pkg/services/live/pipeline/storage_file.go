@@ -158,11 +158,18 @@ func (f *FileStorage) ListChannelRules(_ context.Context, orgID int64) ([]Channe
 	return rules, nil
 }
 
-func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+func (f *FileStorage) CreateChannelRule(_ context.Context, orgID int64, cmd ChannelRuleCreateCmd) (ChannelRule, error) {
 	channelRules, err := f.readRules()
 	if err != nil {
-		return rule, fmt.Errorf("can't read channel rules: %w", err)
+		return ChannelRule{}, fmt.Errorf("can't read channel rules: %w", err)
 	}
+
+	rule := ChannelRule{
+		OrgId:    orgID,
+		Pattern:  cmd.Pattern,
+		Settings: cmd.Settings,
+	}
+
 	ok, reason := rule.Valid()
 	if !ok {
 		return rule, fmt.Errorf("invalid channel rule: %s", reason)
@@ -185,10 +192,16 @@ func uidMatch(orgID int64, uid string, existingBackend RemoteWriteBackend) bool 
 	return uid == existingBackend.UID && (existingBackend.OrgId == orgID || (existingBackend.OrgId == 0 && orgID == 1))
 }
 
-func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, rule ChannelRule) (ChannelRule, error) {
+func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, cmd ChannelRuleUpdateCmd) (ChannelRule, error) {
 	channelRules, err := f.readRules()
 	if err != nil {
-		return rule, fmt.Errorf("can't read channel rules: %w", err)
+		return ChannelRule{}, fmt.Errorf("can't read channel rules: %w", err)
+	}
+
+	rule := ChannelRule{
+		OrgId:    orgID,
+		Pattern:  cmd.Pattern,
+		Settings: cmd.Settings,
 	}
 
 	ok, reason := rule.Valid()
@@ -207,7 +220,10 @@ func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, rule C
 	if index > -1 {
 		channelRules.Rules[index] = rule
 	} else {
-		return f.CreateChannelRule(ctx, orgID, rule)
+		return f.CreateChannelRule(ctx, orgID, ChannelRuleCreateCmd{
+			Pattern:  cmd.Pattern,
+			Settings: cmd.Settings,
+		})
 	}
 
 	err = f.saveChannelRules(orgID, channelRules)
@@ -260,7 +276,7 @@ func (f *FileStorage) saveChannelRules(orgID int64, rules ChannelRules) error {
 	return nil
 }
 
-func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern string) error {
+func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, cmd ChannelRuleDeleteCmd) error {
 	channelRules, err := f.readRules()
 	if err != nil {
 		return fmt.Errorf("can't read channel rules: %w", err)
@@ -268,7 +284,7 @@ func (f *FileStorage) DeleteChannelRule(_ context.Context, orgID int64, pattern 
 
 	index := -1
 	for i, existingRule := range channelRules.Rules {
-		if patternMatch(orgID, pattern, existingRule) {
+		if patternMatch(orgID, cmd.Pattern, existingRule) {
 			index = i
 			break
 		}

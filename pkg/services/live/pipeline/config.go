@@ -258,23 +258,37 @@ type FrameConditionCheckerConfig struct {
 	NumberCompareConditionConfig   *NumberCompareFrameConditionConfig   `json:"numberCompare,omitempty"`
 }
 
-type RuleStorage interface {
+type ChannelRuleCreateCmd struct {
+	Pattern  string              `json:"pattern"`
+	Settings ChannelRuleSettings `json:"settings"`
+}
+
+type ChannelRuleUpdateCmd struct {
+	Pattern  string              `json:"pattern"`
+	Settings ChannelRuleSettings `json:"settings"`
+}
+
+type ChannelRuleDeleteCmd struct {
+	Pattern string `json:"pattern"`
+}
+
+type Storage interface {
 	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
 	GetRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendGetCmd) (RemoteWriteBackend, bool, error)
 	CreateRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendCreateCmd) (RemoteWriteBackend, error)
 	UpdateRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendUpdateCmd) (RemoteWriteBackend, error)
 	DeleteRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendDeleteCmd) error
 	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
-	CreateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
-	UpdateChannelRule(_ context.Context, orgID int64, rule ChannelRule) (ChannelRule, error)
-	DeleteChannelRule(_ context.Context, orgID int64, pattern string) error
+	CreateChannelRule(_ context.Context, orgID int64, cmd ChannelRuleCreateCmd) (ChannelRule, error)
+	UpdateChannelRule(_ context.Context, orgID int64, cmd ChannelRuleUpdateCmd) (ChannelRule, error)
+	DeleteChannelRule(_ context.Context, orgID int64, cmd ChannelRuleDeleteCmd) error
 }
 
 type StorageRuleBuilder struct {
 	Node                 *centrifuge.Node
 	ManagedStream        *managedstream.Runner
 	FrameStorage         *FrameStorage
-	RuleStorage          RuleStorage
+	Storage              Storage
 	ChannelHandlerGetter ChannelHandlerGetter
 }
 
@@ -509,12 +523,12 @@ func (f *StorageRuleBuilder) getRemoteWriteBackend(uid string, remoteWriteBacken
 }
 
 func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*LiveChannelRule, error) {
-	channelRules, err := f.RuleStorage.ListChannelRules(ctx, orgID)
+	channelRules, err := f.Storage.ListChannelRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	remoteWriteBackends, err := f.RuleStorage.ListRemoteWriteBackends(ctx, orgID)
+	remoteWriteBackends, err := f.Storage.ListRemoteWriteBackends(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
