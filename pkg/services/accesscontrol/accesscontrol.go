@@ -20,7 +20,7 @@ type AccessControl interface {
 	// CloneUserToServiceAccount Creates a new service account and assigns the same roles to it
 	CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error)
 
-	// LinkAPIKeyToServiceAccount Connects an APIkey to a service account
+	// LinkAPIKeyToServiceAccount Connects an APIkey to a service account.  Multiple API keys may be linked to one account.
 	LinkAPIKeyToServiceAccount(ctx context.Context, ApiKey *models.ApiKey, serviceAccount *models.User) error
 
 	//IsDisabled returns if access control is enabled or not
