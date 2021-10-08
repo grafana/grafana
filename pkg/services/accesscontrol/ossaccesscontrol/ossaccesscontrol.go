@@ -65,7 +65,16 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
-	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+
+	groupedPermissions := accesscontrol.GroupScopesByAction(permissions)
+
+	// TODO would it be better to work inside GetUserPermissions instead?
+	resolvedPermissions, err := accesscontrol.ResolveGroupedPermissions(user, groupedPermissions)
+	if err != nil {
+		return false, err
+	}
+
+	return evaluator.Evaluate(resolvedPermissions)
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
