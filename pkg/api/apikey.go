@@ -74,7 +74,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	if cmd.CreateNewServiceAccount {
 		serviceAccount, err = hs.AccessControl.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 		if err != nil {
-			panic("Unable to clone user to service account")
+			return response.Error(500, "Unable to clone user to service account", err)
 		}
 	}
 
