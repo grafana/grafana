@@ -1,4 +1,4 @@
-package securejsondata
+package ualert
 
 import (
 	"github.com/grafana/grafana/pkg/infra/log"

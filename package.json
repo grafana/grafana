@@ -88,7 +88,6 @@
     "@grafana/eslint-config": "2.5.0",
     "@kusto/monaco-kusto": "3.2.7",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.0-rc.6",
-    "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/jest-dom": "5.11.5",
     "@testing-library/react": "11.1.2",
     "@testing-library/react-hooks": "^3.2.1",
@@ -187,7 +186,6 @@
     "lerna": "^4.0.0",
     "lint-staged": "10.0.7",
     "mini-css-extract-plugin": "2.2.0",
-    "mocha": "7.0.1",
     "module-alias": "2.2.2",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.1.0",
@@ -339,9 +337,6 @@
       "**/@types/*",
       "**/@types/*/**"
     ]
-  },
-  "_moduleAliases": {
-    "puppeteer": "node_modules/puppeteer-core"
   },
   "engines": {
     "node": ">= 14"
