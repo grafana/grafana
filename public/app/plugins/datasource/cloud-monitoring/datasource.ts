@@ -163,11 +163,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           });
         }),
         map(({ data }) => {
-          return data;
-        }),
-        map((response) => {
-          const result = response.results[refId];
-          return result && result.meta ? result.meta.labels : {};
+          const dataQueryResponse = toDataQueryResponse({
+            data: data,
+          });
+          return dataQueryResponse?.data[0]?.meta?.custom?.labels ?? {};
         })
       )
     );
@@ -219,9 +218,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         })
         .pipe(
           map(({ data }) => {
-            return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
-              ? data.results.getGCEDefaultProject.meta.defaultProject
-              : '';
+            const dataQueryResponse = toDataQueryResponse({
+              data: data,
+            });
+            return dataQueryResponse?.data[0]?.meta?.custom?.defaultProject ?? '';
           }),
           catchError((err) => {
             return throwError(err.data.error);
