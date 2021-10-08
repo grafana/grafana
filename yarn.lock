@@ -16698,7 +16698,7 @@ move-concurrently@^1.0.1:
     rimraf "^2.5.4"
     run-queue "^1.0.3"
 
-moveable@^0.26.0:
+moveable@0.26.0:
   version "0.26.0"
   resolved "https://registry.yarnpkg.com/moveable/-/moveable-0.26.0.tgz#7ae053290189bccd4740faf4829eb9f36f3a4023"
   integrity sha512-pVwd6IQKn1QaL3KXcUluz+dReDidwQwQ45MoiusbOo/QCdab5+ToOpNyMPVHpN0biuiQzqoO3AKRx5Ob+wt7Hg==
@@ -21645,7 +21645,7 @@ selection-is-backward@^1.0.0:
   resolved "https://registry.yarnpkg.com/selection-is-backward/-/selection-is-backward-1.0.0.tgz#97a54633188a511aba6419fc5c1fa91b467e6be1"
   integrity sha1-l6VGMxiKURq6ZBn8XB+pG0Z+a+E=
 
-selecto@^1.13.0:
+selecto@1.13.0:
   version "1.13.0"
   resolved "https://registry.yarnpkg.com/selecto/-/selecto-1.13.0.tgz#c6498705f3d4382f7637402d9af7b045da345a88"
   integrity sha512-YQNg7Nk/kLNGX8NZHj/yQwSQIjN0ud3MQssULCsRvzKP0oFDbBD9neR1+Go6u2ZSC3U0hSvpk+Czlttnnm1Lag==
