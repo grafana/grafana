@@ -144,8 +144,6 @@ If you want to pick a test first, use the `yarn e2e:dev`, to pick a test and fol
 yarn e2e:dev
 ```
 
-a
-
 ## Configure Grafana for development
 
 The default configuration, `defaults.ini`, is located in the `conf` directory.
