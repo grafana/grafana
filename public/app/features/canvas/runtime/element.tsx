@@ -6,6 +6,8 @@ import {
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
+  Placement,
+  Anchor,
 } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
@@ -28,16 +30,50 @@ export class ElementState {
   height = 100;
   data?: any; // depends on the type
 
+  // From options, but always set and always valid
+  anchor: Anchor;
+  placement: Placement;
+
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
       this.options = { type: item.id };
     }
+    this.anchor = options.anchor ?? {};
+    this.placement = options.placement ?? {};
+    options.anchor = this.anchor;
+    options.placement = this.placement;
+  }
+
+  validatePlacement() {
+    const { anchor, placement } = this;
+    if (!(anchor.left || anchor.right)) {
+      anchor.left = true;
+    }
+    if (!(anchor.top || anchor.bottom)) {
+      anchor.top = true;
+    }
+
+    if (anchor.top) {
+      if (!placement.top) {
+        placement.top = 0;
+      }
+    }
+
+    if (anchor.bottom) {
+      if (!placement.bottom) {
+        placement.bottom = 0;
+      }
+    }
+
+    this.options.anchor = this.anchor;
+    this.options.placement = this.placement;
   }
 
   // The parent size, need to set our own size based on offsets
   updateSize(width: number, height: number) {
     this.width = width;
     this.height = height;
+    this.validatePlacement();
 
     // Update the CSS position
     this.sizeStyle = {
@@ -129,33 +165,92 @@ export class ElementState {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
-
-    let placement = this.options.placement;
-    if (!placement) {
-      placement = {
-        left: 0,
-        top: 0,
-      };
-      this.options.placement = placement;
-    }
   };
 
   applyDrag = (event: OnDrag) => {
-    const placement = this.options.placement;
-    placement!.top = event.top;
-    placement!.left = event.left;
+    const { placement, anchor } = this;
 
-    event.target.style.top = `${event.top}px`;
-    event.target.style.left = `${event.left}px`;
+    const deltaX = event.delta[0];
+    const deltaY = event.delta[1];
+
+    const style = event.target.style;
+    if (anchor.top) {
+      placement.top! += deltaY;
+      style.top = `${placement.top}px`;
+    }
+    if (anchor.bottom) {
+      placement.bottom! -= deltaY;
+      style.bottom = `${placement.bottom}px`;
+    }
+    if (anchor.left) {
+      placement.left! += deltaX;
+      style.left = `${placement.left}px`;
+    }
+    if (anchor.right) {
+      placement.right! -= deltaX;
+      style.right = `${placement.right}px`;
+    }
   };
 
+  // kinda like:
+  // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
   applyResize = (event: OnResize) => {
-    const placement = this.options.placement;
-    placement!.height = event.height;
-    placement!.width = event.width;
+    const { placement, anchor } = this;
 
-    event.target.style.height = `${event.height}px`;
-    event.target.style.width = `${event.width}px`;
+    const style = event.target.style;
+    const deltaX = event.delta[0];
+    const deltaY = event.delta[1];
+    const dirLR = event.direction[0];
+    const dirTB = event.direction[1];
+    if (dirLR === 1) {
+      // RIGHT
+      if (anchor.right) {
+        placement.right! -= deltaX;
+        style.right = `${placement.right}px`;
+        if (!anchor.left) {
+          placement.width = event.width;
+          style.width = `${placement.width}px`;
+        }
+      } else {
+        placement.width! = event.width;
+        style.width = `${placement.width}px`;
+      }
+    } else if (dirLR === -1) {
+      // LEFT
+      if (anchor.left) {
+        placement.left! -= deltaX;
+        placement.width! = event.width;
+        style.left = `${placement.left}px`;
+        style.width = `${placement.width}px`;
+      } else {
+        placement.width! += deltaX;
+        style.width = `${placement.width}px`;
+      }
+    }
+
+    if (dirTB === -1) {
+      // TOP
+      if (anchor.top) {
+        placement.top! -= deltaY;
+        placement.height = event.height;
+        style.top = `${placement.top}px`;
+        style.height = `${placement.height}px`;
+      } else {
+        placement.height = event.height;
+        style.height = `${placement.height}px`;
+      }
+    } else if (dirTB === 1) {
+      // BOTTOM
+      if (anchor.bottom) {
+        placement.bottom! -= deltaY;
+        placement.height! = event.height;
+        style.bottom = `${placement.bottom}px`;
+        style.height = `${placement.height}px`;
+      } else {
+        placement.height! = event.height;
+        style.height = `${placement.height}px`;
+      }
+    }
   };
 
   render() {
