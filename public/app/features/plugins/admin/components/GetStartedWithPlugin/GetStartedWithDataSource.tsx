@@ -22,7 +22,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
 
   return (
     <Button variant="primary" onClick={onAddDataSource}>
-      Add data source
+      Add {plugin.name} data source
     </Button>
   );
 }
