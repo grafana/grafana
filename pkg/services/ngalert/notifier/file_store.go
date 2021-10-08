@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const KVNamespace = "alertmanager"
@@ -24,6 +25,7 @@ type FileStore struct {
 	kv             *kvstore.NamespacedKVStore
 	orgID          int64
 	workingDirPath string
+	logger         log.Logger
 }
 
 func NewFileStore(orgID int64, store kvstore.KVStore, workingDirPath string) *FileStore {
@@ -31,6 +33,7 @@ func NewFileStore(orgID int64, store kvstore.KVStore, workingDirPath string) *Fi
 		workingDirPath: workingDirPath,
 		orgID:          orgID,
 		kv:             kvstore.WithNamespace(store, orgID, KVNamespace),
+		logger:         log.New("filestore", "org", orgID),
 	}
 }
 
@@ -90,9 +93,14 @@ func (fileStore *FileStore) WriteFileToDisk(fn string, content []byte) error {
 	return os.WriteFile(fileStore.pathFor(fn), content, 0644)
 }
 
-// CleanUp will remove the working directory from disk. 
-func (fileStore *FileStore) CleanUp() error {
-	return os.RemoveAll(fileStore.workingDirPath)
+// CleanUp will remove the working directory from disk.
+func (fileStore *FileStore) CleanUp() {
+	if err := os.RemoveAll(fileStore.workingDirPath); err != nil {
+		log.Warn("unable to delete the working directory", "dir", fileStore.workingDirPath,
+			"err", err)
+		return
+	}
+	log.Warn("succesfully deleted working directory", "dir", fileStore.workingDirPath)
 }
 
 func (fileStore *FileStore) pathFor(fn string) string {
