@@ -41,7 +41,6 @@ interface Props<TQuery extends DataQuery> {
   index: number;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
-  onChangeParentDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
   renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
@@ -305,7 +304,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderExtraActions = () => {
-    const { query, queries, data, onAddQuery, dataSource, onChangeParentDataSource } = this.props;
+    const { query, queries, data, onAddQuery, dataSource } = this.props;
     return RowActionComponents.getAllExtraRenderAction().map((c, index) => {
       return React.createElement(c, {
         query,
@@ -314,7 +313,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onAddQuery: onAddQuery as (query: DataQuery) => void,
         dataSource: dataSource,
         key: index,
-        onChangeDataSource: onChangeParentDataSource,
       });
     });
   };

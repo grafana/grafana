@@ -31,7 +31,6 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
-  onChangeParentDataSource?: (ds: DataSourceInstanceSettings) => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -102,7 +101,7 @@ export class QueryEditorRows extends PureComponent<Props> {
   };
 
   render() {
-    const { dsSettings, data, queries, app, history, eventBus, onChangeParentDataSource } = this.props;
+    const { dsSettings, data, queries, app, history, eventBus } = this.props;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -125,7 +124,6 @@ export class QueryEditorRows extends PureComponent<Props> {
                       query={query}
                       dataSource={dataSourceSettings}
                       onChangeDataSource={onChangeDataSourceSettings}
-                      onChangeParentDataSource={onChangeParentDataSource}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={this.props.onAddQuery}
