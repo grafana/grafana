@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
@@ -148,13 +150,13 @@ func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrat
 			dashboardUID *string
 			panelID      *int64
 		)
-		if s, ok := next.Annotations["__dashboardUid__"]; ok {
+		if s, ok := next.Annotations[ngmodels.DashboardUIDAnnotation]; ok {
 			dashboardUID = &s
 		}
-		if s, ok := next.Annotations["__panelId__"]; ok {
+		if s, ok := next.Annotations[ngmodels.PanelIDAnnotation]; ok {
 			i, err := strconv.ParseInt(s, 10, 64)
 			if err != nil {
-				return fmt.Errorf("the __panelId__ annotation does not contain a valid Panel ID: %w", err)
+				return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
 			}
 			panelID = &i
 		}
