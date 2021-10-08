@@ -129,28 +129,42 @@ describe('Grouping to Matrix', () => {
 
     await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
       const processed = received[0];
-      const expected: Field[] = [
-        {
-          name: 'Row\\Column',
-          type: FieldType.string,
-          values: new ArrayVector(['R1', 'R2']),
-          config: {},
-        },
-        {
-          name: 'C1',
-          type: FieldType.number,
-          values: new ArrayVector([1, 4]),
-          config: { units: 'celsius' },
-        },
-        {
-          name: 'C2',
-          type: FieldType.number,
-          values: new ArrayVector([5, '']),
-          config: { units: 'celsius' },
-        },
-      ];
 
-      expect(processed[0].fields).toEqual(expected);
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "Row\\\\Column",
+            "type": "string",
+            "values": Array [
+              "R1",
+              "R2",
+            ],
+          },
+          Object {
+            "config": Object {
+              "units": "celsius",
+            },
+            "name": "C1",
+            "type": "number",
+            "values": Array [
+              1,
+              4,
+            ],
+          },
+          Object {
+            "config": Object {
+              "units": "celsius",
+            },
+            "name": "C2",
+            "type": "number",
+            "values": Array [
+              5,
+              "",
+            ],
+          },
+        ]
+      `);
     });
   });
 });
