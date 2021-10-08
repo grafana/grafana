@@ -10,7 +10,7 @@ import { appEvents } from 'app/core/core';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { createExploreLink, createViewLink } from '../../utils/misc';
+import { createExploreLink, createViewLink, makeSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { deleteRuleAction } from '../../state/actions';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
@@ -136,12 +136,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         key="silence"
         icon="bell-slash"
         target="__blank"
-        href={
-          `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
-          `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
-            .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
-            .join(',')}`
-        }
+        href={makeSilenceLink(alertmanagerSourceName, rule)}
       >
         Silence
       </LinkButton>
