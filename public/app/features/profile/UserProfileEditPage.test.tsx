@@ -271,7 +271,7 @@ describe('UserProfileEditPage', () => {
         const { props } = await getTestContext();
         const sessionsRevokeButton = () =>
           within(getSelectors().sessionsRow()).getByRole('button', {
-            name: /revoke user session button/i,
+            name: /revoke user session/i,
           });
 
         userEvent.click(sessionsRevokeButton());
