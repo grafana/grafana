@@ -190,6 +190,7 @@ func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
 		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
 		TLS:       dsInfo.HTTPClientOpts.TLS,
 		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
+		Headers:   dsInfo.HTTPClientOpts.Headers,
 	}
 
 	customMiddlewares := customQueryParametersMiddleware(plog)
