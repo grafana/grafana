@@ -9,10 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/services/encryption"
-
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -123,11 +121,7 @@ func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64,
 	if index > -1 {
 		remoteWriteBackends.Backends[index] = backend
 	} else {
-		return f.CreateRemoteWriteBackend(ctx, orgID, RemoteWriteBackendCreateCmd{
-			UID:            cmd.UID,
-			Settings:       cmd.Settings,
-			SecureSettings: cmd.SecureSettings,
-		})
+		return f.CreateRemoteWriteBackend(ctx, orgID, RemoteWriteBackendCreateCmd(cmd))
 	}
 
 	err = f.saveRemoteWriteBackends(orgID, remoteWriteBackends)
@@ -233,10 +227,7 @@ func (f *FileStorage) UpdateChannelRule(ctx context.Context, orgID int64, cmd Ch
 	if index > -1 {
 		channelRules.Rules[index] = rule
 	} else {
-		return f.CreateChannelRule(ctx, orgID, ChannelRuleCreateCmd{
-			Pattern:  cmd.Pattern,
-			Settings: cmd.Settings,
-		})
+		return f.CreateChannelRule(ctx, orgID, ChannelRuleCreateCmd(cmd))
 	}
 
 	err = f.saveChannelRules(orgID, channelRules)
