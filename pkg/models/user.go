@@ -70,7 +70,7 @@ type CreateUserCommand struct {
 	DefaultOrgRole string
 
 	Result         User
-	ServiceAccount bool
+	IsServiceAccount bool
 }
 
 type UpdateUserCommand struct {
