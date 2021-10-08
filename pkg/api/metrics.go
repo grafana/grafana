@@ -84,7 +84,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	// TODO cloud-monitoring currently skipped
 	req, err := hs.createRequest(ds, request)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Request formation error", err)
