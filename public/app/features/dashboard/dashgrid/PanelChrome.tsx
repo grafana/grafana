@@ -19,7 +19,13 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import {
+  ErrorBoundary,
+  PanelContext,
+  PanelContextProvider,
+  SeriesVisibilityChangeMode,
+  VizLegendOptions,
+} from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -89,6 +95,7 @@ export class PanelChrome extends Component<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
+        onToggleLegendSort: this.onToggleLegendSort,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -125,6 +132,30 @@ export class PanelChrome extends Component<Props, State> {
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
+  };
+
+  onToggleLegendSort = (sortKey: string) => {
+    const legendOptions: VizLegendOptions = this.props.panel.options.legend;
+
+    let sortDesc = legendOptions.sortDesc;
+    let sortBy = legendOptions.sortBy;
+    if (sortKey !== sortBy) {
+      sortDesc = undefined;
+    }
+
+    // if already sort ascending, disable sorting
+    if (sortDesc === false) {
+      sortBy = undefined;
+      sortDesc = undefined;
+    } else {
+      sortDesc = !sortDesc;
+      sortBy = sortKey;
+    }
+
+    this.onOptionsChange({
+      ...this.props.panel.options,
+      legend: { ...legendOptions, sortBy, sortDesc },
+    });
   };
 
   getInitialPanelDataState(): PanelData {

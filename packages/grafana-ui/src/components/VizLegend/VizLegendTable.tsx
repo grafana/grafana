@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
 import { useStyles2 } from '../../themes/ThemeContext';
-import { sortBy } from 'lodash';
+import { orderBy } from 'lodash';
 import { LegendTableItem } from './VizLegendTableItem';
 import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 
@@ -34,13 +34,17 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   const sortedItems = sortKey
-    ? sortBy(items, (item) => {
-        if (item.getDisplayValues) {
-          const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
-          return stat && stat.numeric;
-        }
-        return undefined;
-      })
+    ? orderBy(
+        items,
+        (item) => {
+          if (item.getDisplayValues) {
+            const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
+            return stat && stat.numeric;
+          }
+          return undefined;
+        },
+        sortDesc ? 'desc' : 'asc'
+      )
     : items;
 
   if (!itemRenderer) {
