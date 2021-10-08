@@ -161,7 +161,6 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
-  <div></div>;
 }
 
 function valueToState(
