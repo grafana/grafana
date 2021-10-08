@@ -228,7 +228,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		NoAlertmanagerOrgTwo := len(sched.AlertmanagersFor(2)) == 0 && len(sched.DroppedAlertmanagersFor(2)) == 0
 
 		return NoAlertmanagerOrgOne && NoAlertmanagerOrgTwo
-	}, 10*time.Second, 200*time.Millisecond, "alertmanager for org 1 and 2 were never removed")
+	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 1 and 2 were never removed")
 }
 
 func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore) (*schedule, *clock.Mock) {
