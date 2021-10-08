@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { cloneDeep, groupBy } from 'lodash';
-import { concatMap, from, Observable, of } from 'rxjs';
+import { mergeMap, from, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
@@ -56,10 +56,10 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     // Convert array to an observable so we can iterate through the items and map them to DataQueryResponse
     return from(runnableQueries).pipe(
-      concatMap((query, i) =>
+      mergeMap((query, i) =>
         // Get the datasource, this is async this is why we need observables here
         from(query.datasource).pipe(
-          concatMap((api: DataSourceApi) => {
+          mergeMap((api: DataSourceApi) => {
             const dsRequest = cloneDeep(request);
             dsRequest.requestId = `mixed-${i}-${dsRequest.requestId || ''}`;
             dsRequest.targets = query.targets;
