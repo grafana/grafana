@@ -6,7 +6,7 @@ import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } fr
 import store from 'app/core/store';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 
 // Types
 import { RichHistoryQuery } from 'app/types/explore';
@@ -44,8 +44,9 @@ export function addToRichHistory(
   starred: boolean,
   comment: string | null,
   sessionName: string,
-  showError: boolean
-): { richHistory: RichHistoryQuery[]; localStorageFull?: boolean } {
+  showQuotaExceededError: boolean,
+  showLimitExceededWarning: boolean
+): { richHistory: RichHistoryQuery[]; localStorageFull?: boolean; limitExceeded?: boolean } {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
@@ -73,10 +74,12 @@ export function addToRichHistory(
     }
 
     // remove oldest non-starred items to give space for the recent query
+    let limitExceeded = false;
     let current = queriesToKeep.length - 1;
     while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
       if (!queriesToKeep[current].starred) {
         queriesToKeep.splice(current, 1);
+        limitExceeded = true;
       }
       current--;
     }
@@ -95,11 +98,21 @@ export function addToRichHistory(
     ];
 
     try {
+      showLimitExceededWarning &&
+        limitExceeded &&
+        dispatch(
+          notifyApp(
+            createWarningNotification(
+              `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items will be removed.`
+            )
+          )
+        );
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
-      return { richHistory: updatedHistory };
+      return { richHistory: updatedHistory, limitExceeded, localStorageFull: false };
     } catch (error) {
-      showError && dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-      return { richHistory: updatedHistory, localStorageFull: error.name === 'QuotaExceededError' };
+      showQuotaExceededError &&
+        dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      return { richHistory: updatedHistory, limitExceeded, localStorageFull: error.name === 'QuotaExceededError' };
     }
   }
 

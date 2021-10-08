@@ -53,6 +53,11 @@ export interface ExploreState {
   localStorageFull: boolean;
 
   /**
+   * True if a warning message of hitting the exceeded number of items has been shown already.
+   */
+  richHistoryLimitExceededWarningShown: boolean;
+
+  /**
    * Auto-loading logs volume after running the query
    */
   autoLoadLogsVolume: boolean;
