@@ -41,7 +41,7 @@ export const PanelTypeCard: React.FC<Props> = ({
       onClick={disabled ? undefined : onClick}
       title={isCurrent ? 'Click again to close this section' : plugin.name}
     >
-      <img className={styles.img} src={plugin.info.logos.small} />
+      <img className={styles.img} src={plugin.info.logos.small} alt={`${plugin.name} logo`} />
 
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>

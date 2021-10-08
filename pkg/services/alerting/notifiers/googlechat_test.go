@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -21,7 +22,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := newGoogleChatNotifier(model)
+				_, err := newGoogleChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +39,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := newGoogleChatNotifier(model)
+				not, err := newGoogleChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				webhookNotifier := not.(*GoogleChatNotifier)
 
 				So(err, ShouldBeNil)

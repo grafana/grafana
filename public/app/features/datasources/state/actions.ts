@@ -33,6 +33,7 @@ export interface DataSourceTypesLoadedPayload {
 
 export interface InitDataSourceSettingDependencies {
   loadDataSource: typeof loadDataSource;
+  loadDataSourceMeta: typeof loadDataSourceMeta;
   getDataSource: typeof getDataSource;
   getDataSourceMeta: typeof getDataSourceMeta;
   importDataSourcePlugin: typeof importDataSourcePlugin;
@@ -47,6 +48,7 @@ export const initDataSourceSettings = (
   pageId: string,
   dependencies: InitDataSourceSettingDependencies = {
     loadDataSource,
+    loadDataSourceMeta,
     getDataSource,
     getDataSourceMeta,
     importDataSourcePlugin,
@@ -59,7 +61,8 @@ export const initDataSourceSettings = (
     }
 
     try {
-      await dispatch(dependencies.loadDataSource(pageId));
+      const loadedDataSource = await dispatch(dependencies.loadDataSource(pageId));
+      await dispatch(dependencies.loadDataSourceMeta(loadedDataSource));
 
       // have we already loaded the plugin then we can skip the steps below?
       if (getState().dataSourceSettings.plugin) {
@@ -72,7 +75,6 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      console.error('Failed to import plugin module', err);
       dispatch(initDataSourceSettingsFailed(err));
     }
   };
@@ -117,9 +119,17 @@ export function loadDataSources(): ThunkResult<void> {
   };
 }
 
-export function loadDataSource(uid: string): ThunkResult<void> {
+export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
     const dataSource = await getDataSourceUsingUidOrId(uid);
+
+    dispatch(dataSourceLoaded(dataSource));
+    return dataSource;
+  };
+}
+
+export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
+  return async (dispatch) => {
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
@@ -127,7 +137,7 @@ export function loadDataSource(uid: string): ThunkResult<void> {
       ...pluginInfo,
       isBackend: isBackend,
     };
-    dispatch(dataSourceLoaded(dataSource));
+
     dispatch(dataSourceMetaLoaded(meta));
 
     plugin.meta = meta;
