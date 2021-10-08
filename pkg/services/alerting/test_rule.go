@@ -9,11 +9,11 @@ import (
 )
 
 // AlertTest makes a test alert.
-func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
+func (e *AlertEngine) AlertTest(ctx context.Context, orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
 
 	extractor := NewDashAlertExtractor(dash, orgID, user)
-	alerts, err := extractor.GetAlerts()
+	alerts, err := extractor.GetAlerts(ctx)
 	if err != nil {
 		return nil, err
 	}

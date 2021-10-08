@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		Convey("apply default values when missing", func() {
 			dc := newDatasourceProvisioner(logger)
-			err := dc.applyChanges(withoutDefaults)
+			err := dc.applyChanges(context.Background(), withoutDefaults)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
 			}
@@ -52,7 +53,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		Convey("One configured datasource", func() {
 			Convey("no datasource in database", func() {
 				dc := newDatasourceProvisioner(logger)
-				err := dc.applyChanges(twoDatasourcesConfig)
+				err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
@@ -69,7 +70,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 				Convey("should update one datasource", func() {
 					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(twoDatasourcesConfig)
+					err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -82,7 +83,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			Convey("Two datasources with is_default", func() {
 				dc := newDatasourceProvisioner(logger)
-				err := dc.applyChanges(doubleDatasourcesConfig)
+				err := dc.applyChanges(context.Background(), doubleDatasourcesConfig)
 				Convey("should raise error", func() {
 					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
 				})
@@ -91,7 +92,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		Convey("Multiple datasources in different organizations with isDefault in each organization", func() {
 			dc := newDatasourceProvisioner(logger)
-			err := dc.applyChanges(multipleOrgsWithDefault)
+			err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
 			Convey("should not raise error", func() {
 				So(err, ShouldBeNil)
 				So(len(fakeRepo.inserted), ShouldEqual, 4)
@@ -111,7 +112,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 				Convey("should have two new datasources", func() {
 					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
+					err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -132,7 +133,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 				Convey("should have two new datasources", func() {
 					dc := newDatasourceProvisioner(logger)
-					err := dc.applyChanges(twoDatasourcesConfig)
+					err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}

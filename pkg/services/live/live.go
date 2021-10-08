@@ -594,7 +594,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		}
 	}
 	if !ruleFound {
-		handler, addr, err := g.GetChannelHandler(user, channel)
+		handler, addr, err := g.GetChannelHandler(client.Context(), user, channel)
 		if err != nil {
 			if errors.Is(err, live.ErrInvalidChannelID) {
 				logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
@@ -686,7 +686,7 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		}
 	}
 
-	handler, addr, err := g.GetChannelHandler(user, channel)
+	handler, addr, err := g.GetChannelHandler(client.Context(), user, channel)
 	if err != nil {
 		if errors.Is(err, live.ErrInvalidChannelID) {
 			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
@@ -756,7 +756,7 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
+func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
 	addr, err := live.ParseChannel(channel)
 	if err != nil {
@@ -779,7 +779,7 @@ func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel strin
 		return c, addr, nil
 	}
 
-	getter, err := g.GetChannelHandlerFactory(user, addr.Scope, addr.Namespace)
+	getter, err := g.GetChannelHandlerFactory(ctx, user, addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, addr, fmt.Errorf("error getting channel handler factory: %w", err)
 	}
@@ -797,14 +797,14 @@ func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel strin
 
 // GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user *models.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
 	switch scope {
 	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
 	case live.ScopePlugin:
 		return g.handlePluginScope(user, namespace)
 	case live.ScopeDatasource:
-		return g.handleDatasourceScope(user, namespace)
+		return g.handleDatasourceScope(ctx, user, namespace)
 	case live.ScopeStream:
 		return g.handleStreamScope(user, namespace)
 	default:
@@ -844,8 +844,8 @@ func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string
 	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, live.ScopeStream, namespace)
 }
 
-func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	ds, err := g.DataSourceCache.GetDatasourceByUID(namespace, user, false)
+func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+	ds, err := g.DataSourceCache.GetDatasourceByUID(ctx, namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
@@ -917,7 +917,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		}
 	}
 
-	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
+	channelHandler, addr, err := g.GetChannelHandler(ctx.Req.Context(), ctx.SignedInUser, cmd.Channel)
 	if err != nil {
 		logger.Error("Error getting channels handler", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)

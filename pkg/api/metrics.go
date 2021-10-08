@@ -55,7 +55,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			if dsID == grafanads.DatasourceID {
 				ds = grafanads.DataSourceModel(c.OrgId)
 			} else {
-				ds, err = hs.DataSourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+				ds, err = hs.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
 				if err != nil {
 					return hs.handleGetDataSourceError(err, dsID)
 				}
@@ -131,7 +131,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		if name != expr.DatasourceName {
 			// Expression requests have everything in one request, so need to check
 			// all data source queries for possible permission / not found issues.
-			if _, err = hs.DataSourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
+			if _, err = hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache); err != nil {
 				return hs.handleGetDataSourceError(err, datasourceID)
 			}
 		}
@@ -179,7 +179,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		return response.Error(http.StatusBadRequest, "Query missing datasourceId", nil)
 	}
 
-	ds, err := hs.DataSourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return hs.handleGetDataSourceError(err, datasourceId)
 	}

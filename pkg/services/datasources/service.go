@@ -64,17 +64,17 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 
 	s.Bus.AddHandler(s.GetDataSources)
 	s.Bus.AddHandler(s.GetDataSourcesByType)
-	s.Bus.AddHandler(s.GetDataSource)
+	s.Bus.AddHandlerCtx(s.GetDataSource)
 	s.Bus.AddHandlerCtx(s.AddDataSource)
-	s.Bus.AddHandler(s.DeleteDataSource)
+	s.Bus.AddHandlerCtx(s.DeleteDataSource)
 	s.Bus.AddHandlerCtx(s.UpdateDataSource)
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	return s
 }
 
-func (s *Service) GetDataSource(query *models.GetDataSourceQuery) error {
-	return s.SQLStore.GetDataSource(query)
+func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+	return s.SQLStore.GetDataSource(ctx, query)
 }
 
 func (s *Service) GetDataSources(query *models.GetDataSourcesQuery) error {
@@ -92,11 +92,11 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		return err
 	}
 
-	return s.SQLStore.AddDataSource(cmd)
+	return s.SQLStore.AddDataSource(ctx, cmd)
 }
 
-func (s *Service) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
-	return s.SQLStore.DeleteDataSource(cmd)
+func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+	return s.SQLStore.DeleteDataSource(ctx, cmd)
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
@@ -106,7 +106,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		return err
 	}
 
-	return s.SQLStore.UpdateDataSource(cmd)
+	return s.SQLStore.UpdateDataSource(ctx, cmd)
 }
 
 func (s *Service) GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {

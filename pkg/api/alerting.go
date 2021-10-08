@@ -137,7 +137,7 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand)
 		return response.Error(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
 
-	res, err := hs.AlertEngine.AlertTest(c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser)
+	res, err := hs.AlertEngine.AlertTest(c.Req.Context(), c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser)
 	if err != nil {
 		var validationErr alerting.ValidationError
 		if errors.As(err, &validationErr) {

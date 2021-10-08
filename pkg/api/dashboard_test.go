@@ -1226,7 +1226,7 @@ type mockDashboardProvisioningService struct {
 	dashboards.DashboardProvisioningService
 }
 
-func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (
+func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (
 	*models.DashboardProvisioning, error) {
 	return nil, nil
 }

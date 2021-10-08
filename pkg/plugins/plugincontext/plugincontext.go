@@ -47,7 +47,7 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
 	plugin := p.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
@@ -86,7 +86,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 	}
 
 	if datasourceUID != "" {
-		ds, err := p.DataSourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		ds, err := p.DataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
