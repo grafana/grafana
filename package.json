@@ -88,7 +88,6 @@
     "@grafana/eslint-config": "2.5.0",
     "@kusto/monaco-kusto": "3.2.7",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.0-rc.6",
-    "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/jest-dom": "5.11.5",
     "@testing-library/react": "11.1.2",
     "@testing-library/react-hooks": "^3.2.1",
