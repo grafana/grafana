@@ -520,7 +520,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "kafka":
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn, am.orgID)
 	case "sensugo":
 		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
