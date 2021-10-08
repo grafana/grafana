@@ -672,7 +672,6 @@ func (m *PluginManager) stop(ctx context.Context) {
 // corePluginDirs provides a list of the Core plugins which need to be read
 func (m *PluginManager) corePluginDirs() []string {
 	datasourcePaths := []string{
-		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/cloud-monitoring"),
 		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
 		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
 		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
