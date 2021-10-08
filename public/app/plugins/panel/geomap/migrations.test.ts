@@ -191,85 +191,85 @@ describe('geomap migrations', () => {
     } as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
-    expect(JSON.stringify(panel)).toEqual(
-      JSON.stringify({
-        id: 2,
-        gridPos: {
-          h: 9,
-          w: 12,
-          x: 0,
-          y: 0,
-        },
-        type: 'geomap',
-        title: 'Panel Title',
-        fieldConfig: {
-          defaults: {
-            thresholds: {
-              mode: 'absolute',
-              steps: [
-                {
-                  color: 'green',
-                  value: null,
+    expect(panel).toMatchInlineSnapshot(`
+      Object {
+        "datasource": null,
+        "fieldConfig": Object {
+          "defaults": Object {
+            "color": Object {
+              "mode": "thresholds",
+            },
+            "mappings": Array [],
+            "thresholds": Object {
+              "mode": "absolute",
+              "steps": Array [
+                Object {
+                  "color": "green",
+                  "value": null,
                 },
-                {
-                  color: 'red',
-                  value: 80,
+                Object {
+                  "color": "red",
+                  "value": 80,
                 },
               ],
             },
-            mappings: [],
-            color: {
-              mode: 'thresholds',
-            },
           },
-          overrides: [],
+          "overrides": Array [],
         },
-        options: {
-          view: {
-            id: 'zero',
-            lat: 0,
-            lon: 0,
-            zoom: 1,
+        "gridPos": Object {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 0,
+        },
+        "id": 2,
+        "options": Object {
+          "basemap": Object {
+            "config": Object {},
+            "type": "default",
           },
-          basemap: {
-            type: 'default',
-            config: {},
+          "controls": Object {
+            "mouseWheelZoom": true,
+            "showAttribution": true,
+            "showDebug": false,
+            "showScale": false,
+            "showZoom": true,
           },
-          layers: [
-            {
-              config: {
-                color: {
-                  fixed: 'dark-green',
+          "layers": Array [
+            Object {
+              "config": Object {
+                "color": Object {
+                  "fixed": "dark-green",
                 },
-                fillOpacity: 0.4,
-                markerSymbol: {
-                  fixed: MarkerShapePath.Circle,
-                  mode: 'fixed',
+                "fillOpacity": 0.4,
+                "markerSymbol": Object {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed",
                 },
-                showLegend: true,
-                size: {
-                  fixed: 5,
-                  max: 15,
-                  min: 2,
+                "showLegend": true,
+                "size": Object {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2,
                 },
               },
-              location: {
-                mode: 'auto',
+              "location": Object {
+                "mode": "auto",
               },
-              type: 'markers',
+              "type": "markers",
             },
           ],
-          controls: {
-            showZoom: true,
-            mouseWheelZoom: true,
-            showAttribution: true,
-            showScale: false,
-            showDebug: false,
+          "view": Object {
+            "id": "zero",
+            "lat": 0,
+            "lon": 0,
+            "zoom": 1,
           },
         },
-        pluginVersion: '8.3.0-pre',
-        datasource: null,
-      })
-    );
+        "pluginVersion": "8.3.0-pre",
+        "title": "Panel Title",
+        "type": "geomap",
+      }
+    `);
   });
 });
