@@ -130,7 +130,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return the first page of users and a total count
 		query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3}
-		err := SearchUsers(&query)
+		err := SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 3)
@@ -138,7 +138,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return the second page of users and a total count
 		query = models.SearchUsersQuery{Query: "", Page: 2, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 2)
@@ -146,28 +146,28 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return list of users matching query on user name
 		query = models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 3)
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
 		query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
 		query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
 		query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 0)
@@ -175,7 +175,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return list of users matching query on email
 		query = models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
@@ -183,7 +183,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// Return list of users matching query on login name
 		query = models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
@@ -203,7 +203,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		isDisabled := false
 		query := models.SearchUsersQuery{IsDisabled: &isDisabled}
-		err := SearchUsers(&query)
+		err := SearchUsers(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Len(t, query.Result.Users, 2)
@@ -251,7 +251,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// When the user is deleted
-		err = DeleteUser(&models.DeleteUserCommand{UserId: users[1].Id})
+		err = DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
 
 		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
@@ -308,7 +308,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, query3.Result)
 		require.Equal(t, query3.OrgId, users[1].OrgId)
-		err = SetUsingOrg(&models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
+		err = SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
 		require.Nil(t, err)
 		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].Id}
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
@@ -325,18 +325,18 @@ func TestUserDataAccess(t *testing.T) {
 			IsDisabled: true,
 		}
 
-		err = BatchDisableUsers(&disableCmd)
+		err = BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
 		isDisabled = true
 		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled}
-		err = SearchUsers(query5)
+		err = SearchUsers(context.Background(), query5)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query5.Result.TotalCount, 5)
 
 		// the user is deleted
-		err = DeleteUser(&models.DeleteUserCommand{UserId: users[1].Id})
+		err = DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
 
 		// delete connected org users and permissions
@@ -378,12 +378,12 @@ func TestUserDataAccess(t *testing.T) {
 			IsDisabled: false,
 		}
 
-		err := BatchDisableUsers(&disableCmd)
+		err := BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
 		isDisabled := false
 		query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
-		err = SearchUsers(query)
+		err = SearchUsers(context.Background(), query)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query.Result.TotalCount, 5)
@@ -410,11 +410,11 @@ func TestUserDataAccess(t *testing.T) {
 			IsDisabled: true,
 		}
 
-		err := BatchDisableUsers(&disableCmd)
+		err := BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
 		query := models.SearchUsersQuery{}
-		err = SearchUsers(&query)
+		err = SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query.Result.TotalCount, 5)

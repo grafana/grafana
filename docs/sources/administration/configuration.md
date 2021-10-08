@@ -45,9 +45,11 @@ For example:
 ;http_port = 3000
 ```
 
-## Configure with environment variables
+## Override configuration with environment variables
 
-All options in the configuration file can be overridden using environment variables using the syntax:
+Do not use environment variables to _add_ new configuration settings. Instead, use environmental variables to _override_ existing options.
+
+To override an option:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -1113,6 +1115,16 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
+### enabled
+
+Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+
+Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
+
+### disabled_orgs
+
+Comma-separated list of organization IDs for which to disable Grafana 8 Unified Alerting.
+
 ### admin_config_poll_interval
 
 Specify the frequency of polling for admin config changes. The default value is `60s`.
@@ -1161,21 +1173,21 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### execute_alerts
 
-Enable or disable alerting rule execution. Default is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1">}}) that takes precedence.
+Enable or disable alerting rule execution. The default value is `true`. The alerting UI remains visible. This option has a [legacy version in the alerting section]({{< relref "#execute_alerts-1">}}) that takes precedence.
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the datasource. Default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds">}}) that takes precedence.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
 ### max_attempts
 
-Sets a maximum limit on attempts to sending alert notifications. Default value is `3`. If it's `3` (the default) then the [respective legacy option]({{< relref "#max_attempts-1">}}) is applied
+Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `3`. This option has a [legacy version in the alerting section]({{< relref "#max_attempts-1">}}) that takes precedence.
 
 ### min_interval
 
-Sets the minimum interval to enforce between rule evaluations. Default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
+Sets the minimum interval to enforce between rule evaluations. The default value is `10s` which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as we'll schedule fewer evaluations over time. This option has [a legacy version in the alerting section]({{< relref "#min_interval_seconds">}}) that takes precedence.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
@@ -1189,7 +1201,7 @@ For more information about the Alerting feature in Grafana, refer to [Alerts ove
 
 ### enabled
 
-Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. Default is `true`.
+Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
 
 ### execute_alerts
 
@@ -1735,7 +1747,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
+Keys of alpha features to enable, separated by space.
 
 ## [date_formats]
 

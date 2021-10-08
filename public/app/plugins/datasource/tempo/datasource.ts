@@ -1,5 +1,5 @@
 import { from, merge, Observable, of, throwError } from 'rxjs';
-import { map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
   DataQueryRequest,
@@ -7,6 +7,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
+  isValidGoDuration,
   LoadingState,
 } from '@grafana/data';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
@@ -26,6 +27,7 @@ import {
   createTableFrameFromSearch,
 } from './resultTransformer';
 import { tokenizer } from './syntax';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
@@ -38,6 +40,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   search?: {
     hide?: boolean;
   };
+  nodeGraph?: NodeGraphOptions;
 }
 
 export type TempoQuery = {
@@ -53,6 +56,8 @@ export type TempoQuery = {
   limit?: number;
 } & DataQuery;
 
+export const DEFAULT_LIMIT = 20;
+
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
@@ -61,6 +66,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   search?: {
     hide?: boolean;
   };
+  nodeGraph?: NodeGraphOptions;
   uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
@@ -68,6 +74,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
+    this.nodeGraph = instanceSettings.jsonData.nodeGraph;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -109,16 +116,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (targets.nativeSearch?.length) {
-      const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
-      subQueries.push(
-        this._request('/api/search', searchQuery).pipe(
-          map((response) => {
-            return {
-              data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
-            };
-          })
-        )
-      );
+      try {
+        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+        subQueries.push(
+          this._request('/api/search', searchQuery).pipe(
+            map((response) => {
+              return {
+                data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
+        );
+      } catch (error) {
+        return of({ error: { message: error.message }, data: [] });
+      }
     }
 
     if (targets.upload?.length) {
@@ -127,7 +141,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (!otelTraceData.batches) {
           subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
         } else {
-          subQueries.push(of(transformFromOTEL(otelTraceData.batches)));
+          subQueries.push(of(transformFromOTEL(otelTraceData.batches, this.nodeGraph?.enabled)));
         }
       } else {
         subQueries.push(of({ data: [], state: LoadingState.Done }));
@@ -146,7 +160,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             if (response.error) {
               return response;
             }
-            return transformTrace(response);
+            return transformTrace(response, this.nodeGraph?.enabled);
           })
         )
       );
@@ -204,6 +218,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
       // Ensure there is a valid key value pair with accurate types
       if (
+        token &&
+        lookupToken &&
         typeof token !== 'string' &&
         token.type === 'key' &&
         typeof token.content === 'string' &&
@@ -218,12 +234,37 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
     // Remove empty properties
     tempoQuery = pickBy(tempoQuery, identity);
+
     if (query.serviceName) {
       tagsQuery.push({ ['service.name']: query.serviceName });
     }
     if (query.spanName) {
       tagsQuery.push({ ['name']: query.spanName });
     }
+
+    // Set default limit
+    if (!tempoQuery.limit) {
+      tempoQuery.limit = DEFAULT_LIMIT;
+    }
+
+    // Validate query inputs and remove spaces if valid
+    if (tempoQuery.minDuration) {
+      if (!isValidGoDuration(tempoQuery.minDuration)) {
+        throw new Error('Please enter a valid min duration.');
+      }
+      tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
+    }
+    if (tempoQuery.maxDuration) {
+      if (!isValidGoDuration(tempoQuery.maxDuration)) {
+        throw new Error('Please enter a valid max duration.');
+      }
+      tempoQuery.maxDuration = tempoQuery.maxDuration.replace(/\s/g, '');
+    }
+
+    if (!Number.isInteger(tempoQuery.limit) || tempoQuery.limit <= 0) {
+      throw new Error('Please enter a valid limit.');
+    }
+
     const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
     return { ...tagsQueryObject, ...tempoQuery };
   }

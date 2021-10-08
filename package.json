@@ -8,6 +8,7 @@
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js",
+    "check-strict": "./scripts/ci-check-strict.sh",
     "dev": "webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
@@ -33,8 +34,8 @@
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
     "precommit": "yarn run lint-staged",
-    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
-    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss,js}\" --write",
+    "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss,md,mdx}\"",
+    "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss,js,md,mdx}\" --write",
     "start": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=0 --config scripts/webpack/webpack.dev.js",
     "start:hot": "yarn themes:generate && webpack serve --progress --color --config scripts/webpack/webpack.hot.js",
     "start:noTsCheck": "yarn themes:generate && webpack --progress --color --watch --env noTsCheck=1 --config scripts/webpack/webpack.dev.js",
@@ -45,7 +46,7 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
+    "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-2/",
@@ -87,7 +88,6 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@kusto/monaco-kusto": "3.2.7",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.0-rc.6",
-    "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/jest-dom": "5.11.5",
     "@testing-library/react": "11.1.2",
     "@testing-library/react-hooks": "^3.2.1",
@@ -189,7 +189,6 @@
     "lerna": "^4.0.0",
     "lint-staged": "10.0.7",
     "mini-css-extract-plugin": "2.2.0",
-    "mocha": "7.0.1",
     "module-alias": "2.2.2",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.1.0",
@@ -246,7 +245,7 @@
     "@reduxjs/toolkit": "1.6.1",
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
-    "@sentry/utils": "5.24.2",
+    "@sentry/utils": "6.13.2",
     "@types/ol": "^6.5.1",
     "@visx/event": "2.1.0",
     "@visx/gradient": "2.1.0",
@@ -356,9 +355,6 @@
       "packages/*",
       "plugins-bundled/internal/*"
     ]
-  },
-  "_moduleAliases": {
-    "puppeteer": "node_modules/puppeteer-core"
   },
   "engines": {
     "node": ">= 14"

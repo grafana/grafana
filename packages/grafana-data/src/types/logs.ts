@@ -2,6 +2,7 @@ import { Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+import { DataQueryResponse } from './datasource';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -142,3 +143,31 @@ export enum LogsDedupDescription {
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
+
+/**
+ * @alpha
+ */
+export interface DataSourceWithLogsContextSupport {
+  /**
+   * Retrieve context for a given log row
+   */
+  getLogRowContext: <TContextQueryOptions extends {}>(
+    row: LogRowModel,
+    options?: TContextQueryOptions
+  ) => Promise<DataQueryResponse>;
+
+  showContextToggle(row?: LogRowModel): boolean;
+}
+
+/**
+ * @alpha
+ */
+export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
+
+  return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};

@@ -3,17 +3,8 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func init() {
-	bus.AddHandler("sql", GetPluginSettingById)
-	bus.AddHandler("sql", UpdatePluginSetting)
-	bus.AddHandler("sql", UpdatePluginSettingVersion)
-}
 
 func (ss *SQLStore) GetPluginSettings(orgID int64) ([]*models.PluginSettingInfoDTO, error) {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version
@@ -33,7 +24,7 @@ func (ss *SQLStore) GetPluginSettings(orgID int64) ([]*models.PluginSettingInfoD
 	return rslt, nil
 }
 
-func GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
+func (ss *SQLStore) GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
 	pluginSetting := models.PluginSetting{OrgId: query.OrgId, PluginId: query.PluginId}
 	has, err := x.Get(&pluginSetting)
 	if err != nil {
@@ -45,9 +36,7 @@ func GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
 	return nil
 }
 
-func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
-	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
-
+func (ss *SQLStore) UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		var pluginSetting models.PluginSetting
 
@@ -65,7 +54,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 				Pinned:         cmd.Pinned,
 				JsonData:       cmd.JsonData,
 				PluginVersion:  cmd.PluginVersion,
-				SecureJsonData: encryptedJsonData,
+				SecureJsonData: cmd.EncryptedSecureJsonData,
 				Created:        time.Now(),
 				Updated:        time.Now(),
 			}
@@ -81,7 +70,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 			return err
 		}
 
-		for key, encryptedData := range encryptedJsonData {
+		for key, encryptedData := range cmd.EncryptedSecureJsonData {
 			pluginSetting.SecureJsonData[key] = encryptedData
 		}
 
@@ -105,7 +94,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 	})
 }
 
-func UpdatePluginSettingVersion(cmd *models.UpdatePluginSettingVersionCmd) error {
+func (ss *SQLStore) UpdatePluginSettingVersion(cmd *models.UpdatePluginSettingVersionCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err

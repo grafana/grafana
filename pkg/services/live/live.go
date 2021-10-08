@@ -2,8 +2,10 @@ package live
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -190,6 +192,22 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+
+		// Pre-build/validate channel rules for all organizations on start.
+		// This can be unreasonable to have in production scenario with many
+		// organizations.
+		query := &models.SearchOrgsQuery{}
+		err := sqlstore.SearchOrgs(query)
+		if err != nil {
+			return nil, fmt.Errorf("can't get org list: %w", err)
+		}
+		for _, org := range query.Result {
+			_, _, err := channelRuleGetter.Get(org.Id, "")
+			if err != nil {
+				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.Id, err)
+			}
+		}
+
 		g.Pipeline, err = pipeline.New(channelRuleGetter)
 		if err != nil {
 			return nil, err
@@ -535,28 +553,47 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 
 	var reply models.SubscribeReply
 	var status backend.SubscribeStreamStatus
+	var ruleFound bool
 
-	var subscribeRuleFound bool
 	if g.Pipeline != nil {
 		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		if ok && rule.Subscriber != nil {
-			subscribeRuleFound = true
-			var err error
-			reply, status, err = rule.Subscriber.Subscribe(client.Context(), pipeline.Vars{
-				OrgID:   orgID,
-				Channel: channel,
-			})
-			if err != nil {
-				logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
-				return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		ruleFound = ok
+		if ok {
+			if rule.SubscribeAuth != nil {
+				ok, err := rule.SubscribeAuth.CanSubscribe(client.Context(), user)
+				if err != nil {
+					logger.Error("Error checking subscribe permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+				}
+				if !ok {
+					// using HTTP error codes for WS errors too.
+					code, text := subscribeStatusToHTTPError(backend.SubscribeStreamStatusPermissionDenied)
+					return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			}
+			if len(rule.Subscribers) > 0 {
+				var err error
+				for _, sub := range rule.Subscribers {
+					reply, status, err = sub.Subscribe(client.Context(), pipeline.Vars{
+						OrgID:   orgID,
+						Channel: channel,
+					})
+					if err != nil {
+						logger.Error("Error channel rule subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+						return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+					}
+					if status != backend.SubscribeStreamStatusOK {
+						break
+					}
+				}
 			}
 		}
 	}
-	if !subscribeRuleFound {
+	if !ruleFound {
 		handler, addr, err := g.GetChannelHandler(user, channel)
 		if err != nil {
 			if errors.Is(err, live.ErrInvalidChannelID) {
@@ -613,6 +650,42 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		return centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied
 	}
 
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+			return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+		}
+		if ok {
+			if rule.PublishAuth != nil {
+				ok, err := rule.PublishAuth.CanPublish(client.Context(), user)
+				if err != nil {
+					logger.Error("Error checking publish permissions", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+					return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+				}
+				if !ok {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			} else {
+				if !user.HasRole(models.ROLE_ADMIN) {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(backend.PublishStreamStatusPermissionDenied)
+					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
+				}
+			}
+			_, err := g.Pipeline.ProcessInput(client.Context(), user.OrgId, channel, e.Data)
+			if err != nil {
+				logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+				return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+			}
+			return centrifuge.PublishReply{
+				Result: &centrifuge.PublishResult{},
+			}, nil
+		}
+	}
+
 	handler, addr, err := g.GetChannelHandler(user, channel)
 	if err != nil {
 		if errors.Is(err, live.ErrInvalidChannelID) {
@@ -631,6 +704,7 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		logger.Error("Error calling channel handler publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
+
 	if status != backend.PublishStreamStatusOK {
 		// using HTTP error codes for WS errors too.
 		code, text := publishStatusToHTTPError(status)
@@ -810,6 +884,38 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	}
 
 	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
+	user := ctx.SignedInUser
+	channel := cmd.Channel
+
+	if g.Pipeline != nil {
+		rule, ok, err := g.Pipeline.Get(user.OrgId, channel)
+		if err != nil {
+			logger.Error("Error getting channel rule", "user", user, "channel", channel, "error", err)
+			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+		}
+		if ok {
+			if rule.PublishAuth != nil {
+				ok, err := rule.PublishAuth.CanPublish(ctx.Req.Context(), user)
+				if err != nil {
+					logger.Error("Error checking publish permissions", "user", user, "channel", channel, "error", err)
+					return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+				}
+				if !ok {
+					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+				}
+			} else {
+				if !user.HasRole(models.ROLE_ADMIN) {
+					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+				}
+			}
+			_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgId, channel, cmd.Data)
+			if err != nil {
+				logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
+				return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+			}
+			return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
+		}
+	}
 
 	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
@@ -822,6 +928,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
+
 	if status != backend.PublishStreamStatusOK {
 		code, text := publishStatusToHTTPError(status)
 		return response.Error(code, text, nil)
@@ -883,95 +990,157 @@ func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.
 	})
 }
 
-type configInfo struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Example     interface{} `json:"example,omitempty"`
+type ConvertDryRunRequest struct {
+	ChannelRules []pipeline.ChannelRule `json:"channelRules"`
+	Channel      string                 `json:"channel"`
+	Data         string                 `json:"data"`
+}
+
+type ConvertDryRunResponse struct {
+	ChannelFrames []*pipeline.ChannelFrame `json:"channelFrames"`
+}
+
+type DryRunRuleStorage struct {
+	ChannelRules []pipeline.ChannelRule
+}
+
+func (s *DryRunRuleStorage) CreateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) UpdateChannelRule(_ context.Context, _ int64, _ pipeline.ChannelRule) (pipeline.ChannelRule, error) {
+	return pipeline.ChannelRule{}, errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) DeleteChannelRule(_ context.Context, _ int64, _ string) error {
+	return errors.New("not implemented by dry run rule storage")
+}
+
+func (s *DryRunRuleStorage) ListRemoteWriteBackends(_ context.Context, _ int64) ([]pipeline.RemoteWriteBackend, error) {
+	return nil, nil
+}
+
+func (s *DryRunRuleStorage) ListChannelRules(_ context.Context, _ int64) ([]pipeline.ChannelRule, error) {
+	return s.ChannelRules, nil
+}
+
+// HandlePipelineConvertTestHTTP ...
+func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var req ConvertDryRunRequest
+	err = json.Unmarshal(body, &req)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding request", err)
+	}
+	storage := &DryRunRuleStorage{
+		ChannelRules: req.ChannelRules,
+	}
+	builder := &pipeline.StorageRuleBuilder{
+		Node:                 g.node,
+		ManagedStream:        g.ManagedStreamRunner,
+		FrameStorage:         pipeline.NewFrameStorage(),
+		RuleStorage:          storage,
+		ChannelHandlerGetter: g,
+	}
+	channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
+	pipe, err := pipeline.New(channelRuleGetter)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error creating pipeline", err)
+	}
+	rule, ok, err := channelRuleGetter.Get(c.OrgId, req.Channel)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error getting channel rule", err)
+	}
+	if !ok {
+		return response.Error(http.StatusNotFound, "No rule found", nil)
+	}
+	if rule.Converter == nil {
+		return response.Error(http.StatusNotFound, "No converter found", nil)
+	}
+	channelFrames, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgId, req.Channel, []byte(req.Data))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error converting data", err)
+	}
+	return response.JSON(http.StatusOK, ConvertDryRunResponse{
+		ChannelFrames: channelFrames,
+	})
+}
+
+// HandleChannelRulesPostHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	result, err := g.channelRuleStorage.CreateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": result,
+	})
+}
+
+// HandleChannelRulesPutHTTP ...
+func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	rule, err = g.channelRuleStorage.UpdateChannelRule(c.Req.Context(), c.OrgId, rule)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rule": rule,
+	})
+}
+
+// HandleChannelRulesDeleteHTTP ...
+func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) response.Response {
+	body, err := ioutil.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reading body", err)
+	}
+	var rule pipeline.ChannelRule
+	err = json.Unmarshal(body, &rule)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
+	}
+	if rule.Pattern == "" {
+		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
+	}
+	err = g.channelRuleStorage.DeleteChannelRule(c.Req.Context(), c.OrgId, rule.Pattern)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{})
 }
 
 // HandlePipelineEntitiesListHTTP ...
 func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"subscribers": []configInfo{
-			{
-				Type:        pipeline.SubscriberTypeBuiltin,
-				Description: "apply builtin feature subscribe logic",
-			},
-			{
-				Type:        pipeline.SubscriberTypeManagedStream,
-				Description: "apply managed stream subscribe logic",
-			},
-			{
-				Type:        pipeline.SubscriberTypeMultiple,
-				Description: "apply multiple subscribers",
-			},
-			{
-				Type:        pipeline.SubscriberTypeAuthorizeRole,
-				Description: "authorize user role",
-			},
-		},
-		"outputs": []configInfo{
-			{
-				Type:        pipeline.OutputTypeManagedStream,
-				Description: "Only send schema when structure changes.  Note this also requires a matching subscriber",
-				Example:     pipeline.ManagedStreamOutputConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeMultiple,
-				Description: "Send the output to multiple destinations",
-				Example:     pipeline.MultipleOutputterConfig{},
-			},
-			{
-				Type:        pipeline.OutputTypeConditional,
-				Description: "send to an output depending on frame values",
-				Example:     pipeline.ConditionalOutputConfig{},
-			},
-			{
-				Type: pipeline.OutputTypeRedirect,
-			},
-			{
-				Type: pipeline.OutputTypeThreshold,
-			},
-			{
-				Type: pipeline.OutputTypeChangeLog,
-			},
-			{
-				Type: pipeline.OutputTypeRemoteWrite,
-			},
-		},
-		"converters": []configInfo{
-			{
-				Type: pipeline.ConverterTypeJsonAuto,
-			},
-			{
-				Type: pipeline.ConverterTypeJsonExact,
-			},
-			{
-				Type:        pipeline.ConverterTypeInfluxAuto,
-				Description: "accept influx line protocol",
-				Example:     pipeline.AutoInfluxConverterConfig{},
-			},
-			{
-				Type: pipeline.ConverterTypeJsonFrame,
-			},
-		},
-		"processors": []configInfo{
-			{
-				Type:        pipeline.ProcessorTypeKeepFields,
-				Description: "list the fields that should stay",
-				Example:     pipeline.KeepFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeDropFields,
-				Description: "list the fields that should be removed",
-				Example:     pipeline.DropFieldsProcessorConfig{},
-			},
-			{
-				Type:        pipeline.ProcessorTypeMultiple,
-				Description: "apply multiple processors",
-				Example:     pipeline.MultipleProcessorConfig{},
-			},
-		},
+		"subscribers":     pipeline.SubscribersRegistry,
+		"dataOutputs":     pipeline.DataOutputsRegistry,
+		"converters":      pipeline.ConvertersRegistry,
+		"frameProcessors": pipeline.FrameProcessorsRegistry,
+		"frameOutputs":    pipeline.FrameOutputsRegistry,
 	})
 }
 

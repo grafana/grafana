@@ -9,7 +9,7 @@ import (
 )
 
 func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) response.Response {
-	err := hs.ProvisioningService.ProvisionDashboards()
+	err := hs.ProvisioningService.ProvisionDashboards(c.Req.Context())
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return response.Error(500, "", err)
 	}

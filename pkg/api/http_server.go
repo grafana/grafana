@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/searchusers"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -104,9 +106,11 @@ type HTTPServer struct {
 	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
 	EncryptionService      encryption.Service
+	DataSourcesService     *datasources.Service
 	cleanUpService         *cleanup.CleanUpService
 	tracingService         *tracing.TracingService
 	internalMetricsSvc     *metrics.InternalMetricsService
+	searchUsersService     searchusers.Service
 }
 
 type ServerOptions struct {
@@ -130,7 +134,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Service) (*HTTPServer, error) {
+	encryptionService encryption.Service, searchUsersService searchusers.Service,
+	dataSourcesService *datasources.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 
@@ -177,6 +182,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:          socialService,
 		OAuthTokenService:      oauthTokenService,
 		EncryptionService:      encryptionService,
+		DataSourcesService:     dataSourcesService,
+		searchUsersService:     searchUsersService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

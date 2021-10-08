@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
@@ -29,13 +29,18 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
 	kvStore := newFakeKVStore(t)
+	decryptFn := ossencryption.ProvideService().GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
 	cfg := &setting.Cfg{
-		DataPath:        tmpDir,
-		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			DisabledOrgs:                   map[int64]struct{}{5: {}},
+		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -82,6 +87,12 @@ grafana_alerting_active_configurations 4
 grafana_alerting_discovered_configurations 4
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
 	}
+	// if the disabled org comes back, it should not detect it.
+	{
+		orgStore.orgs = []int64{1, 2, 3, 4, 5}
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 4)
+	}
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
@@ -98,9 +109,10 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
 	}
 	kvStore := newFakeKVStore(t)
+	decryptFn := ossencryption.ProvideService().GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 
