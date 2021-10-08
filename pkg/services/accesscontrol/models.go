@@ -140,6 +140,12 @@ func (p Permission) OSSPermission() Permission {
 	}
 }
 
+// ScopeParams holds the parameters used to fill in scope templates
+type ScopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
+}
+
 const (
 	GlobalOrgID = 0
 	// Permission actions

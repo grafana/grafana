@@ -169,7 +169,7 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := s.EncryptionService.Decrypt(decoded, setting.SecretKey)
+	decrypted, err := s.EncryptionService.Decrypt(context.Background(), decoded, setting.SecretKey)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +179,7 @@ func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
 func (s *Implementation) encryptAndEncode(str string) (string, error) {
-	encrypted, err := s.EncryptionService.Encrypt([]byte(str), setting.SecretKey)
+	encrypted, err := s.EncryptionService.Encrypt(context.Background(), []byte(str), setting.SecretKey)
 	if err != nil {
 		return "", err
 	}

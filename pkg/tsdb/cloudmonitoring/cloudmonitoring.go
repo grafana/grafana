@@ -29,6 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -71,13 +73,14 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginManager plugins.Manager,
-	backendPluginManager backendplugin.Manager) *Service {
+	backendPluginManager backendplugin.Manager, dsService *datasources.Service) *Service {
 	s := &Service{
 		pluginManager:        pluginManager,
 		backendPluginManager: backendPluginManager,
 		httpClientProvider:   httpClientProvider,
 		cfg:                  cfg,
 		im:                   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		dsService:            dsService,
 	}
 
 	factory := coreplugin.New(backend.ServeOpts{
@@ -96,6 +99,7 @@ type Service struct {
 	httpClientProvider   httpclient.Provider
 	cfg                  *setting.Cfg
 	im                   instancemgmt.InstanceManager
+	dsService            *datasources.Service
 }
 
 type QueryModel struct {

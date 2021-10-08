@@ -13,11 +13,12 @@ type Service interface {
 }
 
 type OSSService struct {
-	bus bus.Bus
+	bus              bus.Bus
+	searchUserFilter models.SearchUserFilter
 }
 
-func ProvideUsersService(bus bus.Bus) *OSSService {
-	return &OSSService{bus: bus}
+func ProvideUsersService(bus bus.Bus, searchUserFilter models.SearchUserFilter) *OSSService {
+	return &OSSService{bus: bus, searchUserFilter: searchUserFilter}
 }
 
 func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
@@ -50,9 +51,15 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 	}
 
 	searchQuery := c.Query("query")
-	filter := c.Query("filter")
+	filters := make([]models.Filter, 0)
+	for filterName := range s.searchUserFilter.GetFilterList() {
+		filter := s.searchUserFilter.GetFilter(filterName, c.QueryStrings(filterName))
+		if filter != nil {
+			filters = append(filters, filter)
+		}
+	}
 
-	query := &models.SearchUsersQuery{Query: searchQuery, Filter: models.SearchUsersFilter(filter), Page: page, Limit: perPage}
+	query := &models.SearchUsersQuery{Query: searchQuery, Filters: filters, Page: page, Limit: perPage}
 	if err := s.bus.Dispatch(query); err != nil {
 		return nil, err
 	}

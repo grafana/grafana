@@ -150,6 +150,60 @@ func TestPrometheusRules(t *testing.T) {
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 	}
 
+	// Check that we cannot create a rule that has a panel_id and no dashboard_uid
+	{
+		rules := apimodels.PostableRuleGroupConfig{
+			Name: "anotherrulegroup",
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{},
+						Annotations: map[string]string{"__panelId__": "1"},
+					},
+					// this rule does not explicitly set no data and error states
+					// therefore it should get the default values
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "NeverCreated",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, 400, resp.StatusCode)
+		require.JSONEq(t, `{"message":"failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
+	}
+
 	// Now, let's see how this looks like.
 	{
 		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)

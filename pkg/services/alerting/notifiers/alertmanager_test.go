@@ -4,15 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/validations"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
@@ -93,7 +92,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewAlertmanagerNotifier(model)
+				_, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -107,7 +106,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewAlertmanagerNotifier(model)
+				not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)
@@ -126,7 +125,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewAlertmanagerNotifier(model)
+				not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)

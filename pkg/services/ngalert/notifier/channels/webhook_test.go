@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -183,7 +185,8 @@ func TestWebhookNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewWebHookNotifier(m, tmpl)
+			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			pn, err := NewWebHookNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

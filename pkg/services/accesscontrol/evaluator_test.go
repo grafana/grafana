@@ -17,7 +17,7 @@ type injectTestCase struct {
 	desc        string
 	expected    bool
 	evaluator   Evaluator
-	params      map[string]string
+	params      ScopeParams
 	permissions map[string]map[string]struct{}
 }
 
@@ -78,12 +78,27 @@ func TestPermission_Evaluate(t *testing.T) {
 func TestPermission_Inject(t *testing.T) {
 	tests := []injectTestCase{
 		{
+			desc:      "should inject field",
+			expected:  true,
+			evaluator: EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
+			params: ScopeParams{
+				OrgID: 3,
+			},
+			permissions: map[string]map[string]struct{}{
+				"orgs:read": {
+					"orgs:3": struct{}{},
+				},
+			},
+		},
+		{
 			desc:      "should inject correct param",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
-			params: map[string]string{
-				":id":       "10",
-				":reportId": "1",
+			params: ScopeParams{
+				URLParams: map[string]string{
+					":id":       "10",
+					":reportId": "1",
+				},
 			},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
@@ -95,7 +110,7 @@ func TestPermission_Inject(t *testing.T) {
 			desc:      "should fail for nil params",
 			expected:  false,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
-			params:    nil,
+			params:    ScopeParams{},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -106,9 +121,11 @@ func TestPermission_Inject(t *testing.T) {
 			desc:      "should inject several parameters to one permission",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"), Parameter(":reportId2"))),
-			params: map[string]string{
-				":reportId":  "report",
-				":reportId2": "report2",
+			params: ScopeParams{
+				URLParams: map[string]string{
+					":reportId":  "report",
+					":reportId2": "report2",
+				},
 			},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
@@ -187,10 +204,12 @@ func TestAll_Inject(t *testing.T) {
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 				EvalPermission("settings:read", Scope("settings", Parameter(":settingsId"))),
 			),
-			params: map[string]string{
-				":id":         "10",
-				":settingsId": "3",
-				":reportId":   "1",
+			params: ScopeParams{
+				URLParams: map[string]string{
+					":id":         "10",
+					":settingsId": "3",
+					":reportId":   "1",
+				},
 			},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
@@ -202,13 +221,33 @@ func TestAll_Inject(t *testing.T) {
 			},
 		},
 		{
+			desc:     "should inject field and URL param",
+			expected: true,
+			evaluator: EvalAll(
+				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
+				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
+			),
+			params: ScopeParams{
+				OrgID: 3,
+				URLParams: map[string]string{
+					":orgId": "4",
+				},
+			},
+			permissions: map[string]map[string]struct{}{
+				"orgs:read": {
+					"orgs:3": struct{}{},
+					"orgs:4": struct{}{},
+				},
+			},
+		},
+		{
 			desc:     "should fail for nil params",
 			expected: false,
 			evaluator: EvalAll(
 				EvalPermission("settings:read", Scope("reports", Parameter(":settingsId"))),
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 			),
-			params: nil,
+			params: ScopeParams{},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -287,10 +326,12 @@ func TestAny_Inject(t *testing.T) {
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 				EvalPermission("settings:read", Scope("settings", Parameter(":settingsId"))),
 			),
-			params: map[string]string{
-				":id":         "10",
-				":settingsId": "3",
-				":reportId":   "1",
+			params: ScopeParams{
+				URLParams: map[string]string{
+					":id":         "10",
+					":settingsId": "3",
+					":reportId":   "1",
+				},
 			},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
@@ -302,13 +343,33 @@ func TestAny_Inject(t *testing.T) {
 			},
 		},
 		{
+			desc:     "should inject field and URL param",
+			expected: true,
+			evaluator: EvalAny(
+				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
+				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
+			),
+			params: ScopeParams{
+				OrgID: 3,
+				URLParams: map[string]string{
+					":orgId": "4",
+				},
+			},
+			permissions: map[string]map[string]struct{}{
+				"orgs:read": {
+					"orgs:3": struct{}{},
+					"orgs:4": struct{}{},
+				},
+			},
+		},
+		{
 			desc:     "should fail for nil params",
 			expected: false,
 			evaluator: EvalAny(
 				EvalPermission("settings:read", Scope("reports", Parameter(":settingsId"))),
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 			),
-			params: nil,
+			params: ScopeParams{},
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
