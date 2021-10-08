@@ -2,10 +2,12 @@ package pipeline
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pipeline/pattern"
@@ -187,10 +189,10 @@ type RemoteWriteBackendDeleteCmd struct {
 }
 
 type RemoteWriteBackend struct {
-	OrgId          int64                         `json:"-"`
-	UID            string                        `json:"uid"`
-	Settings       RemoteWriteSettings           `json:"settings"`
-	SecureSettings securejsondata.SecureJsonData `json:"secureSettings"`
+	OrgId          int64               `json:"-"`
+	UID            string              `json:"uid"`
+	Settings       RemoteWriteSettings `json:"settings"`
+	SecureSettings map[string][]byte   `json:"secureSettings"`
 }
 
 func (r RemoteWriteBackend) Valid() (bool, string) {
@@ -290,6 +292,7 @@ type StorageRuleBuilder struct {
 	FrameStorage         *FrameStorage
 	Storage              Storage
 	ChannelHandlerGetter ChannelHandlerGetter
+	EncryptionService    encryption.Service
 }
 
 func (f *StorageRuleBuilder) extractSubscriber(config *SubscriberConfig) (Subscriber, error) {
@@ -473,14 +476,14 @@ func (f *StorageRuleBuilder) extractFrameOutputter(config *FrameOutputterConfig,
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
-		password, ok := remoteWriteBackend.SecureSettings.DecryptedValue("password")
-		if !ok {
-			return nil, errors.New("password not found")
+		password, err := f.EncryptionService.Decrypt(context.Background(), remoteWriteBackend.SecureSettings["password"], setting.SecretKey)
+		if err != nil {
+			return nil, fmt.Errorf("password can't be decrypted: %w", err)
 		}
 		return NewRemoteWriteFrameOutput(
 			remoteWriteBackend.Settings.Endpoint,
 			remoteWriteBackend.Settings.User,
-			password,
+			string(password),
 			config.RemoteWriteOutputConfig.SampleMilliseconds,
 		), nil
 	case FrameOutputTypeChangeLog:

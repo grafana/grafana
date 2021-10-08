@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
@@ -62,7 +64,7 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, encService encryption.Service,
 	usageStatsService usagestats.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
@@ -73,6 +75,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
+		EncryptionService:     encService,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -180,7 +183,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			}
 		} else {
 			storage := &pipeline.FileStorage{
-				DataPath: cfg.DataPath,
+				DataPath:          cfg.DataPath,
+				EncryptionService: g.EncryptionService,
 			}
 			g.pipelineStorage = storage
 			builder = &pipeline.StorageRuleBuilder{
@@ -189,6 +193,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 				FrameStorage:         pipeline.NewFrameStorage(),
 				Storage:              storage,
 				ChannelHandlerGetter: g,
+				EncryptionService:    g.EncryptionService,
 			}
 		}
 		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
@@ -365,6 +370,7 @@ type GrafanaLive struct {
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
+	EncryptionService     encryption.Service
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -1215,7 +1221,11 @@ func (g *GrafanaLive) HandleRemoteWriteBackendsPutHTTP(c *models.ReqContext) res
 		if cmd.SecureSettings == nil {
 			cmd.SecureSettings = map[string]string{}
 		}
-		secureJSONData := existingBackend.SecureSettings.Decrypt()
+		secureJSONData, err := g.EncryptionService.DecryptJsonData(c.Req.Context(), existingBackend.SecureSettings, setting.SecretKey)
+		if err != nil {
+			logger.Error("Error decrypting secure settings", "error", err)
+			return response.Error(http.StatusInternalServerError, "Error decrypting secure settings", err)
+		}
 		for k, v := range secureJSONData {
 			if _, ok := cmd.SecureSettings[k]; !ok {
 				cmd.SecureSettings[k] = v

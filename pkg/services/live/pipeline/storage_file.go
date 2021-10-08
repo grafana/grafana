@@ -9,14 +9,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/services/encryption"
 
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // FileStorage can load channel rules from a file on disk.
 type FileStorage struct {
-	DataPath string
+	DataPath          string
+	EncryptionService encryption.Service
 }
 
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
@@ -51,7 +54,7 @@ func (f *FileStorage) GetRemoteWriteBackend(_ context.Context, orgID int64, cmd 
 	return RemoteWriteBackend{}, false, nil
 }
 
-func (f *FileStorage) CreateRemoteWriteBackend(_ context.Context, orgID int64, cmd RemoteWriteBackendCreateCmd) (RemoteWriteBackend, error) {
+func (f *FileStorage) CreateRemoteWriteBackend(ctx context.Context, orgID int64, cmd RemoteWriteBackendCreateCmd) (RemoteWriteBackend, error) {
 	remoteWriteBackends, err := f.readRemoteWriteBackends()
 	if err != nil {
 		return RemoteWriteBackend{}, fmt.Errorf("can't read remote write backends: %w", err)
@@ -60,11 +63,16 @@ func (f *FileStorage) CreateRemoteWriteBackend(_ context.Context, orgID int64, c
 		cmd.UID = util.GenerateShortUID()
 	}
 
+	secureSettings, err := f.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	if err != nil {
+		return RemoteWriteBackend{}, fmt.Errorf("error encrypting data: %w", err)
+	}
+
 	backend := RemoteWriteBackend{
 		OrgId:          orgID,
 		UID:            cmd.UID,
 		Settings:       cmd.Settings,
-		SecureSettings: securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+		SecureSettings: secureSettings,
 	}
 
 	ok, reason := backend.Valid()
@@ -87,11 +95,16 @@ func (f *FileStorage) UpdateRemoteWriteBackend(ctx context.Context, orgID int64,
 		return RemoteWriteBackend{}, fmt.Errorf("can't read remote write backends: %w", err)
 	}
 
+	secureSettings, err := f.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	if err != nil {
+		return RemoteWriteBackend{}, fmt.Errorf("error encrypting data: %w", err)
+	}
+
 	backend := RemoteWriteBackend{
 		OrgId:          orgID,
 		UID:            cmd.UID,
 		Settings:       cmd.Settings,
-		SecureSettings: securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+		SecureSettings: secureSettings,
 	}
 
 	ok, reason := backend.Valid()
