@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -15,9 +16,11 @@ import (
 // NewService returns a new Service.
 func NewService(
 	cfg *setting.Cfg, pluginsClient plugins.Client,
-	oauthTokenService *oauthtoken.Service, cloudMonitoringService *cloudmonitoring.Service,
+	oauthTokenService *oauthtoken.Service,
+	dataSourcesService *datasources.Service,
+	cloudMonitoringService *cloudmonitoring.Service,
 ) *Service {
-	s := newService(cfg, pluginsClient, oauthTokenService)
+	s := newService(cfg, pluginsClient, oauthTokenService, dataSourcesService)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
@@ -27,21 +30,23 @@ func NewService(
 }
 
 func newService(cfg *setting.Cfg, pluginsClient plugins.Client,
-	oauthTokenService oauthtoken.OAuthTokenService) *Service {
+	oauthTokenService oauthtoken.OAuthTokenService, dataSourcesService *datasources.Service) *Service {
 	return &Service{
 		Cfg:           cfg,
 		pluginsClient: pluginsClient,
 		// nolint:staticcheck // plugins.DataPlugin deprecated
-		registry:          map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
-		OAuthTokenService: oauthTokenService,
+		registry:           map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+		OAuthTokenService:  oauthTokenService,
+		DataSourcesService: dataSourcesService,
 	}
 }
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg               *setting.Cfg
-	pluginsClient     plugins.Client
-	OAuthTokenService oauthtoken.OAuthTokenService
+	Cfg                *setting.Cfg
+	pluginsClient      plugins.Client
+	OAuthTokenService  oauthtoken.OAuthTokenService
+	DataSourcesService *datasources.Service
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
@@ -59,7 +64,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 		return plugin.DataQuery(ctx, ds, query)
 	}
-	return dataPluginQueryAdapter(ds.Type, s.pluginsClient, s.OAuthTokenService).DataQuery(ctx, ds, query)
+	return dataPluginQueryAdapter(ds.Type, s.pluginsClient, s.OAuthTokenService, s.DataSourcesService).DataQuery(ctx, ds, query)
 }
 
 // RegisterQueryHandler registers a query handler factory.

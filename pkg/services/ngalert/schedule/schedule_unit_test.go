@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -18,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -232,8 +232,10 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 	m := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
-	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, nil, log.New("testlogger"))
+	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, nil, log.New("testlogger"))
 	require.NoError(t, err)
+
 	schedCfg := SchedulerCfg{
 		C:                       mockedClock,
 		BaseInterval:            time.Second,

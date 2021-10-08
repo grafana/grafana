@@ -1,22 +1,25 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
-	log log.Logger
+	encryptionService encryption.Service
+	log               log.Logger
 }
 
 func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error) {
@@ -44,15 +47,15 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 	}
 
 	cr.log.Debug("Validating alert notifications")
-	if err = validateRequiredField(notifications); err != nil {
+	if err = cr.validateRequiredField(notifications); err != nil {
 		return nil, err
 	}
 
-	if err := checkOrgIDAndOrgName(notifications); err != nil {
+	if err := cr.checkOrgIDAndOrgName(notifications); err != nil {
 		return nil, err
 	}
 
-	if err := validateNotifications(notifications); err != nil {
+	if err := cr.validateNotifications(notifications); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +81,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
+func (cr *configReader) checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
 			if notification.OrgID < 1 {
@@ -107,7 +110,7 @@ func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
 	return nil
 }
 
-func validateRequiredField(notifications []*notificationsAsConfig) error {
+func (cr *configReader) validateRequiredField(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		var errStrings []string
 		for index, notification := range notifications[i].Notifications {
@@ -150,19 +153,29 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 	return nil
 }
 
-func validateNotifications(notifications []*notificationsAsConfig) error {
+func (cr *configReader) validateNotifications(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		if notifications[i].Notifications == nil {
 			continue
 		}
 
 		for _, notification := range notifications[i].Notifications {
-			_, err := alerting.InitNotifier(&models.AlertNotification{
+			encryptedSecureSettings, err := cr.encryptionService.EncryptJsonData(
+				context.Background(),
+				notification.SecureSettings,
+				setting.SecretKey,
+			)
+
+			if err != nil {
+				return err
+			}
+
+			_, err = alerting.InitNotifier(&models.AlertNotification{
 				Name:           notification.Name,
 				Settings:       notification.SettingsToJSON(),
-				SecureSettings: securejsondata.GetEncryptedJsonData(notification.SecureSettings),
+				SecureSettings: encryptedSecureSettings,
 				Type:           notification.Type,
-			})
+			}, cr.encryptionService.GetDecryptedValue)
 
 			if err != nil {
 				return err

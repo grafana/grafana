@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -83,7 +82,7 @@ func DataSourceModel(orgId int64) *models.DataSource {
 		Type:           "grafana",
 		OrgId:          orgId,
 		JsonData:       simplejson.New(),
-		SecureJsonData: make(securejsondata.SecureJsonData),
+		SecureJsonData: make(map[string][]byte),
 	}
 }
 

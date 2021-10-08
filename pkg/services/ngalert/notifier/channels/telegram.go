@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
 )
 
 var (
@@ -31,12 +31,12 @@ type TelegramNotifier struct {
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
-	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
+	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
 	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
