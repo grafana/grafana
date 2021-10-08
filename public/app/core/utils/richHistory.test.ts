@@ -81,6 +81,7 @@ describe('richHistory', () => {
         mock.testStarred,
         mock.testComment,
         mock.testSessionName,
+        true,
         true
       );
       expect(newHistory).toEqual(expectedResult);
@@ -97,6 +98,7 @@ describe('richHistory', () => {
         mock.testStarred,
         mock.testComment,
         mock.testSessionName,
+        true,
         true
       );
       expect(store.exists(key)).toBeTruthy();
@@ -113,6 +115,7 @@ describe('richHistory', () => {
         mock.testStarred,
         mock.testComment,
         mock.testSessionName,
+        true,
         true
       );
       expect(newHistory).toEqual([mock.storedHistory[0]]);
@@ -128,6 +131,7 @@ describe('richHistory', () => {
         mock.testStarred,
         mock.testComment,
         mock.testSessionName,
+        true,
         true
       );
       expect(store.exists(key)).toBeFalsy();
@@ -163,6 +167,7 @@ describe('richHistory', () => {
         true,
         mock.testComment,
         mock.testSessionName,
+        true,
         true
       );
 
