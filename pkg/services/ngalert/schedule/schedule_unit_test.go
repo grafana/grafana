@@ -243,7 +243,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 
 	schedCfg := SchedulerCfg{
 		C:                       mockedClock,
-		BaseInterval:            1 * time.Second,
+		BaseInterval:            time.Second,
 		MaxAttempts:             1,
 		Evaluator:               eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
 		RuleStore:               rs,
