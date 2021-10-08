@@ -96,6 +96,9 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 
 	err = hs.AccessControl.LinkAPIKeyToServiceAccount(c.Req.Context(), cmd.Result, serviceAccount)
+	if err != nil {
+		return response.Error(500, "Linking API key to service account failed", err)
+	}
 
 	result := &dtos.NewApiKeyResult{
 		ID:   cmd.Result.Id,
