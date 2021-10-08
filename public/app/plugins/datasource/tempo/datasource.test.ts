@@ -12,7 +12,7 @@ import {
 
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { TempoDatasource, TempoQuery } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -155,7 +155,7 @@ describe('Tempo data source', () => {
     });
   });
 
-  it('should include a default limit of 100', () => {
+  it('should include a default limit', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
       queryType: 'search',
@@ -165,7 +165,7 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
-      limit: 100,
+      limit: DEFAULT_LIMIT,
     });
   });
 
@@ -179,7 +179,7 @@ describe('Tempo data source', () => {
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
-      limit: 100,
+      limit: DEFAULT_LIMIT,
       'root.http.status_code': '500',
     });
   });
@@ -233,7 +233,7 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings = {
+const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: '0',
   type: 'tracing',
@@ -247,7 +247,11 @@ const defaultSettings: DataSourceInstanceSettings = {
     module: '',
     baseUrl: '',
   },
-  jsonData: {},
+  jsonData: {
+    nodeGraph: {
+      enabled: true,
+    },
+  },
 };
 
 const totalsPromMetric = new MutableDataFrame({

@@ -474,7 +474,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return err
 				}
 
-				processedStates := sch.stateManager.ProcessEvalResults(alertRule, results)
+				processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 

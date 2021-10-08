@@ -10,9 +10,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -29,7 +31,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -39,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 )
 
 const (
@@ -57,6 +59,24 @@ const (
 	memoryAlertsGCInterval = 30 * time.Minute
 )
 
+func init() {
+	silence.ValidateMatcher = func(m *pb.Matcher) error {
+		switch m.Type {
+		case pb.Matcher_EQUAL, pb.Matcher_NOT_EQUAL:
+			if !model.LabelValue(m.Pattern).IsValid() {
+				return fmt.Errorf("invalid label value %q", m.Pattern)
+			}
+		case pb.Matcher_REGEXP, pb.Matcher_NOT_REGEXP:
+			if _, err := regexp.Compile(m.Pattern); err != nil {
+				return fmt.Errorf("invalid regular expression %q: %s", m.Pattern, err)
+			}
+		default:
+			return fmt.Errorf("unknown matcher type %q", m.Type)
+		}
+		return nil
+	}
+}
+
 type ClusterPeer interface {
 	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
 	Position() int
@@ -66,7 +86,6 @@ type ClusterPeer interface {
 type Alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
-	OrgID       int64
 
 	Settings  *setting.Cfg
 	Store     store.AlertingStore
@@ -98,9 +117,12 @@ type Alertmanager struct {
 	config          *apimodels.PostableUserConfig
 	configHash      [16]byte
 	orgID           int64
+
+	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore, peer ClusterPeer, m *metrics.Alertmanager) (*Alertmanager, error) {
+func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
@@ -113,6 +135,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		peerTimeout:       cfg.UnifiedAlerting.HAPeerTimeout,
 		Metrics:           m,
 		orgID:             orgID,
+		decryptFn:         decryptFn,
 	}
 
 	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
@@ -139,7 +162,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
-	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.OrgID), am.notificationLog, m.Registerer)
+	c := am.peer.AddState(fmt.Sprintf("notificationlog:%d", am.orgID), am.notificationLog, m.Registerer)
 	am.notificationLog.SetBroadcast(c.Broadcast)
 
 	am.silences, err = newSilences(silencesFilePath, m.Registerer)
@@ -147,7 +170,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
-	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.OrgID), am.silences, m.Registerer)
+	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.orgID), am.silences, m.Registerer)
 	am.silences.SetBroadcast(c.Broadcast)
 
 	am.wg.Add(1)
@@ -393,7 +416,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, inhibitionStage, stage}
 	}
 
-	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
@@ -452,7 +475,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 
 func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
 	// secure settings are already encrypted at this point
-	secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
 	for k, v := range r.SecureSettings {
 		d, err := base64.StdEncoding.DecodeString(v)
@@ -481,13 +504,13 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "email":
 		n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 	case "pagerduty":
-		n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+		n, err = channels.NewPagerdutyNotifier(cfg, tmpl, am.decryptFn)
 	case "pushover":
-		n, err = channels.NewPushoverNotifier(cfg, tmpl)
+		n, err = channels.NewPushoverNotifier(cfg, tmpl, am.decryptFn)
 	case "slack":
-		n, err = channels.NewSlackNotifier(cfg, tmpl)
+		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
 	case "telegram":
-		n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		n, err = channels.NewTelegramNotifier(cfg, tmpl, am.decryptFn)
 	case "victorops":
 		n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 	case "teams":
@@ -497,21 +520,21 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "kafka":
 		n, err = channels.NewKafkaNotifier(cfg, tmpl)
 	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, tmpl)
+		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
 	case "sensugo":
-		n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
 	case "discord":
 		n, err = channels.NewDiscordNotifier(cfg, tmpl)
 	case "googlechat":
 		n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
 	case "LINE":
-		n, err = channels.NewLineNotifier(cfg, tmpl)
+		n, err = channels.NewLineNotifier(cfg, tmpl, am.decryptFn)
 	case "threema":
-		n, err = channels.NewThreemaNotifier(cfg, tmpl)
+		n, err = channels.NewThreemaNotifier(cfg, tmpl, am.decryptFn)
 	case "opsgenie":
-		n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+		n, err = channels.NewOpsgenieNotifier(cfg, tmpl, am.decryptFn)
 	case "prometheus-alertmanager":
-		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
+		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
 	default:
 		return nil, InvalidReceiverError{
 			Receiver: r,
@@ -639,22 +662,14 @@ func validateLabelSet(ls model.LabelSet) error {
 	return nil
 }
 
-// isValidLabelName is ln.IsValid() while additionally allowing spaces.
-// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
-// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+// isValidLabelName is ln.IsValid() without restrictions other than it can not be empty.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$.
 func isValidLabelName(ln model.LabelName) bool {
 	if len(ln) == 0 {
 		return false
 	}
-	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') ||
-			(b >= 'A' && b <= 'Z') ||
-			b == '_' ||
-			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
-			return false
-		}
-	}
-	return true
+
+	return utf8.ValidString(string(ln))
 }
 
 // AlertValidationError is the error capturing the validation errors

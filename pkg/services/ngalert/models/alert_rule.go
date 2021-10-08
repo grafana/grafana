@@ -46,6 +46,10 @@ const (
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
+
+	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
+	DashboardUIDAnnotation = "__dashboardUid__"
+	PanelIDAnnotation      = "__panelId__"
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -58,8 +62,10 @@ type AlertRule struct {
 	Updated         time.Time
 	IntervalSeconds int64
 	Version         int64
-	UID             string `xorm:"uid"`
-	NamespaceUID    string `xorm:"namespace_uid"`
+	UID             string  `xorm:"uid"`
+	NamespaceUID    string  `xorm:"namespace_uid"`
+	DashboardUID    *string `xorm:"dashboard_uid"`
+	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
@@ -137,6 +143,11 @@ type ListAlertRulesQuery struct {
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
 
+	// DashboardUID and PanelID are optional and allow filtering rules
+	// to return just those for a dashboard and panel.
+	DashboardUID string
+	PanelID      int64
+
 	Result []*AlertRule
 }
 
@@ -156,6 +167,11 @@ type ListRuleGroupAlertRulesQuery struct {
 	NamespaceUID string
 	RuleGroup    string
 
+	// DashboardUID and PanelID are optional and allow filtering rules
+	// to return just those for a dashboard and panel.
+	DashboardUID string
+	PanelID      int64
+
 	Result []*AlertRule
 }
 
@@ -163,6 +179,11 @@ type ListRuleGroupAlertRulesQuery struct {
 type ListOrgRuleGroupsQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string
+
+	// DashboardUID and PanelID are optional and allow filtering rules
+	// to return just those for a dashboard and panel.
+	DashboardUID string
+	PanelID      int64
 
 	Result [][]string
 }

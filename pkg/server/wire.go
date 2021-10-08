@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -45,10 +46,12 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -142,8 +145,12 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	secrets.ProvideSecretsService,
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
+	datasources.ProvideService,
+	pluginsettings.ProvideService,
+	alerting.ProvideService,
 )
 
 var wireSet = wire.NewSet(

@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
@@ -99,6 +101,79 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 		// if user disables the feature flag and enables it back.
 		// This migration does not need to be run because the original migration AddDashAlertMigration does what's needed
 	}
+}
+
+func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	migrationID := "update dashboard_uid and panel_id from existing annotations"
+	_, migrationRun := logs[migrationID]
+	ngEnabled := mg.Cfg.UnifiedAlerting.Enabled
+	undoMigrationID := "undo " + migrationID
+
+	if ngEnabled && !migrationRun {
+		// If ngalert is enabled and the migration has not been run then run it.
+		mg.AddMigration(migrationID, &updateDashboardUIDPanelIDMigration{})
+	} else if !ngEnabled && migrationRun {
+		// If ngalert is disabled and the migration has been run then remove it
+		// from the migration log so it will run if ngalert is re-enabled.
+		mg.AddMigration(undoMigrationID, &clearMigrationEntry{
+			migrationID: migrationID,
+		})
+	}
+}
+
+// updateDashboardUIDPanelIDMigration sets the dashboard_uid and panel_id columns
+// from the __dashboardUid__ and __panelId__ annotations.
+type updateDashboardUIDPanelIDMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *updateDashboardUIDPanelIDMigration) SQL(_ migrator.Dialect) string {
+	return "set dashboard_uid and panel_id migration"
+}
+
+func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var results []struct {
+		ID          int64             `xorm:"id"`
+		Annotations map[string]string `xorm:"annotations"`
+	}
+	if err := sess.SQL(`SELECT id, annotations FROM alert_rule`).Find(&results); err != nil {
+		return fmt.Errorf("failed to get annotations for all alert rules: %w", err)
+	}
+	for _, next := range results {
+		var (
+			dashboardUID *string
+			panelID      *int64
+		)
+		if s, ok := next.Annotations[ngmodels.DashboardUIDAnnotation]; ok {
+			dashboardUID = &s
+		}
+		if s, ok := next.Annotations[ngmodels.PanelIDAnnotation]; ok {
+			i, err := strconv.ParseInt(s, 10, 64)
+			if err != nil {
+				return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
+			}
+			panelID = &i
+		}
+		// We do not want to set panel_id to a non-nil value when dashboard_uid is nil
+		// as panel_id is not unique and so cannot be queried without its dashboard_uid.
+		// This can happen where users have deleted the dashboard_uid annotation but kept
+		// the panel_id annotation.
+		if dashboardUID != nil {
+			if _, err := sess.Exec(`UPDATE alert_rule SET dashboard_uid = ?, panel_id = ? WHERE id = ?`,
+				dashboardUID,
+				panelID,
+				next.ID); err != nil {
+				return fmt.Errorf("failed to set dashboard_uid and panel_id for alert rule: %w", err)
+			}
+		}
+	}
+	return nil
 }
 
 // clearMigrationEntry removes an entry fromt the migration_log table.

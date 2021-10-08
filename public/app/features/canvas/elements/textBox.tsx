@@ -97,14 +97,17 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
+    const category = ['Text box'];
     builder
       .addCustomEditor({
+        category,
         id: 'textSelector',
         path: 'config.text',
         name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
+        category,
         id: 'config.color',
         path: 'config.color',
         name: 'Text color',
@@ -113,6 +116,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         defaultValue: {},
       })
       .addRadio({
+        category,
         path: 'config.align',
         name: 'Align text',
         settings: {
@@ -125,6 +129,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         defaultValue: Align.Left,
       })
       .addRadio({
+        category,
         path: 'config.valign',
         name: 'Vertical align',
         settings: {
@@ -137,6 +142,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         defaultValue: VAlign.Middle,
       })
       .addNumberInput({
+        category,
         path: 'config.size',
         name: 'Text size',
         settings: {

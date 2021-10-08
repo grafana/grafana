@@ -1,7 +1,8 @@
 import { ComponentType } from 'react';
-import { PanelOptionsEditorBuilder, RegistryItem } from '@grafana/data';
+import { RegistryItem } from '@grafana/data';
 import { Anchor, BackgroundConfig, LineConfig, Placement } from './types';
 import { DimensionContext } from '../dimensions/context';
+import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 
 /**
  * This gets saved in panel json
@@ -52,5 +53,5 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   display: ComponentType<CanvasElementProps<TConfig, TData>>;
 
   /** Build the configuraiton UI */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<CanvasElementOptions<TConfig>>) => void;
+  registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
 }

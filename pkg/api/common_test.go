@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+
 	"github.com/grafana/grafana/pkg/services/searchusers"
 
 	"github.com/stretchr/testify/require"
@@ -226,7 +228,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(bus),
+		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
 	}
 
 	sc := setupScenarioContext(t, url)
