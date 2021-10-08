@@ -22,6 +22,11 @@
 
 - **Plugins:** Create a mock icon component to prevent console errors. [#39901](https://github.com/grafana/grafana/pull/39901), [@jackw](https://github.com/jackw)
 
+
+<!-- v8.2.0 START -->
+
+
+<!-- v8.2.0 END -->
 <!-- 8.2.0 END -->
 <!-- 8.2.0-beta2 START -->
 
