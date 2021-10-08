@@ -31,8 +31,7 @@ type WebhookNotifier struct {
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn,
-	orgID int64) (*WebhookNotifier, error) {
+func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find settings property"}
 	}
@@ -48,7 +47,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, 
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		orgID:      orgID,
+		orgID:      model.OrgID,
 		URL:        url,
 		User:       model.Settings.Get("username").MustString(),
 		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey),

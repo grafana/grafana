@@ -187,10 +187,11 @@ func TestWebhookNotifier(t *testing.T) {
 				Name:     "webhook_testing",
 				Type:     "webhook",
 				Settings: settingsJSON,
+				OrgID:    orgID,
 			}
 
 			decryptFn := ossencryption.ProvideService().GetDecryptedValue
-			pn, err := NewWebHookNotifier(m, tmpl, decryptFn, orgID)
+			pn, err := NewWebHookNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

@@ -56,6 +56,7 @@ func getAlertStatusColor(status model.AlertStatus) string {
 
 type NotificationChannelConfig struct {
 	UID                   string            `json:"uid"`
+	OrgID                 int64             `json:"orgId"`
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
