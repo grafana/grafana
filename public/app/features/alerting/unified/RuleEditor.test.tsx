@@ -316,7 +316,7 @@ describe('RuleEditor', () => {
       uid: 'abcd',
       id: 1,
     };
-    jest.spyOn(api, 'searchFolders').mockResolvedValue([folder] as DashboardSearchHit[]);
+    const searchFolderMock = jest.spyOn(api, 'searchFolders').mockResolvedValue([folder] as DashboardSearchHit[]);
     const getFolderByUid = jest.fn().mockResolvedValue({
       ...folder,
       canSave: true,
@@ -363,6 +363,7 @@ describe('RuleEditor', () => {
     });
 
     await renderRuleEditor(uid);
+    await waitFor(() => expect(searchFolderMock).toHaveBeenCalled());
 
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jwt"
@@ -63,7 +62,7 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 		getTokenSource = fn
 	}
 
-	ds := &models.DataSource{Id: 1, Version: 2}
+	ds := DSInfo{ID: 1, Updated: time.Now()}
 
 	t.Run("should fetch token using JWT private key", func(t *testing.T) {
 		setUp(t, func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
@@ -170,7 +169,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
-		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, authParams)
+		provider := newGenericAccessTokenProvider(DSInfo{}, pluginRoute, authParams)
 
 		testCases := []tokenTestDescription{
 			{
@@ -252,7 +251,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
-		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, authParams)
+		provider := newGenericAccessTokenProvider(DSInfo{}, pluginRoute, authParams)
 
 		token = map[string]interface{}{
 			"access_token":  "2YotnFZFEjr1zCsicMWpAA",
