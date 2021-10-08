@@ -489,7 +489,7 @@ export class ElasticResponse {
     return this.processResponseToDataFrames(true, logMessageField, logLevelField);
   }
 
-  processResponseToDataFrames(
+  private processResponseToDataFrames(
     isLogsRequest: boolean,
     logMessageField?: string,
     logLevelField?: string
@@ -553,7 +553,7 @@ export class ElasticResponse {
             series.add(doc);
           }
           if (isLogsRequest) {
-            series = addPreferredVisualisationType(series, 'logs');
+            addPreferredVisualisationType(series, 'logs');
           }
           const target = this.targets[n];
           series.refId = target.refId;
@@ -582,7 +582,7 @@ export class ElasticResponse {
 
           // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
           if (isLogsRequest) {
-            series = addPreferredVisualisationType(series, 'graph');
+            addPreferredVisualisationType(series, 'graph');
           }
 
           series.refId = target.refId;
@@ -756,8 +756,6 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
     : (s.meta = {
         preferredVisualisationType: type,
       });
-
-  return s;
 };
 
 const toNameTypePair = (docs: Array<Record<string, any>>) => (propName: string): [string, FieldType] => [
