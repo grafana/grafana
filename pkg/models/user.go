@@ -69,7 +69,7 @@ type CreateUserCommand struct {
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
-	Result         User
+	Result           User
 	IsServiceAccount bool
 }
 

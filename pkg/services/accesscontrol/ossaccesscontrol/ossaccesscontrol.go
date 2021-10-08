@@ -79,7 +79,7 @@ func (ac *OSSAccessControlService) CloneUserToServiceAccount(ctx context.Context
 }
 
 // Link creates a service account with permissions based on a user
-func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(ctx context.Context, user *models.SignedInUser) error {
+func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(context.Context, *models.ApiKey, *models.User) error {
 	panic("Unsupported function")
 }
 

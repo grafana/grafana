@@ -41,15 +41,15 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	CloneUserToServiceAccountFunc func(context.Context, *models.SignedInUser) (*models.User, error)
-	LinkAPIKeyToServiceAccount    func(context.Context, *models.ApiKey, *models.User) error
-	EvaluateFunc                  func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
-	GetUserRolesFunc              func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
-	IsDisabledFunc                func() bool
-	DeclareFixedRolesFunc         func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc       func(user *models.SignedInUser) []string
-	RegisterFixedRolesFunc        func() error
+	CloneUserToServiceAccountFunc  func(context.Context, *models.SignedInUser) (*models.User, error)
+	LinkAPIKeyToServiceAccountFunc func(context.Context, *models.ApiKey, *models.User) error
+	EvaluateFunc                   func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc         func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
+	GetUserRolesFunc               func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
+	IsDisabledFunc                 func() bool
+	DeclareFixedRolesFunc          func(...accesscontrol.RoleRegistration) error
+	GetUserBuiltInRolesFunc        func(user *models.SignedInUser) []string
+	RegisterFixedRolesFunc         func() error
 }
 
 // Ensure the mock stays in line with the interface
