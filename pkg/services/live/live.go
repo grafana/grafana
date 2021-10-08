@@ -1237,7 +1237,7 @@ func (g *GrafanaLive) HandleRemoteWriteBackendsPutHTTP(c *models.ReqContext) res
 		return response.Error(http.StatusInternalServerError, "Failed to update remote write backend", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{
-		"remoteWriteBackend": result,
+		"remoteWriteBackend": pipeline.RemoteWriteBackendToDto(result),
 	})
 }
 
