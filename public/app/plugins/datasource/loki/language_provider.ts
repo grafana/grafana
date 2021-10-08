@@ -338,11 +338,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const datasourceType = originDataSource.meta.id;
     if (datasourceType === 'prometheus') {
       return Promise.all(
-        queries.map(async (query) => {
-          const expr = await this.importPrometheusQuery((query as PromQuery).expr);
+        queries.map(async (query: PromQuery) => {
+          const expr = await this.importPrometheusQuery(query.expr);
+          const { refId } = query;
           return {
             expr,
-            refId: query.refId,
+            refId,
             range: true,
           } as LokiQuery;
         })
