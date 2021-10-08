@@ -19,7 +19,6 @@ export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
       return settings;
     })
     .catch((err: any) => {
-      // err.isHandled = true;
-      return Promise.reject('Unknown Plugin');
+      return Promise.reject(new Error('Unknown Plugin'));
     });
 }
