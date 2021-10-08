@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"sync"
@@ -424,19 +425,21 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
-	sch.log.Debug("alert rule routine started", "key", key)
+	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
+	logger.Debug("alert rule routine started")
 
 	updateRule := func() (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
 		if err != nil {
-			sch.log.Error("failed to fetch alert rule", "key", key)
+			logger.Error("failed to fetch alert rule")
 			return nil, err
 		}
 		return q.Result, nil
 	}
 
 	evaluate := func(alertRule *models.AlertRule, attempt int64, ctx *evalContext) error {
+		logger := logger.New("version", alertRule.Version, "attempt", attempt, "now", ctx.now)
 		start := timeNow()
 
 		condition := models.Condition{
@@ -456,8 +459,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		if err != nil {
 			sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
 			// consider saving alert instance on error
-			sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
-				"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+			logger.Error("failed to evaluate alert rule", "duration", end.Sub(start), "error", err)
 			return err
 		}
 
@@ -466,18 +468,24 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
 		if len(alerts.PostableAlerts) == 0 {
-			sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
+			logger.Debug("no alerts to put in the notifier")
 			return nil
 		}
 
-		sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
+		var localNotifierExist, externalNotifierExist bool
+		logger.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 		n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
 		if err == nil {
+			localNotifierExist = true
 			if err := n.PutAlerts(alerts); err != nil {
-				sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
+				logger.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
 			}
 		} else {
-			sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
+			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+				logger.Debug("local notifier was not found")
+			} else {
+				logger.Error("local notifier is not available", "error", err)
+			}
 		}
 
 		// Send alerts to external Alertmanager(s) if we have a sender for this organization.
@@ -485,9 +493,18 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		defer sch.sendersMtx.RUnlock()
 		s, ok := sch.senders[alertRule.OrgID]
 		if ok {
+			logger.Debug("found external notifier. Sending alerts")
 			s.SendAlerts(alerts)
+			externalNotifierExist = true
+		} else {
+			logger.Debug("external notifier was not found")
 		}
 
+		if !localNotifierExist && !externalNotifierExist {
+			logger.Error("unable to lookup notifier for the org - alerts not delivered!", "count", len(alerts.PostableAlerts))
+		} else {
+			logger.Debug("notifications have been sent.")
+		}
 		return nil
 	}
 
@@ -525,14 +542,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 							return err
 						}
 						currentRule = newRule
-						sch.log.Debug("new alert rule version fetched", "title", newRule.Title, "key", key, "version", newRule.Version)
+						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
 					}
 					return evaluate(currentRule, attempt, ctx)
 				})
 			}()
 		case <-stopCh:
 			sch.stopApplied(key)
-			sch.log.Debug("stopping alert rule routine", "key", key)
+			logger.Debug("stopping alert rule routine")
 			// interrupt evaluation if it's running
 			return nil
 		case <-grafanaCtx.Done():
