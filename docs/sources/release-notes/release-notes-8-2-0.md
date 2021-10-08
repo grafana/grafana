@@ -34,4 +34,3 @@ list = false
 ### Plugin development fixes & changes
 
 - **Plugins:** Create a mock icon component to prevent console errors. [#39901](https://github.com/grafana/grafana/pull/39901), [@jackw](https://github.com/jackw)
-
