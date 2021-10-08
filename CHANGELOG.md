@@ -2,6 +2,28 @@
 
 # 8.2.0 (2021-10-07)
 
+### Breaking changes
+
+In Grafana v8.2.0, this change can prevent the `grafana-server` service from starting on older versions of systemd, present on Ubuntu 18.04 and slightly older versions of Debian. If running one of those versions, please wait until v8.2.1 is released before upgrading.
+
+If you still want to upgrade or have already ugpraded, a simple fix is available here: https://github.com/grafana/grafana/issues/40162#issuecomment-938060240
+
+The workaround is to apply a simple systemd override that removes the new SysCallFilter and MemoryDenyWriteExecute options.
+
+To add edit a systemd service override:
+
+```bash
+systemctl edit grafana-service
+```
+
+And apply these settings. Ensure that the `[Service]` header is included.
+
+```
+[Service]
+SystemCallFilter=
+MemoryDenyWriteExecute=false
+```
+
 ### Features and enhancements
 
 - **AWS:** Updated AWS authentication documentation. [#39236](https://github.com/grafana/grafana/pull/39236), [@sunker](https://github.com/sunker)
