@@ -77,6 +77,7 @@ go.sum @grafana/backend-platform
 /public @grafana/user-essentials
 /public/app/core/components/TimePicker @grafana/grafana-bi-squad
 /public/app/features/canvas/ @grafana/grafana-edge-squad
+/public/app/features/dimensions/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-squad
 /public/app/plugins/panel/alertlist @grafana/alerting-squad
