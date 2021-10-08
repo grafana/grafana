@@ -294,7 +294,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     if (target.exemplar) {
       const histogramMetrics = this.languageProvider.histogramMetrics;
 
-      if (histogramMetrics) {
+      if (histogramMetrics.length > 0) {
         return !!histogramMetrics.find((metric) => target.expr.includes(metric));
       } else {
         return target.expr.includes('_bucket');
