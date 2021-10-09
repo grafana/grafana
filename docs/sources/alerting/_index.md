@@ -13,7 +13,7 @@ Grafana 8.0 has new and improved alerts. You can now create and edit alerting ru
 
 Grafana 8 alerting have four main components:
 
-- Alerting rule - One or more query and/or expression, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert.
+- Alerting rule - An evaluation criteria that determine whether an alert will fire. It consists of one or more queries and/or expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 - Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
 - Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
 - Silences - Date and matching criteria used to silence notifications.
