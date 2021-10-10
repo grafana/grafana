@@ -13,7 +13,7 @@ import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
 
-let counter = 100;
+let counter = 0;
 
 export class ElementState {
   readonly UID = counter++;
@@ -53,20 +53,52 @@ export class ElementState {
       anchor.top = true;
     }
 
+    const w = placement.width ?? 100; // this.div ? this.div.clientWidth : this.width;
+    const h = placement.height ?? 100; // this.div ? this.div.clientHeight : this.height;
+
     if (anchor.top) {
       if (!placement.top) {
         placement.top = 0;
       }
-    }
-
-    if (anchor.bottom) {
+      if (anchor.bottom) {
+        delete placement.height;
+      } else {
+        placement.height = h;
+        delete placement.bottom;
+      }
+    } else if (anchor.bottom) {
       if (!placement.bottom) {
         placement.bottom = 0;
       }
+      placement.height = h;
+      delete placement.top;
     }
+
+    if (anchor.left) {
+      if (!placement.left) {
+        placement.left = 0;
+      }
+      if (anchor.right) {
+        delete placement.width;
+      } else {
+        placement.width = w;
+        delete placement.right;
+      }
+    } else if (anchor.right) {
+      if (!placement.right) {
+        placement.right = 0;
+      }
+      placement.width = w;
+      delete placement.left;
+    }
+
+    this.width = w;
+    this.height = h;
 
     this.options.anchor = this.anchor;
     this.options.placement = this.placement;
+
+    // console.log('validate', this.UID, this.item.id, this.placement, this.anchor);
   }
 
   // The parent size, need to set our own size based on offsets
@@ -251,6 +283,9 @@ export class ElementState {
         style.height = `${placement.height}px`;
       }
     }
+
+    this.width = event.width;
+    this.height = event.height;
   };
 
   render() {

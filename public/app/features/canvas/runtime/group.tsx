@@ -35,7 +35,7 @@ export class GroupState extends ElementState {
         this.elements.push(new GroupState(c as CanvasGroupOptions, this));
       } else {
         const item = canvasElementRegistry.getIfExists(c.type) ?? notFoundItem;
-        this.elements.push(new ElementState(item, c, parent));
+        this.elements.push(new ElementState(item, c, this));
       }
     }
   }
@@ -43,16 +43,17 @@ export class GroupState extends ElementState {
   // The parent size, need to set our own size based on offsets
   updateSize(width: number, height: number) {
     super.updateSize(width, height);
+    if (!this.parent) {
+      this.width = width;
+      this.height = height;
+      this.sizeStyle.width = width;
+      this.sizeStyle.height = height;
+    }
 
     // Update children with calculated size
     for (const elem of this.elements) {
       elem.updateSize(this.width, this.height);
     }
-
-    // The group forced to full width (for now)
-    this.sizeStyle.width = width;
-    this.sizeStyle.height = height;
-    this.sizeStyle.position = 'absolute';
   }
 
   updateData(ctx: DimensionContext) {
