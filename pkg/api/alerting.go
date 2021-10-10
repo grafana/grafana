@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -358,7 +357,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *model
 		return err
 	}
 
-	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
+	secureSettings, err := hs.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
 	if err != nil {
 		return err
 	}
@@ -386,7 +385,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 		return err
 	}
 
-	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
+	secureSettings, err := hs.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
 	if err != nil {
 		return err
 	}
