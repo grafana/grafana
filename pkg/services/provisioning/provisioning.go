@@ -8,23 +8,23 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager plugifaces.Manager,
-	encryptionService encryption.Service) (*ProvisioningServiceImpl, error) {
+	secretsService secrets.SecretsService) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		SQLStore:                sqlStore,
 		PluginManager:           pluginManager,
-		EncryptionService:       encryptionService,
+		SecretsService:          secretsService,
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: dashboards.New,
 		provisionNotifiers:      notifiers.Provision,
@@ -59,7 +59,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(string, encryption.Service) error,
+	provisionNotifiers func(string, secrets.SecretsService) error,
 	provisionDatasources func(string) error,
 	provisionPlugins func(string, plugifaces.Manager) error,
 ) *ProvisioningServiceImpl {
@@ -76,12 +76,12 @@ type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
 	PluginManager           plugifaces.Manager
-	EncryptionService       encryption.Service
+	SecretsService          secrets.SecretsService
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(string, encryption.Service) error
+	provisionNotifiers      func(string, secrets.SecretsService) error
 	provisionDatasources    func(string) error
 	provisionPlugins        func(string, plugifaces.Manager) error
 	mutex                   sync.Mutex
@@ -149,7 +149,7 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
 
 func (ps *ProvisioningServiceImpl) ProvisionNotifications() error {
 	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	err := ps.provisionNotifiers(alertNotificationsPath, ps.EncryptionService)
+	err := ps.provisionNotifiers(alertNotificationsPath, ps.SecretsService)
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
 
