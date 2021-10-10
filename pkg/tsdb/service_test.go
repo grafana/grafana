@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -19,7 +19,7 @@ import (
 
 func TestHandleRequest(t *testing.T) {
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
-		svc, _, pm := createService()
+		svc, _, pm := createService(t)
 		backendPluginManagerCalled := false
 		pm.QueryDataHandlerFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			backendPluginManagerCalled = true
@@ -100,9 +100,10 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 	return false
 }
 
-func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
+func createService(t *testing.T) (*Service, *fakeExecutor, *fakeBackendPM) {
+	t.Helper()
 	fakeBackendPM := &fakeBackendPM{}
-	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	dsService := datasources.ProvideService(bus.New(), nil, secrets.SetupTestService(t))
 	s := newService(
 		setting.NewCfg(),
 		fakeBackendPM,
