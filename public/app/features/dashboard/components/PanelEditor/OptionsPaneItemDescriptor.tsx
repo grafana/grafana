@@ -3,6 +3,7 @@ import { Field, Label } from '@grafana/ui';
 import React, { ReactNode } from 'react';
 import Highlighter from 'react-highlight-words';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemOverrides, OptionPaneItemOverrideInfo } from './OptionsPaneItemOverrides';
 
 export interface OptionsPaneItemProps {
   title: string;
@@ -12,6 +13,7 @@ export interface OptionsPaneItemProps {
   render: () => React.ReactNode;
   skipField?: boolean;
   showIf?: () => boolean;
+  overrides?: OptionPaneItemOverrideInfo[];
 }
 
 /**
@@ -23,15 +25,20 @@ export class OptionsPaneItemDescriptor {
   constructor(public props: OptionsPaneItemProps) {}
 
   getLabel(searchQuery?: string): ReactNode {
-    const { title, description } = this.props;
+    const { title, description, overrides } = this.props;
 
     if (!searchQuery) {
       // Do not render label for categories with only one child
-      if (this.parent.props.title === title) {
+      if (this.parent.props.title === title && !overrides?.length) {
         return null;
       }
 
-      return title;
+      return (
+        <Label description={description}>
+          {title}
+          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+        </Label>
+      );
     }
 
     const categories: React.ReactNode[] = [];
@@ -47,6 +54,7 @@ export class OptionsPaneItemDescriptor {
     return (
       <Label description={description && this.highlightWord(description, searchQuery)} category={categories}>
         {this.highlightWord(title, searchQuery)}
+        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
       </Label>
     );
   }
@@ -55,6 +63,13 @@ export class OptionsPaneItemDescriptor {
     return (
       <Highlighter textToHighlight={word} searchWords={[query]} highlightClassName={'search-fragment-highlight'} />
     );
+  }
+
+  renderOverrides() {
+    const { overrides } = this.props;
+    if (!overrides || overrides.length === 0) {
+      return;
+    }
   }
 
   render(searchQuery?: string) {

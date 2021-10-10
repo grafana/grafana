@@ -12,6 +12,7 @@ import {
   PanelOptionsEditorBuilder,
 } from '../../../../../../packages/grafana-data/src/utils/OptionsUIBuilders';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { searchForDataOverrides } from './OptionsPaneItemOverrides';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -91,6 +92,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         description: fieldOption.description,
+        overrides: searchForDataOverrides(fieldOption, data?.series),
         render: function renderEditor() {
           const onChange = (v: any) => {
             onFieldConfigsChange(
