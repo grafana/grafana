@@ -112,13 +112,7 @@ export function searchForOptionOverrides(
           color: 'primary',
           description: overrideRuleTooltipDescription,
           tooltip: function TooltipContent() {
-            const styles = useStyles2(getStyles);
-
-            return (
-              <div>
-                <span>{overrideRuleTooltipDescription}</span>
-              </div>
-            );
+            return <div>{overrideRuleTooltipDescription}</div>;
           },
         });
 

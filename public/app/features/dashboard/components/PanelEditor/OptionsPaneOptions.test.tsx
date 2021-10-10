@@ -17,7 +17,7 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
-import { dataOverrideTooltipDescription } from './OptionsPaneItemOverrides';
+import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './OptionsPaneItemOverrides';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -239,7 +239,7 @@ describe('OptionsPaneOptions', () => {
     ).toBeInTheDocument();
   });
 
-  it('should show override info dots', async () => {
+  it('should show data override info dot', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.panelData.series = [
       toDataFrame({
@@ -259,7 +259,25 @@ describe('OptionsPaneOptions', () => {
 
     scenario.render();
 
-    const overrideInfoDot = screen.getByLabelText(dataOverrideTooltipDescription);
-    expect(overrideInfoDot).toBeInTheDocument();
+    expect(screen.getByLabelText(dataOverrideTooltipDescription)).toBeInTheDocument();
+    expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+  });
+
+  it('should show override rule info dot', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.panel.fieldConfig.overrides = [
+      {
+        matcher: { id: 'byName', options: 'SeriesA' },
+        properties: [
+          {
+            id: 'decimals',
+            value: 2,
+          },
+        ],
+      },
+    ];
+
+    scenario.render();
+    expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });
