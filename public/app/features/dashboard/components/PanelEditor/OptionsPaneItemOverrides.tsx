@@ -16,6 +16,7 @@ export function OptionsPaneItemOverrides({ overrides }: Props) {
       {overrides.map((override, index) => (
         <Tooltip content={override.tooltip} key={index.toString()}>
           <div
+            aria-label={override.description}
             style={{
               backgroundColor: theme.colors[override.color].main,
               width: 8,
@@ -36,7 +37,10 @@ export interface OptionPaneItemOverrideInfo {
   color: 'primary' | 'warning';
   onClick?: () => void;
   tooltip: () => React.ReactElement;
+  description: string;
 }
+
+export const dataOverrideTooltipDescription = 'Data contains fields with configuration that overrides this default';
 
 export function searchForDataOverrides(
   fieldOption: FieldConfigPropertyItem,
@@ -63,12 +67,13 @@ export function searchForDataOverrides(
   if (hits.length > 0) {
     overrides.push({
       color: 'warning',
+      description: dataOverrideTooltipDescription,
       tooltip: function TooltipContent() {
         const styles = useStyles2(getStyles);
 
         return (
           <div>
-            <span>Data contains fields with configuration that overrides this default</span>
+            <span>${dataOverrideTooltipDescription}</span>
             <table className={styles.tooltipTable}>
               <thead>
                 <tr>
