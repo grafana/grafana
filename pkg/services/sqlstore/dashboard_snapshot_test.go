@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,14 +24,14 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	t.Cleanup(func() {
 		setting.SecretKey = origSecret
 	})
-
+	secretsService := secrets.SetupTestService(t)
 	dashboard := simplejson.NewFromAny(map[string]interface{}{"hello": "mupp"})
 
 	t.Run("Given saved snapshot", func(t *testing.T) {
 		rawDashboard, err := dashboard.Encode()
 		require.NoError(t, err)
 
-		encryptedDashboard, err := ossencryption.ProvideService().Encrypt(context.Background(), rawDashboard, setting.SecretKey)
+		encryptedDashboard, err := secretsService.Encrypt(context.Background(), rawDashboard)
 		require.NoError(t, err)
 
 		cmd := models.CreateDashboardSnapshotCommand{
@@ -51,10 +51,9 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 			assert.NotNil(t, query.Result)
 
-			decryptedDashboard, err := ossencryption.ProvideService().Decrypt(
+			decryptedDashboard, err := secretsService.Decrypt(
 				context.Background(),
 				query.Result.DashboardEncrypted,
-				setting.SecretKey,
 			)
 			require.NoError(t, err)
 
@@ -133,10 +132,9 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 		})
 
 		t.Run("Should have encrypted dashboard data", func(t *testing.T) {
-			decryptedDashboard, err := ossencryption.ProvideService().Decrypt(
+			decryptedDashboard, err := secretsService.Decrypt(
 				context.Background(),
 				cmd.Result.DashboardEncrypted,
-				setting.SecretKey,
 			)
 			require.NoError(t, err)
 
