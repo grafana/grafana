@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -16,8 +16,8 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
 	s := &Service{
-		SQLStore:          sqlStore,
-		EncryptionService: ossencryption.ProvideService(),
+		SQLStore:       sqlStore,
+		SecretsService: secrets.SetupTestService(t),
 	}
 
 	origSecret := setting.SecretKey
@@ -44,7 +44,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 		err = s.CreateDashboardSnapshot(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.Decrypt(ctx, cmd.Result.DashboardEncrypted, setting.SecretKey)
+		decrypted, err := s.SecretsService.Decrypt(ctx, cmd.Result.DashboardEncrypted)
 		require.NoError(t, err)
 
 		require.Equal(t, rawDashboard, decrypted)
