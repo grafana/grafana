@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,8 @@ func TestPluginProxy(t *testing.T) {
 		setting.SecretKey = "password"
 
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			key, err := ossencryption.ProvideService().Encrypt(ctx, []byte("123"), "password")
+			secretsService := secrets.SetupTestService(t)
+			key, err := secretsService.Encrypt(ctx, []byte("123"), secrets.WithoutScope())
 			if err != nil {
 				return err
 			}
@@ -196,10 +197,11 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			encryptedJsonData, err := ossencryption.ProvideService().EncryptJsonData(
+			secretsService := secrets.SetupTestService(t)
+			encryptedJsonData, err := secretsService.EncryptJsonData(
 				ctx,
 				map[string]string{"key": "123"},
-				setting.SecretKey,
+				secrets.WithoutScope(),
 			)
 
 			if err != nil {
@@ -247,7 +249,7 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, ossencryption.ProvideService())
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, secrets.SetupTestService(t))
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)
