@@ -14,16 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 type Service struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Service
+	Bus            bus.Bus
+	SQLStore       *sqlstore.SQLStore
+	SecretsService secrets.SecretsService
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -49,11 +49,11 @@ type cachedDecryptedJSON struct {
 	json    map[string]string
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Service) *Service {
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.SecretsService) *Service {
 	s := &Service{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		Bus:            bus,
+		SQLStore:       store,
+		SecretsService: secretsService,
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
@@ -87,7 +87,7 @@ func (s *Service) GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) 
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureJsonData, setting.SecretKey)
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (s *Service) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureJsonData, setting.SecretKey)
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (s *Service) DecryptedValues(ds *models.DataSource) map[string]string {
 		return item.json
 	}
 
-	json, err := s.EncryptionService.DecryptJsonData(context.Background(), ds.SecureJsonData, setting.SecretKey)
+	json, err := s.SecretsService.DecryptJsonData(context.Background(), ds.SecureJsonData)
 	if err != nil {
 		return map[string]string{}
 	}
