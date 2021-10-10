@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -21,7 +20,7 @@ var (
 
 // NewLineNotifier is the constructor for the LINE notifier
 func NewLineNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*LineNotifier, error) {
-	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString(), setting.SecretKey)
+	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString())
 	if token == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find token in settings"}
 	}

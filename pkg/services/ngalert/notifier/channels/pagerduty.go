@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -47,7 +46,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
-	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString(), setting.SecretKey)
+	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString())
 	if key == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
 	}

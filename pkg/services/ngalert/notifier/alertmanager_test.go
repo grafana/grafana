@@ -12,11 +12,11 @@ import (
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -47,7 +47,8 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	}
 
 	kvStore := newFakeKVStore(t)
-	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	secretsService := secrets.SetupTestService(t)
+	decryptFn := secretsService.GetDecryptedValue
 	am, err := newAlertmanager(1, cfg, s, kvStore, &NilPeer{}, decryptFn, m)
 	require.NoError(t, err)
 	return am
