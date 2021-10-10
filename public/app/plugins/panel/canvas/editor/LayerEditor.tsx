@@ -5,54 +5,17 @@ import { GrafanaTheme, SelectableValue, StandardEditorProps } from '@grafana/dat
 import { config } from '@grafana/runtime';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
-import { Unsubscribable } from 'rxjs';
 import { PanelOptions } from '../models.gen';
 import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
-import { ElementState } from 'app/features/canvas/runtime/element';
 import { canvasElementRegistry } from 'app/features/canvas';
 
 // StandardEditorProps<any, >>
 
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
-interface State {
-  // selection: string[];
-}
 
-export class LayerEditor extends PureComponent<Props, State> {
+export class LayerEditor extends PureComponent<Props> {
   style = getStyles(config.theme);
-  sub: Unsubscribable | undefined;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = { selection: [] };
-    console.log('constructor (LayerEditor)');
-  }
-
-  //   private selectionInit = () => {
-  //     console.log('selectionInit (ListItemsEditor)');
-  //     const scene = getCurrentScene();
-  //     if (!scene) {
-  //       setTimeout(this.selectionInit, 150);
-  //       return;
-  //     }
-  //     this.sub = scene.getSelection().subscribe({
-  //       next: (selection: string[]) => {
-  //         console.log('ListItemEditor> ITEM', selection);
-  //         this.setState({ selection });
-  //       },
-  //     });
-  //   };
-
-  //   componentDidMount() {
-  //     this.selectionInit();
-  //   }
-
-  //   componentWillUnmount() {
-  //     if (this.sub) {
-  //       this.sub.unsubscribe();
-  //     }
-  //   }
 
   onAddItem = (sel: SelectableValue<string>) => {
     // const reg = drawItemsRegistry.getIfExists(sel.value);
@@ -85,27 +48,18 @@ export class LayerEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const layer = this.props.value;
-    const count = layer.items.length - 1;
+    const { settings } = this.props.item;
+    if (!settings?.layer) {
+      return;
+    }
+
+    const { layer } = settings;
+
+    const count = layer.elements.length - 1;
     const src = (result.source.index - count) * -1;
     const dst = (result.destination.index - count) * -1;
 
-    const items = reorder(layer.items, src, dst);
-    this.props.onChange({
-      ...layer,
-      items,
-    });
-  };
-
-  doAction = (action: string, item: ElementState) => {
-    // const v = layerActions.getIfExists(action);
-    // if (!v) {
-    //   console.log('UNKNOWN action', action);
-    //   return;
-    // }
-    // const layer = v.apply(this.props.value, item);
-    // this.props.onChange(layer);
-    console.log('DO action', action, item);
+    layer.reorder(src, dst);
   };
 
   render() {
@@ -130,27 +84,27 @@ export class LayerEditor extends PureComponent<Props, State> {
                   // reverse order
                   const rows: any = [];
                   for (let i = layer.elements.length - 1; i >= 0; i--) {
-                    const item = layer.elements[i];
+                    const element = layer.elements[i];
                     rows.push(
-                      <Draggable key={item.UID} draggableId={`${item.UID}`} index={rows.length}>
+                      <Draggable key={element.UID} draggableId={`${element.UID}`} index={rows.length}>
                         {(provided, snapshot) => (
                           <div
-                            className={this.getRowStyle(selection.includes(item.UID))}
+                            className={this.getRowStyle(selection.includes(element.UID))}
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            onMouseDown={() => this.onSelect(item)}
+                            onMouseDown={() => this.onSelect(element)}
                           >
-                            <span className={styles.typeWrapper}>{item.item.name}</span>
+                            <span className={styles.typeWrapper}>{element.item.name}</span>
                             <div className={styles.textWrapper}>
-                              &nbsp; {item.UID} ({i})
+                              &nbsp; {element.UID} ({i})
                             </div>
 
                             <IconButton
                               name="copy"
                               title={'duplicate'}
                               className={styles.actionIcon}
-                              onClick={() => this.doAction(LayerActionID.Duplicate, item)}
+                              onClick={() => layer.doAction(LayerActionID.Duplicate, element)}
                               surface="header"
                             />
 
@@ -158,7 +112,7 @@ export class LayerEditor extends PureComponent<Props, State> {
                               name="trash-alt"
                               title={'remove'}
                               className={cx(styles.actionIcon, styles.dragIcon)}
-                              onClick={() => this.doAction(LayerActionID.Delete, item)}
+                              onClick={() => layer.doAction(LayerActionID.Delete, element)}
                               surface="header"
                             />
                             <Icon
@@ -201,15 +155,6 @@ export class LayerEditor extends PureComponent<Props, State> {
     );
   }
 }
-
-// a little function to help us with reordering the result
-const reorder = (list: any[], startIndex: number, endIndex: number) => {
-  const result = Array.from(list);
-  const [removed] = result.splice(startIndex, 1);
-  result.splice(endIndex, 0, removed);
-
-  return result;
-};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`

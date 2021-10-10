@@ -62,6 +62,9 @@ export class Scene {
     this.root.visit((v) => {
       this.lookup.set(v.UID, v);
     });
+
+    // Call save whenever things change
+    this.root.changeCallback = this.save;
     return this.root;
   }
 
@@ -132,9 +135,12 @@ export class Scene {
     this.moved.next(Date.now());
   }
 
-  save() {
+  save = () => {
+    const options = this.root.options;
+    delete options.anchor;
+    delete options.placement;
     this.onSave(this.root.getSaveModel());
-  }
+  };
 
   private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
     return this.root.elements.find((element) => element.div === target);
@@ -218,10 +224,8 @@ export class Scene {
 
   render() {
     return (
-      <div>
-        <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
-          {this.root.render()}
-        </div>
+      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
+        {this.root.render()}
       </div>
     );
   }
