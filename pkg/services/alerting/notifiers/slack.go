@@ -125,7 +125,7 @@ const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier.
 func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
-	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
+	urlStr := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 	if urlStr == "" {
 		urlStr = slackAPIEndpoint
 	}
@@ -150,7 +150,7 @@ func NewSlackNotifier(model *models.AlertNotification, fn alerting.GetDecryptedV
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString(), setting.SecretKey)
+	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "token must be specified when using the Slack chat API",

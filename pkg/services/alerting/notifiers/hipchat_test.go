@@ -5,13 +5,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 //nolint:goconst
 func TestHipChatNotifier(t *testing.T) {
 	Convey("HipChat notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -23,7 +24,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewHipChatNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +40,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewHipChatNotifier(model, secretsService.GetDecryptedValue)
 				hipchatNotifier := not.(*HipChatNotifier)
 
 				So(err, ShouldBeNil)
@@ -65,7 +66,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewHipChatNotifier(model, secretsService.GetDecryptedValue)
 				hipchatNotifier := not.(*HipChatNotifier)
 
 				So(err, ShouldBeNil)

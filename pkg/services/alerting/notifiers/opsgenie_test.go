@@ -8,13 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
 	Convey("OpsGenie notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -26,7 +27,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewOpsGenieNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -43,7 +44,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewOpsGenieNotifier(model, secretsService.GetDecryptedValue)
 				opsgenieNotifier := not.(*OpsGenieNotifier)
 
 				So(err, ShouldBeNil)
@@ -67,7 +68,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewOpsGenieNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 				So(err, ShouldHaveSameTypeAs, alerting.ValidationError{})
 				So(err.Error(), ShouldEndWith, "Invalid value for sendTagsAs: \"not_a_valid_value\"")
@@ -90,7 +91,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue) // unhandled error
+				notifier, notifierErr := NewOpsGenieNotifier(model, secretsService.GetDecryptedValue) // unhandled error
 
 				opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -140,7 +141,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue) // unhandled error
+				notifier, notifierErr := NewOpsGenieNotifier(model, secretsService.GetDecryptedValue) // unhandled error
 
 				opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -190,7 +191,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue) // unhandled error
+				notifier, notifierErr := NewOpsGenieNotifier(model, secretsService.GetDecryptedValue) // unhandled error
 
 				opsgenieNotifier := notifier.(*OpsGenieNotifier)
 

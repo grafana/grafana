@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -79,7 +78,7 @@ var (
 func NewPagerdutyNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
-	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString(), setting.SecretKey)
+	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString())
 	messageInDetails := model.Settings.Get("messageInDetails").MustBool(false)
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}

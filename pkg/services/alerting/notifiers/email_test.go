@@ -5,12 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestEmailNotifier(t *testing.T) {
 	Convey("Email notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -22,7 +23,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewEmailNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +40,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewEmailNotifier(model, secretsService.GetDecryptedValue)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)
@@ -63,7 +64,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewEmailNotifier(model, secretsService.GetDecryptedValue)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)

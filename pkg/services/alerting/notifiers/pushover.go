@@ -9,8 +9,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -195,8 +193,8 @@ func init() {
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
 func NewPushoverNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
-	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString(), setting.SecretKey)
-	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString(), setting.SecretKey)
+	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString())
+	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
 	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {

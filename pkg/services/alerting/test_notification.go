@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 // NotificationTestCommand initiates an test
@@ -52,7 +52,7 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Con
 
 		if query.Result.SecureSettings != nil {
 			var err error
-			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
+			secureSettingsMap, err = s.SecretsService.DecryptJsonData(ctx, query.Result.SecureSettings)
 			if err != nil {
 				return err
 			}
@@ -64,12 +64,12 @@ func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Con
 	}
 
 	var err error
-	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, secureSettingsMap, setting.SecretKey)
+	model.SecureSettings, err = s.SecretsService.EncryptJsonData(ctx, secureSettingsMap, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
 
-	notifiers, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
+	notifiers, err := InitNotifier(model, s.SecretsService.GetDecryptedValue)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return err

@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,6 +13,7 @@ import (
 func TestSensuGoNotifier(t *testing.T) {
 	json := `{ }`
 
+	secretsService := secrets.SetupTestService(t)
 	settingsJSON, err := simplejson.NewJson([]byte(json))
 	require.NoError(t, err)
 	model := &models.AlertNotification{
@@ -21,7 +22,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		Settings: settingsJSON,
 	}
 
-	_, err = NewSensuGoNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+	_, err = NewSensuGoNotifier(model, secretsService.GetDecryptedValue)
 	require.Error(t, err)
 
 	json = `
@@ -42,7 +43,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		Settings: settingsJSON,
 	}
 
-	not, err := NewSensuGoNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+	not, err := NewSensuGoNotifier(model, secretsService.GetDecryptedValue)
 	require.NoError(t, err)
 	sensuGoNotifier := not.(*SensuGoNotifier)
 

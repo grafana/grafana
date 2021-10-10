@@ -7,13 +7,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTelegramNotifier(t *testing.T) {
 	Convey("Telegram notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -25,7 +26,7 @@ func TestTelegramNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewTelegramNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewTelegramNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -43,7 +44,7 @@ func TestTelegramNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTelegramNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewTelegramNotifier(model, secretsService.GetDecryptedValue)
 				telegramNotifier := not.(*TelegramNotifier)
 
 				So(err, ShouldBeNil)

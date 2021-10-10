@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -48,7 +48,7 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Service,
+	dataService plugins.DataRequestHandler, usageStatsService usagestats.Service, secretsService secrets.SecretsService,
 	cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
@@ -64,7 +64,7 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService, encryptionService.GetDecryptedValue)
+	e.resultHandler = newResultHandler(e.RenderService, secretsService.GetDecryptedValue)
 
 	e.registerUsageMetrics()
 

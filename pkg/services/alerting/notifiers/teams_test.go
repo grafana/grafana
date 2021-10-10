@@ -5,12 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTeamsNotifier(t *testing.T) {
 	Convey("Teams notifier tests", t, func() {
+		secretsService := secrets.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -22,7 +23,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				_, err := NewTeamsNotifier(model, secretsService.GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +40,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewTeamsNotifier(model, secretsService.GetDecryptedValue)
 				teamsNotifier := not.(*TeamsNotifier)
 
 				So(err, ShouldBeNil)
@@ -61,7 +62,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+				not, err := NewTeamsNotifier(model, secretsService.GetDecryptedValue)
 				teamsNotifier := not.(*TeamsNotifier)
 
 				So(err, ShouldBeNil)

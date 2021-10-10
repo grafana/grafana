@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,6 +14,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 	t.Run("Empty settings should cause error", func(t *testing.T) {
 		const json = `{}`
 
+		secretsService := secrets.SetupTestService(t)
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 		model := &models.AlertNotification{
@@ -22,13 +23,14 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		_, err = NewWebHookNotifier(model, secretsService.GetDecryptedValue)
 		require.Error(t, err)
 	})
 
 	t.Run("Valid settings should result in a valid notifier", func(t *testing.T) {
 		const json = `{"url": "http://google.com"}`
 
+		secretsService := secrets.SetupTestService(t)
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 		model := &models.AlertNotification{
@@ -37,7 +39,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewWebHookNotifier(model, secretsService.GetDecryptedValue)
 		require.NoError(t, err)
 		webhookNotifier := not.(*WebhookNotifier)
 

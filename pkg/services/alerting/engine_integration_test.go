@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -21,7 +21,7 @@ import (
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
 		usMock := &usagestats.UsageStatsMock{T: t}
-		engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
+		engine := ProvideAlertEngine(nil, nil, nil, nil, usMock, secrets.SetupTestService(t), setting.NewCfg())
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}

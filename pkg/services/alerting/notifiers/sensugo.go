@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -74,7 +73,7 @@ func init() {
 // NewSensuGoNotifier is the constructor for the Sensu Go Notifier.
 func NewSensuGoNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
-	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), setting.SecretKey)
+	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
 
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}
