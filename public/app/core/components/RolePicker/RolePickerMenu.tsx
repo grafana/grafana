@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -10,8 +10,7 @@ import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 interface RolePickerMenuProps {
   builtInRole: string;
   options: Array<SelectableValue<string>>;
-  onChange: (newRole: string) => void;
-  // setValue: (newValue: any, action: any) => void;
+  onCustomRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
   onClose: () => void;
 }
@@ -20,9 +19,10 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const { builtInRole, options, onChange, onBuiltinRoleChange } = props;
+  const { builtInRole, options, onCustomRolesChange, onBuiltinRoleChange } = props;
 
   const [selectedOptions, setSelectedOptions] = useState({} as any);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
 
   const onSelect = (option: SelectableValue<string>) => {
     if (option.value) {
@@ -35,14 +35,29 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
     }
   };
 
+  const onSelectedBuiltinRoleChange = (newRole: string) => {
+    setSelectedBuiltInRole(newRole);
+  };
+
   const onClear = () => {
     setSelectedOptions({});
+  };
+
+  const onUpdate = () => {
+    onBuiltinRoleChange(selectedBuiltInRole);
+
+    const selectedCustomRoles: string[] = [];
+    for (const key in selectedOptions) {
+      const roleUID = selectedOptions[key]?.value;
+      selectedCustomRoles.push(roleUID);
+    }
+    onCustomRolesChange(selectedCustomRoles);
   };
 
   return (
     <div className={cx(styles.menu, customStyles.menu)} aria-label="Role picker menu">
       <div className={customStyles.groupHeader}>Built-in roles</div>
-      <BuiltinRoleSelector value={builtInRole} onChange={onBuiltinRoleChange} />
+      <BuiltinRoleSelector value={builtInRole} onChange={onSelectedBuiltinRoleChange} />
       <div className={styles.optionBody}></div>
       <div className={customStyles.groupHeader}>Custom roles</div>
       <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
@@ -62,7 +77,7 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
           <Button size="sm" fill="text" onClick={onClear}>
             Clear all
           </Button>
-          <Button size="sm">Update</Button>
+          <Button size="sm" onClick={onUpdate}>Update</Button>
         </HorizontalGroup>
       </div>
     </div>

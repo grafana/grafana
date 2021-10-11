@@ -11,6 +11,7 @@ import { RolePickerInput } from './RolePickerInput';
 export interface Props {
   /** Primary role selected */
   role: string;
+  customRoles: string[];
   onChange: (newRole: string) => void;
   onBuiltinRoleChange: (newRole: string) => void;
 }
@@ -65,14 +66,23 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
     }
   };
 
+  const onBuiltinRoleChangeInternal = (newRole: string) => {
+    console.log(newRole);
+    onBuiltinRoleChange(newRole);
+  };
+
+  const onCustomRoleChangeInternal = (newRoles: string[]) => {
+    console.log(newRoles);
+  }
+
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={() => setOpen(false)}>
         <RolePickerInput role={role} onChange={onInputChange} onOpen={onOpen} isFocused={isOpen} ref={inputRef} />
         {isOpen && (
           <RolePickerMenu
-            onBuiltinRoleChange={onBuiltinRoleChange}
-            onChange={onApply}
+            onBuiltinRoleChange={onBuiltinRoleChangeInternal}
+            onCustomRolesChange={onCustomRoleChangeInternal}
             onClose={() => setOpen(false)}
             options={filteredOptions}
             builtInRole={role}

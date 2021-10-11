@@ -144,6 +144,10 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
     this.setState({ isChangingRole: false });
   };
 
+  onBuiltinRoleChange = (newRole: string) => {
+    this.props.onOrgRoleChange(this.props.org.orgId, (newRole as OrgRole));
+  }
+
   render() {
     const { org, isExternalUser, theme } = this.props;
     const { currentRole, isChangingRole } = this.state;
@@ -160,8 +164,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
             <OrgRolePicker value={currentRole} onChange={this.onOrgRoleChange} />
           </td>
         ) : (
-          <td className="width-25">
-            <RolePicker role={org.role} onChange={() => {}} onBuiltinRoleChange={() => {}} />
+          <td className="width-20">
+            <RolePicker role={org.role} onChange={() => {}} onBuiltinRoleChange={this.onBuiltinRoleChange} />
           </td>
         )}
         <td colSpan={1}>
