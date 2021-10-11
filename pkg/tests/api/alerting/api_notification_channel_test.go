@@ -1884,6 +1884,7 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "receiver": "webhook_recv",
 		  "status": "firing",
+		  "orgId": 1,
 		  "alerts": [
 			{
 			  "status": "firing",

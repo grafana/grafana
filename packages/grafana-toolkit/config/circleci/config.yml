@@ -59,7 +59,7 @@ executors:
   default_exec: # declares a reusable executor
     docker:
       - image: srclosson/grafana-plugin-ci-alpine:latest
-  e2e_exec: 
+  e2e_exec:
     docker:
       - image: srclosson/grafana-plugin-ci-e2e:latest
 
@@ -76,7 +76,7 @@ jobs:
           name: Install dependencies
           command: |
             mkdir ci
-            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --frozen-lockfile
+            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --immutable
       - save_cache:
           name: save node_modules
           paths:
@@ -193,7 +193,7 @@ jobs:
         command: |
           mkdir ci # Avoid error if not exists
           mkdir ci/jobs # Avoid error if not exists
-          mkdir ci/jobs/provisioning  
+          mkdir ci/jobs/provisioning
           mv plugin-provisioning/${PROVISIONING_REPO_PATH}/* ci/jobs/provisioning
     - persist_to_workspace:
         root: .
@@ -228,7 +228,7 @@ jobs:
           ginstall canary
           /opt/grafana/bin/grafana-server -config ci/grafana-test-env/custom.ini -homepath /opt/grafana &
           ## To make sure grafana has started up
-          while ! $(netstat -tulpn | grep 3000 >/dev/null 2>&1); do sleep 1; done 
+          while ! $(netstat -tulpn | grep 3000 >/dev/null 2>&1); do sleep 1; done
           /opt/grafana/bin/grafana-cli --version
     - run:
         name: Copy provisioning files

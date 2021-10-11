@@ -31,10 +31,10 @@ import {
   DateTimeInput,
   EventBusExtended,
   EventBusSrv,
+  PanelModel as IPanelModel,
   TimeRange,
   TimeZone,
   UrlQueryValue,
-  PanelModel as IPanelModel,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -45,6 +45,7 @@ import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { isOnTheSameGridRow } from './utils';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -703,6 +704,10 @@ export class DashboardModel {
     if (yOffset > 0) {
       const panelBelowIndex = panelIndex + selectedOptions.length;
       for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        if (isOnTheSameGridRow(panel, this.panels[i])) {
+          continue;
+        }
+
         this.panels[i].gridPos.y += yOffset;
       }
     }

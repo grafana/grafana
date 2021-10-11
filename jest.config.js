@@ -27,7 +27,11 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
-    '^react($|/.+)': '<rootDir>/node_modules/react$1',
+    '^react($|/.+)$': '<rootDir>/node_modules/react$1',
+    '^react-router(.+)$': '<rootDir>/node_modules/react-router$1',
+    '^react-hook-form$': '<rootDir>/node_modules/react-hook-form',
+    '^enzyme($|/.+)$': '<rootDir>/node_modules/enzyme$1',
+    '^jquery$': '<rootDir>/node_modules/jquery',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };
