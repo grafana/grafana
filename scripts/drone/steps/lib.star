@@ -357,12 +357,7 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition, tries=None):
-    test_backend_cmd = './bin/grabpl test-backend --edition {}'.format(edition)
-    integration_tests_cmd = './bin/grabpl integration-tests --edition {}'.format(edition)
-    if tries:
-        test_backend_cmd += ' --tries {}'.format(tries)
-        integration_tests_cmd += ' --tries {}'.format(tries)
+def test_backend_step(edition):
     return {
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
@@ -372,10 +367,19 @@ def test_backend_step(edition, tries=None):
         'commands': [
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
-            # Then execute non-integration tests in parallel, since it should be safe
-            test_backend_cmd,
-            # Then execute integration tests in serial
-            integration_tests_cmd,
+            './bin/grabpl test-backend --edition {}'.format(edition),
+        ],
+    }
+
+def test_backend_integration_step(edition):
+    return {
+        'name': 'test-backend-integration' + enterprise2_suffix(edition),
+        'image': build_image,
+        'depends_on': [
+            'lint-backend',
+        ],
+        'commands': [
+            './bin/grabpl integration-tests --edition {}'.format(edition),
         ],
     }
 
