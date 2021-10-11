@@ -29,7 +29,7 @@ const (
 
 type AlertmanagerSrv struct {
 	mam     *notifier.MultiOrgAlertmanager
-	secrets secrets.SecretsService
+	secrets secrets.Service
 	store   store.AlertingStore
 	log     log.Logger
 }

@@ -4,10 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -16,7 +18,8 @@ import (
 func TestService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
-	secretsService := secrets.SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, store)
 	s := ProvideService(bus.New(), sqlStore, secretsService)
 
 	origSecret := setting.SecretKey

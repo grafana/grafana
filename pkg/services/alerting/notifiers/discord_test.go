@@ -3,6 +3,9 @@ package notifiers
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -11,7 +14,8 @@ import (
 
 func TestDiscordNotifier(t *testing.T) {
 	Convey("Discord notifier tests", t, func() {
-		secretsService, _ := secretsManager.SetupTestService(t)
+		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, store)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

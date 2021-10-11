@@ -4,11 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -24,7 +27,8 @@ func presenceComparerInt(a, b int64) bool {
 }
 func TestVictoropsNotifier(t *testing.T) {
 	Convey("Victorops notifier tests", t, func() {
-		secretsService := secrets.SetupTestService(t)
+		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+		secretsService := secretsManager.SetupTestService(t, store)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

@@ -105,7 +105,7 @@ type HTTPServer struct {
 	SocialService          social.Service
 	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
-	SecretsService         secrets.SecretsService
+	SecretsService         secrets.Service
 	DataSourcesService     *datasources.Service
 	cleanUpService         *cleanup.CleanUpService
 	tracingService         *tracing.TracingService
@@ -134,7 +134,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	secretsService secrets.SecretsService, searchUsersService searchusers.Service,
+	secretsService secrets.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()

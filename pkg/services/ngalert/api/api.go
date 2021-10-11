@@ -64,7 +64,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	SecretsService       secrets.SecretsService
+	SecretsService       secrets.Service
 }
 
 // RegisterAPIEndpoints registers API handlers

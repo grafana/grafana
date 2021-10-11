@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
-
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -23,7 +23,8 @@ import (
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, secrets.SetupTestService(t))
+	store := database.ProvideSecretsStore(sqlStore)
+	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, secretsManager.SetupTestService(t, store))
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {

@@ -17,7 +17,7 @@ import (
 )
 
 type configReader struct {
-	secretsService secrets.SecretsService
+	secretsService secrets.Service
 	log            log.Logger
 }
 

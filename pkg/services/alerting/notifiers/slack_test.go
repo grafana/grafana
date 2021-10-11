@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -12,7 +16,8 @@ import (
 )
 
 func TestSlackNotifier(t *testing.T) {
-	secretsService := secrets.SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, store)
 
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`

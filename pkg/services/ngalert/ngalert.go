@@ -39,7 +39,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.SecretsService, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:             cfg,
 		DataSourceCache: dataSourceCache,
@@ -75,7 +75,7 @@ type AlertNG struct {
 	DataService     *tsdb.Service
 	DataProxy       *datasourceproxy.DataSourceProxyService
 	QuotaService    *quota.QuotaService
-	SecretsService  secrets.SecretsService
+	SecretsService  secrets.Service
 	Metrics         *metrics.NGAlert
 	Log             log.Logger
 	schedule        schedule.ScheduleService

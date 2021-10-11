@@ -5,12 +5,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -33,7 +35,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 	Convey("Testing notification as configuration", t, func() {
 		sqlStore := sqlstore.InitTestDB(t)
-		secretsService := secrets.SetupTestService(t)
+		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		setupBusHandlers(sqlStore)
 
 		for i := 1; i < 5; i++ {

@@ -13,10 +13,10 @@ import (
 type Service struct {
 	Bus            bus.Bus
 	SQLStore       *sqlstore.SQLStore
-	SecretsService secrets.SecretsService
+	SecretsService secrets.Service
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.SecretsService) *Service {
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
 	s := &Service{
 		Bus:            bus,
 		SQLStore:       store,

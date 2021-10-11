@@ -7,6 +7,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -15,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -135,7 +138,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			secretsService := secrets.SetupTestService(t)
+			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, store)
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewPagerdutyNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

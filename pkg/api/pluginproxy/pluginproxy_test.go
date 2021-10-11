@@ -10,6 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +30,8 @@ func TestPluginProxy(t *testing.T) {
 		setting.SecretKey = "password"
 
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			secretsService := secrets.SetupTestService(t)
+			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, store)
 			key, err := secretsService.Encrypt(ctx, []byte("123"), secrets.WithoutScope())
 			if err != nil {
 				return err
@@ -197,7 +201,8 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			secretsService := secrets.SetupTestService(t)
+			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, store)
 			encryptedJsonData, err := secretsService.EncryptJsonData(
 				ctx,
 				map[string]string{"key": "123"},
@@ -249,7 +254,9 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, secrets.SetupTestService(t))
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, store)
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, secretsService)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)

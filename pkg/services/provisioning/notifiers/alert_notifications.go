@@ -8,7 +8,7 @@ import (
 )
 
 // Provision alert notifiers
-func Provision(configDirectory string, secretsService secrets.SecretsService) error {
+func Provision(configDirectory string, secretsService secrets.Service) error {
 	dc := newNotificationProvisioner(secretsService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(configDirectory)
 }
@@ -19,7 +19,7 @@ type NotificationProvisioner struct {
 	cfgProvider *configReader
 }
 
-func newNotificationProvisioner(secretsService secrets.SecretsService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(secretsService secrets.Service, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log: log,
 		cfgProvider: &configReader{

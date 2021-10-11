@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -11,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -103,7 +106,9 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 func createService(t *testing.T) (*Service, *fakeExecutor, *fakeBackendPM) {
 	t.Helper()
 	fakeBackendPM := &fakeBackendPM{}
-	dsService := datasources.ProvideService(bus.New(), nil, secrets.SetupTestService(t))
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, store)
+	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	s := newService(
 		setting.NewCfg(),
 		fakeBackendPM,

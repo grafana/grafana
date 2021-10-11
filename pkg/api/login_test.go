@@ -13,6 +13,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -107,12 +111,14 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, store)
 	hs := &HTTPServer{
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
-		SecretsService:   secrets.SetupTestService(t),
+		SecretsService:   secretsService,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {

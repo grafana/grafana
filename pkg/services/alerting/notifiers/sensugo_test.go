@@ -3,9 +3,12 @@ package notifiers
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +16,8 @@ import (
 func TestSensuGoNotifier(t *testing.T) {
 	json := `{ }`
 
-	secretsService := secrets.SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	secretsService := secretsManager.SetupTestService(t, store)
 	settingsJSON, err := simplejson.NewJson([]byte(json))
 	require.NoError(t, err)
 	model := &models.AlertNotification{

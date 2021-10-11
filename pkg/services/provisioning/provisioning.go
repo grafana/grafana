@@ -19,7 +19,7 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager plugifaces.Manager,
-	secretsService secrets.SecretsService) (*ProvisioningServiceImpl, error) {
+	secretsService secrets.Service) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		SQLStore:                sqlStore,
@@ -59,7 +59,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(string, secrets.SecretsService) error,
+	provisionNotifiers func(string, secrets.Service) error,
 	provisionDatasources func(string) error,
 	provisionPlugins func(string, plugifaces.Manager) error,
 ) *ProvisioningServiceImpl {
@@ -76,12 +76,12 @@ type ProvisioningServiceImpl struct {
 	Cfg                     *setting.Cfg
 	SQLStore                *sqlstore.SQLStore
 	PluginManager           plugifaces.Manager
-	SecretsService          secrets.SecretsService
+	SecretsService          secrets.Service
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(string, secrets.SecretsService) error
+	provisionNotifiers      func(string, secrets.Service) error
 	provisionDatasources    func(string) error
 	provisionPlugins        func(string, plugifaces.Manager) error
 	mutex                   sync.Mutex

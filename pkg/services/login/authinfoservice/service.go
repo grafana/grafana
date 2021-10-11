@@ -18,12 +18,12 @@ type Implementation struct {
 	Bus                   bus.Bus
 	SQLStore              *sqlstore.SQLStore
 	UserProtectionService login.UserProtectionService
-	SecretsService        secrets.SecretsService
+	SecretsService        secrets.Service
 	logger                log.Logger
 }
 
 func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, userProtectionService login.UserProtectionService,
-	secretsService secrets.SecretsService) *Implementation {
+	secretsService secrets.Service) *Implementation {
 	s := &Implementation{
 		Bus:                   bus,
 		SQLStore:              store,
