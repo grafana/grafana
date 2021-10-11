@@ -251,7 +251,9 @@ describe('UserProfileEditPage', () => {
       it('should call changeUserOrg', async () => {
         const { props } = await getTestContext();
         const orgsAdminSelectButton = () =>
-          within(getSelectors().orgsAdminRow()).getByRole('button', { name: /select/i });
+          within(getSelectors().orgsAdminRow()).getByRole('button', {
+            name: /switch to the organization named Third/i,
+          });
 
         userEvent.click(orgsAdminSelectButton());
 
@@ -267,7 +269,10 @@ describe('UserProfileEditPage', () => {
     describe('and session is revoked', () => {
       it('should call revokeUserSession', async () => {
         const { props } = await getTestContext();
-        const sessionsRevokeButton = () => within(getSelectors().sessionsRow()).getByRole('button');
+        const sessionsRevokeButton = () =>
+          within(getSelectors().sessionsRow()).getByRole('button', {
+            name: /revoke user session/i,
+          });
 
         userEvent.click(sessionsRevokeButton());
 

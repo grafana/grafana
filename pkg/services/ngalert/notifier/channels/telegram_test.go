@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -94,7 +96,8 @@ func TestTelegramNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewTelegramNotifier(m, tmpl)
+			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			pn, err := NewTelegramNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

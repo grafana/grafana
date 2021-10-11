@@ -1727,7 +1727,7 @@ var expEmailNotifications = []*models.SendEmailCommandSync{
 				"Message": "",
 				"Status":  "firing",
 				"Alerts": channels.ExtendedAlerts{
-					{
+					channels.ExtendedAlert{
 						Status:       "firing",
 						Labels:       template.KV{"alertname": "EmailAlert"},
 						Annotations:  template.KV{},
@@ -1884,6 +1884,7 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "receiver": "webhook_recv",
 		  "status": "firing",
+		  "orgId": 1,
 		  "alerts": [
 			{
 			  "status": "firing",
