@@ -11,9 +11,9 @@ Grafana allows you to create alerting rules that query one or more data sources,
 
 ## Add Grafana managed rule
 
-1. In the Grafana menu, click the Alerting (bell) icon to open the Alerting page listing existing alerts.
+1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **New alert rule**. 
-1. In Step 1, add the rule name, type and storage location.
+1. In Step 1, add the rule name, type, and storage location.
     - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
     - From the **Rule type** drop down, select **Grafana managed alert**.
     - From the **Folder** drop-down, select the folder where you want to store the rule. If you do not select a folder, the rule is stored in the General folder. To create a new folder, click the drop down and enter the new folder name.
@@ -25,9 +25,9 @@ Grafana allows you to create alerting rules that query one or more data sources,
     - Click **Run queries** to verify that the query is successful. 
 1. In Step 3, add conditions.
     - From the **Condition** drop down, select the query or expression to trigger the alert rule.
-    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`
+    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
     - For **Evaluate for**,  specify the duration for which the condition must be true before an alert fires. 
-        > **Note:** Once a condition is breached, the alert goes into the Pending state.  If the condition remains breached for the duration specified in **Evaluate for**, the alert transitions to the Firing state, else it reverts back to the Normal state.    
+        > **Note:** Once a condition is breached, the alert goes into the Pending state.  If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts back to the Normal state.
     - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
     - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
 1. In Step 4, add additional metadata associated with the rule.
@@ -51,7 +51,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 - Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../grafana-managed-numeric-rule.md" >}})).
 - Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
-![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
+![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot' )
 
 For more information, see [expressions documentation]({{< relref "../../../panels/expressions.md" >}}).
 

@@ -5,7 +5,7 @@ weight = 114
 
 # Legacy Grafana alerts
 
-Out of the box, Grafana still supports legacy dashboard alerts. If you are using version 8.0 or later, you can [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) to use Grafana 8 alerts. See [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}) for more infromation.
+Out of the box, Grafana still supports legacy dashboard alerts. If you are using version 8.0 or later, you can [opt-in]({{< relref "../unified-alerting/opt-in.md" >}}) to use Grafana 8 alerts. See [What's New with Grafana 8 alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}) for more infromation.
 
 Legacy alerts have two main components:
 

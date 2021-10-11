@@ -6,7 +6,11 @@ weight = 130
 
 # Create and manage alerting rules
 
-One or more queries and/or expressions, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert. Alerting rules are how you express the criteria for creating an alert. Queries and expressions select and can operate on the data you wish to alert on. A condition sets the threshold that an alert must meet or exceed to create an alert. The interval specifies how frequently the rule should be evaluated. The duration, when configured, sets a period that a condition must be met or exceeded before an alert is created. Alerting rules also can contain settings for what to do when your query does not return any data, or there is an error attempting to execute the query.
+An alerting rule is an evaluation criteria that determine whether an alert will fire. It consists of one or more queries and/or expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
+
+While queries and expressions select select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert. The interval specifies how frequently the rule should be evaluated. The duration, when configured, sets a period that a condition must be met or exceeded before an alert is created. Alerting rules also can contain settings for what to do when your query does not return any data, or there is an error attempting to execute the query.
+
+In Grafana 8 alerting, you can:
 
 - [Create Cortex or Loki managed alert rule]({{< relref "./create-cortex-loki-managed-rule.md" >}})
 - [Create Cortex or Loki managed recording rule]({{< relref "./create-cortex-loki-managed-recording-rule.md" >}})
