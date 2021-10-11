@@ -45,7 +45,7 @@
     "@types/node": "10.14.1",
     "@types/papaparse": "5.2.0",
     "@types/react": "16.9.9",
-    "@types/rollup-plugin-visualizer": "2.6.0",
+    "@types/rollup-plugin-visualizer": "4.2.1",
     "@types/sinon": "^10.0.4",
     "rollup": "2.33.3",
     "rollup-plugin-sourcemaps": "0.6.3",
