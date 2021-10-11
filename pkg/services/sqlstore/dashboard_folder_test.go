@@ -16,15 +16,21 @@ import (
 
 func TestDashboardFolderDataAccess(t *testing.T) {
 	t.Run("Testing DB", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		var sqlStore *SQLStore
+		var folder, dashInRoot, childDash *models.Dashboard
+		var currentUser models.User
+
+		setup := func() {
+			sqlStore = InitTestDB(t)
+			folder = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
+			dashInRoot = insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod", "webapp")
+			childDash = insertTestDashboard(t, sqlStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
+			insertTestDashboard(t, sqlStore, "test dash 45", 1, folder.Id, false, "prod")
+			currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
+		}
 
 		t.Run("Given one dashboard folder with two dashboards and one dashboard in the root folder", func(t *testing.T) {
-			folder := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
-			dashInRoot := insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod", "webapp")
-			childDash := insertTestDashboard(t, sqlStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
-			insertTestDashboard(t, sqlStore, "test dash 45", 1, folder.Id, false, "prod")
-
-			currentUser := createUser(t, sqlStore, "viewer", "Viewer", false)
+			setup()
 
 			t.Run("and no acls are set", func(t *testing.T) {
 				t.Run("should return all dashboards", func(t *testing.T) {
@@ -161,16 +167,23 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 		})
 
 		t.Run("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func(t *testing.T) {
-			sqlStore = InitTestDB(t)
-			folder1 := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod")
-			folder2 := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod")
-			dashInRoot := insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod")
-			childDash1 := insertTestDashboard(t, sqlStore, "child dash 1", 1, folder1.Id, false, "prod")
-			childDash2 := insertTestDashboard(t, sqlStore, "child dash 2", 1, folder2.Id, false, "prod")
-
-			currentUser := createUser(t, sqlStore, "viewer", "Viewer", false)
+			var sqlStore *SQLStore
+			var folder1, folder2, dashInRoot, childDash1, childDash2 *models.Dashboard
+			var currentUser models.User
 			var rootFolderId int64 = 0
 
+			setup2 := func() {
+				sqlStore = InitTestDB(t)
+				folder1 = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod")
+				folder2 = insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod")
+				dashInRoot = insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod")
+				childDash1 = insertTestDashboard(t, sqlStore, "child dash 1", 1, folder1.Id, false, "prod")
+				childDash2 = insertTestDashboard(t, sqlStore, "child dash 2", 1, folder2.Id, false, "prod")
+
+				currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
+			}
+
+			setup2()
 			t.Run("and one folder is expanded, the other collapsed", func(t *testing.T) {
 				t.Run("should return dashboards in root and expanded folder", func(t *testing.T) {
 					query := &search.FindPersistedDashboardsQuery{
@@ -214,6 +227,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
+					setup2()
 					moveDashboard(t, sqlStore, 1, childDash1.Data, folder2.Id)
 
 					t.Run("should return folder without acl and its children", func(t *testing.T) {
@@ -224,11 +238,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						}
 						err := SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 3)
+						require.Equal(t, len(query.Result), 4)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
 						require.Equal(t, query.Result[1].ID, childDash1.Id)
-						// require.Equal(t, query.Result[2].ID, childDash2.Id)  //3 instead of 5
-						// require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[2].ID, childDash2.Id)
+						require.Equal(t, query.Result[3].ID, dashInRoot.Id)
 					})
 				})
 
@@ -246,28 +260,35 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(context.Background(), query)
+						err = SearchDashboards(context.Background(), query)
 						require.NoError(t, err)
-						require.Equal(t, len(query.Result), 3)
+						require.Equal(t, len(query.Result), 4)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
 						require.Equal(t, query.Result[1].ID, childDash1.Id)
-						// require.Equal(t, query.Result[2].ID, childDash2.Id) // 3 instead of 5
-						// require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[2].ID, childDash2.Id)
+						require.Equal(t, query.Result[3].ID, dashInRoot.Id)
 					})
 				})
 			})
 		})
 
 		t.Run("Given two dashboard folders", func(t *testing.T) {
-			sqlStore = InitTestDB(t)
-			folder1 := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod")
-			folder2 := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod")
-			insertTestDashboard(t, sqlStore, "folder in another org", 2, 0, true, "prod")
+			var sqlStore *SQLStore
+			var folder1, folder2 *models.Dashboard
+			var adminUser, editorUser, viewerUser models.User
 
-			adminUser := createUser(t, sqlStore, "admin", "Admin", true)
-			editorUser := createUser(t, sqlStore, "editor", "Editor", false)
-			viewerUser := createUser(t, sqlStore, "viewer", "Viewer", false)
+			setup3 := func() {
+				sqlStore = InitTestDB(t)
+				folder1 = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod")
+				folder2 = insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod")
+				insertTestDashboard(t, sqlStore, "folder in another org", 2, 0, true, "prod")
 
+				adminUser = createUser(t, sqlStore, "admin", "Admin", true)
+				editorUser = createUser(t, sqlStore, "editor", "Editor", false)
+				viewerUser = createUser(t, sqlStore, "viewer", "Viewer", false)
+			}
+
+			setup3()
 			t.Run("Admin users", func(t *testing.T) {
 				t.Run("Should have write access to all dashboard folders in their org", func(t *testing.T) {
 					query := search.FindPersistedDashboardsQuery{
@@ -403,6 +424,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should have view access to folders with default ACL", func(t *testing.T) {
+					setup3()
+
 					query := models.GetDashboardPermissionsForUserQuery{
 						DashboardIds: []int64{folder1.Id, folder2.Id},
 						OrgId:        1,
@@ -413,11 +436,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					err := GetDashboardPermissionsForUser(context.Background(), &query)
 					require.NoError(t, err)
 
-					require.Equal(t, len(query.Result), 1)
-					// require.Equal(t, query.Result[0].DashboardId, folder1.Id) //2 instead of 1
+					require.Equal(t, len(query.Result), 2)
+					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
 					require.Equal(t, query.Result[0].Permission, models.PERMISSION_VIEW)
-					// require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					// require.Equal(t, query.Result[1].Permission, models.PERMISSION_VIEW)
+					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
+					require.Equal(t, query.Result[1].Permission, models.PERMISSION_VIEW)
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {
@@ -434,12 +457,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have edit permission in folders", func(t *testing.T) {
+					setup3()
+
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
 					err := HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
-					// require.False(t, query.Result)
+					require.False(t, query.Result)
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
