@@ -7,7 +7,7 @@ import { Button, useStyles2, VerticalGroup } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { PanelDirectiveReadyEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryElementDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
 import { changePanelPlugin } from 'app/features/panel/state/actions';
@@ -38,6 +38,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
     if (!changeToPanel) {
       return;
     }
+
     setChangeToPanel(undefined);
 
     const panelTypeChanged = panel.type !== changeToPanel.model.type;
@@ -54,11 +55,9 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
     });
 
     panel.configRev = 0;
+    panel.getQueryRunner().clearLastResult();
     panel.refresh();
-    const unsubscribeEvent = panel.events.subscribe(PanelDirectiveReadyEvent, () => {
-      panel.refresh();
-      unsubscribeEvent.unsubscribe();
-    });
+
     panel.events.publish(PanelQueriesChangedEvent);
     panel.events.publish(PanelOptionsChangedEvent);
   };

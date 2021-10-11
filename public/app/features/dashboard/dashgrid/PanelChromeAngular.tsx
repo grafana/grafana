@@ -163,6 +163,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const { angularComponent, setPanelAngularComponent, panel } = this.props;
 
     if (angularComponent) {
+      console.log('angularComponent.destroy()');
       angularComponent.destroy();
     }
 
@@ -226,7 +227,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularComponent: state.panels[props.panel.key].angularComponent,
+    angularComponent: state.panels[props.panel.key]?.angularComponent,
   };
 };
 

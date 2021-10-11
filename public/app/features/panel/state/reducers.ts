@@ -21,9 +21,9 @@ const panelsSlice = createSlice({
         plugin: action.payload.plugin,
       };
     },
-    // cleanUpEditPanel: (state) => {
-    //   delete state.panels[EDIT_PANEL_ID];
-    // },
+    cleanUpPanelState: (state, action: PayloadAction<{ key: string }>) => {
+      delete state[action.payload.key];
+    },
     setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
       state[action.payload.key].instanceState = action.payload.value;
     },
@@ -48,7 +48,12 @@ export interface SetPanelInstanceStatePayload {
   value: any;
 }
 
-export const { panelModelAndPluginReady, setPanelAngularComponent, setPanelInstanceState } = panelsSlice.actions;
+export const {
+  panelModelAndPluginReady,
+  setPanelAngularComponent,
+  setPanelInstanceState,
+  cleanUpPanelState,
+} = panelsSlice.actions;
 
 export const panelsReducer = panelsSlice.reducer;
 

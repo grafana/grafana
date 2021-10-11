@@ -63,12 +63,12 @@ interface OwnProps {
 
 const mapStateToProps = (state: StoreState) => {
   const panel = state.panelEditor.getPanel();
-  const { plugin, instanceState } = state.panels[panel.key];
+  const panelState = state.panels[panel.key];
 
   return {
-    plugin: plugin,
     panel,
-    instanceState,
+    plugin: panelState?.plugin,
+    instanceState: panelState?.instanceState,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
@@ -243,8 +243,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={panelSize} data-panelid={panel.editSourceId}>
+                  <div style={panelSize} data-panelid={panel.id}>
                     <DashboardPanel
+                      key={panel.key}
                       dashboard={dashboard}
                       panel={panel}
                       isEditing={true}

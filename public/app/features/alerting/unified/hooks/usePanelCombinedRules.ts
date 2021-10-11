@@ -63,7 +63,7 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
         .filter(
           (rule) =>
             rule.annotations[Annotation.dashboardUID] === dashboard.uid &&
-            rule.annotations[Annotation.panelID] === String(panel.editSourceId)
+            rule.annotations[Annotation.panelID] === String(panel.id)
         ),
     [combinedNamespaces, dashboard, panel]
   );

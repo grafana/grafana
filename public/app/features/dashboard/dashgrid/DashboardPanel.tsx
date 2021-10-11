@@ -54,6 +54,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.props.initPanelOnMount(this.props.panel);
+    console.log('DashboardPanel.mount');
   }
 
   componentDidUpdate() {

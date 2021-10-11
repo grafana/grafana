@@ -85,7 +85,7 @@ export function skipPanelUpdate(modifiedPanel: PanelModel, panelToUpdate: PanelM
   }
 
   // don't update the modifiedPanel twice
-  if (panelToUpdate.id && panelToUpdate.id === modifiedPanel.editSourceId) {
+  if (panelToUpdate.id && panelToUpdate.id === modifiedPanel.id) {
     return true;
   }
 
@@ -102,6 +102,10 @@ export function exitPanelEditor(): ThunkResult<void> {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
 
+    if (dashboard) {
+      dashboard.exitPanelEditor();
+    }
+
     if (!shouldDiscardChanges) {
       const panel = getPanel();
       const modifiedSaveModel = panel.getSaveModel();
@@ -110,17 +114,15 @@ export function exitPanelEditor(): ThunkResult<void> {
 
       dispatch(updateDuplicateLibraryPanels(panel, dashboard));
 
-      // restore the source panel ID before we update source panel
-      modifiedSaveModel.id = sourcePanel.id;
-
       sourcePanel.restoreModel(modifiedSaveModel);
       sourcePanel.configRev++; // force check the configs
 
-      // Loaded plugin is not included in the persisted properties
-      // So is not handled by restoreModel
-      sourcePanel.plugin = panel.plugin;
-
       if (panelTypeChanged) {
+        // Loaded plugin is not included in the persisted properties
+        // So is not handled by restoreModel
+        sourcePanel.plugin = panel.plugin;
+        sourcePanel.key = panel.key;
+
         await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
       }
 
@@ -132,13 +134,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       }, 20);
     }
 
-    if (dashboard) {
-      dashboard.exitPanelEditor();
-    }
-
     dispatch(closeEditor());
-    // TODO do on unmount?
-    //dispatch(cleanUpEditPanel());
   };
 }
 

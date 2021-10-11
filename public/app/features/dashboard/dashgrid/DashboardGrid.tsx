@@ -196,6 +196,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     if (panel.type === 'add-panel') {
       return <AddPanelWidget key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
     }
+    console.log('Grid.renderPanel', itemKey);
 
     return (
       <DashboardPanel

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 import { locationService } from '@grafana/runtime';
@@ -63,7 +63,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends Component<Props, State> {
+export class PanelChrome extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -219,19 +219,6 @@ export class PanelChrome extends Component<Props, State> {
     if (width !== prevProps.width) {
       liveTimer.updateInterval(this);
     }
-  }
-
-  shouldComponentUpdate(prevProps: Props, prevState: State) {
-    const { plugin, panel } = this.props;
-
-    // If plugin changed we need to process fieldOverrides again
-    // We do this by asking panel query runner to resend last result
-    if (prevProps.plugin !== plugin) {
-      panel.getQueryRunner().resendLastResult();
-      return false;
-    }
-
-    return true;
   }
 
   // Updates the response with information from the stream
