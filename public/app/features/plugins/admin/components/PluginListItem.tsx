@@ -24,10 +24,8 @@ export function PluginListItem({ plugin, pathName, displayMode = PluginListDispl
       className={cx(styles.container, { [styles.list]: isList })}
     >
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
-      <h2 id="name" className={styles.name}>
-        {plugin.name}
-      </h2>
-      <div id="content" className={styles.content}>
+      <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
+      <div className={cx(styles.content, 'plugin-content')}>
         <p>By {plugin.orgName}</p>
         <PluginListItemBadges plugin={plugin} />
       </div>
@@ -60,10 +58,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     list: css`
       row-gap: 0px;
+
       > img {
         align-self: start;
       }
-      > #content {
+
+      > .plugin-content {
         min-height: 0px;
         grid-area: 2 / 2 / 4 / 3;
 
@@ -72,7 +72,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
 
-      > #name {
+      > .plugin-name {
         align-self: center;
         grid-area: 1 / 2 / 2 / 3;
       }
