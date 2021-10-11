@@ -6,9 +6,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type ScopeResolveFunc func(*models.SignedInUser) (string, error)
+type KeywordedScopeResolveFunc func(*models.SignedInUser) (string, error)
 
-var ScopeResolutions = map[string]ScopeResolveFunc{
+var KeywordedScopeResolutions = map[string]KeywordedScopeResolveFunc{
 	"orgs:current": resolveCurrentOrg,
 	"users:self":   resolveUserSelf,
 }
@@ -22,9 +22,9 @@ func resolveUserSelf(u *models.SignedInUser) (string, error) {
 }
 
 // TODO: This is destructive for the input map, double check if that's ok.
-func ResolveGroupedPermissions(u *models.SignedInUser, permissions map[string]map[string]struct{}) (map[string]map[string]struct{}, error) {
+func ResolvePermissionsKeywordedScopes(u *models.SignedInUser, permissions map[string]map[string]struct{}) (map[string]map[string]struct{}, error) {
 	for action, scopes := range permissions {
-		resolvedScopes, err := resolveScopes(u, scopes)
+		resolvedScopes, err := resolveKeywordedScopes(u, scopes)
 		if err != nil {
 			return nil, err
 		}
@@ -34,9 +34,9 @@ func ResolveGroupedPermissions(u *models.SignedInUser, permissions map[string]ma
 }
 
 // TODO: This is destructive for the input map, double check if that's ok.
-func resolveScopes(u *models.SignedInUser, scopes map[string]struct{}) (map[string]struct{}, error) {
+func resolveKeywordedScopes(u *models.SignedInUser, scopes map[string]struct{}) (map[string]struct{}, error) {
 	for scope := range scopes {
-		if fn, ok := ScopeResolutions[scope]; ok {
+		if fn, ok := KeywordedScopeResolutions[scope]; ok {
 			res, err := fn(u)
 			if err != nil {
 				return nil, fmt.Errorf("Could not resolve %v: %v", scope, err)
