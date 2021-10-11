@@ -4,12 +4,11 @@
     "baseUrl": "public/",
     "outDir": "public/dist",
     "paths": {
-      "@grafana/slate-react": ["../node_modules/@types/slate-react"],
-      "app": ["app/"],
-      "sass": ["sass/"]
+      "@grafana/slate-react": [
+        "../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react/index.d.ts"
+      ]
     },
     "rootDirs": ["public/"],
-    "typeRoots": ["node_modules/@types", "public/app/types"],
     "allowJs": true,
     "strictNullChecks": true,
     "resolveJsonModule": true,

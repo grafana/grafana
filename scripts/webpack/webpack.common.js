@@ -10,7 +10,7 @@ class CopyUniconsPlugin {
       let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
 
       if (!fs.pathExistsSync(destDir)) {
-        let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/unicons/svg/line');
+        let srcDir = require.resolve('iconscout-unicons-tarball/unicons/svg/line');
         fs.copySync(srcDir, destDir);
       }
     });
@@ -32,27 +32,19 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
-      // rc-trigger uses babel-runtime which has internal dependency to core-js@2
-      // this alias maps that dependency to core-js@t3
-      'core-js/library/fn': 'core-js/stable',
       // storybook v6 bump caused the app to bundle multiple versions of react breaking hooks
       // make sure to resolve only from the project: https://github.com/facebook/react/issues/13991#issuecomment-435587809
-      react: path.resolve(__dirname, '../../node_modules/react'),
-      // Needed as these don't work across different execution contexts, which can cause
-      // problems with @grafana/ui
-      'react-router': require.resolve('react-router'),
-      'react-router-dom': require.resolve('react-router-dom'),
-      'react-hook-form': require.resolve('react-hook-form'),
-      jquery: require.resolve('jquery'),
       // some of data source pluginis use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
-      prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
+      prismjs: require.resolve('prismjs'),
     },
     modules: [
       'node_modules',
-      path.resolve('public'),
       // we need full path to root node_modules for grafana-enterprise symlink to work
       path.resolve('node_modules'),
+      '.yarn',
+      path.resolve('.yarn'),
+      path.resolve('public'),
     ],
     fallback: {
       buffer: false,
@@ -60,6 +52,7 @@ module.exports = {
       stream: false,
       http: false,
       https: false,
+      string_decoder: false,
     },
   },
   ignoreWarnings: [/export .* was not found in/],
@@ -74,18 +67,18 @@ module.exports = {
     new CopyUniconsPlugin(),
     new CopyWebpackPlugin({
       patterns: [
+        // {
+        //   context: path.join(require.resolve('monaco-editor'), 'min/vs'),
+        //   from: '**/*',
+        //   to: '../lib/monaco/', // inside the public/build folder
+        //   globOptions: {
+        //     ignore: [
+        //       '**/*.map', // debug files
+        //     ],
+        //   },
+        // },
         {
-          context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
-          from: 'min/vs/**',
-          to: '../lib/monaco/', // inside the public/build folder
-          globOptions: {
-            ignore: [
-              '**/*.map', // debug files
-            ],
-          },
-        },
-        {
-          from: './node_modules/@kusto/monaco-kusto/release/min/',
+          from: require.resolve('@kusto/monaco-kusto'),
           to: '../lib/monaco/min/vs/language/kusto/',
         },
       ],

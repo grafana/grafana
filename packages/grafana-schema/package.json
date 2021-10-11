@@ -32,6 +32,7 @@
     "rollup-plugin-terser": "7.0.2",
     "rollup-plugin-typescript2": "0.29.0",
     "rollup-plugin-visualizer": "4.2.0",
+    "tslib": "2.3.1",
     "typescript": "4.4.3"
   },
   "volta": {

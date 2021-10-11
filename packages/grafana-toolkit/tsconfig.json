@@ -4,7 +4,6 @@
     "module": "commonjs",
     "outDir": "dist/src",
     "rootDirs": ["."],
-    "typeRoots": ["node_modules/@types"],
     "useUnknownInCatchVariables": false
   },
   "exclude": ["dist", "node_modules"],
