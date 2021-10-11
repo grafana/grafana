@@ -394,11 +394,11 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Get("/", routing.Wrap(GetAlertNotifications))
 			alertNotifications.Post("/test", bind(dtos.NotificationTestCommand{}), routing.Wrap(NotificationTest))
 			alertNotifications.Post("/", bind(models.CreateAlertNotificationCommand{}), routing.Wrap(CreateAlertNotification))
-			alertNotifications.Put("/:notificationId", bind(models.UpdateAlertNotificationCommand{}), routing.Wrap(UpdateAlertNotification))
+			alertNotifications.Put("/:notificationId", bind(models.UpdateAlertNotificationCommand{}), routing.Wrap(hs.UpdateAlertNotification))
 			alertNotifications.Get("/:notificationId", routing.Wrap(GetAlertNotificationByID))
 			alertNotifications.Delete("/:notificationId", routing.Wrap(DeleteAlertNotification))
 			alertNotifications.Get("/uid/:uid", routing.Wrap(GetAlertNotificationByUID))
-			alertNotifications.Put("/uid/:uid", bind(models.UpdateAlertNotificationWithUidCommand{}), routing.Wrap(UpdateAlertNotificationByUID))
+			alertNotifications.Put("/uid/:uid", bind(models.UpdateAlertNotificationWithUidCommand{}), routing.Wrap(hs.UpdateAlertNotificationByUID))
 			alertNotifications.Delete("/uid/:uid", routing.Wrap(DeleteAlertNotificationByUID))
 		}, reqEditorRole)
 

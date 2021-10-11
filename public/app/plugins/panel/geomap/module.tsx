@@ -3,13 +3,14 @@ import { PanelPlugin } from '@grafana/data';
 import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
-import { mapPanelChangedHandler } from './migrations';
+import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { getLayerEditor } from './editor/layerEditor';
 import { config } from '@grafana/runtime';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
+  .setMigrationHandler(mapMigrationHandler)
   .useFieldConfig()
   .setPanelOptions((builder, context) => {
     let category = ['Map view'];

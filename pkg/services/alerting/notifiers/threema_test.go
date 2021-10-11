@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -23,7 +24,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewThreemaNotifier(model)
+				_, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -42,7 +43,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldBeNil)
 				threemaNotifier := not.(*ThreemaNotifier)
 
@@ -69,7 +70,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)
@@ -91,7 +92,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)
@@ -113,7 +114,7 @@ func TestThreemaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewThreemaNotifier(model)
+				not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
 				So(errors.As(err, &valErr), ShouldBeTrue)

@@ -1,15 +1,38 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
 import { Registry, RegistryItem } from '@grafana/data';
 
-interface MarkerMaker extends RegistryItem {
-  make: (color: string, fillColor: string, radius: number) => Style;
+export type StyleMaker = (color: string, fillColor: string, radius: number, markerPath?: string) => Style;
+
+export interface MarkerMaker extends RegistryItem {
+  // path to icon that will be shown (but then replaced)
+  aliasIds: string[];
+  make: StyleMaker;
   hasFill: boolean;
 }
 
+export enum RegularShapeId {
+  Circle = 'circle',
+  Square = 'square',
+  Triangle = 'triangle',
+  Star = 'star',
+  Cross = 'cross',
+  X = 'x',
+}
+
+export enum MarkerShapePath {
+  Circle = 'img/icons/marker/circle.svg',
+  Square = 'img/icons/marker/square.svg',
+  Triangle = 'img/icons/marker/triangle.svg',
+  Star = 'img/icons/marker/star.svg',
+  Cross = 'img/icons/marker/cross.svg',
+  X = 'img/icons/marker/x-mark.svg',
+}
+
 export const circleMarker: MarkerMaker = {
-  id: 'circle',
+  id: RegularShapeId.Circle,
   name: 'Circle',
   hasFill: true,
+  aliasIds: [MarkerShapePath.Circle],
   make: (color: string, fillColor: string, radius: number) => {
     return new Style({
       image: new Circle({
@@ -21,12 +44,13 @@ export const circleMarker: MarkerMaker = {
   },
 };
 
-export const markerMakers = new Registry<MarkerMaker>(() => [
+const makers: MarkerMaker[] = [
   circleMarker,
   {
-    id: 'square',
+    id: RegularShapeId.Square,
     name: 'Square',
     hasFill: true,
+    aliasIds: [MarkerShapePath.Square],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -40,9 +64,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'triangle',
+    id: RegularShapeId.Triangle,
     name: 'Triangle',
     hasFill: true,
+    aliasIds: [MarkerShapePath.Triangle],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -57,9 +82,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'star',
+    id: RegularShapeId.Star,
     name: 'Star',
     hasFill: true,
+    aliasIds: [MarkerShapePath.Star],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -74,9 +100,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'cross',
+    id: RegularShapeId.Cross,
     name: 'Cross',
     hasFill: false,
+    aliasIds: [MarkerShapePath.Cross],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -91,9 +118,10 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
     },
   },
   {
-    id: 'x',
+    id: RegularShapeId.X,
     name: 'X',
     hasFill: false,
+    aliasIds: [MarkerShapePath.X],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -107,4 +135,15 @@ export const markerMakers = new Registry<MarkerMaker>(() => [
       });
     },
   },
-]);
+];
+
+export const markerMakers = new Registry<MarkerMaker>(() => makers);
+
+export const getMarkerFromPath = (svgPath: string): MarkerMaker | undefined => {
+  for (const [key, val] of Object.entries(MarkerShapePath)) {
+    if (val === svgPath) {
+      return markerMakers.getIfExists(key);
+    }
+  }
+  return undefined;
+};

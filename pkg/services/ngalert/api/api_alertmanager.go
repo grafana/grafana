@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,10 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/macaron.v1"
 )
@@ -27,6 +30,7 @@ const (
 
 type AlertmanagerSrv struct {
 	mam   *notifier.MultiOrgAlertmanager
+	enc   encryption.Service
 	store store.AlertingStore
 	log   log.Logger
 }
@@ -76,7 +80,7 @@ func (srv AlertmanagerSrv) loadSecureSettings(orgId int64, receivers []*apimodel
 			for key := range cgmr.SecureSettings {
 				_, ok := gr.SecureSettings[key]
 				if !ok {
-					decryptedValue, err := cgmr.GetDecryptedSecret(key)
+					decryptedValue, err := srv.getDecryptedSecret(cgmr, key)
 					if err != nil {
 						return fmt.Errorf("failed to decrypt stored secure setting: %s: %w", key, err)
 					}
@@ -91,6 +95,25 @@ func (srv AlertmanagerSrv) loadSecureSettings(orgId int64, receivers []*apimodel
 		}
 	}
 	return nil
+}
+
+func (srv AlertmanagerSrv) getDecryptedSecret(r *apimodels.PostableGrafanaReceiver, key string) (string, error) {
+	storedValue, ok := r.SecureSettings[key]
+	if !ok {
+		return "", nil
+	}
+
+	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
+	if err != nil {
+		return "", err
+	}
+
+	decryptedValue, err := srv.enc.Decrypt(context.Background(), decodeValue, setting.SecretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return string(decryptedValue), nil
 }
 
 func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Response {
@@ -194,7 +217,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
-				decryptedValue, err := pr.GetDecryptedSecret(k)
+				decryptedValue, err := srv.getDecryptedSecret(pr, k)
 				if err != nil {
 					return ErrResp(http.StatusInternalServerError, err, "failed to decrypt stored secure setting: %s", k)
 				}
@@ -333,7 +356,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(); err != nil {
+	if err := body.ProcessConfig(srv.enc.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
@@ -367,7 +390,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(); err != nil {
+	if err := body.ProcessConfig(srv.enc.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 

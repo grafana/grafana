@@ -55,6 +55,7 @@
     "execa": "5.1.1",
     "resolve-as-bin": "2.1.0",
     "ts-loader": "6.2.1",
+    "tslib": "2.3.1",
     "typescript": "4.4.3",
     "yaml": "^1.8.3"
   },

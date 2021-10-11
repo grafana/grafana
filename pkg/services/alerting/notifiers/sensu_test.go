@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -21,7 +22,7 @@ func TestSensuNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewSensuNotifier(model)
+				_, err := NewSensuNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -40,7 +41,7 @@ func TestSensuNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewSensuNotifier(model)
+				not, err := NewSensuNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				sensuNotifier := not.(*SensuNotifier)
 
 				So(err, ShouldBeNil)
