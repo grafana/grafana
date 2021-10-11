@@ -1,3 +1,15 @@
+
+<!-- 8.2.1 START -->
+
+# 8.2.1 (2021-10-11)
+
+### Bug fixes
+
+- **Dashboard:** Fixes rendering of repeating panels. [#39991](https://github.com/grafana/grafana/pull/39991), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Datasources:** Fix deletion of datasource if plugin cannot be found. [#40095](https://github.com/grafana/grafana/pull/40095), [@jackw](https://github.com/jackw)
+- **Prometheus:** Add Headers to HTTP client Options. [#40214](https://github.com/grafana/grafana/pull/40214), [@dsotirakis](https://github.com/dsotirakis)
+
+<!-- 8.2.1 END -->
 <!-- 8.2.0 START -->
 
 # 8.2.0 (2021-10-07)
