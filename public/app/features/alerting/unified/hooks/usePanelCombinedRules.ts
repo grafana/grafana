@@ -34,8 +34,18 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
     const fetch = () => {
-      dispatch(fetchPromRulesAction(GRAFANA_RULES_SOURCE_NAME));
-      dispatch(fetchRulerRulesAction(GRAFANA_RULES_SOURCE_NAME));
+      dispatch(
+        fetchPromRulesAction({
+          rulesSourceName: GRAFANA_RULES_SOURCE_NAME,
+          filter: { dashboardUID: dashboard.uid, panelId: panel.editSourceId },
+        })
+      );
+      dispatch(
+        fetchRulerRulesAction({
+          rulesSourceName: GRAFANA_RULES_SOURCE_NAME,
+          filter: { dashboardUID: dashboard.uid, panelId: panel.editSourceId },
+        })
+      );
     };
     fetch();
     if (poll) {
@@ -45,7 +55,7 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
       };
     }
     return () => {};
-  }, [dispatch, poll]);
+  }, [dispatch, poll, panel.editSourceId, dashboard.uid]);
 
   const loading = promRuleRequest.loading || rulerRuleRequest.loading;
   const errors = [promRuleRequest.error, rulerRuleRequest.error].filter(
