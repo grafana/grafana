@@ -254,11 +254,13 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		if err != nil {
 			return nil, err
 		}
+		//Final interval value
+		var interval time.Duration
 
 		//Calculate interval
 		queryInterval := model.Interval
 		//If we are using variable or interval/step, we will replace it with calculated interval
-		if queryInterval == "$__interval" || queryInterval == "$__interval_ms" {
+		if queryInterval == "$__interval" || queryInterval == "$__interval_ms" || queryInterval == "$__rate_interval" {
 			queryInterval = ""
 		}
 		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
@@ -268,18 +270,23 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 
 		calculatedInterval := s.intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
 		safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
-
 		adjustedInterval := safeInterval.Value
+
 		if calculatedInterval.Value > safeInterval.Value {
 			adjustedInterval = calculatedInterval.Value
 		}
 
-		intervalFactor := model.IntervalFactor
-		if intervalFactor == 0 {
-			intervalFactor = 1
+		if queryInterval == "$__rate_interval" {
+			// Rate interval is final and is not affected by resolution
+			interval = calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, s.intervalCalculator)
+		} else {
+			intervalFactor := model.IntervalFactor
+			if intervalFactor == 0 {
+				intervalFactor = 1
+			}
+			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
 		}
 
-		interval := time.Duration(int64(adjustedInterval) * intervalFactor)
 		intervalMs := int64(interval / time.Millisecond)
 		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
 
