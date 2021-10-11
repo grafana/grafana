@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/validations"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -35,7 +35,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewVictoropsNotifier(model)
+				_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -52,7 +52,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model)
+				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				victoropsNotifier := not.(*VictoropsNotifier)
 
 				So(err, ShouldBeNil)
@@ -76,7 +76,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model)
+				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				victoropsNotifier := not.(*VictoropsNotifier)
@@ -124,7 +124,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewVictoropsNotifier(model)
+				not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldBeNil)
 
 				victoropsNotifier := not.(*VictoropsNotifier)

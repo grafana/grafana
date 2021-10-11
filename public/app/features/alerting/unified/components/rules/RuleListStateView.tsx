@@ -8,6 +8,7 @@ import { RuleListStateSection } from './RuleListStateSection';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
+  expandAll?: boolean;
 }
 
 type GroupedRules = Record<PromAlertingRuleState, CombinedRule[]>;

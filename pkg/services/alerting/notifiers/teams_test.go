@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -21,7 +22,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewTeamsNotifier(model)
+				_, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +39,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTeamsNotifier(model)
+				not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				teamsNotifier := not.(*TeamsNotifier)
 
 				So(err, ShouldBeNil)
@@ -60,7 +61,7 @@ func TestTeamsNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewTeamsNotifier(model)
+				not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				teamsNotifier := not.(*TeamsNotifier)
 
 				So(err, ShouldBeNil)

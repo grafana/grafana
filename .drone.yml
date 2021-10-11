@@ -51,6 +51,7 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
   depends_on:
   - initialize
 
@@ -79,11 +80,6 @@ steps:
     TEST_MAX_WORKERS: 50%
     YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
-  - restore-cache
-  - initialize
-
-- name: build-frontend
-  image: grafana/build-container:1.4.2
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:

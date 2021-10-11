@@ -7,6 +7,7 @@ export const getAvailableIcons = () =>
   [
     'angle-double-down',
     'angle-double-right',
+    'angle-double-up',
     'angle-down',
     'angle-left',
     'angle-right',

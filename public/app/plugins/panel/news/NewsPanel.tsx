@@ -133,7 +133,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   itemWide: css`
     flex-direction: row;
   `,
-  body: css``,
+  body: css`
+    display: flex;
+    flex-direction: column;
+  `,
   socialImage: css`
     display: flex;
     align-items: center;

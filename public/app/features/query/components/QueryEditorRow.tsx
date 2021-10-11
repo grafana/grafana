@@ -100,10 +100,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       dashboard: dashboard,
       refresh: () => {
         // Old angular editors modify the query model and just call refresh
-        // Important that this use this.props here so that as this fuction is only created on mount and it's
+        // Important that this use this.props here so that as this function is only created on mount and it's
         // important not to capture old prop functions in this closure
 
-        // the "hide" attribute of the quries can be changed from the "outside",
+        // the "hide" attribute of the queries can be changed from the "outside",
         // it will be applied to "this.props.query.hide", but not to "query.hide".
         // so we have to apply it.
         if (query.hide !== me.props.query.hide) {
@@ -212,6 +212,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           ds.components?.ExploreQueryField ||
           ds.components?.QueryEditor
         );
+      case CoreApp.PanelEditor:
       case CoreApp.Dashboard:
       default:
         return ds.components?.QueryEditor;
@@ -219,7 +220,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, app = CoreApp.Dashboard, history } = this.props;
+    const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -304,13 +305,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderExtraActions = () => {
     const { query, queries, data, onAddQuery, dataSource } = this.props;
-    return RowActionComponents.getAllExtraRenderAction().map((c) => {
+    return RowActionComponents.getAllExtraRenderAction().map((c, index) => {
       return React.createElement(c, {
         query,
         queries,
         timeRange: data.timeRange,
         onAddQuery: onAddQuery as (query: DataQuery) => void,
         dataSource: dataSource,
+        key: index,
       });
     });
   };
