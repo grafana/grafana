@@ -12,7 +12,7 @@ type FakeSecretsStore struct {
 }
 
 func NewFakeSecretsStore() FakeSecretsStore {
-	return FakeSecretsStore{store: make(map[string]*secrets.DataKey, 0)}
+	return FakeSecretsStore{store: make(map[string]*secrets.DataKey)}
 }
 
 func (f FakeSecretsStore) GetDataKey(_ context.Context, name string) (*secrets.DataKey, error) {

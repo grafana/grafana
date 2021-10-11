@@ -58,7 +58,9 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			decryptFn := ossencryption.ProvideService().GetDecryptedValue
+			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+			secretsService := secretsManager.SetupTestService(t, store)
+			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewAlertmanagerNotifier(m, tmpl, decryptFn)
 			if c.expectedInitError != "" {
 				require.Equal(t, c.expectedInitError, err.Error())
