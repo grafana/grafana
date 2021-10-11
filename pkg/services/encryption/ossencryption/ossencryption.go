@@ -1,6 +1,7 @@
 package ossencryption
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -21,7 +22,7 @@ func ProvideService() *Service {
 
 const saltLength = 8
 
-func (s *Service) Decrypt(payload []byte, secret string) ([]byte, error) {
+func (s *Service) Decrypt(_ context.Context, payload []byte, secret string) ([]byte, error) {
 	if len(payload) < saltLength {
 		return nil, fmt.Errorf("unable to compute salt")
 	}
@@ -52,7 +53,7 @@ func (s *Service) Decrypt(payload []byte, secret string) ([]byte, error) {
 	return payloadDst, nil
 }
 
-func (s *Service) Encrypt(payload []byte, secret string) ([]byte, error) {
+func (s *Service) Encrypt(_ context.Context, payload []byte, secret string) ([]byte, error) {
 	salt, err := util.GetRandomString(saltLength)
 	if err != nil {
 		return nil, err
@@ -80,6 +81,45 @@ func (s *Service) Encrypt(payload []byte, secret string) ([]byte, error) {
 	stream.XORKeyStream(ciphertext[saltLength+aes.BlockSize:], payload)
 
 	return ciphertext, nil
+}
+
+func (s *Service) EncryptJsonData(ctx context.Context, kv map[string]string, secret string) (map[string][]byte, error) {
+	encrypted := make(map[string][]byte)
+	for key, value := range kv {
+		encryptedData, err := s.Encrypt(ctx, []byte(value), secret)
+		if err != nil {
+			return nil, err
+		}
+
+		encrypted[key] = encryptedData
+	}
+	return encrypted, nil
+}
+
+func (s *Service) DecryptJsonData(ctx context.Context, sjd map[string][]byte, secret string) (map[string]string, error) {
+	decrypted := make(map[string]string)
+	for key, data := range sjd {
+		decryptedData, err := s.Decrypt(ctx, data, secret)
+		if err != nil {
+			return nil, err
+		}
+
+		decrypted[key] = string(decryptedData)
+	}
+	return decrypted, nil
+}
+
+func (s *Service) GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback, secret string) string {
+	if value, ok := sjd[key]; ok {
+		decryptedData, err := s.Decrypt(ctx, value, secret)
+		if err != nil {
+			return fallback
+		}
+
+		return string(decryptedData)
+	}
+
+	return fallback
 }
 
 // Key needs to be 32bytes

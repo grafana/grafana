@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -287,10 +289,10 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 	return response.JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
-func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) response.Response {
+func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) response.Response {
 	cmd.OrgId = c.OrgId
 
-	err := fillWithSecureSettingsData(&cmd)
+	err := hs.fillWithSecureSettingsData(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update alert notification", err)
 	}
@@ -314,11 +316,11 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 	return response.JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
-func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) response.Response {
+func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) response.Response {
 	cmd.OrgId = c.OrgId
 	cmd.Uid = macaron.Params(c.Req)[":uid"]
 
-	err := fillWithSecureSettingsDataByUID(&cmd)
+	err := hs.fillWithSecureSettingsDataByUID(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update alert notification", err)
 	}
@@ -342,7 +344,7 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 	return response.JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
-func fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) error {
+func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
@@ -352,11 +354,15 @@ func fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) erro
 		Id:    cmd.Id,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(ctx, query); err != nil {
 		return err
 	}
 
-	secureSettings := query.Result.SecureSettings.Decrypt()
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
 	for k, v := range secureSettings {
 		if _, ok := cmd.SecureSettings[k]; !ok {
 			cmd.SecureSettings[k] = v
@@ -366,7 +372,7 @@ func fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) erro
 	return nil
 }
 
-func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
@@ -376,11 +382,15 @@ func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidC
 		Uid:   cmd.Uid,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(ctx, query); err != nil {
 		return err
 	}
 
-	secureSettings := query.Result.SecureSettings.Decrypt()
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
 	for k, v := range secureSettings {
 		if _, ok := cmd.SecureSettings[k]; !ok {
 			cmd.SecureSettings[k] = v
