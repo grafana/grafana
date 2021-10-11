@@ -3,6 +3,7 @@ import { PanelModel } from '../../../state/PanelModel';
 import { getDefaultTimeRange, LoadingState, PanelData, VisualizationSuggestion } from '@grafana/data';
 import { DisplayMode } from '../types';
 import store from '../../../../../core/store';
+import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 
 export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 
@@ -118,6 +119,10 @@ const pluginsSlice = createSlice({
       state.tableViewEnabled = false;
     },
   },
+  extraReducers: (builder) =>
+    builder.addCase(panelModelAndPluginReady, (state, action) => {
+      state.panelSuggestions = [];
+    }),
 });
 
 export const {
@@ -132,3 +137,7 @@ export const {
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;
+
+export default {
+  panelEditor: panelEditorReducer,
+};
