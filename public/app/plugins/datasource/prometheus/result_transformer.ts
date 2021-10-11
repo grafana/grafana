@@ -19,7 +19,7 @@ import {
   CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { partition } from 'lodash';
+import { partition, groupBy } from 'lodash';
 import { descending, deviation } from 'd3';
 import {
   ExemplarTraceIdDestination,
@@ -64,11 +64,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
   );
 
   // For table results, we need to transform data frames to table data frames
-  const responseLength = options.targets.filter((target) => !target.hide).length;
-  const tableFrames = tableResults.map((dataFrame) => {
-    const df = transformDFoTable(dataFrame, responseLength);
-    return df;
-  });
+  const tableFrames = transformDFoTable(tableResults);
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = otherResults.map((dataFrame) => {
@@ -85,49 +81,63 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
   return { ...response, data: [...otherFrames, ...tableFrames] };
 }
 
-export function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
-  if (df.length === 0) {
-    return df;
+export function transformDFoTable(dfs: DataFrame[]): DataFrame[] {
+  // If no dataFrames or if 1 dataFrames with no values, return original dataFrame
+  if (dfs.length === 0 || (dfs.length === 1 && dfs[0].length === 0)) {
+    return dfs;
   }
 
-  const timeField = df.fields[0];
-  const valueField = df.fields[1];
+  // Group results by refId and process dataFrames  with the same refId as 1 dataFrame
+  const dataFramesByRefId = groupBy(dfs, 'refId');
 
-  // Create label fields
-  const promLabels: PromMetric = valueField.labels ?? {};
-  const labelFields = Object.keys(promLabels)
-    .sort()
-    .map((label) => {
-      const numberField = label === 'le';
-      return {
-        name: label,
-        config: { filterable: true },
-        type: numberField ? FieldType.number : FieldType.string,
-        values: new ArrayVector(),
-      };
+  const frames = Object.keys(dataFramesByRefId).map((refId: string) => {
+    // Create timeField, valueField and labelFields
+    const valueText = getValueText(dfs.length, refId);
+    const valueField = getValueField({ data: [], valueName: valueText });
+    const timeField = getTimeField([]);
+    const labelFields: MutableField[] = [];
+
+    // Fill labelsFields with labels from dataFrames
+    dataFramesByRefId[refId].forEach((df: DataFrame) => {
+      const frameValueField = df.fields[1];
+      const promLabels = frameValueField.labels ?? {};
+
+      Object.keys(promLabels)
+        .sort()
+        .forEach((label) => {
+          // If we don't have label in labelFields, add it
+          if (!labelFields.some((l) => l.name === label)) {
+            const numberField = label === 'le';
+            labelFields.push({
+              name: label,
+              config: { filterable: true },
+              type: numberField ? FieldType.number : FieldType.string,
+              values: new ArrayVector(),
+            });
+          }
+        });
     });
 
-  // Fill labelFields with label values
-  labelFields.forEach((field) => field.values.add(getLabelValue(promLabels, field.name)));
+    // Fill valueField, timeField and labelFields with values
+    dataFramesByRefId[refId].forEach((df) => {
+      console.log(df);
+      df.fields[0].values.toArray().forEach((value) => timeField.values.add(value));
+      df.fields[1].values.toArray().forEach((value) => {
+        valueField.values.add(parseSampleValue(value));
+        const labelsForField = df.fields[1].labels ?? {};
+        labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
+      });
+    });
 
-  const tableDataFrame = {
-    ...df,
-    name: undefined,
-    meta: { ...df.meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
-    fields: [
-      timeField,
-      ...labelFields,
-      {
-        ...valueField,
-        name: getValueText(responseLength, df.refId),
-        labels: undefined,
-        config: { ...valueField.config, displayNameFromDS: undefined },
-        state: { ...valueField.state, displayName: undefined },
-      },
-    ],
-  };
-
-  return tableDataFrame;
+    const fields = [timeField, ...labelFields, valueField];
+    return {
+      refId,
+      fields,
+      meta: { ...dfs[0].meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+      length: timeField.values.length,
+    };
+  });
+  return frames;
 }
 
 function getValueText(responseLength: number, refId = '') {

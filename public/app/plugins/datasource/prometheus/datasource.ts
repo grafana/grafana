@@ -291,8 +291,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
-    const shouldRunBackendQuery =
-      this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
+    const shouldRunBackendQuery = this.access === 'proxy' && !options.targets.some((query) => query.exemplar);
 
     if (shouldRunBackendQuery) {
       const targets = options.targets.map((target) => ({

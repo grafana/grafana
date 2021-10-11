@@ -159,14 +159,14 @@ describe('Prometheus Result Transformer', () => {
         ],
       });
 
-      const tableDf = transformDFoTable(df, 1);
+      const tableDf = transformDFoTable([df])[0];
       expect(tableDf.fields.length).toBe(4);
       expect(tableDf.fields[0].name).toBe('time');
       expect(tableDf.fields[1].name).toBe('label1');
       expect(tableDf.fields[1].values.get(0)).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
       expect(tableDf.fields[2].values.get(0)).toBe('value2');
-      expect(tableDf.fields[3].name).toBe('Value');
+      expect(tableDf.fields[3].name).toBe('Value #A');
     });
 
     it('transforms dataFrame with response length 2 to table dataFrame', () => {
@@ -183,7 +183,7 @@ describe('Prometheus Result Transformer', () => {
         ],
       });
 
-      const tableDf = transformDFoTable(df, 3);
+      const tableDf = transformDFoTable([df])[0];
       expect(tableDf.fields.length).toBe(4);
       expect(tableDf.fields[0].name).toBe('time');
       expect(tableDf.fields[1].name).toBe('label1');
