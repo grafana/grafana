@@ -103,7 +103,18 @@ Example json body:
 }
 ```
 
-- **status** - The possible values for alert state are: `firing`, `resolved`.
+### Fields
+
+#### Body
+
+| Key | Description |
+| --- | ----------- |
+| A   | B           |
+
+#### Alert
+
+| Key | Description |
+| --- | ----------- |
 
 ### Breaking changes when updating to unified alerting
 
