@@ -12,7 +12,7 @@ export interface AxisProps {
   show?: boolean;
   size?: number | null;
   gap?: number;
-  rotate?: number;
+  rotateLabel?: number;
   placement?: AxisPlacement;
   grid?: Axis.Grid;
   ticks?: boolean;
@@ -53,7 +53,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       isTime,
       timeZone,
       theme,
-      rotate,
+      rotateLabel,
+      size,
     } = this.props;
 
     const font = `${fontSize}px ${theme.typography.fontFamily}`;
@@ -70,8 +71,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       stroke: theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
-      size: this.props.size ?? calculateAxisSize,
-      rotate,
+      size: size ?? calculateAxisSize,
+      rotate: rotateLabel,
       gap,
 
       labelGap: 0,

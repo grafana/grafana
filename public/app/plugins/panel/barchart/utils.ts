@@ -14,8 +14,9 @@ import {
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
-import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
+import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { Padding } from 'uplot';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -47,6 +48,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   text,
   rawValue,
   allFrames,
+  rotateLabel = 0,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -85,6 +87,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
+  builder.setPadding(getRotationPadding(frame, rotateLabel, theme));
+
   builder.setPrepData(config.prepData);
 
   builder.addScale({
@@ -104,6 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     grid: { show: false },
     ticks: false,
     gap: 15,
+    rotateLabel: rotateLabel,
     theme,
   });
 
@@ -203,6 +208,29 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   return builder;
 };
+
+function getRotationPadding(frame: DataFrame, rotateLabel: number, theme: GrafanaTheme2): Padding {
+  const values = frame.fields[0].values;
+  const fontSize = theme.typography.fontSize;
+  let maxLength = 0;
+  for (let i = 0; i < values.length; i++) {
+    let size = measureText(values.get(i), fontSize);
+    maxLength = size.width > maxLength ? size.width : maxLength;
+  }
+
+  const paddingRight =
+    rotateLabel < 0
+      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
+        measureText(frame.fields[0].values.get(values.length - 1), fontSize).width
+      : 0;
+
+  const paddingLeft =
+    rotateLabel > 0 ? Math.cos((rotateLabel * Math.PI) / 180) * measureText(values.get(0), fontSize).width : 0;
+
+  const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
+
+  return [0, paddingRight, paddingBottom, paddingLeft];
+}
 
 /** @internal */
 export function preparePlotFrame(data: DataFrame[]) {

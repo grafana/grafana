@@ -120,6 +120,16 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 1,
           step: 0.01,
         },
+      })
+      .addSliderInput({
+        path: 'rotateLabel',
+        name: 'Rotate label',
+        defaultValue: 0,
+        settings: {
+          min: -90,
+          max: 90,
+          step: 1,
+        },
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
