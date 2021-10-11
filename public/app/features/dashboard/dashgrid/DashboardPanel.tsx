@@ -6,6 +6,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 import { initPanelOnMount } from '../../panel/state/actions';
+import { cleanUpPanelState } from '../../panel/state/reducers';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -35,6 +36,7 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 
 const mapDispatchToProps = {
   initPanelOnMount,
+  cleanUpPanelState,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -54,7 +56,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.props.initPanelOnMount(this.props.panel);
-    console.log('DashboardPanel.mount');
+    console.log('DashboardPanel.mount', this.props.panel.key);
   }
 
   componentDidUpdate() {

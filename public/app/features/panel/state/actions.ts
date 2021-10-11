@@ -3,6 +3,9 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 import { ThunkResult } from 'app/types';
 import { panelModelAndPluginReady } from './reducers';
+import { LibraryElementDTO } from 'app/features/library-panels/types';
+import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
 export function initPanelOnMount(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
@@ -40,14 +43,45 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
       plugin = await dispatch(loadPanelPlugin(pluginId));
     }
 
-    // clean up angular component (scope / ctrl state)
-    const angularComponent = store.panels[panel.key].angularComponent;
-    if (angularComponent) {
-      angularComponent.destroy();
-    }
-
     panel.changePlugin(plugin);
 
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+  };
+}
+
+export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryElementDTO): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const newPluginId = libraryPanel.model.type;
+    const oldType = panel.type;
+
+    // Update model but preserve gridPos & id
+    panel.restoreModel({
+      ...libraryPanel.model,
+      gridPos: panel.gridPos,
+      id: panel.id,
+      libraryPanel: toPanelModelLibraryPanel(libraryPanel.model),
+    });
+
+    // Handle plugin change
+    if (oldType !== newPluginId) {
+      const store = getStore();
+      let plugin = store.plugins.panels[newPluginId];
+
+      if (!plugin) {
+        plugin = await dispatch(loadPanelPlugin(newPluginId));
+      }
+
+      panel.pluginLoaded(plugin);
+      panel.generateNewKey();
+
+      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+    }
+
+    panel.configRev = 0;
+    panel.getQueryRunner().clearLastResult();
+    panel.refresh();
+
+    panel.events.publish(PanelQueriesChangedEvent);
+    panel.events.publish(PanelOptionsChangedEvent);
   };
 }

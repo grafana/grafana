@@ -7,10 +7,8 @@ import { Button, useStyles2, VerticalGroup } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryElementDTO } from '../../types';
-import { toPanelModelLibraryPanel } from '../../utils';
-import { changePanelPlugin } from 'app/features/panel/state/actions';
+import { changeToLibraryPanel } from 'app/features/panel/state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
@@ -41,25 +39,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
 
     setChangeToPanel(undefined);
 
-    const panelTypeChanged = panel.type !== changeToPanel.model.type;
-
-    if (panelTypeChanged) {
-      await dispatch(changePanelPlugin(panel, changeToPanel.model.type));
-    }
-
-    panel.restoreModel({
-      ...changeToPanel.model,
-      gridPos: panel.gridPos,
-      id: panel.id,
-      libraryPanel: toPanelModelLibraryPanel(changeToPanel),
-    });
-
-    panel.configRev = 0;
-    panel.getQueryRunner().clearLastResult();
-    panel.refresh();
-
-    panel.events.publish(PanelQueriesChangedEvent);
-    panel.events.publish(PanelOptionsChangedEvent);
+    dispatch(changeToLibraryPanel(panel, changeToPanel));
   };
 
   const onAddToPanelLibrary = () => {

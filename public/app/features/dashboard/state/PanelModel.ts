@@ -111,6 +111,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   libraryPanel: true,
   getDisplayTitle: true,
   configRev: true,
+  key: true,
 };
 
 const defaults: any = {
@@ -195,10 +196,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
+    this.key = uuidv4();
   }
 
   /** Given a persistened PanelModel restores property values */
-  restoreModel(model: any, generateNewKey = true) {
+  restoreModel(model: any) {
     // Start with clean-up
     for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
@@ -230,10 +232,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
+  }
 
-    if (generateNewKey) {
-      this.key = uuidv4();
-    }
+  generateNewKey() {
+    this.key = uuidv4();
   }
 
   ensureQueryIds() {
@@ -434,8 +436,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.type = pluginId;
     this.plugin = newPlugin;
     this.configRev++;
-
-    // changing plugin should mean a new key, triggers a re-mount for pane & clears some state
     this.key = uuidv4();
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
