@@ -8,15 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +26,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	t.Cleanup(func() {
 		setting.SecretKey = origSecret
 	})
-	secretsService := SetupTestSecretsService(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dashboard := simplejson.NewFromAny(map[string]interface{}{"hello": "mupp"})
 
 	t.Run("Given saved snapshot", func(t *testing.T) {
@@ -209,26 +205,4 @@ func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires in
 	}
 
 	return cmd.Result
-}
-
-func SetupTestSecretsService(t *testing.T) secrets.SecretsService {
-	t.Helper()
-	defaultKey := "SdlklWklckeLS"
-	if len(setting.SecretKey) > 0 {
-		defaultKey = setting.SecretKey
-	}
-	raw, err := ini.Load([]byte(`
-		[security]
-		secret_key = ` + defaultKey))
-	require.NoError(t, err)
-	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
-
-	store := fakes.NewFakeSecretsStore()
-
-	return secretsManager.ProvideSecretsService(
-		store,
-		bus.New(),
-		ossencryption.ProvideService(),
-		settings,
-	)
 }
