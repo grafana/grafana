@@ -107,14 +107,39 @@ Example json body:
 
 #### Body
 
-| Key | Description |
-| --- | ----------- |
-| A   | B           |
+| Key      | Description            |
+| -------- | ---------------------- |
+| receiver | ID of the organization |
+| status   | B                      |
+
+| orgId
+| alerts | Array of [alerts](#alert)
+| groupLabels | |
+| commonLabels | |
+| commonAnnotations | |
+| externalURL | |
+| version | |
+| groupKey | |
+| truncatedAlerts | |
+| title | **Will be deprecated soon** |
+| state | ** Will be deprecated soon ** |
+| message | ** Will be deprecated soon ** |
 
 #### Alert
 
-| Key | Description |
-| --- | ----------- |
+| Key          | Description                     |
+| ------------ | ------------------------------- |
+| status       |                                 |
+| labels       |                                 |
+| annotations  |                                 |
+| startsAt     |                                 |
+| valueString  |                                 |
+| endsAt       |                                 |
+| generatorURL |                                 |
+| fingerprint  |                                 |
+| silenceURL   |                                 |
+| dashboardURL | ** Will be deprecated soon **   |
+| panelURL     |   ** Will be deprecated soon ** |
 
 ### Breaking changes when updating to unified alerting
 
