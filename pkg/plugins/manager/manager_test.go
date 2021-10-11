@@ -3,7 +3,6 @@ package manager
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,14 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -172,8 +169,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.init()
 		require.NoError(t, err)
 
-		assert.Len(t, pm.scanningErrors, 1)
-		assert.True(t, errors.Is(pm.scanningErrors[0], plugins.DuplicatePluginError{}))
+		assert.NotNil(t, pm.Plugin("test-app"))
 	})
 
 	t.Run("With external back-end plugin with valid v2 signature", func(t *testing.T) {
@@ -415,28 +411,21 @@ func TestPluginManager_Init(t *testing.T) {
 
 func TestPluginManager_Installer(t *testing.T) {
 	t.Run("Install plugin after manager init", func(t *testing.T) {
-		pm := createManager(t, func(pm *PluginManager) {
-		})
-
-		err := pm.init()
-		require.NoError(t, err)
-
-		// mock installer
 		i := &fakePluginInstaller{}
-		pm.pluginInstaller = i
 
-		// Set plugin location (we do this after manager Init() so that
-		// it doesn't install the plugin automatically)
-		pm.cfg.PluginsPath = "testdata/installer"
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.cfg.PluginsPath = "testdata/installer"
+			pm.pluginInstaller = i
+		})
 
 		pluginID := "test"
 		pluginFolder := pm.cfg.PluginsPath + "/plugin"
 
-		err = pm.Install(context.Background(), pluginID, "1.0.0")
+		err := pm.Install(context.Background(), pluginID, "1.0.0", plugins.InstallOpts{})
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, installer.installCount)
-		assert.Equal(t, 0, installer.uninstallCount)
+		assert.Equal(t, 1, i.installCount)
+		assert.Equal(t, 0, i.uninstallCount)
 
 		// verify plugin manager has loaded core plugins successfully
 		verifyNoPluginErrors(t, pm)
@@ -495,8 +484,8 @@ func TestPluginManager_Installer(t *testing.T) {
 			err := pm.Uninstall(context.Background(), pluginID)
 			require.NoError(t, err)
 
-			assert.Equal(t, 1, installer.installCount)
-			assert.Equal(t, 1, installer.uninstallCount)
+			assert.Equal(t, 1, i.installCount)
+			assert.Equal(t, 1, i.uninstallCount)
 
 			assert.Nil(t, pm.Plugin(pluginID))
 			assert.Len(t, pm.Routes(), 0)
@@ -563,6 +552,8 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"zipkin",
 	}
 
+	//registeredPlugins := pm.registeredPlugins()
+
 	for _, p := range panels {
 		assert.NotNil(t, pm.Plugin(p))
 		assert.Equal(t, plugins.Panel, pm.Plugin(p).Type)
@@ -610,8 +601,8 @@ func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginPath string) 
 	return nil
 }
 
-func (f *fakePluginInstaller) GetUpdateInfo(pluginID, version, pluginRepoURL string) (installer.UpdateInfo, error) {
-	return installer.UpdateInfo{}, nil
+func (f *fakePluginInstaller) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+	return plugins.UpdateInfo{}, nil
 }
 
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
@@ -639,45 +630,21 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 const testPluginID = "test-plugin"
 
 func TestManager(t *testing.T) {
-
-	p := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID: testPluginID,
-		},
-	}
-
 	newManagerScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Managed plugin scenario", func(t *testing.T) {
-			ctx.license.edition = "Open Source"
-			ctx.license.hasLicense = false
-			ctx.cfg.BuildVersion = "7.0.0"
-
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.registerAndStart(context.Background(), testPluginID, ctx.factory)
+				err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
 				require.NoError(t, err)
 				require.NotNil(t, ctx.plugin)
-				require.Equal(t, testPluginID, ctx.plugin.pluginID)
-				require.NotNil(t, ctx.plugin.logger)
-				require.Equal(t, 1, ctx.plugin.startCount)
-				require.True(t, ctx.manager.IsRegistered(testPluginID))
+				require.Equal(t, testPluginID, ctx.plugin.ID)
+				require.NotNil(t, ctx.plugin.Logger())
+				require.Equal(t, 1, ctx.pluginClient.startCount)
+				require.NotNil(t, ctx.manager.Plugin(testPluginID))
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
-					err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
-					require.Equal(t, 1, ctx.plugin.startCount)
+					err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
+					require.Equal(t, 1, ctx.pluginClient.startCount)
 					require.Error(t, err)
-				})
-
-				t.Run("Should provide expected host environment variables", func(t *testing.T) {
-					require.Len(t, ctx.env, 7)
-					require.EqualValues(t, []string{
-						"GF_VERSION=7.0.0",
-						"GF_EDITION=Open Source",
-						fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName),
-						fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName),
-						"AZURE_CLOUD=AzureCloud",
-						"AZURE_MANAGED_IDENTITY_CLIENT_ID=client-id",
-						"AZURE_MANAGED_IDENTITY_ENABLED=true"},
-						ctx.env)
 				})
 
 				t.Run("When manager runs should start and stop plugin", func(t *testing.T) {
@@ -694,13 +661,13 @@ func TestManager(t *testing.T) {
 					cancel()
 					wg.Wait()
 					require.Equal(t, context.Canceled, runErr)
-					require.Equal(t, 1, ctx.plugin.startCount)
-					require.Equal(t, 1, ctx.plugin.stopCount)
+					require.Equal(t, 1, ctx.pluginClient.startCount)
+					require.Equal(t, 1, ctx.pluginClient.stopCount)
 				})
 
 				t.Run("When manager runs should restart plugin process when killed", func(t *testing.T) {
-					ctx.plugin.stopCount = 0
-					ctx.plugin.startCount = 0
+					ctx.pluginClient.stopCount = 0
+					ctx.pluginClient.startCount = 0
 					pCtx := context.Background()
 					cCtx, cancel := context.WithCancel(pCtx)
 					var wgRun sync.WaitGroup
@@ -716,7 +683,7 @@ func TestManager(t *testing.T) {
 					var wgKill sync.WaitGroup
 					wgKill.Add(1)
 					go func() {
-						ctx.plugin.kill()
+						ctx.pluginClient.kill()
 						for {
 							if !ctx.plugin.Exited() {
 								break
@@ -728,12 +695,12 @@ func TestManager(t *testing.T) {
 					wgKill.Wait()
 					wgRun.Wait()
 					require.Equal(t, context.Canceled, runErr)
-					require.Equal(t, 1, ctx.plugin.stopCount)
-					require.Equal(t, 1, ctx.plugin.startCount)
+					require.Equal(t, 1, ctx.pluginClient.stopCount)
+					require.Equal(t, 1, ctx.pluginClient.startCount)
 				})
 
 				t.Run("Shouldn't be able to start managed plugin", func(t *testing.T) {
-					err := ctx.manager.start(context.Background(), testPluginID)
+					err := ctx.manager.start(context.Background(), ctx.plugin)
 					require.NotNil(t, err)
 				})
 
@@ -759,7 +726,7 @@ func TestManager(t *testing.T) {
 
 				t.Run("Implemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return expected result", func(t *testing.T) {
-						ctx.plugin.CollectMetricsHandlerFunc = func(ctx context.Context) (*backend.CollectMetricsResult, error) {
+						ctx.pluginClient.CollectMetricsHandlerFunc = func(ctx context.Context) (*backend.CollectMetricsResult, error) {
 							return &backend.CollectMetricsResult{
 								PrometheusMetrics: []byte("hello"),
 							}, nil
@@ -775,7 +742,7 @@ func TestManager(t *testing.T) {
 						json := []byte(`{
 							"key": "value"
 						}`)
-						ctx.plugin.CheckHealthHandlerFunc = func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+						ctx.pluginClient.CheckHealthHandlerFunc = func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 							return &backend.CheckHealthResult{
 								Status:      backend.HealthStatusOk,
 								Message:     "All good",
@@ -792,7 +759,7 @@ func TestManager(t *testing.T) {
 					})
 
 					t.Run("Call resource should return expected response", func(t *testing.T) {
-						ctx.plugin.CallResourceHandlerFunc = func(ctx context.Context,
+						ctx.pluginClient.CallResourceHandlerFunc = func(ctx context.Context,
 							req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 							return sender.Send(&backend.CallResourceResponse{
 								Status: http.StatusOK,
@@ -809,17 +776,17 @@ func TestManager(t *testing.T) {
 				})
 
 				t.Run("Should be able to decommission a running plugin", func(t *testing.T) {
-					require.True(t, ctx.manager.IsRegistered(testPluginID))
+					require.True(t, ctx.manager.isRegistered(testPluginID))
 
-					err := ctx.manager.UnregisterAndStop(context.Background(), testPluginID)
+					err := ctx.manager.unregisterAndStop(context.Background(), ctx.plugin)
 					require.NoError(t, err)
 
-					require.Equal(t, 2, ctx.plugin.stopCount)
-					require.False(t, ctx.manager.IsRegistered(testPluginID))
+					require.Equal(t, 2, ctx.pluginClient.stopCount)
+					require.False(t, ctx.manager.isRegistered(testPluginID))
 					p := ctx.manager.plugins[testPluginID]
 					require.Nil(t, p)
 
-					err = ctx.manager.StartPlugin(context.Background(), testPluginID)
+					err = ctx.manager.start(context.Background(), ctx.plugin)
 					require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
 				})
 			})
@@ -828,15 +795,11 @@ func TestManager(t *testing.T) {
 
 	newManagerScenario(t, false, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Unmanaged plugin scenario", func(t *testing.T) {
-			ctx.license.edition = "Open Source"
-			ctx.license.hasLicense = false
-			ctx.cfg.BuildVersion = "7.0.0"
-
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
+				err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
 				require.NoError(t, err)
-				require.True(t, ctx.manager.IsRegistered(testPluginID))
-				require.False(t, ctx.plugin.managed)
+				require.True(t, ctx.manager.isRegistered(testPluginID))
+				require.False(t, ctx.pluginClient.managed)
 
 				t.Run("When manager runs should not start plugin", func(t *testing.T) {
 					pCtx := context.Background()
@@ -853,8 +816,8 @@ func TestManager(t *testing.T) {
 					}()
 					wg.Wait()
 					require.Equal(t, context.Canceled, runErr)
-					require.Equal(t, 0, ctx.plugin.startCount)
-					require.Equal(t, 1, ctx.plugin.stopCount)
+					require.Equal(t, 0, ctx.pluginClient.startCount)
+					require.Equal(t, 1, ctx.pluginClient.stopCount)
 					require.True(t, ctx.plugin.Exited())
 				})
 
@@ -862,14 +825,14 @@ func TestManager(t *testing.T) {
 					pCtx := context.Background()
 					cCtx, cancel := context.WithCancel(pCtx)
 					defer cancel()
-					err := ctx.manager.StartPlugin(cCtx, testPluginID)
+					err := ctx.manager.start(cCtx, ctx.plugin)
 					require.Nil(t, err)
-					require.Equal(t, 1, ctx.plugin.startCount)
+					require.Equal(t, 1, ctx.pluginClient.startCount)
 
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
-						ctx.plugin.kill()
+						ctx.pluginClient.kill()
 						for {
 							if !ctx.plugin.Exited() {
 								break
@@ -878,48 +841,17 @@ func TestManager(t *testing.T) {
 						wg.Done()
 					}()
 					wg.Wait()
-					require.Equal(t, 2, ctx.plugin.startCount)
+					require.Equal(t, 2, ctx.pluginClient.startCount)
 				})
-			})
-		})
-	})
-
-	newManagerScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
-		t.Run("Plugin registration scenario when Grafana is licensed", func(t *testing.T) {
-			ctx.license.edition = "Enterprise"
-			ctx.license.hasLicense = true
-			ctx.license.tokenRaw = "testtoken"
-			ctx.cfg.BuildVersion = "7.0.0"
-			ctx.cfg.EnterpriseLicensePath = "/license.txt"
-
-			err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
-			require.NoError(t, err)
-
-			t.Run("Should provide expected host environment variables", func(t *testing.T) {
-				require.Len(t, ctx.env, 9)
-				require.EqualValues(t, []string{
-					"GF_VERSION=7.0.0",
-					"GF_EDITION=Enterprise",
-					"GF_ENTERPRISE_LICENSE_PATH=/license.txt",
-					"GF_ENTERPRISE_LICENSE_TEXT=testtoken",
-					fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName),
-					fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName),
-					"AZURE_CLOUD=AzureCloud",
-					"AZURE_MANAGED_IDENTITY_CLIENT_ID=client-id",
-					"AZURE_MANAGED_IDENTITY_ENABLED=true"},
-					ctx.env)
 			})
 		})
 	})
 }
 
 type managerScenarioCtx struct {
-	cfg     *setting.Cfg
-	license *testLicensingService
-	manager *PluginManager
-	factory backendplugin.PluginFactoryFunc
-	plugin  *testPlugin
-	env     []string
+	manager      *PluginManager
+	plugin       *plugins.Plugin
+	pluginClient *testPluginClient
 }
 
 func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
@@ -933,29 +865,24 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	license := &testLicensingService{}
-	validator := &testPluginRequestValidator{}
+	requestValidator := &testPluginRequestValidator{}
 	ctx := &managerScenarioCtx{
-		cfg:     cfg,
-		license: license,
-		manager: &PluginManager{
-			cfg:              cfg,
-			license:          license,
-			requestValidator: validator,
-			log:              log.New("test"),
-			plugins:          map[string]*plugins.Plugin{},
+		manager: newManager(cfg, license, requestValidator, nil),
+	}
+
+	ctx.plugin = &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: testPluginID,
 		},
 	}
 
-	ctx.factory = func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
-		ctx.plugin = &testPlugin{
-			pluginID: pluginID,
-			logger:   logger,
-			managed:  managed,
-		}
-		ctx.env = env
-
-		return ctx.plugin, nil
+	ctx.pluginClient = &testPluginClient{
+		pluginID: testPluginID,
+		logger:   log.New("test"),
+		managed:  managed,
 	}
+
+	ctx.plugin.RegisterClient(ctx.pluginClient)
 
 	fn(t, ctx)
 }
@@ -966,7 +893,7 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 	}
 }
 
-type testPlugin struct {
+type testPluginClient struct {
 	pluginID       string
 	logger         log.Logger
 	startCount     int
@@ -979,17 +906,19 @@ type testPlugin struct {
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
 	mutex sync.RWMutex
+
+	backendplugin.Plugin
 }
 
-func (tp *testPlugin) PluginID() string {
+func (tp *testPluginClient) PluginID() string {
 	return tp.pluginID
 }
 
-func (tp *testPlugin) Logger() log.Logger {
+func (tp *testPluginClient) Logger() log.Logger {
 	return tp.logger
 }
 
-func (tp *testPlugin) Start(ctx context.Context) error {
+func (tp *testPluginClient) Start(ctx context.Context) error {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 	tp.exited = false
@@ -997,7 +926,7 @@ func (tp *testPlugin) Start(ctx context.Context) error {
 	return nil
 }
 
-func (tp *testPlugin) Stop(ctx context.Context) error {
+func (tp *testPluginClient) Stop(ctx context.Context) error {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 	tp.stopCount++
@@ -1005,17 +934,17 @@ func (tp *testPlugin) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (tp *testPlugin) IsManaged() bool {
+func (tp *testPluginClient) IsManaged() bool {
 	return tp.managed
 }
 
-func (tp *testPlugin) Exited() bool {
+func (tp *testPluginClient) Exited() bool {
 	tp.mutex.RLock()
 	defer tp.mutex.RUnlock()
 	return tp.exited
 }
 
-func (tp *testPlugin) Decommission() error {
+func (tp *testPluginClient) Decommission() error {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 
@@ -1024,19 +953,19 @@ func (tp *testPlugin) Decommission() error {
 	return nil
 }
 
-func (tp *testPlugin) IsDecommissioned() bool {
+func (tp *testPluginClient) IsDecommissioned() bool {
 	tp.mutex.RLock()
 	defer tp.mutex.RUnlock()
 	return tp.decommissioned
 }
 
-func (tp *testPlugin) kill() {
+func (tp *testPluginClient) kill() {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 	tp.exited = true
 }
 
-func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (tp *testPluginClient) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
 	if tp.CollectMetricsHandlerFunc != nil {
 		return tp.CollectMetricsHandlerFunc(ctx)
 	}
@@ -1044,7 +973,7 @@ func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetri
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (tp *testPluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if tp.CheckHealthHandlerFunc != nil {
 		return tp.CheckHealthHandlerFunc(ctx, req)
 	}
@@ -1052,7 +981,7 @@ func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (tp *testPluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if tp.QueryDataHandlerFunc != nil {
 		return tp.QueryDataHandlerFunc(ctx, req)
 	}
@@ -1060,7 +989,7 @@ func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (tp *testPluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if tp.CallResourceHandlerFunc != nil {
 		return tp.CallResourceHandlerFunc(ctx, req, sender)
 	}
@@ -1068,15 +997,15 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 	return backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (tp *testPluginClient) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (tp *testPluginClient) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (tp *testPluginClient) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 
@@ -1106,7 +1035,7 @@ func (t *testLicensingService) ContentDeliveryPrefix() string {
 	return ""
 }
 
-func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
+func (t *testLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return ""
 }
 

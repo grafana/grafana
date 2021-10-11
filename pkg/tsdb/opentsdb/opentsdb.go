@@ -40,8 +40,7 @@ func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.Co
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
-	err := registrar.LoadAndRegister("opentsdb", factory)
-	if err != nil {
+	if err := registrar.LoadAndRegister("opentsdb", factory); err != nil {
 		return nil, err
 	}
 

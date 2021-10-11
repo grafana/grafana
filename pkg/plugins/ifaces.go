@@ -32,6 +32,16 @@ type InstallOpts struct {
 	InstallDir, PluginZipURL, PluginRepoURL string
 }
 
+type Installer interface {
+	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
+	Uninstall(ctx context.Context, pluginDir string) error
+	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
+}
+
+type UpdateInfo struct {
+	PluginZipURL string
+}
+
 type Client interface {
 	// QueryData queries data from a plugin.
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)

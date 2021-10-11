@@ -45,11 +45,10 @@ var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg              *setting.Cfg
-	license          models.Licensing
 	requestValidator models.PluginRequestValidator
 	sqlStore         *sqlstore.SQLStore
 	plugins          map[string]*plugins.Plugin
-	pluginInstaller  installer.Installer
+	pluginInstaller  plugins.Installer
 	pluginLoader     loader.Loader
 	pluginsMu        sync.RWMutex
 	log              log.Logger
@@ -68,19 +67,22 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 	sqlStore *sqlstore.SQLStore) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
-		license:          license,
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
 		plugins:          map[string]*plugins.Plugin{},
 		log:              log.New("plugin.manager.v2"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		pluginLoader:     loader.New(nil, nil, cfg),
+		pluginLoader:     loader.New(license, cfg),
 	}
 }
 
 func (m *PluginManager) init() error {
-	// create external plugins path if not exists
+	// create external plugin's path if not exists
 	if exists, err := fs.Exists(m.cfg.PluginsPath); !exists {
+		if err != nil {
+			return err
+		}
+
 		if err = os.MkdirAll(m.cfg.PluginsPath, os.ModePerm); err != nil {
 			m.log.Error("Failed to create external plugins directory", "dir", m.cfg.PluginsPath, "error", err)
 		} else {
@@ -111,6 +113,29 @@ func (m *PluginManager) init() error {
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
+	go func() {
+		err := func() error {
+			m.checkForUpdates()
+
+			ticker := time.NewTicker(time.Minute * 10)
+			run := true
+
+			for run {
+				select {
+				case <-ticker.C:
+					m.checkForUpdates()
+				case <-ctx.Done():
+					run = false
+				}
+			}
+
+			return ctx.Err()
+		}()
+		if err != nil {
+			m.log.Error("Error occurred checking for Plugin updates", "err", err)
+		}
+	}()
+
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
@@ -254,7 +279,7 @@ func (m *PluginManager) callResourceInternal(w http.ResponseWriter, req *http.Re
 	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
 		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
 		if err != nil {
-			p.Logger().Error("Failed to to unpack JSONData in datasource instance settings", "error", err)
+			p.Logger().Error("Failed to to unpack JSONData in datasource instance settings", "err", err)
 		}
 	}
 
@@ -334,7 +359,7 @@ func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseS
 				return errutil.Wrap("failed to receive response from resource call", err)
 			}
 
-			plugin.Logger().Error("Failed to receive response from resource call", "error", err)
+			plugin.Logger().Error("Failed to receive response from resource call", "err", err)
 			return stream.Close()
 		}
 
@@ -362,7 +387,7 @@ func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseS
 		}
 
 		if _, err := w.Write(resp.Body); err != nil {
-			plugin.Logger().Error("Failed to write resource response", "error", err)
+			plugin.Logger().Error("Failed to write resource response", "err", err)
 		}
 
 		if flusher, ok := w.(http.Flusher); ok {
@@ -460,7 +485,7 @@ func (m *PluginManager) Install(ctx context.Context, pluginID, version string, o
 		}
 
 		// get plugin update information to confirm if upgrading is possible
-		updateInfo, err := m.pluginInstaller.GetUpdateInfo(pluginID, version, opts.PluginRepoURL)
+		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, opts.PluginRepoURL)
 		if err != nil {
 			return err
 		}
@@ -560,9 +585,9 @@ func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Pl
 		return fmt.Errorf("plugin %s is not registered", plugin.ID)
 	}
 
-	m.start(ctx, plugin)
+	err = m.start(ctx, plugin)
 
-	return nil
+	return err
 }
 
 func (m *PluginManager) register(p *plugins.Plugin) error {
@@ -596,14 +621,17 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 }
 
 // start starts a backend plugin process
-func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) {
+func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 	if !p.IsManaged() || !p.Backend {
-		return
+		return nil
 	}
 
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		p.Logger().Error("Failed to start plugin", "error", err)
+		return err
 	}
+
+	return nil
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {

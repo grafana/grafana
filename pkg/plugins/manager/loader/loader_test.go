@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,7 +32,6 @@ func TestLoader_LoadAll(t *testing.T) {
 	tests := []struct {
 		name            string
 		cfg             *setting.Cfg
-		log             log.Logger
 		pluginPaths     []string
 		existingPlugins map[string]struct{}
 		want            []*plugins.Plugin
@@ -222,7 +220,7 @@ func TestLoader_LoadAll(t *testing.T) {
 }
 
 func TestLoader_loadDuplicatePlugins(t *testing.T) {
-	t.Run("Load identical plugin folders", func(t *testing.T) {
+	t.Run("Load duplicate plugin folders", func(t *testing.T) {
 		pluginDir, err := filepath.Abs("../testdata/test-app")
 		if err != nil {
 			t.Errorf("could not construct absolute path of plugin dir")
