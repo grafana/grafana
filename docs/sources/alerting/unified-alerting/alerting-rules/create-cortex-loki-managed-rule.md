@@ -7,15 +7,17 @@ weight = 400
 
 # Create a Cortex or Loki managed alerting rule
 
-Grafana allows you to create alerting rules for an external Cortex or Loki instance. If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.
+Grafana allows you to create alerting rules for an external Cortex or Loki instance. 
 
 ## Before you begin
 
-For both Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the ruler API by configuring their respective services. 
+For Cortex and Loki data sources to work with Grafana 8.0 alerting, enable the ruler API by configuring their respective services. 
 
-**Loki** - The `local` rule storage type, default for Loki, only supports viewing of rules. To edit rules, you must configure one of the other rule storage types. 
+**Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types. 
 
-**Cortex** - When configuring a Grafana Prometheus data source to point to Cortex, use the legacy `/api/prom` prefix, not `/prometheus`. Only single-binary mode is currently supported, and it is not possible to provide a separate URL for the ruler API.
+**Cortex** - When configuring a Grafana Prometheus data source to point to Cortex, use the legacy `/api/prom` prefix, not `/prometheus`. Currently, we only support single-binary mode. Also, it is not possible to provide a separate URL for the ruler API.
+
+> **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.
 
 ## Add a Cortex or Loki managed alerting rule
 
@@ -27,10 +29,10 @@ For both Cortex and Loki data sources to work with Grafana 8.0 alerting, enable 
     - From the **Select data source** drop down, select a Prometheus or Loki data source. (Only Prometheus data sources that support Cortex ruler API are available for selection).
     - From the **Namespace** drop down, select an existing rule namespace. Otherwise click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose.
     - From the **Group** drop down, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-    {{< figure src="/static/img/docs/alerting/rule-edit-cortex-alert-type-8-0.pngg" max-width="550px" caption="Alert type section" >}}
+    {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-alert-type-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 2, add the query to evaluate.
     - Enter a PromQL or LogQL expression. The rule fires if the evaluation result has at least one series with a value that is greater than 0. An alert is created for each series.
-    {{< figure src="/static/img/docs/alerting/rule-edit-cortex-query-8-0.pngg" max-width="550px" caption="Query section" >}}
+    {{< figure src="/static/img/docs/alerting/unified/rule-edit-cortex-query-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 3, add conditions.
     - In the **For** text box, specify the duration for which the condition must be true before an alert fires. If you specify `5m`, the condition must be true for 5 minutes before the alert fires.
         > **Note:** Once a condition is breached, the alert goes into the Pending state.  If the condition remains breached for the duration specified, the alert transitions to the Firing state, else it reverts back to the Normal state.  
@@ -40,9 +42,3 @@ For both Cortex and Loki data sources to work with Grafana 8.0 alerting, enable 
     - Add custom labels.
 1. To evaluate the rule and see what alerts it would produce, click **Preview alerts**. It will display a list of alerts with state and value of for each one.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-
-## Edit a Cortex or Loki managed alerting rule
-
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. In the Cortex / Loki section, expand the rule and click **Edit**.
-1. Update the rule following instructions in [Add a Cortex or Loki managed alerting rule](#add-a-cortex-or-loki-managed-alerting-rule).

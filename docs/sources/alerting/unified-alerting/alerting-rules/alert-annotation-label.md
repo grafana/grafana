@@ -1,21 +1,21 @@
 +++
-title = "Annotaions and labels for alerting"
-description = "Annotaions and labels for alerting"
+title = "Annotations and labels for alerting rules"
+description = "Annotations and labels for alerting"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
-weight = 400
+weight = 401
 +++
 
-# Annotations and labels for alerting
+# Annotations and labels for alerting rules
 
 Annotations and labels help customize alert messages so that you can quickly identify the service or application that needs attention.
 
 ## Annotations
 
-Annotations are key and value pairs that provide additional meta information about the alert, for example description, summary, runbook URL. They are displayed in rule and alert details in the UI and can be used in contact type message templates. Annotations can also be templated, for example `Instance {{ $labels.instance }} down` will have the evaluated `instance` label value added for every alert this rule produces.
+Annotations are key and value pairs that provide additional meta-information about an alert. For example, description, summary, runbook URL. These are displayed in rule and alert details in the UI and can be used in contact type message templates. Annotations can also be templated, for example `Instance {{ $labels.instance }} down` will have the evaluated `instance` label value added for every alert this rule produces.
 
 ## Labels
 
-Labels are key value pairs that categorize or identify an alert. Labels are used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure team specific notification policies, or silence all alerts for a particular team. Labels can also be templated like annotations, for example `{{ $labels.namespace }}/{{ $labels.job }}` will produce a new rule label that will have the evaluated `namespace` and `job` label value added for every alert this rule produces. The rule labels take precedence over the labels produced by the query/condition.
+Labels are key-value pairs that categorize or identify an alert. Labels are used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure notification policies specific to the team, or silence all alerts for a particular team. Labels can also be templated like annotations, for example, `{{ $labels.namespace }}/{{ $labels.job }}` will produce a new rule label that will have the evaluated `namespace` and `job` label value added for every alert this rule produces. The rule labels take precedence over the labels produced by the query/condition.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-edit-details-8-0.png" max-width="550px" caption="Alert details" >}}
 
