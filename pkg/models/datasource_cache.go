@@ -282,7 +282,7 @@ func ClearDSDecryptionCache() {
 
 func awsServiceNamespace(dsType string) string {
 	switch dsType {
-	case DS_ES, DS_ES_OPEN_DISTRO:
+	case DS_ES, DS_ES_OPEN_DISTRO, DS_ES_OPENSEARCH:
 		return "es"
 	case DS_PROMETHEUS:
 		return "aps"
