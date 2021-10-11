@@ -57,17 +57,26 @@ const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery
   return false;
 };
 
+const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+  const target = options.targets.find((target) => target.refId === dataFrame.refId);
+  if (target?.format === 'heatmap') {
+    return true;
+  }
+  return false;
+};
+
 // V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
-  const [tableResults, otherResults]: [DataFrame[], DataFrame[]] = partition(response.data, (dataFrame) =>
-    isTableResult(dataFrame, options)
-  );
+  const [tableFrames, framesWithoutTable] = partition(response.data, (df) => isTableResult(df, options));
+  const processedTableFrames = transformDFoTable(tableFrames);
 
-  // For table results, we need to transform data frames to table data frames
-  const tableFrames = transformDFoTable(tableResults);
+  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition(framesWithoutTable, (df) =>
+    isHeatmapResult(df, options)
+  );
+  const processedHeatmapFrames = transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel));
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
-  const otherFrames = otherResults.map((dataFrame) => {
+  const otherFrames = framesWithoutTableAndHeatmaps.map((dataFrame) => {
     const df = {
       ...dataFrame,
       meta: {
@@ -78,7 +87,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
     return df;
   });
 
-  return { ...response, data: [...otherFrames, ...tableFrames] };
+  return { ...response, data: [...otherFrames, ...processedTableFrames, ...processedHeatmapFrames] };
 }
 
 export function transformDFoTable(dfs: DataFrame[]): DataFrame[] {
