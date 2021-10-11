@@ -3,7 +3,7 @@ package routing
 import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -12,7 +12,7 @@ var (
 	}
 )
 
-func Wrap(action interface{}) macaron.Handler {
+func Wrap(action interface{}) web.Handler {
 	return func(c *models.ReqContext) {
 		var res response.Response
 		val, err := c.Invoke(action)

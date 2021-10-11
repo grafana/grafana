@@ -799,29 +799,32 @@ func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, ove
 	return isParentFolderChanged, nil
 }
 
+// HasEditPermissionInFolders validates that an user have access to a certain folder
 func HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
-		query.Result = true
+	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
+			query.Result = true
+			return nil
+		}
+
+		builder := &SQLBuilder{}
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
+			query.SignedInUser.OrgId, dialect.BooleanStr(true))
+		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
+
+		type folderCount struct {
+			Count int64
+		}
+
+		resp := make([]*folderCount, 0)
+		if err := dbSession.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+			return err
+		}
+
+		query.Result = len(resp) > 0 && resp[0].Count > 0
+
 		return nil
-	}
-
-	builder := &SQLBuilder{}
-	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-		query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
-
-	type folderCount struct {
-		Count int64
-	}
-
-	resp := make([]*folderCount, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
-		return err
-	}
-
-	query.Result = len(resp) > 0 && resp[0].Count > 0
-
-	return nil
+	})
 }
 
 func HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {

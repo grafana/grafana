@@ -26,10 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-	"gopkg.in/macaron.v1"
 )
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
@@ -120,7 +120,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 			require.NoError(t, err)
 			ctx := &models.ReqContext{
-				Context:      &macaron.Context{Req: req},
+				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 			}
 			return ctx, req
@@ -263,7 +263,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
-			Context:      &macaron.Context{Req: req},
+			Context:      &web.Context{Req: req},
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 		}
 
@@ -501,7 +501,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
 			SignedInUser: &models.SignedInUser{UserId: 1},
-			Context:      &macaron.Context{Req: req},
+			Context:      &web.Context{Req: req},
 		}
 		mockAuthToken := mockOAuthTokenService{
 			token: &oauth2.Token{
@@ -623,7 +623,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-		responseWriter := macaron.NewResponseWriter("GET", httptest.NewRecorder())
+		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
 		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
 		// so doing it here instead
@@ -635,7 +635,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		return &models.ReqContext{
 			SignedInUser: &models.SignedInUser{},
-			Context: &macaron.Context{
+			Context: &web.Context{
 				Req:  httptest.NewRequest("GET", "/render", nil),
 				Resp: responseWriter,
 			},
@@ -725,7 +725,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	ctx := models.ReqContext{
-		Context:      &macaron.Context{},
+		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
 	ds := models.DataSource{
@@ -744,7 +744,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 
 func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	ctx := models.ReqContext{
-		Context:      &macaron.Context{},
+		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
 	ds := models.DataSource{
@@ -765,7 +765,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 // Test wth MSSQL type data sources.
 func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	ctx := models.ReqContext{
-		Context:      &macaron.Context{},
+		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
 	tcs := []struct {
@@ -978,7 +978,7 @@ func Test_PathCheck(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
-			Context:      &macaron.Context{Req: req},
+			Context:      &web.Context{Req: req},
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_VIEWER},
 		}
 		return ctx, req
