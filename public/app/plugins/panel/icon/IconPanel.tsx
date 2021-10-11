@@ -39,7 +39,7 @@ export class IconPanel extends Component<Props> {
   };
 
   shouldComponentUpdate(nextProps: Props) {
-    const { width, height, data, renderCounter } = this.props;
+    const { width, height, data } = this.props;
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
@@ -47,7 +47,7 @@ export class IconPanel extends Component<Props> {
       changed = true;
     }
     if (data !== nextProps.data) {
-      this.element.updateData(this.context);
+      this.element.updateData(this.dims);
       changed = true;
     }
 
@@ -56,11 +56,6 @@ export class IconPanel extends Component<Props> {
       this.initElement(nextProps);
       changed = true;
     }
-
-    if (renderCounter !== nextProps.renderCounter) {
-      changed = true;
-    }
-
     return changed;
   }
 
