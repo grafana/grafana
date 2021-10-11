@@ -76,7 +76,7 @@ Example json body:
         "alertname": "WebhookAlert"
       },
       "annotations": {},
-      "startsAt": "%s",
+      "startsAt": "0001-01-01T00:00:00Z",
       "valueString": "[ var='A' labels={} value=1 ]",
       "endsAt": "0001-01-01T00:00:00Z",
       "generatorURL": "https://play.grafana.org/alerting/UID_WebhookAlert/edit",
@@ -103,43 +103,42 @@ Example json body:
 }
 ```
 
-### Fields
+### Webhook fields
 
 #### Body
 
-| Key      | Description            |
-| -------- | ---------------------- |
-| receiver | ID of the organization |
-| status   | B                      |
-
-| orgId
-| alerts | Array of [alerts](#alert)
-| groupLabels | |
-| commonLabels | |
-| commonAnnotations | |
-| externalURL | |
-| version | |
-| groupKey | |
-| truncatedAlerts | |
-| title | **Will be deprecated soon** |
-| state | ** Will be deprecated soon ** |
-| message | ** Will be deprecated soon ** |
+| Key               | Type                      | Description                                                                         |
+| ----------------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| receiver          | string                    | Name of the receiver                                                                |
+| status            | string                    | Current status of the alert, `firing` or `resolved`                                 |
+| orgId             | number                    | ID of the organization related to the payload                                       |
+| alerts            | array of [alerts](#alert) | Alerts that are triggering                                                          |
+| groupLabels       | object                    | Labels that are used for grouping, Key/Value object where both are strings          |
+| commonLabels      | object                    | Labels that all alarms have in common, Key/Value object where both are strings      |
+| commonAnnotations |  object                   | Annotations that all alarms have in common, Key/Value object where both are strings |
+| externalURL       | string                    | External URL to the grafana instance sending this webhook                           |
+| version           | string                    | Version of the payload                                                              |
+| groupKey          | string                    | Key that is used for grouping                                                       |
+| truncatedAlerts   | number                    | Amount of alerts that where truncated                                               |
+| title             | string                    | **Will be deprecated soon**                                                         |
+| state             | string                    | **Will be deprecated soon**                                                         |
+| message           | string                    | **Will be deprecated soon**                                                         |
 
 #### Alert
 
-| Key          | Description                     |
-| ------------ | ------------------------------- |
-| status       |                                 |
-| labels       |                                 |
-| annotations  |                                 |
-| startsAt     |                                 |
-| valueString  |                                 |
-| endsAt       |                                 |
-| generatorURL |                                 |
-| fingerprint  |                                 |
-| silenceURL   |                                 |
-| dashboardURL | ** Will be deprecated soon **   |
-| panelURL     |   ** Will be deprecated soon ** |
+| Key          | Type   | Description                                                                      |
+| ------------ | ------ | -------------------------------------------------------------------------------- |
+| status       | string | Current status of the alert, `firing` or `resolved`                              |
+| labels       | object | Labels that are part of this alert, Key/Value object where both are strings      |
+| annotations  | object | Annotations that are part of this alert, Key/Value object where both are strings |
+| startsAt     | string | Starttime of the alert                                                           |
+| endsAt       | string | Endtime of the alert                                                             |
+| valueString  | string | Values that triggered the current status                                         |
+| generatorURL | string | URL of the generator in the Grafana UI                                           |
+| fingerprint  | string | Fingerprint of the alert                                                         |
+| silenceURL   | string | URL to silence the alert in the Grafana UI                                       |
+| dashboardURL | string | **Will be deprecated soon**                                                      |
+| panelURL     | string | **Will be deprecated soon**                                                      |
 
 ### Breaking changes when updating to unified alerting
 
