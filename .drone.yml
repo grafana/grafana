@@ -39,6 +39,7 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz
   - rm dockerize-linux-amd64-v0.6.1.tar.gz
+  - find . -type d | grep grafana-toolkit
   environment:
     YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
@@ -163,6 +164,6 @@ get:
 
 ---
 kind: signature
-hmac: d6bc571a9d5f2ce84419b455e6d26853543c6e7fdee9af708dbb999eaa4a22c3
+hmac: 5c7fd955841b9ac262f1520be2dad5c7b9568e9dae87635a2bcf191851c413a3
 
 ...
