@@ -31,7 +31,7 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { toggleTableView } from './state/reducers';
+import { toggleTableView, setPanelVisualizationSuggestions } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
@@ -55,6 +55,7 @@ import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
+import { VisualizationSuggestions } from './VisualizationSuggestions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -74,6 +75,7 @@ const mapStateToProps = (state: StoreState) => {
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariables(state),
+    panelSuggestions: state.panelEditor.panelSuggestions,
   };
 };
 
@@ -84,6 +86,7 @@ const mapDispatchToProps = {
   updateTimeZoneForSession,
   toggleTableView,
   notifyApp,
+  setPanelVisualizationSuggestions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -218,8 +221,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderPanel(styles: EditorStyles, noTabsBelow: boolean) {
-    const { dashboard, panel, uiState, tableViewEnabled } = this.props;
+  renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
+    const { dashboard, panel, uiState, tableViewEnabled, setPanelVisualizationSuggestions } = this.props;
 
     return (
       <div className={styles.mainPaneWrapper} key="panel">
@@ -232,7 +235,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               }
 
               // If no tabs limit height so panel does not extend to edge
-              if (noTabsBelow) {
+              if (isOnlyPanel) {
                 height -= config.theme2.spacing.gridSize * 2;
               }
 
@@ -256,6 +259,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       width={panelSize.width}
                       height={panelSize.height}
                       skipStateCleanUp={true}
+                      onSuggestVisualizations={setPanelVisualizationSuggestions}
                     />
                   </div>
                 </div>
@@ -268,23 +272,36 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelAndEditor(styles: EditorStyles) {
-    const { panel, dashboard, plugin, tab } = this.props;
+    const { panel, dashboard, plugin, tab, panelSuggestions } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
+    const isOnlyPanel = tabs.length === 0 && panelSuggestions.length === 0;
+    const panes: React.ReactNode[] = [this.renderPanel(styles, isOnlyPanel)];
+
+    if (panelSuggestions.length > 0) {
+      panes.push(
+        <div
+          className={styles.tabsWrapper}
+          aria-label={selectors.components.PanelEditor.DataPane.content}
+          key="visualization-suggestions"
+        >
+          <VisualizationSuggestions suggestions={panelSuggestions} />
+        </div>
+      );
+    }
 
     if (tabs.length > 0) {
-      return [
-        this.renderPanel(styles, false),
+      panes.push(
         <div
           className={styles.tabsWrapper}
           aria-label={selectors.components.PanelEditor.DataPane.content}
           key="panel-editor-tabs"
         >
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
-        </div>,
-      ];
+        </div>
+      );
     }
 
-    return this.renderPanel(styles, true);
+    return panes;
   }
 
   renderTemplateVariables(styles: EditorStyles) {

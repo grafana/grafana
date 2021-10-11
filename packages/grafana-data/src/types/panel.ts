@@ -12,6 +12,7 @@ import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
+import { DataTransformerConfig } from './transformations';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -181,4 +182,22 @@ export enum VizOrientation {
 export interface PanelPluginDataSupport {
   annotations: boolean;
   alertStates: boolean;
+}
+
+/**
+ * @alpha
+ */
+export interface VisualizationSuggestion {
+  /** Name of suggestion */
+  name: string;
+  /** Description */
+  description?: string;
+  /** Panel plugin id */
+  pluginId: string;
+  /** Panel plugin options */
+  options?: any;
+  /** Panel plugin field options */
+  fieldOptions?: FieldConfigSource;
+  /** Data transformations */
+  transformations?: DataTransformerConfig[];
 }

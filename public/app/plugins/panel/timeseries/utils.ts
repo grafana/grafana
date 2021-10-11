@@ -6,19 +6,52 @@ import {
   getDisplayProcessor,
   GrafanaTheme2,
   isBooleanUnit,
+  VisualizationSuggestion,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
+import { useTheme2 } from '@grafana/ui';
+import { useEffect, useState } from 'react';
+
+export interface GraphableFieldsResult {
+  frames?: DataFrame[];
+  warn?: string;
+  noTimeField?: boolean;
+}
+
+export interface UseGraphableFieldsProps {
+  frames?: DataFrame[];
+  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
+}
+
+export function useGraphableFields({
+  frames,
+  onSuggestVisualizations,
+}: UseGraphableFieldsProps): GraphableFieldsResult {
+  const theme = useTheme2();
+  const [state, setState] = useState<GraphableFieldsResult>({});
+
+  useEffect(() => {
+    const result = prepareGraphableFields(frames, theme);
+
+    if (result.noTimeField && onSuggestVisualizations) {
+      onSuggestVisualizations(getNoTimeFieldSuggestions(frames));
+    }
+
+    setState(result);
+  }, [frames, theme, onSuggestVisualizations]);
+
+  return state;
+}
 
 // This will return a set of frames with only graphable values included
-export function prepareGraphableFields(
-  series: DataFrame[] | undefined,
-  theme: GrafanaTheme2
-): { frames?: DataFrame[]; warn?: string } {
+export function prepareGraphableFields(series: DataFrame[] | undefined, theme: GrafanaTheme2): GraphableFieldsResult {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
   let copy: Field;
   let hasTimeseries = false;
+
   const frames: DataFrame[] = [];
 
   for (let frame of series) {
@@ -63,10 +96,12 @@ export function prepareGraphableFields(
             min: 0,
             custom,
           };
+
           // smooth and linear do not make sense
           if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
             custom.lineInterpolation = LineInterpolation.StepAfter;
           }
+
           copy = {
             ...field,
             config,
@@ -80,10 +115,12 @@ export function prepareGraphableFields(
               })
             ),
           };
+
           if (!isBooleanUnit(config.unit)) {
             config.unit = 'bool';
             copy.display = getDisplayProcessor({ field: copy, theme });
           }
+
           fields.push(copy);
           break;
         default:
@@ -105,10 +142,25 @@ export function prepareGraphableFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field' };
+    return { warn: 'Data does not have a time field', noTimeField: true };
   }
+
   if (!frames.length) {
     return { warn: 'No graphable fields' };
   }
+
   return { frames };
+}
+
+function getNoTimeFieldSuggestions(frames: DataFrame[] | undefined): VisualizationSuggestion[] {
+  return [
+    {
+      name: 'Switch to table',
+      pluginId: 'table',
+    },
+    {
+      name: 'Switch to bar chart',
+      pluginId: 'barchart',
+    },
+  ];
 }
