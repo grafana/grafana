@@ -1,5 +1,5 @@
 // Libraries
-import React, { memo, FormEvent, createRef, useState } from 'react';
+import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
 import { css } from '@emotion/css';
 
 // Components
@@ -50,7 +50,7 @@ export interface State {
   isOpen: boolean;
 }
 
-export const UnthemedTimeRangePicker = (props: TimeRangePickerProps) => {
+export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactElement {
   const [isOpen, setOpen] = useState(false);
 
   const {
@@ -152,7 +152,7 @@ export const UnthemedTimeRangePicker = (props: TimeRangePickerProps) => {
       </Tooltip>
     </ButtonGroup>
   );
-};
+}
 
 const ZoomOutTooltip = () => (
   <>

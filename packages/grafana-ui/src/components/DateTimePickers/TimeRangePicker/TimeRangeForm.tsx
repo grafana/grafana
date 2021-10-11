@@ -18,7 +18,7 @@ import { useStyles2 } from '../../..';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
-import { TimePickerCalendar } from './TimePickerCalendar';
+import TimePickerCalendar from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
