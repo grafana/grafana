@@ -63,7 +63,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = state.panels[props.panel.key];
   if (!panelState) {
     return { plugin: null };
   }

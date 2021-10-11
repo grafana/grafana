@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { setPanelAngularComponent } from '../state/reducers';
+import { setPanelAngularComponent } from 'app/features/panel/state/reducers';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
@@ -154,7 +154,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     };
 
     setPanelAngularComponent({
-      panelId: panel.id,
+      key: panel.key,
       angularComponent: loader.load(this.element, this.scopeProps, template),
     });
   }
@@ -166,7 +166,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       angularComponent.destroy();
     }
 
-    setPanelAngularComponent({ panelId: panel.id, angularComponent: null });
+    setPanelAngularComponent({ key: panel.key, angularComponent: null });
   }
 
   hasOverlayHeader() {
@@ -226,7 +226,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularComponent: state.dashboard.panels[props.panel.id].angularComponent,
+    angularComponent: state.panels[props.panel.key].angularComponent,
   };
 };
 

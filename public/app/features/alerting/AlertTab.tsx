@@ -263,7 +263,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+    angularPanelComponent: state.panels[props.panel.key].angularComponent,
   };
 };
 

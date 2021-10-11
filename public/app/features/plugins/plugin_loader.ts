@@ -219,7 +219,7 @@ export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaDa
   });
 }
 
-import { getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {

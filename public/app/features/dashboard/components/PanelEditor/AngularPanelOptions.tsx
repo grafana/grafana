@@ -8,7 +8,7 @@ import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 // Types
 import { PanelModel, DashboardModel } from '../../state';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { changePanelPlugin } from '../../state/actions';
+import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
@@ -20,7 +20,7 @@ interface OwnProps {
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => ({
-  angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  angularPanelComponent: state.panels[props.panel.key].angularComponent,
 });
 
 const mapDispatchToProps = { changePanelPlugin };

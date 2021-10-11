@@ -34,7 +34,6 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
-import { getPanelStateById } from '../../state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
 
 import { StoreState } from 'app/types';
@@ -64,7 +63,7 @@ interface OwnProps {
 
 const mapStateToProps = (state: StoreState) => {
   const panel = state.panelEditor.getPanel();
-  const { plugin, instanceState } = getPanelStateById(state.dashboard, panel.id);
+  const { plugin, instanceState } = state.panels[panel.key];
 
   return {
     plugin: plugin,

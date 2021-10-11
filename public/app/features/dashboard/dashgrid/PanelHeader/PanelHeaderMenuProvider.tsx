@@ -18,9 +18,8 @@ interface Props {
 
 export const PanelHeaderMenuProvider: FC<Props> = ({ panel, dashboard, children }) => {
   const [items, setItems] = useState<PanelMenuItem[]>([]);
-  const angularComponent = useSelector(
-    (state: StoreState) => state.dashboard.panels[panel.id]?.angularComponent || null
-  );
+  const angularComponent = useSelector((state: StoreState) => state.panels[panel.key]?.angularComponent || null);
+
   useEffect(() => {
     setItems(getPanelMenu(dashboard, panel, angularComponent));
   }, [dashboard, panel, angularComponent, setItems]);

@@ -8,7 +8,7 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
+import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import store from 'app/core/store';
 import { pick } from 'lodash';
 
@@ -60,7 +60,7 @@ export function updateDuplicateLibraryPanels(
       panel.configRev++;
 
       if (pluginChanged) {
-        dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin: panel.plugin! }));
+        dispatch(panelModelAndPluginReady({ key: panel.key, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
@@ -121,7 +121,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       sourcePanel.plugin = panel.plugin;
 
       if (panelTypeChanged) {
-        await dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
+        await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
@@ -137,7 +137,8 @@ export function exitPanelEditor(): ThunkResult<void> {
     }
 
     dispatch(closeEditor());
-    dispatch(cleanUpEditPanel());
+    // TODO do on unmount?
+    //dispatch(cleanUpEditPanel());
   };
 }
 

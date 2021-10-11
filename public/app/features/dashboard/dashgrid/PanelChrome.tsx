@@ -37,7 +37,7 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
-import { setPanelInstanceState } from '../state/reducers';
+import { setPanelInstanceState } from '../../panel/state/reducers';
 import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -103,7 +103,7 @@ export class PanelChrome extends Component<Props, State> {
     });
 
     // Set redux panel state so panel options can get notified
-    store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
+    store.dispatch(setPanelInstanceState({ key: this.props.panel.key, value }));
   };
 
   getPanelContextApp() {

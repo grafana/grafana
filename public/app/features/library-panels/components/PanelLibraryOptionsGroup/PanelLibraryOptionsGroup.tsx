@@ -10,7 +10,7 @@ import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { PanelDirectiveReadyEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryElementDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
-import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
