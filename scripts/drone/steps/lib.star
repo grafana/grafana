@@ -62,7 +62,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'yarn install --frozen-lockfile --no-progress',
+            'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
@@ -427,7 +427,7 @@ def test_a11y_frontend_step(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+            'yarn run test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 
@@ -446,7 +446,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility-pr',
+            'yarn run test:accessibility-pr',
         ],
     }
 
@@ -480,6 +480,7 @@ def codespell_step():
             # Important: all words have to be in lowercase, and separated by "\n".
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
+            'rm words_to_ignore.txt',
         ],
     }
 
@@ -631,7 +632,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            './node_modules/.bin/cypress install',
+            'yarn run cypress install',
             cmd,
         ],
     }
@@ -1014,5 +1015,23 @@ def validate_scuemata_step():
         ],
         'commands': [
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
+        ],
+    }
+
+def ensure_cuetsified_step():
+    return {
+        'name': 'ensure-cuetsified',
+        'image': build_image,
+        'depends_on': [
+            'validate-scuemata',
+        ],
+        'commands': [
+            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
+            '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
+            '# It is required that the generated Typescript be in sync with the input CUE files.',
+            '# ...Modulo eslint auto-fixes...:',
+            './node_modules/.bin/eslint . --ext .gen.ts --fix',
+            '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
+            './scripts/clean-git-or-error.sh',
         ],
     }
