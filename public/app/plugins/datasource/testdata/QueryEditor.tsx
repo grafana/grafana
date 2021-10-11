@@ -175,6 +175,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
             width={32}
+            inputId={`scenario-input-${query.refId}`}
           />
         </InlineField>
         {currentScenario?.stringInput && (

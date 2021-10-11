@@ -225,7 +225,7 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton name="times" onClick={onCancel} surface="header" />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} surface="header" />
     </div>
   );
 };
