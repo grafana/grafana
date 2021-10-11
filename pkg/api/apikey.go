@@ -11,10 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// GetAPIKeys returns a list of API keys
 func GetAPIKeys(c *models.ReqContext) response.Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
@@ -36,12 +37,13 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
+// DeleteAPIKey deletes an API key
 func DeleteAPIKey(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
 		if errors.Is(err, models.ErrApiKeyNotFound) {
@@ -55,6 +57,7 @@ func DeleteAPIKey(c *models.ReqContext) response.Response {
 	return response.Success("API key deleted")
 }
 
+// AddAPIKey adds an API key
 func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
@@ -77,7 +80,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}
