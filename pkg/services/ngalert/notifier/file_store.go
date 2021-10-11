@@ -100,7 +100,7 @@ func (fileStore *FileStore) CleanUp() {
 			"err", err)
 		return
 	}
-	log.Warn("succesfully deleted working directory", "dir", fileStore.workingDirPath)
+	log.Warn("successfully deleted working directory", "dir", fileStore.workingDirPath)
 }
 
 func (fileStore *FileStore) pathFor(fn string) string {
