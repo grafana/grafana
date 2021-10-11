@@ -73,6 +73,7 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
+    "tslib": "2.3.1",
     "uplot": "1.6.16"
   },
   "devDependencies": {
@@ -112,7 +113,10 @@
     "@types/slate": "0.47.2",
     "@types/slate-react": "0.22.5",
     "@types/tinycolor2": "1.4.1",
+    "@wojtekmaj/enzyme-adapter-react-17": "0.6.2",
     "common-tags": "^1.8.0",
+    "csstype": "3.0.9",
+    "enzyme": "3.11.0",
     "mock-raf": "1.0.1",
     "react-docgen-typescript-loader": "3.7.2",
     "react-test-renderer": "17.0.1",

@@ -71,6 +71,8 @@ export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 /** Places that use the value */
 export interface ResourceDimensionOptions {
   resourceType: 'icon' | 'image';
+  folderName?: ResourceFolderName;
+  showSourceRadio?: boolean;
 }
 
 export enum ResourceDimensionMode {
@@ -83,4 +85,11 @@ export enum ResourceDimensionMode {
 /** Get the path to a resource (URL) */
 export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
   mode: ResourceDimensionMode;
+}
+
+export enum ResourceFolderName {
+  Icon = 'img/icons/unicons',
+  IOT = 'img/icons/iot',
+  Marker = 'img/icons/marker',
+  BG = 'img/bg',
 }
