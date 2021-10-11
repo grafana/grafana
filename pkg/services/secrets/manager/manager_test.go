@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -11,7 +14,8 @@ import (
 )
 
 func TestSecrets_EnvelopeEncryption(t *testing.T) {
-	svc, store := SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
@@ -74,7 +78,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestSecretsService_DataKeys(t *testing.T) {
-	_, store := SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 	ctx := context.Background()
 
 	dataKey := secrets.DataKey{

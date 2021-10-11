@@ -29,7 +29,7 @@ type SecretsService struct {
 	dataKeyCache    map[string]dataKeyCacheItem
 }
 
-func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Service, settings setting.Provider) secrets.SecretsService {
+func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Service, settings setting.Provider) *SecretsService {
 	providers := map[string]secrets.Provider{
 		defaultProvider: grafana.New(settings, enc),
 	}
