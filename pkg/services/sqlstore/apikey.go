@@ -68,7 +68,7 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 
 		ServiceAccountId, err := strconv.Atoi(cmd.ServiceAccountId)
 		if err != nil {
-			panic("Invalid service account id!")
+			return fmt.Errorf("invalid service account id: %w", err)
 		}
 		t := models.ApiKey{
 			OrgId:            cmd.OrgId,
