@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/searchusers"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -137,11 +142,12 @@ func setupOrgUsersAPIcontext(t *testing.T, role models.RoleType) (*scenarioConte
 	db := sqlstore.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		QuotaService:  &quota.QuotaService{Cfg: cfg},
-		RouteRegister: routing.NewRouteRegister(),
-		AccessControl: accesscontrolmock.New().WithDisabled(),
-		SQLStore:      db,
+		Cfg:                cfg,
+		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		RouteRegister:      routing.NewRouteRegister(),
+		AccessControl:      accesscontrolmock.New().WithDisabled(),
+		SQLStore:           db,
+		searchUsersService: searchusers.ProvideUsersService(bus.New(), filters.ProvideOSSSearchUserFilter()),
 	}
 
 	sc := setupScenarioContext(t, "/api/org/users/lookup")

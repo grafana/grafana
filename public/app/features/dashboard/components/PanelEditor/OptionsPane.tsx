@@ -1,6 +1,5 @@
 import React from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
-import { DashboardModel, PanelModel } from '../../state';
+import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,26 +9,17 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 import { VisualizationSelectPane } from './VisualizationSelectPane';
 import { usePanelLatestData } from './usePanelLatestData';
+import { OptionPaneRenderProps } from './types';
 
-interface Props {
-  plugin: PanelPlugin;
-  panel: PanelModel;
-  width: number;
-  dashboard: DashboardModel;
-  onFieldConfigsChange: (config: FieldConfigSource) => void;
-  onPanelOptionsChanged: (options: any) => void;
-  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
-}
-
-export const OptionsPane: React.FC<Props> = ({
+export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   plugin,
   panel,
-  width,
   onFieldConfigsChange,
   onPanelOptionsChanged,
   onPanelConfigChange,
   dashboard,
-}: Props) => {
+  instanceState,
+}) => {
   const styles = useStyles(getStyles);
   const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
@@ -46,6 +36,7 @@ export const OptionsPane: React.FC<Props> = ({
               panel={panel}
               dashboard={dashboard}
               plugin={plugin}
+              instanceState={instanceState}
               data={data}
               onFieldConfigsChange={onFieldConfigsChange}
               onPanelOptionsChanged={onPanelOptionsChanged}

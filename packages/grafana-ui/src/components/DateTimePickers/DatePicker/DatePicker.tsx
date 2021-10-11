@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import Calendar from 'react-calendar/dist/entry.nostyle';
+import Calendar from 'react-calendar';
 import { css } from 'emotion';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes';
@@ -45,7 +45,7 @@ const Body = memo<DatePickerProps>(({ value, onChange }) => {
       value={value || new Date()}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
-      onChange={(ev) => {
+      onChange={(ev: Date | Date[]) => {
         if (!Array.isArray(ev)) {
           onChange(ev);
         }

@@ -5,70 +5,33 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
 
 func TestHandleRequest(t *testing.T) {
-	t.Run("Should return query result when handling request for query", func(t *testing.T) {
-		req := plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
-				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-			},
-		}
-
-		svc, exe, _ := createService()
-		exe.Return("A", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "argh"}})
-
-		res, err := svc.HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
-		require.NoError(t, err)
-		require.NotEmpty(t, res.Results["A"].Series)
-		require.Equal(t, "argh", res.Results["A"].Series[0].Name)
-	})
-
-	t.Run("Should return query results when handling request for two queries with same data source", func(t *testing.T) {
-		req := plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
-				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-				{RefID: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-			},
-		}
-
-		svc, exe, _ := createService()
-		exe.Return("A", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "argh"}})
-		exe.Return("B", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "barg"}})
-
-		res, err := svc.HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
-		require.NoError(t, err)
-
-		require.Len(t, res.Results, 2)
-		require.Equal(t, "argh", res.Results["A"].Series[0].Name)
-		require.Equal(t, "barg", res.Results["B"].Series[0].Name)
-	})
-
-	t.Run("Should fallback to backend plugin manager when handling request for query with unregistered type", func(t *testing.T) {
-		svc, _, manager := createService()
+	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
+		svc, _, pm := createService()
 		backendPluginManagerCalled := false
-		manager.QueryDataHandlerFunc = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		pm.QueryDataHandlerFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			backendPluginManagerCalled = true
-			return &backend.QueryDataResponse{}, nil
-		})
+			return backend.NewQueryDataResponse(), nil
+		}
 
 		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
 		req := plugins.DataQuery{
 			TimeRange: &plugins.DataTimeRange{},
 			Queries: []plugins.DataSubQuery{
-				{
-					RefID:      "A",
-					DataSource: ds,
-					Model:      simplejson.New(),
-				},
+				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
 			},
 		}
 		_, err := svc.HandleRequest(context.Background(), ds, req)
@@ -139,19 +102,17 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 
 func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	fakeBackendPM := &fakeBackendPM{}
-	manager := &manager.PluginManager{
-		BackendPluginManager: fakeBackendPM,
-	}
-
-	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
+	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
+	s := newService(
+		setting.NewCfg(),
+		fakeBackendPM,
+		&fakeOAuthTokenService{},
+		dsService,
+	)
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
 		resultsFn: make(map[string]resultsFn),
-	}
-	//nolint: staticcheck // plugins.DataPlugin deprecated
-	s.registry["test"] = func(*models.DataSource) (plugins.DataPlugin, error) {
-		return e, nil
 	}
 
 	return s, e, fakeBackendPM

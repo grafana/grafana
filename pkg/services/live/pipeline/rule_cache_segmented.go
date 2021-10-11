@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -65,7 +66,7 @@ func (s *CacheSegmentedTree) Get(orgID int64, channel string) (*LiveChannelRule,
 	if !ok {
 		err := s.fillOrg(orgID)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("error filling org: %w", err)
 		}
 	}
 	s.radixMu.RLock()
