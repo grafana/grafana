@@ -119,7 +119,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                    'restore-cache'
                 ],
             'environment': {
-                'DOCKERIZE_VERSION': dockerize_version,
                 'YARN_CACHE_FOLDER': '/drone/src/yarncache',
             },
             'commands': ['echo test'] + download_grabpl_cmds + common_cmds,

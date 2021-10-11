@@ -41,7 +41,6 @@ steps:
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   environment:
-    DOCKERIZE_VERSION: 0.6.1
     YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
   - restore-cache
@@ -80,6 +79,11 @@ steps:
     TEST_MAX_WORKERS: 50%
     YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
+  - restore-cache
+  - initialize
+
+- name: build-frontend
+  image: grafana/build-container:1.4.2
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   environment:
@@ -160,6 +164,6 @@ get:
 
 ---
 kind: signature
-hmac: 7076870176fb4b11f1c8f498c38a0ecb331ac3935b0b6d516ec6ceb712798558
+hmac: 706cd3bd73c3bb47303ce579ef14ad4912e37979b4134bb44c410dfb8a65d6e6
 
 ...
