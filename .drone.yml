@@ -65,6 +65,12 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
@@ -349,6 +355,12 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
@@ -835,8 +847,14 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss --tries 5
-  - ./bin/grabpl integration-tests --edition oss --tries 5
+  - ./bin/grabpl test-backend --edition oss
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
 
@@ -1227,8 +1245,14 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise --tries 5
+  - ./bin/grabpl test-backend --edition enterprise
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
+  - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - lint-backend
 
@@ -1301,8 +1325,14 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
+  - ./bin/grabpl test-backend --edition enterprise2
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration-enterprise2
+  image: grafana/build-container:1.4.3
+  commands:
+  - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - lint-backend
 
@@ -1821,8 +1851,14 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss --tries 5
-  - ./bin/grabpl integration-tests --edition oss --tries 5
+  - ./bin/grabpl test-backend --edition oss
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
 
@@ -2202,8 +2238,14 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise --tries 5
+  - ./bin/grabpl test-backend --edition enterprise
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
+  - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - lint-backend
 
@@ -2276,8 +2318,14 @@ steps:
   image: grafana/build-container:1.4.3
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
+  - ./bin/grabpl test-backend --edition enterprise2
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration-enterprise2
+  image: grafana/build-container:1.4.3
+  commands:
+  - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - lint-backend
 
@@ -2790,6 +2838,12 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
@@ -3142,6 +3196,12 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration
+  image: grafana/build-container:1.4.3
+  commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - lint-backend
@@ -3213,6 +3273,12 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2
+  depends_on:
+  - lint-backend
+
+- name: test-backend-integration-enterprise2
+  image: grafana/build-container:1.4.3
+  commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - lint-backend
@@ -3654,6 +3720,6 @@ get:
 
 ---
 kind: signature
-hmac: e021bf51fe756fded5330c3a1c3550b0d7cd6b73eea6a9a42716893c6a23ba79
+hmac: ff07b94decc99b1ecb5b7587bd4c2c438ffe6074eb7b877537f142f8c1098bb9
 
 ...
