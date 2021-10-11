@@ -221,8 +221,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 
 	// We look for orphan directories and remove them. Orphan directories can
-	// occur when some organization is deleted and the node running Grafana is
-	// shutdown before this sync is executed for the next time.
+	// occur when an organization is deleted and the node running Grafana is
+	// shutdown before the next sync is executed.
 	moa.cleanupOrphanLocalOrgState(orgsFound)
 }
 
@@ -233,18 +233,23 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(activeOrganizations 
 	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
 	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
-		moa.logger.Warn("unable to read directory to find orphan directories",
+		moa.logger.Error("failed to list local working directory", "dir", dataDir, "err", err)
 			"dir", dataDir, "err", err)
 		return
 	}
 	for _, file := range files {
 		if !file.IsDir() {
+			moa.logger.Warn("ignoring unexpected file while scanning local working directory", "filename", filepath.Join(dataDir, file.Name()))
 			continue
 		}
 		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
+		if err != nil {
+		  moa.logger.Error("unable to parse orgID from directory name", "name", file.Name(), "err", err)
+		  continue
+		}
 		_, exists := activeOrganizations[orgID]
-		if err == nil && !exists {
-			moa.logger.Warn("found orphan organization", "orgID", orgID)
+		if !exists {
+			moa.logger.Info("found orphan organization directory", "orgID", orgID)
 			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
 			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
 			// Cleanup all the remaining resources from this alertmanager.

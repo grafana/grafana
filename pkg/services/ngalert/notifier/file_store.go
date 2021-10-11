@@ -96,11 +96,11 @@ func (fileStore *FileStore) WriteFileToDisk(fn string, content []byte) error {
 // CleanUp will remove the working directory from disk.
 func (fileStore *FileStore) CleanUp() {
 	if err := os.RemoveAll(fileStore.workingDirPath); err != nil {
-		log.Warn("unable to delete the working directory", "dir", fileStore.workingDirPath,
+		log.Warn("unable to delete the local working directory", "dir", fileStore.workingDirPath,
 			"err", err)
 		return
 	}
-	log.Warn("successfully deleted working directory", "dir", fileStore.workingDirPath)
+	log.Info("successfully deleted working directory", "dir", fileStore.workingDirPath)
 }
 
 func (fileStore *FileStore) pathFor(fn string) string {

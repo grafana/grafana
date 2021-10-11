@@ -251,7 +251,7 @@ func DeleteOrg(cmd *models.DeleteOrgCommand) error {
 			"DELETE FROM alert_rule_version WHERE rule_org_id = ?",
 			"DELETE FROM alert WHERE org_id = ?",
 			"DELETE FROM annotation WHERE org_id = ?",
-			"DELETE FROM kv_store WHERE org_id= ?",
+			"DELETE FROM kv_store WHERE org_id = ?",
 		}
 
 		for _, sql := range deletes {
