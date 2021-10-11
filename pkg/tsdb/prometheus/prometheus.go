@@ -459,15 +459,11 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 
 func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery) data.Frames {
 	frames := data.Frames{}
-	events := make([]ExemplarEvent, len(response))
+	events := make([]ExemplarEvent, 0)
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
 			event := ExemplarEvent{}
 			exemplarTime := time.Unix(exemplar.Timestamp.Unix(), 0).UTC()
-			// Sometimes we receive exemplars with inivalid timestamps and we want to filter them out
-			if exemplarTime.Unix() < 0 {
-				continue
-			}
 			event.Time = exemplarTime
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)
@@ -492,10 +488,10 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		_, ok := bucketedExemplars[alignedTs]
 		if !ok {
 			bucketedExemplars[alignedTs] = make([]ExemplarEvent, 0)
-		} else {
-			bucketedExemplars[alignedTs] = append(bucketedExemplars[alignedTs], event)
-			values = append(values, event.Value)
 		}
+
+		bucketedExemplars[alignedTs] = append(bucketedExemplars[alignedTs], event)
+		values = append(values, event.Value)
 	}
 
 	//Calculate standard deviation
