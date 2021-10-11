@@ -7,7 +7,7 @@ import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
-export function initPanelOnMount(panel: PanelModel): ThunkResult<void> {
+export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
     let pluginToLoad = panel.type;
     let plugin = getStore().plugins.panels[pluginToLoad];
@@ -23,8 +23,9 @@ export function initPanelOnMount(panel: PanelModel): ThunkResult<void> {
 
     if (!panel.plugin) {
       panel.pluginLoaded(plugin);
-      dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
     }
+
+    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
   };
 }
 

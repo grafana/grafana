@@ -5,7 +5,7 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
-import { initPanelOnMount } from '../../panel/state/actions';
+import { initPanelState } from '../../panel/state/actions';
 import { cleanUpPanelState } from '../../panel/state/reducers';
 
 export interface OwnProps {
@@ -36,7 +36,7 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 };
 
 const mapDispatchToProps = {
-  initPanelOnMount,
+  initPanelState,
   cleanUpPanelState,
 };
 
@@ -56,12 +56,12 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.initPanelOnMount(this.props.panel);
-    console.log(`DashboardPanel.mount panelKey=${this.props.stateKey} panel.key=${this.props.panel.key}`);
+    if (!this.props.plugin) {
+      this.props.initPanelState(this.props.panel);
+    }
   }
 
   componentWillUnmount() {
-    console.log(`DashboardPanel.unmount panelKey=${this.props.stateKey} panel.key=${this.props.panel.key}`);
     this.props.cleanUpPanelState({ key: this.props.stateKey });
   }
 

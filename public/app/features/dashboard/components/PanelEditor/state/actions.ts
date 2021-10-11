@@ -11,13 +11,13 @@ import {
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import store from 'app/core/store';
 import { pick } from 'lodash';
-import { initPanelOnMount } from 'app/features/panel/state/actions';
+import { initPanelState } from 'app/features/panel/state/actions';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
     const panel = dashboard.initEditPanel(sourcePanel);
 
-    await dispatch(initPanelOnMount(panel));
+    await dispatch(initPanelState(panel));
 
     dispatch(
       updateEditorInitState({
