@@ -8,14 +8,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 func TestDashboardSnapshotDBAccess(t *testing.T) {
@@ -207,37 +211,24 @@ func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires in
 	return cmd.Result
 }
 
-type MockSecretsStore struct {
-	store map[string]*types.DataKey
-}
-
-func (m MockSecretsStore) GetDataKey(_ context.Context, name string) (*types.DataKey, error) {
-	key, ok := m.store[name]
-	if !ok {
-		return nil, types.ErrDataKeyNotFound
+func SetupTestSecretsService(t *testing.T) secrets.SecretsService {
+	t.Helper()
+	defaultKey := "SdlklWklckeLS"
+	if len(setting.SecretKey) > 0 {
+		defaultKey = setting.SecretKey
 	}
-	return key, nil
-}
+	raw, err := ini.Load([]byte(`
+		[security]
+		secret_key = ` + defaultKey))
+	require.NoError(t, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
-func (m MockSecretsStore) GetAllDataKeys(_ context.Context) ([]*types.DataKey, error) {
-	result := make([]*types.DataKey, 0)
-	for _, key := range m.store {
-		result = append(result, key)
-	}
-	return result, nil
-}
+	store := fakes.NewFakeSecretsStore()
 
-func (m MockSecretsStore) CreateDataKey(_ context.Context, dataKey types.DataKey) error {
-	m.store[dataKey.Name] = &dataKey
-	return nil
-}
-
-func (m MockSecretsStore) CreateDataKeyWithDBSession(ctx context.Context, dataKey types.DataKey, sess *xorm.Session) error {
-	m.store[dataKey.Name] = &dataKey
-	return nil
-}
-
-func (m MockSecretsStore) DeleteDataKey(_ context.Context, name string) error {
-	delete(m.store, name)
-	return nil
+	return secretsManager.ProvideSecretsService(
+		store,
+		bus.New(),
+		ossencryption.ProvideService(),
+		settings,
+	)
 }
