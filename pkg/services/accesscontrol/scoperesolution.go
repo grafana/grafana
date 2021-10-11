@@ -6,9 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type KeywordedScopeResolveFunc func(*models.SignedInUser) (string, error)
+type KeywordScopeResolveFunc func(*models.SignedInUser) (string, error)
 
-var KeywordedScopeResolutions = map[string]KeywordedScopeResolveFunc{
+// TODO should I encapsulate this map in an object not to have a package variable
+var keywordScopeResolutions = map[string]KeywordScopeResolveFunc{
 	"orgs:current": resolveCurrentOrg,
 	"users:self":   resolveUserSelf,
 }
@@ -21,29 +22,13 @@ func resolveUserSelf(u *models.SignedInUser) (string, error) {
 	return fmt.Sprintf("users:%v", u.UserId), nil
 }
 
-// TODO: This is destructive for the input map, double check if that's ok.
-func ResolvePermissionsKeywordedScopes(u *models.SignedInUser, permissions map[string]map[string]struct{}) (map[string]map[string]struct{}, error) {
-	for action, scopes := range permissions {
-		resolvedScopes, err := resolveKeywordedScopes(u, scopes)
+func ResolveKeywordScope(user *models.SignedInUser, permission Permission) (*Permission, error) {
+	if fn, ok := keywordScopeResolutions[permission.Scope]; ok {
+		resolvedScope, err := fn(user)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not resolve %v: %v", permission.Scope, err)
 		}
-		permissions[action] = resolvedScopes
+		permission.Scope = resolvedScope
 	}
-	return permissions, nil
-}
-
-// TODO: This is destructive for the input map, double check if that's ok.
-func resolveKeywordedScopes(u *models.SignedInUser, scopes map[string]struct{}) (map[string]struct{}, error) {
-	for scope := range scopes {
-		if fn, ok := KeywordedScopeResolutions[scope]; ok {
-			res, err := fn(u)
-			if err != nil {
-				return nil, fmt.Errorf("Could not resolve %v: %v", scope, err)
-			}
-			delete(scopes, scope)
-			scopes[res] = struct{}{}
-		}
-	}
-	return scopes, nil
+	return &permission, nil
 }
