@@ -86,6 +86,17 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 			Grants: []string{string(models.ROLE_VIEWER)},
 		},
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:datasources:reader",
+				Description: "Gives access to read datasources without permissions",
+				Permissions: []accesscontrol.Permission{
+					{Action: ActionDatasourcesRead},
+				},
+			},
+			Grants: []string{string(models.ROLE_VIEWER)},
+		},
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(registrations...)
