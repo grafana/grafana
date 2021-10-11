@@ -345,7 +345,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
             expr,
             refId,
             range: true,
-          } as LokiQuery;
+          };
         })
       );
     }
