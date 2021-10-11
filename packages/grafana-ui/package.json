@@ -130,8 +130,5 @@
     "typescript": "4.4.3",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
-  "types": "src/index.ts",
-  "volta": {
-    "extends": "../../package.json"
-  }
+  "types": "src/index.ts"
 }
