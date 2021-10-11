@@ -17,9 +17,9 @@ interface InputProps {
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   const { role, disabled, isFocused, onChange, onOpen } = props;
-  const [internalRole] = useState(() => {
-    return role;
-  });
+  // const [internalRole] = useState(() => {
+  //   return role;
+  // });
 
   const theme = useTheme2();
   const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
@@ -34,9 +34,9 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
     [ref, onOpen]
   );
 
-  const onBlur = useCallback(() => {
-    onChange(internalRole);
-  }, [internalRole, onChange]);
+  // const onBlur = useCallback(() => {
+  //   onChange(internalRole);
+  // }, [internalRole, onChange]);
 
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target?.value;
@@ -54,7 +54,7 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
         ref={ref}
         // onClick={stopPropagation}
         // onFocus={onFocus}
-        onBlur={onBlur}
+        onBlur={onInputChange}
         onChange={onInputChange}
         // value={internalRole}
         data-testid="date-time-input"
