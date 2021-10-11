@@ -493,7 +493,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 		data.Set("commit", hs.Cfg.BuildCommit)
 	}
 
-	if !hs.databaseHealthy() {
+	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)
