@@ -8,23 +8,21 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 type notificationChannel struct {
-	ID                    int64                         `xorm:"id"`
-	OrgID                 int64                         `xorm:"org_id"`
-	Uid                   string                        `xorm:"uid"`
-	Name                  string                        `xorm:"name"`
-	Type                  string                        `xorm:"type"`
-	DisableResolveMessage bool                          `xorm:"disable_resolve_message"`
-	IsDefault             bool                          `xorm:"is_default"`
-	Settings              *simplejson.Json              `xorm:"settings"`
-	SecureSettings        securejsondata.SecureJsonData `xorm:"secure_settings"`
+	ID                    int64            `xorm:"id"`
+	OrgID                 int64            `xorm:"org_id"`
+	Uid                   string           `xorm:"uid"`
+	Name                  string           `xorm:"name"`
+	Type                  string           `xorm:"type"`
+	DisableResolveMessage bool             `xorm:"disable_resolve_message"`
+	IsDefault             bool             `xorm:"is_default"`
+	Settings              *simplejson.Json `xorm:"settings"`
+	SecureSettings        SecureJsonData   `xorm:"secure_settings"`
 }
 
 // channelsPerOrg maps notification channels per organisation
@@ -332,7 +330,7 @@ func (m *migration) generateChannelUID() (string, bool) {
 // Some settings were migrated from settings to secure settings in between.
 // See https://grafana.com/docs/grafana/latest/installation/upgrading/#ensure-encryption-of-existing-alert-notification-channel-secrets.
 // migrateSettingsToSecureSettings takes care of that.
-func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings securejsondata.SecureJsonData) (*simplejson.Json, map[string]string, error) {
+func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := []string{}
 	switch chanType {
 	case "slack":
@@ -413,7 +411,7 @@ type amConfigsPerOrg = map[int64]*PostableUserConfig
 func (c *PostableUserConfig) EncryptSecureSettings() error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			encryptedData := securejsondata.GetEncryptedJsonData(gr.SecureSettings)
+			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
 			for k, v := range encryptedData {
 				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
 			}
