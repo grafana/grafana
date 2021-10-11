@@ -1,7 +1,11 @@
-package secrets
+package secretshelper
 
 import (
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/secrets"
+
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -11,7 +15,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-func SetupTestService(t *testing.T) SecretsService {
+func SetupTestService(t *testing.T) secrets.SecretsService {
 	t.Helper()
 	defaultKey := "SdlklWklckeLS"
 	if len(setting.SecretKey) > 0 {
@@ -23,8 +27,8 @@ func SetupTestService(t *testing.T) SecretsService {
 	require.NoError(t, err)
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
-	return ProvideSecretsService(
-		sqlstore.InitTestDB(t),
+	return secrets.ProvideSecretsService(
+		database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
 		bus.New(),
 		ossencryption.ProvideService(),
 		settings,

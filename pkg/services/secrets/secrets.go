@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/encryption"
 
@@ -20,8 +20,16 @@ import (
 
 const defaultProvider = "secretKey"
 
+type SecretsStore interface {
+	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
+	GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error)
+	CreateDataKey(ctx context.Context, dataKey types.DataKey) error
+	CreateDataKeyWithDBSession(ctx context.Context, dataKey types.DataKey, sess *xorm.Session) error
+	DeleteDataKey(ctx context.Context, name string) error
+}
+
 type SecretsService struct {
-	sqlStore *sqlstore.SQLStore
+	store    SecretsStore
 	bus      bus.Bus
 	enc      encryption.Service
 	settings setting.Provider
@@ -31,13 +39,13 @@ type SecretsService struct {
 	dataKeyCache    map[string]dataKeyCacheItem
 }
 
-func ProvideSecretsService(sqlStore *sqlstore.SQLStore, bus bus.Bus, enc encryption.Service, settings setting.Provider) SecretsService {
+func ProvideSecretsService(store SecretsStore, bus bus.Bus, enc encryption.Service, settings setting.Provider) SecretsService {
 	providers := map[string]Provider{
 		defaultProvider: newGrafanaProvider(settings, enc),
 	}
 
 	s := SecretsService{
-		sqlStore:        sqlStore,
+		store:           store,
 		bus:             bus,
 		enc:             enc,
 		settings:        settings,
@@ -212,7 +220,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.CreateDataKey(ctx, types.DataKey{
+	err = s.store.CreateDataKey(ctx, types.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
 		Provider:      s.defaultProvider,
@@ -243,7 +251,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 1. get encrypted data key from database
-	dataKey, err := s.GetDataKey(ctx, name)
+	dataKey, err := s.store.GetDataKey(ctx, name)
 	if err != nil {
 		return nil, err
 	}
