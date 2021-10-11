@@ -488,9 +488,6 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	//Create bucketed exemplars based on aligned timestamp
 	for _, event := range events {
-		if event.Time.Unix() < 0 {
-			continue
-		}
 		alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(event.Time.Unix())/query.Step.Seconds())*query.Step.Seconds())
 		_, ok := bucketedExemplars[alignedTs]
 		if !ok {
