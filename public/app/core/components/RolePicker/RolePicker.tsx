@@ -1,8 +1,6 @@
 import React, { FC, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Role } from 'app/types';
 import { RolePickerMenu } from './RolePickerMenu';
 import { RolePickerInput } from './RolePickerInput';
 
@@ -10,21 +8,24 @@ import { RolePickerInput } from './RolePickerInput';
 
 export interface Props {
   /** Primary role selected */
-  role: string;
-  customRoles: string[];
+  builtinRole: string;
+  // roles: string[];
+  getRoles: () => Promise<string[]>;
+  getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
   onChange: (newRole: string) => void;
   onBuiltinRoleChange: (newRole: string) => void;
 }
 
-export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) => {
+export const RolePicker: FC<Props> = ({ builtinRole, getRoles, getRoleOptions, onChange, onBuiltinRoleChange }) => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
   const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
+  const [appliedRoles, setAppliedRoles] = useState({} as { [key: string]: boolean });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     async function fetchOptions() {
-      let options = await getRolesOptions();
+      let options = await getRoleOptions();
       options = options.filter((option) => {
         return (
           !option.label?.startsWith('grafana:') &&
@@ -34,17 +35,25 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
       });
       setRoleOptions(options);
       setFilteredOptions(options);
+
+      const roles = await getRoles();
+      const rolesMap = {} as any;
+      for (const role of roles) {
+        rolesMap[role] = true;
+      }
+      setAppliedRoles(rolesMap);
     }
+
     fetchOptions();
   }, []);
 
-  const onApply = useCallback(
-    (role: string) => {
-      setOpen(false);
-      onChange(role);
-    },
-    [onChange]
-  );
+  // const onApply = useCallback(
+  //   (role: string) => {
+  //     setOpen(false);
+  //     onChange(role);
+  //   },
+  //   [onChange]
+  // );
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -73,36 +82,29 @@ export const RolePicker: FC<Props> = ({ role, onChange, onBuiltinRoleChange }) =
 
   const onCustomRoleChangeInternal = (newRoles: string[]) => {
     console.log(newRoles);
-  }
+  };
 
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
       <ClickOutsideWrapper onClick={() => setOpen(false)}>
-        <RolePickerInput role={role} onChange={onInputChange} onOpen={onOpen} isFocused={isOpen} ref={inputRef} />
+        <RolePickerInput
+          role={builtinRole}
+          onChange={onInputChange}
+          onOpen={onOpen}
+          isFocused={isOpen}
+          ref={inputRef}
+        />
         {isOpen && (
           <RolePickerMenu
             onBuiltinRoleChange={onBuiltinRoleChangeInternal}
             onCustomRolesChange={onCustomRoleChangeInternal}
             onClose={() => setOpen(false)}
             options={filteredOptions}
-            builtInRole={role}
+            builtInRole={builtinRole}
+            appliedRoles={appliedRoles}
           />
         )}
       </ClickOutsideWrapper>
     </div>
-  );
-};
-
-const getRolesOptions = async (query?: string): Promise<Array<SelectableValue<string>>> => {
-  const roles = await getBackendSrv().get('/api/access-control/roles');
-  if (!roles || !roles.length) {
-    return [];
-  }
-  return roles.map(
-    (role: Role): SelectableValue => ({
-      value: role.uid,
-      label: role.name,
-      description: role.description,
-    })
   );
 };

@@ -14,14 +14,15 @@ import {
   withTheme,
 } from '@grafana/ui';
 import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
-import { AccessControlAction, Organization, OrgRole, UserOrg } from 'app/types';
+import { AccessControlAction, Organization, OrgRole, UserDTO, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 import { contextSrv } from 'app/core/core';
-import { RolePicker } from 'app/core/components/RolePicker/RolePicker';
+import { UserRolePicker } from '../../core/components/RolePicker/UserRolePicker';
 
 interface Props {
   orgs: UserOrg[];
+  user?: UserDTO;
   isExternalUser?: boolean;
 
   onOrgRemove: (orgId: number) => void;
@@ -43,7 +44,7 @@ export class UserOrgs extends PureComponent<Props, State> {
   };
 
   render() {
-    const { orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
+    const { user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
     const { showAddOrgModal } = this.state;
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
@@ -60,6 +61,7 @@ export class UserOrgs extends PureComponent<Props, State> {
                   <OrgRow
                     key={`${org.orgId}-${index}`}
                     isExternalUser={isExternalUser}
+                    user={user}
                     org={org}
                     onOrgRoleChange={onOrgRoleChange}
                     onOrgRemove={onOrgRemove}
@@ -105,6 +107,7 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface OrgRowProps extends Themeable {
+  user?: UserDTO;
   org: UserOrg;
   isExternalUser?: boolean;
   onOrgRemove: (orgId: number) => void;
@@ -145,11 +148,11 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   };
 
   onBuiltinRoleChange = (newRole: string) => {
-    this.props.onOrgRoleChange(this.props.org.orgId, (newRole as OrgRole));
-  }
+    this.props.onOrgRoleChange(this.props.org.orgId, newRole as OrgRole);
+  };
 
   render() {
-    const { org, isExternalUser, theme } = this.props;
+    const { user, org, isExternalUser, theme } = this.props;
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
@@ -165,7 +168,12 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
           </td>
         ) : (
           <td className="width-20">
-            <RolePicker role={org.role} onChange={() => {}} onBuiltinRoleChange={this.onBuiltinRoleChange} />
+            <UserRolePicker
+              userId={user?.id || 0}
+              orgId={org.orgId}
+              builtinRole={org.role}
+              onBuiltinRoleChange={this.onBuiltinRoleChange}
+            />
           </td>
         )}
         <td colSpan={1}>
@@ -215,7 +223,9 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
 
 interface AddToOrgModalProps {
   isOpen: boolean;
+
   onOrgAdd(orgId: number, role: string): void;
+
   onDismiss?(): void;
 }
 

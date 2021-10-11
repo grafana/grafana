@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Checkbox, CustomScrollbar, HorizontalGroup, Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -10,6 +10,7 @@ import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 interface RolePickerMenuProps {
   builtInRole: string;
   options: Array<SelectableValue<string>>;
+  appliedRoles: { [key: string]: boolean };
   onCustomRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
   onClose: () => void;
@@ -19,10 +20,20 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const { builtInRole, options, onCustomRolesChange, onBuiltinRoleChange } = props;
+  const { builtInRole, options, appliedRoles, onCustomRolesChange, onBuiltinRoleChange } = props;
 
   const [selectedOptions, setSelectedOptions] = useState({} as any);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState(builtInRole);
+
+  useEffect(() => {
+    const initialSelectedOptions = {} as any;
+    for (const option of options) {
+      if (option.value && appliedRoles[option.value]) {
+        initialSelectedOptions[option.value] = option;
+      }
+    }
+    setSelectedOptions(initialSelectedOptions);
+  }, [appliedRoles]);
 
   const onSelect = (option: SelectableValue<string>) => {
     if (option.value) {
@@ -77,7 +88,9 @@ export const RolePickerMenu: FC<RolePickerMenuProps> = (props) => {
           <Button size="sm" fill="text" onClick={onClear}>
             Clear all
           </Button>
-          <Button size="sm" onClick={onUpdate}>Update</Button>
+          <Button size="sm" onClick={onUpdate}>
+            Update
+          </Button>
         </HorizontalGroup>
       </div>
     </div>
