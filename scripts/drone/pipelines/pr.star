@@ -9,6 +9,7 @@ load(
     'rebuild_cache_step',
     'build_plugins_step',
     'test_backend_step',
+    'test_backend_integration_step',
     'test_frontend_step',
     'gen_version_step',
     'package_step',
