@@ -246,6 +246,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                   <div style={panelSize} data-panelid={panel.id}>
                     <DashboardPanel
                       key={panel.key}
+                      stateKey={panel.key}
                       dashboard={dashboard}
                       panel={panel}
                       isEditing={true}

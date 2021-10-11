@@ -63,6 +63,8 @@ export function updateDuplicateLibraryPanels(
       panel.configRev++;
 
       if (pluginChanged) {
+        panel.generateNewKey();
+
         dispatch(panelModelAndPluginReady({ key: panel.key, plugin: panel.plugin! }));
       }
 
@@ -124,7 +126,7 @@ export function exitPanelEditor(): ThunkResult<void> {
         // Loaded plugin is not included in the persisted properties
         // So is not handled by restoreModel
         sourcePanel.plugin = panel.plugin;
-        sourcePanel.key = panel.key;
+        sourcePanel.generateNewKey();
 
         await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
       }

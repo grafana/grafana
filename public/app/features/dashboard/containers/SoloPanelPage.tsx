@@ -94,7 +94,7 @@ export class SoloPanelPage extends Component<Props, State> {
             }
             return (
               <DashboardPanel
-                key={panel.key}
+                stateKey={panel.key}
                 width={width}
                 height={height}
                 dashboard={dashboard}

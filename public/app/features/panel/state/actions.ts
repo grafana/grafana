@@ -23,9 +23,8 @@ export function initPanelOnMount(panel: PanelModel): ThunkResult<void> {
 
     if (!panel.plugin) {
       panel.pluginLoaded(plugin);
+      dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
     }
-
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
   };
 }
 

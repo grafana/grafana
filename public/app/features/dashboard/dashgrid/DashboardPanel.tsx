@@ -10,6 +10,7 @@ import { cleanUpPanelState } from '../../panel/state/reducers';
 
 export interface OwnProps {
   panel: PanelModel;
+  stateKey: string;
   dashboard: DashboardModel;
   isEditing: boolean;
   isViewing: boolean;
@@ -23,7 +24,7 @@ export interface State {
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
-  const panelState = state.panels[props.panel.key];
+  const panelState = state.panels[props.stateKey];
   if (!panelState) {
     return { plugin: null };
   }
@@ -56,7 +57,12 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.props.initPanelOnMount(this.props.panel);
-    console.log('DashboardPanel.mount', this.props.panel.key);
+    console.log(`DashboardPanel.mount panelKey=${this.props.stateKey} panel.key=${this.props.panel.key}`);
+  }
+
+  componentWillUnmount() {
+    console.log(`DashboardPanel.unmount panelKey=${this.props.stateKey} panel.key=${this.props.panel.key}`);
+    this.props.cleanUpPanelState({ key: this.props.stateKey });
   }
 
   componentDidUpdate() {

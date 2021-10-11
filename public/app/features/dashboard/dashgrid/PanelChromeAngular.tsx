@@ -98,7 +98,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.cleanUpAngularPanel();
     this.subs.unsubscribe();
   }
 
@@ -106,7 +105,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const { plugin, height, width, panel } = this.props;
 
     if (prevProps.plugin !== plugin) {
-      this.cleanUpAngularPanel();
       this.loadAngularPanel();
     }
 
@@ -157,17 +155,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       key: panel.key,
       angularComponent: loader.load(this.element, this.scopeProps, template),
     });
-  }
-
-  cleanUpAngularPanel() {
-    const { angularComponent, setPanelAngularComponent, panel } = this.props;
-
-    if (angularComponent) {
-      console.log('angularComponent.destroy()');
-      angularComponent.destroy();
-    }
-
-    setPanelAngularComponent({ key: panel.key, angularComponent: null });
   }
 
   hasOverlayHeader() {
