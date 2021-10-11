@@ -36,9 +36,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.6/grabpl
   - chmod +x bin/grabpl
-  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
-  - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
+  - curl -fLO https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
+  - tar -C bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz
+  - rm dockerize-linux-amd64-v0.6.1.tar.gz
   environment:
     YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
@@ -163,6 +163,6 @@ get:
 
 ---
 kind: signature
-hmac: 050e67c362db3701af044cc4e65e1153e2a50e3b0abef931f4624b789d2a7410
+hmac: d6bc571a9d5f2ce84419b455e6d26853543c6e7fdee9af708dbb999eaa4a22c3
 
 ...
