@@ -218,14 +218,17 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, theme: Grafan
     maxLength = size.width > maxLength ? size.width : maxLength;
   }
 
+  // Add padding to the right if the labels are rotated in a way that makes the last label extend outside the graph.
   const paddingRight =
     rotateLabel < 0
       ? Math.cos((rotateLabel * -1 * Math.PI) / 180) * measureText(values.get(values.length - 1), fontSize).width
       : 0;
 
+  // Add padding to the left if the labels are rotated in a way that makes the first label extend outside the graph.
   const paddingLeft =
     rotateLabel > 0 ? Math.cos((rotateLabel * Math.PI) / 180) * measureText(values.get(0), fontSize).width : 0;
 
+  // Add padding to the bottom to avoid clipping the rotated labels.
   const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
 
   return [0, paddingRight, paddingBottom, paddingLeft];
