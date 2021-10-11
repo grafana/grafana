@@ -220,8 +220,7 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, theme: Grafan
 
   const paddingRight =
     rotateLabel < 0
-      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
-        measureText(frame.fields[0].values.get(values.length - 1), fontSize).width
+      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) * measureText(values.get(values.length - 1), fontSize).width
       : 0;
 
   const paddingLeft =
