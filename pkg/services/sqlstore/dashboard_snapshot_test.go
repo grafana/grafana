@@ -26,7 +26,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	t.Cleanup(func() {
 		setting.SecretKey = origSecret
 	})
-	secretsService := secrets.SetupSecretsService(t, MockSecretsStore{store: make(map[string]*types.DataKey, 1)})
+	secretsService := SetupTestSecretsService(t)
 	dashboard := simplejson.NewFromAny(map[string]interface{}{"hello": "mupp"})
 
 	t.Run("Given saved snapshot", func(t *testing.T) {

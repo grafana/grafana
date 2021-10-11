@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -26,8 +27,8 @@ func ProvideSecretsStore(sqlStore *sqlstore.SQLStore) *SecretsStoreImpl {
 	}
 }
 
-func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types.DataKey, error) {
-	dataKey := &types.DataKey{}
+func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*secrets.DataKey, error) {
+	dataKey := &secrets.DataKey{}
 	var exists bool
 
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -39,7 +40,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types
 	})
 
 	if !exists {
-		return nil, types.ErrDataKeyNotFound
+		return nil, secrets.ErrDataKeyNotFound
 	}
 
 	if err != nil {
@@ -50,8 +51,8 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types
 	return dataKey, nil
 }
 
-func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error) {
-	result := make([]*types.DataKey, 0)
+func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.DataKey, error) {
+	result := make([]*secrets.DataKey, 0)
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		err := sess.Table(dataKeysTable).Find(&result)
 		return err
@@ -59,13 +60,13 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*types.DataKe
 	return result, err
 }
 
-func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey types.DataKey) error {
+func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey secrets.DataKey) error {
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return ss.CreateDataKeyWithDBSession(ctx, dataKey, sess.Session)
 	})
 }
 
-func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey types.DataKey, sess *xorm.Session) error {
+func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey secrets.DataKey, sess *xorm.Session) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
@@ -83,7 +84,7 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) erro
 	}
 
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Table(dataKeysTable).Delete(&types.DataKey{Name: name})
+		_, err := sess.Table(dataKeysTable).Delete(&secrets.DataKey{Name: name})
 
 		return err
 	})
