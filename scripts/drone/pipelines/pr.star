@@ -8,6 +8,7 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'test_backend_step',
+    'test_backend_integration_step',
     'test_frontend_step',
     'gen_version_step',
     'package_step',
@@ -24,6 +25,7 @@ load(
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
     'validate_scuemata_step',
+    'ensure_cuetsified_step',
     'test_a11y_frontend_step_pr',
 )
 
@@ -50,11 +52,13 @@ def pr_pipelines(edition):
         lint_backend_step(edition=edition),
         lint_frontend_step(),
         test_backend_step(edition=edition),
+        test_backend_integration_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -65,6 +69,7 @@ def pr_pipelines(edition):
         steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
+            test_backend_integration_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 

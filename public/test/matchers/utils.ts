@@ -1,6 +1,6 @@
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
 import { OBSERVABLE_TEST_TIMEOUT_IN_MS } from './types';
-import { asapScheduler, Observable, Subscription, timer } from 'rxjs';
+import { asapScheduler, Subscription, timer, isObservable } from 'rxjs';
 
 export function forceObservableCompletion(subscription: Subscription, resolve: (args: any) => void) {
   const timeoutObservable = timer(OBSERVABLE_TEST_TIMEOUT_IN_MS, asapScheduler);
@@ -35,7 +35,7 @@ Expected ${printReceived(received)} to be ${printExpected('defined')}.`,
 }
 
 export function expectObservableToBeObservable(received: any): jest.CustomMatcherResult | null {
-  if (received instanceof Observable) {
+  if (isObservable(received)) {
     return null;
   }
 

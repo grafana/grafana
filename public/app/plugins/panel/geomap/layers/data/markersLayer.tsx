@@ -11,6 +11,7 @@ import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
+import * as style from 'ol/style';
 
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
@@ -19,11 +20,15 @@ import {
   ScaleDimensionConfig,
   getScaledDimension,
   getColorDimension,
+  ResourceDimensionConfig,
+  ResourceDimensionMode,
+  ResourceFolderName,
+  getPublicOrAbsoluteUrl,
 } from 'app/features/dimensions';
-import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor, ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { circleMarker, markerMakers } from '../../utils/regularShapes';
+import { StyleMaker, getMarkerFromPath, MarkerShapePath } from '../../utils/regularShapes';
 import { ReplaySubject } from 'rxjs';
 
 // Configuration options for Circle overlays
@@ -31,13 +36,15 @@ export interface MarkersConfig {
   size: ScaleDimensionConfig;
   color: ColorDimensionConfig;
   fillOpacity: number;
-  shape?: string;
   showLegend?: boolean;
+  markerSymbol: ResourceDimensionConfig;
 }
+
+const DEFAULT_SIZE = 5;
 
 const defaultOptions: MarkersConfig = {
   size: {
-    fixed: 5,
+    fixed: DEFAULT_SIZE,
     min: 2,
     max: 15,
   },
@@ -45,8 +52,11 @@ const defaultOptions: MarkersConfig = {
     fixed: 'dark-green', // picked from theme
   },
   fillOpacity: 0.4,
-  shape: 'circle',
   showLegend: true,
+  markerSymbol: {
+    mode: ResourceDimensionMode.Fixed,
+    fixed: MarkerShapePath.Circle,
+  },
 };
 
 export const MARKERS_LAYER_ID = 'markers';
@@ -88,7 +98,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (config.showLegend) {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
-    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
 
     return {
       init: () => vectorLayer,
@@ -97,6 +106,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if (!data.series?.length) {
           return; // ignore empty
         }
+
+        const markerPath =
+          getPublicOrAbsoluteUrl(config.markerSymbol?.fixed) ?? getPublicOrAbsoluteUrl(MarkerShapePath.Circle);
+
+        const marker = getMarkerFromPath(config.markerSymbol?.fixed);
+
+        const makeIconStyle = (color: string, fillColor: string, radius: number) => {
+          return new style.Style({
+            image: new style.Icon({
+              src: markerPath,
+              color,
+              //  opacity,
+              scale: (DEFAULT_SIZE + radius) / 100,
+            }),
+          });
+        };
+
+        const shape: StyleMaker = marker?.make ?? makeIconStyle;
 
         const features: Feature<Point>[] = [];
 
@@ -126,8 +153,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               frame,
               rowIndex: i,
             });
-
-            dot.setStyle(shape!.make(color, fillColor, radius));
+            dot.setStyle(shape(color, fillColor, radius));
             features.push(dot);
           }
 
@@ -151,17 +177,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   registerOptionsUI: (builder) => {
     builder
       .addCustomEditor({
-        id: 'config.color',
-        path: 'config.color',
-        name: 'Marker Color',
-        editor: ColorDimensionEditor,
-        settings: {},
-        defaultValue: {
-          // Configured values
-          fixed: 'grey',
-        },
-      })
-      .addCustomEditor({
         id: 'config.size',
         path: 'config.size',
         name: 'Marker Size',
@@ -172,18 +187,33 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         },
         defaultValue: {
           // Configured values
-          fixed: 5,
+          fixed: DEFAULT_SIZE,
           min: 1,
           max: 20,
         },
       })
-      .addSelect({
-        path: 'config.shape',
-        name: 'Marker Shape',
+      .addCustomEditor({
+        id: 'config.markerSymbol',
+        path: 'config.markerSymbol',
+        name: 'Marker Symbol',
+        editor: ResourceDimensionEditor,
+        defaultValue: defaultOptions.markerSymbol,
         settings: {
-          options: markerMakers.selectOptions().options,
+          resourceType: 'icon',
+          showSourceRadio: false,
+          folderName: ResourceFolderName.Marker,
         },
-        defaultValue: 'circle',
+      })
+      .addCustomEditor({
+        id: 'config.color',
+        path: 'config.color',
+        name: 'Marker Color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {
+          // Configured values
+          fixed: 'grey',
+        },
       })
       .addSliderInput({
         path: 'config.fillOpacity',
@@ -194,7 +224,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 1,
           step: 0.1,
         },
-        showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
       })
       .addBooleanSwitch({
         path: 'config.showLegend',
