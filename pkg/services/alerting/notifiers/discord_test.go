@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDiscordNotifier(t *testing.T) {
 	Convey("Discord notifier tests", t, func() {
-		secretsService := secrets.SetupTestService(t)
+		secretsService, _ := secretsManager.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

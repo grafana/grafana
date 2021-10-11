@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +81,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 //nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
 	Convey("Alertmanager notifier tests", t, func() {
-		secretsService := secrets.SetupTestService(t)
+		secretsService, _ := secretsManager.SetupTestService(t)
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
