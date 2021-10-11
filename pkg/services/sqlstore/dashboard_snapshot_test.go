@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"xorm.io/xorm"
 )
 
 func TestDashboardSnapshotDBAccess(t *testing.T) {
@@ -24,14 +26,14 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	t.Cleanup(func() {
 		setting.SecretKey = origSecret
 	})
-	secretsService := secrets.SetupTestService(t)
+	secretsService := secrets.SetupSecretsService(t, MockSecretsStore{store: make(map[string]*types.DataKey, 1)})
 	dashboard := simplejson.NewFromAny(map[string]interface{}{"hello": "mupp"})
 
 	t.Run("Given saved snapshot", func(t *testing.T) {
 		rawDashboard, err := dashboard.Encode()
 		require.NoError(t, err)
 
-		encryptedDashboard, err := secretsService.Encrypt(context.Background(), rawDashboard)
+		encryptedDashboard, err := secretsService.Encrypt(context.Background(), rawDashboard, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		cmd := models.CreateDashboardSnapshotCommand{
@@ -203,4 +205,39 @@ func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires in
 	}
 
 	return cmd.Result
+}
+
+type MockSecretsStore struct {
+	store map[string]*types.DataKey
+}
+
+func (m MockSecretsStore) GetDataKey(_ context.Context, name string) (*types.DataKey, error) {
+	key, ok := m.store[name]
+	if !ok {
+		return nil, types.ErrDataKeyNotFound
+	}
+	return key, nil
+}
+
+func (m MockSecretsStore) GetAllDataKeys(_ context.Context) ([]*types.DataKey, error) {
+	result := make([]*types.DataKey, 0)
+	for _, key := range m.store {
+		result = append(result, key)
+	}
+	return result, nil
+}
+
+func (m MockSecretsStore) CreateDataKey(_ context.Context, dataKey types.DataKey) error {
+	m.store[dataKey.Name] = &dataKey
+	return nil
+}
+
+func (m MockSecretsStore) CreateDataKeyWithDBSession(ctx context.Context, dataKey types.DataKey, sess *xorm.Session) error {
+	m.store[dataKey.Name] = &dataKey
+	return nil
+}
+
+func (m MockSecretsStore) DeleteDataKey(_ context.Context, name string) error {
+	delete(m.store, name)
+	return nil
 }
