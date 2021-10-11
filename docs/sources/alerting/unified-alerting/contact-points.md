@@ -60,6 +60,68 @@ Grafana alerting UI allows you to configure contact points for the Grafana manag
 | [Webhook](#webhook)                           | `webhook`                 |
 | [Zenduty](#zenduty)                           | `webhook`                 |
 
+## Webhook
+
+Example json body:
+
+```json
+{
+  "receiver": "webhook_recv",
+  "status": "firing",
+  "orgId": 1,
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "WebhookAlert"
+      },
+      "annotations": {},
+      "startsAt": "%s",
+      "valueString": "[ var='A' labels={} value=1 ]",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "https://play.grafana.org/alerting/UID_WebhookAlert/edit",
+      "fingerprint": "929467973978d053",
+      "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
+      "dashboardURL": "",
+      "panelURL": ""
+    }
+  ],
+  "groupLabels": {
+    "alertname": "WebhookAlert"
+  },
+  "commonLabels": {
+    "alertname": "WebhookAlert"
+  },
+  "commonAnnotations": {},
+  "externalURL": "https://play.grafana.org/",
+  "version": "1",
+  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{alertname=\"WebhookAlert\"}",
+  "truncatedAlerts": 0,
+  "title": "[FIRING:1] WebhookAlert ",
+  "state": "alerting",
+  "message": "**Firing**\n\nLabels:\n - alertname = WebhookAlert\nAnnotations:\nSource: https://play.grafana.org/alerting/UID_WebhookAlert/edit\nSilence: https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert\n"
+}
+```
+
+- **status** - The possible values for alert state are: `firing`, `resolved`.
+
+### Breaking changes when updating to unified alerting
+
+Unified alerting introduced a whole new way to mange your alerting rules and alerts in grafana.
+As part of this big change there are some breaking changes that we'll explain in detail.
+
+#### Multiple Alerts in one payload
+
+As we now enable [multi deminsional alerting]({{< relref "../difference-old-new.md#multi-dimensional-alerting" >}}) a payload
+consits of an array of alerts.
+
+#### Removed dashboard related fields
+
+As alerts are not coupled to dashboards anymore the fields related to dashboards
+where removed. The removed fields are `dashboardId` and `panelId`.
+
+####
+
 ## Manage contact points for an external Alertmanager
 
 Grafana alerting UI supports managing external Alertmanager configuration. Once you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page where you can select either `Grafana` or an external Alertmanager as your data source.
