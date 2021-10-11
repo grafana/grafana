@@ -3291,7 +3291,7 @@
     "@react-aria/utils" "^3.8.2"
     "@react-types/shared" "^3.8.0"
 
-"@react-aria/overlays@^3.7.2":
+"@react-aria/overlays@3.7.2":
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/@react-aria/overlays/-/overlays-3.7.2.tgz#dca7693c0ec31371b19c2f51b482f03819b8c391"
   integrity sha512-KAurJ5MJRnXCPRrO1OdAaXz253cwO5VOOp8wx3/40Zm05o5FBA15ZJZT6BD8rZQOKMCAjkI76tiZQeMQtDULcQ==
