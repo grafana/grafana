@@ -1,6 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
-import { mapPanelChangedHandler } from './migrations';
-
+import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
 
@@ -106,3 +105,169 @@ const simpleWorldmapConfig = {
   valueName: 'total',
   datasource: null,
 };
+
+describe('geomap migrations', () => {
+  it('updates marker', () => {
+    const panel = {
+      id: 2,
+      gridPos: {
+        h: 9,
+        w: 12,
+        x: 0,
+        y: 0,
+      },
+      type: 'geomap',
+      title: 'Panel Title',
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              {
+                color: 'green',
+                value: null,
+              },
+              {
+                color: 'red',
+                value: 80,
+              },
+            ],
+          },
+          mappings: [],
+          color: {
+            mode: 'thresholds',
+          },
+        },
+        overrides: [],
+      },
+      options: {
+        view: {
+          id: 'zero',
+          lat: 0,
+          lon: 0,
+          zoom: 1,
+        },
+        basemap: {
+          type: 'default',
+          config: {},
+        },
+        layers: [
+          {
+            config: {
+              color: {
+                fixed: 'dark-green',
+              },
+              fillOpacity: 0.4,
+              markerSymbol: {
+                fixed: '',
+                mode: 'fixed',
+              },
+              shape: 'circle',
+              showLegend: true,
+              size: {
+                fixed: 5,
+                max: 15,
+                min: 2,
+              },
+            },
+            location: {
+              mode: 'auto',
+            },
+            type: 'markers',
+          },
+        ],
+        controls: {
+          showZoom: true,
+          mouseWheelZoom: true,
+          showAttribution: true,
+          showScale: false,
+          showDebug: false,
+        },
+      },
+      pluginVersion: '8.3.0-pre',
+      datasource: null,
+    } as PanelModel;
+    panel.options = mapMigrationHandler(panel);
+
+    expect(panel).toMatchInlineSnapshot(`
+      Object {
+        "datasource": null,
+        "fieldConfig": Object {
+          "defaults": Object {
+            "color": Object {
+              "mode": "thresholds",
+            },
+            "mappings": Array [],
+            "thresholds": Object {
+              "mode": "absolute",
+              "steps": Array [
+                Object {
+                  "color": "green",
+                  "value": null,
+                },
+                Object {
+                  "color": "red",
+                  "value": 80,
+                },
+              ],
+            },
+          },
+          "overrides": Array [],
+        },
+        "gridPos": Object {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 0,
+        },
+        "id": 2,
+        "options": Object {
+          "basemap": Object {
+            "config": Object {},
+            "type": "default",
+          },
+          "controls": Object {
+            "mouseWheelZoom": true,
+            "showAttribution": true,
+            "showDebug": false,
+            "showScale": false,
+            "showZoom": true,
+          },
+          "layers": Array [
+            Object {
+              "config": Object {
+                "color": Object {
+                  "fixed": "dark-green",
+                },
+                "fillOpacity": 0.4,
+                "markerSymbol": Object {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed",
+                },
+                "showLegend": true,
+                "size": Object {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2,
+                },
+              },
+              "location": Object {
+                "mode": "auto",
+              },
+              "type": "markers",
+            },
+          ],
+          "view": Object {
+            "id": "zero",
+            "lat": 0,
+            "lon": 0,
+            "zoom": 1,
+          },
+        },
+        "pluginVersion": "8.3.0-pre",
+        "title": "Panel Title",
+        "type": "geomap",
+      }
+    `);
+  });
+});

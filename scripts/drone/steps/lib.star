@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.4.8'
+grabpl_version = '2.5.1'
 build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -62,7 +62,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'yarn install --frozen-lockfile --no-progress',
+            'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
@@ -431,7 +431,7 @@ def test_a11y_frontend_step(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+            'yarn run test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 
@@ -450,7 +450,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility-pr',
+            'yarn run test:accessibility-pr',
         ],
     }
 
@@ -636,7 +636,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            './node_modules/.bin/cypress install',
+            'yarn run cypress install',
             cmd,
         ],
     }
