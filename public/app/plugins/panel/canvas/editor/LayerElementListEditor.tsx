@@ -10,11 +10,9 @@ import { InstanceState } from '../CanvasPanel';
 import { LayerActionID } from '../types';
 import { canvasElementRegistry } from 'app/features/canvas';
 
-// StandardEditorProps<any, >>
-
 type Props = StandardEditorProps<any, InstanceState, PanelOptions>;
 
-export class LayerEditor extends PureComponent<Props> {
+export class LayerElementListEditor extends PureComponent<Props> {
   style = getStyles(config.theme);
 
   onAddItem = (sel: SelectableValue<string>) => {

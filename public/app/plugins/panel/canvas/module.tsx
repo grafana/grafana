@@ -3,7 +3,7 @@ import { PanelPlugin } from '@grafana/data';
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { PanelOptions } from './models.gen';
 import { getElementEditor } from './editor/elementEditor';
-import { LayerEditor } from './editor/LayerEditor';
+import { getLayerEditor } from './editor/layerEditor';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
@@ -32,13 +32,6 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
         console.log('NO Single seleciton', selection?.length);
       }
 
-      builder.addCustomEditor({
-        category: ['Layers'],
-        id: 'content',
-        path: 'root',
-        name: '',
-        editor: LayerEditor,
-        settings: state,
-      });
+      builder.addNestedOptions(getLayerEditor(state));
     }
   });

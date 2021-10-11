@@ -42,6 +42,10 @@ export class GroupState extends ElementState {
     }
   }
 
+  isRoot() {
+    return false;
+  }
+
   // The parent size, need to set our own size based on offsets
   updateSize(width: number, height: number) {
     super.updateSize(width, height);
@@ -65,7 +69,7 @@ export class GroupState extends ElementState {
     }
   }
 
-  // a little function to help us with reordering the result
+  // used in the layer editor
   reorder(startIndex: number, endIndex: number) {
     const result = Array.from(this.elements);
     const [removed] = result.splice(startIndex, 1);
@@ -75,6 +79,7 @@ export class GroupState extends ElementState {
   }
 
   // ??? or should this be on the element directly?
+  // are actions scoped to layers?
   doAction = (action: LayerActionID, element: ElementState) => {
     switch (action) {
       case LayerActionID.Delete:

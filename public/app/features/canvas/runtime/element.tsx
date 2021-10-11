@@ -33,7 +33,6 @@ export class ElementState {
   // From options, but always set and always valid
   anchor: Anchor;
   placement: Placement;
-  changeCallback?: () => void;
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
@@ -185,15 +184,9 @@ export class ElementState {
 
     this.revId++;
     this.options = { ...options };
-    if (this.changeCallback) {
-      this.changeCallback();
-    }
     let trav = this.parent;
     while (trav) {
       trav.revId++;
-      if (trav.changeCallback) {
-        trav.changeCallback();
-      }
       trav = trav.parent;
     }
   }

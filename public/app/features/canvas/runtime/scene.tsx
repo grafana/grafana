@@ -27,15 +27,15 @@ import {
   getResourceDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { GroupState } from './group';
 import { ElementState } from './element';
+import { RootElement } from './root';
 
 export class Scene {
   private lookup = new Map<number, ElementState>();
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
-  readonly moved = new Subject<number>(); // called after resize/drag
-  root: GroupState;
+  readonly moved = new Subject<number>(); // called after resize/drag for editor updates
+  root: RootElement;
 
   revId = 0;
 
@@ -50,11 +50,12 @@ export class Scene {
 
   load(cfg: CanvasGroupOptions) {
     console.log('LOAD', cfg, this);
-    this.root = new GroupState(
+    this.root = new RootElement(
       cfg ?? {
         type: 'group',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
-      }
+      },
+      this.save // callback when changes are made
     );
 
     // Build the scene registry
@@ -63,8 +64,6 @@ export class Scene {
       this.lookup.set(v.UID, v);
     });
 
-    // Call save whenever things change
-    this.root.changeCallback = this.save;
     return this.root;
   }
 
@@ -136,9 +135,6 @@ export class Scene {
   }
 
   save = () => {
-    const options = this.root.options;
-    delete options.anchor;
-    delete options.placement;
     this.onSave(this.root.getSaveModel());
   };
 
