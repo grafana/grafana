@@ -22,6 +22,7 @@
     "@types/deep-freeze": "^0.1.1",
     "@types/hoist-non-react-statics": "^3.3.1",
     "@types/lodash": "^4.14.123",
+    "@types/react": "16.9.9",
     "@types/react-icons": "2.2.7",
     "@types/recompose": "^0.30.7",
     "@types/slate-react": "0.22.5",
@@ -37,9 +38,11 @@
     "lru-memoize": "^1.1.0",
     "memoize-one": "^5.0.0",
     "moment": "2.29.1",
+    "react": "17.0.1",
     "react-icons": "2.2.7",
     "recompose": "^0.25.0",
     "tinycolor2": "1.4.1",
+    "tslib": "2.3.1",
     "tween-functions": "^1.2.0"
   },
   "volta": {

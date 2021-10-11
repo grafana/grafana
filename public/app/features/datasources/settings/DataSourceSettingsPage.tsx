@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { isString } from 'lodash';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { PluginSettings } from './PluginSettings';
@@ -40,7 +39,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const dataSourceId = props.match.params.uid;
   const params = new URLSearchParams(props.location.search);
   const dataSource = getDataSource(state.dataSources, dataSourceId);
-  const { plugin, loadError, testingStatus } = state.dataSourceSettings;
+  const { plugin, loadError, loading, testingStatus } = state.dataSourceSettings;
   const page = params.get('page');
 
   const nav = plugin
@@ -60,6 +59,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     page,
     plugin,
     loadError,
+    loading,
     testingStatus,
     navModel,
   };
@@ -111,7 +111,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: 'Delete',
-        text: 'Are you sure you want to delete this data source?',
+        text: `Are you sure you want to delete the "${this.props.dataSource.name}" data source?`,
         yesText: 'Delete',
         icon: 'trash-alt',
         onConfirm: () => {
@@ -166,19 +166,12 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return url;
   }
 
-  renderLoadError(loadError: any) {
-    let showDelete = false;
-    let msg = loadError.toString();
-    if (loadError.data) {
-      if (loadError.data.message) {
-        msg = loadError.data.message;
-      }
-    } else if (isString(loadError)) {
-      showDelete = true;
-    }
+  renderLoadError() {
+    const { loadError } = this.props;
+    const canDeleteDataSources = !this.isReadOnly() && contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
 
     const node = {
-      text: msg,
+      text: loadError!,
       subTitle: 'Data Source Error',
       icon: 'exclamation-triangle',
     };
@@ -189,18 +182,17 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
     return (
       <Page navModel={nav}>
-        <Page.Contents>
-          <div>
-            <div className="gf-form-button-row">
-              {showDelete && (
-                <Button type="submit" variant="destructive" onClick={this.onDelete}>
-                  Delete
-                </Button>
-              )}
-              <LinkButton variant="secondary" href="datasources" fill="outline">
-                Back
-              </LinkButton>
-            </div>
+        <Page.Contents isLoading={this.props.loading}>
+          {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+          <div className="gf-form-button-row">
+            {canDeleteDataSources && (
+              <Button type="submit" variant="destructive" onClick={this.onDelete}>
+                Delete
+              </Button>
+            )}
+            <LinkButton variant="secondary" href="datasources" fill="outline">
+              Back
+            </LinkButton>
           </div>
         </Page.Contents>
       </Page>
@@ -295,15 +287,15 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, page, loadError } = this.props;
+    const { navModel, page, loadError, loading } = this.props;
 
     if (loadError) {
-      return this.renderLoadError(loadError);
+      return this.renderLoadError();
     }
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={!this.hasDataSource}>
+        <Page.Contents isLoading={loading}>
           {this.hasDataSource ? <div>{page ? this.renderConfigPageBody(page) : this.renderSettings()}</div> : null}
         </Page.Contents>
       </Page>

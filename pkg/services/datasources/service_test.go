@@ -1,26 +1,69 @@
-package models
+package datasources
 
 import (
+	"context"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func TestService(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+
+	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
+
+	origSecret := setting.SecretKey
+	setting.SecretKey = "datasources_service_test"
+	t.Cleanup(func() {
+		setting.SecretKey = origSecret
+	})
+
+	var ds *models.DataSource
+
+	t.Run("create datasource should encrypt the secure json data", func(t *testing.T) {
+		ctx := context.Background()
+
+		sjd := map[string]string{"password": "12345"}
+		cmd := models.AddDataSourceCommand{SecureJsonData: sjd}
+
+		err := s.AddDataSource(ctx, &cmd)
+		require.NoError(t, err)
+
+		ds = cmd.Result
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, ds.SecureJsonData, setting.SecretKey)
+		require.NoError(t, err)
+		require.Equal(t, sjd, decrypted)
+	})
+
+	t.Run("update datasource should encrypt the secure json data", func(t *testing.T) {
+		ctx := context.Background()
+		sjd := map[string]string{"password": "678910"}
+		cmd := models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, SecureJsonData: sjd}
+		err := s.UpdateDataSource(ctx, &cmd)
+		require.NoError(t, err)
+
+		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, cmd.Result.SecureJsonData, setting.SecretKey)
+		require.NoError(t, err)
+		require.Equal(t, sjd, decrypted)
+	})
+}
+
 //nolint:goconst
-func TestDataSource_GetHttpTransport(t *testing.T) {
+func TestService_GetHttpTransport(t *testing.T) {
 	t.Run("Should use cached proxy", func(t *testing.T) {
 		var configuredTransport *http.Transport
 		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
@@ -29,19 +72,20 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		clearDSProxyCache(t)
-		ds := DataSource{
+		ds := models.DataSource{
 			Id:   1,
 			Url:  "http://k8s:8001",
 			Type: "Kubernetes",
 		}
 
-		rt1, err := ds.GetHTTPTransport(provider)
+		dsService := ProvideService(bus.New(), nil, ossencryption.ProvideService())
+
+		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt1)
 		tr1 := configuredTransport
 
-		rt2, err := ds.GetHTTPTransport(provider)
+		rt2, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -60,15 +104,19 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 				configuredTransport = transport
 			},
 		})
-		clearDSProxyCache(t)
+
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		tlsCaCert, err := encryptionService.Encrypt(context.Background(), []byte(caCert), "password")
 		require.NoError(t, err)
-		ds := DataSource{
+
+		ds := models.DataSource{
 			Id:             1,
 			Url:            "http://k8s:8001",
 			Type:           "Kubernetes",
@@ -76,7 +124,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Updated:        time.Now().Add(-2 * time.Minute),
 		}
 
-		rt1, err := ds.GetHTTPTransport(provider)
+		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NotNil(t, rt1)
 		require.NoError(t, err)
 
@@ -90,7 +138,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		ds.SecureJsonData = map[string][]byte{}
 		ds.Updated = time.Now()
 
-		rt2, err := ds.GetHTTPTransport(provider)
+		rt2, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -106,18 +154,22 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 				configuredTransport = transport
 			},
 		})
-		clearDSProxyCache(t)
+
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
-		require.NoError(t, err)
-		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		tlsClientCert, err := encryptionService.Encrypt(context.Background(), []byte(clientCert), "password")
 		require.NoError(t, err)
 
-		ds := DataSource{
+		tlsClientKey, err := encryptionService.Encrypt(context.Background(), []byte(clientKey), "password")
+		require.NoError(t, err)
+
+		ds := models.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
@@ -128,7 +180,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			},
 		}
 
-		rt, err := ds.GetHTTPTransport(provider)
+		rt, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
@@ -144,18 +196,20 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 				configuredTransport = transport
 			},
 		})
-		clearDSProxyCache(t)
-		ClearDSDecryptionCache()
+
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		tlsCaCert, err := encryptionService.Encrypt(context.Background(), []byte(caCert), "password")
 		require.NoError(t, err)
 
-		ds := DataSource{
+		ds := models.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
@@ -165,7 +219,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			},
 		}
 
-		rt, err := ds.GetHTTPTransport(provider)
+		rt, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
@@ -182,24 +236,26 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 				configuredTransport = transport
 			},
 		})
-		clearDSProxyCache(t)
 
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
 
-		ds := DataSource{
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		ds := models.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: json,
 		}
 
-		rt1, err := ds.GetHTTPTransport(provider)
+		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt1)
 		tr1 := configuredTransport
 
-		rt2, err := ds.GetHTTPTransport(provider)
+		rt2, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt2)
 		tr2 := configuredTransport
@@ -210,18 +266,18 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 
 	t.Run("Should set custom headers if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
-		clearDSProxyCache(t)
-		ClearDSDecryptionCache()
 
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
 		})
-		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
 
-		ds := DataSource{
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		encryptedData, err := encryptionService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		require.NoError(t, err)
+
+		ds := models.DataSource{
 			Id:             1,
 			Url:            "http://k8s:8001",
 			Type:           "Kubernetes",
@@ -229,7 +285,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
 		}
 
-		headers := getCustomHeaders(json, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
+		headers := dsService.getCustomHeaders(json, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
 		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
 
 		// 1. Start HTTP test server which checks the request headers
@@ -249,7 +305,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 
 		// 2. Get HTTP transport from datasource which uses the test server as backend
 		ds.Url = backend.URL
-		rt, err := ds.GetHTTPTransport(provider)
+		rt, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 
@@ -269,19 +325,22 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 
 	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
-		clearDSProxyCache(t)
 
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"timeout": 19,
 		})
-		ds := DataSource{
+
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		ds := models.DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: json,
 		}
 
-		client, err := ds.GetHTTPClient(provider)
+		client, err := dsService.GetHTTPClient(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, client)
 		require.Equal(t, 19*time.Second, client.Timeout)
@@ -294,7 +353,6 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 				configuredOpts = opts
 			},
 		})
-		clearDSProxyCache(t)
 
 		origSigV4Enabled := setting.SigV4AuthEnabled
 		setting.SigV4AuthEnabled = true
@@ -305,12 +363,15 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		ds := DataSource{
-			Type:     DS_ES,
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
+		ds := models.DataSource{
+			Type:     models.DS_ES,
 			JsonData: json,
 		}
 
-		_, err = ds.GetHTTPTransport(provider)
+		_, err = dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, configuredOpts)
 		require.NotNil(t, configuredOpts.SigV4)
@@ -318,7 +379,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 	})
 }
 
-func TestDataSource_getTimeout(t *testing.T) {
+func TestService_getTimeout(t *testing.T) {
 	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
 	sdkhttpclient.DefaultTimeoutOptions.Timeout = 60 * time.Second
 	t.Cleanup(func() {
@@ -336,76 +397,100 @@ func TestDataSource_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
+	encryptionService := ossencryption.ProvideService()
+	dsService := ProvideService(bus.New(), nil, encryptionService)
+
 	for _, tc := range testCases {
-		ds := &DataSource{
+		ds := &models.DataSource{
 			JsonData: tc.jsonData,
 		}
-		assert.Equal(t, tc.expectedTimeout, ds.getTimeout())
+		assert.Equal(t, tc.expectedTimeout, dsService.getTimeout(ds))
 	}
 }
 
-func TestDataSource_DecryptedValue(t *testing.T) {
+func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
-		ClearDSDecryptionCache()
+		encryptionService := ossencryption.ProvideService()
+		dsService := ProvideService(bus.New(), nil, encryptionService)
 
-		ds := DataSource{
-			Id:       1,
-			Type:     DS_INFLUXDB_08,
-			JsonData: simplejson.New(),
-			User:     "user",
-			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
+		encryptedJsonData, err := encryptionService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
 				"password": "password",
-			}),
+			}, setting.SecretKey)
+		require.NoError(t, err)
+
+		ds := models.DataSource{
+			Id:             1,
+			Type:           models.DS_INFLUXDB_08,
+			JsonData:       simplejson.New(),
+			User:           "user",
+			SecureJsonData: encryptedJsonData,
 		}
 
 		// Populate cache
-		password, ok := ds.DecryptedValue("password")
+		password, ok := dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
-			"password": "",
-		})
+		encryptedJsonData, err = encryptionService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"password": "",
+			}, setting.SecretKey)
+		require.NoError(t, err)
 
-		password, ok = ds.DecryptedValue("password")
+		ds.SecureJsonData = encryptedJsonData
+
+		password, ok = dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 	})
 
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
-		ClearDSDecryptionCache()
+		encryptionService := ossencryption.ProvideService()
 
-		ds := DataSource{
-			Id:       1,
-			Type:     DS_INFLUXDB_08,
-			JsonData: simplejson.New(),
-			User:     "user",
-			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
+		encryptedJsonData, err := encryptionService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
 				"password": "password",
-			}),
+			}, setting.SecretKey)
+		require.NoError(t, err)
+
+		ds := models.DataSource{
+			Id:             1,
+			Type:           models.DS_INFLUXDB_08,
+			JsonData:       simplejson.New(),
+			User:           "user",
+			SecureJsonData: encryptedJsonData,
 		}
 
+		dsService := ProvideService(bus.New(), nil, encryptionService)
+
 		// Populate cache
-		password, ok := ds.DecryptedValue("password")
+		password, ok := dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
-			"password": "",
-		})
+		ds.SecureJsonData, err = encryptionService.EncryptJsonData(
+			context.Background(),
+			map[string]string{
+				"password": "",
+			}, setting.SecretKey)
 		ds.Updated = time.Now()
+		require.NoError(t, err)
 
-		password, ok = ds.DecryptedValue("password")
+		password, ok = dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Empty(t, password)
 	})
 }
 
-func TestDataSource_HTTPClientOptions(t *testing.T) {
+func TestService_HTTPClientOptions(t *testing.T) {
 	emptyJsonData := simplejson.New()
 	emptySecureJsonData := map[string][]byte{}
 
-	ds := DataSource{
+	ds := models.DataSource{
 		Id:   1,
 		Url:  "https://api.example.com",
 		Type: "prometheus",
@@ -415,7 +500,10 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
-			opts, err := ds.HTTPClientOptions()
+			encryptionService := ossencryption.ProvideService()
+			dsService := ProvideService(bus.New(), nil, encryptionService)
+
+			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
 			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
@@ -429,7 +517,10 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 				"azureAuth": true,
 			})
 
-			opts, err := ds.HTTPClientOptions()
+			encryptionService := ossencryption.ProvideService()
+			dsService := ProvideService(bus.New(), nil, encryptionService)
+
+			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
 			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
@@ -446,7 +537,10 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			opts, err := ds.HTTPClientOptions()
+			encryptionService := ossencryption.ProvideService()
+			dsService := ProvideService(bus.New(), nil, encryptionService)
+
+			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
 			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
@@ -467,7 +561,10 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			opts, err := ds.HTTPClientOptions()
+			encryptionService := ossencryption.ProvideService()
+			dsService := ProvideService(bus.New(), nil, encryptionService)
+
+			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
 			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
@@ -482,7 +579,10 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 				"azureCredentials": "invalid",
 			})
 
-			_, err := ds.HTTPClientOptions()
+			encryptionService := ossencryption.ProvideService()
+			dsService := ProvideService(bus.New(), nil, encryptionService)
+
+			_, err := dsService.httpClientOptions(&ds)
 			assert.Error(t, err)
 		})
 
@@ -493,7 +593,10 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			})
 
-			opts, err := ds.HTTPClientOptions()
+			encryptionService := ossencryption.ProvideService()
+			dsService := ProvideService(bus.New(), nil, encryptionService)
+
+			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
 			require.Contains(t, opts.CustomOptions, "azureEndpointResourceId")
@@ -502,15 +605,6 @@ func TestDataSource_HTTPClientOptions(t *testing.T) {
 			assert.Equal(t, "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5", azureEndpointResourceId)
 		})
 	})
-}
-
-func clearDSProxyCache(t *testing.T) {
-	t.Helper()
-
-	ptc.Lock()
-	defer ptc.Unlock()
-
-	ptc.cache = make(map[int64]cachedRoundTripper)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----
