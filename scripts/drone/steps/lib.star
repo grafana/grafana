@@ -41,7 +41,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'chmod +x bin/grabpl',
     ]
     common_cmds = [
-        'yarn cache dir',
     ]
 
     if ver_mode == 'release':
