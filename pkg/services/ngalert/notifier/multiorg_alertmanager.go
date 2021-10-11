@@ -234,7 +234,6 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(activeOrganizations 
 	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		moa.logger.Error("failed to list local working directory", "dir", dataDir, "err", err)
-			"dir", dataDir, "err", err)
 		return
 	}
 	for _, file := range files {
@@ -244,8 +243,8 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(activeOrganizations 
 		}
 		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
 		if err != nil {
-		  moa.logger.Error("unable to parse orgID from directory name", "name", file.Name(), "err", err)
-		  continue
+			moa.logger.Error("unable to parse orgID from directory name", "name", file.Name(), "err", err)
+			continue
 		}
 		_, exists := activeOrganizations[orgID]
 		if !exists {
