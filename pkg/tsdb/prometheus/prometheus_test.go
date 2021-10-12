@@ -362,21 +362,16 @@ func TestPrometheus_parseResponse(t *testing.T) {
 				Exemplars: []apiv1.Exemplar{
 					{
 						Labels:    p.LabelSet{"traceID": "test1"},
-						Value:     0.001863295,
-						Timestamp: p.TimeFromUnixNano(time.Now().UnixNano()),
-					},
-					{
-						Labels:    p.LabelSet{"traceID": "test2"},
 						Value:     0.003535405,
 						Timestamp: p.TimeFromUnixNano(time.Now().Add(-2 * time.Minute).UnixNano()),
 					},
 					{
-						Labels:    p.LabelSet{"traceID": "test3"},
+						Labels:    p.LabelSet{"traceID": "test2"},
 						Value:     0.005555605,
 						Timestamp: p.TimeFromUnixNano(time.Now().Add(-4 * time.Minute).UnixNano()),
 					},
 					{
-						Labels:    p.LabelSet{"traceID": "test4"},
+						Labels:    p.LabelSet{"traceID": "test3"},
 						Value:     0.007545445,
 						Timestamp: p.TimeFromUnixNano(time.Now().Add(-6 * time.Minute).UnixNano()),
 					},
