@@ -1,0 +1,28 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "enabledManagers": ["npm"],
+  "ignoreDeps": [
+    "d3",
+    "husky",
+    "slate",
+    "slate-plain-serializer",
+    "systemjs",
+    "ts-loader",
+    "ora"
+  ],
+  "labels": ["area/frontend", "dependencies"],
+  "minor": {
+    "enabled": false
+  },
+  "patch": {
+    "enabled": false
+  },
+  "prConcurrentLimit": 10,
+  "reviewers": ["team:grafana/frontend-ops"],
+  "separateMajorMinor": false,
+  "vulnerabilityAlerts": {
+    "addLabels": ["area/security"]
+  }
+}
