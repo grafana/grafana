@@ -12,6 +12,7 @@ export interface SliderProps {
   formatTooltipResult?: (value: number) => number;
   onChange?: (value: number) => void;
   onAfterChange?: (value?: number) => void;
+  ariaLabelForHandle?: string;
 }
 
 export interface RangeSliderProps {
