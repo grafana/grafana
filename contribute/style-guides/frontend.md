@@ -344,6 +344,20 @@ static defaultProps = { ... }
 static defaultProps: Partial<Props> = { ... }
 ```
 
+### export function XXX vs export const XXX = () => {}
+
+It's advisable to use named regular functions when creating a new react functional component.
+
+```typescript
+// bad
+export const Component = (props: Props) => { ... };
+
+// good
+export function Component(props: Props) { ... }
+```
+
+For class methods - use arrow function only when you need the binding, meaning the method will be used outside of the class context.
+
 ## State management
 
 - Don't mutate state in reducers or thunks.
