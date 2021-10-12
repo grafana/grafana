@@ -66,59 +66,66 @@ Example json body:
 
 ```json
 {
-  "receiver": "webhook_recv",
+  "receiver": "My Super Webhook",
   "status": "firing",
   "orgId": 1,
   "alerts": [
     {
       "status": "firing",
       "labels": {
-        "alertname": "WebhookAlert"
+        "alertname": "High memory usage",
+        "team": "blue",
+        "zone": "us-1"
       },
       "annotations": {
-        "summary": "**Firing**\n\nLabels:\n - alertname = WebhookAlert\nAnnotations:\nSource: https://play.grafana.org/alerting/UID_WebhookAlert/edit\nSilence: https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert\n"
+        "description": "The system has high memory usage",
+        "runbook_url": "https://myrunbook.com/runbook/1234",
+        "summary": "This alert was triggered for zone us-1"
       },
-      "startsAt": "0001-01-01T00:00:00Z",
-      "valueString": "[ var='A' labels={} value=1 ]",
+      "startsAt": "2021-10-12T09:51:03.157076+02:00",
       "endsAt": "0001-01-01T00:00:00Z",
-      "generatorURL": "https://play.grafana.org/alerting/UID_WebhookAlert/edit",
-      "fingerprint": "929467973978d053",
-      "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
+      "generatorURL": "https://play.grafana.org/alerting/1afz29v7z/edit",
+      "fingerprint": "c6eadffa33fcdf37",
+      "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT2%2Cteam%3Dblue%2Czone%3Dus-1",
       "dashboardURL": "",
-      "panelURL": ""
+      "panelURL": "",
+      "valueString": "[ metric='' labels={} value=14151.331895396988 ]"
     },
     {
       "status": "firing",
       "labels": {
-        "alertname": "WebhookAlert"
+        "alertname": "High CPU usage",
+        "team": "blue",
+        "zone": "eu-1"
       },
       "annotations": {
-        "summary": "**Firing**\n\nLabels:\n - alertname = WebhookAlert\nAnnotations:\nSource: https://play.grafana.org/alerting/UID_WebhookAlert/edit\nSilence: https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert\n"
+        "description": "The system has high CPU usage",
+        "runbook_url": "https://myrunbook.com/runbook/1234",
+        "summary": "This alert was triggered for zone eu-1"
       },
-      "startsAt": "2021-10-11T17:38:00Z",
-      "valueString": "[ var='A' labels={} value=1 ]",
+      "startsAt": "2021-10-12T09:56:03.157076+02:00",
       "endsAt": "0001-01-01T00:00:00Z",
-      "generatorURL": "https://play.grafana.org/alerting/UID_WebhookAlert/edit",
-      "fingerprint": "929467973978d053",
-      "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
+      "generatorURL": "https://play.grafana.org/alerting/d1rdpdv7k/edit",
+      "fingerprint": "bc97ff14869b13e3",
+      "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT1%2Cteam%3Dblue%2Czone%3Deu-1",
       "dashboardURL": "",
-      "panelURL": ""
+      "panelURL": "",
+      "valueString": "[ metric='' labels={} value=47043.702386305304 ]"
     }
   ],
-  "groupLabels": {
-    "alertname": "WebhookAlert"
-  },
+  "groupLabels": {},
   "commonLabels": {
-    "alertname": "WebhookAlert"
+    "team": "blue"
   },
   "commonAnnotations": {},
   "externalURL": "https://play.grafana.org/",
   "version": "1",
-  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{alertname=\"WebhookAlert\"}",
+  "groupKey": "{}:{}",
   "truncatedAlerts": 0,
-  "title": "[FIRING:1] WebhookAlert ",
+  "orgId": 1,
+  "title": "[FIRING:2]  (blue)",
   "state": "alerting",
-  "message": "**Firing**\n\nLabels:\n - alertname = WebhookAlert\nAnnotations:\nSource: https://play.grafana.org/alerting/UID_WebhookAlert/edit\nSilence: https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert\n"
+  "message": "**Firing**\n\nLabels:\n - alertname = T2\n - team = blue\n - zone = us-1\nAnnotations:\n - description = This is the alert rule checking the second system\n - runbook_url = https://myrunbook.com\n - summary = This is my summary\nSource: https://play.grafana.org/alerting/1afz29v7z/edit\nSilence: https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT2%2Cteam%3Dblue%2Czone%3Dus-1\n\nLabels:\n - alertname = T1\n - team = blue\n - zone = eu-1\nAnnotations:\nSource: https://play.grafana.org/alerting/d1rdpdv7k/edit\nSilence: https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT1%2Cteam%3Dblue%2Czone%3Deu-1\n"
 }
 ```
 
@@ -173,8 +180,6 @@ consits of an array of alerts.
 
 As alerts are not coupled to dashboards anymore the fields related to dashboards
 where removed. The removed fields are `dashboardId` and `panelId`.
-
-####
 
 ## Manage contact points for an external Alertmanager
 
