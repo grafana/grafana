@@ -138,6 +138,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 			if ok {
 				_, err := url.Parse(u)
 				if err != nil {
+					m.mg.Logger.Warn("slack notification channel had invalid URL, removing", "name", c.Name, "uid", c.Uid, "org", c.OrgID)
 					delete(decryptedSecureSettings, "url")
 				}
 			}
