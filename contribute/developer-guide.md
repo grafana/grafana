@@ -10,14 +10,8 @@ Make sure you have the following dependencies installed before setting up your d
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-
-Additionally you'll need:
-
-- [Node.js](https://nodejs.org) (see `volta.node` property in [package.json](../package.json) for the correct version).
-- [Yarn](https://yarnpkg.com) (see `volta.yarn` property in [package.json](../package.json) for the correct version).
-
-We recommend using [Volta](https://github.com/volta-cli/volta) to manage your JS toolchain.
-Refer to the [Volta Getting Started Guide](https://docs.volta.sh/guide/getting-started) for setup instructions for your operating system.
+- [Node.js (Long Term Support)](https://nodejs.org)
+- [Yarn](https://yarnpkg.com)
 
 ### macOS
 
@@ -26,6 +20,8 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
+brew install node@14
+npm install -g yarn
 ```
 
 ### Windows

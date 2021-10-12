@@ -203,7 +203,9 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div>
         <div className={styles.dataSourceRow}>
-          <InlineFormLabel width={'auto'}>Data source</InlineFormLabel>
+          <InlineFormLabel htmlFor="data-source-picker" width={'auto'}>
+            Data source
+          </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}

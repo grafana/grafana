@@ -53,7 +53,7 @@ describe('Prometheus Result Transformer', () => {
           },
         ],
       } as unknown) as DataQueryResponse;
-      const series = transformV2(response, options);
+      const series = transformV2(response, options, {});
       expect(series).toEqual({
         data: [{ fields: [], length: 2, meta: { preferredVisualisationType: 'graph' }, name: 'ALERTS', refId: 'A' }],
         state: 'Done',
@@ -86,7 +86,7 @@ describe('Prometheus Result Transformer', () => {
           }),
         ],
       } as unknown) as DataQueryResponse;
-      const series = transformV2(response, options);
+      const series = transformV2(response, options, {});
       // expect(series.data[0]).toBe({});
       expect(series.data[0].fields[0].name).toEqual('time');
       expect(series.data[0].fields[1].name).toEqual('label1');
@@ -137,7 +137,7 @@ describe('Prometheus Result Transformer', () => {
           }),
         ],
       } as unknown) as DataQueryResponse;
-      const series = transformV2(response, options);
+      const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(2);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('graph');
       expect(series.data[1].fields.length).toEqual(4);

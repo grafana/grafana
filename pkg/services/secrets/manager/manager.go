@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/providers/grafana"
+	grafana "github.com/grafana/grafana/pkg/services/secrets/defaultprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

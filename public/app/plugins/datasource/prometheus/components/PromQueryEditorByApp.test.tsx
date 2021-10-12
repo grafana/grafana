@@ -3,8 +3,6 @@ import { render, RenderResult } from '@testing-library/react';
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { CoreApp } from '@grafana/data';
 import { noop } from 'lodash';
-import { Observable } from 'rxjs';
-import { first } from 'rxjs/operators';
 import { PrometheusDatasource } from '../datasource';
 import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
 import { testIds as regularTestIds } from './PromQueryEditor';
@@ -20,7 +18,6 @@ function setup(app: CoreApp): RenderResult {
       getLabelKeys: () => [],
       metrics: [],
     },
-    exemplarErrors: new Observable().pipe(first()),
   } as unknown) as PrometheusDatasource;
 
   return render(
