@@ -795,26 +795,6 @@ def release_canary_npm_packages_step(edition):
         ],
     }
 
-def push_to_deployment_tools_step(edition, is_downstream=False):
-    if edition != 'enterprise' or not is_downstream:
-        return None
-
-    return {
-        'name': 'push-to-deployment_tools',
-        'image': deploy_docker_image,
-        'depends_on': [
-            'build-docker-images',
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
-        'settings': {
-            'github_token': from_secret(github_token),
-            'images_file': './deployment_tools_config.json',
-            'docker_tag_file': './dist/grafana.version'
-        },
-    }
-
 def enterprise2_suffix(edition):
     if edition == 'enterprise2':
         return '-{}'.format(edition)
