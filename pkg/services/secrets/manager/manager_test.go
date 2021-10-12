@@ -15,7 +15,7 @@ import (
 
 func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	svc := SetupTestService(t, store)
+	svc := setupTestService(t, store)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
