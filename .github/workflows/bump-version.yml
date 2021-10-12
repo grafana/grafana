@@ -4,12 +4,12 @@ on:
     inputs:
       version:
         required: true
-        default: '7.x.x'
+        default: "7.x.x"
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-    # This is a basic workflow to help you get started with Actions
+      # This is a basic workflow to help you get started with Actions
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         id: regex-match
         with:
@@ -24,7 +24,6 @@ jobs:
           example: 7.4.3 or 7.4.3-beta.1"
           exit 1
       - uses: actions/checkout@v2
-
       - name: Set intermedia variables
         id: intermedia
         run: |
@@ -55,7 +54,8 @@ jobs:
           ref: main
       - uses: actions/setup-node@v2.4.1
         with:
-          node-version: '14'
+          node-version: "14"
+          cache: npm
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run bump version
