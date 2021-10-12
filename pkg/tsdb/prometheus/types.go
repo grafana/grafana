@@ -15,22 +15,22 @@ type DatasourceInfo struct {
 	HTTPMethod     string
 	TimeInterval   string
 
-	client apiv1.API
-	cmtx   sync.RWMutex
+	promClient apiv1.API
+	cmtx       *sync.RWMutex
 }
 
-func (s *DatasourceInfo) Client() apiv1.API {
+func (s *DatasourceInfo) client() apiv1.API {
 	s.cmtx.RLock()
 	defer s.cmtx.RUnlock()
 
-	return s.client
+	return s.promClient
 }
 
-func (s *DatasourceInfo) SetClient(client apiv1.API) {
+func (s *DatasourceInfo) setClient(client apiv1.API) {
 	s.cmtx.Lock()
 	defer s.cmtx.Unlock()
 
-	s.client = client
+	s.promClient = client
 }
 
 type PrometheusQuery struct {

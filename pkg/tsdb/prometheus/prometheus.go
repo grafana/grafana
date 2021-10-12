@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -36,7 +37,6 @@ var (
 )
 
 type Service struct {
-	httpClientProvider httpclient.Provider
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
@@ -46,7 +46,6 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
-		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 		im:                 im,
 	}
@@ -105,6 +104,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			HTTPClientOpts: httpCliOpts,
 			HTTPMethod:     httpMethod,
 			TimeInterval:   timeInterval,
+			cmtx:           &sync.RWMutex{},
 		}
 
 		client, err := getClient(settings.URL, httpCliOpts, httpClientProvider)
@@ -112,7 +112,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		mdl.SetClient(client)
+		mdl.setClient(client)
 
 		return mdl, nil
 	}
@@ -129,7 +129,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	client := dsInfo.Client()
+	client := dsInfo.client()
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
