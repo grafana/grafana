@@ -174,7 +174,7 @@ As part of this big change there are some breaking changes that we'll explain in
 #### Multiple Alerts in one payload
 
 As we now enable [multi deminsional alerting]({{< relref "../difference-old-new.md#multi-dimensional-alerting" >}}) a payload
-consits of an array of alerts.
+consists of an array of alerts.
 
 #### Removed dashboard related fields
 
