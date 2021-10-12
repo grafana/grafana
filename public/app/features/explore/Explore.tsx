@@ -24,15 +24,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import {
-  addQueryRow,
-  changeAutoLogsVolume,
-  loadLogsVolumeData,
-  modifyQueries,
-  scanStart,
-  scanStopAction,
-  setQueries,
-} from './state/query';
+import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -223,16 +215,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const {
-      logsVolumeData,
-      exploreId,
-      loadLogsVolumeData,
-      autoLoadLogsVolume,
-      changeAutoLogsVolume,
-      absoluteRange,
-      timeZone,
-      splitOpen,
-    } = this.props;
+    const { logsVolumeData, exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen } = this.props;
 
     return (
       <LogsVolumePanel
@@ -244,10 +227,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onUpdateTimeRange={this.onUpdateTimeRange}
         timeZone={timeZone}
         splitOpen={splitOpen}
-        autoLoadLogsVolume={autoLoadLogsVolume}
-        onChangeAutoLogsVolume={(autoLoadLogsVolume) => {
-          changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
-        }}
         onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
       />
     );
@@ -407,7 +386,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
-  const { syncedTimes, autoLoadLogsVolume } = explore;
+  const { syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
@@ -435,7 +414,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    autoLoadLogsVolume,
     logsVolumeDataProvider,
     logsVolumeData,
     logsResult: logsResult ?? undefined,
@@ -460,7 +438,6 @@ const mapDispatchToProps = {
   setQueries,
   updateTimeRange,
   loadLogsVolumeData,
-  changeAutoLogsVolume,
   addQueryRow,
   splitOpen,
 };

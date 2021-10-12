@@ -34,13 +34,7 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import {
-  localStorageFullAction,
-  richHistoryLimitExceededAction,
-  richHistoryUpdatedAction,
-  stateSave,
-  storeAutoLoadLogsVolumeAction,
-} from './main';
+import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
@@ -329,7 +323,7 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
-    const { richHistory, autoLoadLogsVolume } = getState().explore;
+    const { richHistory } = getState().explore;
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
@@ -485,10 +479,6 @@ export const runQueries = (
         if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
           dispatch(cleanLogsVolumeAction({ exploreId }));
         }
-
-        if (autoLoadLogsVolume && logsVolumeDataProvider) {
-          dispatch(loadLogsVolumeData(exploreId));
-        }
       } else {
         dispatch(
           storeLogsVolumeDataProviderAction({
@@ -582,23 +572,6 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
 export function clearCache(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(clearCacheAction({ exploreId }));
-  };
-}
-
-/**
- * Uses storeLogsVolumeDataProviderAction to update the state and load logs volume when auto-load
- * is enabled and logs volume hasn't been loaded yet.
- */
-export function changeAutoLogsVolume(exploreId: ExploreId, autoLoadLogsVolume: boolean): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(storeAutoLoadLogsVolumeAction(autoLoadLogsVolume));
-    const state = getState().explore[exploreId]!;
-
-    // load logs volume automatically after switching
-    const logsVolumeData = state.logsVolumeData;
-    if (!logsVolumeData?.data && autoLoadLogsVolume) {
-      dispatch(loadLogsVolumeData(exploreId));
-    }
   };
 }
 

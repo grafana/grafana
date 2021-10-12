@@ -1,7 +1,7 @@
 import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Button, Collapse, InlineField, InlineFieldRow, InlineSwitch, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { ExploreId } from '../../types';
 import { css } from '@emotion/css';
 import { logsLevelZoomRatio } from './state/query';
@@ -15,36 +15,14 @@ type Props = {
   splitOpen: SplitOpen;
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  autoLoadLogsVolume: boolean;
-  onChangeAutoLogsVolume: (value: boolean) => void;
   onLoadLogsVolume: () => void;
 };
 
 export function LogsVolumePanel(props: Props) {
-  const {
-    width,
-    logsVolumeData,
-    absoluteRange,
-    timeZone,
-    splitOpen,
-    onUpdateTimeRange,
-    autoLoadLogsVolume,
-    onChangeAutoLogsVolume,
-    onLoadLogsVolume,
-  } = props;
+  const { width, logsVolumeData, absoluteRange, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume } = props;
   const theme = useTheme2();
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
-
-  const handleOnChangeAutoLogsVolume = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const { target } = event;
-      if (target) {
-        onChangeAutoLogsVolume(target.checked);
-      }
-    },
-    [onChangeAutoLogsVolume]
-  );
 
   let LogsVolumePanelContent;
 
@@ -118,12 +96,7 @@ export function LogsVolumePanel(props: Props) {
           top: '5px',
         })}
       >
-        <InlineFieldRow>
-          {zoomLevelInfo}
-          <InlineField label="Auto-load logs volume" transparent>
-            <InlineSwitch value={autoLoadLogsVolume} onChange={handleOnChangeAutoLogsVolume} transparent />
-          </InlineField>
-        </InlineFieldRow>
+        {zoomLevelInfo}
       </div>
     </Collapse>
   );
