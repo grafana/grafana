@@ -213,6 +213,14 @@ a.external-link {
     margin-bottom: $spacer;
   }
 
+  *:not(:first-child) {
+    margin-top: 16px;
+  }
+
+  *:first-child {
+    margin-bottom: 0 !important;
+  }
+
   table {
     td,
     th {
