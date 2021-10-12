@@ -14,6 +14,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PANEL_BORDER } from 'app/core/constants';
 import { isSoloRoute } from '../../../routes/utils';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -27,7 +28,7 @@ interface OwnProps {
 }
 
 interface ConnectedProps {
-  angularComponent?: AngularComponent | null;
+  angularComponent?: AngularComponent;
 }
 
 interface DispatchProps {
@@ -214,7 +215,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularComponent: state.panels[props.panel.key]?.angularComponent,
+    angularComponent: getPanelStateForModel(state, props.panel)?.angularComponent,
   };
 };
 

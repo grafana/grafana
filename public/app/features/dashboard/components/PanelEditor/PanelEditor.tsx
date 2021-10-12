@@ -54,6 +54,7 @@ import {
 import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -63,7 +64,7 @@ interface OwnProps {
 
 const mapStateToProps = (state: StoreState) => {
   const panel = state.panelEditor.getPanel();
-  const panelState = state.panels[panel.key];
+  const panelState = getPanelStateForModel(state, panel);
 
   return {
     panel,

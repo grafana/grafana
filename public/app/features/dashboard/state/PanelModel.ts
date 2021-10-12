@@ -179,7 +179,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
   /**
-   * Unique in application state, this is used as redux key for panel redux state
+   * Unique in application state, this is used as redux key for panel and for redux panel state
    * Change will cause unmount and re-init of panel
    */
   key: string;

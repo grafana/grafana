@@ -16,6 +16,7 @@ import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
 import { AlertState } from '../../plugins/datasource/alertmanager/types';
 import { EventBusSrv } from '@grafana/data';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface AngularPanelController {
   _enableAlert: () => void;
@@ -259,7 +260,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {
-    angularPanelComponent: state.panels[props.panel.key].angularComponent,
+    angularPanelComponent: getPanelStateForModel(state, props.panel)?.angularComponent,
   };
 };
 

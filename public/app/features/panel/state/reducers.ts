@@ -6,7 +6,7 @@ export type RootPanelsState = Record<string, PanelState>;
 
 export interface PanelState {
   plugin?: PanelPlugin;
-  angularComponent?: AngularComponent | null;
+  angularComponent?: AngularComponent;
   instanceState?: any | null;
 }
 
@@ -50,7 +50,7 @@ export interface PanelModelAndPluginReadyPayload {
 
 export interface SetPanelAngularComponentPayload {
   key: string;
-  angularComponent: AngularComponent | null;
+  angularComponent: AngularComponent;
 }
 
 export interface SetPanelInstanceStatePayload {

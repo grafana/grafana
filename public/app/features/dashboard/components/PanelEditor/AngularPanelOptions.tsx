@@ -12,6 +12,7 @@ import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -20,7 +21,7 @@ interface OwnProps {
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => ({
-  angularPanelComponent: state.panels[props.panel.key].angularComponent,
+  angularPanelComponent: getPanelStateForModel(state, props.panel)?.angularComponent,
 });
 
 const mapDispatchToProps = { changePanelPlugin };
