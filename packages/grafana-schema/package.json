@@ -33,8 +33,5 @@
     "rollup-plugin-typescript2": "0.29.0",
     "rollup-plugin-visualizer": "4.2.0",
     "typescript": "4.4.3"
-  },
-  "volta": {
-    "extends": "../../package.json"
   }
 }

@@ -359,9 +359,5 @@
   "engines": {
     "node": ">= 14"
   },
-  "volta": {
-    "node": "14.16.0",
-    "yarn": "3.1.0-rc.5"
-  },
   "packageManager": "yarn@3.1.0-rc.5"
 }
