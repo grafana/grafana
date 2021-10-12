@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { getScreenReaderOnlyStyles, HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
+import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
 import { DataSourceInstanceSettings, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
@@ -144,10 +144,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
-        <label className={getScreenReaderOnlyStyles()} htmlFor="data-source-picker" tabIndex={-1}>
-          Select a data source
-        </label>
         <Select
+          aria-label="Select a data source"
           inputId="data-source-picker"
           menuShouldPortal
           className={styles.select}
