@@ -1,5 +1,5 @@
 import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Button, Collapse, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Collapse, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { ExploreId } from '../../types';
@@ -28,11 +28,10 @@ export function LogsVolumePanel(props: Props) {
   if (!logsVolumeData) {
     return null;
   } else if (logsVolumeData?.error) {
-    LogsVolumePanelContent = (
-      <span>
-        Failed to load volume logs for this query:{' '}
-        {logsVolumeData.error.data?.message || logsVolumeData.error.statusText}
-      </span>
+    return (
+      <Alert title="Failed to load volume logs for this query">
+        {logsVolumeData.error.data?.message || logsVolumeData.error.statusText || logsVolumeData.error.message}
+      </Alert>
     );
   } else if (logsVolumeData?.state === LoadingState.Loading) {
     LogsVolumePanelContent = <span>Logs volume is loading...</span>;
