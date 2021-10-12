@@ -17,7 +17,7 @@ type AccessControl interface {
 	// GetUserRoles returns user roles.
 	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
 
-	// CloneUserToServiceAccount Creates a new service account and assigns the same roles to it
+	// CloneUserToServiceAccount Creates a new service account and assigns it the same roles as the user has
 	CloneUserToServiceAccount(ctx context.Context, user *models.SignedInUser) (*models.User, error)
 
 	// LinkAPIKeyToServiceAccount Connects an APIkey to a service account.  Multiple API keys may be linked to one account.
