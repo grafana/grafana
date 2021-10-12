@@ -15,6 +15,7 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
+import { GraphiteQuery } from '../graphite/types';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -334,11 +335,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
+  async importQueries(
+    queries: PromQuery[] | GraphiteQuery[] | DataQuery[],
+    originDataSource: DataSourceApi
+  ): Promise<LokiQuery[]> {
     const datasourceType = originDataSource.meta.id;
     if (datasourceType === 'prometheus') {
       return Promise.all(
-        queries.map(async (query: PromQuery) => {
+        [...(queries as PromQuery[])].map(async (query) => {
           const expr = await this.importPrometheusQuery(query.expr);
           const { refId } = query;
           return {
