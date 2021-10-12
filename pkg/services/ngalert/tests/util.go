@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -35,7 +34,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(t, sqlStore)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t),
 		nil, nil, nil, nil, secretsService, m,

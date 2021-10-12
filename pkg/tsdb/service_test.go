@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -106,8 +105,7 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 func createService(t *testing.T) (*Service, *fakeExecutor, *fakeBackendPM) {
 	t.Helper()
 	fakeBackendPM := &fakeBackendPM{}
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := secretsManager.SetupTestService(t, store)
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 	dsService := datasources.ProvideService(bus.New(), nil, secretsService)
 	s := newService(
 		setting.NewCfg(),

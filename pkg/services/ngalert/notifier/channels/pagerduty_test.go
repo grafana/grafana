@@ -7,7 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -138,8 +137,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewPagerdutyNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

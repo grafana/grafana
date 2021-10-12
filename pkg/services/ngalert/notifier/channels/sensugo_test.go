@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -15,10 +17,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestSensuGoNotifier(t *testing.T) {
@@ -143,8 +141,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewSensuGoNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

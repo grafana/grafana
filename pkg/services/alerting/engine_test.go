@@ -7,14 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -48,8 +46,7 @@ func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
 		bus := bus.New()
 		usMock := &usagestats.UsageStatsMock{T: t}
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, secretsService, setting.NewCfg())
 		setting.AlertingEvaluationTimeout = 30 * time.Second
 		setting.AlertingNotificationTimeout = 30 * time.Second

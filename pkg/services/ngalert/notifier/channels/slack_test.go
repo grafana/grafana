@@ -8,7 +8,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -16,9 +17,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestSlackNotifier(t *testing.T) {
@@ -173,8 +171,7 @@ func TestSlackNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewSlackNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

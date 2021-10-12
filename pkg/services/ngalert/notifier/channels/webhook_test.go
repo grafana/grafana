@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -192,8 +191,7 @@ func TestWebhookNotifier(t *testing.T) {
 				OrgID:    orgID,
 			}
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewWebHookNotifier(m, tmpl, decryptFn)
 			if c.expInitError != "" {

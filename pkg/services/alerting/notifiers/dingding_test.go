@@ -4,21 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDingDingNotifier(t *testing.T) {
 	Convey("Dingding notifier tests", t, func() {
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		Convey("empty settings should return error", func() {
 			json := `{ }`
 

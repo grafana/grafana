@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -32,8 +31,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "test")
 	require.NoError(t, err)
 	kvStore := newFakeKVStore(t)
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := secretsManager.SetupTestService(t, store)
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
@@ -114,8 +112,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
 	}
 	kvStore := newFakeKVStore(t)
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := secretsManager.SetupTestService(t, store)
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)

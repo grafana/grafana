@@ -4,20 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSlackNotifier(t *testing.T) {
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := secretsManager.SetupTestService(t, store)
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`

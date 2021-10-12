@@ -13,10 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -30,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -111,8 +109,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := secretsManager.SetupTestService(t, store)
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 	hs := &HTTPServer{
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},

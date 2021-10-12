@@ -9,22 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
 )
 
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	store := database.ProvideSecretsStore(sqlStore)
-	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, secretsManager.SetupTestService(t, store))
+	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, secretsManager.SetupTestService(t, sqlStore))
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {

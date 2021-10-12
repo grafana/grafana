@@ -4,14 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
@@ -84,8 +82,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 //nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
 	Convey("Alertmanager notifier tests", t, func() {
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

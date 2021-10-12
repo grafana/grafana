@@ -3,12 +3,10 @@ package notifiers
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,8 +15,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 	t.Run("Empty settings should cause error", func(t *testing.T) {
 		const json = `{}`
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 		model := &models.AlertNotification{
@@ -34,8 +31,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 	t.Run("Valid settings should result in a valid notifier", func(t *testing.T) {
 		const json = `{"url": "http://google.com"}`
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 		model := &models.AlertNotification{

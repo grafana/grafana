@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -235,7 +234,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 	m := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 	decryptFn := secretsService.GetDecryptedValue
 	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, nil, log.New("testlogger"))
 	require.NoError(t, err)

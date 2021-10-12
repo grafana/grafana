@@ -8,16 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
-	"github.com/grafana/grafana/pkg/services/secrets"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -34,7 +31,7 @@ func TestService(t *testing.T) {
 		setting.SecretKey = origSecret
 	})
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(t, sqlStore)
 	s := ProvideService(bus.New(), sqlStore, secretsService)
 
 	var ds *models.DataSource
@@ -83,8 +80,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		rt1, err := dsService.GetHTTPTransport(&ds, provider)
@@ -117,8 +113,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
@@ -168,8 +163,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		tlsClientCert, err := secretsService.Encrypt(context.Background(), []byte(clientCert), secrets.WithoutScope())
@@ -212,8 +206,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
@@ -250,8 +243,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
@@ -282,8 +274,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedData, err := secretsService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
@@ -342,8 +333,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"timeout": 19,
 		})
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
@@ -376,8 +366,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		ds := models.DataSource{
@@ -411,8 +400,7 @@ func TestService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := secretsManager.SetupTestService(t, store)
+	secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 	dsService := ProvideService(bus.New(), nil, secretsService)
 
 	for _, tc := range testCases {
@@ -425,8 +413,7 @@ func TestService_getTimeout(t *testing.T) {
 
 func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 		dsService := ProvideService(bus.New(), nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
@@ -464,8 +451,7 @@ func TestService_DecryptedValue(t *testing.T) {
 	})
 
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsManager.SetupTestService(t, store)
+		secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			context.Background(),
@@ -517,8 +503,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -535,8 +520,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureAuth": true,
 			})
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -556,8 +540,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -581,8 +564,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				},
 			})
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)
@@ -600,8 +582,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureCredentials": "invalid",
 			})
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			_, err := dsService.httpClientOptions(&ds)
@@ -615,8 +596,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			})
 
-			store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-			secretsService := secretsManager.SetupTestService(t, store)
+			secretsService := secretsManager.SetupTestService(t, sqlstore.InitTestDB(t))
 			dsService := ProvideService(bus.New(), nil, secretsService)
 
 			opts, err := dsService.httpClientOptions(&ds)

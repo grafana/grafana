@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +26,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	t.Cleanup(func() {
 		setting.SecretKey = origSecret
 	})
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := fakes.NewFakeSecretsService()
 	dashboard := simplejson.NewFromAny(map[string]interface{}{"hello": "mupp"})
 
 	t.Run("Given saved snapshot", func(t *testing.T) {
