@@ -43,7 +43,7 @@ type Service struct {
 
 func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	plog.Debug("initializing")
-	im := datasource.NewInstanceManager(newInstanceSettings())
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
 		httpClientProvider: httpClientProvider,
@@ -62,7 +62,7 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 	return s, nil
 }
 
-func newInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
@@ -106,6 +106,14 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			HTTPMethod:     httpMethod,
 			TimeInterval:   timeInterval,
 		}
+
+		client, err := getClient(settings.URL, httpCliOpts, httpClientProvider)
+		if err != nil {
+			return nil, err
+		}
+
+		mdl.SetClient(client)
+
 		return mdl, nil
 	}
 }
@@ -120,10 +128,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-	client, err := getClient(dsInfo, s)
-	if err != nil {
-		return nil, err
-	}
+
+	client := dsInfo.Client()
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -190,24 +196,26 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
+func getClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
+	// Do we need to re-define httpOpts? (and thus exclude some fields?)
 	opts := &sdkhttpclient.Options{
-		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
-		TLS:       dsInfo.HTTPClientOpts.TLS,
-		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
-		Headers:   dsInfo.HTTPClientOpts.Headers,
+		Timeouts:  httpOpts.Timeouts,
+		TLS:       httpOpts.TLS,
+		BasicAuth: httpOpts.BasicAuth,
+		Headers:   httpOpts.Headers,
+		Labels:    httpOpts.Labels,
 	}
 
 	customMiddlewares := customQueryParametersMiddleware(plog)
 	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
-	roundTripper, err := s.httpClientProvider.GetTransport(*opts)
+	roundTripper, err := clientProvider.GetTransport(*opts)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := api.Config{
-		Address:      dsInfo.URL,
+		Address:      url,
 		RoundTripper: roundTripper,
 	}
 
