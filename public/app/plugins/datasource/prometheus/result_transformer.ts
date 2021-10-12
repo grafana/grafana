@@ -126,7 +126,7 @@ export function transformDFoTable(dfs: DataFrame[]): DataFrame[] {
     return dfs;
   }
 
-  // Group results by refId and process dataFrames  with the same refId as 1 dataFrame
+  // Group results by refId and process dataFrames with the same refId as 1 dataFrame
   const dataFramesByRefId = groupBy(dfs, 'refId');
 
   const frames = Object.keys(dataFramesByRefId).map((refId: string) => {
