@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -66,10 +65,6 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 			return models.ErrInvalidApiKeyExpiration
 		}
 
-		ServiceAccountId, err := strconv.Atoi(cmd.ServiceAccountId)
-		if err != nil {
-			return fmt.Errorf("invalid service account id: %w", err)
-		}
 		t := models.ApiKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
@@ -78,7 +73,7 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: int64(ServiceAccountId),
+			ServiceAccountId: cmd.ServiceAccountId,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
