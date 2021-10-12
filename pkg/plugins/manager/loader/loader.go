@@ -35,8 +35,8 @@ type Loader struct {
 	errs map[string]error
 }
 
-func New(license models.Licensing, cfg *setting.Cfg) Loader {
-	return Loader{
+func New(license models.Licensing, cfg *setting.Cfg) plugins.Loader {
+	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(cfg),
 		pluginInitializer:  initializer.New(cfg, license),
@@ -45,7 +45,28 @@ func New(license models.Licensing, cfg *setting.Cfg) Loader {
 	}
 }
 
-func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
+func (l *Loader) Load(paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+	pluginJSONPaths, err := l.pluginFinder.Find(paths)
+	if err != nil {
+		logger.Error("plugin finder encountered an error", "err", err)
+	}
+
+	return l.loadPlugins(pluginJSONPaths, ignore)
+}
+
+func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
+	p, err := l.load(path, map[string]struct{}{})
+	if err != nil {
+		logger.Error("failed to load core plugin", "err", err)
+		return nil, err
+	}
+
+	err = l.pluginInitializer.InitializeWithFactory(p, factory)
+
+	return p, err
+}
+
+func (l *Loader) load(path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
 	if err != nil {
 		logger.Error("failed to find plugin", "err", err)
@@ -62,27 +83,6 @@ func (l *Loader) Load(path string, ignore map[string]struct{}) (*plugins.Plugin,
 	}
 
 	return loadedPlugins[0], nil
-}
-
-func (l *Loader) LoadAll(paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find(paths)
-	if err != nil {
-		logger.Error("plugin finder encountered an error", "err", err)
-	}
-
-	return l.loadPlugins(pluginJSONPaths, ignore)
-}
-
-func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	p, err := l.Load(path, map[string]struct{}{})
-	if err != nil {
-		logger.Error("failed to load core plugin", "err", err)
-		return nil, err
-	}
-
-	err = l.pluginInitializer.InitializeWithFactory(p, factory)
-
-	return p, err
 }
 
 // test one bad doesn't break all loading

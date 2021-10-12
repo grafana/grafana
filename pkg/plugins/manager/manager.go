@@ -49,7 +49,7 @@ type PluginManager struct {
 	sqlStore         *sqlstore.SQLStore
 	plugins          map[string]*plugins.Plugin
 	pluginInstaller  plugins.Installer
-	pluginLoader     loader.Loader
+	pluginLoader     plugins.Loader
 	pluginsMu        sync.RWMutex
 	log              log.Logger
 }
@@ -142,8 +142,7 @@ func (m *PluginManager) Run(ctx context.Context) error {
 }
 
 func (m *PluginManager) loadPlugins(path ...string) error {
-	// think about state + their transitions
-	loadedPlugins, err := m.pluginLoader.LoadAll(path, m.registeredPlugins())
+	loadedPlugins, err := m.pluginLoader.Load(path, m.registeredPlugins())
 	if err != nil {
 		return err
 	}

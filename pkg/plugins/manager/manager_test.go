@@ -616,7 +616,12 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		Env:            setting.Prod,
 		StaticRootPath: staticRootPath,
 	}
-	pm := newManager(cfg, nil, nil, &sqlstore.SQLStore{})
+
+	license := &testLicensingService{}
+	requestValidator := &testPluginRequestValidator{}
+	loader := &testLoader{}
+	pm := newManager(cfg, license, requestValidator, &sqlstore.SQLStore{})
+	pm.pluginLoader = loader
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -624,8 +629,6 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 
 	return pm
 }
-
-// Backend plugin manager
 
 const testPluginID = "test-plugin"
 
@@ -866,8 +869,11 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 
 	license := &testLicensingService{}
 	requestValidator := &testPluginRequestValidator{}
+	loader := &testLoader{}
+	manager := newManager(cfg, license, requestValidator, nil)
+	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
-		manager: newManager(cfg, license, requestValidator, nil),
+		manager: manager,
 	}
 
 	ctx.plugin = &plugins.Plugin{
@@ -891,6 +897,18 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 	for _, plugin := range pm.plugins {
 		assert.Nil(t, plugin.SignatureError)
 	}
+}
+
+type testLoader struct {
+	plugins.Loader
+}
+
+func (l *testLoader) Load(paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+	return nil, nil
+}
+
+func (l *testLoader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
+	return nil, nil
 }
 
 type testPluginClient struct {

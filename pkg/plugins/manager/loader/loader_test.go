@@ -207,9 +207,9 @@ func TestLoader_LoadAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := New(nil, nil, tt.cfg)
-			got, err := l.LoadAll(tt.pluginPaths, tt.existingPlugins)
+			got, err := l.Load(tt.pluginPaths, tt.existingPlugins)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !cmp.Equal(got, tt.want, compareOpts) {
@@ -284,7 +284,7 @@ func TestLoader_loadDuplicatePlugins(t *testing.T) {
 
 		l := New(nil, nil, cfg)
 
-		got, err := l.LoadAll([]string{pluginDir, pluginDir}, map[string]struct{}{})
+		got, err := l.Load([]string{pluginDir, pluginDir}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -375,7 +375,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 
 		l := New(nil, nil, cfg)
 
-		got, err := l.LoadAll([]string{"../testdata/nested-plugins"}, map[string]struct{}{})
+		got, err := l.Load([]string{"../testdata/nested-plugins"}, map[string]struct{}{})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -399,7 +399,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 
 		l := New(nil, nil, cfg)
 
-		got, err := l.LoadAll([]string{"../testdata/nested-plugins"}, map[string]struct{}{
+		got, err := l.Load([]string{"../testdata/nested-plugins"}, map[string]struct{}{
 			"test-panel": {},
 		})
 		assert.NoError(t, err)

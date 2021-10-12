@@ -59,6 +59,7 @@ type JSONData struct {
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	Preload      bool               `json:"preload"`
 	Backend      bool               `json:"backend"`
+	Routes       []*Route           `json:"routes"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -80,9 +81,8 @@ type JSONData struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (App + Datasource + Renderer settings)
-	Routes     []*Route `json:"routes"`
-	Executable string   `json:"executable,omitempty"`
+	// Backend (Datasource + Renderer)
+	Executable string `json:"executable,omitempty"`
 }
 
 // Route describes a plugin route that is defined in

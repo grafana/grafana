@@ -32,6 +32,12 @@ type InstallOpts struct {
 	InstallDir, PluginZipURL, PluginRepoURL string
 }
 
+type Loader interface {
+	Load(paths []string, ignore map[string]struct{}) ([]*Plugin, error)
+
+	LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
+}
+
 type Installer interface {
 	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
 	Uninstall(ctx context.Context, pluginDir string) error
