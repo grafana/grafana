@@ -70,13 +70,14 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	var serviceAccount *models.User
+	var serviceAccount *models.User = &models.User{Id: -1}
 	if hs.Cfg.FeatureToggles["service-accounts"] {
 		if cmd.CreateNewServiceAccount {
 			serviceAccount, err = hs.AccessControl.CloneUserToServiceAccount(c.Req.Context(), c.SignedInUser)
 			if err != nil {
 				return response.Error(500, "Unable to clone user to service account", err)
 			}
+			cmd.ServiceAccountId = serviceAccount.Id
 		}
 	}
 
@@ -95,13 +96,6 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 			return response.Error(409, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to add API Key", err)
-	}
-
-	if hs.Cfg.FeatureToggles["service-accounts"] {
-		err = hs.AccessControl.LinkAPIKeyToServiceAccount(c.Req.Context(), cmd.Result, serviceAccount)
-		if err != nil {
-			return response.Error(500, "Linking API key to service account failed", err)
-		}
 	}
 
 	result := &dtos.NewApiKeyResult{
