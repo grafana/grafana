@@ -78,21 +78,21 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 
 func (m *PluginManager) init() error {
 	// create external plugin's path if not exists
-	if exists, err := fs.Exists(m.cfg.PluginsPath); !exists {
-		if err != nil {
-			return err
-		}
+	exists, err := fs.Exists(m.cfg.PluginsPath)
+	if err != nil {
+		return err
+	}
 
+	if !exists {
 		if err = os.MkdirAll(m.cfg.PluginsPath, os.ModePerm); err != nil {
 			m.log.Error("Failed to create external plugins directory", "dir", m.cfg.PluginsPath, "error", err)
 		} else {
 			m.log.Debug("External plugins directory created", "dir", m.cfg.PluginsPath)
 		}
-		return err
 	}
 
 	// install Core plugins
-	err := m.loadPlugins(m.corePluginDirs()...)
+	err = m.loadPlugins(m.corePluginDirs()...)
 	if err != nil {
 		return err
 	}

@@ -26,15 +26,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: httpReq}}
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 

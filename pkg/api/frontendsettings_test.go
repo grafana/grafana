@@ -7,10 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/bus"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -18,9 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	sqlstore.InitTestDB(t)
 
@@ -54,9 +53,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 
-	m := macaron.New()
+	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	m.UseMiddleware(macaron.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	m.UseMiddleware(web.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
 	return m, hs
