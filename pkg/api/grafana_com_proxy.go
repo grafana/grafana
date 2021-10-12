@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var grafanaComProxyTransport = &http.Transport{
@@ -42,7 +42,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 }
 
 func ProxyGnetRequest(c *models.ReqContext) {
-	proxyPath := macaron.Params(c.Req)["*"]
+	proxyPath := web.Params(c.Req)["*"]
 	proxy := ReverseProxyGnetReq(proxyPath)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)

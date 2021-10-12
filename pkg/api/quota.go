@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func GetOrgQuotas(c *models.ReqContext) response.Response {
@@ -26,7 +26,7 @@ func UpdateOrgQuota(c *models.ReqContext, cmd models.UpdateOrgQuotaCmd) response
 		return response.Error(404, "Quotas not enabled", nil)
 	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
-	cmd.Target = macaron.Params(c.Req)[":target"]
+	cmd.Target = web.Params(c.Req)[":target"]
 
 	if _, ok := setting.Quota.Org.ToMap()[cmd.Target]; !ok {
 		return response.Error(404, "Invalid quota target", nil)
@@ -56,7 +56,7 @@ func UpdateUserQuota(c *models.ReqContext, cmd models.UpdateUserQuotaCmd) respon
 		return response.Error(404, "Quotas not enabled", nil)
 	}
 	cmd.UserId = c.ParamsInt64(":id")
-	cmd.Target = macaron.Params(c.Req)[":target"]
+	cmd.Target = web.Params(c.Req)[":target"]
 
 	if _, ok := setting.Quota.User.ToMap()[cmd.Target]; !ok {
 		return response.Error(404, "Invalid quota target", nil)
