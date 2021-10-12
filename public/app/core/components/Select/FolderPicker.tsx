@@ -20,6 +20,7 @@ export interface Props {
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
   allowEmpty?: boolean;
   showRoot?: boolean;
+  inputId?: string;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -169,12 +170,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew } = this.props;
+    const { inputId, enableCreateNew } = this.props;
 
     return (
       <div aria-label={selectors.components.FolderPicker.container}>
         <AsyncSelect
           menuShouldPortal
+          inputId={inputId}
           loadingMessage="Loading folders..."
           defaultOptions
           defaultValue={folder}

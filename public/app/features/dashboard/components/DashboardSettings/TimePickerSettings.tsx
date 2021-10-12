@@ -83,13 +83,17 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           />
         </Field>
         <Field label="Hide time picker">
-          <Switch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
+          <Switch
+            id="hide-time-picker-toggle"
+            value={!!this.props.timePickerHidden}
+            onChange={this.onHideTimePickerChange}
+          />
         </Field>
         <Field
           label="Refresh live dashboards"
           description="Continuously re-draw panels where the time range references 'now'"
         >
-          <Switch value={!!this.props.liveNow} onChange={this.onLiveNowChange} />
+          <Switch id="refresh-live-dashboards-toggle" value={!!this.props.liveNow} onChange={this.onLiveNowChange} />
         </Field>
       </CollapsableSection>
     );

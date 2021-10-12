@@ -86,16 +86,17 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
       </h3>
       <div className="gf-form-group">
         <Field label="Name">
-          <Input name="title" onBlur={onBlur} defaultValue={dashboard.title} />
+          <Input id="title-input" name="title" onBlur={onBlur} defaultValue={dashboard.title} />
         </Field>
         <Field label="Description">
-          <Input name="description" onBlur={onBlur} defaultValue={dashboard.description} />
+          <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
         </Field>
         <Field label="Tags">
           <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
         </Field>
         <Field label="Folder">
           <FolderPicker
+            inputId="dashboard-folder-input"
             initialTitle={dashboard.meta.folderTitle}
             initialFolderId={dashboard.meta.folderId}
             onChange={onFolderChange}
