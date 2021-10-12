@@ -18,6 +18,7 @@ VULNERABILITY_AUDIT="$(yarn npm audit --all --recursive --json)"
 LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"low"' | wc -l)"
 MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"moderate"' | wc -l)"
 HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"high"' | wc -l)"
+CRITICAL_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"critical"' | wc -l)"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
@@ -47,4 +48,5 @@ echo "Metrics: {
   \"grafana.ci-code.dependencies.vulnerabilities.low\": \"${LOW_VULNERABILITIES}\",
   \"grafana.ci-code.dependencies.vulnerabilities.medium\": \"${MED_VULNERABILITIES}\",
   \"grafana.ci-code.dependencies.vulnerabilities.high\": \"${HIGH_VULNERABILITIES}\"
+  \"grafana.ci-code.dependencies.vulnerabilities.critical\": \"${CRITICAL_VULNERABILITIES}\"
 }"
