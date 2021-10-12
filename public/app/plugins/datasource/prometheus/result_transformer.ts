@@ -44,7 +44,7 @@ interface TimeAndValue {
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
   // We want to process instant results in Explore as table
-  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.queryType) === 'instant') {
+  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
     return true;
   }
 
@@ -66,17 +66,44 @@ const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQue
 };
 
 // V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
-export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
-  const [tableFrames, framesWithoutTable] = partition(response.data, (df) => isTableResult(df, options));
+export function transformV2(
+  response: DataQueryResponse,
+  request: DataQueryRequest<PromQuery>,
+  options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
+) {
+  const [tableFrames, framesWithoutTable] = partition(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFoTable(tableFrames);
 
   const [heatmapResults, framesWithoutTableAndHeatmaps] = partition(framesWithoutTable, (df) =>
-    isHeatmapResult(df, options)
+    isHeatmapResult(df, request)
   );
   const processedHeatmapFrames = transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel));
 
+  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition(
+    framesWithoutTableAndHeatmaps,
+    (df) => df.meta?.custom?.resultType === 'exemplar'
+  );
+
+  // EXEMPLAR FRAMES: We enrich exemplar frames with data links and add dataTopic meta info
+  const { exemplarTraceIdDestinations: destinations } = options;
+  const processedExemplarFrames = exemplarFrames.map((dataFrame: DataFrame) => {
+    if (destinations?.length) {
+      for (const exemplarTraceIdDestination of destinations) {
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
+        if (traceIDField) {
+          const links = getDataLinks(exemplarTraceIdDestination);
+          traceIDField.config.links = traceIDField.config.links?.length
+            ? [...traceIDField.config.links, ...links]
+            : links;
+        }
+      }
+    }
+
+    return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
+  });
+
   // Everything else is processed as time_series result and graph preferredVisualisationType
-  const otherFrames = framesWithoutTableAndHeatmaps.map((dataFrame) => {
+  const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
     const df = {
       ...dataFrame,
       meta: {
@@ -87,7 +114,10 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
     return df;
   });
 
-  return { ...response, data: [...otherFrames, ...processedTableFrames, ...processedHeatmapFrames] };
+  return {
+    ...response,
+    data: [...otherFrames, ...processedTableFrames, ...processedHeatmapFrames, ...processedExemplarFrames],
+  };
 }
 
 export function transformDFoTable(dfs: DataFrame[]): DataFrame[] {
@@ -129,7 +159,6 @@ export function transformDFoTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
-      console.log(df);
       df.fields[0].values.toArray().forEach((value) => timeField.values.add(value));
       df.fields[1].values.toArray().forEach((value) => {
         valueField.values.add(parseSampleValue(value));
@@ -205,7 +234,7 @@ export function transform(
     // Add data links if configured
     if (transformOptions.exemplarTraceIdDestinations?.length) {
       for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
-        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination!.name);
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
         if (traceIDField) {
           const links = getDataLinks(exemplarTraceIdDestination);
           traceIDField.config.links = traceIDField.config.links?.length
