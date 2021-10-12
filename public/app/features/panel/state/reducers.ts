@@ -17,6 +17,11 @@ const panelsSlice = createSlice({
   initialState,
   reducers: {
     panelModelAndPluginReady: (state, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
+      if (action.payload.cleanUpKey) {
+        cleanUpAngularComponent(state[action.payload.cleanUpKey]);
+        delete state[action.payload.cleanUpKey];
+      }
+
       state[action.payload.key] = {
         plugin: action.payload.plugin,
       };
@@ -46,6 +51,8 @@ function cleanUpAngularComponent(panelState?: Draft<PanelState>) {
 export interface PanelModelAndPluginReadyPayload {
   key: string;
   plugin: PanelPlugin;
+  /** Used to cleanup previous state when we change key (used when switching panel plugin) */
+  cleanUpKey?: string;
 }
 
 export interface SetPanelAngularComponentPayload {

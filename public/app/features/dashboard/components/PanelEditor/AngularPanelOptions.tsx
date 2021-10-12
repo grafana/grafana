@@ -42,7 +42,10 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.props.plugin !== prevProps.plugin) {
+    if (
+      this.props.plugin !== prevProps.plugin ||
+      this.props.angularPanelComponent !== prevProps.angularPanelComponent
+    ) {
       this.cleanUpAngularOptions();
     }
 

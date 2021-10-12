@@ -8,7 +8,7 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
+import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import store from 'app/core/store';
 import { pick } from 'lodash';
 import { initPanelState } from 'app/features/panel/state/actions';
@@ -106,13 +106,13 @@ export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
+    const panel = getPanel();
 
     if (dashboard) {
       dashboard.exitPanelEditor();
     }
 
     if (!shouldDiscardChanges) {
-      const panel = getPanel();
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
@@ -123,8 +123,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       sourcePanel.configRev++; // force check the configs
 
       if (panelTypeChanged) {
-        // Loaded plugin is not included in the persisted properties
-        // So is not handled by restoreModel
+        // Loaded plugin is not included in the persisted properties so is not handled by restoreModel
         sourcePanel.plugin = panel.plugin;
         sourcePanel.generateNewKey();
 
@@ -139,6 +138,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       }, 20);
     }
 
+    dispatch(cleanUpPanelState({ key: panel.key }));
     dispatch(closeEditor());
   };
 }

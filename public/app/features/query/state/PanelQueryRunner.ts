@@ -293,6 +293,8 @@ export class PanelQueryRunner {
 
   clearLastResult() {
     this.lastResult = undefined;
+    // A new subject is also needed since it's a replay subject that remembers/sends last value
+    this.subject = new ReplaySubject(1);
   }
 
   /**

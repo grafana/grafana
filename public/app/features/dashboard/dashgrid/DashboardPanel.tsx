@@ -17,6 +17,7 @@ export interface OwnProps {
   isInView: boolean;
   width: number;
   height: number;
+  skipStateCleanUp?: boolean;
 }
 
 export interface State {
@@ -62,7 +63,10 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.props.cleanUpPanelState({ key: this.props.stateKey });
+    // Most of the time an unmount should result in cleanup but in PanelEdit it should not
+    if (!this.props.skipStateCleanUp) {
+      this.props.cleanUpPanelState({ key: this.props.stateKey });
+    }
   }
 
   componentDidUpdate() {

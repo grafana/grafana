@@ -43,9 +43,12 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
       plugin = await dispatch(loadPanelPlugin(pluginId));
     }
 
-    panel.changePlugin(plugin);
+    const oldKey = panel.key;
 
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+    panel.changePlugin(plugin);
+    panel.generateNewKey();
+
+    dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey: oldKey }));
   };
 }
 
@@ -62,6 +65,9 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       libraryPanel: toPanelModelLibraryPanel(libraryPanel.model),
     });
 
+    // a new library panel usually means new queries, clear any current result
+    panel.getQueryRunner().clearLastResult();
+
     // Handle plugin change
     if (oldType !== newPluginId) {
       const store = getStore();
@@ -71,14 +77,15 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
         plugin = await dispatch(loadPanelPlugin(newPluginId));
       }
 
+      const oldKey = panel.key;
+
       panel.pluginLoaded(plugin);
       panel.generateNewKey();
 
-      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey: oldKey }));
     }
 
     panel.configRev = 0;
-    panel.getQueryRunner().clearLastResult();
     panel.refresh();
 
     panel.events.publish(PanelQueriesChangedEvent);
