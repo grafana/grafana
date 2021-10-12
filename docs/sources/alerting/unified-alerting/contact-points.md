@@ -128,7 +128,7 @@ Example json body:
 
 | Key               | Type                      | Description                                                                         |
 | ----------------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| receiver          | string                    | Name of the receiver                                                                |
+| receiver          | string                    | Name of the webhook                                                                 |
 | status            | string                    | Current status of the alert, `firing` or `resolved`                                 |
 | orgId             | number                    | ID of the organization related to the payload                                       |
 | alerts            | array of [alerts](#alert) | Alerts that are triggering                                                          |
@@ -153,9 +153,9 @@ Example json body:
 | startsAt     | string | Starttime of the alert                                                             |
 | endsAt       | string | Endtime of the alert, default value when not resolved `0001-01-01T00:00:00Z`       |
 | valueString  | string | Values that triggered the current status                                           |
-| generatorURL | string | URL of the generator in the Grafana UI                                             |
+| generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, Alarms with the same labels will have the same fingerprint |
-| silenceURL   | string | URL to silence the alert in the Grafana UI                                         |
+| silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
 | dashboardURL | string | **Will be deprecated soon**                                                        |
 | panelURL     | string | **Will be deprecated soon**                                                        |
 
