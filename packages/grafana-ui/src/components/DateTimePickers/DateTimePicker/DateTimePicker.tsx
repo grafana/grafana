@@ -5,9 +5,10 @@ import { css, cx } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
 import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
-import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
+import { getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { isValid } from '../utils';
+import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 
 export interface Props {
   /** Input date for the component */

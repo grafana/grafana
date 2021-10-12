@@ -42,7 +42,6 @@ export interface PanelData {
 
   /**
    * @internal
-   * @deprecated alertState is deprecated and will be removed when the next generation Alerting is in place
    */
   alertState?: AlertStateInfo;
 

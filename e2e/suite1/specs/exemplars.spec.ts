@@ -35,17 +35,15 @@ describe('Exemplars', () => {
   });
 
   it('should be able to navigate to configured data source', () => {
-    e2e().intercept('POST', '**/api/v1/query_exemplars', {
-      fixture: 'exemplars-query-response.json',
-    });
-    e2e().intercept('POST', '**/api/v1/query_range', {
-      fixture: 'prometheus-query-range-response.json',
-    });
-    e2e().intercept('POST', '**/api/v1/query', {
-      fixture: 'prometheus-query-response.json',
-    });
-    e2e().intercept('POST', '**/api/ds/query', {
-      fixture: 'tempo-response.json',
+    let intercept = 'prometheus';
+    e2e().intercept('/api/ds/query', (req) => {
+      if (intercept === 'prometheus') {
+        // For second intercept, we want to send tempo response
+        intercept = 'tempo';
+        req.reply({ fixture: 'exemplars-query-response.json' });
+      } else {
+        req.reply({ fixture: 'tempo-response.json' });
+      }
     });
 
     e2e.pages.Explore.visit();
@@ -57,10 +55,10 @@ describe('Exemplars', () => {
       });
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
     e2e.components.TimePicker.openButton().click();
-    e2e.components.TimePicker.fromField().clear().type('2021-05-11 19:30:00');
-    e2e.components.TimePicker.toField().clear().type('2021-05-11 21:40:00');
+    e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');
+    e2e.components.TimePicker.toField().clear().type('2021-07-10 17:30:00');
     e2e.components.TimePicker.applyTimeRange().click();
-    e2e.components.QueryField.container().should('be.visible').type('exemplar-query{shift}{enter}');
+    e2e.components.QueryField.container().should('be.visible').type('exemplar-query_bucket{shift}{enter}');
 
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
     e2e().contains('Query with gdev-tempo').click();

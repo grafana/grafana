@@ -136,11 +136,11 @@ export class ShareExport extends PureComponent<Props, State> {
       <>
         <p className="share-modal-info-text">Export this dashboard.</p>
         <Field label="Export for sharing externally">
-          <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
+          <Switch id="share-externally-toggle" value={shareExternally} onChange={this.onShareExternallyChange} />
         </Field>
         {config.featureToggles.trimDefaults && (
           <Field label="Export with default values removed">
-            <Switch value={trimDefaults} onChange={this.onTrimDefaultsChange} />
+            <Switch id="trim-defaults-toggle" value={trimDefaults} onChange={this.onTrimDefaultsChange} />
           </Field>
         )}
         <Modal.ButtonRow>

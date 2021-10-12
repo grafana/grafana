@@ -14,7 +14,7 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from './mocks';
-import { DataSourceType } from './utils/datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
@@ -269,6 +269,15 @@ describe('PanelAlertTabContent', () => {
         { key: '__dashboardUid__', value: '12' },
         { key: '__panelId__', value: '34' },
       ],
+    });
+
+    expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      dashboardUID: dashboard.uid,
+      panelId: panel.editSourceId,
+    });
+    expect(mocks.api.fetchRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      dashboardUID: dashboard.uid,
+      panelId: panel.editSourceId,
     });
   });
 });

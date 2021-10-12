@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var pluginProxyTransport *http.Transport
 
-func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
+func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 	pluginProxyTransport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
@@ -35,7 +35,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	for _, plugin := range hs.PluginManager.Apps() {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
-			handlers := make([]macaron.Handler, 0)
+			handlers := make([]web.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,
 			}))
@@ -56,9 +56,9 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	}
 }
 
-func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) macaron.Handler {
+func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer) web.Handler {
 	return func(c *models.ReqContext) {
-		path := macaron.Params(c.Req)["*"]
+		path := web.Params(c.Req)["*"]
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.EncryptionService)
 		proxy.Transport = pluginProxyTransport
