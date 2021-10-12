@@ -51,6 +51,7 @@ export class UserOrganizations extends PureComponent<Props> {
                           onClick={() => {
                             this.props.setUserOrg(org);
                           }}
+                          aria-label={`Switch to the organization named ${org.name}`}
                         >
                           Select
                         </Button>

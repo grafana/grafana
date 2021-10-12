@@ -18,11 +18,13 @@ import { css } from '@emotion/css';
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { ResourceFolderName } from '..';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
+  folderName: ResourceFolderName;
 }
 
 interface ResourceItem {
@@ -33,12 +35,13 @@ interface ResourceItem {
 }
 
 export function ResourcePicker(props: Props) {
-  const { value, onChange, mediaType } = props;
-  const folders = (mediaType === 'icon' ? ['img/icons/unicons', 'img/icons/iot'] : ['img/bg']).map((v) => ({
+  const { value, onChange, mediaType, folderName } = props;
+  const folders = getFolders(mediaType).map((v) => ({
     label: v,
     value: v,
   }));
-  const folderOfCurrentValue = value ? folders.filter((folder) => value.indexOf(folder.value) > -1)[0] : folders[0];
+
+  const folderOfCurrentValue = value || folderName ? folderIfExists(folders, value ?? folderName) : folders[0];
   const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
   const [tabs, setTabs] = useState([
     { label: 'Select', active: true },
@@ -169,3 +172,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
   };
 });
+
+const getFolders = (mediaType: 'icon' | 'image') => {
+  if (mediaType === 'icon') {
+    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
+  } else {
+    return [ResourceFolderName.BG];
+  }
+};
+
+const folderIfExists = (folders: Array<{ label: string; value: string }>, path: string) => {
+  return folders.filter((folder) => path.indexOf(folder.value) > -1)[0] ?? folders[0];
+};
