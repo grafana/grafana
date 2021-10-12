@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { StoreState } from '../../../../types';
 
-export function useExternalAmSelector(): Array<{ url: string; status: string }> {
+export function useExternalAmSelector(): Array<{ url: string; status: string }> | undefined {
   const activeAlertmanagers = useSelector(
     (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.activeAlertmanagers.result?.data
   );
@@ -10,7 +10,7 @@ export function useExternalAmSelector(): Array<{ url: string; status: string }> 
   );
 
   if (!activeAlertmanagers || !alertmanagerConfig) {
-    return [{ url: '', status: '' }];
+    return;
   }
 
   const enabledAlertmanagers: Array<{ url: string; status: string }> = [];
@@ -21,22 +21,27 @@ export function useExternalAmSelector(): Array<{ url: string; status: string }> 
     })
   );
 
-  // const enabledAlertmanagers = activeAlertmanagers.activeAlertManagers.map((alertmanager) => {
-  //   alertmanagerConfig.find((url) => alertmanager.url === `${url}/api/v2/alerts`);
-  //   for (const url in alertmanagerConfig) {
-  //     if (alertmanager.url === `${url}/api/v2/alerts`) {
-  //       return {
-  //         url: alertmanager.url,
-  //         status: 'active',
-  //       };
-  //     } else {
-  //       return {
-  //         url: `${url}/api/v2/alerts`,
-  //         status: 'pending',
-  //       };
-  //     }
-  //   }
-  // });
+  for (const url of alertmanagerConfig) {
+    if (activeAlertmanagers.activeAlertManagers.length === 0) {
+      enabledAlertmanagers.push({
+        url: `${url}/api/v2/alerts`,
+        status: 'pending',
+      });
+    }
+    for (const activeAM of activeAlertmanagers.activeAlertManagers) {
+      if (activeAM.url === `${url}/api/v2/alerts`) {
+        enabledAlertmanagers.push({
+          url: activeAM.url,
+          status: 'active',
+        });
+      } else {
+        enabledAlertmanagers.push({
+          url: `${url}/api/v2/alerts`,
+          status: 'pending',
+        });
+      }
+    }
+  }
 
   return [...enabledAlertmanagers, ...droppedAlertmanagers];
 }

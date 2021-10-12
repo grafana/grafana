@@ -27,8 +27,8 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
     </div>
   );
 
-  const onSubmit = (values: Record<string, any>) => {
-    dispatch(addExternalAlertmanagers(values.alertmanagers.map((am) => am.url)));
+  const onSubmit = (values: Record<string, Array<{ url: string }>>) => {
+    dispatch(addExternalAlertmanagers(values.alertmanagers.map((am) => am.url.replace(/\/$/, ''))));
     onClose();
   };
 
@@ -78,7 +78,7 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onClose }) => {
               )}
             </FieldArray>
             <div>
-              <Button onSubmit={onSubmit}>Add Alertmanagers</Button>
+              <Button onSubmit={() => onSubmit}>Add Alertmanagers</Button>
             </div>
           </div>
         )}

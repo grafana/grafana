@@ -27,7 +27,7 @@ export const ExternalAlertmanagers = () => {
   const onDelete = useCallback(
     (index: number) => {
       // to delete we need to filter the alertmanager from the list and repost
-      const newList = externalAlertManagers
+      const newList = externalAlertManagers!
         .filter((am, i) => i !== index)
         .map((am) => {
           return am.url;
@@ -76,7 +76,7 @@ export const ExternalAlertmanagers = () => {
         return 'red';
     }
   };
-
+  console.log(externalAlertManagers);
   return (
     <div>
       <h4>External Alertmanagers</h4>
@@ -102,13 +102,7 @@ export const ExternalAlertmanagers = () => {
               return (
                 <tr key={index}>
                   <td className="link-td">
-                    {am.url}{' '}
-                    <Icon
-                      name="heart"
-                      className={css`
-                        color: ${getStatusColor(am.status)};
-                      `}
-                    />
+                    {am.url} <Icon name="heart" style={{ color: getStatusColor(am.status) }} />
                   </td>
                   <td>
                     <HorizontalGroup>
