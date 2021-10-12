@@ -1,10 +1,12 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
+  AbsoluteTimeRange,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  getTimeField,
   hasLogsVolumeSupport,
   LoadingState,
   PanelData,
@@ -44,6 +46,7 @@ import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createCacheKey, createEmptyQueryResponse, getResultsFromCache } from './utils';
 import { config } from '@grafana/runtime';
+import deepEqual from 'fast-deep-equal';
 
 //
 // Actions and Payloads
@@ -123,6 +126,8 @@ export interface StoreLogsVolumeDataProvider {
 const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
   'explore/storeLogsVolumeDataProviderAction'
 );
+
+const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
 
 export interface StoreLogsVolumeDataSubscriptionPayload {
   exploreId: ExploreId;
@@ -476,6 +481,11 @@ export const runQueries = (
             logsVolumeDataProvider,
           })
         );
+        const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
+        if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
+          dispatch(cleanLogsVolumeAction({ exploreId }));
+        }
+
         if (autoLoadLogsVolume && logsVolumeDataProvider) {
           dispatch(loadLogsVolumeData(exploreId));
         }
@@ -492,6 +502,38 @@ export const runQueries = (
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
 };
+
+function canReuseLogsVolumeData(
+  logsVolumeData: DataQueryResponse | undefined,
+  queries: DataQuery[],
+  absoluteRange: AbsoluteTimeRange
+): boolean {
+  if (logsVolumeData && logsVolumeData.data[0]) {
+    if (!deepEqual(logsVolumeData.data[0].meta?.custom?.targets, queries)) {
+      return false;
+    }
+    const { timeField } = getTimeField(logsVolumeData.data[0]);
+    if (timeField) {
+      const dataRange = {
+        from: timeField.values.get(0),
+        to: timeField.values.get(timeField.values.length - 1),
+      };
+      // if selected range is within loaded histogram
+      if (dataRange.from <= absoluteRange.from && absoluteRange.to <= dataRange.to) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function logsLevelZoomRatio(
+  logsVolumeData: DataQueryResponse | undefined,
+  selectedTimeRange: AbsoluteTimeRange
+): number | undefined {
+  const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
+  return dataRange ? (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to) : undefined;
+}
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
@@ -697,7 +739,12 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       logsVolumeDataProvider,
       logsVolumeDataSubscription: undefined,
-      // clear previous data, with a new provider the previous data becomes stale
+    };
+  }
+
+  if (cleanLogsVolumeAction.match(action)) {
+    return {
+      ...state,
       logsVolumeData: undefined,
     };
   }

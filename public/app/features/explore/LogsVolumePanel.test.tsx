@@ -24,6 +24,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       logsVolumeData={logsVolumeData}
       autoLoadLogsVolume={false}
       onChangeAutoLogsVolume={() => {}}
+      onLoadLogsVolume={() => {}}
     />
   );
 }

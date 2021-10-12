@@ -4,6 +4,7 @@ import { ExploreGraph } from './ExploreGraph';
 import React, { useCallback } from 'react';
 import { ExploreId } from '../../types';
 import { css } from '@emotion/css';
+import { logsLevelZoomRatio } from './state/query';
 
 type Props = {
   exploreId: ExploreId;
@@ -16,37 +17,39 @@ type Props = {
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   autoLoadLogsVolume: boolean;
   onChangeAutoLogsVolume: (value: boolean) => void;
+  onLoadLogsVolume: () => void;
 };
 
 export function LogsVolumePanel(props: Props) {
   const {
     width,
     logsVolumeData,
-    exploreId,
-    loadLogsVolumeData,
     absoluteRange,
     timeZone,
     splitOpen,
     onUpdateTimeRange,
     autoLoadLogsVolume,
     onChangeAutoLogsVolume,
+    onLoadLogsVolume,
   } = props;
   const theme = useTheme2();
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
+  const handleOnChangeAutoLogsVolume = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const { target } = event;
+      if (target) {
+        onChangeAutoLogsVolume(target.checked);
+      }
+    },
+    [onChangeAutoLogsVolume]
+  );
+
   let LogsVolumePanelContent;
 
   if (!logsVolumeData) {
-    LogsVolumePanelContent = (
-      <Button
-        onClick={() => {
-          loadLogsVolumeData(exploreId);
-        }}
-      >
-        Load logs volume
-      </Button>
-    );
+    return null;
   } else if (logsVolumeData?.error) {
     LogsVolumePanelContent = (
       <span>
@@ -75,15 +78,24 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  const handleOnChangeAutoLogsVolume = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const { target } = event;
-      if (target) {
-        onChangeAutoLogsVolume(target.checked);
-      }
-    },
-    [onChangeAutoLogsVolume]
-  );
+  const zoomLevel = logsLevelZoomRatio(logsVolumeData, absoluteRange);
+  let zoomLevelInfo;
+
+  if (zoomLevel !== undefined && zoomLevel < 1) {
+    zoomLevelInfo = (
+      <>
+        <span
+          style={{
+            padding: '8px',
+            fontSize: `${theme.typography.bodySmall.fontSize}`,
+          }}
+        >
+          Logs volume zoom ~ {(zoomLevel * 100).toFixed(0)}%. Reload to show higher resolution
+        </span>
+        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
+      </>
+    );
+  }
 
   return (
     <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
@@ -101,9 +113,13 @@ export function LogsVolumePanel(props: Props) {
         className={css({
           display: 'flex',
           justifyContent: 'end',
+          position: 'absolute',
+          right: '5px',
+          top: '5px',
         })}
       >
         <InlineFieldRow>
+          {zoomLevelInfo}
           <InlineField label="Auto-load logs volume" transparent>
             <InlineSwitch value={autoLoadLogsVolume} onChange={handleOnChangeAutoLogsVolume} transparent />
           </InlineField>

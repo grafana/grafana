@@ -46,6 +46,14 @@ export function createLokiLogsVolumeProvider(
     const subscription = datasource.query(logsVolumeRequest).subscribe({
       complete: () => {
         const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume);
+        if (aggregatedLogsVolume[0]) {
+          aggregatedLogsVolume[0].meta = {
+            custom: {
+              targets: dataQueryRequest.targets,
+              absoluteRange: { from: dataQueryRequest.range.from.valueOf(), to: dataQueryRequest.range.to.valueOf() },
+            },
+          };
+        }
         observer.next({
           state: LoadingState.Done,
           error: undefined,

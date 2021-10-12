@@ -8,10 +8,12 @@ type Props = {
   addQueryRowButtonHidden?: boolean;
   richHistoryButtonActive?: boolean;
   queryInspectorButtonActive?: boolean;
+  loadingLogsVolumeAvailable?: boolean;
 
   onClickAddQueryRowButton: () => void;
   onClickRichHistoryButton: () => void;
   onClickQueryInspectorButton: () => void;
+  onClickLoadLogsVolume: () => void;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -56,6 +58,16 @@ export function SecondaryActions(props: Props) {
         >
           Inspector
         </Button>
+        {props.loadingLogsVolumeAvailable && (
+          <Button
+            variant="secondary"
+            aria-label="Load logs volume buttonLogsVolumePanel.test.tsx:16:"
+            onClick={props.onClickLoadLogsVolume}
+            icon="graph-bar"
+          >
+            Load logs volume
+          </Button>
+        )}
       </HorizontalGroup>
     </div>
   );
