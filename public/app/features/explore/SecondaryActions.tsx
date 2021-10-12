@@ -61,7 +61,7 @@ export function SecondaryActions(props: Props) {
         {props.loadingLogsVolumeAvailable && (
           <Button
             variant="secondary"
-            aria-label="Load logs volume buttonLogsVolumePanel.test.tsx:16:"
+            aria-label="Load logs volume button"
             onClick={props.onClickLoadLogsVolume}
             icon="graph-bar"
           >

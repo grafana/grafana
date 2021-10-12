@@ -59,6 +59,7 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={onClickAddRow}
         onClickRichHistoryButton={onClickHistory}
         onClickQueryInspectorButton={onClickQueryInspector}
+        loadingLogsVolumeAvailable={true}
         onClickLoadLogsVolume={onClickLoadLogsVolumeInspector}
       />
     );

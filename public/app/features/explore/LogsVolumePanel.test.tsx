@@ -48,8 +48,8 @@ describe('LogsVolumePanel', () => {
     expect(screen.getByText('Failed to load volume logs for this query: Error message')).toBeInTheDocument();
   });
 
-  it('shows button to load logs volume', () => {
+  it('does not show the panel when there is no volume data', () => {
     renderPanel(undefined);
-    expect(screen.getByText('Load logs volume')).toBeInTheDocument();
+    expect(screen.queryByText('Logs volume')).not.toBeInTheDocument();
   });
 });
