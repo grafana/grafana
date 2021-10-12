@@ -4,7 +4,7 @@ import { PanelRendererProps } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
-import { importPanelPlugin } from '../../plugins/plugin_loader';
+import { importPanelPlugin } from '../../plugins/importPanelPlugin';
 import { useTheme2 } from '@grafana/ui';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
