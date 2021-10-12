@@ -13,10 +13,14 @@
     "ora"
   ],
   "labels": ["area/frontend", "dependencies"],
+  "matchPaths": ["+(package.json)", "+(packages/*/package.json)"],
   "minor": {
     "enabled": false
   },
   "patch": {
+    "enabled": false
+  },
+  "pin": {
     "enabled": false
   },
   "prConcurrentLimit": 10,
