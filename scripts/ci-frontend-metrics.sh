@@ -33,6 +33,7 @@ echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
 echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
 echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
+echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
 
 echo "Metrics: {
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
