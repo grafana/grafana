@@ -1,7 +1,7 @@
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { closeEditor, initialState, PanelEditorState } from './reducers';
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
-import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
+import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
@@ -56,8 +56,9 @@ describe('panelEditor actions', () => {
         .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
-      expect(dispatchedActions.length).toBe(1);
-      expect(dispatchedActions[0].type).toBe(closeEditor.type);
+      expect(dispatchedActions.length).toBe(2);
+      expect(dispatchedActions[0].type).toBe(cleanUpPanelState.type);
+      expect(dispatchedActions[1].type).toBe(closeEditor.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
       expect(sourcePanel.id).toEqual(12);
     });
@@ -90,7 +91,7 @@ describe('panelEditor actions', () => {
         .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
-      expect(dispatchedActions.length).toBe(2);
+      expect(dispatchedActions.length).toBe(3);
       expect(dispatchedActions[0].type).toBe(panelModelAndPluginReady.type);
       expect(sourcePanel.plugin).toEqual(panel.plugin);
       expect(panelDestroy.mock.calls.length).toEqual(1);
@@ -125,7 +126,7 @@ describe('panelEditor actions', () => {
         .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
-      expect(dispatchedActions.length).toBe(1);
+      expect(dispatchedActions.length).toBe(2);
       expect(sourcePanel.getOptions()).toEqual({});
     });
   });
