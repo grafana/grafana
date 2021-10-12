@@ -34,7 +34,7 @@ export class CanvasPanel extends Component<Props, State> {
     };
 
     // Only the initial options are ever used.
-    // later changs are all controled by the scene
+    // later changes are all controlled by the scene
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);

@@ -489,7 +489,7 @@ export class ElasticResponse {
     return this.processResponseToDataFrames(true, logMessageField, logLevelField);
   }
 
-  processResponseToDataFrames(
+  private processResponseToDataFrames(
     isLogsRequest: boolean,
     logMessageField?: string,
     logLevelField?: string
@@ -501,64 +501,67 @@ export class ElasticResponse {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
-      if (response.hits && response.hits.hits.length > 0) {
+      if (response.hits) {
         const { propNames, docs } = flattenHits(response.hits.hits);
-        if (docs.length > 0) {
-          let series = createEmptyDataFrame(
-            propNames.map(toNameTypePair(docs)),
-            this.targets[0].timeField!,
-            isLogsRequest,
-            logMessageField,
-            logLevelField
-          );
 
-          // Add a row for each document
-          for (const doc of docs) {
-            if (logLevelField) {
-              // Remap level field based on the datasource config. This field is
-              // then used in explore to figure out the log level. We may rewrite
-              // some actual data in the level field if they are different.
-              doc['level'] = doc[logLevelField];
-            }
-            // When highlighting exists, we need to collect all the highlighted
-            // phrases and add them to the DataFrame's meta.searchWords array.
-            if (doc.highlight) {
-              // There might be multiple words so we need two versions of the
-              // regular expression. One to match gobally, when used with part.match,
-              // it returns and array of matches. The second one is used to capture the
-              // values between the tags.
-              const globalHighlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP, 'g');
-              const highlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP);
-              const newSearchWords = Object.keys(doc.highlight)
-                .flatMap((key) => {
-                  return doc.highlight[key].flatMap((line: string) => {
-                    const matchedPhrases = line.match(globalHighlightWordRegex);
-                    if (!matchedPhrases) {
-                      return [];
-                    }
-                    return matchedPhrases.map((part) => {
-                      const matches = part.match(highlightWordRegex);
-                      return (matches && matches[1]) || null;
-                    });
-                  });
-                })
-                .filter(identity);
-              // If meta and searchWords already exists, add the words and
-              // deduplicate otherwise create a new set of search words.
-              const searchWords = series.meta?.searchWords
-                ? uniq([...series.meta.searchWords, ...newSearchWords])
-                : [...newSearchWords];
-              series.meta = series.meta ? { ...series.meta, searchWords } : { searchWords };
-            }
-            series.add(doc);
-          }
-          if (isLogsRequest) {
-            series = addPreferredVisualisationType(series, 'logs');
-          }
-          const target = this.targets[n];
-          series.refId = target.refId;
-          dataFrame.push(series);
+        const series = docs.length
+          ? createEmptyDataFrame(
+              propNames.map(toNameTypePair(docs)),
+              isLogsRequest,
+              this.targets[0].timeField,
+              logMessageField,
+              logLevelField
+            )
+          : createEmptyDataFrame([], isLogsRequest);
+
+        if (isLogsRequest) {
+          addPreferredVisualisationType(series, 'logs');
         }
+
+        // Add a row for each document
+        for (const doc of docs) {
+          if (logLevelField) {
+            // Remap level field based on the datasource config. This field is
+            // then used in explore to figure out the log level. We may rewrite
+            // some actual data in the level field if they are different.
+            doc['level'] = doc[logLevelField];
+          }
+          // When highlighting exists, we need to collect all the highlighted
+          // phrases and add them to the DataFrame's meta.searchWords array.
+          if (doc.highlight) {
+            // There might be multiple words so we need two versions of the
+            // regular expression. One to match gobally, when used with part.match,
+            // it returns and array of matches. The second one is used to capture the
+            // values between the tags.
+            const globalHighlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP, 'g');
+            const highlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP);
+            const newSearchWords = Object.keys(doc.highlight)
+              .flatMap((key) => {
+                return doc.highlight[key].flatMap((line: string) => {
+                  const matchedPhrases = line.match(globalHighlightWordRegex);
+                  if (!matchedPhrases) {
+                    return [];
+                  }
+                  return matchedPhrases.map((part) => {
+                    const matches = part.match(highlightWordRegex);
+                    return (matches && matches[1]) || null;
+                  });
+                });
+              })
+              .filter(identity);
+            // If meta and searchWords already exists, add the words and
+            // deduplicate otherwise create a new set of search words.
+            const searchWords = series.meta?.searchWords
+              ? uniq([...series.meta.searchWords, ...newSearchWords])
+              : [...newSearchWords];
+            series.meta = series.meta ? { ...series.meta, searchWords } : { searchWords };
+          }
+          series.add(doc);
+        }
+
+        const target = this.targets[n];
+        series.refId = target.refId;
+        dataFrame.push(series);
       }
 
       if (response.aggregations) {
@@ -582,7 +585,7 @@ export class ElasticResponse {
 
           // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
           if (isLogsRequest) {
-            series = addPreferredVisualisationType(series, 'graph');
+            addPreferredVisualisationType(series, 'graph');
           }
 
           series.refId = target.refId;
@@ -690,20 +693,22 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
  */
 const createEmptyDataFrame = (
   props: Array<[string, FieldType]>,
-  timeField: string,
   isLogsRequest: boolean,
+  timeField?: string,
   logMessageField?: string,
   logLevelField?: string
 ): MutableDataFrame => {
   const series = new MutableDataFrame({ fields: [] });
 
-  series.addField({
-    config: {
-      filterable: true,
-    },
-    name: timeField,
-    type: FieldType.time,
-  });
+  if (timeField) {
+    series.addField({
+      config: {
+        filterable: true,
+      },
+      name: timeField,
+      type: FieldType.time,
+    });
+  }
 
   if (logMessageField) {
     series.addField({
@@ -756,8 +761,6 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
     : (s.meta = {
         preferredVisualisationType: type,
       });
-
-  return s;
 };
 
 const toNameTypePair = (docs: Array<Record<string, any>>) => (propName: string): [string, FieldType] => [
