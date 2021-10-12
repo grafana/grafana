@@ -119,7 +119,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -412,7 +412,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -908,7 +908,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -1306,7 +1306,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -1912,7 +1912,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -2299,7 +2299,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -2895,7 +2895,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -3253,7 +3253,7 @@ steps:
   - "# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files."
   - "# It is required that the generated Typescript be in sync with the input CUE files."
   - "# ...Modulo eslint auto-fixes...:"
-  - ./node_modules/.bin/eslint . --ext .gen.ts --fix
+  - yarn run eslint . --ext .gen.ts --fix
   - "# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result."
   - ./scripts/clean-git-or-error.sh
   depends_on:
@@ -3720,6 +3720,6 @@ get:
 
 ---
 kind: signature
-hmac: ff07b94decc99b1ecb5b7587bd4c2c438ffe6074eb7b877537f142f8c1098bb9
+hmac: 3dc3e8b1405c197f4f075528d1dd3320d6c48db4b42008d2ae0bb51bacaede89
 
 ...
