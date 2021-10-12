@@ -7,46 +7,40 @@ weight = 400
 
 # Silence alert notifications
 
-Grafana allows to you to prevent notifications from one or more alert rules by creating a silence. This silence lasts for a specified window of time.
+You can use silences to stop notifications from one or more alerting rules. Silences do not prevent alert rules from being evaluated. Nor do they not stop alerting instances from being shown in the user interface. Silences only stop notifications from getting created. A silence lasts for only a specified window of time.
 
-Silences do not prevent alert rules from being evaluated. They also do not stop alert instances being shown in the user interface. Silences only prevent notifications from being created.
-
-Grafana alerting UI allows you to configure silences for the Grafana managed alerts (handled by the embedded Alertmanager) as well as silences for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}), using the Alertmanager dropdown.
-
-> **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise silences for the Grafana managed alerts will be visible by all organizations.
+Grafana 8 alerting supports managing of silences for an external Alertmanager. 
 
 ## Add a silence
 
 To add a silence:
 
-1. In the Grafana menu, hover your cursor over the **Alerting** (bell) icon and then select **Silences** (crossed out bell icon).
-1. Click the **New Silence** button.
-1. Select the start and end date in **Silence start and end** to indicate when the silence should go into effect and expire.
-1. Optionally, update the **Duration** to alter the time for the end of silence in the previous step to correspond to the start plus the duration.
-1. Enter one or more _Matching Labels_ by filling out the **Name** and **Value** fields. Matchers determine which rules the silence will apply to.
-1. Enter a **Comment**.
-1. Enter the name of the owner in **Creator**.
+1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
+1. In the Alerting page, click **Silences** to open the page listing existing contact points.
+1. From [Alertmanager]({{< relref "../contact-points.md/#alertmanager" >}}) drop down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
+1. Click **New Silence** to open the Create silence page.
+1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
+1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the  **Silence start and end** field.
+1. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. For more information, see [Label matching for alert suppression](#label-matching-for-alert-suppression).
+1. In **Comment**, add details about the silence.
+1. In **Creator**, enter the name of the silence owner or keep the default owner.
 1. Click **Create**.
 
-## How label matching works
+### Label matching for alert suppression
 
-Alert instances that have labels that match all of the "Matching Labels" specified in the silence will have their notifications suppressed.
+Notifications are suppressed only for alerts with labels that match all the "Matching Labels" specified in the silence.
 
 - The **Label** field is the name of the label to match. It must exactly match the label name.
 - The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Regex** and **Equal** checkboxes.
-- The **Regex** checkbox specifies if the inputted **Value** should be matched against labels as a regular expression. The regular expression is always anchored. If not selected it is an exact string match.
-- The **Equal** checkbox specifies if the match should include alert instances that match or do not match. If not checked, the silence includes alert instances _do not_ match.
+- The **Regex** checkbox indicates if **Value** should be treated as a regular expression to match against labels. The regular expression is always anchored. If not selected, it is an exact string match.
+- The **Equal** checkbox specifies if the match should include alert instances that match. If not checked, the silence includes alerts that _do not_ match.
 
-## Viewing and editing silences
+## Managing silences
 
-1. In the Grafana menu hover your cursor over the **Alerting** (bell) icon, then select **Silences** (crossed out bell icon).
-1. To end the silence, click the **Unsilence** option next to the listed silence. Silences that have ended are still listed and are automatically removed after 5 days. There is no method for manual removal.
-1. To edit a silence, click the pencil icon next to the listed silence. Edit the silence using instructions on how to create a silence.
-1. Click **Submit** to save your changes.
-
-## Manage silences for an external Alertmanager
-
-Grafana alerting UI supports managing external Alertmanager silences. Once you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page where you can select either `Grafana` or an external Alertmanager as your data source.
+1. In the Alerting page, click **Silences** to view the list of existing silences.
+1. To end the silence, click the **Unsilence** option next to a listed silence. Silences that have ended are still listed for five days, after which they are automatically removed. You cannot remove a silence manually.
+1. Find the silence you want to edit, then click **Edit** (pen icon).
+1. Make any changes and click **Submit** to save your changes.
 
 ## Create a URL to silence form with defaults filled in
 
