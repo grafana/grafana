@@ -254,6 +254,18 @@ describe('Query imports', () => {
   });
 
   describe('prometheus query imports', () => {
+    it('always results in range query type', async () => {
+      const instance = new LanguageProvider(datasource);
+      const result = await instance.importQueries(
+        [{ refId: 'bar', expr: '{job="grafana"}', instant: true, range: false } as DataQuery],
+        {
+          meta: { id: 'prometheus' },
+        } as DataSourceApi
+      );
+      expect(result).toEqual([{ refId: 'bar', expr: '{job="grafana"}', range: true }]);
+      expect(result).not.toHaveProperty('instant');
+    });
+
     it('returns empty query from metric-only query', async () => {
       const instance = new LanguageProvider(datasource);
       const result = await instance.importPrometheusQuery('foo');

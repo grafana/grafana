@@ -44,8 +44,5 @@
     "tinycolor2": "1.4.1",
     "tslib": "2.3.1",
     "tween-functions": "^1.2.0"
-  },
-  "volta": {
-    "extends": "../../package.json"
   }
 }

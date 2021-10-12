@@ -60,6 +60,11 @@ export class GroupState extends ElementState {
     for (const elem of this.elements) {
       elem.updateSize(this.width, this.height);
     }
+
+    // The group forced to full width (for now)
+    this.sizeStyle.width = width;
+    this.sizeStyle.height = height;
+    this.sizeStyle.position = 'absolute';
   }
 
   updateData(ctx: DimensionContext) {
