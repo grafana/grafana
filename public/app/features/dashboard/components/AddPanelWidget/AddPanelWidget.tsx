@@ -215,7 +215,7 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton name="arrow-left" onClick={onBack} surface="header" size="xl" />
+          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} surface="header" size="xl" />
         </div>
       )}
       {!onBack && (
