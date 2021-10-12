@@ -8,20 +8,21 @@ import (
 
 type KeywordScopeResolveFunc func(*models.SignedInUser) (string, error)
 
-// TODO should I encapsulate this map in an object not to have a package variable
+// TODO should I encapsulate this map in an object not to have a package variable?
 var keywordScopeResolutions = map[string]KeywordScopeResolveFunc{
 	"orgs:current": resolveCurrentOrg,
 	"users:self":   resolveUserSelf,
 }
 
 func resolveCurrentOrg(u *models.SignedInUser) (string, error) {
-	return fmt.Sprintf("orgs:%v", u.OrgId), nil
+	return Scope("orgs", "id", fmt.Sprintf("%v", u.OrgId)), nil
 }
 
 func resolveUserSelf(u *models.SignedInUser) (string, error) {
-	return fmt.Sprintf("users:%v", u.UserId), nil
+	return Scope("users", "id", fmt.Sprintf("%v", u.UserId)), nil
 }
 
+// ResolveKeywordScope resolves scope with keywords such as `self` or `current` for instance into `id` based scopes
 func ResolveKeywordScope(user *models.SignedInUser, permission Permission) (*Permission, error) {
 	if fn, ok := keywordScopeResolutions[permission.Scope]; ok {
 		resolvedScope, err := fn(user)

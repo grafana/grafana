@@ -84,6 +84,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 					continue
 				}
 				for _, p := range role.Permissions {
+					// if the permission has a keyword in its scope it will be resolved
 					permission, err := accesscontrol.ResolveKeywordScope(user, p)
 					if err != nil {
 						return nil, err

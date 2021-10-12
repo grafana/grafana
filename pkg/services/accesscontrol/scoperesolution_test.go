@@ -36,7 +36,7 @@ func TestResolveKeywordedScope(t *testing.T) {
 			name:       "user if resolution",
 			user:       testUser,
 			permission: Permission{Action: "users:read", Scope: "users:self"},
-			want:       &Permission{Action: "users:read", Scope: "users:2"},
+			want:       &Permission{Action: "users:read", Scope: "users:id:2"},
 			wantErr:    false,
 		},
 	}
