@@ -467,7 +467,15 @@ export const runQueries = (
           }
         );
 
-      if (config.featureToggles.fullRangeLogsVolume && hasLogsVolumeSupport(datasourceInstance)) {
+      if (live) {
+        dispatch(
+          storeLogsVolumeDataProviderAction({
+            exploreId,
+            logsVolumeDataProvider: undefined,
+          })
+        );
+        dispatch(cleanLogsVolumeAction({ exploreId }));
+      } else if (config.featureToggles.fullRangeLogsVolume && hasLogsVolumeSupport(datasourceInstance)) {
         const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
         dispatch(
           storeLogsVolumeDataProviderAction({
