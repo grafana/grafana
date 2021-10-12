@@ -24555,7 +24555,7 @@ fsevents@~2.1.2:
     wordwrap: ~1.0.0
   bin:
     pa11y-ci: ./bin/pa11y-ci.js
-  checksum: 668c9119bd5195ab1013cafef4d5d9249ed13f9a049bb8e68088cebc50d495975b5398a201b34f126aff03e605d494aa59044d1a325a642970b28d472395203a
+  checksum: fee3cafd66ab7193da4b0cc027d368b7b0f6cef9949c0ad9025161dfcd07c82309d481bb0cd62bf543acd583be6942dc182edda0146669fa5b0eaad0029c4ea9
   languageName: node
   linkType: hard
 
