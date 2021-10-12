@@ -75,7 +75,8 @@ func newFakeKVStore(t *testing.T) *FakeKVStore {
 	t.Helper()
 
 	return &FakeKVStore{
-		store: map[int64]map[string]map[string]string{},
+		store:    map[int64]map[string]map[string]string{},
+		orgStore: &FakeOrgStore{orgs: []int64{}},
 	}
 }
 
