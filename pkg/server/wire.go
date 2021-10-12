@@ -52,6 +52,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -145,7 +147,10 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
-	secrets.ProvideSecretsService,
+	secretsManager.ProvideSecretsService,
+	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	secretsDatabase.ProvideSecretsStore,
+	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
 	datasources.ProvideService,
