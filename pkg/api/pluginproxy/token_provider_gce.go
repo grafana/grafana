@@ -2,43 +2,30 @@ package pluginproxy
 
 import (
 	"context"
-	"time"
 
+	googletokenprovider "github.com/grafana/grafana-google-sdk-go/tokenprovider"
 	"github.com/grafana/grafana/pkg/plugins"
-	"golang.org/x/oauth2/google"
 )
 
 type gceAccessTokenProvider struct {
-	datasourceId      int64
-	datasourceUpdated time.Time
-	ctx               context.Context
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	tokenProvider googletokenprovider.TokenProvider
+	initErr       error
 }
 
 func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
 	authParams *plugins.JwtTokenAuth) *gceAccessTokenProvider {
-	return &gceAccessTokenProvider{
-		datasourceId:      ds.ID,
-		datasourceUpdated: ds.Updated,
-		ctx:               ctx,
-		route:             pluginRoute,
-		authParams:        authParams,
+	cfg := googletokenprovider.Config{
+		RoutePath:         pluginRoute.Path,
+		RouteMethod:       pluginRoute.Method,
+		DataSourceID:      ds.ID,
+		DataSourceUpdated: ds.Updated,
+		Scopes:            authParams.Scopes,
 	}
+	gceProvider := &gceAccessTokenProvider{}
+	gceProvider.tokenProvider, gceProvider.initErr = googletokenprovider.NewGceAccessTokenProvider(ctx, &cfg)
+	return gceProvider
 }
 
 func (provider *gceAccessTokenProvider) GetAccessToken() (string, error) {
-	tokenSrc, err := google.DefaultTokenSource(provider.ctx, provider.authParams.Scopes...)
-	if err != nil {
-		logger.Error("Failed to get default token from meta data server", "error", err)
-		return "", err
-	} else {
-		token, err := tokenSrc.Token()
-		if err != nil {
-			logger.Error("Failed to get default access token from meta data server", "error", err)
-			return "", err
-		} else {
-			return token.AccessToken, nil
-		}
-	}
+	return provider.tokenProvider.GetAccessToken()
 }
