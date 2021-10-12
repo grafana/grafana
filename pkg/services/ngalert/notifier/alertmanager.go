@@ -119,6 +119,10 @@ type Alertmanager struct {
 	orgID           int64
 
 	decryptFn channels.GetDecryptedValueFn
+
+	// isRemoved indicates if this alertmanager will be removed from the system
+	// as the organization was deleted.
+	isRemoved bool
 }
 
 func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
@@ -156,6 +160,9 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 		nflog.WithRetention(retentionNotificationsAndSilences),
 		nflog.WithSnapshot(nflogFilepath),
 		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
+			if am.isRemoved {
+				return 0, nil
+			}
 			return am.fileStore.Persist(context.TODO(), notificationLogFilename, am.notificationLog)
 		}),
 	)
@@ -176,6 +183,9 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, k
 	am.wg.Add(1)
 	go func() {
 		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
+			if am.isRemoved {
+				return 0, nil
+			}
 			return am.fileStore.Persist(context.TODO(), silencesFilename, am.silences)
 		})
 		am.wg.Done()
