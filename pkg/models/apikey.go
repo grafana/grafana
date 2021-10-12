@@ -32,7 +32,7 @@ type AddApiKeyCommand struct {
 	OrgId                   int64    `json:"-"`
 	Key                     string   `json:"-"`
 	SecondsToLive           int64    `json:"secondsToLive"`
-	ServiceAccountId        string   `json:"serviceAccount"`
+	ServiceAccountId        int64    `json:"serviceAccount"`
 	CreateNewServiceAccount bool     `json:"createServiceAccount"`
 
 	Result *ApiKey `json:"-"`
