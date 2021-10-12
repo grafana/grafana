@@ -23,11 +23,10 @@ import (
 	"net/http"
 	"runtime"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -103,8 +102,8 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery(cfg *setting.Cfg) macaron.Handler {
-	return func(c *macaron.Context) {
+func Recovery(cfg *setting.Cfg) web.Handler {
+	return func(c *web.Context) {
 		defer func() {
 			if r := recover(); r != nil {
 				panicLogger := log.Root

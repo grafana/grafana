@@ -6,41 +6,41 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type Router interface {
-	Handle(method, pattern string, handlers []macaron.Handler)
-	Get(pattern string, handlers ...macaron.Handler)
+	Handle(method, pattern string, handlers []web.Handler)
+	Get(pattern string, handlers ...web.Handler)
 }
 
-// RouteRegister allows you to add routes and macaron.Handlers
+// RouteRegister allows you to add routes and web.Handlers
 // that the web server should serve.
 type RouteRegister interface {
 	// Get adds a list of handlers to a given route with a GET HTTP verb
-	Get(string, ...macaron.Handler)
+	Get(string, ...web.Handler)
 
 	// Post adds a list of handlers to a given route with a POST HTTP verb
-	Post(string, ...macaron.Handler)
+	Post(string, ...web.Handler)
 
 	// Delete adds a list of handlers to a given route with a DELETE HTTP verb
-	Delete(string, ...macaron.Handler)
+	Delete(string, ...web.Handler)
 
 	// Put adds a list of handlers to a given route with a PUT HTTP verb
-	Put(string, ...macaron.Handler)
+	Put(string, ...web.Handler)
 
 	// Patch adds a list of handlers to a given route with a PATCH HTTP verb
-	Patch(string, ...macaron.Handler)
+	Patch(string, ...web.Handler)
 
 	// Any adds a list of handlers to a given route with any HTTP verb
-	Any(string, ...macaron.Handler)
+	Any(string, ...web.Handler)
 
 	// Group allows you to pass a function that can add multiple routes
 	// with a shared prefix route.
-	Group(string, func(RouteRegister), ...macaron.Handler)
+	Group(string, func(RouteRegister), ...web.Handler)
 
 	// Insert adds more routes to an existing Group.
-	Insert(string, func(RouteRegister), ...macaron.Handler)
+	Insert(string, func(RouteRegister), ...web.Handler)
 
 	// Register iterates over all routes added to the RouteRegister
 	// and add them to the `Router` pass as an parameter.
@@ -50,7 +50,7 @@ type RouteRegister interface {
 	Reset()
 }
 
-type RegisterNamedMiddleware func(name string) macaron.Handler
+type RegisterNamedMiddleware func(name string) web.Handler
 
 func ProvideRegister(cfg *setting.Cfg) *RouteRegisterImpl {
 	return NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(cfg))
@@ -61,7 +61,7 @@ func NewRouteRegister(namedMiddlewares ...RegisterNamedMiddleware) *RouteRegiste
 	return &RouteRegisterImpl{
 		prefix:           "",
 		routes:           []route{},
-		subfixHandlers:   []macaron.Handler{},
+		subfixHandlers:   []web.Handler{},
 		namedMiddlewares: namedMiddlewares,
 	}
 }
@@ -69,12 +69,12 @@ func NewRouteRegister(namedMiddlewares ...RegisterNamedMiddleware) *RouteRegiste
 type route struct {
 	method   string
 	pattern  string
-	handlers []macaron.Handler
+	handlers []web.Handler
 }
 
 type RouteRegisterImpl struct {
 	prefix           string
-	subfixHandlers   []macaron.Handler
+	subfixHandlers   []web.Handler
 	namedMiddlewares []RegisterNamedMiddleware
 	routes           []route
 	groups           []*RouteRegisterImpl
@@ -90,7 +90,7 @@ func (rr *RouteRegisterImpl) Reset() {
 	rr.subfixHandlers = nil
 }
 
-func (rr *RouteRegisterImpl) Insert(pattern string, fn func(RouteRegister), handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Insert(pattern string, fn func(RouteRegister), handlers ...web.Handler) {
 	// loop over all groups at current level
 	for _, g := range rr.groups {
 		// apply routes if the prefix matches the pattern
@@ -106,7 +106,7 @@ func (rr *RouteRegisterImpl) Insert(pattern string, fn func(RouteRegister), hand
 	}
 }
 
-func (rr *RouteRegisterImpl) Group(pattern string, fn func(rr RouteRegister), handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Group(pattern string, fn func(rr RouteRegister), handlers ...web.Handler) {
 	group := &RouteRegisterImpl{
 		prefix:           rr.prefix + pattern,
 		subfixHandlers:   append(rr.subfixHandlers, handlers...),
@@ -135,8 +135,8 @@ func (rr *RouteRegisterImpl) Register(router Router) {
 	}
 }
 
-func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...macaron.Handler) {
-	h := make([]macaron.Handler, 0)
+func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...web.Handler) {
+	h := make([]web.Handler, 0)
 	fullPattern := rr.prefix + pattern
 
 	for _, fn := range rr.namedMiddlewares {
@@ -159,26 +159,26 @@ func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...macaron.H
 	})
 }
 
-func (rr *RouteRegisterImpl) Get(pattern string, handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Get(pattern string, handlers ...web.Handler) {
 	rr.route(pattern, http.MethodGet, handlers...)
 }
 
-func (rr *RouteRegisterImpl) Post(pattern string, handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Post(pattern string, handlers ...web.Handler) {
 	rr.route(pattern, http.MethodPost, handlers...)
 }
 
-func (rr *RouteRegisterImpl) Delete(pattern string, handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Delete(pattern string, handlers ...web.Handler) {
 	rr.route(pattern, http.MethodDelete, handlers...)
 }
 
-func (rr *RouteRegisterImpl) Put(pattern string, handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Put(pattern string, handlers ...web.Handler) {
 	rr.route(pattern, http.MethodPut, handlers...)
 }
 
-func (rr *RouteRegisterImpl) Patch(pattern string, handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Patch(pattern string, handlers ...web.Handler) {
 	rr.route(pattern, http.MethodPatch, handlers...)
 }
 
-func (rr *RouteRegisterImpl) Any(pattern string, handlers ...macaron.Handler) {
+func (rr *RouteRegisterImpl) Any(pattern string, handlers ...web.Handler) {
 	rr.route(pattern, "*", handlers...)
 }
