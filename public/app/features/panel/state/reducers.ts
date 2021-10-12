@@ -43,7 +43,6 @@ const panelsSlice = createSlice({
 
 function cleanUpAngularComponent(panelState?: Draft<PanelState>) {
   if (panelState?.angularComponent) {
-    console.log('AngularComponent.destroy');
     panelState.angularComponent.destroy();
   }
 }
