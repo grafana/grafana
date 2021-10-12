@@ -84,7 +84,7 @@ export function transformV2(
   const exemplarFrames = exemplarResults.map((dataFrame) => {
     if (destinations?.length) {
       for (const exemplarTraceIdDestination of destinations) {
-        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination!.name);
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
         if (traceIDField) {
           const links = getDataLinks(exemplarTraceIdDestination);
           traceIDField.config.links = traceIDField.config.links?.length
@@ -213,7 +213,7 @@ export function transform(
     // Add data links if configured
     if (transformOptions.exemplarTraceIdDestinations?.length) {
       for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
-        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination!.name);
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
         if (traceIDField) {
           const links = getDataLinks(exemplarTraceIdDestination);
           traceIDField.config.links = traceIDField.config.links?.length
