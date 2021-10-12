@@ -345,7 +345,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
             payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent(payload));
+            eventBus.publish(new DataHoverClearEvent());
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
