@@ -1,9 +1,10 @@
-package secrets
+package defaultprovider
 
 import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -12,7 +13,7 @@ type grafanaProvider struct {
 	encryption encryption.Service
 }
 
-func newGrafanaProvider(settings setting.Provider, encryption encryption.Service) grafanaProvider {
+func New(settings setting.Provider, encryption encryption.Service) secrets.Provider {
 	return grafanaProvider{
 		settings:   settings,
 		encryption: encryption,

@@ -14,7 +14,7 @@ e2e.scenario({
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').click();
+        e2e().get('input[id*="scenario-input-"]').should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();

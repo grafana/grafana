@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, Subject, throwError } from 'rxjs';
+import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import LRU from 'lru-cache';
 import {
@@ -43,7 +43,6 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this query are not available.';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> {
@@ -63,7 +62,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  exemplarErrors: Subject<{ refId: string; error: string | null }> = new Subject();
+  exemplarsAvailable: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -88,10 +87,12 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
+    this.exemplarsAvailable = true;
   }
 
-  init = () => {
+  init = async () => {
     this.loadRules();
+    this.exemplarsAvailable = await this.areExemplarsAvailable();
   };
 
   getQueryDisplayText(query: PromQuery) {
@@ -271,12 +272,8 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
             exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
-            this.exemplarErrors.next({ refId: exemplarTarget.refId, error: null });
           }
           target.exemplar = false;
-        }
-        if (target.exemplar && target.instant) {
-          this.exemplarErrors.next({ refId: target.refId, error: 'Exemplars are not available for instant queries.' });
         }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
@@ -289,23 +286,53 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     };
   };
 
-  query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+  shouldRunExemplarQuery(target: PromQuery): boolean {
+    /* We want to run exemplar query only for histogram metrics: 
+    1. If we haven't processd histogram metrics yet, we need to check if expr includes "_bucket" which means that it is probably histogram metric (can rarely lead to false positive).
+    2. If we have processed histogram metrics, check if it is part of query expr.
+    */
+    if (target.exemplar) {
+      const histogramMetrics = this.languageProvider.histogramMetrics;
+
+      if (histogramMetrics.length > 0) {
+        return !!histogramMetrics.find((metric) => target.expr.includes(metric));
+      } else {
+        return target.expr.includes('_bucket');
+      }
+    }
+
+    return false;
+  }
+
+  processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    const processedTarget = {
+      ...target,
+      exemplar: this.shouldRunExemplarQuery(target),
+      requestId: request.panelId + target.refId,
+      // We need to pass utcOffsetSec to backend to calculate aligned range
+      utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
+    };
+    return processedTarget;
+  }
+
+  query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
-    const shouldRunBackendQuery =
-      this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
+    const shouldRunBackendQuery = this.access === 'proxy' && request.app === CoreApp.Explore;
 
     if (shouldRunBackendQuery) {
-      const targets = options.targets.map((target) => ({
-        ...target,
-        // We need to pass utcOffsetSec to backend to calculate aligned range
-        utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
-      }));
-      return super.query({ ...options, targets }).pipe(map((response) => transformV2(response, options)));
+      const targets = request.targets.map((target) => this.processTargetV2(target, request));
+      return super
+        .query({ ...request, targets })
+        .pipe(
+          map((response) =>
+            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+          )
+        );
       // Run queries trough browser/proxy
     } else {
-      const start = this.getPrometheusTime(options.range.from, false);
-      const end = this.getPrometheusTime(options.range.to, true);
-      const { queries, activeTargets } = this.prepareTargets(options, start, end);
+      const start = this.getPrometheusTime(request.range.from, false);
+      const end = this.getPrometheusTime(request.range.to, true);
+      const { queries, activeTargets } = this.prepareTargets(request, start, end);
 
       // No valid targets, return the empty result to save a round trip.
       if (!queries || !queries.length) {
@@ -315,11 +342,11 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
         });
       }
 
-      if (options.app === CoreApp.Explore) {
+      if (request.app === CoreApp.Explore) {
         return this.exploreQuery(queries, activeTargets, end);
       }
 
-      return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
+      return this.panelsQuery(queries, activeTargets, end, request.requestId, request.scopedVars);
     }
   }
 
@@ -404,7 +431,6 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     if (query.exemplar) {
       return this.getExemplars(query).pipe(
         catchError(() => {
-          this.exemplarErrors.next({ refId: query.refId, error: EXEMPLARS_NOT_AVAILABLE });
           return of({
             data: [],
             state: LoadingState.Done,
@@ -782,6 +808,18 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     } catch (e) {
       console.log('Rules API is experimental. Ignore next error.');
       console.error(e);
+    }
+  }
+
+  async areExemplarsAvailable() {
+    try {
+      const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
+      if (res.statusText === 'OK') {
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
     }
   }
 
