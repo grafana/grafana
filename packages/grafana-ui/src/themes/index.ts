@@ -11,6 +11,8 @@ export {
 export { getTheme, mockTheme } from './getTheme';
 export { stylesFactory } from './stylesFactory';
 export { GlobalStyles } from './GlobalStyles/GlobalStyles';
+export { getScreenReaderOnlyStyles } from './GlobalStyles/screenReaderStyles';
 
 import * as styleMixins from './mixins';
+
 export { styleMixins };
