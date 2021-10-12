@@ -28,19 +28,25 @@ To add a silence:
 
 ### Label matching for alert suppression
 
-Notifications are suppressed only for alerts with labels that match all the "Matching Labels" specified in the silence.
+Grafana suppresses notifications only for alerts with labels that match all the "Matching Labels" specified in the silence.
 
 - The **Label** field is the name of the label to match. It must exactly match the label name.
 - The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Regex** and **Equal** checkboxes.
 - The **Regex** checkbox indicates if **Value** should be treated as a regular expression to match against labels. The regular expression is always anchored. If not selected, it is an exact string match.
 - The **Equal** checkbox specifies if the match should include alert instances that match. If not checked, the silence includes alerts that _do not_ match.
 
-## Managing silences
+## Edit silences
 
 1. In the Alerting page, click **Silences** to view the list of existing silences.
-1. To end the silence, click the **Unsilence** option next to a listed silence. Silences that have ended are still listed for five days, after which they are automatically removed. You cannot remove a silence manually.
 1. Find the silence you want to edit, then click **Edit** (pen icon).
-1. Make any changes and click **Submit** to save your changes.
+1. Make changes, then click **Submit** to save your changes.
+
+## Remove silences
+
+1. In the Alerting page, click **Silences** to view the list of existing silences.
+1. Find the silence you want to end, then click **Unsilence**. 
+
+> **Note:** Silences that have ended are retained and listed for five days. You cannot remove a silence manually.
 
 ## Create a URL to silence form with defaults filled in
 
