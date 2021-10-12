@@ -13,5 +13,4 @@ export { stylesFactory } from './stylesFactory';
 export { GlobalStyles } from './GlobalStyles/GlobalStyles';
 
 import * as styleMixins from './mixins';
-
 export { styleMixins };
