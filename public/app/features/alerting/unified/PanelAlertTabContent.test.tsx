@@ -139,10 +139,11 @@ const dashboard = {
     folderTitle: 'super folder',
   },
 } as DashboardModel;
+
 const panel = ({
   datasource: dataSources.prometheus.uid,
   title: 'mypanel',
-  editSourceId: 34,
+  id: 34,
   targets: [
     {
       expr: 'sum(some_metric [$__interval])) by (app)',
