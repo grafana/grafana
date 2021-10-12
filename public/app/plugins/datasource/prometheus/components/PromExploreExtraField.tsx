@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { usePrevious } from 'react-use';
 import { isEqual } from 'lodash';
 import { css, cx } from '@emotion/css';
@@ -27,17 +27,6 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
     ];
 
     const prevQuery = usePrevious(query);
-
-    // Setting default values
-    useEffect(() => {
-      if (query.exemplar === undefined) {
-        onChange({ ...query, exemplar: true });
-      }
-
-      if (!query.instant && !query.range) {
-        onChange({ ...query, instant: true, range: true });
-      }
-    }, [onChange, query]);
 
     const onExemplarChange = useCallback(
       (exemplar: boolean) => {
