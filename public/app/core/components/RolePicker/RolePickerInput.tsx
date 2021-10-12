@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useState } from 'react';
+import React, { FormEvent, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,36 +7,48 @@ import { sharedInputStyle } from '@grafana/ui/src/components/Forms/commonStyles'
 import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { DropdownIndicator } from '@grafana/ui/src/components/Select/DropdownIndicator';
 
+// const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
+
 interface InputProps {
   role?: string;
+  query: string;
   onChange: (query?: string) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
+  onClose: () => void;
   isFocused?: boolean;
   disabled?: boolean;
 }
 
 export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
-  const { role, disabled, isFocused, onChange, onOpen } = props;
-  // const [internalRole] = useState(() => {
-  //   return role;
-  // });
+  const { role, disabled, isFocused, onChange, onOpen, onClose } = props;
 
   const theme = useTheme2();
   const styles = getRolePickerInputStyles(theme, false, !!isFocused, !!disabled, false);
 
   const onFocus = useCallback(
     (event: FormEvent<HTMLElement>) => {
-      event.stopPropagation();
-      // setFocused(true);
-      (ref as any).current.focus();
       onOpen(event);
     },
-    [ref, onOpen]
+    [onOpen]
   );
 
-  // const onBlur = useCallback(() => {
-  //   onChange(internalRole);
-  // }, [internalRole, onChange]);
+  const onClick = useCallback(
+    (event: FormEvent<HTMLElement>) => {
+      if (!!isFocused) {
+        // (ref as any).current.blur();
+        onClose();
+      } else {
+        (ref as any).current.focus();
+        onOpen(event);
+      }
+    },
+    [ref, onFocus, isFocused, onClose]
+  );
+
+  // const onBlur = useCallback((event: FormEvent<HTMLInputElement>) => {
+  //   event.preventDefault();
+  //   event.stopPropagation();
+  // }, []);
 
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target?.value;
@@ -44,7 +56,7 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
   };
 
   return (
-    <div className={styles.wrapper} onFocus={onFocus} onClick={onFocus}>
+    <div className={styles.wrapper} onMouseDown={onClick}>
       <div className={styles.builtInRoleValueContainer}>
         <Icon name="user" size="xs" />
         {role}
@@ -53,11 +65,10 @@ export const RolePickerInput = React.forwardRef<HTMLInputElement, InputProps>((p
         className={styles.input}
         ref={ref}
         // onClick={stopPropagation}
-        // onFocus={onFocus}
-        onBlur={onInputChange}
+        onFocus={onFocus}
+        // onBlur={onBlur}
         onChange={onInputChange}
-        // value={internalRole}
-        data-testid="date-time-input"
+        data-testid="role-picker-input"
         placeholder="Select role"
       />
       <div className={styles.suffix}>
@@ -89,14 +100,13 @@ const getRolePickerInputStyles = stylesFactory(
           padding-right: 0;
           max-width: 100%;
           align-items: center;
-          cursor: default;
           display: flex;
           flex-wrap: wrap;
-          // justify-content: space-between;
           justify-content: flex-start;
           position: relative;
           box-sizing: border-box;
-          cursor: ${disabled ? 'not-allowed' : 'pointer'};
+          // cursor: ${disabled ? 'not-allowed' : 'pointer'};
+          cursor: ${focused ? 'default' : 'pointer'};
         `,
         withPrefix &&
           css`
@@ -107,6 +117,7 @@ const getRolePickerInputStyles = stylesFactory(
         sharedInputStyle(theme, invalid),
         css`
           border: none;
+          cursor: ${focused ? 'default' : 'pointer'};
         `
       ),
       builtInRoleValueContainer: cx(

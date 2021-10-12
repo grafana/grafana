@@ -39,8 +39,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       height: 18px;
       position: relative;
 
-      // padding: 8px;
-
       input {
         opacity: 0;
         left: -100vw;

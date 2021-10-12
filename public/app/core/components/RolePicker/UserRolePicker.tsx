@@ -4,8 +4,6 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Role } from 'app/types';
 import { RolePicker } from './RolePicker';
 
-// const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
 export interface Props {
   builtinRole: string;
   userId: number;
@@ -21,9 +19,8 @@ export const UserRolePicker: FC<Props> = ({ builtinRole, userId, orgId, onBuilti
 
   return (
     <RolePicker
-      // roles={userRoles}
       builtinRole={builtinRole}
-      onChange={() => {}}
+      onRolesChange={(roles) => updateUserRoles(roles, userId, orgId)}
       onBuiltinRoleChange={onBuiltinRoleChange}
       getRoleOptions={getRolesOptions}
       getRoles={getRoles}
@@ -51,4 +48,11 @@ export const getUserRoles = async (userId: number, orgId?: number): Promise<Role
     return [];
   }
   return roles;
+};
+
+export const updateUserRoles = (rolesUIDs: string[], userId: number, orgId?: number) => {
+  return getBackendSrv().put(`/api/access-control/users/${userId}/roles`, {
+    orgId: orgId,
+    rolesUids: rolesUIDs,
+  });
 };

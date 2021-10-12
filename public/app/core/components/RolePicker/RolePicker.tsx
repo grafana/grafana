@@ -12,11 +12,17 @@ export interface Props {
   // roles: string[];
   getRoles: () => Promise<string[]>;
   getRoleOptions: () => Promise<Array<SelectableValue<string>>>;
-  onChange: (newRole: string) => void;
+  onRolesChange: (newRoles: string[]) => void;
   onBuiltinRoleChange: (newRole: string) => void;
 }
 
-export const RolePicker: FC<Props> = ({ builtinRole, getRoles, getRoleOptions, onChange, onBuiltinRoleChange }) => {
+export const RolePicker: FC<Props> = ({
+  builtinRole,
+  getRoles,
+  getRoleOptions,
+  onRolesChange,
+  onBuiltinRoleChange,
+}) => {
   const [isOpen, setOpen] = useState(false);
   const [roleOptions, setRoleOptions] = useState([] as Array<SelectableValue<string>>);
   const [filteredOptions, setFilteredOptions] = useState([] as Array<SelectableValue<string>>);
@@ -45,7 +51,7 @@ export const RolePicker: FC<Props> = ({ builtinRole, getRoles, getRoleOptions, o
     }
 
     fetchOptions();
-  }, []);
+  }, [getRoles, getRoleOptions]);
 
   // const onApply = useCallback(
   //   (role: string) => {
@@ -62,6 +68,10 @@ export const RolePicker: FC<Props> = ({ builtinRole, getRoles, getRoleOptions, o
     },
     [setOpen]
   );
+
+  const onClose = useCallback(() => {
+    setOpen(false);
+  }, []);
 
   const onInputChange = (query?: string) => {
     if (query) {
@@ -82,15 +92,17 @@ export const RolePicker: FC<Props> = ({ builtinRole, getRoles, getRoleOptions, o
 
   const onCustomRoleChangeInternal = (newRoles: string[]) => {
     console.log(newRoles);
+    onRolesChange(newRoles);
   };
 
   return (
     <div data-testid="role-picker" style={{ position: 'relative' }}>
-      <ClickOutsideWrapper onClick={() => setOpen(false)}>
+      <ClickOutsideWrapper onClick={onClose}>
         <RolePickerInput
           role={builtinRole}
           onChange={onInputChange}
           onOpen={onOpen}
+          onClose={onClose}
           isFocused={isOpen}
           ref={inputRef}
         />
@@ -98,7 +110,7 @@ export const RolePicker: FC<Props> = ({ builtinRole, getRoles, getRoleOptions, o
           <RolePickerMenu
             onBuiltinRoleChange={onBuiltinRoleChangeInternal}
             onCustomRolesChange={onCustomRoleChangeInternal}
-            onClose={() => setOpen(false)}
+            onClose={onClose}
             options={filteredOptions}
             builtInRole={builtinRole}
             appliedRoles={appliedRoles}
