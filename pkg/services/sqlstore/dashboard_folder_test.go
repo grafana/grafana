@@ -5,7 +5,6 @@ package sqlstore
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -195,7 +194,6 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 					err := SearchDashboards(context.Background(), query)
 					require.NoError(t, err)
-					fmt.Println(query.Result)
 					require.Equal(t, len(query.Result), 4)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
 					require.Equal(t, query.Result[1].ID, folder2.Id)
