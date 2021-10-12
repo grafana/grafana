@@ -3,8 +3,11 @@ package notifier
 import (
 	"bytes"
 	"context"
+	"errors"
+	"io/fs"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -92,6 +95,38 @@ grafana_alerting_discovered_configurations 4
 		orgStore.orgs = []int64{1, 2, 3, 4, 5}
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 4)
+	}
+
+	// Orphaned local state should be removed.
+	{
+		// First we create a directory and two files for an ograniztation that
+		// is not existing in the current state.
+		orphanDir := filepath.Join(tmpDir, "alerting", "6")
+		err := os.Mkdir(orphanDir, 0750)
+		require.NoError(t, err)
+
+		silencesPath := filepath.Join(orphanDir, silencesFilename)
+		err = os.WriteFile(silencesPath, []byte("file_1"), 0644)
+		require.NoError(t, err)
+
+		notificationPath := filepath.Join(orphanDir, notificationLogFilename)
+		err = os.WriteFile(notificationPath, []byte("file_2"), 0644)
+		require.NoError(t, err)
+
+		// We make sure that both files are on disk.
+		info, err := os.Stat(silencesPath)
+		require.NoError(t, err)
+		require.Equal(t, info.Name(), silencesFilename)
+		info, err = os.Stat(notificationPath)
+		require.NoError(t, err)
+		require.Equal(t, info.Name(), notificationLogFilename)
+
+		// Now re run the sync job once.
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		// The organization directory should be gone by now.
+		_, err = os.Stat(orphanDir)
+		require.True(t, errors.Is(err, fs.ErrNotExist))
 	}
 }
 
