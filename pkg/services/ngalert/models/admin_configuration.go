@@ -13,6 +13,12 @@ type AdminConfiguration struct {
 	// List of Alertmanager(s) URL to push alerts to.
 	Alertmanagers []string
 
+	// Handling indicates which alertmanager will handle the alert:
+	// 0: both internal and external alertmanagers.
+	// 1: the internal alertmanager.
+	// 2: the external alertmanagers.
+	Handling int64 `xorm:"handling"`
+
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`
 }

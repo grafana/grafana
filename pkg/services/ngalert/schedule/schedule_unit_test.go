@@ -32,12 +32,27 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	fakeInstanceStore := &fakeInstanceStore{}
 	fakeAdminConfigStore := newFakeAdminConfigStore(t)
 
-	// create alert rule with one second interval
-	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
+	// create alert rules with one second interval
+	alertRuleBothWays := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
+	alertRuleExternal := CreateTestAlertRule(t, fakeRuleStore, 1, 2)
+	alertRuleInternal := CreateTestAlertRule(t, fakeRuleStore, 1, 3)
 
-	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}}
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
+	// First, let's create an admin configuration that holds an alertmanager
+	// and sends alerts to both internal and external alertmanagers.
+	adminConfigBothWays := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, Handling: store.HandleBothWays}
+	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigBothWays}
+	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+
+	// Then, let's create an admin configuration that holds an alertmanager
+	// and sends alerts just to the external alertmanagers.
+	adminConfigExternal := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL}, Handling: store.HandleExternally}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigExternal}
+	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+
+	// Finally, let's create an admin configuration that holds an alertmanager
+	// and sends alerts just to the internal alertmanager.
+	adminConfigInternal := &models.AdminConfiguration{OrgID: 3, Alertmanagers: []string{fakeAM.server.URL}, Handling: store.HandleInternally}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigInternal}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore)
@@ -45,14 +60,20 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.Equal(t, 1, len(sched.senders))
-	require.Equal(t, 1, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Lock()
+	require.Equal(t, 2, len(sched.senders))
+	require.Equal(t, 2, len(sched.sendersCfgHash))
+	sched.adminConfigMtx.Unlock()
 
-	// Then, ensure we've discovered the Alertmanager.
+	// Then, ensure we've discovered all the Alertmanagers.
 	require.Eventually(t, func() bool {
-		return len(sched.AlertmanagersFor(1)) == 1 && len(sched.DroppedAlertmanagersFor(1)) == 0
+		return len(sched.AlertmanagersFor(1)) == 1 &&
+			len(sched.DroppedAlertmanagersFor(1)) == 0 &&
+			len(sched.AlertmanagersFor(2)) == 1 &&
+			len(sched.DroppedAlertmanagersFor(2)) == 0 &&
+			// Org 3 should have no Alertmanagers set up.
+			len(sched.AlertmanagersFor(3)) == 0 &&
+			len(sched.DroppedAlertmanagersFor(3)) == 0
 	}, 10*time.Second, 200*time.Millisecond)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -67,26 +88,36 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
 	mockedClock.Add(2 * time.Second)
 
-	// Eventually, our Alertmanager should have received at least one alert.
+	// Eventually, our Alertmanager should have received alerts from orgs 1 and 2 and no alerts from org 3.
 	require.Eventually(t, func() bool {
-		return fakeAM.AlertsCount() >= 1 && fakeAM.AlertNamesCompare([]string{alertRule.Title})
+		return fakeAM.AlertsCount() >= 1 &&
+			fakeAM.AlertNamesCompare([]string{alertRuleBothWays.Title, alertRuleExternal.Title}) &&
+			!fakeAM.AlertNamesCompare([]string{alertRuleInternal.Title})
 	}, 10*time.Second, 200*time.Millisecond)
 
-	// Now, let's remove the Alertmanager from the admin configuration.
-	adminConfig.Alertmanagers = []string{}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
+	// Now, let's remove the Alertmanagers from the admin configuration.
+	adminConfigBothWays.Alertmanagers = []string{}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigBothWays}
+	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+	adminConfigExternal.Alertmanagers = []string{}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigExternal}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Again, make sure we sync and verify the senders.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.Equal(t, 0, len(sched.senders))
 	require.Equal(t, 0, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Then, ensure we've dropped the Alertmanager.
 	require.Eventually(t, func() bool {
-		return len(sched.AlertmanagersFor(1)) == 0 && len(sched.DroppedAlertmanagersFor(1)) == 0
+		return len(sched.AlertmanagersFor(1)) == 0 &&
+			len(sched.DroppedAlertmanagersFor(1)) == 0 &&
+			len(sched.AlertmanagersFor(2)) == 0 &&
+			len(sched.DroppedAlertmanagersFor(2)) == 0 &&
+			len(sched.AlertmanagersFor(3)) == 0 &&
+			len(sched.DroppedAlertmanagersFor(3)) == 0
 	}, 10*time.Second, 200*time.Millisecond)
 }
 
@@ -107,10 +138,10 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.Equal(t, 1, len(sched.senders))
 	require.Equal(t, 1, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Then, ensure we've discovered the Alertmanager.
 	require.Eventuallyf(t, func() bool {
@@ -133,10 +164,10 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 
 	// If we sync again, new senders must have spawned.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.Equal(t, 2, len(sched.senders))
 	require.Equal(t, 2, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Then, ensure we've discovered the Alertmanager for the new organization.
 	require.Eventuallyf(t, func() bool {
@@ -167,19 +198,19 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Before we sync, let's grab the existing hash of this particular org.
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	currentHash := sched.sendersCfgHash[2]
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Now, sync again.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
 
 	// The hash for org two should not be the same and we should still have two senders.
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.NotEqual(t, sched.sendersCfgHash[2], currentHash)
 	require.Equal(t, 2, len(sched.senders))
 	require.Equal(t, 2, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Wait for the discovery of the new Alertmanager for orgID = 2.
 	require.Eventuallyf(t, func() bool {
@@ -192,17 +223,17 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Before we sync, let's get the current config hash.
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	currentHash = sched.sendersCfgHash[1]
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Now, sync again.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
 
 	// The old configuration should still be running.
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.Equal(t, sched.sendersCfgHash[1], currentHash)
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 	require.Equal(t, 1, len(sched.AlertmanagersFor(1)))
 
 	// If we fix it - it should be applied.
@@ -210,18 +241,18 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.NotEqual(t, sched.sendersCfgHash[1], currentHash)
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	// Finally, remove everything.
 	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(1))
 	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(2))
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
+	sched.adminConfigMtx.Lock()
 	require.Equal(t, 0, len(sched.senders))
 	require.Equal(t, 0, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	sched.adminConfigMtx.Unlock()
 
 	require.Eventuallyf(t, func() bool {
 		NoAlertmanagerOrgOne := len(sched.AlertmanagersFor(1)) == 0 && len(sched.DroppedAlertmanagersFor(1)) == 0

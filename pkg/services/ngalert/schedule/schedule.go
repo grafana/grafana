@@ -80,7 +80,8 @@ type schedule struct {
 	metrics          *metrics.Scheduler
 
 	// Senders help us send alerts to external Alertmanagers.
-	sendersMtx              sync.RWMutex
+	adminConfigMtx          sync.RWMutex
+	handling                map[int64]int64
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
@@ -131,6 +132,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, 
 		metrics:                 cfg.Metrics,
 		appURL:                  appURL,
 		stateManager:            stateManager,
+		handling:                map[int64]int64{},
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
@@ -180,7 +182,8 @@ func (sch *schedule) Run(ctx context.Context) error {
 	return nil
 }
 
-// SyncAndApplyConfigFromDatabase looks for the admin configuration in the database and adjusts the sender(s) accordingly.
+// SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
+// and adjusts the sender(s) and alert handling mechanism accordingly.
 func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	sch.log.Debug("start of admin configuration sync")
 	cfgs, err := sch.adminConfigStore.GetAdminConfigurations()
@@ -191,7 +194,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	sch.log.Debug("found admin configurations", "count", len(cfgs))
 
 	orgsFound := make(map[int64]struct{}, len(cfgs))
-	sch.sendersMtx.Lock()
+	sch.adminConfigMtx.Lock()
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
@@ -203,15 +206,26 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 
 		existing, ok := sch.senders[cfg.OrgID]
 
-		// If the tenant has no Alertmanager(s) configured and no running sender no-op.
+		// We have no running sender and no Alertmanager(s) configured, no-op.
 		if !ok && len(cfg.Alertmanagers) == 0 {
 			sch.log.Debug("no external alertmanagers configured", "org", cfg.OrgID)
+			continue
+		}
+		//  We have no running sender and alerts are handled internally, no-op.
+		if !ok && cfg.Handling == store.HandleInternally {
+			sch.log.Debug("alerts are handled internally", "org", cfg.OrgID)
 			continue
 		}
 
 		// We have a running sender but no Alertmanager(s) configured, shut it down.
 		if ok && len(cfg.Alertmanagers) == 0 {
 			sch.log.Debug("no external alertmanager(s) configured, sender will be stopped", "org", cfg.OrgID)
+			delete(orgsFound, cfg.OrgID)
+			continue
+		}
+		// We have a running sender but alerts are handled internally, shut it down.
+		if ok && cfg.Handling == store.HandleInternally {
+			sch.log.Debug("alerts are handled internally, sender will be stopped", "org", cfg.OrgID)
 			delete(orgsFound, cfg.OrgID)
 			continue
 		}
@@ -262,7 +276,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			delete(sch.sendersCfgHash, orgID)
 		}
 	}
-	sch.sendersMtx.Unlock()
+	sch.adminConfigMtx.Unlock()
 
 	// We can now stop these senders w/o having to hold a lock.
 	for orgID, s := range sendersToStop {
@@ -278,8 +292,8 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
 func (sch *schedule) AlertmanagersFor(orgID int64) []*url.URL {
-	sch.sendersMtx.RLock()
-	defer sch.sendersMtx.RUnlock()
+	sch.adminConfigMtx.RLock()
+	defer sch.adminConfigMtx.RUnlock()
 	s, ok := sch.senders[orgID]
 	if !ok {
 		return []*url.URL{}
@@ -290,8 +304,8 @@ func (sch *schedule) AlertmanagersFor(orgID int64) []*url.URL {
 
 // DroppedAlertmanagersFor returns all the dropped Alertmanager(s) for a particular organization.
 func (sch *schedule) DroppedAlertmanagersFor(orgID int64) []*url.URL {
-	sch.sendersMtx.RLock()
-	defer sch.sendersMtx.RUnlock()
+	sch.adminConfigMtx.RLock()
+	defer sch.adminConfigMtx.RUnlock()
 	s, ok := sch.senders[orgID]
 	if !ok {
 		return []*url.URL{}
@@ -309,12 +323,12 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 			}
 		case <-ctx.Done():
 			// Stop sending alerts to all external Alertmanager(s).
-			sch.sendersMtx.Lock()
+			sch.adminConfigMtx.Lock()
 			for orgID, s := range sch.senders {
 				delete(sch.senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
 				s.Stop()
 			}
-			sch.sendersMtx.Unlock()
+			sch.adminConfigMtx.Unlock()
 
 			return nil
 		}
@@ -478,25 +492,31 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
 				if len(alerts.PostableAlerts) == 0 {
-					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
+					sch.log.Debug("no alerts to put in the notifier or to send to external Alertmanager(s)", "org", alertRule.OrgID)
 					return nil
 				}
 
-				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
-				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
-				if err == nil {
-					if err := n.PutAlerts(alerts); err != nil {
-						sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
-					}
+				// Send alerts to notifier if they need to be handled internally.
+				if sch.handling[alertRule.OrgID] == store.HandleExternally {
+					sch.log.Debug("no alerts to put in the notifier", "org", alertRule.OrgID)
 				} else {
-					sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
+					sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
+					n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
+					if err == nil {
+						if err := n.PutAlerts(alerts); err != nil {
+							sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
+						}
+					} else {
+						sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
+					}
 				}
 
-				// Send alerts to external Alertmanager(s) if we have a sender for this organization.
-				sch.sendersMtx.RLock()
-				defer sch.sendersMtx.RUnlock()
+				// Send alerts to external Alertmanager(s) if they need to be handled externally
+				// and we have a sender for this organization.
+				sch.adminConfigMtx.RLock()
+				defer sch.adminConfigMtx.RUnlock()
 				s, ok := sch.senders[alertRule.OrgID]
-				if ok {
+				if ok && sch.handling[alertRule.OrgID] != store.HandleInternally {
 					s.SendAlerts(alerts)
 				}
 
