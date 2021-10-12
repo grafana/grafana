@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -178,7 +178,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 		return errResp
 	}
 
-	silenceID := macaron.Params(c.Req)[":SilenceId"]
+	silenceID := web.Params(c.Req)[":SilenceId"]
 	if err := am.DeleteSilence(silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -305,7 +305,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Respon
 		return errResp
 	}
 
-	silenceID := macaron.Params(c.Req)[":SilenceId"]
+	silenceID := web.Params(c.Req)[":SilenceId"]
 	gettableSilence, err := am.GetSilence(silenceID)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {

@@ -475,7 +475,7 @@ export class PanelChrome extends Component<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    let alertState = config.unifiedAlertingEnabled ? undefined : data.alertState?.state;
+    const alertState = data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,

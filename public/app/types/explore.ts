@@ -47,6 +47,17 @@ export interface ExploreState {
   richHistory: RichHistoryQuery[];
 
   /**
+   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * multiple errors when local storage is full.
+   */
+  localStorageFull: boolean;
+
+  /**
+   * True if a warning message of hitting the exceeded number of items has been shown already.
+   */
+  richHistoryLimitExceededWarningShown: boolean;
+
+  /**
    * Auto-loading logs volume after running the query
    */
   autoLoadLogsVolume: boolean;
