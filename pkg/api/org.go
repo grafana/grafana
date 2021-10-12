@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // GET /api/org
@@ -25,7 +25,7 @@ func GetOrgByID(c *models.ReqContext) response.Response {
 
 // Get /api/orgs/name/:name
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
-	org, err := hs.SQLStore.GetOrgByName(macaron.Params(c.Req)[":name"])
+	org, err := hs.SQLStore.GetOrgByName(web.Params(c.Req)[":name"])
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Organization not found", err)
