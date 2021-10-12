@@ -13,7 +13,9 @@ STRICT_LINT_RESULTS="$(./node_modules/.bin/eslint --rule '@typescript-eslint/no-
 STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
 
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
-OUTDATED_DEPENDENCIES="$(yarn outdated | wc -l | xargs)"
+# TODO yarn berry has no `yarn outdated`, causing all metrics to fail to publish.
+# TODO find another way to reimplement this.
+# OUTDATED_DEPENDENCIES="$(yarn outdated | wc -l | xargs)"
 VULNERABILITY_AUDIT="$(yarn audit | grep 'Severity:' | grep -Eo '[0-9]{1,4}')"
 LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '1p')"
 MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '2p')"
