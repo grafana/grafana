@@ -1,5 +1,5 @@
 import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Alert, Button, Collapse, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Collapse, TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { ExploreId } from '../../types';
@@ -47,6 +47,7 @@ export function LogsVolumePanel(props: Props) {
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
+          tooltipDisplayMode={TooltipDisplayMode.Multi}
         />
       );
     } else {
