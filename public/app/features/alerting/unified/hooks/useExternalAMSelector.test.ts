@@ -2,17 +2,17 @@ import * as reactRedux from 'react-redux';
 import { useExternalAmSelector } from './useExternalAmSelector';
 
 const createMockStoreState = (
-  activeAlertManagers: Array<{ url: string }>,
-  droppedAlertManagers: Array<{ url: string }>,
+  activeAlertmanagers: Array<{ url: string }>,
+  droppedAlertmanagers: Array<{ url: string }>,
   alertmanagerConfig: string[]
 ) => ({
   unifiedAlerting: {
     externalAlertmanagers: {
-      activeAlertmanagers: {
+      discoveredAlertmanagers: {
         result: {
           data: {
-            activeAlertManagers: activeAlertManagers,
-            droppedAlertManagers: droppedAlertManagers,
+            activeAlertManagers: activeAlertmanagers,
+            droppedAlertManagers: droppedAlertmanagers,
           },
         },
       },
