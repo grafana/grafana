@@ -93,3 +93,13 @@ func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, ke
 	})
 	return err
 }
+
+// DelOrphans will deleted all orphaned records in the store, where the
+// referenced organization does not work anymore.
+func (kv *kvStoreSQL) DelOrphans(ctx context.Context) error {
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.Exec("DELETE FROM kv_store WHERE NOT EXISTS (SELECT 1 FROM org WHERE org.id = org_id);")
+		return err
+	})
+	return err
+}

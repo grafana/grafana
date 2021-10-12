@@ -19,6 +19,7 @@ type KVStore interface {
 	Get(ctx context.Context, orgId int64, namespace string, key string) (string, bool, error)
 	Set(ctx context.Context, orgId int64, namespace string, key string, value string) error
 	Del(ctx context.Context, orgId int64, namespace string, key string) error
+	DelOrphans(ctx context.Context) error
 }
 
 // WithNamespace returns a kvstore wrapper with fixed orgId and namespace.
@@ -47,4 +48,8 @@ func (kv *NamespacedKVStore) Set(ctx context.Context, key string, value string) 
 
 func (kv *NamespacedKVStore) Del(ctx context.Context, key string) error {
 	return kv.kvStore.Del(ctx, kv.orgId, kv.namespace, key)
+}
+
+func (kv *NamespacedKVStore) DelOrphans(ctx context.Context) error {
+	return kv.kvStore.DelOrphans(ctx)
 }

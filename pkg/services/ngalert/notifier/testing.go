@@ -66,8 +66,9 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 }
 
 type FakeKVStore struct {
-	mtx   sync.Mutex
-	store map[int64]map[string]map[string]string
+	mtx      sync.Mutex
+	store    map[int64]map[string]map[string]string
+	orgStore store.OrgStore
 }
 
 func newFakeKVStore(t *testing.T) *FakeKVStore {
@@ -127,6 +128,22 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 
 	delete(fkv.store[orgId][namespace], key)
 
+	return nil
+}
+
+func (fkv *FakeKVStore) DelOrphans(ctx context.Context) error {
+	fkv.mtx.Lock()
+	defer fkv.mtx.Unlock()
+outer:
+	for k := range fkv.store {
+		orgs, _ := fkv.orgStore.GetOrgs(ctx)
+		for _, orgID := range orgs {
+			if orgID == k {
+				continue outer
+			}
+		}
+		delete(fkv.store, k)
+	}
 	return nil
 }
 

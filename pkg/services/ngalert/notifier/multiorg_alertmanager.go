@@ -255,6 +255,9 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(activeOrganizations 
 			fileStore.CleanUp()
 		}
 	}
+	if err := moa.kvStore.DelOrphans(context.Background()); err != nil {
+		moa.logger.Error("failed to delete orphaned kvstore records", "err", err)
+	}
 }
 
 func (moa *MultiOrgAlertmanager) StopAndWait() {
