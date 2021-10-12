@@ -8,9 +8,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	cw "github.com/weaveworks/common/middleware"
-	"gopkg.in/macaron.v1"
 )
 
 var (
@@ -45,10 +45,10 @@ func init() {
 }
 
 // RequestMetrics is a middleware handler that instruments the request.
-func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
-	return func(handler string) macaron.Handler {
-		return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
-			rw := res.(macaron.ResponseWriter)
+func RequestMetrics(cfg *setting.Cfg) func(handler string) web.Handler {
+	return func(handler string) web.Handler {
+		return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
+			rw := res.(web.ResponseWriter)
 			now := time.Now()
 			httpRequestsInFlight.Inc()
 			defer httpRequestsInFlight.Dec()

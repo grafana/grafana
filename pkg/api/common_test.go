@@ -12,9 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/searchusers"
 
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -29,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
@@ -148,12 +147,12 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 type scenarioContext struct {
 	t                    *testing.T
 	cfg                  *setting.Cfg
-	m                    *macaron.Macaron
+	m                    *web.Mux
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
 	handlerFunc          handlerFunc
 	handlerFuncCtx       handlerFuncCtx
-	defaultHandler       macaron.Handler
+	defaultHandler       web.Handler
 	req                  *http.Request
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
@@ -200,8 +199,8 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	require.NoError(t, err)
 	require.Truef(t, exists, "Views should be in %q", viewsPath)
 
-	sc.m = macaron.New()
-	sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
+	sc.m = web.New()
+	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 	sc.m.Use(getContextHandler(t, cfg).Middleware)
 
 	return sc

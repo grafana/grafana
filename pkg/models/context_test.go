@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func TestQueryBoolWithDefault(t *testing.T) {
@@ -31,7 +31,7 @@ func TestQueryBoolWithDefault(t *testing.T) {
 			req, err := http.NewRequest("GET", tt.url, nil)
 			require.NoError(t, err)
 			r := ReqContext{
-				Context: &macaron.Context{Req: req},
+				Context: &web.Context{Req: req},
 			}
 			require.Equal(t, tt.expected, r.QueryBoolWithDefault("silenced", tt.defaultValue))
 		})
