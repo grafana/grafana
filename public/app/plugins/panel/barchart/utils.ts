@@ -48,7 +48,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   text,
   rawValue,
   allFrames,
-  rotateLabel = 0,
+  valueRotation,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -87,7 +87,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  builder.setPadding(getRotationPadding(frame, rotateLabel, theme));
+  const rawRotation = valueRotation.presetRotation ?? valueRotation.customRotation ?? 0;
+  if (vizOrientation.xOri === ScaleOrientation.Horizontal) {
+    builder.setPadding(getRotationPadding(frame, rawRotation, theme));
+  }
 
   builder.setPrepData(config.prepData);
 
@@ -108,7 +111,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     grid: { show: false },
     ticks: false,
     gap: 15,
-    rotateLabel: rotateLabel,
+    valueRotation: rawRotation,
     theme,
   });
 

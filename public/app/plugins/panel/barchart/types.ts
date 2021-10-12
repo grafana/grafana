@@ -13,13 +13,21 @@ import { VizOrientation } from '@grafana/data';
 /**
  * @alpha
  */
+export interface ValueRotationConfig {
+  presetRotation?: number;
+  customRotation?: number;
+}
+
+/**
+ * @alpha
+ */
 export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithTextFormatting {
   orientation: VizOrientation;
   stacking: StackingMode;
   showValue: VisibilityMode;
   barWidth: number;
   groupWidth: number;
-  rotateLabel?: number;
+  valueRotation: ValueRotationConfig;
   rawValue: (seriesIdx: number, valueIdx: number) => number;
 }
 

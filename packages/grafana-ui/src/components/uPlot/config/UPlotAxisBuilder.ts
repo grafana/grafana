@@ -12,7 +12,7 @@ export interface AxisProps {
   show?: boolean;
   size?: number | null;
   gap?: number;
-  rotateLabel?: number;
+  valueRotation?: number;
   placement?: AxisPlacement;
   grid?: Axis.Grid;
   ticks?: boolean;
@@ -53,7 +53,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       isTime,
       timeZone,
       theme,
-      rotateLabel,
+      valueRotation,
       size,
     } = this.props;
 
@@ -72,7 +72,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       side: getUPlotSideFromAxis(placement),
       font,
       size: size ?? calculateAxisSize,
-      rotate: rotateLabel,
+      rotate: valueRotation,
       gap,
 
       labelGap: 0,

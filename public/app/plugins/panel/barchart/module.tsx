@@ -4,13 +4,21 @@ import {
   FieldConfigProperty,
   FieldType,
   PanelPlugin,
+  SelectableValue,
+  StandardEditorProps,
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
 import { StackingMode, VisibilityMode } from '@grafana/schema';
-import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { graphFieldOptions, commonOptionsBuilder, HorizontalGroup, RadioButtonGroup, Input } from '@grafana/ui';
 
-import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
+import {
+  BarChartFieldConfig,
+  BarChartOptions,
+  defaultBarChartFieldConfig,
+  ValueRotationConfig,
+} from 'app/plugins/panel/barchart/types';
+import React from 'react';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -75,6 +83,16 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
         defaultValue: VizOrientation.Auto,
       })
+      .addCustomEditor<void, ValueRotationConfig>({
+        id: 'valueRotation',
+        path: 'valueRotation',
+        name: 'Rotate values',
+        editor: ValueRotationEditor,
+        defaultValue: { presetRotation: 0 },
+        showIf: (opts) => {
+          return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
+        },
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',
@@ -120,16 +138,6 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 1,
           step: 0.01,
         },
-      })
-      .addSliderInput({
-        path: 'rotateLabel',
-        name: 'Rotate label',
-        defaultValue: 0,
-        settings: {
-          min: -90,
-          max: 90,
-          step: 1,
-        },
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
@@ -150,3 +158,33 @@ function countNumberFields(data?: DataFrame[]): number {
   }
   return count;
 }
+
+const ROTATION_OPTIONS: Array<SelectableValue<number | undefined>> = [
+  { label: 'No rotation', value: 0 },
+  { label: '45°', value: -45 },
+  { label: '90°', value: -90 },
+  { label: 'Custom', value: undefined },
+];
+
+const ValueRotationEditor: React.FC<StandardEditorProps<ValueRotationConfig>> = ({ value, onChange }) => {
+  return (
+    <HorizontalGroup>
+      <RadioButtonGroup
+        value={value.presetRotation}
+        options={ROTATION_OPTIONS}
+        onChange={(v: number | undefined) => {
+          onChange({ ...value, presetRotation: v });
+        }}
+      ></RadioButtonGroup>
+      {value.presetRotation === undefined && (
+        <Input
+          value={value.customRotation || 0}
+          type="number"
+          onChange={(e) => {
+            onChange({ ...value, customRotation: e.currentTarget.valueAsNumber });
+          }}
+        ></Input>
+      )}
+    </HorizontalGroup>
+  );
+};
