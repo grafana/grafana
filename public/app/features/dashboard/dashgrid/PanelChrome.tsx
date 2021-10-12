@@ -19,13 +19,8 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import {
-  ErrorBoundary,
-  PanelContext,
-  PanelContextProvider,
-  SeriesVisibilityChangeMode,
-  VizLegendOptions,
-} from '@grafana/ui';
+import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { VizLegendOptions } from '@grafana/schema';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
