@@ -12,8 +12,8 @@
     "ts-loader",
     "ora"
   ],
+  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies"],
-  "matchPaths": ["+(package.json)", "+(packages/*/package.json)"],
   "minor": {
     "enabled": false
   },
