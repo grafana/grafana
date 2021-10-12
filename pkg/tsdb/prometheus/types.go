@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"sync"
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -16,21 +15,6 @@ type DatasourceInfo struct {
 	TimeInterval   string
 
 	promClient apiv1.API
-	cmtx       *sync.RWMutex
-}
-
-func (s *DatasourceInfo) client() apiv1.API {
-	s.cmtx.RLock()
-	defer s.cmtx.RUnlock()
-
-	return s.promClient
-}
-
-func (s *DatasourceInfo) setClient(client apiv1.API) {
-	s.cmtx.Lock()
-	defer s.cmtx.Unlock()
-
-	s.promClient = client
 }
 
 type PrometheusQuery struct {

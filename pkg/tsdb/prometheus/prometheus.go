@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -98,21 +97,19 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
+		client, err := getClient(settings.URL, httpCliOpts, httpClientProvider)
+		if err != nil {
+			return nil, err
+		}
+
 		mdl := DatasourceInfo{
 			ID:             settings.ID,
 			URL:            settings.URL,
 			HTTPClientOpts: httpCliOpts,
 			HTTPMethod:     httpMethod,
 			TimeInterval:   timeInterval,
-			cmtx:           &sync.RWMutex{},
+			promClient:     client,
 		}
-
-		client, err := getClient(settings.URL, httpCliOpts, httpClientProvider)
-		if err != nil {
-			return nil, err
-		}
-
-		mdl.setClient(client)
 
 		return mdl, nil
 	}
@@ -129,7 +126,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	client := dsInfo.client()
+	client := dsInfo.promClient
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -197,19 +194,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func getClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
-	// Do we need to re-define httpOpts? (and thus exclude some fields?)
-	opts := &sdkhttpclient.Options{
-		Timeouts:  httpOpts.Timeouts,
-		TLS:       httpOpts.TLS,
-		BasicAuth: httpOpts.BasicAuth,
-		Headers:   httpOpts.Headers,
-		Labels:    httpOpts.Labels,
-	}
-
 	customMiddlewares := customQueryParametersMiddleware(plog)
-	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
+	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
-	roundTripper, err := clientProvider.GetTransport(*opts)
+	roundTripper, err := clientProvider.GetTransport(httpOpts)
 	if err != nil {
 		return nil, err
 	}
