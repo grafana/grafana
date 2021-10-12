@@ -6,7 +6,6 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  getTimeField,
   hasLogsVolumeSupport,
   LoadingState,
   PanelData,
@@ -501,25 +500,24 @@ export const runQueries = (
   };
 };
 
+/**
+ * Checks if after changing the time range the existing data can be used to show logs volume.
+ * It can happen if queries are the same and new time range is within existing data time range.
+ */
 function canReuseLogsVolumeData(
   logsVolumeData: DataQueryResponse | undefined,
   queries: DataQuery[],
-  absoluteRange: AbsoluteTimeRange
+  selectedTimeRange: AbsoluteTimeRange
 ): boolean {
   if (logsVolumeData && logsVolumeData.data[0]) {
+    // check if queries are the same
     if (!deepEqual(logsVolumeData.data[0].meta?.custom?.targets, queries)) {
       return false;
     }
-    const { timeField } = getTimeField(logsVolumeData.data[0]);
-    if (timeField) {
-      const dataRange = {
-        from: timeField.values.get(0),
-        to: timeField.values.get(timeField.values.length - 1),
-      };
-      // if selected range is within loaded histogram
-      if (dataRange.from <= absoluteRange.from && absoluteRange.to <= dataRange.to) {
-        return true;
-      }
+    const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
+    // if selected range is within loaded logs volume
+    if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
+      return true;
     }
   }
   return false;
