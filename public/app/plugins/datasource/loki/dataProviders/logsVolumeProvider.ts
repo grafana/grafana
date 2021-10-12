@@ -28,10 +28,6 @@ export function createLokiLogsVolumeProvider(
   logsVolumeRequest.targets = logsVolumeRequest.targets
     .filter((target) => target.expr && !isMetricsQuery(target.expr))
     .map((target) => {
-      let expr = target.expr;
-      if (expr.includes('logfmt')) {
-        expr += ' |  __error__!="LogfmtParserErr"';
-      }
       return {
         ...target,
         instant: false,
