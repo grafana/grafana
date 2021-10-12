@@ -13,11 +13,11 @@ STRICT_LINT_RESULTS="$(./node_modules/.bin/eslint --rule '@typescript-eslint/no-
 STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
 
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
-OUTDATED_DEPENDENCIES="$(yarn outdated | wc -l | xargs)"
-VULNERABILITY_AUDIT="$(yarn audit | grep 'Severity:' | grep -Eo '[0-9]{1,4}')"
-LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '1p')"
-MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '2p')"
-HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '3p')"
+OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?=dependencies are out of date)')"
+VULNERABILITY_AUDIT="$(yarn npm audit --all --recursive --json)"
+LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"low"' | wc -l)"
+MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"moderate"' | wc -l)"
+HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"high"' | wc -l)"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
