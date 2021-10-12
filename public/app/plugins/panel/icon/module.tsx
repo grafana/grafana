@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 
 import { IconPanel } from './IconPanel';
-import { PanelOptions } from './models.gen';
+import { defaultPanelOptions, PanelOptions } from './models.gen';
 import { IconConfig, iconItem } from 'app/features/canvas/elements/icon';
 import { optionBuilder } from '../canvas/editor/options';
 import { CanvasElementOptions } from 'app/features/canvas';
@@ -21,5 +21,7 @@ export const plugin = new PanelPlugin<PanelOptions>(IconPanel)
         optionBuilder.addBackground(builder, ctx);
         optionBuilder.addBorder(builder, ctx);
       },
+
+      defaultValue: defaultPanelOptions.root as any,
     });
   });

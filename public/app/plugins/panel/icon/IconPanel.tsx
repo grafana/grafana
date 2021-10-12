@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -60,6 +60,7 @@ export class IconPanel extends Component<Props> {
   }
 
   render() {
-    return this.element.render();
+    const { width, height } = this.props;
+    return <div style={{ width, height, overflow: 'hidden', position: 'relative' }}>{this.element.render()}</div>;
   }
 }
