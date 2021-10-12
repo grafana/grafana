@@ -295,5 +295,82 @@ describe('preparePlotData', () => {
         ]
       `);
     });
+
+    describe('with legend sorted', () => {
+      it('should affect when single group', () => {
+        const df = new MutableDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+            {
+              name: 'a',
+              values: [-10, 20, 10],
+              state: { calcs: { max: 20 } },
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'b',
+              values: [10, 10, 10],
+              state: { calcs: { max: 10 } },
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'c',
+              values: [20, 20, 20],
+              state: { calcs: { max: 20 } },
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+          ],
+        });
+
+        expect(preparePlotData([df], undefined, { sortBy: 'Max', sortDesc: false } as any)).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            0,
+            30,
+            20,
+          ],
+          Array [
+            10,
+            10,
+            10,
+          ],
+          Array [
+            20,
+            50,
+            40,
+          ],
+        ]
+      `);
+        expect(preparePlotData([df], undefined, { sortBy: 'Max', sortDesc: true } as any)).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+          ],
+          Array [
+            20,
+            50,
+            40,
+          ],
+          Array [
+            10,
+            40,
+            30,
+          ],
+        ]
+      `);
+      });
+    });
   });
 });

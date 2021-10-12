@@ -15,7 +15,7 @@ import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from
 import { BarsOptions, getConfig } from './bars';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
-import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -47,6 +47,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   text,
   rawValue,
   allFrames,
+  legend,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -73,6 +74,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     formatValue,
     text,
     showValue,
+    legend,
   };
 
   const config = getConfig(opts, theme);
@@ -192,7 +194,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   if (stackingGroups.size !== 0) {
     builder.setStacking(true);
-    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+    for (const [_, seriesIds] of stackingGroups.entries()) {
+      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
       for (let j = seriesIdxs.length - 1; j > 0; j--) {
         builder.addBand({
           series: [seriesIdxs[j], seriesIdxs[j - 1]],

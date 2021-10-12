@@ -20,6 +20,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   'groupWidth',
   'stacking',
   'showValue',
+  'legend',
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
 
