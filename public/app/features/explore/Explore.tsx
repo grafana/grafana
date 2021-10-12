@@ -41,7 +41,7 @@ import { LogsVolumePanel } from './LogsVolumePanel';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css`
-      ˘label: exploreMain;
+      label: exploreMain;
       // Is needed for some transition animations to work.
       position: relative;
       margin-top: 21px;

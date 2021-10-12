@@ -517,14 +517,6 @@ function canReuseLogsVolumeData(
   return false;
 }
 
-export function logsLevelZoomRatio(
-  logsVolumeData: DataQueryResponse | undefined,
-  selectedTimeRange: AbsoluteTimeRange
-): number | undefined {
-  const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
-  return dataRange ? (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to) : undefined;
-}
-
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
  * Use this action for clicks on query examples. Triggers a query run.

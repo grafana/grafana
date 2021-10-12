@@ -4,7 +4,6 @@ import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { ExploreId } from '../../types';
 import { css } from '@emotion/css';
-import { logsLevelZoomRatio } from './state/query';
 
 type Props = {
   exploreId: ExploreId;
@@ -100,4 +99,12 @@ export function LogsVolumePanel(props: Props) {
       </div>
     </Collapse>
   );
+}
+
+function logsLevelZoomRatio(
+  logsVolumeData: DataQueryResponse | undefined,
+  selectedTimeRange: AbsoluteTimeRange
+): number | undefined {
+  const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
+  return dataRange ? (selectedTimeRange.from - selectedTimeRange.to) / (dataRange.from - dataRange.to) : undefined;
 }
