@@ -1,9 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelModel } from '../../../state/PanelModel';
-import { getDefaultTimeRange, LoadingState, PanelData, VisualizationSuggestion } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { DisplayMode } from '../types';
 import store from '../../../../../core/store';
-import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 
 export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 
@@ -37,7 +36,6 @@ export interface PanelEditorState {
   ui: PanelEditorUIState;
   isVizPickerOpen: boolean;
   tableViewEnabled: boolean;
-  panelSuggestions: VisualizationSuggestion[];
 }
 
 export const initialState = (): PanelEditorState => {
@@ -66,7 +64,6 @@ export const initialState = (): PanelEditorState => {
       ...DEFAULT_PANEL_EDITOR_UI_STATE,
       ...migratedState,
     },
-    panelSuggestions: [],
   };
 };
 
@@ -106,9 +103,6 @@ const pluginsSlice = createSlice({
         state.ui.isPanelOptionsVisible = true;
       }
     },
-    setPanelVisualizationSuggestions: (state, action: PayloadAction<VisualizationSuggestion[]>) => {
-      state.panelSuggestions = action.payload;
-    },
     toggleTableView(state) {
       state.tableViewEnabled = !state.tableViewEnabled;
     },
@@ -119,10 +113,6 @@ const pluginsSlice = createSlice({
       state.tableViewEnabled = false;
     },
   },
-  extraReducers: (builder) =>
-    builder.addCase(panelModelAndPluginReady, (state, action) => {
-      state.panelSuggestions = [];
-    }),
 });
 
 export const {
@@ -133,7 +123,6 @@ export const {
   setPanelEditorUIState,
   toggleVizPicker,
   toggleTableView,
-  setPanelVisualizationSuggestions,
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;

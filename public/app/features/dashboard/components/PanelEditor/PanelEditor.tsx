@@ -31,7 +31,7 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { toggleTableView, setPanelVisualizationSuggestions } from './state/reducers';
+import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
@@ -75,7 +75,7 @@ const mapStateToProps = (state: StoreState) => {
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariables(state),
-    panelSuggestions: state.panelEditor.panelSuggestions,
+    panelSuggestions: panelState?.suggestions ?? [],
   };
 };
 
@@ -86,7 +86,6 @@ const mapDispatchToProps = {
   updateTimeZoneForSession,
   toggleTableView,
   notifyApp,
-  setPanelVisualizationSuggestions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -222,7 +221,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
-    const { dashboard, panel, uiState, tableViewEnabled, setPanelVisualizationSuggestions } = this.props;
+    const { dashboard, panel, uiState, tableViewEnabled } = this.props;
 
     return (
       <div className={styles.mainPaneWrapper} key="panel">
@@ -259,7 +258,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       width={panelSize.width}
                       height={panelSize.height}
                       skipStateCleanUp={true}
-                      onSuggestVisualizations={setPanelVisualizationSuggestions}
                     />
                   </div>
                 </div>

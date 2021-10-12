@@ -6,7 +6,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin, VisualizationSuggestion } from '@grafana/data';
 import { initPanelState } from '../../panel/state/actions';
-import { cleanUpPanelState } from '../../panel/state/reducers';
+import { cleanUpPanelState, setPanelInstanceState, setPanelSuggestions } from '../../panel/state/reducers';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -18,7 +18,6 @@ export interface OwnProps {
   width: number;
   height: number;
   skipStateCleanUp?: boolean;
-  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
 }
 
 export interface State {
@@ -40,6 +39,8 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 const mapDispatchToProps = {
   initPanelState,
   cleanUpPanelState,
+  setPanelInstanceState,
+  setPanelSuggestions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -76,8 +77,16 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
+  onInstanceStateChange = (value: any) => {
+    this.props.setPanelInstanceState({ key: this.props.stateKey, value });
+  };
+
+  onSuggestVisualizations = (suggestions: VisualizationSuggestion[]) => {
+    this.props.setPanelSuggestions({ key: this.props.stateKey, suggestions });
+  };
+
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, width, height, onSuggestVisualizations } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
 
     if (plugin.angularPanelCtrl) {
       return (
@@ -104,7 +113,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
         isInView={isInView}
         width={width}
         height={height}
-        onSuggestVisualizations={onSuggestVisualizations}
+        onInstanceStateChange={this.onInstanceStateChange}
+        onSuggestVisualizations={this.onSuggestVisualizations}
       />
     );
   }

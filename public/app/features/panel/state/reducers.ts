@@ -1,6 +1,6 @@
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
 import { AngularComponent } from '@grafana/runtime';
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, VisualizationSuggestion } from '@grafana/data';
 
 export type RootPanelsState = Record<string, PanelState>;
 
@@ -8,6 +8,7 @@ export interface PanelState {
   plugin?: PanelPlugin;
   angularComponent?: AngularComponent;
   instanceState?: any | null;
+  suggestions?: VisualizationSuggestion[];
 }
 
 export const initialState: RootPanelsState = {};
@@ -32,6 +33,9 @@ const panelsSlice = createSlice({
     },
     setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
       state[action.payload.key].instanceState = action.payload.value;
+    },
+    setPanelSuggestions: (state, action: PayloadAction<{ key: string; suggestions: VisualizationSuggestion[] }>) => {
+      state[action.payload.key].suggestions = action.payload.suggestions;
     },
     setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       const panelState = state[action.payload.key];
@@ -68,6 +72,7 @@ export const {
   panelModelAndPluginReady,
   setPanelAngularComponent,
   setPanelInstanceState,
+  setPanelSuggestions,
   cleanUpPanelState,
 } = panelsSlice.actions;
 
