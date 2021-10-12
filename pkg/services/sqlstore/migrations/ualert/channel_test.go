@@ -22,7 +22,6 @@ func Test_makeReceiverAndRoute(t *testing.T) {
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 			seenChannelUIDs:           make(map[string]struct{}),
-			// lastReceiverID: 0,
 		}
 	}
 
@@ -44,7 +43,7 @@ func Test_makeReceiverAndRoute(t *testing.T) {
 	t.Run("Slack channel is migrated", func(t *testing.T) {
 		t.Run("url is removed if it is invalid (secure settings)", func(t *testing.T) {
 			secureSettings := map[string]string{
-				"url": "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�",
+				"url":   invalidUri,
 				"token": util.GenerateShortUID(),
 			}
 			settings := map[string]interface{}{
@@ -83,7 +82,7 @@ func Test_makeReceiverAndRoute(t *testing.T) {
 				"token": util.GenerateShortUID(),
 			}
 			settings := map[string]interface{}{
-				"url": "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�",
+				"url":  invalidUri,
 				"test": "data",
 				"some_map": map[string]interface{}{
 					"test": rand.Int63(),
@@ -116,3 +115,5 @@ func Test_makeReceiverAndRoute(t *testing.T) {
 		})
 	})
 }
+
+const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�"
