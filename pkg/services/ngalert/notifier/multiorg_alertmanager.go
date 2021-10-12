@@ -223,13 +223,14 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	// We look for orphan directories and remove them. Orphan directories can
 	// occur when an organization is deleted and the node running Grafana is
 	// shutdown before the next sync is executed.
-	moa.cleanupOrphanLocalOrgState(orgsFound)
+	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
 }
 
 // cleanupOrphanLocalOrgState will check if there is any organization on
 // disk that is not part of the active organizations. If this is the case
 // it will delete the local state from disk.
-func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(activeOrganizations map[int64]struct{}) {
+func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
+	activeOrganizations map[int64]struct{}) {
 	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
 	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
@@ -255,7 +256,7 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(activeOrganizations 
 			fileStore.CleanUp()
 		}
 	}
-	if err := moa.kvStore.DelOrphans(context.Background()); err != nil {
+	if err := moa.kvStore.DelOrphans(ctx); err != nil {
 		moa.logger.Error("failed to delete orphaned kvstore records", "err", err)
 	}
 }
