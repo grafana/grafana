@@ -130,6 +130,63 @@ grafana_alerting_discovered_configurations 4
 	}
 }
 
+func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
+	// Include a broken configuration for organization 2.
+	configStore := &FakeConfigStore{
+		configs: map[int64]*models.AlertConfiguration{
+			2: {AlertmanagerConfiguration: brokenConfig, OrgID: 2},
+		},
+	}
+	orgStore := &FakeOrgStore{
+		orgs: []int64{1, 2, 3},
+	}
+
+	tmpDir, err := ioutil.TempDir("", "test")
+	require.NoError(t, err)
+	kvStore := newFakeKVStore(t)
+	decryptFn := ossencryption.ProvideService().GetDecryptedValue
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
+	cfg := &setting.Cfg{
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 10 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+		}, // do not poll in tests.
+	}
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	require.NoError(t, err)
+	ctx := context.Background()
+
+	// When you sync the first time, the alertmanager is created but is doesn't become ready until you have a configuration applied.
+	{
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 3)
+		require.True(t, mam.alertmanagers[1].ready())
+		require.False(t, mam.alertmanagers[2].ready())
+		require.True(t, mam.alertmanagers[3].ready())
+	}
+
+	// On the next sync, it never panics and alertmanager is still not ready.
+	{
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 3)
+		require.True(t, mam.alertmanagers[1].ready())
+		require.False(t, mam.alertmanagers[2].ready())
+		require.True(t, mam.alertmanagers[3].ready())
+	}
+
+	// If we fix the configuration, it becomes ready.
+	{
+		configStore.configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 3)
+		require.True(t, mam.alertmanagers[1].ready())
+		require.True(t, mam.alertmanagers[2].ready())
+		require.True(t, mam.alertmanagers[3].ready())
+	}
+}
+
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	configStore := &FakeConfigStore{
 		configs: map[int64]*models.AlertConfiguration{},
@@ -197,3 +254,25 @@ func cleanOrgDirectories(path string, t *testing.T) func() {
 		require.NoError(t, os.RemoveAll(path))
 	}
 }
+
+var brokenConfig = `
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "slack receiver",
+				"type": "slack",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+					"url": "�r_��q/b�����p@ⱎȏ =��@ӹtd>Rú�H��           �;�@Uf��0�\k2*jh�}Íu�)"2�F6]�}r��R�b�d�J;��S퓧��$��",
+					"recipient": "#graphana-metrics",
+				}
+			}]
+		}]
+	}
+}`
