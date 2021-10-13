@@ -62,6 +62,8 @@ var (
 )
 
 const (
+	pluginID string = "stackdriver"
+
 	gceAuthentication         string = "gce"
 	jwtAuthentication         string = "jwt"
 	metricQueryType           string = "metrics"
@@ -85,7 +87,7 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, httpClientProvi
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("stackdriver", factory); err != nil {
+	if err := registrar.LoadAndRegister(pluginID, factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
@@ -594,8 +596,8 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 
 	req.Header.Set("Content-Type", "application/json")
 
-	// find plugin
-	plugin := s.pluginStore.Plugin("stackdriver")
+	// find stackdriver / cloud-monitoring plugin
+	plugin := s.pluginStore.Plugin(pluginID)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
