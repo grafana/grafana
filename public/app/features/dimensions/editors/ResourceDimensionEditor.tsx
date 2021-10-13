@@ -1,10 +1,17 @@
 import React, { FC, useCallback, useState } from 'react';
-import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import {
+  FieldNamePickerConfigSettings,
+  GrafanaTheme2,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+} from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import { ResourcePicker } from './ResourcePicker';
-import { ResourceFolderName } from '..';
+import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
+import SVG from 'react-inlinesvg';
+import { css } from '@emotion/css';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -22,6 +29,7 @@ export const ResourceDimensionEditor: FC<
   const { value, context, onChange, item } = props;
   const labelWidth = 9;
   const [isOpen, setOpen] = useState(false);
+  const styles = useStyles2(getStyles);
 
   const onModeChange = useCallback(
     (mode) => {
@@ -62,6 +70,7 @@ export const ResourceDimensionEditor: FC<
   const showSourceRadio = item.settings?.showSourceRadio ?? true;
   const mediaType = item.settings?.resourceType ?? 'icon';
   const folderName = item.settings?.folderName ?? ResourceFolderName.Icon;
+  const srcPath = mediaType === 'icon' && value ? getPublicOrAbsoluteUrl(value?.fixed) : '';
 
   return (
     <>
@@ -91,6 +100,7 @@ export const ResourceDimensionEditor: FC<
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
+          {srcPath && <SVG src={srcPath} className={styles.img} />}
           <InlineField label={null} grow>
             <Input value={value?.fixed} placeholder="Resource URL" readOnly={true} onClick={openModal} />
           </InlineField>
@@ -107,3 +117,11 @@ export const ResourceDimensionEditor: FC<
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  img: css`
+    width: 32px;
+    height: 32px;
+    fill: ${theme.colors.text.primary};
+  `,
+});
