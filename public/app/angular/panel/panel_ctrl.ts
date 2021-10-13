@@ -10,7 +10,7 @@ import {
   EventBusExtended,
   EventBusSrv,
 } from '@grafana/data';
-import { DashboardModel } from '../dashboard/state';
+import { DashboardModel } from '../../features/dashboard/state';
 import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 
 export class PanelCtrl {

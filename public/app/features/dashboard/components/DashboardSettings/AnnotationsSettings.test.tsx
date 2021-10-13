@@ -148,7 +148,7 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).not.toBeInTheDocument();
 
-    userEvent.click(screen.getByRole('button', { name: /delete/i }));
+    userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
 
     expect(screen.queryAllByRole('row').length).toBe(0);
     expect(
