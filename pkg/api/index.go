@@ -149,6 +149,12 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
 			Url: hs.Cfg.AppSubURL + "/dashboard/import",
 		})
+		if setting.AlertingEnabled || hs.Cfg.UnifiedAlerting.Enabled {
+			children = append(children, &dtos.NavLink{
+				Text: "Alert", SubTitle: "Create an alert", Id: "alert",
+				Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
+			})
+		}
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Create",
 			Id:         "create",
