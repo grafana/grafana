@@ -61,7 +61,8 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'curl -fLO https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz',
             'tar -C bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz',
             'rm dockerize-linux-amd64-v0.6.1.tar.gz',
-            'yarn info --cache',
+            'ls -a yarncache',
+            'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''

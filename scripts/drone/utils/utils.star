@@ -17,6 +17,11 @@ def pipeline(
                 'os': 'linux',
                 'arch': 'amd64'
             },
+            # A shared cache is used on the host
+            # To avoid issues with parallel builds, we run this repo on single build agents
+            'node': {
+                'type': 'no-parallel'
+            }
         }
     else:
         platform_conf = {

@@ -39,7 +39,8 @@ steps:
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz
   - rm dockerize-linux-amd64-v0.6.1.tar.gz
-  - yarn info --cache
+  - ls -a yarncache
+  - yarn install --immutable
   environment:
     YARN_CACHE_FOLDER: /drone/src/yarncache
   depends_on:
@@ -110,6 +111,9 @@ steps:
   depends_on:
   - initialize
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - pull_request
@@ -164,6 +168,6 @@ get:
 
 ---
 kind: signature
-hmac: b2fcbc090736e4eb2da90268804bbeac4d278982c3781063720ea2ef53ac8620
+hmac: be5c9679ee9cb1187172be7711183daae7f6cda5c825119264fec2413cc122f9
 
 ...
