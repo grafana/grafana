@@ -1,4 +1,6 @@
 import React, { CSSProperties } from 'react';
+import { OnDrag, OnResize } from 'react-moveable/declaration/types';
+
 import {
   BackgroundImageSize,
   CanvasElementItem,
@@ -15,7 +17,11 @@ export class ElementState {
   readonly UID = counter++;
 
   revId = 0;
-  style: CSSProperties = {};
+  sizeStyle: CSSProperties = {};
+  dataStyle: CSSProperties = {};
+
+  // Filled in by ref
+  div?: HTMLDivElement;
 
   // Calculated
   width = 100;
@@ -34,10 +40,9 @@ export class ElementState {
     this.height = height;
 
     // Update the CSS position
-    this.style = {
-      ...this.style,
-      width,
-      height,
+    this.sizeStyle = {
+      ...this.options.placement,
+      position: 'absolute',
     };
   }
 
@@ -96,18 +101,14 @@ export class ElementState {
       }
     }
 
-    css.width = this.width;
-    css.height = this.height;
-
-    this.style = css;
+    this.dataStyle = css;
   }
 
-  /** Recursivly visit all nodes */
+  /** Recursively visit all nodes */
   visit(visitor: (v: ElementState) => void) {
     visitor(this);
   }
 
-  // Something changed
   onChange(options: CanvasElementOptions) {
     if (this.item.id !== options.type) {
       this.item = canvasElementRegistry.getIfExists(options.type) ?? notFoundItem;
@@ -126,10 +127,41 @@ export class ElementState {
     return { ...this.options };
   }
 
+  initElement = (target: HTMLDivElement) => {
+    this.div = target;
+
+    let placement = this.options.placement;
+    if (!placement) {
+      placement = {
+        left: 0,
+        top: 0,
+      };
+      this.options.placement = placement;
+    }
+  };
+
+  applyDrag = (event: OnDrag) => {
+    const placement = this.options.placement;
+    placement!.top = event.top;
+    placement!.left = event.left;
+
+    event.target.style.top = `${event.top}px`;
+    event.target.style.left = `${event.left}px`;
+  };
+
+  applyResize = (event: OnResize) => {
+    const placement = this.options.placement;
+    placement!.height = event.height;
+    placement!.width = event.width;
+
+    event.target.style.height = `${event.height}px`;
+    event.target.style.width = `${event.width}px`;
+  };
+
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={this.style}>
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );
