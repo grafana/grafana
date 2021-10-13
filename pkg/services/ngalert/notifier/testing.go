@@ -140,8 +140,9 @@ func (fkv *FakeKVStore) List(ctx context.Context, namespace string, key string) 
 	for orgID, namespaceMap := range fkv.store {
 		if keyMap, exists := namespaceMap[namespace]; exists {
 			if value, exists := keyMap[key]; exists {
+				orgCopy := orgID
 				items = append(items, kvstore.Item{
-					OrgId:     &orgID,
+					OrgId:     &orgCopy,
 					Namespace: &namespace,
 					Key:       &key,
 					Value:     value,
