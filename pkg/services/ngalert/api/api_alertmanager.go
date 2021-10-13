@@ -411,6 +411,10 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 
 	result, err := am.TestReceivers(ctx, body)
 	if err != nil {
+		var invalidAlertErr notifier.InvalidAlertError
+		if errors.As(err, &invalidAlertErr) {
+			return response.Error(http.StatusBadRequest, "", err)
+		}
 		if errors.Is(err, notifier.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
 		}
@@ -444,8 +448,12 @@ func contextWithTimeoutFromRequest(ctx context.Context, r *http.Request, default
 
 func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestReceiversResult {
 	v := apimodels.TestReceiversResult{
-		Receivers: make([]apimodels.TestReceiverResult, len(r.Receivers)),
-		NotifedAt: r.NotifedAt,
+		Alert: apimodels.TestReceiversConfigAlertParams{
+			Annotations: r.Alert.Annotations,
+			Labels:      r.Alert.Labels,
+		},
+		Receivers:  make([]apimodels.TestReceiverResult, len(r.Receivers)),
+		NotifiedAt: r.NotifedAt,
 	}
 	for ix, next := range r.Receivers {
 		configs := make([]apimodels.TestReceiverConfigResult, len(next.Configs))
