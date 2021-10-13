@@ -345,7 +345,7 @@ static defaultProps = { ... }
 static defaultProps: Partial<Props> = { ... }
 ```
 
-### export function XXX vs export const XXX = () => {}
+### How to declare functional components
 
 It's advisable to use named regular functions when creating a new react functional component.
 
@@ -354,10 +354,8 @@ It's advisable to use named regular functions when creating a new react function
 export const Component = (props: Props) => { ... };
 
 // good
-export function Component(props: Props) { ... }
+export function Component(props: Props): ReactElement { ... }
 ```
-
-For class methods - use arrow function only when you need the binding, meaning the method will be used outside of the class context.
 
 ## State management
 
