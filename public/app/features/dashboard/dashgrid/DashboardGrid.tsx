@@ -179,7 +179,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height, panel.key);
+            return this.renderPanel(panel, width, height);
           }}
         </GrafanaGridItem>
       );
@@ -188,18 +188,19 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: any, height: any, itemKey: string) {
+  renderPanel(panel: PanelModel, width: any, height: any) {
     if (panel.type === 'row') {
-      return <DashboardRow key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
+      return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     if (panel.type === 'add-panel') {
-      return <AddPanelWidget key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
+      return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     return (
       <DashboardPanel
-        key={itemKey}
+        key={panel.key}
+        stateKey={panel.key}
         panel={panel}
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}

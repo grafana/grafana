@@ -1,5 +1,6 @@
 // Libraries
 import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 // Utils
 import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -20,7 +21,6 @@ import {
   PanelModel as IPanelModel,
   DatasourceRef,
 } from '@grafana/data';
-import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import {
@@ -61,7 +61,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
-  editSourceId: true,
   configRev: true,
   getDisplayTitle: true,
   dataSupport: true,
@@ -104,13 +103,13 @@ const mustKeepProps: { [str: string]: boolean } = {
   queryRunner: true,
   transformations: true,
   fieldConfig: true,
-  editSourceId: true,
   maxDataPoints: true,
   interval: true,
   replaceVariables: true,
   libraryPanel: true,
   getDisplayTitle: true,
   configRev: true,
+  key: true,
 };
 
 const defaults: any = {
@@ -130,7 +129,6 @@ const defaults: any = {
 export class PanelModel implements DataConfigSource, IPanelModel {
   /* persisted id, used in URL to identify a panel */
   id!: number;
-  editSourceId?: number;
   gridPos!: GridPos;
   type!: string;
   title!: string;
@@ -178,7 +176,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
-  key: string; // unique in dashboard, changes will force a react reload
+  /**
+   * Unique in application state, this is used as redux key for panel and for redux panel state
+   * Change will cause unmount and re-init of panel
+   */
+  key: string;
 
   /**
    * The PanelModel event bus only used for internal and legacy angular support.
@@ -192,7 +194,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.key = this.id ? `${this.id}` : `panel-${Math.floor(Math.random() * 100000)}`;
+    this.key = uuidv4();
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -228,6 +230,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
+  }
+
+  generateNewKey() {
+    this.key = uuidv4();
   }
 
   ensureQueryIds() {
@@ -303,7 +309,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
-      panelId: this.editSourceId || this.id,
+      panelId: this.id,
       dashboardId: dashboardId,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
@@ -475,12 +481,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   getEditClone() {
     const sourceModel = this.getSaveModel();
 
-    // Temporary id for the clone, restored later in redux action when changes are saved
-    sourceModel.id = EDIT_PANEL_ID;
-    sourceModel.editSourceId = this.id;
-
     const clone = new PanelModel(sourceModel);
     clone.isEditing = true;
+
     const sourceQueryRunner = this.getQueryRunner();
 
     // Copy last query result
@@ -588,14 +591,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     this.getQueryRunner().resendLastResult();
-  }
-
-  /*
-   * Panel have a different id while in edit mode (to more easily be able to discard changes)
-   * Use this to always get the underlying source id
-   * */
-  getSavedId(): number {
-    return this.editSourceId ?? this.id;
   }
 
   /*

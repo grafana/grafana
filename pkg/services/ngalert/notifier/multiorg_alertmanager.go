@@ -174,6 +174,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}
+			moa.alertmanagers[orgID] = am
 			alertmanager = am
 		}
 

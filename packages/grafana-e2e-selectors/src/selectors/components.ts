@@ -12,10 +12,14 @@
 export const Components = {
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
-    fromField: 'TimePicker from field',
-    toField: 'TimePicker to field',
+    fromField: 'Time Range from field',
+    toField: 'Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
-    calendar: 'TimePicker calendar',
+    calendar: {
+      label: 'Time Range calendar',
+      openButton: 'Open time range calendar',
+      closeButton: 'Close time range Calendar',
+    },
     absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
   DataSource: {
@@ -205,7 +209,11 @@ export const Components = {
   },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    /**
+     * @deprecated use inputV2 instead
+     */
     input: () => 'input[id="data-source-picker"]',
+    inputV2: 'Select a data source',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',

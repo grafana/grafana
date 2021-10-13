@@ -19,7 +19,7 @@ export class EventEditorCtrl {
   constructor() {}
 
   $onInit() {
-    this.event.panelId = this.panelCtrl.panel.editSourceId ?? this.panelCtrl.panel.id; // set correct id if in panel edit
+    this.event.panelId = this.panelCtrl.panel.id; // set correct id if in panel edit
     this.event.dashboardId = this.panelCtrl.dashboard.id;
 
     // Annotations query returns time as Unix timestamp in milliseconds
