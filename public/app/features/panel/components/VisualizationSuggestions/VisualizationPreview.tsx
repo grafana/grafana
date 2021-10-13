@@ -19,8 +19,8 @@ export function VisualizationPreview({ data, suggestion }: Props) {
   const showWidth = 100 * aspectRatio;
   const showHeight = 100;
   const padding = 8;
-  const widthFactor = showWidth / (renderWidth - padding);
-  const heightFactor = showHeight / (renderHeight - padding);
+  const widthFactor = showWidth / (renderWidth - padding * 2);
+  const heightFactor = showHeight / (renderHeight - padding * 2);
 
   const style: CSSProperties = {
     width: renderWidth,

@@ -3,94 +3,50 @@ import { GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data
 import { VisualizationPreview } from './VisualizationPreview';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { useAsync } from 'react-use';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export interface Props {
   data: PanelData;
 }
 
 export function VisualizationSuggestions({ data }: Props) {
-  const suggestions = getSuggestions();
+  const { value: suggestions } = useAsync(() => getSuggestions(data), [data]);
   const styles = useStyles2(getStyles);
 
   return (
     <div>
       <div className={styles.heading}>Suggestions</div>
       <div className={styles.grid}>
-        {suggestions.map((suggestion, index) => (
-          <VisualizationPreview key={index} data={data} suggestion={suggestion} />
-        ))}
+        {suggestions &&
+          suggestions.map((suggestion, index) => (
+            <VisualizationPreview key={index} data={data} suggestion={suggestion} />
+          ))}
       </div>
       <div className={styles.heading}>All</div>
     </div>
   );
 }
 
-function getSuggestions(): VisualizationSuggestion[] {
-  return [
-    {
-      name: 'barchart horizontal',
-      pluginId: 'barchart',
-      options: {
-        orientation: 'horizontal',
-        showValue: 'never',
-        legend: {
-          displayMode: 'hidden',
-        },
-      },
-      fieldConfig: {
-        defaults: {
-          custom: {
-            axisPlacement: 'hidden',
-          },
-        },
-        overrides: [],
-      },
-    },
-    {
-      name: 'Barchart vertical',
-      pluginId: 'barchart',
-      options: {
-        orientation: 'vertical',
-        showValue: 'never',
-        legend: {
-          displayMode: 'hidden',
-        },
-      },
-      fieldConfig: {
-        defaults: {
-          custom: {
-            axisPlacement: 'hidden',
-          },
-        },
-        overrides: [],
-      },
-    },
-    {
-      name: 'Piechart',
-      pluginId: 'piechart',
-      options: {
-        reduceOptions: {
-          values: true,
-        },
-        legend: {
-          displayMode: 'hidden',
-        },
-      },
-    },
-    {
-      name: 'Piechart',
-      pluginId: 'piechart',
-      options: {
-        reduceOptions: {
-          values: true,
-        },
-        pieType: 'donut',
-        legend: {
-          displayMode: 'hidden',
-        },
-      },
-    },
-  ];
+async function getSuggestions(data: PanelData): Promise<VisualizationSuggestion[]> {
+  const plugins = ['timeseries', 'barchart', 'gauge', 'piechart', 'bargauge', 'table'];
+  const input = { data };
+  const allSuggestions: VisualizationSuggestion[] = [];
+
+  for (const pluginId of plugins) {
+    const plugin = await importPanelPlugin(pluginId);
+    const supplier = plugin.getSuggestionsSupplier();
+
+    if (supplier) {
+      const pluginSuggestions = supplier(input);
+
+      if (pluginSuggestions && pluginSuggestions.length > 0) {
+        allSuggestions.push(...pluginSuggestions);
+      }
+    }
+  }
+
+  return allSuggestions;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
