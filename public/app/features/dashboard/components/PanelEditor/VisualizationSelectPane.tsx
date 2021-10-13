@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { Button, CustomScrollbar, Icon, Input, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { changePanelPlugin } from '../../../panel/state/actions';
 import { PanelModel } from '../../state/PanelModel';
 import { useDispatch, useSelector } from 'react-redux';
@@ -64,13 +64,6 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     [onPluginTypeChange, plugin.meta]
   );
 
-  const suffix =
-    searchQuery !== '' ? (
-      <Button icon="times" fill="text" size="sm" onClick={() => setSearchQuery('')}>
-        Clear
-      </Button>
-    ) : null;
-
   if (!plugin) {
     return null;
   }
@@ -88,13 +81,12 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     <div className={styles.openWrapper}>
       <div className={styles.formBox}>
         <div className={styles.searchRow}>
-          <Input
+          <FilterInput
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            onChange={setSearchQuery}
             onKeyPress={onKeyPress}
-            prefix={<Icon name="search" />}
-            suffix={suffix}
             ref={searchRef}
+            autoFocus={true}
             placeholder="Search for..."
           />
           <Button
