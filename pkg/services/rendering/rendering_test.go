@@ -3,9 +3,12 @@ package rendering
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -138,4 +141,40 @@ func TestRenderLimitImage(t *testing.T) {
 			assert.Equal(t, tc.expected, result.FilePath)
 		})
 	}
+}
+
+func TestRenderingService404Behavior(t *testing.T) {
+	cfg := setting.NewCfg()
+	rs := &RenderingService{
+		Cfg: cfg,
+		log: log.New("rendering-test"),
+	}
+
+	t.Run("When renderer responds with correct version should return that version", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("{\"version\":\"2.7.1828\"}"))
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererUrl = server.URL + "/render"
+		version, err := rs.getRemotePluginVersion()
+
+		require.NoError(t, err)
+		require.Equal(t, version, "2.7.1828")
+	})
+
+	t.Run("When renderer responds with 404 should assume a valid but old version", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererUrl = server.URL + "/render"
+		version, err := rs.getRemotePluginVersion()
+
+		require.NoError(t, err)
+		require.Equal(t, version, "1.0.0")
+	})
 }

@@ -212,7 +212,10 @@ func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 		}
 	}()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound {
+		// Old versions of the renderer lacked the version endpoint
+		return "1.0.0", nil
+	} else if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("remote rendering request to get version failed, status code: %d, status: %s", resp.StatusCode,
 			resp.Status)
 	}
