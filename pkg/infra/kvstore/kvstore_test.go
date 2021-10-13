@@ -194,6 +194,16 @@ func TestKVStore(t *testing.T) {
 				Namespace: namespace,
 				Key:       key,
 			},
+			{
+				OrgId:     1,
+				Namespace: namespace,
+				Key:       "other_key",
+			},
+			{
+				OrgId:     4,
+				Namespace: namespace,
+				Key:       "another_one",
+			},
 		}
 
 		for _, tc := range testCases {

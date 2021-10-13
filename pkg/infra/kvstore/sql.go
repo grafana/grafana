@@ -8,11 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-const (
-	// Wildcard to query all organizations
-	AllOrganizations = -1
-)
-
 // kvStoreSQL provides a key/value store backed by the Grafana database
 type kvStoreSQL struct {
 	log      log.Logger

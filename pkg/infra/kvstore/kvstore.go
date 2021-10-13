@@ -7,6 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+const (
+	// Wildcard to query all organizations
+	AllOrganizations = -1
+)
+
 func ProvideService(sqlStore *sqlstore.SQLStore) KVStore {
 	return &kvStoreSQL{
 		sqlStore: sqlStore,
