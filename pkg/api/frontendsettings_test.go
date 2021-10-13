@@ -35,20 +35,17 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	ps := &fakePluginStore{}
-
-	r := &rendering.RenderingService{
-		Cfg:                   cfg,
-		RendererPluginManager: ps,
-	}
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		RenderService: r,
+		Cfg:     cfg,
+		Bus:     bus.GetBus(),
+		License: &licensing.OSSLicensingService{Cfg: cfg},
+		RenderService: &rendering.RenderingService{
+			Cfg:                   cfg,
+			RendererPluginManager: &fakeRendererManager{},
+		},
 		SQLStore:      sqlStore,
-		pluginStore:   ps,
+		pluginStore:   &fakePluginStore{},
 		updateChecker: &updatechecker.Service{},
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}

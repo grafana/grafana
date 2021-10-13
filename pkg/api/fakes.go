@@ -14,7 +14,11 @@ func (ps *fakePluginStore) Plugins(pluginType ...plugins.Type) []*plugins.Plugin
 	return nil
 }
 
-func (ps *fakePluginStore) Renderer() *plugins.Plugin {
+type fakeRendererManager struct {
+	plugins.RendererManager
+}
+
+func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
 	return nil
 }
 
