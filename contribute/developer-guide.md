@@ -48,7 +48,7 @@ Grafana consists of two components; the _frontend_, and the _backend_.
 Before we can build the frontend assets, we need to install the dependencies:
 
 ```
-yarn install --pure-lockfile
+yarn install --immutable
 ```
 
 After the command has finished, we can start building our source code:
