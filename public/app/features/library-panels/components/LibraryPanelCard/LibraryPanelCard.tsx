@@ -6,7 +6,7 @@ import { LibraryElementDTO } from '../../types';
 import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 import { config } from '@grafana/runtime';
-import { getPanelPluginNotFound } from 'app/features/dashboard/dashgrid/PanelPluginError';
+import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryElementDTO;

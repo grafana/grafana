@@ -1,11 +1,17 @@
 import React from 'react';
-import { PanelOptionsEditorItem, StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
+import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet } from 'lodash';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import {
+  isNestedPanelOptions,
+  NestedValueAccess,
+  PanelOptionsEditorBuilder,
+} from '../../../../../../packages/grafana-data/src/utils/OptionsUIBuilders';
+import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -40,16 +46,16 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     }));
   };
 
-  // Load the options into categories
-  fillOptionsPaneItems(
-    plugin.optionEditors.list(),
-    getOptionsPaneCategory,
-    (path: string, value: any) => {
-      const newOptions = setOptionImmutably(context.options, path, value);
+  const access: NestedValueAccess = {
+    getValue: (path: string) => lodashGet(currentOptions, path),
+    onChange: (path: string, value: any) => {
+      const newOptions = setOptionImmutably(currentOptions, path, value);
       onPanelOptionsChanged(newOptions);
     },
-    context
-  );
+  };
+
+  // Load the options into categories
+  fillOptionsPaneItems(plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
   /**
    * Field options
@@ -92,7 +98,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} />;
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })
     );
@@ -107,21 +113,41 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
  * @internal
  */
 export function fillOptionsPaneItems(
-  optionEditors: PanelOptionsEditorItem[],
+  supplier: PanelOptionsSupplier<any>,
+  access: NestedValueAccess,
   getOptionsPaneCategory: categoryGetter,
-  onValueChanged: (path: string, value: any) => void,
-  context: StandardEditorContext<any, any>
+  context: StandardEditorContext<any, any>,
+  parentCategory?: OptionsPaneCategoryDescriptor
 ) {
-  for (const pluginOption of optionEditors) {
+  const builder = new PanelOptionsEditorBuilder<any>();
+  supplier(builder, context);
+
+  for (const pluginOption of builder.getItems()) {
     if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
       continue;
     }
 
-    const category = getOptionsPaneCategory(pluginOption.category);
+    let category = parentCategory;
+    if (!category) {
+      category = getOptionsPaneCategory(pluginOption.category);
+    } else if (pluginOption.category?.[0]?.length) {
+      category = category.getCategory(pluginOption.category[0]);
+    }
+
+    // Nested options get passed up one level
+    if (isNestedPanelOptions(pluginOption)) {
+      const sub = access.getValue(pluginOption.path);
+      fillOptionsPaneItems(
+        pluginOption.getBuilder(),
+        pluginOption.getNestedValueAccess(access),
+        getOptionsPaneCategory,
+        { ...context, options: sub },
+        category // parent category
+      );
+      continue;
+    }
+
     const Editor = pluginOption.editor;
-
-    // TODO? can some options recursivly call: fillOptionsPaneItems?
-
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: pluginOption.name,
@@ -129,12 +155,13 @@ export function fillOptionsPaneItems(
         render: function renderEditor() {
           return (
             <Editor
-              value={lodashGet(context.options, pluginOption.path)}
+              value={access.getValue(pluginOption.path)}
               onChange={(value: any) => {
-                onValueChanged(pluginOption.path, value);
+                access.onChange(pluginOption.path, value);
               }}
               item={pluginOption}
               context={context}
+              id={pluginOption.id}
             />
           );
         },

@@ -682,6 +682,111 @@ describe('given dashboard with row and panel repeat', () => {
   });
 });
 
+// fix for https://github.com/grafana/grafana/issues/38805
+describe('given dashboard with row and repeats on same row', () => {
+  it('should set correct gridPos when row is expanding', () => {
+    const ROW1 = 1;
+    const GAUGE1 = 2;
+    const REPEAT1 = 3;
+    const GAUGE2 = 4;
+    const REPEAT2 = 5;
+    const GAUGE3 = 6;
+    const dashboardJSON = {
+      panels: [
+        {
+          collapsed: true,
+          datasource: null,
+          gridPos: { h: 1, w: 24, x: 0, y: 0 },
+          id: ROW1,
+          panels: [
+            { gridPos: { h: 5, w: 4, x: 0, y: 1 }, id: GAUGE1, type: 'gauge' },
+            {
+              gridPos: { h: 5, w: 4, x: 4, y: 1 },
+              id: REPEAT1,
+              repeat: 'abc',
+              repeatDirection: 'v',
+              type: 'gauge',
+            },
+            { gridPos: { h: 5, w: 4, x: 8, y: 1 }, id: GAUGE2, type: 'gauge' },
+            {
+              gridPos: { h: 5, w: 4, x: 12, y: 1 },
+              id: REPEAT2,
+              repeat: 'abc',
+              repeatDirection: 'v',
+              type: 'gauge',
+            },
+            { gridPos: { h: 5, w: 4, x: 16, y: 1 }, id: GAUGE3, type: 'gauge' },
+          ],
+          title: 'Row title',
+          type: 'row',
+        },
+      ],
+      templating: {
+        list: [
+          {
+            allValue: null,
+            current: { selected: true, text: ['All'], value: ['$__all'] },
+            includeAll: true,
+            name: 'abc',
+            options: [
+              { selected: true, text: 'All', value: '$__all' },
+              { selected: false, text: 'a', value: 'a' },
+              { selected: false, text: 'b', value: 'b' },
+              { selected: false, text: 'c', value: 'c' },
+              { selected: false, text: 'd', value: 'd' },
+              { selected: false, text: 'e', value: 'e' },
+              { selected: false, text: 'f', value: 'f' },
+              { selected: false, text: 'g', value: 'g' },
+            ],
+            type: 'custom',
+          },
+        ],
+      },
+    };
+    const dashboard = getDashboardModel(dashboardJSON);
+
+    // toggle row
+    dashboard.toggleRow(dashboard.panels[0]);
+
+    // correct number of panels
+    expect(dashboard.panels.length).toBe(18);
+
+    // check row
+    const rowPanel = dashboard.panels.find((p) => p.id === ROW1);
+    expect(rowPanel?.gridPos).toEqual({ x: 0, y: 0, w: 24, h: 1 });
+
+    // check the gridPos of all the top level panels that are next to each other
+    const firstGauge = dashboard.panels.find((p) => p.id === GAUGE1);
+    const secondGauge = dashboard.panels.find((p) => p.id === GAUGE2);
+    const thirdGauge = dashboard.panels.find((p) => p.id === GAUGE3);
+    const firstVerticalRepeatingGauge = dashboard.panels.find((p) => p.id === REPEAT1);
+    const secondVerticalRepeatingGauge = dashboard.panels.find((p) => p.id === REPEAT2);
+    expect(firstGauge?.gridPos).toEqual({ x: 0, y: 1, w: 4, h: 5 });
+    expect(secondGauge?.gridPos).toEqual({ x: 8, y: 1, w: 4, h: 5 });
+    expect(thirdGauge?.gridPos).toEqual({ x: 16, y: 1, w: 4, h: 5 });
+    expect(firstVerticalRepeatingGauge?.gridPos).toEqual({ x: 4, y: 1, w: 4, h: 5 });
+    expect(secondVerticalRepeatingGauge?.gridPos).toEqual({ x: 12, y: 1, w: 4, h: 5 });
+
+    // check the gridPos of all first vertical repeats children
+    const { x, h, w } = firstVerticalRepeatingGauge!.gridPos;
+    expect(dashboard.panels[6].gridPos).toEqual({ x, y: 6, w, h });
+    expect(dashboard.panels[8].gridPos).toEqual({ x, y: 11, w, h });
+    expect(dashboard.panels[10].gridPos).toEqual({ x, y: 16, w, h });
+    expect(dashboard.panels[12].gridPos).toEqual({ x, y: 21, w, h });
+    expect(dashboard.panels[14].gridPos).toEqual({ x, y: 26, w, h });
+    expect(dashboard.panels[16].gridPos).toEqual({ x, y: 31, w, h });
+
+    // check the gridPos of all second vertical repeats children
+    const { x: x2, h: h2, w: w2 } = secondVerticalRepeatingGauge!.gridPos;
+    expect(dashboard.panels[7].gridPos).toEqual({ x: x2, y: 6, w: w2, h: h2 });
+    expect(dashboard.panels[9].gridPos).toEqual({ x: x2, y: 11, w: w2, h: h2 });
+    expect(dashboard.panels[11].gridPos).toEqual({ x: x2, y: 16, w: w2, h: h2 });
+    expect(dashboard.panels[13].gridPos).toEqual({ x: x2, y: 21, w: w2, h: h2 });
+    expect(dashboard.panels[15].gridPos).toEqual({ x: x2, y: 26, w: w2, h: h2 });
+    expect(dashboard.panels[17].gridPos).toEqual({ x: x2, y: 31, w: w2, h: h2 });
+  });
+});
+
 describe('given panel is in view mode', () => {
   let dashboard: any;
 

@@ -44,7 +44,7 @@ interface TimeAndValue {
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
   // We want to process instant results in Explore as table
-  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.queryType) === 'instant') {
+  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
     return true;
   }
 
@@ -58,19 +58,46 @@ const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery
 };
 
 // V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
-export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
-  const [tableResults, otherResults]: [DataFrame[], DataFrame[]] = partition(response.data, (dataFrame) =>
-    isTableResult(dataFrame, options)
+export function transformV2(
+  response: DataQueryResponse,
+  request: DataQueryRequest<PromQuery>,
+  options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
+) {
+  const [tableResults, results]: [DataFrame[], DataFrame[]] = partition(response.data, (dataFrame) =>
+    isTableResult(dataFrame, request)
   );
 
-  // For table results, we need to transform data frames to table data frames
-  const responseLength = options.targets.filter((target) => !target.hide).length;
+  // TABLE FRAMES: For table results, we need to transform data frames to table data frames
+  const responseLength = request.targets.filter((target) => !target.hide).length;
   const tableFrames = tableResults.map((dataFrame) => {
     const df = transformDFoTable(dataFrame, responseLength);
     return df;
   });
 
-  // Everything else is processed as time_series result and graph preferredVisualisationType
+  const [exemplarResults, otherResults]: [DataFrame[], DataFrame[]] = partition(
+    results,
+    (dataFrame) => dataFrame.meta?.custom?.resultType === 'exemplar'
+  );
+
+  // EXEMPLAR FRAMES: We enrich exemplar frames with data links and add dataTopic meta info
+  const { exemplarTraceIdDestinations: destinations } = options;
+  const exemplarFrames = exemplarResults.map((dataFrame) => {
+    if (destinations?.length) {
+      for (const exemplarTraceIdDestination of destinations) {
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
+        if (traceIDField) {
+          const links = getDataLinks(exemplarTraceIdDestination);
+          traceIDField.config.links = traceIDField.config.links?.length
+            ? [...traceIDField.config.links, ...links]
+            : links;
+        }
+      }
+    }
+
+    return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
+  });
+
+  // OTHER FRAMES: Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = otherResults.map((dataFrame) => {
     const df = {
       ...dataFrame,
@@ -82,7 +109,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
     return df;
   });
 
-  return { ...response, data: [...otherFrames, ...tableFrames] };
+  return { ...response, data: [...otherFrames, ...tableFrames, ...exemplarFrames] };
 }
 
 export function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
@@ -186,7 +213,7 @@ export function transform(
     // Add data links if configured
     if (transformOptions.exemplarTraceIdDestinations?.length) {
       for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
-        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination!.name);
+        const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
         if (traceIDField) {
           const links = getDataLinks(exemplarTraceIdDestination);
           traceIDField.config.links = traceIDField.config.links?.length

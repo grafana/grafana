@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -173,7 +173,7 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	cmd := dtos.LoginCommand{}
-	if err := macaron.Bind(c.Req, &cmd); err != nil {
+	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
 	}
 	authModule := ""
@@ -315,12 +315,12 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return "", false
 	}
 
-	decryptedError, err := hs.EncryptionService.Decrypt(decoded, setting.SecretKey)
+	decryptedError, err := hs.EncryptionService.Decrypt(ctx.Req.Context(), decoded, setting.SecretKey)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.EncryptionService.Encrypt([]byte(value), setting.SecretKey)
+	encryptedError, err := hs.EncryptionService.Encrypt(ctx.Req.Context(), []byte(value), setting.SecretKey)
 	if err != nil {
 		return err
 	}

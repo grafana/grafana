@@ -7,6 +7,7 @@ import { ShowConfirmModalEvent } from '../../../types/events';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { MAX_HISTORY_ITEMS } from '../../../core/utils/richHistory';
 
 export interface RichHistorySettingsProps {
   retentionPeriod: number;
@@ -80,7 +81,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
     <div className={styles.container}>
       <Field
         label="History time span"
-        description="Select the period of time for which Grafana will save your query history"
+        description={`Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`}
         className="space-between"
       >
         <div className={styles.input}>

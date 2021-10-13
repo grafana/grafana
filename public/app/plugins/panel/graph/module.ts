@@ -19,7 +19,7 @@ import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
 import { auto } from 'angular';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
-import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { appEvents } from '../../../core/core';

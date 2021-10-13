@@ -168,6 +168,10 @@ sudo systemctl enable grafana-server
 
 > **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
 
+#### Serving Grafana on a port < 1024
+
+{{< docs/shared "systemd/bind-net-capabilities.md" >}}
+
 ### Start the server with init.d
 
 To start the service and verify that the service has started:
