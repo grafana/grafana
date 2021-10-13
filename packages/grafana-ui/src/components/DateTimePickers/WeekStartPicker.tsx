@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { isNumber } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   onChange: (weekStart: number) => void;
@@ -46,7 +47,7 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
       onChange={onChangeWeekStart}
       onBlur={onBlur}
       disabled={disabled}
-      aria-label={'Week start picker'}
+      aria-label={selectors.components.WeekStartPicker.container}
       menuShouldPortal={true}
     />
   );
