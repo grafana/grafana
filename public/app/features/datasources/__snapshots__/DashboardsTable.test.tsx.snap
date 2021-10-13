@@ -68,13 +68,17 @@ exports[`Render should render table 1`] = `
           }
         }
       >
-        <Button
-          onClick={[Function]}
-          size="sm"
-          variant="secondary"
-        >
-          Update
-        </Button>
+        <Badge
+          color="red"
+          icon="exclamation-triangle"
+          style={
+            Object {
+              "marginRight": "5px",
+            }
+          }
+          text="Incompatible"
+          tooltip="This dashboard is not compatible with this version of Grafana"
+        />
         <Button
           icon="trash-alt"
           onClick={[Function]}
