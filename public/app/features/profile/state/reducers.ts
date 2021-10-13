@@ -45,7 +45,6 @@ export const slice = createSlice({
     },
     updateWeekStart: (state, action: PayloadAction<{ weekStart: number }>) => {
       state.weekStart = action.payload.weekStart;
-      setWeekStart(action.payload.weekStart);
     },
     updateFiscalYearStartMonth: (state, action: PayloadAction<{ fiscalYearStartMonth: number }>) => {
       state.fiscalYearStartMonth = action.payload.fiscalYearStartMonth;
@@ -124,6 +123,7 @@ export const updateWeekStartForSession = (weekStart: number): ThunkResult<void> 
 
     set(contextSrv, 'user.weekStart', weekStart);
     dispatch(updateWeekStart({ weekStart }));
+    setWeekStart(weekStart);
   };
 };
 
