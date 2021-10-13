@@ -139,10 +139,11 @@ const dashboard = {
     folderTitle: 'super folder',
   },
 } as DashboardModel;
+
 const panel = ({
   datasource: dataSources.prometheus.uid,
   title: 'mypanel',
-  editSourceId: 34,
+  id: 34,
   targets: [
     {
       expr: 'sum(some_metric [$__interval])) by (app)',
@@ -273,11 +274,11 @@ describe('PanelAlertTabContent', () => {
 
     expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       dashboardUID: dashboard.uid,
-      panelId: panel.editSourceId,
+      panelId: panel.id,
     });
     expect(mocks.api.fetchRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       dashboardUID: dashboard.uid,
-      panelId: panel.editSourceId,
+      panelId: panel.id,
     });
   });
 });

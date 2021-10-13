@@ -98,7 +98,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} />;
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })
     );
@@ -161,6 +161,7 @@ export function fillOptionsPaneItems(
               }}
               item={pluginOption}
               context={context}
+              id={pluginOption.id}
             />
           );
         },
