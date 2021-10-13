@@ -5,8 +5,8 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin, VisualizationSuggestion } from '@grafana/data';
+import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
 import { initPanelState } from '../../panel/state/actions';
-import { cleanUpPanelState, setPanelInstanceState, setPanelSuggestions } from '../../panel/state/reducers';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -18,6 +18,7 @@ export interface OwnProps {
   width: number;
   height: number;
   skipStateCleanUp?: boolean;
+  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
 }
 
 export interface State {
@@ -40,7 +41,6 @@ const mapDispatchToProps = {
   initPanelState,
   cleanUpPanelState,
   setPanelInstanceState,
-  setPanelSuggestions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -81,12 +81,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     this.props.setPanelInstanceState({ key: this.props.stateKey, value });
   };
 
-  onSuggestVisualizations = (suggestions: VisualizationSuggestion[]) => {
-    this.props.setPanelSuggestions({ key: this.props.stateKey, suggestions });
-  };
-
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, width, height, onSuggestVisualizations } = this.props;
 
     if (plugin.angularPanelCtrl) {
       return (
@@ -114,7 +110,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
         width={width}
         height={height}
         onInstanceStateChange={this.onInstanceStateChange}
-        onSuggestVisualizations={this.onSuggestVisualizations}
+        onSuggestVisualizations={onSuggestVisualizations}
       />
     );
   }

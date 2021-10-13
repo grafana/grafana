@@ -133,10 +133,11 @@ func Recovery(cfg *setting.Cfg) web.Handler {
 
 				data := struct {
 					Title     string
+					AppTitle  string
 					AppSubUrl string
 					Theme     string
 					ErrorMsg  string
-				}{"Server Error", cfg.AppSubURL, cfg.DefaultTheme, ""}
+				}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, ""}
 
 				if setting.Env == setting.Dev {
 					if err, ok := r.(error); ok {

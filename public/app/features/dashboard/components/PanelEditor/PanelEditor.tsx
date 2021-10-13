@@ -31,7 +31,7 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { toggleTableView } from './state/reducers';
+import { toggleTableView, setPanelSuggestions } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
@@ -75,7 +75,7 @@ const mapStateToProps = (state: StoreState) => {
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariables(state),
-    panelSuggestions: panelState?.suggestions ?? [],
+    panelSuggestions: state.panelEditor.panelSuggestions,
   };
 };
 
@@ -83,6 +83,7 @@ const mapDispatchToProps = {
   initPanelEditor,
   discardPanelChanges,
   updatePanelEditorUIState,
+  setPanelSuggestions,
   updateTimeZoneForSession,
   toggleTableView,
   notifyApp,
@@ -221,7 +222,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
-    const { dashboard, panel, uiState, tableViewEnabled } = this.props;
+    const { dashboard, panel, uiState, tableViewEnabled, setPanelSuggestions, panelSuggestions } = this.props;
 
     return (
       <div className={styles.mainPaneWrapper} key="panel">
@@ -258,6 +259,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       width={panelSize.width}
                       height={panelSize.height}
                       skipStateCleanUp={true}
+                      onSuggestVisualizations={setPanelSuggestions}
                     />
                   </div>
                 </div>
@@ -265,27 +267,20 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             }}
           </AutoSizer>
         </div>
+        {panelSuggestions.length > 0 && (
+          <div className={styles.suggestionsWrapper}>
+            <VisualizationSuggestions suggestions={panelSuggestions} />
+          </div>
+        )}
       </div>
     );
   }
 
   renderPanelAndEditor(styles: EditorStyles) {
-    const { panel, dashboard, plugin, tab, panelSuggestions } = this.props;
+    const { panel, dashboard, plugin, tab } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
-    const isOnlyPanel = tabs.length === 0 && panelSuggestions.length === 0;
+    const isOnlyPanel = tabs.length === 0;
     const panes: React.ReactNode[] = [this.renderPanel(styles, isOnlyPanel)];
-
-    if (panelSuggestions.length > 0) {
-      panes.push(
-        <div
-          className={styles.tabsWrapper}
-          aria-label={selectors.components.PanelEditor.DataPane.content}
-          key="visualization-suggestions"
-        >
-          <VisualizationSuggestions suggestions={panelSuggestions} />
-        </div>
-      );
-    }
 
     if (tabs.length > 0) {
       panes.push(
@@ -544,6 +539,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       justify-content: center;
       align-items: center;
       position: relative;
+      flex-direction: column;
+    `,
+    suggestionsWrapper: css`
+      height: 50px;
     `,
   };
 });
