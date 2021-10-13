@@ -70,7 +70,6 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 type FakeKVStore struct {
 	mtx      sync.Mutex
 	store    map[int64]map[string]map[string]string
-	orgStore store.OrgStore
 }
 
 func newFakeKVStore(t *testing.T) *FakeKVStore {
@@ -78,7 +77,6 @@ func newFakeKVStore(t *testing.T) *FakeKVStore {
 
 	return &FakeKVStore{
 		store:    map[int64]map[string]map[string]string{},
-		orgStore: &FakeOrgStore{orgs: []int64{}},
 	}
 }
 
