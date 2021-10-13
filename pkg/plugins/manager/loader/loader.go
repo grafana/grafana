@@ -108,8 +108,6 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
-	// mutex protection for swaperoo
-
 	foundPlugins.stripDuplicates(existingPlugins)
 
 	// calculate initial signature state

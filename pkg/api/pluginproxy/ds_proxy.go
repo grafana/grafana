@@ -36,7 +36,7 @@ type DataSourceProxy struct {
 	ctx                *models.ReqContext
 	targetUrl          *url.URL
 	proxyPath          string
-	route              *plugins.Route
+	matchedRoute       *plugins.Route
 	pluginRoutes       []*plugins.Route
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
@@ -257,8 +257,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		return
 	}
 
-	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, DSInfo{
+	if proxy.matchedRoute != nil {
+		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
 			ID:                      proxy.ds.Id,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
@@ -308,7 +308,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			}
 		}
 
-		proxy.route = route
+		proxy.matchedRoute = route
 		return nil
 	}
 

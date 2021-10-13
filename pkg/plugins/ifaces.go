@@ -16,31 +16,39 @@ type DataRequestHandler interface {
 	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
 }
 
+// Store is the storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(pluginID string) *Plugin
 	// Plugins returns plugins by their requested type.
 	Plugins(pluginTypes ...Type) []*Plugin
 
-	// Install installs a plugin.
-	Install(ctx context.Context, pluginID, version string, opts InstallOpts) error
-	// Uninstall uninstalls a plugin.
-	Uninstall(ctx context.Context, pluginID string) error
+	// Add adds a plugin to the store.
+	Add(ctx context.Context, pluginID, version string, opts InstallOpts) error
+	// Remove removes a plugin from the store.
+	Remove(ctx context.Context, pluginID string) error
 }
 
 type InstallOpts struct {
 	InstallDir, PluginZipURL, PluginRepoURL string
 }
 
+// Loader is responsible for loading plugins from the file system.
 type Loader interface {
+	// Load will return a list of plugins found in the provided file system paths.
 	Load(paths []string, ignore map[string]struct{}) ([]*Plugin, error)
-
+	// LoadWithFactory will return a plugin found in the provided file system path and use the provided factory to
+	// construct the plugin backend client.
 	LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
 }
 
+// Installer is responsible for managing plugins (add / remove) on the file system.
 type Installer interface {
+	// Install downloads the requested plugin in the provided file system location.
 	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
+	// Uninstall removes the requested plugin from the provided file system location.
 	Uninstall(ctx context.Context, pluginDir string) error
+	// GetUpdateInfo provides update information for the requested plugin.
 	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
 }
 
@@ -48,6 +56,7 @@ type UpdateInfo struct {
 	PluginZipURL string
 }
 
+// Client is used to communicate with backend plugin implementations.
 type Client interface {
 	// QueryData queries data from a plugin.
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
@@ -65,7 +74,7 @@ type RendererManager interface {
 }
 
 type CoreBackendRegistrar interface {
-	//LoadAndRegister loads and registers a Core backend plugin
+	// LoadAndRegister loads and registers a Core backend plugin
 	LoadAndRegister(pluginID string, factory backendplugin.PluginFactoryFunc) error
 }
 

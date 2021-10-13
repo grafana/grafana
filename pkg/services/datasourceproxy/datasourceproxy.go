@@ -18,12 +18,12 @@ import (
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
-	pm plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
+	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService *datasources.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
-		pluginStore:            pm,
+		pluginStore:            pluginStore,
 		Cfg:                    cfg,
 		HTTPClientProvider:     httpClientProvider,
 		OAuthTokenService:      oauthTokenService,

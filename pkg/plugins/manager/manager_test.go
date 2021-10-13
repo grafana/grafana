@@ -170,7 +170,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			pm.pluginLoader = l
 		})
 
-		err := pm.Install(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
+		err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, i.installCount)
@@ -190,7 +190,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Plugins(), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Install(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
+			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
 			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
@@ -198,7 +198,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		})
 
 		t.Run("Uninstall base case", func(t *testing.T) {
-			err := pm.Uninstall(context.Background(), p.ID)
+			err := pm.Remove(context.Background(), p.ID)
 			require.NoError(t, err)
 
 			assert.Equal(t, 1, i.installCount)
@@ -208,7 +208,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.Len(t, pm.Routes(), 0)
 
 			t.Run("Won't uninstall if not installed", func(t *testing.T) {
-				err := pm.Uninstall(context.Background(), p.ID)
+				err := pm.Remove(context.Background(), p.ID)
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)
 			})
 		})
@@ -236,11 +236,11 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Install(context.Background(), testPluginID, "", plugins.InstallOpts{})
+		err = pm.Add(context.Background(), testPluginID, "", plugins.InstallOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
-			err := pm.Uninstall(context.Background(), p.ID)
+			err := pm.Remove(context.Background(), p.ID)
 			require.Equal(t, plugins.ErrUninstallCorePlugin, err)
 		})
 	})
@@ -267,11 +267,11 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Install(context.Background(), testPluginID, "", plugins.InstallOpts{})
+		err = pm.Add(context.Background(), testPluginID, "", plugins.InstallOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
-			err := pm.Uninstall(context.Background(), p.ID)
+			err := pm.Remove(context.Background(), p.ID)
 			require.Equal(t, plugins.ErrUninstallCorePlugin, err)
 		})
 	})

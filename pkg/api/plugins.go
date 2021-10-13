@@ -57,7 +57,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
-		if pluginDef.State == plugins.StateAlpha && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -378,7 +378,7 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Install(c.Req.Context(), pluginID, dto.Version, plugins.InstallOpts{})
+	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.InstallOpts{})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -409,7 +409,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Uninstall(c.Req.Context(), pluginID)
+	err := hs.pluginStore.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)

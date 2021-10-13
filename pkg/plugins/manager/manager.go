@@ -475,7 +475,7 @@ func (m *PluginManager) isRegistered(pluginID string) bool {
 	return !p.IsDecommissioned()
 }
 
-func (m *PluginManager) Install(ctx context.Context, pluginID, version string, opts plugins.InstallOpts) error {
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.InstallOpts) error {
 	var pluginZipURL string
 
 	if opts.PluginRepoURL == "" {
@@ -504,7 +504,7 @@ func (m *PluginManager) Install(ctx context.Context, pluginID, version string, o
 		pluginZipURL = updateInfo.PluginZipURL
 
 		// remove existing installation of plugin
-		err = m.Uninstall(ctx, plugin.ID)
+		err = m.Remove(ctx, plugin.ID)
 		if err != nil {
 			return err
 		}
@@ -531,7 +531,7 @@ func (m *PluginManager) Install(ctx context.Context, pluginID, version string, o
 	return nil
 }
 
-func (m *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
+func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 	plugin := m.Plugin(pluginID)
 	if plugin == nil {
 		return plugins.ErrPluginNotInstalled

@@ -126,8 +126,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/v4/some/method", cfg, httpClientProvider,
 				&oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = routes[0]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
+			proxy.matchedRoute = routes[0]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			assert.Equal(t, "https://www.google.com/some/method", req.URL.String())
 			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
@@ -138,8 +138,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/common/some/method", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = routes[3]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
+			proxy.matchedRoute = routes[3]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			assert.Equal(t, "https://dynamic.grafana.com/some/method?apiKey=123", req.URL.String())
 			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
@@ -150,8 +150,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = routes[4]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
+			proxy.matchedRoute = routes[4]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
 		})
@@ -161,8 +161,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
 			proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/body", cfg, httpClientProvider, &oauthtoken.Service{}, dsService)
 			require.NoError(t, err)
-			proxy.route = routes[5]
-			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, dsInfo, cfg)
+			proxy.matchedRoute = routes[5]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
 			content, err := ioutil.ReadAll(req.Body)
 			require.NoError(t, err)
@@ -945,7 +945,7 @@ func Test_PathCheck(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Nil(t, proxy.validateRequest())
-	require.Equal(t, routes[1], proxy.route)
+	require.Equal(t, routes[1], proxy.matchedRoute)
 }
 
 type mockOAuthTokenService struct {

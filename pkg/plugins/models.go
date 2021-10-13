@@ -153,7 +153,7 @@ const (
 type ReleaseState string
 
 const (
-	StateAlpha ReleaseState = "alpha"
+	AlphaRelease ReleaseState = "alpha"
 )
 
 type SignatureType string
