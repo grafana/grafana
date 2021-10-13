@@ -136,12 +136,15 @@ func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string,
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
 	var keys []kvstore.Key
-	for orgID, namespaceMap := range fkv.store {
+	for orgIDFromStore, namespaceMap := range fkv.store {
+		if orgID != kvstore.AllOrganizations && orgID != orgIDFromStore {
+			continue
+		}
 		if keyMap, exists := namespaceMap[namespace]; exists {
 			for k := range keyMap {
 				if strings.HasPrefix(k, keyPrefix) {
 					keys = append(keys, kvstore.Key{
-						OrgId:     orgID,
+						OrgId:     orgIDFromStore,
 						Namespace: namespace,
 						Key:       keyPrefix,
 					})
