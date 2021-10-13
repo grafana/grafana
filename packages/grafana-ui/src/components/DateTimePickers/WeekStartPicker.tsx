@@ -45,6 +45,7 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
       onBlur={onBlur}
       disabled={disabled}
       aria-label={'Week start picker'}
+      menuShouldPortal={true}
     />
   );
 };
