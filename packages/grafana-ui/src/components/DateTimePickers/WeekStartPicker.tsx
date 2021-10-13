@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { isNumber } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,12 +26,11 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
 
   const onChangeWeekStart = useCallback(
     (selectable: SelectableValue<number>) => {
-      if (!selectable || !isNumber(selectable.value)) {
-        return onChange(value);
+      if (selectable.value !== undefined) {
+        onChange(selectable.value);
       }
-      onChange(selectable.value);
     },
-    [onChange, value]
+    [onChange]
   );
 
   return (
