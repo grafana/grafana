@@ -296,6 +296,15 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
                 process(evt.message);
               }
               return;
+            } else if (evt.state === LiveChannelConnectionState.Disconnected) {
+              console.log('LiveQuery [complete]', options.addr);
+              if (state !== LoadingState.Error) {
+                state = LoadingState.Done;
+              }
+              subscriber.next({ state, data: [data], key });
+              subscriber.complete();
+              sub.unsubscribe();
+              return;
             }
             console.log('ignore state', evt);
           }
