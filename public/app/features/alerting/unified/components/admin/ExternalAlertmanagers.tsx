@@ -17,11 +17,14 @@ export const ExternalAlertmanagers = () => {
   const [modalState, setModalState] = useState({ open: false, payload: [{ url: '' }] });
   const externalAlertManagers = useExternalAmSelector();
 
-  console.log(externalAlertManagers);
-
   useEffect(() => {
     dispatch(fetchExternalAlertmanagersAction());
     dispatch(fetchExternalAlertmanagersConfigAction());
+    const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [dispatch]);
 
   const onDelete = useCallback(
@@ -94,6 +97,7 @@ export const ExternalAlertmanagers = () => {
           <thead>
             <tr>
               <th>Url</th>
+              <th>Status</th>
               <th style={{ width: '2%' }}>Action</th>
             </tr>
           </thead>
@@ -101,8 +105,9 @@ export const ExternalAlertmanagers = () => {
             {externalAlertManagers.map((am, index) => {
               return (
                 <tr key={index}>
-                  <td className="link-td">
-                    {am.url} <Icon name="heart" style={{ color: getStatusColor(am.status) }} />
+                  <td className="link-td">{am.url}</td>
+                  <td>
+                    <Icon name="heart" style={{ color: getStatusColor(am.status) }} title={am.status} />
                   </td>
                   <td>
                     <HorizontalGroup>
