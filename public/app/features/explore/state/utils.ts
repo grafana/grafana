@@ -2,6 +2,7 @@ import {
   AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
+  ExploreGraphStyle,
   ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
@@ -12,12 +13,22 @@ import {
 import { ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
+};
+
+const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
+export const storeGraphStyle = (graphStyle: string): void => {
+  store.set(GRAPH_STYLE_KEY, graphStyle);
+};
+
+const loadGraphStyle = (): ExploreGraphStyle => {
+  const data = store.get(GRAPH_STYLE_KEY);
+  return toGraphStyle(data);
 };
 
 /**
@@ -52,6 +63,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   cache: [],
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
+  graphStyle: loadGraphStyle(),
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -97,6 +109,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     datasource: pane.datasourceInstance?.name || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
+    graphStyle: pane.graphStyle,
   };
 }
 

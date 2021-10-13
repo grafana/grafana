@@ -86,6 +86,8 @@ const dummyProps: Props = {
   logsVolumeData: undefined,
   logsVolumeDataProvider: undefined,
   loadLogsVolumeData: () => {},
+  changeGraphStyle: () => {},
+  graphStyle: 'lines',
 };
 
 describe('Explore', () => {

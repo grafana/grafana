@@ -19,15 +19,24 @@ import {
   loadAndInitDatasource,
   createEmptyQueryResponse,
   getUrlStateFromPaneState,
+  storeGraphStyle,
 } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
+import {
+  EventBusExtended,
+  DataQuery,
+  ExploreUrlState,
+  TimeRange,
+  HistoryItem,
+  DataSourceApi,
+  ExploreGraphStyle,
+} from '@grafana/data';
 // Types
 import { ThunkResult } from 'app/types';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction } from './main';
+import { richHistoryUpdatedAction, stateSave } from './main';
 
 //
 // Actions and Payloads
@@ -76,6 +85,21 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
+interface ChangeGraphStylePayload {
+  exploreId: ExploreId;
+  graphStyle: ExploreGraphStyle;
+}
+
+const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
+
+export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    storeGraphStyle(graphStyle);
+    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
+    dispatch(stateSave());
+  };
+}
+
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -87,6 +111,7 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
+  graphStyle: ExploreGraphStyle | undefined,
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
@@ -113,6 +138,10 @@ export function initializeExplore(
         history,
       })
     );
+    if (graphStyle !== undefined) {
+      // if graphStyle is undefined, we let it be at the initial-value (which was taken from local-storage)
+      dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
+    }
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
@@ -144,7 +173,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
-    const { datasource, queries, range: urlRange, originPanelId } = newUrlState;
+    const { datasource, queries, range: urlRange, originPanelId, graphStyle } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -161,7 +190,16 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       await dispatch(
-        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, originPanelId)
+        initializeExplore(
+          exploreId,
+          datasource,
+          initialQueries,
+          range,
+          containerWidth,
+          eventBridge,
+          graphStyle,
+          originPanelId
+        )
       );
       return;
     }
@@ -172,6 +210,10 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    if (update.graphStyle && graphStyle !== undefined) {
+      dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
     }
 
     // always run queries when refresh is needed
@@ -198,6 +240,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
+  }
+
+  if (changeGraphStyleAction.match(action)) {
+    const { graphStyle } = action.payload;
+    return { ...state, graphStyle };
   }
 
   if (initializeExploreAction.match(action)) {
@@ -234,14 +281,17 @@ export const urlDiff = (
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  graphStyle: boolean;
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
   const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const graphStyle = currentUrlState?.graphStyle !== oldUrlState?.graphStyle;
 
   return {
     datasource,
     queries,
     range,
+    graphStyle,
   };
 };

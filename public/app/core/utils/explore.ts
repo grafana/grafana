@@ -23,6 +23,7 @@ import {
   rangeUtil,
   DateTime,
   isDateTime,
+  ExploreGraphStyle,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -206,6 +207,24 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
+const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
+// we use this function to take any kind of data we loaded
+// from an external source (URL, localStorage, whatever),
+// and extract the graph-style from it, or return the default
+// graph-style if we are not able to do that.
+// it is important that this function is able to take any form of data,
+// (be it objects, or arrays, or booleans or whatever),
+// and produce a best-effort graphStyle.
+// note that typescript makes sure we make no mistake in this function.
+// we do not rely on ` as ` or ` any `.
+export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
+  if (data === 'lines' || data === 'bars' || data === 'points' || data === 'stacked_lines' || data === 'stacked_bars') {
+    return data;
+  }
+
+  return DEFAULT_GRAPH_STYLE;
+};
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
   const errorResult: any = {
@@ -235,10 +254,12 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
+  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', 'style'));
 
   const originPanelId = parsedSegments.filter((segment) => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, originPanelId };
+  const maybeGraphStyle = parsedSegments.filter((segment) => isSegment(segment, 'style'))[0]?.style?.graph;
+  const graphStyle = maybeGraphStyle === undefined ? undefined : toGraphStyle(maybeGraphStyle);
+  return { datasource, queries, range, originPanelId, graphStyle };
 }
 
 export function generateKey(index = 0): string {

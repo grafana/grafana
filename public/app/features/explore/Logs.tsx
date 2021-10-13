@@ -301,6 +301,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               response.
             </div>
             <ExploreGraph
+              graphStyle="lines"
               data={logsSeries}
               height={150}
               width={width}

@@ -13,6 +13,7 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
+  ExploreGraphStyle,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -167,6 +168,9 @@ export interface ExploreItemState {
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
 }
 
 export interface ExploreUpdateState {

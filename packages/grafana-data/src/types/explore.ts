@@ -4,12 +4,16 @@ import { RawTimeRange, TimeRange } from './time';
 type AnyQuery = DataQuery & Record<string, any>;
 
 /** @internal */
+export type ExploreGraphStyle = 'lines' | 'bars' | 'points' | 'stacked_lines' | 'stacked_bars';
+
+/** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string;
   queries: T[];
   range: RawTimeRange;
   originPanelId?: number;
   context?: string;
+  graphStyle?: ExploreGraphStyle;
 }
 
 /**
