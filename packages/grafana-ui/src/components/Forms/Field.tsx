@@ -29,6 +29,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   validationMessageHorizontalOverflow?: boolean;
 
   className?: string;
+  htmlFor?: string;
 }
 
 export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -72,11 +73,12 @@ export const Field: React.FC<FieldProps> = ({
   children,
   className,
   validationMessageHorizontalOverflow,
+  htmlFor,
   ...otherProps
 }) => {
   const theme = useTheme2();
   const styles = getFieldStyles(theme);
-  const inputId = getChildId(children);
+  const inputId = htmlFor ?? getChildId(children);
 
   const labelElement =
     typeof label === 'string' ? (
