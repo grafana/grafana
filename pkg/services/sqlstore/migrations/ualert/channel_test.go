@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -36,7 +37,7 @@ func Test_makeReceiverAndRoute(t *testing.T) {
 			DisableResolveMessage: rand.Int63()%2 == 0,
 			IsDefault:             rand.Int63()%2 == 0,
 			Settings:              simplejson.NewFromAny(settings),
-			SecureSettings:        GetEncryptedJsonData(secureSettings),
+			SecureSettings:        securejsondata.GetEncryptedJsonData(secureSettings),
 		}
 	}
 
