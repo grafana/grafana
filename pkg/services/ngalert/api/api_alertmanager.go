@@ -411,6 +411,10 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 
 	result, err := am.TestReceivers(ctx, body)
 	if err != nil {
+		var invalidAlertErr notifier.InvalidAlertError
+		if errors.As(err, &invalidAlertErr) {
+			return response.Error(http.StatusBadRequest, "", err)
+		}
 		if errors.Is(err, notifier.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
 		}
