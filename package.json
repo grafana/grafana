@@ -240,7 +240,7 @@
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@opentelemetry/api": "1.0.2",
     "@opentelemetry/exporter-collector": "0.23.0",
-    "@opentelemetry/semantic-conventions": "0.23.0",
+    "@opentelemetry/semantic-conventions": "1.0.0",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.6.1",
     "@sentry/browser": "5.25.0",
