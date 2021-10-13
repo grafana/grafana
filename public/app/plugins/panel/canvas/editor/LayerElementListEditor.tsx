@@ -33,8 +33,11 @@ export class LayerElementListEditor extends PureComponent<Props> {
   };
 
   onSelect = (item: any) => {
-    //  getCurrentScene()?.selectItem(item.id);
-    console.log('SELECT', item);
+    const { settings } = this.props.item;
+
+    if (settings?.scene && settings?.scene?.selecto) {
+      settings.scene.selecto.clickTarget(item, item?.div);
+    }
   };
 
   getRowStyle = (sel: boolean) => {

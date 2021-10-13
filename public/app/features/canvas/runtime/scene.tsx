@@ -43,6 +43,7 @@ export class Scene {
   height = 0;
   style: CSSProperties = {};
   data?: PanelData;
+  selecto?: Selecto | null;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg);
@@ -148,7 +149,7 @@ export class Scene {
       targetElements.push(element.div!);
     });
 
-    const selecto = new Selecto({
+    this.selecto = new Selecto({
       container: sceneContainer,
       selectableTargets: targetElements,
       selectByClick: true,
@@ -159,7 +160,7 @@ export class Scene {
       resizable: true,
     })
       .on('clickGroup', (event) => {
-        selecto.clickTarget(event.inputEvent, event.inputTarget);
+        this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -187,35 +188,33 @@ export class Scene {
       });
 
     let targets: Array<HTMLElement | SVGElement> = [];
-    selecto
-      .on('dragStart', (event) => {
-        const selectedTarget = event.inputEvent.target;
+    this.selecto!.on('dragStart', (event) => {
+      const selectedTarget = event.inputEvent.target;
 
-        const isTargetMoveableElement =
-          moveable.isMoveableElement(selectedTarget) ||
-          targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
+      const isTargetMoveableElement =
+        moveable.isMoveableElement(selectedTarget) ||
+        targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
-        if (isTargetMoveableElement) {
-          // Prevent drawing selection box when selected target is a moveable element
-          event.stop();
-        }
-      })
-      .on('selectEnd', (event) => {
-        targets = event.selected;
-        moveable.target = targets;
+      if (isTargetMoveableElement) {
+        // Prevent drawing selection box when selected target is a moveable element
+        event.stop();
+      }
+    }).on('selectEnd', (event) => {
+      targets = event.selected;
+      moveable.target = targets;
 
-        const s = event.selected.map((t) => this.findElementByTarget(t)!);
-        this.selection.next(s);
-        console.log('UPDATE selection', s);
+      const s = event.selected.map((t) => this.findElementByTarget(t)!);
+      this.selection.next(s);
+      console.log('UPDATE selection', s);
 
-        if (event.isDragStart) {
-          event.inputEvent.preventDefault();
+      if (event.isDragStart) {
+        event.inputEvent.preventDefault();
 
-          setTimeout(() => {
-            moveable.dragStart(event.inputEvent);
-          });
-        }
-      });
+        setTimeout(() => {
+          moveable.dragStart(event.inputEvent);
+        });
+      }
+    });
   };
 
   render() {
