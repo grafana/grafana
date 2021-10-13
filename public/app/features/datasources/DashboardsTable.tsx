@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { PluginDashboard } from '../../types';
-import { Button, Icon } from '@grafana/ui';
+import { Button, Icon, Badge } from '@grafana/ui';
 
 export interface Props {
   dashboards: PluginDashboard[];
@@ -34,10 +34,18 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
                   <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, false)}>
                     Import
                   </Button>
-                ) : (
+                ) : dashboard.compatible ? (
                   <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, true)}>
                     {buttonText(dashboard)}
                   </Button>
+                ) : (
+                  <Badge
+                    text="Incompatible"
+                    icon="exclamation-triangle"
+                    color="red"
+                    tooltip="This dashboard is not compatible with this version of Grafana"
+                    style={{ marginRight: '5px' }}
+                  />
                 )}
                 {dashboard.imported && (
                   <Button icon="trash-alt" variant="destructive" size="sm" onClick={() => onRemove(dashboard)} />

@@ -4,17 +4,29 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
 	plugin := pm.GetPlugin(pluginID)
+
 	if plugin == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
+
+	gv, err := semver.NewVersion(setting.BuildVersion)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// clear the pre-release version. This prevents valid comparison - see https://github.com/Masterminds/semver#working-with-prerelease-versions
+	grafanaVersion, _ := gv.SetPrerelease("")
 
 	result := make([]*plugins.PluginDashboardInfoDTO, 0)
 
@@ -24,6 +36,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 		return nil, err
 	}
 
+	// used to de-duplicate dashboards in case multiple with the same uid are compatible. If installed offer upgrades - effectively a re-import.
 	existingMatches := make(map[int64]bool)
 	for _, include := range plugin.Includes {
 		if include.Type != plugins.PluginTypeDashboard {
@@ -50,6 +63,20 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 				res.ImportedUrl = existingDash.GetUrl()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
 				existingMatches[existingDash.Id] = true
+			}
+		}
+
+		//if SupportVersions is not set we include to support backwards compatibility and by default mark as compatible
+		res.Compatible = true
+		if include.SupportedVersions != "" {
+			con, err := semver.NewConstraint(include.SupportedVersions)
+			if err != nil {
+				return nil, err
+			}
+			res.Compatible = con.Check(&grafanaVersion)
+			// if the dashboard is incompatible we exclude unless its imported already - worst case we list as incompatible or offer an update
+			if !res.Compatible && !res.Imported {
+				continue
 			}
 		}
 

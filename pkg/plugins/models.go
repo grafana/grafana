@@ -104,16 +104,17 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Type       string          `json:"type"`
-	Component  string          `json:"component"`
-	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"addToNav"`
-	DefaultNav bool            `json:"defaultNav"`
-	Slug       string          `json:"slug"`
-	Icon       string          `json:"icon"`
-	UID        string          `json:"uid"`
+	Name              string          `json:"name"`
+	Path              string          `json:"path"`
+	Type              string          `json:"type"`
+	Component         string          `json:"component"`
+	Role              models.RoleType `json:"role"`
+	AddToNav          bool            `json:"addToNav"`
+	DefaultNav        bool            `json:"defaultNav"`
+	Slug              string          `json:"slug"`
+	Icon              string          `json:"icon"`
+	UID               string          `json:"uid"`
+	SupportedVersions string          `json:"supportedVersions"`
 
 	Id string `json:"-"`
 }

@@ -14,4 +14,5 @@ type PluginDashboardInfoDTO struct {
 	Description      string `json:"description"`
 	Path             string `json:"path"`
 	Removed          bool   `json:"removed"`
+	Compatible       bool   `json:"compatible"`
 }

@@ -14,6 +14,7 @@ import (
 )
 
 func TestGetPluginDashboards(t *testing.T) {
+	setting.BuildVersion = "8.2.1-beta.2"
 	cfg := &setting.Cfg{
 		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
@@ -38,12 +39,9 @@ func TestGetPluginDashboards(t *testing.T) {
 	})
 
 	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-		var data = simplejson.New()
-		data.Set("title", "Nginx Connections")
-		data.Set("revision", 22)
-
 		query.Result = []*models.Dashboard{
-			{Slug: "nginx-connections", Data: data},
+			{Slug: "nginx-connections", Data: simplejson.NewFromAny(map[string]interface{}{"title": "Nginx Connections", "revision": 22})},
+			{Slug: "nginx-memory-incompatible", Data: simplejson.NewFromAny(map[string]interface{}{"title": "Nginx Memory - Incompatible", "revision": 21})},
 		}
 		return nil
 	})
@@ -51,12 +49,23 @@ func TestGetPluginDashboards(t *testing.T) {
 	dashboards, err := pm.GetPluginDashboards(1, "test-app")
 	require.NoError(t, err)
 
-	require.Len(t, dashboards, 2)
+	//incompatible versions will be ignored except those already loaded
+	require.Len(t, dashboards, 5)
 	require.Equal(t, "Nginx Connections", dashboards[0].Title)
 	require.Equal(t, int64(25), dashboards[0].Revision)
 	require.Equal(t, int64(22), dashboards[0].ImportedRevision)
 	require.Equal(t, "db/nginx-connections", dashboards[0].ImportedUri)
+	require.True(t, dashboards[0].Compatible)
 
 	require.Equal(t, int64(2), dashboards[1].Revision)
 	require.Equal(t, int64(0), dashboards[1].ImportedRevision)
+	require.True(t, dashboards[1].Compatible)
+
+	require.Equal(t, "Nginx Connections - Latest", dashboards[2].Title)
+	require.Equal(t, int64(25), dashboards[2].Revision)
+	require.True(t, dashboards[2].Compatible)
+
+	require.Equal(t, "Nginx Memory - Incompatible", dashboards[3].Title)
+	require.False(t, dashboards[3].Compatible)
+
 }

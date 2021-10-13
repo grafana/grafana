@@ -6,6 +6,7 @@ export interface PluginDashboard {
   description: string;
   folderId: number;
   imported: boolean;
+  compatible: boolean;
   importedRevision: number;
   importedUri: string;
   importedUrl: string;
