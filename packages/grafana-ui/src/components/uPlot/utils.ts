@@ -193,7 +193,7 @@ export const pluginLog = pluginLogger.logger;
 attachDebugger('graphng', undefined, pluginLogger);
 
 type OrderIdsByCalcsOptions = {
-  legend: VizLegendOptions | undefined;
+  legend?: VizLegendOptions;
   ids: number[];
   frame: DataFrame;
 };
