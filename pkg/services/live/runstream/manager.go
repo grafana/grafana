@@ -32,6 +32,9 @@ type NumLocalSubscribersGetter interface {
 	// GetNumSubscribers returns number of channel subscribers throughout all nodes.
 	GetNumLocalSubscribers(channel string) (int, error)
 }
+type ChannelUnsubscriberGetter interface {
+	Unsubscribe(channel string) error
+}
 
 type StreamRunner interface {
 	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error
@@ -53,6 +56,7 @@ type Manager struct {
 	streams                 map[string]streamContext
 	datasourceStreams       map[string]map[string]struct{}
 	presenceGetter          NumLocalSubscribersGetter
+	channelUnsubscriber     ChannelUnsubscriberGetter
 	pluginContextGetter     PluginContextGetter
 	channelSender           ChannelLocalPublisher
 	registerCh              chan submitRequest
@@ -80,13 +84,14 @@ const (
 )
 
 // NewManager creates new Manager.
-func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubscribersGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
+func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubscribersGetter, channelUnsubscriber ChannelUnsubscriberGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
 	sm := &Manager{
 		streams:                 make(map[string]streamContext),
 		datasourceStreams:       map[string]map[string]struct{}{},
 		channelSender:           channelSender,
 		presenceGetter:          presenceGetter,
 		pluginContextGetter:     pluginContextGetter,
+		channelUnsubscriber:     channelUnsubscriber,
 		registerCh:              make(chan submitRequest),
 		closedCh:                make(chan struct{}),
 		checkInterval:           defaultCheckInterval,
@@ -313,6 +318,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			isReconnect = true
 			continue
 		}
+		s.channelUnsubscriber.Unsubscribe(sr.Channel)
 		logger.Debug("Stream finished without error, stopping it", "path", sr.Path)
 		return
 	}

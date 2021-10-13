@@ -59,6 +59,27 @@ func (p *NumLocalSubscribersGetter) GetNumLocalSubscribers(channelID string) (in
 	return p.node.Hub().NumSubscribers(channelID), nil
 }
 
+type ChannelUnsubscriber struct {
+	node *centrifuge.Node
+}
+
+func NewChannelUnsubscriber(node *centrifuge.Node) *ChannelUnsubscriber {
+	return &ChannelUnsubscriber{node: node}
+}
+
+func (c *ChannelUnsubscriber) Unsubscribe(channelID string) error {
+	p, err := c.node.Presence(channelID)
+	if err != nil {
+		return err
+	}
+	for _, v := range p.Presence {
+		if err = c.node.Unsubscribe(v.UserID, channelID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type ContextGetter struct {
 	PluginContextProvider *plugincontext.Provider
 }
