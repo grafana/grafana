@@ -16,10 +16,11 @@ export function VisualizationPreview({ data, suggestion }: Props) {
   const fullWidth = 400;
   const renderWidth = 300 * aspectRatio;
   const renderHeight = 300;
-  const showWidth = 90 * aspectRatio;
-  const showHeight = 90;
-  const widthFactor = showWidth / renderWidth;
-  const heightFactor = showHeight / renderHeight;
+  const showWidth = 100 * aspectRatio;
+  const showHeight = 100;
+  const padding = 8;
+  const widthFactor = showWidth / (renderWidth - padding);
+  const heightFactor = showHeight / (renderHeight - padding);
 
   const style: CSSProperties = {
     width: renderWidth,
@@ -28,7 +29,7 @@ export function VisualizationPreview({ data, suggestion }: Props) {
   };
 
   return (
-    <div style={{ position: 'relative', width: showWidth, height: showHeight, marginRight: '8px' }}>
+    <div style={{ position: 'relative', width: showWidth, height: showHeight, margin: '8px' }}>
       <div style={style} className={styles.card}>
         <PanelRenderer
           title=""

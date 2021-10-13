@@ -14,43 +14,19 @@ export function VisualizationSuggestions({ data }: Props) {
 
   return (
     <div>
-      <div>Suggestions</div>
+      <div className={styles.heading}>Suggestions</div>
       <div className={styles.grid}>
         {suggestions.map((suggestion, index) => (
           <VisualizationPreview key={index} data={data} suggestion={suggestion} />
         ))}
       </div>
+      <div className={styles.heading}>All</div>
     </div>
   );
 }
 
 function getSuggestions(): VisualizationSuggestion[] {
   return [
-    {
-      name: 'Piechart',
-      pluginId: 'piechart',
-      options: {
-        reduceOptions: {
-          values: true,
-        },
-        legend: {
-          displayMode: 'hidden',
-        },
-      },
-    },
-    {
-      name: 'Piechart',
-      pluginId: 'piechart',
-      options: {
-        reduceOptions: {
-          values: true,
-        },
-        pieType: 'donut',
-        legend: {
-          displayMode: 'hidden',
-        },
-      },
-    },
     {
       name: 'barchart horizontal',
       pluginId: 'barchart',
@@ -89,14 +65,42 @@ function getSuggestions(): VisualizationSuggestion[] {
         overrides: [],
       },
     },
+    {
+      name: 'Piechart',
+      pluginId: 'piechart',
+      options: {
+        reduceOptions: {
+          values: true,
+        },
+        legend: {
+          displayMode: 'hidden',
+        },
+      },
+    },
+    {
+      name: 'Piechart',
+      pluginId: 'piechart',
+      options: {
+        reduceOptions: {
+          values: true,
+        },
+        pieType: 'donut',
+        legend: {
+          displayMode: 'hidden',
+        },
+      },
+    },
   ];
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    heading: css({
+      ...theme.typography.h5,
+      margin: theme.spacing(1),
+    }),
     grid: css({
       display: 'flex',
-      marginBottom: theme.spacing(2),
       flexWrap: 'wrap',
     }),
   };
