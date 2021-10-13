@@ -94,16 +94,16 @@ func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, ke
 	return err
 }
 
-// List get all items for a given namespace and keyPrefix. To query for all
+// Keys get all keys for a given namespace and keyPrefix. To query for all
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
-func (kv *kvStoreSQL) List(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Item, error) {
-	var items []Item
+func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Key, error) {
+	var keys []Key
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		query := dbSession.Where("namespace = ?", namespace).And("key LIKE ?", keyPrefix+"%")
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)
 		}
-		return query.Find(&items)
+		return query.Find(&keys)
 	})
-	return items, err
+	return keys, err
 }

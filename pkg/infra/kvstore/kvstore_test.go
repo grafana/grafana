@@ -177,22 +177,22 @@ func TestKVStore(t *testing.T) {
 			{
 				OrgId:     1,
 				Namespace: namespace,
-				Key:       key,
+				Key:       key + "_1",
 			},
 			{
 				OrgId:     2,
 				Namespace: namespace,
-				Key:       key,
+				Key:       key + "_2",
 			},
 			{
 				OrgId:     3,
 				Namespace: namespace,
-				Key:       key,
+				Key:       key + "_3",
 			},
 			{
 				OrgId:     4,
 				Namespace: namespace,
-				Key:       key,
+				Key:       key + "_4",
 			},
 			{
 				OrgId:     1,
@@ -211,16 +211,16 @@ func TestKVStore(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		items, err := kv.List(ctx, AllOrganizations, namespace, key[0:6])
+		keys, err := kv.Keys(ctx, AllOrganizations, namespace, key[0:6])
 
 		require.NoError(t, err)
-		require.Len(t, items, 4)
+		require.Len(t, keys, 4)
 
 		found := 0
 
-		for _, item := range items {
+		for _, key := range keys {
 			for _, tc := range testCases {
-				if item.Value == tc.Value() {
+				if key.Key == tc.Key {
 					found++
 					break
 				}
@@ -229,13 +229,13 @@ func TestKVStore(t *testing.T) {
 
 		require.Equal(t, 4, found, "querying with the wildcard should return 4 records")
 
-		items, err = kv.List(ctx, 1, namespace, key[0:6])
+		keys, err = kv.Keys(ctx, 1, namespace, key[0:6])
 
 		require.NoError(t, err)
-		require.Len(t, items, 1, "querying for a specific org should return 1 record")
+		require.Len(t, keys, 1, "querying for a specific org should return 1 record")
 
-		items, err = kv.List(ctx, AllOrganizations, "not_existing_namespace", "not_existing_key")
+		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_namespace", "not_existing_key")
 		require.NoError(t, err, "querying a not existing namespace and key should not throw an error")
-		require.Len(t, items, 0, "querying a not existing namespace and key should return an empty slice")
+		require.Len(t, keys, 0, "querying a not existing namespace and key should return an empty slice")
 	})
 }

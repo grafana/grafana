@@ -134,26 +134,25 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 	return nil
 }
 
-func (fkv *FakeKVStore) List(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Item, error) {
+func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Key, error) {
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
-	var items []kvstore.Item
+	var keys []kvstore.Key
 	for orgID, namespaceMap := range fkv.store {
 		if keyMap, exists := namespaceMap[namespace]; exists {
-			for k, v := range keyMap {
+			for k := range keyMap {
 				if strings.HasPrefix(k, keyPrefix) {
-					orgCopy := orgID
-					items = append(items, kvstore.Item{
-						OrgId:     &orgCopy,
-						Namespace: &namespace,
-						Key:       &keyPrefix,
-						Value:     v,
+					//orgCopy := orgID
+					keys = append(keys, kvstore.Key{
+						OrgId:     orgID,
+						Namespace: namespace,
+						Key:       keyPrefix,
 					})
 				}
 			}
 		}
 	}
-	return items, nil
+	return keys, nil
 }
 
 type fakeState struct {
