@@ -1,5 +1,9 @@
 import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
+import { ReplaySubject } from 'rxjs';
+import Moveable from 'moveable';
+import Selecto from 'selecto';
+
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
@@ -17,7 +21,6 @@ import {
   getResourceDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { ReplaySubject } from 'rxjs';
 import { GroupState } from './group';
 import { ElementState } from './element';
 
@@ -93,10 +96,83 @@ export class Scene {
     this.onSave(this.root.getSaveModel());
   }
 
+  private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+    return this.root.elements.find((element) => element.div === target);
+  };
+
+  initMoveable = (sceneContainer: HTMLDivElement) => {
+    const targetElements: HTMLDivElement[] = [];
+    this.root.elements.forEach((element: ElementState) => {
+      targetElements.push(element.div!);
+    });
+
+    const selecto = new Selecto({
+      container: sceneContainer,
+      selectableTargets: targetElements,
+    });
+
+    const moveable = new Moveable(sceneContainer, {
+      draggable: true,
+      resizable: true,
+    })
+      .on('clickGroup', (event) => {
+        selecto.clickTarget(event.inputEvent, event.inputTarget);
+      })
+      .on('drag', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        targetedElement!.applyDrag(event);
+      })
+      .on('dragGroup', (e) => {
+        e.events.forEach((event) => {
+          const targetedElement = this.findElementByTarget(event.target);
+          targetedElement!.applyDrag(event);
+        });
+      })
+      .on('resize', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        targetedElement!.applyResize(event);
+      })
+      .on('resizeGroup', (e) => {
+        e.events.forEach((event) => {
+          const targetedElement = this.findElementByTarget(event.target);
+          targetedElement!.applyResize(event);
+        });
+      });
+
+    let targets: Array<HTMLElement | SVGElement> = [];
+    selecto
+      .on('dragStart', (event) => {
+        const selectedTarget = event.inputEvent.target;
+
+        const isTargetMoveableElement =
+          moveable.isMoveableElement(selectedTarget) ||
+          targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
+
+        if (isTargetMoveableElement) {
+          // Prevent drawing selection box when selected target is a moveable element
+          event.stop();
+        }
+      })
+      .on('selectEnd', (event) => {
+        targets = event.selected;
+        moveable.target = targets;
+
+        if (event.isDragStart) {
+          event.inputEvent.preventDefault();
+
+          setTimeout(() => {
+            moveable.dragStart(event.inputEvent);
+          });
+        }
+      });
+  };
+
   render() {
     return (
-      <div key={this.revId} className={this.styles.wrap} style={this.style}>
-        {this.root.render()}
+      <div>
+        <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
+          {this.root.render()}
+        </div>
       </div>
     );
   }

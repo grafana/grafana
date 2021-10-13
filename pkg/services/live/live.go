@@ -43,8 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/macaron.v1"
 )
 
 var (
@@ -333,7 +333,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
-		newCtx = livecontext.SetContextStreamID(newCtx, macaron.Params(ctx.Req)[":streamId"])
+		newCtx = livecontext.SetContextStreamID(newCtx, web.Params(ctx.Req)[":streamId"])
 		r := ctx.Req.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
@@ -968,7 +968,7 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
-	path := macaron.Params(ctx.Req)["*"]
+	path := web.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
 		return response.JSON(200, util.DynMap{
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgId),

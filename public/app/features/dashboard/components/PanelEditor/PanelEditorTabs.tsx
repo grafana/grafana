@@ -36,6 +36,8 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     return null;
   }
 
+  console.log(config.unifiedAlertingEnabled, tabs);
+
   return (
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar} hideBorder>
