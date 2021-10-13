@@ -71,7 +71,7 @@ import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
-const iconPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/icon/module');
+const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
