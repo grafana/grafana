@@ -55,7 +55,6 @@ import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
-import { VisualizationSuggestions } from './VisualizationSuggestions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -222,7 +221,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
-    const { dashboard, panel, uiState, tableViewEnabled, setPanelSuggestions, panelSuggestions } = this.props;
+    const { dashboard, panel, uiState, tableViewEnabled, setPanelSuggestions } = this.props;
 
     return (
       <div className={styles.mainPaneWrapper} key="panel">
@@ -267,11 +266,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             }}
           </AutoSizer>
         </div>
-        {panelSuggestions.length > 0 && (
-          <div className={styles.suggestionsWrapper}>
-            <VisualizationSuggestions suggestions={panelSuggestions} />
-          </div>
-        )}
       </div>
     );
   }

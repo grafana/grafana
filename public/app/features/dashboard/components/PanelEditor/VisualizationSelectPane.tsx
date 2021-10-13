@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { GrafanaTheme, PanelData, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Button, CustomScrollbar, Icon, Input, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { changePanelPlugin } from '../../../panel/state/actions';
 import { PanelModel } from '../../state/PanelModel';
@@ -11,12 +11,14 @@ import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components
 import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPanelPluginWithFallback } from '../../state/selectors';
+import { VisualizationSuggestions } from 'app/features/panel/components/VisualizationSuggestions/VisualizationSuggestions';
 
 interface Props {
   panel: PanelModel;
+  data?: PanelData;
 }
 
-export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
+export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(ListMode.Visualizations);
@@ -114,12 +116,15 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.scrollContent}>
             {listMode === ListMode.Visualizations && (
-              <VizTypePicker
-                current={plugin.meta}
-                onTypeChange={onPluginTypeChange}
-                searchQuery={searchQuery}
-                onClose={() => {}}
-              />
+              <div>
+                {data && <VisualizationSuggestions data={data} />}
+                <VizTypePicker
+                  current={plugin.meta}
+                  onTypeChange={onPluginTypeChange}
+                  searchQuery={searchQuery}
+                  onClose={() => {}}
+                />
+              </div>
             )}
             {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
