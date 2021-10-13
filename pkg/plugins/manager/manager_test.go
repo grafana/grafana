@@ -58,7 +58,7 @@ func TestPluginManager_init(t *testing.T) {
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", true, true)
+		p, pc := createDSPlugin(testPluginID, "", plugins.External, true, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -81,7 +81,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", false, true)
+		p, pc := createDSPlugin(testPluginID, "", plugins.External, false, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -104,7 +104,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Managed non-backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", false, true)
+		p, pc := createDSPlugin(testPluginID, "", plugins.External, false, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -127,7 +127,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged non-backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", false, false)
+		p, pc := createDSPlugin(testPluginID, "", plugins.External, false, false)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -157,15 +157,14 @@ func TestPluginManager_Run(t *testing.T) {
 }
 
 func TestPluginManager_Installer(t *testing.T) {
-	t.Run("Install plugin after manager init", func(t *testing.T) {
-		i := &fakePluginInstaller{}
-
-		p, pc := createDSPlugin(testPluginID, "1.0.0", true, true)
+	t.Run("Install base case", func(t *testing.T) {
+		p, pc := createDSPlugin(testPluginID, "1.0.0", plugins.External, true, true)
 
 		l := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
 		}
 
+		i := &fakePluginInstaller{}
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginInstaller = i
 			pm.pluginLoader = l
@@ -214,10 +213,72 @@ func TestPluginManager_Installer(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("Can't update core plugin", func(t *testing.T) {
+		p, pc := createDSPlugin(testPluginID, "", plugins.Core, true, true)
+
+		loader := &fakeLoader{
+			mockedLoadedPlugins: []*plugins.Plugin{p},
+		}
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.pluginLoader = loader
+		})
+		err := pm.loadPlugins("test/path")
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, pc.startCount)
+		assert.Equal(t, 0, pc.stopCount)
+		assert.False(t, pc.exited)
+		assert.False(t, pc.decommissioned)
+		assert.Equal(t, p, pm.Plugin(testPluginID))
+		assert.Len(t, pm.Plugins(), 1)
+
+		verifyNoPluginErrors(t, pm)
+
+		err = pm.Install(context.Background(), testPluginID, "", plugins.InstallOpts{})
+		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
+
+		t.Run("Can't uninstall core plugin", func(t *testing.T) {
+			err := pm.Uninstall(context.Background(), p.ID)
+			require.Equal(t, plugins.ErrUninstallCorePlugin, err)
+		})
+	})
+
+	t.Run("Can't update bundled plugin", func(t *testing.T) {
+		p, pc := createDSPlugin(testPluginID, "", plugins.Bundled, true, true)
+
+		loader := &fakeLoader{
+			mockedLoadedPlugins: []*plugins.Plugin{p},
+		}
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.pluginLoader = loader
+		})
+		err := pm.loadPlugins("test/path")
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, pc.startCount)
+		assert.Equal(t, 0, pc.stopCount)
+		assert.False(t, pc.exited)
+		assert.False(t, pc.decommissioned)
+		assert.Equal(t, p, pm.Plugin(testPluginID))
+		assert.Len(t, pm.Plugins(), 1)
+
+		verifyNoPluginErrors(t, pm)
+
+		err = pm.Install(context.Background(), testPluginID, "", plugins.InstallOpts{})
+		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
+
+		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
+			err := pm.Uninstall(context.Background(), p.ID)
+			require.Equal(t, plugins.ErrUninstallCorePlugin, err)
+		})
+	})
 }
 
 func TestManager(t *testing.T) {
-	newManagerScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
+	newScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Managed plugin scenario", func(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
 				err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
@@ -374,7 +435,7 @@ func TestManager(t *testing.T) {
 		})
 	})
 
-	newManagerScenario(t, false, func(t *testing.T, ctx *managerScenarioCtx) {
+	newScenario(t, false, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Unmanaged plugin scenario", func(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
 				err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
@@ -416,55 +477,6 @@ func TestManager(t *testing.T) {
 	})
 }
 
-func createDSPlugin(pluginID, version string, managed, backend bool) (*plugins.Plugin, *fakePluginClient) {
-	p := &plugins.Plugin{
-		Class: plugins.External,
-		JSONData: plugins.JSONData{
-			ID:      pluginID,
-			Type:    plugins.DataSource,
-			Backend: backend,
-			Info: plugins.PluginInfo{
-				Version: version,
-			},
-		},
-	}
-
-	logger := fakeLogger{}
-
-	p.SetLogger(logger)
-
-	pc := &fakePluginClient{
-		pluginID: pluginID,
-		logger:   logger,
-		managed:  managed,
-	}
-
-	p.RegisterClient(pc)
-
-	return p, pc
-}
-
-type fakePluginInstaller struct {
-	installer.Installer
-
-	installCount   int
-	uninstallCount int
-}
-
-func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
-	f.installCount++
-	return nil
-}
-
-func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginPath string) error {
-	f.uninstallCount++
-	return nil
-}
-
-func (f *fakePluginInstaller) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
-	return plugins.UpdateInfo{}, nil
-}
-
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
@@ -490,13 +502,41 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	return pm
 }
 
+func createDSPlugin(pluginID, version string, class plugins.Class, managed, backend bool) (*plugins.Plugin, *fakePluginClient) {
+	p := &plugins.Plugin{
+		Class: class,
+		JSONData: plugins.JSONData{
+			ID:      pluginID,
+			Type:    plugins.DataSource,
+			Backend: backend,
+			Info: plugins.PluginInfo{
+				Version: version,
+			},
+		},
+	}
+
+	logger := fakeLogger{}
+
+	p.SetLogger(logger)
+
+	pc := &fakePluginClient{
+		pluginID: pluginID,
+		logger:   logger,
+		managed:  managed,
+	}
+
+	p.RegisterClient(pc)
+
+	return p, pc
+}
+
 type managerScenarioCtx struct {
 	manager      *PluginManager
 	plugin       *plugins.Plugin
 	pluginClient *fakePluginClient
 }
 
-func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
+func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
@@ -519,23 +559,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 		manager: manager,
 	}
 
-	logger := fakeLogger{}
-
-	ctx.plugin = &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID:      testPluginID,
-			Backend: true,
-		},
-	}
-	ctx.plugin.SetLogger(logger)
-
-	ctx.pluginClient = &fakePluginClient{
-		pluginID: testPluginID,
-		logger:   fakeLogger{},
-		managed:  managed,
-	}
-
-	ctx.plugin.RegisterClient(ctx.pluginClient)
+	ctx.plugin, ctx.pluginClient = createDSPlugin(testPluginID, "", plugins.Core, managed, true)
 
 	fn(t, ctx)
 }
@@ -544,6 +568,27 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 	for _, plugin := range pm.Plugins() {
 		assert.Nil(t, plugin.SignatureError)
 	}
+}
+
+type fakePluginInstaller struct {
+	installer.Installer
+
+	installCount   int
+	uninstallCount int
+}
+
+func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+	f.installCount++
+	return nil
+}
+
+func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginPath string) error {
+	f.uninstallCount++
+	return nil
+}
+
+func (f *fakePluginInstaller) GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+	return plugins.UpdateInfo{}, nil
 }
 
 type fakeLoader struct {
