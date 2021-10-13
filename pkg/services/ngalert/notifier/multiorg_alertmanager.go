@@ -256,8 +256,26 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 			fileStore.CleanUp()
 		}
 	}
-	if err := moa.kvStore.DelOrphans(ctx); err != nil {
-		moa.logger.Error("failed to delete orphaned kvstore records", "err", err)
+	// Remove all orphaned items from kvstore by listing all existing items
+	// in our used namespace and comparing them to the currently active
+	// organizations.
+	storedFiles := []string{notificationLogFilename, silencesFilename}
+	for _, key := range storedFiles {
+		items, err := moa.kvStore.List(ctx, KVNamespace, key)
+		if err != nil {
+			moa.logger.Error("failed to fetch items from kvstore", "err", err,
+				"namespace", KVNamespace, "key", key)
+		}
+		for _, item := range items {
+			if _, exists := activeOrganizations[*item.OrgId]; exists {
+				continue
+			}
+			err = moa.kvStore.Del(ctx, *item.OrgId, *item.Namespace, *item.Key)
+			if err != nil {
+				moa.logger.Error("failed to delete item from kvstore", "err", err,
+					"orgID", *item.OrgId, "namespace", KVNamespace, "key", key)
+			}
+		}
 	}
 }
 

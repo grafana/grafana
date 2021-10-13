@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -132,20 +133,23 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 	return nil
 }
 
-func (fkv *FakeKVStore) DelOrphans(ctx context.Context) error {
+func (fkv *FakeKVStore) List(ctx context.Context, namespace string, key string) ([]kvstore.Item, error) {
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
-outer:
-	for k := range fkv.store {
-		orgs, _ := fkv.orgStore.GetOrgs(ctx)
-		for _, orgID := range orgs {
-			if orgID == k {
-				continue outer
+	var items []kvstore.Item
+	for orgID, namespaceMap := range fkv.store {
+		if keyMap, exists := namespaceMap[namespace]; exists {
+			if value, exists := keyMap[key]; exists {
+				items = append(items, kvstore.Item{
+					OrgId:     &orgID,
+					Namespace: &namespace,
+					Key:       &key,
+					Value:     value,
+				})
 			}
 		}
-		delete(fkv.store, k)
 	}
-	return nil
+	return items, nil
 }
 
 type fakeState struct {

@@ -165,4 +165,62 @@ func TestKVStore(t *testing.T) {
 			require.False(t, ok, "all keys should be deleted at this point")
 		}
 	})
+
+	t.Run("listing existing keys", func(t *testing.T) {
+		kv := createTestableKVStore(t)
+
+		ctx := context.Background()
+
+		namespace, key := "listtest", "listtest"
+
+		testCases := []*TestCase{
+			{
+				OrgId:     1,
+				Namespace: namespace,
+				Key:       key,
+			},
+			{
+				OrgId:     2,
+				Namespace: namespace,
+				Key:       key,
+			},
+			{
+				OrgId:     3,
+				Namespace: namespace,
+				Key:       key,
+			},
+			{
+				OrgId:     4,
+				Namespace: namespace,
+				Key:       key,
+			},
+		}
+
+		for _, tc := range testCases {
+			err := kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Key, tc.Value())
+			require.NoError(t, err)
+		}
+
+		items, err := kv.List(ctx, namespace, key)
+
+		require.NoError(t, err)
+		require.Len(t, items, 4)
+
+		found := 0
+
+		for _, item := range items {
+			for _, tc := range testCases {
+				if item.Value == tc.Value() {
+					found++
+					break
+				}
+			}
+		}
+
+		require.Equal(t, 4, found)
+
+		items, err = kv.List(ctx, "not_existing_namespace", "not_existing_key")
+		require.NoError(t, err, "querying a not existing namespace and key should not throw an error")
+		require.Len(t, items, 0, "querying a not existing namespace and key should return an empty slice")
+	})
 }
