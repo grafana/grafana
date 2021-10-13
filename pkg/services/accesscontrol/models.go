@@ -149,6 +149,46 @@ type ScopeParams struct {
 	URLParams map[string]string
 }
 
+type ResourcePermission struct {
+	ID          int64  `xorm:"id"`
+	ResourceID  string `xorm:"resource_id"`
+	RoleName    string
+	Action      string
+	Scope       string
+	UserId      int64
+	UserLogin   string
+	UserEmail   string
+	TeamId      int64
+	TeamEmail   string
+	Team        string
+	BuiltInRole string
+	Created     time.Time
+	Updated     time.Time
+}
+
+func (p *ResourcePermission) Managed() bool {
+	return strings.HasPrefix(p.RoleName, "managed:")
+}
+
+type SetResourcePermissionsCommand struct {
+	Actions    []string
+	Resource   string
+	ResourceID string
+}
+
+type RemoveResourcePermissionCommand struct {
+	Resource     string
+	Actions      []string
+	ResourceID   string
+	PermissionID int64
+}
+
+type GetResourcesPermissionsQuery struct {
+	Actions     []string
+	Resource    string
+	ResourceIDs []string
+}
+
 const (
 	GlobalOrgID = 0
 	// Permission actions
