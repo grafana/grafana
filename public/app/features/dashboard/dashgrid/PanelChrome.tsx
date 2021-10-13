@@ -132,6 +132,11 @@ export class PanelChrome extends PureComponent<Props, State> {
   onToggleLegendSort = (sortKey: string) => {
     const legendOptions: VizLegendOptions = this.props.panel.options.legend;
 
+    // We don't want to do anything when legend options are not available
+    if (!legendOptions) {
+      return;
+    }
+
     let sortDesc = legendOptions.sortDesc;
     let sortBy = legendOptions.sortBy;
     if (sortKey !== sortBy) {
