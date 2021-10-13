@@ -35,7 +35,6 @@ const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
-// Yep...
 var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.PluginDashboardManager = (*PluginManager)(nil)
@@ -113,36 +112,49 @@ func (m *PluginManager) init() error {
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
-	go func() {
-		err := func() error {
-			m.checkForUpdates()
+	if m.cfg.CheckForUpdates {
+		go func() {
+			err := func() error {
+				m.checkForUpdates()
 
-			ticker := time.NewTicker(time.Minute * 10)
-			run := true
+				ticker := time.NewTicker(time.Minute * 10)
+				run := true
 
-			for run {
-				select {
-				case <-ticker.C:
-					m.checkForUpdates()
-				case <-ctx.Done():
-					run = false
+				for run {
+					select {
+					case <-ticker.C:
+						m.checkForUpdates()
+					case <-ctx.Done():
+						run = false
+					}
 				}
-			}
 
-			return ctx.Err()
+				return ctx.Err()
+			}()
+			if err != nil {
+				m.log.Error("Error occurred checking for Plugin updates", "err", err)
+			}
 		}()
-		if err != nil {
-			m.log.Error("Error occurred checking for Plugin updates", "err", err)
-		}
-	}()
+	}
 
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
 }
 
-func (m *PluginManager) loadPlugins(path ...string) error {
-	loadedPlugins, err := m.pluginLoader.Load(path, m.registeredPlugins())
+func (m *PluginManager) loadPlugins(paths ...string) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	var pluginPaths []string
+	for _, p := range paths {
+		if p != "" {
+			pluginPaths = append(pluginPaths, p)
+		}
+	}
+
+	loadedPlugins, err := m.pluginLoader.Load(pluginPaths, m.registeredPlugins())
 	if err != nil {
 		return err
 	}
@@ -566,7 +578,7 @@ func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.P
 }
 
 func (m *PluginManager) Routes() []*plugins.PluginStaticRoute {
-	var staticRoutes []*plugins.PluginStaticRoute
+	staticRoutes := []*plugins.PluginStaticRoute{}
 
 	for _, p := range m.Plugins() {
 		staticRoutes = append(staticRoutes, p.StaticRoute())
@@ -623,6 +635,10 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 	if !p.IsManaged() || !p.Backend {
 		return nil
+	}
+
+	if !m.isRegistered(p.ID) {
+		return backendplugin.ErrPluginNotRegistered
 	}
 
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {

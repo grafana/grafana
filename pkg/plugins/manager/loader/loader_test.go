@@ -6,6 +6,11 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"github.com/stretchr/testify/assert"
@@ -205,8 +210,8 @@ func TestLoader_LoadAll(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		l := newLoader(tt.cfg, nil)
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, tt.cfg)
 			got, err := l.Load(tt.pluginPaths, tt.existingPlugins)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
@@ -278,11 +283,9 @@ func TestLoader_loadDuplicatePlugins(t *testing.T) {
 			},
 		}
 
-		cfg := &setting.Cfg{
+		l := newLoader(&setting.Cfg{
 			PluginsPath: filepath.Dir(pluginDir),
-		}
-
-		l := New(nil, nil, cfg)
+		}, nil)
 
 		got, err := l.Load([]string{pluginDir, pluginDir}, map[string]struct{}{})
 		assert.NoError(t, err)
@@ -369,11 +372,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
 		expected := []*plugins.Plugin{parent, child}
-		cfg := &setting.Cfg{
+		l := newLoader(&setting.Cfg{
 			PluginsPath: parentDir,
-		}
-
-		l := New(nil, nil, cfg)
+		}, nil)
 
 		got, err := l.Load([]string{"../testdata/nested-plugins"}, map[string]struct{}{})
 		assert.NoError(t, err)
@@ -393,11 +394,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		parent.Children = nil
 		expected := []*plugins.Plugin{parent}
 
-		cfg := &setting.Cfg{
+		l := newLoader(&setting.Cfg{
 			PluginsPath: parentDir,
-		}
-
-		l := New(nil, nil, cfg)
+		}, nil)
 
 		got, err := l.Load([]string{"../testdata/nested-plugins"}, map[string]struct{}{
 			"test-panel": {},
@@ -477,9 +476,10 @@ func TestLoader_readPluginJSON(t *testing.T) {
 			failed:     true,
 		},
 	}
+
+	l := newLoader(nil, nil)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, nil)
 			got, err := l.readPluginJSON(tt.pluginPath)
 			if (err != nil) && !tt.failed {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
@@ -592,9 +592,19 @@ func Test_pluginClass(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, tt.args.cfg)
+			l := newLoader(tt.args.cfg, nil)
 			got := l.pluginClass(tt.args.pluginDir)
 			assert.Equal(t, tt.expected, got)
 		})
+	}
+}
+
+func newLoader(cfg *setting.Cfg, license models.Licensing) *Loader {
+	return &Loader{
+		cfg:                cfg,
+		pluginFinder:       finder.New(cfg),
+		pluginInitializer:  initializer.New(cfg, license),
+		signatureValidator: signature.NewValidator(cfg),
+		errs:               make(map[string]error),
 	}
 }
