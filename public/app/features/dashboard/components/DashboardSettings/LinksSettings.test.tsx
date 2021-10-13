@@ -131,7 +131,7 @@ describe('LinksSettings', () => {
 
     expect(getTableBodyRows().length).toBe(links.length);
 
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: /delete/i })[0]);
+    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Delete' })[0]);
 
     expect(getTableBodyRows().length).toBe(links.length - 1);
     expect(within(getTableBody()).queryByText(links[0].title)).not.toBeInTheDocument();
