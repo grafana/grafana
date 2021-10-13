@@ -3,10 +3,12 @@ import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPl
 import { PanelRendererProps } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { useAsync } from 'react-use';
-import { getPanelOptionsWithDefaults, OptionDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
-import { importPanelPlugin } from '../plugins/plugin_loader';
+import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
+import { importPanelPlugin } from '../../plugins/importPanelPlugin';
 import { useTheme2 } from '@grafana/ui';
+
 const defaultFieldConfig = { defaults: {}, overrides: [] };
+
 export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,

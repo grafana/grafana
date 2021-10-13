@@ -2,7 +2,7 @@ import { createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
 import { StoreState, ThunkResult } from 'app/types';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   getRemotePlugins,
   getPluginErrors,

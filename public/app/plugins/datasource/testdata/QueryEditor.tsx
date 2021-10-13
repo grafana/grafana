@@ -4,13 +4,13 @@ import { useAsync } from 'react-use';
 
 // Components
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { StreamingClientEditor, RandomWalkEditor } from './components';
+import { RandomWalkEditor, StreamingClientEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, NodesQuery, CSVWave, USAQuery } from './types';
+import { CSVWave, NodesQuery, TestDataQuery, USAQuery } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
@@ -170,12 +170,12 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       <InlineFieldRow aria-label={selectors.scenarioSelectContainer}>
         <InlineField labelWidth={14} label="Scenario">
           <Select
+            inputId={`test-data-scenario-select-${query.refId}`}
             menuShouldPortal
             options={options}
             value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
             width={32}
-            inputId={`scenario-input-${query.refId}`}
           />
         </InlineField>
         {currentScenario?.stringInput && (

@@ -9,11 +9,7 @@ const addDataSource = () => {
     form: () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
       e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
-      e2e.components.DataSourcePicker.container()
-        .should('be.visible')
-        .within(() => {
-          e2e.components.DataSourcePicker.input().should('be.visible').click({ force: true });
-        });
+      e2e.components.DataSourcePicker.inputV2().should('be.visible').click({ force: true });
 
       e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },
@@ -48,11 +44,7 @@ describe('Exemplars', () => {
 
     e2e.pages.Explore.visit();
 
-    e2e.components.DataSourcePicker.container()
-      .should('be.visible')
-      .within(() => {
-        e2e.components.DataSourcePicker.input().should('be.visible').click();
-      });
+    e2e.components.DataSourcePicker.input().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');

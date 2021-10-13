@@ -37,13 +37,13 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
       dispatch(
         fetchPromRulesAction({
           rulesSourceName: GRAFANA_RULES_SOURCE_NAME,
-          filter: { dashboardUID: dashboard.uid, panelId: panel.editSourceId },
+          filter: { dashboardUID: dashboard.uid, panelId: panel.id },
         })
       );
       dispatch(
         fetchRulerRulesAction({
           rulesSourceName: GRAFANA_RULES_SOURCE_NAME,
-          filter: { dashboardUID: dashboard.uid, panelId: panel.editSourceId },
+          filter: { dashboardUID: dashboard.uid, panelId: panel.id },
         })
       );
     };
@@ -55,7 +55,7 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
       };
     }
     return () => {};
-  }, [dispatch, poll, panel.editSourceId, dashboard.uid]);
+  }, [dispatch, poll, panel.id, dashboard.uid]);
 
   const loading = promRuleRequest.loading || rulerRuleRequest.loading;
   const errors = [promRuleRequest.error, rulerRuleRequest.error].filter(
@@ -73,7 +73,7 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
         .filter(
           (rule) =>
             rule.annotations[Annotation.dashboardUID] === dashboard.uid &&
-            rule.annotations[Annotation.panelID] === String(panel.editSourceId)
+            rule.annotations[Annotation.panelID] === String(panel.id)
         ),
     [combinedNamespaces, dashboard, panel]
   );
