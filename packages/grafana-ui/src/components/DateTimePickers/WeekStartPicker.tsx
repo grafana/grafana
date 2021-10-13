@@ -11,6 +11,7 @@ export interface Props {
   onBlur?: () => void;
   includeInternal?: boolean;
   disabled?: boolean;
+  inputId?: string;
 }
 
 const weekStarts: SelectableValue[] = [
@@ -21,7 +22,7 @@ const weekStarts: SelectableValue[] = [
 ];
 
 export const WeekStartPicker: React.FC<Props> = (props) => {
-  const { onChange, width, autoFocus = false, onBlur, value, disabled = false } = props;
+  const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
 
   const onChangeWeekStart = useCallback(
     (selectable: SelectableValue<number>) => {
@@ -35,6 +36,7 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
 
   return (
     <Select
+      inputId={inputId}
       value={weekStarts.find((item) => item.value === value)?.value}
       placeholder="Choose starting day of the week"
       autoFocus={autoFocus}
