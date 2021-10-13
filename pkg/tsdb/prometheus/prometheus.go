@@ -97,18 +97,17 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			}
 		}
 
-		client, err := getClient(settings.URL, httpCliOpts, httpClientProvider)
+		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
 		if err != nil {
 			return nil, err
 		}
 
 		mdl := DatasourceInfo{
-			ID:             settings.ID,
-			URL:            settings.URL,
-			HTTPClientOpts: httpCliOpts,
-			HTTPMethod:     httpMethod,
-			TimeInterval:   timeInterval,
-			promClient:     client,
+			ID:           settings.ID,
+			URL:          settings.URL,
+			HTTPMethod:   httpMethod,
+			TimeInterval: timeInterval,
+			promClient:   client,
 		}
 
 		return mdl, nil
@@ -193,7 +192,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func getClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
+func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
 	customMiddlewares := customQueryParametersMiddleware(plog)
 	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
