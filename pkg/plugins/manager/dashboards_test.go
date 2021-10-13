@@ -67,5 +67,4 @@ func TestGetPluginDashboards(t *testing.T) {
 
 	require.Equal(t, "Nginx Memory - Incompatible", dashboards[3].Title)
 	require.False(t, dashboards[3].Compatible)
-
 }
