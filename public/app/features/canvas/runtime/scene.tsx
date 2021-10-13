@@ -31,6 +31,7 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 
 export class Scene {
+  readonly initTime = Date.now();
   private lookup = new Map<number, ElementState>();
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
@@ -44,13 +45,22 @@ export class Scene {
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto | null;
+  div?: HTMLDivElement;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg);
   }
 
+  // Called when the component unmounts
+  destroy() {
+    console.log('Calling destroy', this.initTime);
+    if (this.selecto) {
+      this.selecto.destroy();
+    }
+  }
+
   load(cfg: CanvasGroupOptions) {
-    console.log('LOAD', cfg, this);
+    console.log('LOAD', this.initTime, cfg, this);
     this.root = new RootElement(
       cfg ?? {
         type: 'group',
@@ -65,6 +75,9 @@ export class Scene {
       this.lookup.set(v.UID, v);
     });
 
+    if (this.div) {
+      this.initMoveable(this.div);
+    }
     return this.root;
   }
 
@@ -144,6 +157,13 @@ export class Scene {
   };
 
   initMoveable = (sceneContainer: HTMLDivElement) => {
+    console.log('Calling destroy', this.initTime);
+    this.div = sceneContainer;
+    if (this.selecto) {
+      console.log('TODO? clear existing selection???', this.initTime);
+      this.selecto.destroy();
+    }
+
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);

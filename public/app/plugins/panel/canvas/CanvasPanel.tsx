@@ -45,6 +45,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
+          console.log('EXIT editor!!!');
         }
       })
     );
@@ -52,7 +53,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    if (this.panelContext.onInstanceStateChange && this.panelContext.app === CoreApp.PanelEditor) {
+    if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         scene: this.scene,
         layer: this.scene.root,
@@ -74,6 +75,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+    this.scene.destroy();
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -103,6 +105,7 @@ export class CanvasPanel extends Component<Props, State> {
 
     // After editing, the options are valid, but the scene was in a different panel
     if (this.needsReload && this.props.options !== nextProps.options) {
+      console.log('reloading canvas (after panel edit?)');
       this.needsReload = false;
       this.scene.load(nextProps.options.root);
       this.scene.updateSize(nextProps.width, nextProps.height);
