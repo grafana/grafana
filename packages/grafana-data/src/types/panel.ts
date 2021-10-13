@@ -187,7 +187,7 @@ export interface PanelPluginDataSupport {
 /**
  * @alpha
  */
-export interface VisualizationSuggestion {
+export interface VisualizationSuggestion<TOptions = any, TFieldConfig extends object = any> {
   /** Name of suggestion */
   name: string;
   /** Description */
@@ -195,9 +195,23 @@ export interface VisualizationSuggestion {
   /** Panel plugin id */
   pluginId: string;
   /** Panel plugin options */
-  options?: any;
+  options?: TOptions;
   /** Panel plugin field options */
-  fieldConfig?: FieldConfigSource;
+  fieldConfig?: FieldConfigSource<TFieldConfig>;
   /** Data transformations */
   transformations?: DataTransformerConfig[];
+  /** Tweak for small preview */
+  getPreviewVersion?: (suggestion: VisualizationSuggestion) => VisualizationSuggestion;
 }
+
+/**
+ * @alpha
+ */
+export interface VisualizationSuggestionsInput {
+  data?: PanelData;
+}
+
+/**
+ * @alpha
+ */
+export type VisualizationSuggestionsSupplier = (input: VisualizationSuggestionsInput) => VisualizationSuggestion[];
