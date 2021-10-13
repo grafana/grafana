@@ -61,7 +61,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			"access":    ds.Access,
 		}
 
-		meta, exists := enabledPlugins[plugins.DataSource][ds.Type]
+		meta, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
 			log.Errorf(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
@@ -339,8 +339,17 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 // EnabledPlugins represents a mapping of plugin types to plugin IDs to plugins
 type EnabledPlugins map[plugins.Type]map[string]*plugins.Plugin
 
-func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) *plugins.Plugin {
-	return ep[pluginType][pluginID]
+func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins.Plugin, bool) {
+	// support old plugin name transition
+	if pluginID == "stackdriver" {
+		return ep.Get(plugins.DataSource, "cloud-monitoring")
+	}
+
+	if _, exists := ep[pluginType][pluginID]; exists {
+		return ep[pluginType][pluginID], true
+	}
+
+	return nil, false
 }
 
 func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
@@ -351,7 +360,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 		return ep, err
 	}
 
-	apps := map[string]*plugins.Plugin{}
+	apps := make(map[string]*plugins.Plugin)
 	for _, app := range hs.pluginStore.Plugins(plugins.App) {
 		if b, ok := pluginSettingMap[app.ID]; ok {
 			app.Pinned = b.Pinned
@@ -360,7 +369,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 	}
 	ep[plugins.App] = apps
 
-	dataSources := map[string]*plugins.Plugin{}
+	dataSources := make(map[string]*plugins.Plugin)
 	for _, ds := range hs.pluginStore.Plugins(plugins.DataSource) {
 		if _, exists := pluginSettingMap[ds.ID]; exists {
 			dataSources[ds.ID] = ds
@@ -368,7 +377,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 	}
 	ep[plugins.DataSource] = dataSources
 
-	panels := map[string]*plugins.Plugin{}
+	panels := make(map[string]*plugins.Plugin)
 	for _, p := range hs.pluginStore.Plugins(plugins.Panel) {
 		if _, exists := pluginSettingMap[p.ID]; exists {
 			panels[p.ID] = p
