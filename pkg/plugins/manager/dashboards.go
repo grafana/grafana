@@ -14,7 +14,7 @@ import (
 func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
 	plugin := m.Plugin(pluginID)
 	if plugin == nil {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
+		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
 
 	result := make([]*plugins.PluginDashboardInfoDTO, 0)
@@ -27,7 +27,7 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 
 	existingMatches := make(map[int64]bool)
 	for _, include := range plugin.Includes {
-		if include.Type != plugins.PluginTypeDashboard {
+		if include.Type != plugins.TypeDashboard {
 			continue
 		}
 
@@ -74,7 +74,7 @@ func (m *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*pl
 func (m *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
 	plugin := m.Plugin(pluginID)
 	if plugin == nil {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
+		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
 
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)

@@ -21,9 +21,9 @@ func (ps *fakePluginStore) Renderer() *plugins.Plugin {
 type fakePluginStaticRouteResolver struct {
 	plugins.StaticRouteResolver
 
-	routes []*plugins.PluginStaticRoute
+	routes []*plugins.StaticRoute
 }
 
-func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.PluginStaticRoute {
+func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
 	return psrr.routes
 }

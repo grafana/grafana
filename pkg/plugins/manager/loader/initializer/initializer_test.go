@@ -24,10 +24,10 @@ func TestInitializer_Initialize(t *testing.T) {
 			JSONData: plugins.JSONData{
 				ID:   "test",
 				Type: plugins.DataSource,
-				Includes: []*plugins.PluginInclude{
+				Includes: []*plugins.Includes{
 					{
 						Name: "Example dashboard",
-						Type: plugins.PluginTypeDashboard,
+						Type: plugins.TypeDashboard,
 					},
 				},
 				Backend: true,
@@ -61,7 +61,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			JSONData: plugins.JSONData{
 				ID:   "test",
 				Type: plugins.Renderer,
-				Dependencies: plugins.PluginDependencies{
+				Dependencies: plugins.Dependencies{
 					GrafanaVersion: ">=8.x",
 				},
 				Backend: true,
@@ -94,7 +94,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			JSONData: plugins.JSONData{
 				ID:   "parent-plugin",
 				Type: plugins.App,
-				Includes: []*plugins.PluginInclude{
+				Includes: []*plugins.Includes{
 					{
 						Type:       "page",
 						DefaultNav: true,
@@ -149,7 +149,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			JSONData: plugins.JSONData{
 				ID:   "test-plugin",
 				Type: plugins.App,
-				Includes: []*plugins.PluginInclude{
+				Includes: []*plugins.Includes{
 					{
 						Type:       "page",
 						DefaultNav: true,
@@ -188,7 +188,7 @@ func TestInitializer_InitializeWithFactory(t *testing.T) {
 			JSONData: plugins.JSONData{
 				ID:   "test-plugin",
 				Type: plugins.App,
-				Includes: []*plugins.PluginInclude{
+				Includes: []*plugins.Includes{
 					{
 						Type:       "page",
 						DefaultNav: true,

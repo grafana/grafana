@@ -168,7 +168,7 @@ func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Respons
 
 	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
-		var notFound plugins.PluginNotFoundError
+		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -185,7 +185,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	content, err := hs.pluginMarkdown(pluginID, name)
 	if err != nil {
-		var notFound plugins.PluginNotFoundError
+		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
 			return response.Error(404, notFound.Error(), nil)
 		}
@@ -380,7 +380,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 
 	err := hs.pluginStore.Install(c.Req.Context(), pluginID, dto.Version, plugins.InstallOpts{})
 	if err != nil {
-		var dupeErr plugins.DuplicatePluginError
+		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
@@ -449,7 +449,7 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, error) {
 	plug := hs.pluginStore.Plugin(pluginId)
 	if plug == nil {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
+		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
 	// nolint:gosec
@@ -487,8 +487,8 @@ func (hs *HTTPServer) pluginSignatureErrors() []plugins.SignatureError {
 	for _, p := range hs.pluginStore.Plugins() {
 		if p.SignatureError != nil {
 			scanningErrs = append(scanningErrs, plugins.SignatureError{
-				PluginID: p.ID,
-				Status:   p.SignatureError.SignatureStatus,
+				PluginID:        p.ID,
+				SignatureStatus: p.SignatureError.SignatureStatus,
 			})
 		}
 	}

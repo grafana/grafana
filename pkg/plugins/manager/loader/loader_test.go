@@ -54,27 +54,27 @@ func TestLoader_LoadAll(t *testing.T) {
 						ID:   "cloudwatch",
 						Type: "datasource",
 						Name: "CloudWatch",
-						Info: plugins.PluginInfo{
-							Author: plugins.PluginInfoLink{
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
 								Name: "Grafana Labs",
 								URL:  "https://grafana.com",
 							},
 							Description: "Data source for Amazon AWS monitoring service",
-							Logos: plugins.PluginLogos{
+							Logos: plugins.Logos{
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
 						},
-						Includes: []*plugins.PluginInclude{
+						Includes: []*plugins.Includes{
 							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
 							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer"},
 							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer"},
 							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer"},
 							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
 						},
-						Dependencies: plugins.PluginDependencies{
+						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
-							Plugins:        []plugins.PluginDependencyItem{},
+							Plugins:        []plugins.Dependency{},
 						},
 						Category:     "cloud",
 						Annotations:  true,
@@ -104,20 +104,20 @@ func TestLoader_LoadAll(t *testing.T) {
 						ID:   "test",
 						Type: "datasource",
 						Name: "Test",
-						Info: plugins.PluginInfo{
-							Author: plugins.PluginInfoLink{
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
 								Name: "Grafana Labs",
 								URL:  "https://grafana.com",
 							},
-							Logos: plugins.PluginLogos{
+							Logos: plugins.Logos{
 								Small: "public/img/icn-datasource.svg",
 								Large: "public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
-						Dependencies: plugins.PluginDependencies{
+						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
-							Plugins:        []plugins.PluginDependencyItem{},
+							Plugins:        []plugins.Dependency{},
 						},
 						Backend: true,
 						State:   "alpha",
@@ -142,35 +142,35 @@ func TestLoader_LoadAll(t *testing.T) {
 						ID:   "test-app",
 						Type: "app",
 						Name: "Test App",
-						Info: plugins.PluginInfo{
-							Author: plugins.PluginInfoLink{
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
 								Name: "Test Inc.",
 								URL:  "http://test.com",
 							},
-							Logos: plugins.PluginLogos{
+							Logos: plugins.Logos{
 								Small: "public/plugins/test-app/img/logo_small.png",
 								Large: "public/plugins/test-app/img/logo_large.png",
 							},
-							Links: []plugins.PluginInfoLink{
+							Links: []plugins.InfoLink{
 								{Name: "Project site", URL: "http://project.com"},
 								{Name: "License & Terms", URL: "http://license.com"},
 							},
 							Description: "Official Grafana Test App & Dashboard bundle",
-							Screenshots: []plugins.PluginScreenshots{
+							Screenshots: []plugins.Screenshots{
 								{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
 								{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 							},
 							Version: "1.0.0",
 							Updated: "2015-02-10",
 						},
-						Dependencies: plugins.PluginDependencies{
+						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
-							Plugins: []plugins.PluginDependencyItem{
+							Plugins: []plugins.Dependency{
 								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 							},
 						},
-						Includes: []*plugins.PluginInclude{
+						Includes: []*plugins.Includes{
 							{
 								Name: "Nginx Connections",
 								Path: "dashboards/connections.json",
@@ -237,35 +237,35 @@ func TestLoader_loadDuplicatePlugins(t *testing.T) {
 					ID:   "test-app",
 					Type: "app",
 					Name: "Test App",
-					Info: plugins.PluginInfo{
-						Author: plugins.PluginInfoLink{
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
 							Name: "Test Inc.",
 							URL:  "http://test.com",
 						},
 						Description: "Official Grafana Test App & Dashboard bundle",
 						Version:     "1.0.0",
-						Links: []plugins.PluginInfoLink{
+						Links: []plugins.InfoLink{
 							{Name: "Project site", URL: "http://project.com"},
 							{Name: "License & Terms", URL: "http://license.com"},
 						},
-						Logos: plugins.PluginLogos{
+						Logos: plugins.Logos{
 							Small: "public/plugins/test-app/img/logo_small.png",
 							Large: "public/plugins/test-app/img/logo_large.png",
 						},
-						Screenshots: []plugins.PluginScreenshots{
+						Screenshots: []plugins.Screenshots{
 							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
 							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 						},
 						Updated: "2015-02-10",
 					},
-					Dependencies: plugins.PluginDependencies{
+					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
-						Plugins: []plugins.PluginDependencyItem{
+						Plugins: []plugins.Dependency{
 							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 						},
 					},
-					Includes: []*plugins.PluginInclude{
+					Includes: []*plugins.Includes{
 						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
 						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
 						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
@@ -307,12 +307,12 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			ID:   "test-ds",
 			Type: "datasource",
 			Name: "Parent",
-			Info: plugins.PluginInfo{
-				Author: plugins.PluginInfoLink{
+			Info: plugins.Info{
+				Author: plugins.InfoLink{
 					Name: "Grafana Labs",
 					URL:  "http://grafana.com",
 				},
-				Logos: plugins.PluginLogos{
+				Logos: plugins.Logos{
 					Small: "public/img/icn-datasource.svg",
 					Large: "public/img/icn-datasource.svg",
 				},
@@ -320,9 +320,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				Version:     "1.0.0",
 				Updated:     "2020-10-20",
 			},
-			Dependencies: plugins.PluginDependencies{
+			Dependencies: plugins.Dependencies{
 				GrafanaVersion: "*",
-				Plugins:        []plugins.PluginDependencyItem{},
+				Plugins:        []plugins.Dependency{},
 			},
 			Backend: true,
 		},
@@ -340,12 +340,12 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			ID:   "test-panel",
 			Type: "panel",
 			Name: "Child",
-			Info: plugins.PluginInfo{
-				Author: plugins.PluginInfoLink{
+			Info: plugins.Info{
+				Author: plugins.InfoLink{
 					Name: "Grafana Labs",
 					URL:  "http://grafana.com",
 				},
-				Logos: plugins.PluginLogos{
+				Logos: plugins.Logos{
 					Small: "public/img/icn-panel.svg",
 					Large: "public/img/icn-panel.svg",
 				},
@@ -353,9 +353,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				Version:     "1.0.1",
 				Updated:     "2020-10-30",
 			},
-			Dependencies: plugins.PluginDependencies{
+			Dependencies: plugins.Dependencies{
 				GrafanaVersion: "*",
-				Plugins:        []plugins.PluginDependencyItem{},
+				Plugins:        []plugins.Dependency{},
 			},
 		},
 		Module:        "plugins/test-panel/module",
@@ -428,35 +428,35 @@ func TestLoader_readPluginJSON(t *testing.T) {
 				ID:   "test-app",
 				Type: "app",
 				Name: "Test App",
-				Info: plugins.PluginInfo{
-					Author: plugins.PluginInfoLink{
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
 						Name: "Test Inc.",
 						URL:  "http://test.com",
 					},
 					Description: "Official Grafana Test App & Dashboard bundle",
 					Version:     "1.0.0",
-					Links: []plugins.PluginInfoLink{
+					Links: []plugins.InfoLink{
 						{Name: "Project site", URL: "http://project.com"},
 						{Name: "License & Terms", URL: "http://license.com"},
 					},
-					Logos: plugins.PluginLogos{
+					Logos: plugins.Logos{
 						Small: "img/logo_small.png",
 						Large: "img/logo_large.png",
 					},
-					Screenshots: []plugins.PluginScreenshots{
+					Screenshots: []plugins.Screenshots{
 						{Path: "img/screenshot1.png", Name: "img1"},
 						{Path: "img/screenshot2.png", Name: "img2"},
 					},
 					Updated: "2015-02-10",
 				},
-				Dependencies: plugins.PluginDependencies{
+				Dependencies: plugins.Dependencies{
 					GrafanaVersion: "3.x.x",
-					Plugins: []plugins.PluginDependencyItem{
+					Plugins: []plugins.Dependency{
 						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 					},
 				},
-				Includes: []*plugins.PluginInclude{
+				Includes: []*plugins.Includes{
 					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard"},
 					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard"},
 					{Name: "Nginx Panel", Type: "panel"},

@@ -30,7 +30,7 @@ type Plugin struct {
 	Parent         *Plugin
 	Children       []*Plugin
 	SignedFiles    PluginFiles
-	SignatureError *PluginSignatureError
+	SignatureError *SignatureError
 
 	// GCOM update checker fields
 	GrafanaComVersion   string
@@ -48,18 +48,18 @@ type Plugin struct {
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
-	ID           string             `json:"id"`
-	Type         Type               `json:"type"`
-	Name         string             `json:"name"`
-	Info         PluginInfo         `json:"info"`
-	Dependencies PluginDependencies `json:"dependencies"`
-	Includes     []*PluginInclude   `json:"includes"`
-	State        State              `json:"state,omitempty"`
-	Category     string             `json:"category"`
-	HideFromList bool               `json:"hideFromList,omitempty"`
-	Preload      bool               `json:"preload"`
-	Backend      bool               `json:"backend"`
-	Routes       []*Route           `json:"routes"`
+	ID           string       `json:"id"`
+	Type         Type         `json:"type"`
+	Name         string       `json:"name"`
+	Info         Info         `json:"info"`
+	Dependencies Dependencies `json:"dependencies"`
+	Includes     []*Includes  `json:"includes"`
+	State        ReleaseState `json:"state,omitempty"`
+	Category     string       `json:"category"`
+	HideFromList bool         `json:"hideFromList,omitempty"`
+	Preload      bool         `json:"preload"`
+	Backend      bool         `json:"backend"`
+	Routes       []*Route     `json:"routes"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -262,8 +262,8 @@ type PluginClient interface {
 	backend.StreamHandler
 }
 
-func (p *Plugin) StaticRoute() *PluginStaticRoute {
-	return &PluginStaticRoute{Directory: p.PluginDir, PluginID: p.ID}
+func (p *Plugin) StaticRoute() *StaticRoute {
+	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {
@@ -357,10 +357,8 @@ func (pt Type) IsValid() bool {
 type PluginDTO struct {
 	JSONData
 
-	// Signature fields
 	Signature SignatureStatus `json:"signature"`
 
-	// SystemJS fields
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
 }

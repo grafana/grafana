@@ -489,7 +489,7 @@ func (m *PluginManager) Install(ctx context.Context, pluginID, version string, o
 		}
 
 		if plugin.Info.Version == version {
-			return plugins.DuplicatePluginError{
+			return plugins.DuplicateError{
 				PluginID:          plugin.ID,
 				ExistingPluginDir: plugin.PluginDir,
 			}
@@ -582,8 +582,8 @@ func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.P
 	return nil
 }
 
-func (m *PluginManager) Routes() []*plugins.PluginStaticRoute {
-	staticRoutes := []*plugins.PluginStaticRoute{}
+func (m *PluginManager) Routes() []*plugins.StaticRoute {
+	staticRoutes := []*plugins.StaticRoute{}
 
 	for _, p := range m.Plugins() {
 		staticRoutes = append(staticRoutes, p.StaticRoute())

@@ -191,7 +191,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
 			err := pm.Install(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
-			assert.Equal(t, plugins.DuplicatePluginError{
+			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
 			}, err)
@@ -509,7 +509,7 @@ func createDSPlugin(pluginID, version string, class plugins.Class, managed, back
 			ID:      pluginID,
 			Type:    plugins.DataSource,
 			Backend: backend,
-			Info: plugins.PluginInfo{
+			Info: plugins.Info{
 				Version: version,
 			},
 		},

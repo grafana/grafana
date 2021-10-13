@@ -70,7 +70,7 @@ type CoreBackendRegistrar interface {
 }
 
 type StaticRouteResolver interface {
-	Routes() []*PluginStaticRoute
+	Routes() []*StaticRoute
 }
 
 type PluginDashboardManager interface {

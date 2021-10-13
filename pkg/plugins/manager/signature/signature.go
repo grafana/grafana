@@ -26,7 +26,7 @@ func NewValidator(cfg *setting.Cfg) Validator {
 	}
 }
 
-func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureError {
+func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	if plugin.Signature == plugins.SignatureValid {
 		logger.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
@@ -58,7 +58,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureErr
 	case plugins.SignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			logger.Debug("Plugin is unsigned", "pluginID", plugin.ID)
-			return &plugins.PluginSignatureError{
+			return &plugins.SignatureError{
 				PluginID:        plugin.ID,
 				SignatureStatus: plugins.SignatureUnsigned,
 			}
@@ -67,20 +67,20 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.PluginSignatureErr
 		return nil
 	case plugins.SignatureInvalid:
 		logger.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
-		return &plugins.PluginSignatureError{
+		return &plugins.SignatureError{
 			PluginID:        plugin.ID,
 			SignatureStatus: plugins.SignatureInvalid,
 		}
 	case plugins.SignatureModified:
 		logger.Debug("Plugin has a modified signature", "pluginID", plugin.ID)
-		return &plugins.PluginSignatureError{
+		return &plugins.SignatureError{
 			PluginID:        plugin.ID,
 			SignatureStatus: plugins.SignatureModified,
 		}
 	default:
 		logger.Debug("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
 			plugin.Signature)
-		return &plugins.PluginSignatureError{
+		return &plugins.SignatureError{
 			PluginID: plugin.ID,
 		}
 	}

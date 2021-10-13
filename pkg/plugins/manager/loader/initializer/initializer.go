@@ -39,7 +39,7 @@ func New(cfg *setting.Cfg, license models.Licensing) Initializer {
 
 func (i *Initializer) Initialize(p *plugins.Plugin) error {
 	if len(p.Dependencies.Plugins) == 0 {
-		p.Dependencies.Plugins = []plugins.PluginDependencyItem{}
+		p.Dependencies.Plugins = []plugins.Dependency{}
 	}
 
 	if p.Dependencies.GrafanaVersion == "" {
