@@ -24,7 +24,7 @@ import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
-import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
+import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { loadSnapshotData } from '../../../features/dashboard/utils/loadSnapshotData';
 import { annotationsFromDataFrames } from '../../../features/query/state/DashboardQueryRunner/utils';
 
