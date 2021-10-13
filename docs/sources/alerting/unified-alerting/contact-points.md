@@ -133,32 +133,32 @@ Example JSON body:
 
 #### Body
 
-| Key               | Type                      | Description                                                                         |
-| ----------------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| receiver          | string                    | Name of the webhook                                                                 |
-| status            | string                    | Current status of the alert, `firing` or `resolved`                                 |
-| orgId             | number                    | ID of the organization related to the payload                                       |
-| alerts            | array of [alerts](#alert) | Alerts that are triggering                                                          |
-| groupLabels       | object                    | Labels that are used for grouping, map of string keys to string values      |
-| commonLabels      | object                    | Labels that all alarms have in common, Key/Value object where both are strings      |
-| commonAnnotations | object                    | Annotations that all alarms have in common, Key/Value object where both are strings |
-| externalURL       | string                    | External URL to the Grafana instance sending this webhook                           |
-| version           | string                    | Version of the payload                                                              |
-| groupKey          | string                    | Key that is used for grouping                                                       |
-| truncatedAlerts   | number                    | Number of alerts that were truncated                                               |
-| title             | string                    | **Will be deprecated soon**                                                         |
-| state             | string                    | **Will be deprecated soon**                                                         |
-| message           | string                    | **Will be deprecated soon**                                                         |
+| Key               | Type                      | Description                                                                     |
+| ----------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| receiver          | string                    | Name of the webhook                                                             |
+| status            | string                    | Current status of the alert, `firing` or `resolved`                             |
+| orgId             | number                    | ID of the organization related to the payload                                   |
+| alerts            | array of [alerts](#alert) | Alerts that are triggering                                                      |
+| groupLabels       | object                    | Labels that are used for grouping, map of string keys to string values          |
+| commonLabels      | object                    | Labels that all alarms have in common, map of string keys to string values      |
+| commonAnnotations | object                    | Annotations that all alarms have in common, map of string keys to string values |
+| externalURL       | string                    | External URL to the Grafana instance sending this webhook                       |
+| version           | string                    | Version of the payload                                                          |
+| groupKey          | string                    | Key that is used for grouping                                                   |
+| truncatedAlerts   | number                    | Number of alerts that were truncated                                            |
+| title             | string                    | **Will be deprecated soon**                                                     |
+| state             | string                    | **Will be deprecated soon**                                                     |
+| message           | string                    | **Will be deprecated soon**                                                     |
 
 #### Alert
 
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
 | status       | string | Current status of the alert, `firing` or `resolved`                                |
-| labels       | object | Labels that are part of this alert, map of string keys to string values        |
-| annotations  | object | Annotations that are part of this alert, Key/Value object where both are strings   |
-| startsAt     | string | Start time of the alert                                                             |
-| endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`       |
+| labels       | object | Labels that are part of this alert, map of string keys to string values            |
+| annotations  | object | Annotations that are part of this alert, map of string keys to string values       |
+| startsAt     | string | Start time of the alert                                                            |
+| endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`   |
 | valueString  | string | Values that triggered the current status                                           |
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
