@@ -105,7 +105,7 @@ describe('ApiKeysPage', () => {
 
       setSearchQueryMock.mockClear();
       expect(screen.getByPlaceholderText(/search keys/i)).toBeInTheDocument();
-      await userEvent.type(screen.getByPlaceholderText(/search keys/i), 'First');
+      userEvent.type(screen.getByPlaceholderText(/search keys/i), 'First');
       expect(setSearchQueryMock).toHaveBeenCalledTimes(5);
     });
   });
@@ -176,8 +176,8 @@ describe('ApiKeysPage', () => {
 
       addApiKeyMock.mockClear();
       userEvent.click(screen.getByRole('button', { name: /add api key/i }));
-      await userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
-      await userEvent.type(screen.getByPlaceholderText(/1d/i), '60x');
+      userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
+      userEvent.type(screen.getByPlaceholderText(/1d/i), '60x');
       expect(screen.queryByText(/not a valid duration/i)).not.toBeInTheDocument();
       userEvent.click(screen.getByRole('button', { name: /^add$/i }));
       expect(screen.getByText(/not a valid duration/i)).toBeInTheDocument();
@@ -197,8 +197,8 @@ async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: bool
   expect(screen.getByPlaceholderText(/1d/i)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /^add$/i })).toBeInTheDocument();
 
-  await userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
-  await userEvent.type(screen.getByPlaceholderText(/1d/i), '60s');
+  userEvent.type(screen.getByPlaceholderText(/name/i), 'Test');
+  userEvent.type(screen.getByPlaceholderText(/1d/i), '60s');
   userEvent.click(screen.getByRole('button', { name: /^add$/i }));
   expect(addApiKeyMock).toHaveBeenCalledTimes(1);
   expect(addApiKeyMock).toHaveBeenCalledWith(

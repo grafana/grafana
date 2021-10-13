@@ -235,7 +235,7 @@ describe('UserProfileEditPage', () => {
 
         const { email, saveProfile } = getSelectors();
         userEvent.clear(email());
-        await userEvent.type(email(), 'test@test.se');
+        userEvent.type(email(), 'test@test.se');
         userEvent.click(saveProfile());
 
         await waitFor(() => expect(props.updateUserProfile).toHaveBeenCalledTimes(1));
