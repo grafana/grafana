@@ -122,12 +122,16 @@ export const dateTimeForTimeZone = (
 };
 
 export const setWeekStart = (weekStart: number) => {
+  const suffix = '-weekStart';
+  const language = getLocale().replace(suffix, '');
   if (weekStart !== -1) {
-    const language = getLocale();
-    moment.updateLocale(language, {
+    moment.locale(language + suffix, {
+      parentLocale: language,
       week: {
         dow: weekStart,
       },
     });
+  } else {
+    setLocale(language);
   }
 };
