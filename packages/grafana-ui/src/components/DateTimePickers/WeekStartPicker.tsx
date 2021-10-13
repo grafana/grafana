@@ -14,7 +14,7 @@ export interface Props {
   inputId?: string;
 }
 
-const weekStarts: SelectableValue[] = [
+const weekStarts: Array<SelectableValue<number>> = [
   { value: -1, label: 'Default' },
   { value: 6, label: 'Saturday' },
   { value: 0, label: 'Sunday' },
