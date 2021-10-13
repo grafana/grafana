@@ -9,8 +9,8 @@
     "slate",
     "slate-plain-serializer",
     "systemjs",
-    "ts-loader",
-    "ora"
+    "ts-loader", // we should remove ts-loader and use babel-loader instead
+    "ora" // we should bump this once we move to esm modules
   ],
   "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies"],
