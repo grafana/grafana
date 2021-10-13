@@ -22,13 +22,14 @@ export class IconPanel extends Component<Props> {
 
   constructor(props: Props) {
     super(props);
-    this.initElement(props);
+    this.element = this.initElement(props);
   }
 
   initElement = (props: Props) => {
     this.element = new ElementState(iconItem, props.options.root as any);
     this.element.updateSize(props.width, props.height);
     this.element.updateData(this.dims);
+    return this.element;
   };
 
   dims: DimensionContext = {
