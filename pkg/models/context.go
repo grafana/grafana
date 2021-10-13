@@ -30,10 +30,11 @@ type ReqContext struct {
 func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
 	data := struct {
 		Title     string
+		AppTitle  string
 		AppSubUrl string
 		Theme     string
 		ErrorMsg  error
-	}{title, cfg.AppSubURL, "dark", nil}
+	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.Prod {
