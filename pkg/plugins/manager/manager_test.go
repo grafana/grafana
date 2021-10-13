@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -58,7 +57,7 @@ func TestPluginManager_init(t *testing.T) {
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", plugins.External, true, true)
+		p, pc := createPlugin(testPluginID, "", plugins.External, true, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -81,7 +80,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", plugins.External, false, true)
+		p, pc := createPlugin(testPluginID, "", plugins.External, false, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -104,7 +103,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Managed non-backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", plugins.External, false, true)
+		p, pc := createPlugin(testPluginID, "", plugins.External, false, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -127,7 +126,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged non-backend plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", plugins.External, false, false)
+		p, pc := createPlugin(testPluginID, "", plugins.External, false, false)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -150,15 +149,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 }
 
-func TestPluginManager_Run(t *testing.T) {
-	t.Run("Cancelled context will cause running plugins to stop", func(t *testing.T) {
-
-	})
-}
-
 func TestPluginManager_Installer(t *testing.T) {
-	t.Run("Install base case", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "1.0.0", plugins.External, true, true)
+	t.Run("Install", func(t *testing.T) {
+		p, pc := createPlugin(testPluginID, "1.0.0", plugins.External, true, true)
 
 		l := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -197,12 +190,34 @@ func TestPluginManager_Installer(t *testing.T) {
 			}, err)
 		})
 
-		t.Run("Uninstall base case", func(t *testing.T) {
+		t.Run("Update", func(t *testing.T) {
+			p, pc := createPlugin(testPluginID, "1.2.0", plugins.External, true, true)
+
+			l := &fakeLoader{
+				mockedLoadedPlugins: []*plugins.Plugin{p},
+			}
+			pm.pluginLoader = l
+
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.InstallOpts{})
+			assert.NoError(t, err)
+
+			assert.Equal(t, 2, i.installCount)
+			assert.Equal(t, 1, i.uninstallCount)
+
+			assert.Equal(t, 1, pc.startCount)
+			assert.Equal(t, 0, pc.stopCount)
+			assert.False(t, pc.exited)
+			assert.False(t, pc.decommissioned)
+			assert.Equal(t, p, pm.Plugin(testPluginID))
+			assert.Len(t, pm.Plugins(), 1)
+		})
+
+		t.Run("Uninstall", func(t *testing.T) {
 			err := pm.Remove(context.Background(), p.ID)
 			require.NoError(t, err)
 
-			assert.Equal(t, 1, i.installCount)
-			assert.Equal(t, 1, i.uninstallCount)
+			assert.Equal(t, 2, i.installCount)
+			assert.Equal(t, 2, i.uninstallCount)
 
 			assert.Nil(t, pm.Plugin(p.ID))
 			assert.Len(t, pm.Routes(), 0)
@@ -215,7 +230,7 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 
 	t.Run("Can't update core plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", plugins.Core, true, true)
+		p, pc := createPlugin(testPluginID, "", plugins.Core, true, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -246,7 +261,7 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 
 	t.Run("Can't update bundled plugin", func(t *testing.T) {
-		p, pc := createDSPlugin(testPluginID, "", plugins.Bundled, true, true)
+		p, pc := createPlugin(testPluginID, "", plugins.Bundled, true, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -277,7 +292,7 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 }
 
-func TestManager(t *testing.T) {
+func TestPluginManager_lifecycle_managed(t *testing.T) {
 	newScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Managed plugin scenario", func(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
@@ -416,25 +431,12 @@ func TestManager(t *testing.T) {
 						require.Equal(t, http.StatusOK, w.Code)
 					})
 				})
-
-				t.Run("Should be able to decommission a running plugin", func(t *testing.T) {
-					require.True(t, ctx.manager.isRegistered(testPluginID))
-
-					err := ctx.manager.unregisterAndStop(context.Background(), ctx.plugin)
-					require.NoError(t, err)
-
-					require.Equal(t, 2, ctx.pluginClient.stopCount)
-					require.False(t, ctx.manager.isRegistered(testPluginID))
-					p := ctx.manager.plugins[testPluginID]
-					require.Nil(t, p)
-
-					err = ctx.manager.start(context.Background(), ctx.plugin)
-					require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
-				})
 			})
 		})
 	})
+}
 
+func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 	newScenario(t, false, func(t *testing.T, ctx *managerScenarioCtx) {
 		t.Run("Unmanaged plugin scenario", func(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
@@ -502,7 +504,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	return pm
 }
 
-func createDSPlugin(pluginID, version string, class plugins.Class, managed, backend bool) (*plugins.Plugin, *fakePluginClient) {
+func createPlugin(pluginID, version string, class plugins.Class, managed, backend bool) (*plugins.Plugin, *fakePluginClient) {
 	p := &plugins.Plugin{
 		Class: class,
 		JSONData: plugins.JSONData{
@@ -559,7 +561,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		manager: manager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createDSPlugin(testPluginID, "", plugins.Core, managed, true)
+	ctx.plugin, ctx.pluginClient = createPlugin(testPluginID, "", plugins.Core, managed, true)
 
 	fn(t, ctx)
 }
@@ -571,7 +573,7 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 }
 
 type fakePluginInstaller struct {
-	installer.Installer
+	plugins.Installer
 
 	installCount   int
 	uninstallCount int
