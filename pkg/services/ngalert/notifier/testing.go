@@ -68,15 +68,15 @@ func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 }
 
 type FakeKVStore struct {
-	mtx      sync.Mutex
-	store    map[int64]map[string]map[string]string
+	mtx   sync.Mutex
+	store map[int64]map[string]map[string]string
 }
 
 func newFakeKVStore(t *testing.T) *FakeKVStore {
 	t.Helper()
 
 	return &FakeKVStore{
-		store:    map[int64]map[string]map[string]string{},
+		store: map[int64]map[string]map[string]string{},
 	}
 }
 
