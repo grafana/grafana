@@ -220,7 +220,7 @@ export const Components = {
     container: 'Time zone picker select container',
   },
   WeekStartPicker: {
-    container: 'Week start picker select container',
+    container: 'Choose starting day of the week',
   },
   TraceViewer: {
     spanBar: () => '[data-test-id="SpanBar--wrapper"]',
