@@ -142,7 +142,6 @@ func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string,
 		if keyMap, exists := namespaceMap[namespace]; exists {
 			for k := range keyMap {
 				if strings.HasPrefix(k, keyPrefix) {
-					//orgCopy := orgID
 					keys = append(keys, kvstore.Key{
 						OrgId:     orgID,
 						Namespace: namespace,
