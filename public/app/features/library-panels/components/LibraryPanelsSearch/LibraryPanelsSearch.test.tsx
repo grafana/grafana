@@ -8,7 +8,7 @@ import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSe
 import * as api from '../../state/api';
 import { LibraryElementKind, LibraryElementsSearchResult } from '../../types';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import * as viztypepicker from '../../../dashboard/components/VizTypePicker/VizTypePicker';
+import * as viztypepicker from '../../../panel/components/VizTypePicker/VizTypePicker';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
