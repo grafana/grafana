@@ -35,11 +35,12 @@ var (
 )
 
 type DatasourceInfo struct {
-	ID             int64
-	HTTPClientOpts sdkhttpclient.Options
-	URL            string
-	HTTPMethod     string
-	TimeInterval   string
+	ID           int64
+	URL          string
+	HTTPMethod   string
+	TimeInterval string
+
+	promClient apiv1.API
 }
 
 type QueryModel struct {
@@ -54,17 +55,15 @@ type QueryModel struct {
 }
 
 type Service struct {
-	httpClientProvider httpclient.Provider
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	plog.Debug("initializing")
-	im := datasource.NewInstanceManager(newInstanceSettings())
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
-		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 		im:                 im,
 	}
@@ -80,7 +79,7 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 	return s, nil
 }
 
-func newInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
@@ -117,13 +116,19 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			}
 		}
 
-		mdl := DatasourceInfo{
-			ID:             settings.ID,
-			URL:            settings.URL,
-			HTTPClientOpts: httpCliOpts,
-			HTTPMethod:     httpMethod,
-			TimeInterval:   timeInterval,
+		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
+		if err != nil {
+			return nil, err
 		}
+
+		mdl := DatasourceInfo{
+			ID:           settings.ID,
+			URL:          settings.URL,
+			HTTPMethod:   httpMethod,
+			TimeInterval: timeInterval,
+			promClient:   client,
+		}
+
 		return mdl, nil
 	}
 }
@@ -138,10 +143,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-	client, err := getClient(dsInfo, s)
-	if err != nil {
-		return nil, err
-	}
+
+	client := dsInfo.promClient
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -185,24 +188,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
-	opts := &sdkhttpclient.Options{
-		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
-		TLS:       dsInfo.HTTPClientOpts.TLS,
-		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
-		Headers:   dsInfo.HTTPClientOpts.Headers,
-	}
-
+func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
 	customMiddlewares := customQueryParametersMiddleware(plog)
-	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
+	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
-	roundTripper, err := s.httpClientProvider.GetTransport(*opts)
+	roundTripper, err := clientProvider.GetTransport(httpOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := api.Config{
-		Address:      dsInfo.URL,
+		Address:      url,
 		RoundTripper: roundTripper,
 	}
 
