@@ -62,7 +62,7 @@ Grafana alerting UI allows you to configure contact points for the Grafana manag
 
 ## Webhook
 
-Example json body:
+Example JSON body:
 
 ```json
 {
@@ -139,13 +139,13 @@ Example json body:
 | status            | string                    | Current status of the alert, `firing` or `resolved`                                 |
 | orgId             | number                    | ID of the organization related to the payload                                       |
 | alerts            | array of [alerts](#alert) | Alerts that are triggering                                                          |
-| groupLabels       | object                    | Labels that are used for grouping, Key/Value object where both are strings          |
+| groupLabels       | object                    | Labels that are used for grouping, map of string keys to string values      |
 | commonLabels      | object                    | Labels that all alarms have in common, Key/Value object where both are strings      |
 | commonAnnotations | object                    | Annotations that all alarms have in common, Key/Value object where both are strings |
-| externalURL       | string                    | External URL to the grafana instance sending this webhook                           |
+| externalURL       | string                    | External URL to the Grafana instance sending this webhook                           |
 | version           | string                    | Version of the payload                                                              |
 | groupKey          | string                    | Key that is used for grouping                                                       |
-| truncatedAlerts   | number                    | Amount of alerts that where truncated                                               |
+| truncatedAlerts   | number                    | Number of alerts that were truncated                                               |
 | title             | string                    | **Will be deprecated soon**                                                         |
 | state             | string                    | **Will be deprecated soon**                                                         |
 | message           | string                    | **Will be deprecated soon**                                                         |
@@ -155,30 +155,30 @@ Example json body:
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
 | status       | string | Current status of the alert, `firing` or `resolved`                                |
-| labels       | object | Labels that are part of this alert, Key/Value object where both are strings        |
+| labels       | object | Labels that are part of this alert, map of string keys to string values        |
 | annotations  | object | Annotations that are part of this alert, Key/Value object where both are strings   |
-| startsAt     | string | Starttime of the alert                                                             |
-| endsAt       | string | Endtime of the alert, default value when not resolved `0001-01-01T00:00:00Z`       |
+| startsAt     | string | Start time of the alert                                                             |
+| endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`       |
 | valueString  | string | Values that triggered the current status                                           |
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
-| fingerprint  | string | The labels fingerprint, Alarms with the same labels will have the same fingerprint |
+| fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
 | dashboardURL | string | **Will be deprecated soon**                                                        |
 | panelURL     | string | **Will be deprecated soon**                                                        |
 
 ### Breaking changes when updating to unified alerting
 
-Unified alerting introduced a whole new way to mange your alerting rules and alerts in grafana.
-As part of this big change there are some breaking changes that we'll explain in detail.
+Grafana 8 alerts introduce a new way to manage your alerting rules and alerts in Grafana.
+As part of this change, there are some breaking changes that we will explain in details.
 
 #### Multiple Alerts in one payload
 
-As we now enable [multi deminsional alerting]({{< relref "../difference-old-new.md#multi-dimensional-alerting" >}}) a payload
+As we now enable [multi dimensional alerting]({{< relref "../difference-old-new.md#multi-dimensional-alerting" >}}) a payload
 consists of an array of alerts.
 
-#### Removed dashboard related fields
+#### Removed fields related to dashboards
 
-As alerts are not coupled to dashboards anymore the fields related to dashboards
+Alerts are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
 where removed. The removed fields are `dashboardId` and `panelId`.
 
 ## Manage contact points for an external Alertmanager
