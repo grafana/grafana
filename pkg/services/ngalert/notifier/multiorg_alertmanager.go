@@ -261,7 +261,7 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	// organizations.
 	storedFiles := []string{notificationLogFilename, silencesFilename}
 	for _, key := range storedFiles {
-		items, err := moa.kvStore.List(ctx, KVNamespace, key)
+		items, err := moa.kvStore.List(ctx, kvstore.AllOrganizations, KVNamespace, key)
 		if err != nil {
 			moa.logger.Error("failed to fetch items from kvstore", "err", err,
 				"namespace", KVNamespace, "key", key)

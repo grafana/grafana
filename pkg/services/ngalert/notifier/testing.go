@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 
@@ -133,20 +134,22 @@ func (fkv *FakeKVStore) Del(_ context.Context, orgId int64, namespace string, ke
 	return nil
 }
 
-func (fkv *FakeKVStore) List(ctx context.Context, namespace string, key string) ([]kvstore.Item, error) {
+func (fkv *FakeKVStore) List(ctx context.Context, orgID int64, namespace string, keyPrefix string) ([]kvstore.Item, error) {
 	fkv.mtx.Lock()
 	defer fkv.mtx.Unlock()
 	var items []kvstore.Item
 	for orgID, namespaceMap := range fkv.store {
 		if keyMap, exists := namespaceMap[namespace]; exists {
-			if value, exists := keyMap[key]; exists {
-				orgCopy := orgID
-				items = append(items, kvstore.Item{
-					OrgId:     &orgCopy,
-					Namespace: &namespace,
-					Key:       &key,
-					Value:     value,
-				})
+			for k, v := range keyMap {
+				if strings.HasPrefix(k, keyPrefix) {
+					orgCopy := orgID
+					items = append(items, kvstore.Item{
+						OrgId:     &orgCopy,
+						Namespace: &namespace,
+						Key:       &keyPrefix,
+						Value:     v,
+					})
+				}
 			}
 		}
 	}
