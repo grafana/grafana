@@ -2698,7 +2698,7 @@ __metadata:
     "@testing-library/jest-dom": 5.11.9
     "@types/classnames": 2.2.7
     "@types/common-tags": ^1.8.0
-    "@types/d3": 5.7.2
+    "@types/d3": 7.0.0
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
     "@types/jest": 26.0.15
@@ -6899,13 +6899,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-array@npm:^1":
-  version: 1.2.9
-  resolution: "@types/d3-array@npm:1.2.9"
-  checksum: baa59c95d31fe541ed6bc45c2b508f73231353b910dfe7eb5ae3d66d3b38767677829802bfd86a1a2af435e48c218358d663343374846e6141d741c7c5ab0a91
-  languageName: node
-  linkType: hard
-
 "@types/d3-axis@npm:*":
   version: 3.0.1
   resolution: "@types/d3-axis@npm:3.0.1"
@@ -6931,13 +6924,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-collection@npm:*":
-  version: 1.0.10
-  resolution: "@types/d3-collection@npm:1.0.10"
-  checksum: f6904524148f512ef1630667edbef5cd2255bacc9efe24401baf8e155e849b352c01688eb3176ccaf2cab291dd87abce2a731926490221752464bd4bfae01766
-  languageName: node
-  linkType: hard
-
 "@types/d3-color@npm:*":
   version: 3.0.2
   resolution: "@types/d3-color@npm:3.0.2"
@@ -6959,6 +6945,13 @@ __metadata:
     "@types/d3-array": "*"
     "@types/geojson": "*"
   checksum: 2f7d7f94913caf529730afed45ad73d057b143ba11d36e1918efc2fd2f52610f48e4510d9b34b606792048c53d405910da1d5014d8dd57f2e064b26ed5578c4c
+  languageName: node
+  linkType: hard
+
+"@types/d3-delaunay@npm:*":
+  version: 6.0.0
+  resolution: "@types/d3-delaunay@npm:6.0.0"
+  checksum: 8012edee7f64b6e01f2bafc17ade8e0bea0e87df55d6b42e20059d081226a6c441dd7cb4276de810133e1c44ae2508bc3dba58387f60087ace58d0e1c139a2f7
   languageName: node
   linkType: hard
 
@@ -7185,13 +7178,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-voronoi@npm:*":
-  version: 1.1.9
-  resolution: "@types/d3-voronoi@npm:1.1.9"
-  checksum: 604e8c4fb4d65f9fc6a549fc3a32a8e9bc7e54e566a2ca6a834f5ff91e41728b3289cfc5c85dd96283fac772c7b9184e023702ec7230e2646a97b78907ddbecb
-  languageName: node
-  linkType: hard
-
 "@types/d3-zoom@npm:*":
   version: 3.0.1
   resolution: "@types/d3-zoom@npm:3.0.1"
@@ -7202,17 +7188,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:5.7.2":
-  version: 5.7.2
-  resolution: "@types/d3@npm:5.7.2"
+"@types/d3@npm:7.0.0":
+  version: 7.0.0
+  resolution: "@types/d3@npm:7.0.0"
   dependencies:
-    "@types/d3-array": ^1
+    "@types/d3-array": "*"
     "@types/d3-axis": "*"
     "@types/d3-brush": "*"
     "@types/d3-chord": "*"
-    "@types/d3-collection": "*"
     "@types/d3-color": "*"
     "@types/d3-contour": "*"
+    "@types/d3-delaunay": "*"
     "@types/d3-dispatch": "*"
     "@types/d3-drag": "*"
     "@types/d3-dsv": "*"
@@ -7235,9 +7221,8 @@ __metadata:
     "@types/d3-time-format": "*"
     "@types/d3-timer": "*"
     "@types/d3-transition": "*"
-    "@types/d3-voronoi": "*"
     "@types/d3-zoom": "*"
-  checksum: 64609ecb792df8cb556b36f30d0e729762f86b39aac56b346e8f9d08a67b2daa4ff0c83763e228c540b29e51ee005d31adc5be2c0ce4da70167c2bc901640207
+  checksum: 4d07bd9bcde795782976e9f40b818a1eef2ebc3778d8687e09f748831e6088c20b5d8a4455e82c11f99c9dca9e1bdde68576862c525459a76492f17d6c0f3a8b
   languageName: node
   linkType: hard
 
@@ -17839,7 +17824,7 @@ fsevents@~2.1.2:
     "@types/classnames": 2.2.9
     "@types/clipboard": 2.0.1
     "@types/common-tags": ^1.8.0
-    "@types/d3": 5.7.2
+    "@types/d3": 7.0.0
     "@types/d3-force": ^2.1.0
     "@types/d3-scale-chromatic": 1.3.1
     "@types/debounce-promise": 3.1.3
