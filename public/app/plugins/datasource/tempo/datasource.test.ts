@@ -209,7 +209,7 @@ const backendSrvWithPrometheus = {
     if (uid === 'prom') {
       return {
         query() {
-          return of({ data: [totalsPromMetric] }, { data: [secondsPromMetric] });
+          return of({ data: [totalsPromMetric, secondsPromMetric] });
         },
       };
     }
