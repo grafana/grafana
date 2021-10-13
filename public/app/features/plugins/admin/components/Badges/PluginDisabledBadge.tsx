@@ -1,21 +1,21 @@
 import React from 'react';
-import { PluginErrorCode } from '@grafana/data';
+import { PluginSignatureErrorCode } from '@grafana/data';
 import { Badge } from '@grafana/ui';
 
-type Props = { error?: PluginErrorCode };
+type Props = { error?: PluginSignatureErrorCode };
 
 export function PluginDisabledBadge({ error }: Props): React.ReactElement {
   const tooltip = errorCodeToTooltip(error);
   return <Badge icon="exclamation-triangle" text="Disabled" color="red" tooltip={tooltip} />;
 }
 
-function errorCodeToTooltip(error?: PluginErrorCode): string | undefined {
+function errorCodeToTooltip(error?: PluginSignatureErrorCode): string | undefined {
   switch (error) {
-    case PluginErrorCode.modifiedSignature:
+    case PluginSignatureErrorCode.modifiedSignature:
       return 'Plugin disabled due to modified content';
-    case PluginErrorCode.invalidSignature:
+    case PluginSignatureErrorCode.invalidSignature:
       return 'Plugin disabled due to invalid plugin signature';
-    case PluginErrorCode.missingSignature:
+    case PluginSignatureErrorCode.missingSignature:
       return 'Plugin disabled due to missing plugin signature';
     default:
       return `Plugin disabled due to unkown error: ${error}`;

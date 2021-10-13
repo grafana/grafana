@@ -1,6 +1,6 @@
 import React from 'react';
 import { PluginListPage, Props } from './PluginListPage';
-import { NavModel, PluginErrorCode, PluginMeta } from '@grafana/data';
+import { NavModel, PluginSignatureErrorCode, PluginMeta } from '@grafana/data';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setPluginsSearchQuery } from './state/reducers';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -80,7 +80,7 @@ describe('Render', () => {
 
   describe('Plugin signature errors', () => {
     it('should render notice if there are plugins with signing errors', async () => {
-      errorsReturnMock = [{ pluginId: 'invalid-sig', errorCode: PluginErrorCode.invalidSignature }];
+      errorsReturnMock = [{ pluginId: 'invalid-sig', errorCode: PluginSignatureErrorCode.invalidSignature }];
       setup({
         hasFetched: true,
       });

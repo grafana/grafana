@@ -85,7 +85,7 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, httpClientProvi
 		QueryDataHandler: s,
 	})
 
-	if err := registrar.LoadAndRegister("cloud-monitoring", factory); err != nil {
+	if err := registrar.LoadAndRegister("stackdriver", factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s

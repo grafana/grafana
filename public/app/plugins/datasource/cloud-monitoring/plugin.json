@@ -1,7 +1,7 @@
 {
   "name": "Google Cloud Monitoring",
   "type": "datasource",
-  "id": "cloud-monitoring",
+  "id": "stackdriver",
   "category": "cloud",
 
   "metrics": true,

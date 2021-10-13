@@ -6,7 +6,7 @@ import { getAllPluginsErrors } from './state/selectors';
 import { loadPlugins, loadPluginsErrors } from './state/actions';
 import useAsync from 'react-use/lib/useAsync';
 import { connect, ConnectedProps } from 'react-redux';
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { css } from '@emotion/css';
 
 const mapStateToProps = (state: StoreState) => ({
@@ -64,7 +64,7 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
               <HorizontalGroup spacing="sm" justify="flex-start" align="center">
                 <strong>{e.pluginId}</strong>
                 <PluginSignatureBadge
-                  status={mapPluginErrorCodeToSignatureStatus(e.errorCode)}
+                  status={mapPluginErrorCodeToSignatureStatus(e.status)}
                   className={css`
                     margin-top: 0;
                   `}
@@ -81,13 +81,13 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
 
 export const PluginsErrorsInfo = connect(mapStateToProps, mapDispatchToProps)(PluginsErrorsInfoUnconnected);
 
-function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
+function mapPluginErrorCodeToSignatureStatus(code: PluginSignatureErrorCode) {
   switch (code) {
-    case PluginErrorCode.invalidSignature:
+    case PluginSignatureErrorCode.invalidSignature:
       return PluginSignatureStatus.invalid;
-    case PluginErrorCode.missingSignature:
+    case PluginSignatureErrorCode.missingSignature:
       return PluginSignatureStatus.missing;
-    case PluginErrorCode.modifiedSignature:
+    case PluginSignatureErrorCode.modifiedSignature:
       return PluginSignatureStatus.modified;
     default:
       return PluginSignatureStatus.missing;

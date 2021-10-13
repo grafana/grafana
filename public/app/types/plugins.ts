@@ -1,4 +1,4 @@
-import { PluginError, PluginMeta, PanelPlugin } from '@grafana/data';
+import { PluginSignatureError, PluginMeta, PanelPlugin } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 export interface PluginDashboard {
@@ -23,7 +23,7 @@ export interface PanelPluginsIndex {
 
 export interface PluginsState {
   plugins: PluginMeta[];
-  errors: PluginError[];
+  errors: PluginSignatureError[];
   searchQuery: string;
   hasFetched: boolean;
   dashboards: PluginDashboard[];

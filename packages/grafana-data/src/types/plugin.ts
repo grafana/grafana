@@ -37,15 +37,15 @@ export enum PluginSignatureType {
 }
 
 /** Describes error code returned from Grafana plugins API call */
-export enum PluginErrorCode {
+export enum PluginSignatureErrorCode {
   missingSignature = 'signatureMissing',
   invalidSignature = 'signatureInvalid',
   modifiedSignature = 'signatureModified',
 }
 
 /** Describes error returned from Grafana plugins API call */
-export interface PluginError {
-  errorCode: PluginErrorCode;
+export interface PluginSignatureError {
+  status: PluginSignatureErrorCode;
   pluginId: string;
 }
 

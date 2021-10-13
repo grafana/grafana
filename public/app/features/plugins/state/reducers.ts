@@ -1,5 +1,5 @@
 import { AnyAction, createSlice, PayloadAction, Reducer } from '@reduxjs/toolkit';
-import { PluginMeta, PanelPlugin, PluginError } from '@grafana/data';
+import { PluginMeta, PanelPlugin, PluginSignatureError } from '@grafana/data';
 import { PluginsState } from 'app/types';
 import { config } from 'app/core/config';
 import { reducer as pluginCatalogReducer } from '../admin/state/reducer';
@@ -23,7 +23,7 @@ const pluginsSlice = createSlice({
       state.hasFetched = true;
       state.plugins = action.payload;
     },
-    pluginsErrorsLoaded: (state, action: PayloadAction<PluginError[]>) => {
+    pluginsErrorsLoaded: (state, action: PayloadAction<PluginSignatureError[]>) => {
       state.errors = action.payload;
     },
     setPluginsSearchQuery: (state, action: PayloadAction<string>) => {

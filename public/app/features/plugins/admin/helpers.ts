@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, PluginSignatureError } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Settings } from 'app/core/config';
@@ -17,7 +17,7 @@ export function isOrgAdmin() {
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
   remote: RemotePlugin[] = [],
-  errors?: PluginError[]
+  errors?: PluginSignatureError[]
 ): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
@@ -43,7 +43,11 @@ export function mergeLocalsAndRemotes(
   return catalogPlugins;
 }
 
-export function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
+export function mergeLocalAndRemote(
+  local?: LocalPlugin,
+  remote?: RemotePlugin,
+  error?: PluginSignatureError
+): CatalogPlugin {
   if (!local && remote) {
     return mapRemoteToCatalog(remote, error);
   }
@@ -55,7 +59,7 @@ export function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin, 
   return mapToCatalogPlugin(local, remote, error);
 }
 
-export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): CatalogPlugin {
+export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginSignatureError): CatalogPlugin {
   const {
     name,
     slug: id,
@@ -98,12 +102,12 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isDev: false,
     isEnterprise: status === 'enterprise',
     type: typeCode,
-    error: error?.errorCode,
+    error: error?.status,
   };
   return catalogPlugin;
 }
 
-export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): CatalogPlugin {
+export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginSignatureError): CatalogPlugin {
   const {
     name,
     info: { description, version, logos, updated, author },
@@ -136,11 +140,15 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDev: Boolean(dev),
     isEnterprise: false,
     type,
-    error: error?.errorCode,
+    error: error?.status,
   };
 }
 
-export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
+export function mapToCatalogPlugin(
+  local?: LocalPlugin,
+  remote?: RemotePlugin,
+  error?: PluginSignatureError
+): CatalogPlugin {
   const version = remote?.version || local?.info.version || '';
   const hasUpdate =
     local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
@@ -185,7 +193,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version,
-    error: error?.errorCode,
+    error: error?.status,
   };
 }
 
@@ -217,11 +225,11 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   return plugins;
 };
 
-function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, PluginError | undefined> {
+function groupErrorsByPluginId(errors: PluginSignatureError[] = []): Record<string, PluginSignatureError | undefined> {
   return errors.reduce((byId, error) => {
     byId[error.pluginId] = error;
     return byId;
-  }, {} as Record<string, PluginError | undefined>);
+  }, {} as Record<string, PluginSignatureError | undefined>);
 }
 
 // Updates the core Grafana config to have the correct list available panels

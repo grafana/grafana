@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginSignatureErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { PluginListItem } from './PluginListItem';
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
@@ -67,7 +67,7 @@ describe('PluginListItem', () => {
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
-    const pluginWithError = { ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature };
+    const pluginWithError = { ...plugin, isDisabled: true, error: PluginSignatureErrorCode.modifiedSignature };
     render(<PluginListItem plugin={pluginWithError} pathName="" />);
 
     expect(screen.getByText(/disabled/i)).toBeVisible();
@@ -110,7 +110,7 @@ describe('PluginListItem', () => {
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
-    const pluginWithError = { ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature };
+    const pluginWithError = { ...plugin, isDisabled: true, error: PluginSignatureErrorCode.modifiedSignature };
     render(<PluginListItem plugin={pluginWithError} pathName="" displayMode={PluginListDisplayMode.List} />);
 
     expect(screen.getByText(/disabled/i)).toBeVisible();

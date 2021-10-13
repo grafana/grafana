@@ -66,7 +66,14 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			log.Errorf(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
 		}
-		dsMap["meta"] = meta
+		dsMap["preload"] = meta.Preload
+		dsMap["module"] = meta.Module
+		dsMap["meta"] = &plugins.PluginDTO{
+			JSONData:  meta.JSONData,
+			Signature: meta.Signature,
+			Module:    meta.Module,
+			BaseURL:   meta.BaseURL,
+		}
 
 		jsonData := ds.JsonData
 		if jsonData == nil {
@@ -118,7 +125,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": ds,
+				"meta": &plugins.PluginDTO{
+					JSONData:  ds.JSONData,
+					Signature: ds.Signature,
+					Module:    ds.Module,
+					BaseURL:   ds.BaseURL,
+				},
 			}
 			if ds.Name == grafanads.DatasourceName {
 				info["id"] = grafanads.DatasourceID
@@ -138,7 +150,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	var pluginsToPreload []string
+	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, app.Module)
@@ -157,9 +169,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			defaultDS = n
 		}
 
-		meta := dsM["meta"].(*plugins.Plugin)
-		if meta.Preload {
-			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		module, _ := dsM["module"].(string)
+		if preload, _ := dsM["preload"].(bool); preload && module != "" {
+			pluginsToPreload = append(pluginsToPreload, module)
 		}
 	}
 
@@ -340,11 +352,6 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 type EnabledPlugins map[plugins.Type]map[string]*plugins.Plugin
 
 func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins.Plugin, bool) {
-	// support old plugin name transition
-	if pluginID == "stackdriver" {
-		return ep.Get(plugins.DataSource, "cloud-monitoring")
-	}
-
 	if _, exists := ep[pluginType][pluginID]; exists {
 		return ep[pluginType][pluginID], true
 	}
@@ -413,9 +420,9 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 		}
 
 		// apps are disabled by default unless autoEnabled: true
-		if app := hs.pluginStore.Plugin(pluginDef.ID); app != nil {
-			opt.Enabled = app.AutoEnabled
-			opt.Pinned = app.AutoEnabled
+		if p := hs.pluginStore.Plugin(pluginDef.ID); p != nil && p.IsApp() {
+			opt.Enabled = p.AutoEnabled
+			opt.Pinned = p.AutoEnabled
 		}
 
 		// if it's included in app check app settings

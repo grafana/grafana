@@ -372,7 +372,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(200, hs.pluginSignatureErrors)
+	return response.JSON(200, hs.pluginSignatureErrors())
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {

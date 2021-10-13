@@ -562,7 +562,12 @@ func (m *PluginManager) LoadAndRegister(pluginID string, factory backendplugin.P
 		return fmt.Errorf("backend plugin %s already registered", pluginID)
 	}
 
-	path := filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource", pluginID)
+	pluginRootDir := pluginID
+	if pluginID == "stackdriver" {
+		pluginRootDir = "cloud-monitoring"
+	}
+
+	path := filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource", pluginRootDir)
 
 	p, err := m.pluginLoader.LoadWithFactory(path, factory)
 	if err != nil {

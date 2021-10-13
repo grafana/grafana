@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { PluginError, renderMarkdown } from '@grafana/data';
+import { PluginSignatureError, renderMarkdown } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { mergeLocalAndRemote } from './helpers';
 import {
@@ -67,7 +67,7 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
   };
 }
 
-export async function getPluginErrors(): Promise<PluginError[]> {
+export async function getPluginErrors(): Promise<PluginSignatureError[]> {
   try {
     return await getBackendSrv().get(`${API_ROOT}/errors`);
   } catch (error) {

@@ -11,7 +11,7 @@ import { CatalogPlugin, PluginTabIds, RequestStatus, ReducerState } from '../typ
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => {
@@ -285,7 +285,7 @@ describe('Plugin details page', () => {
       id,
       isInstalled: true,
       isDisabled: true,
-      error: PluginErrorCode.modifiedSignature,
+      error: PluginSignatureErrorCode.modifiedSignature,
     });
 
     await waitFor(() => expect(queryByLabelText(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument());

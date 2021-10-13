@@ -353,3 +353,14 @@ func (pt Type) IsValid() bool {
 	}
 	return false
 }
+
+type PluginDTO struct {
+	JSONData
+
+	// Signature fields
+	Signature SignatureStatus `json:"signature"`
+
+	// SystemJS fields
+	Module  string `json:"module"`
+	BaseURL string `json:"baseUrl"`
+}
