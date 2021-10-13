@@ -347,13 +347,9 @@ static defaultProps: Partial<Props> = { ... }
 
 ### How to declare functional components
 
-It's advisable to use named regular functions when creating a new react functional component.
+We recommend using named regular functions when creating a new react functional component.
 
 ```typescript
-// bad
-export const Component = (props: Props) => { ... };
-
-// good
 export function Component(props: Props): ReactElement { ... }
 ```
 
