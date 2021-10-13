@@ -81,7 +81,7 @@ type schedule struct {
 
 	// Senders help us send alerts to external Alertmanagers.
 	adminConfigMtx          sync.RWMutex
-	handling                map[int64]int64
+	handling                map[int64]int
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
@@ -132,7 +132,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL *url.URL, 
 		metrics:                 cfg.Metrics,
 		appURL:                  appURL,
 		stateManager:            stateManager,
-		handling:                map[int64]int64{},
+		handling:                map[int64]int{},
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,

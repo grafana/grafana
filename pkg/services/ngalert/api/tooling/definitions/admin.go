@@ -55,11 +55,13 @@ type NGalertConfig struct {
 // swagger:model
 type PostableNGalertConfig struct {
 	Alertmanagers []string `json:"alertmanagers"`
+	Handling      int      `json:"handling"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
 	Alertmanagers []string `json:"alertmanagers"`
+	Handling      int      `json:"handling"`
 }
 
 // swagger:model

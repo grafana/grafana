@@ -17,7 +17,7 @@ type AdminConfiguration struct {
 	// 0: both internal and external alertmanagers.
 	// 1: the internal alertmanager.
 	// 2: the external alertmanagers.
-	Handling int64 `xorm:"handling"`
+	Handling int `xorm:"handling"`
 
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`

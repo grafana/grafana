@@ -56,6 +56,7 @@ func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respons
 
 	resp := apimodels.GettableNGalertConfig{
 		Alertmanagers: cfg.Alertmanagers,
+		Handling:      cfg.Handling,
 	}
 	return response.JSON(http.StatusOK, resp)
 }
@@ -67,6 +68,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers: body.Alertmanagers,
+		Handling:      body.Handling,
 		OrgID:         c.OrgId,
 	}
 
