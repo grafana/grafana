@@ -41,6 +41,10 @@
   "includes": [
     {"type": "dashboard", "name": "Nginx Connections", "path": "dashboards/connections.json"},
     {"type": "dashboard", "name": "Nginx Memory", "path": "dashboards/memory.json"},
+    {"type": "dashboard", "name": "Nginx Connections - Latest", "path": "dashboards/latest_connections.json", "supportedVersions": ">8.2.0, <=8.x"},
+    {"type": "dashboard", "name": "Nginx Connections - Incompatible", "path": "dashboards/incompatible_connections.json", "supportedVersions": ">=7.5.0, <=8.2.0"},
+    {"type": "dashboard", "name": "Nginx Memory - Incompatible", "path": "dashboards/memory_incompatible.json", "supportedVersions": "<=8.1.0"},
+    {"type": "dashboard", "name": "Nginx Memory - Latest", "path": "dashboards/memory_latest.json", "supportedVersions": ">=8.1.0"},    
     {"type": "panel", "name": "Nginx Panel"},
     {"type": "datasource", "name": "Nginx Datasource"}
   ],
