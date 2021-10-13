@@ -197,7 +197,7 @@ export interface VisualizationSuggestion {
   /** Panel plugin options */
   options?: any;
   /** Panel plugin field options */
-  fieldOptions?: FieldConfigSource;
+  fieldConfig?: FieldConfigSource;
   /** Data transformations */
   transformations?: DataTransformerConfig[];
 }
