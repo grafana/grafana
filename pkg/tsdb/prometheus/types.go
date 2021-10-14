@@ -9,7 +9,6 @@ import (
 type DatasourceInfo struct {
 	ID           int64
 	URL          string
-	HTTPMethod   string
 	TimeInterval string
 
 	promClient apiv1.API
