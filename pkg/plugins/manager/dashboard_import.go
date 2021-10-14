@@ -42,7 +42,6 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 				supportedVersions = include.SupportedVersions
 			}
 		}
-
 	} else {
 		dashboard = models.NewDashboardFromJson(dashboardModel)
 	}
