@@ -226,19 +226,14 @@ func TestDataAccess(t *testing.T) {
 			ds := initDatasource(sqlStore)
 
 			err := sqlStore.DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
-			require.NoError(t, err)
-			query := models.GetDataSourcesQuery{OrgId: ds.OrgID}
-			err = sqlStore.GetDataSources(&query)
-			require.NoError(t, err)
-
-			require.Equal(t, 1, len(query.Result))
+			require.ErrorIs(t, err, models.ErrDataSourceNotFound)
 		})
 
 		t.Run("Returns ErrDataSourceIdentifierNotSet if OrgID is 0", func(t *testing.T) {
-			InitTestDB(t)
-			ds := initDatasource()
+			s := InitTestDB(t)
+			ds := initDatasource(s)
 
-			err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id})
+			err := s.DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id})
 			require.ErrorIs(t, err, models.ErrDataSourceIdentifierNotSet)
 		})
 	})
@@ -253,7 +248,7 @@ func TestDataAccess(t *testing.T) {
 			return nil
 		})
 
-		err := sqlstore.DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
+		err := sqlStore.DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
@@ -267,8 +262,8 @@ func TestDataAccess(t *testing.T) {
 	})
 
 	t.Run("does not fire a deleted event when the datasource does not exist", func(t *testing.T) {
-		InitTestDB(t)
-		ds := initDatasource()
+		s := InitTestDB(t)
+		ds := initDatasource(s)
 
 		var deleted *events.DataSourceDeleted
 		bus.AddEventListener(func(e *events.DataSourceDeleted) error {
@@ -276,7 +271,7 @@ func TestDataAccess(t *testing.T) {
 			return nil
 		})
 
-		err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: 99999999, UID: "example-missing", Name: "example-missing-datasource", OrgID: ds.OrgId})
+		err := s.DeleteDataSource(&models.DeleteDataSourceCommand{ID: 99999999, UID: "example-missing", Name: "example-missing-datasource", OrgID: ds.OrgId})
 		require.Error(t, err)
 
 		require.Never(t, func() bool {
