@@ -113,10 +113,6 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State != eval.Alerting && a.State != eval.Normal {
-		return false
-	}
-
 	if a.State == eval.Normal && !a.Resolved {
 		return false
 	}
