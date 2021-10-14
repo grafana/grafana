@@ -93,7 +93,7 @@
     "@testing-library/jest-dom": "5.11.9",
     "@types/classnames": "2.2.7",
     "@types/common-tags": "^1.8.0",
-    "@types/d3": "5.7.2",
+    "@types/d3": "7.0.0",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "26.0.15",
