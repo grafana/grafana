@@ -2742,7 +2742,7 @@ __metadata:
     "@types/d3": 7.0.0
     "@types/enzyme": 3.10.5
     "@types/enzyme-adapter-react-16": 1.0.6
-    "@types/grafana__slate-react": "link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react"
+    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.1
     "@types/jest": 26.0.15
@@ -7546,17 +7546,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/grafana__slate-react@link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react::locator=%40grafana%2Fui%40workspace%3Apackages%2Fgrafana-ui":
-  version: 0.0.0-use.local
-  resolution: "@types/grafana__slate-react@link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react::locator=%40grafana%2Fui%40workspace%3Apackages%2Fgrafana-ui"
-  languageName: node
-  linkType: soft
-
 "@types/grafana__slate-react@link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react::locator=%40jaegertracing%2Fjaeger-ui-components%40workspace%3Apackages%2Fjaeger-ui-components":
   version: 0.0.0-use.local
   resolution: "@types/grafana__slate-react@link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react::locator=%40jaegertracing%2Fjaeger-ui-components%40workspace%3Apackages%2Fjaeger-ui-components"
   languageName: node
   linkType: soft
+
+"@types/grafana__slate-react@npm:@types/slate-react@0.22.5, @types/slate-react@npm:0.22.5":
+  version: 0.22.5
+  resolution: "@types/slate-react@npm:0.22.5"
+  dependencies:
+    "@types/react": "*"
+    "@types/slate": "*"
+    immutable: ^3.8.2
+  checksum: afc83c7f47d19cc6776a8b4c14eb3894b18db2410e8274058133ed53d78ee82976f1318a707597ddc7277b1b857a4baf97b152687679f4e9757bb8c662508164
+  languageName: node
+  linkType: hard
 
 "@types/hast@npm:^2.0.0":
   version: 2.3.4
@@ -8447,17 +8452,6 @@ __metadata:
   dependencies:
     "@types/slate": "*"
   checksum: 59d0c051147b23829c8d7e46b1e0c366a258b9909543dd6e35983cdbc2fd38fdc33f3fe2ac18b2531484289662dfb83f76aaf6d9f83cfeae5227c96720c84e9e
-  languageName: node
-  linkType: hard
-
-"@types/slate-react@npm:0.22.5":
-  version: 0.22.5
-  resolution: "@types/slate-react@npm:0.22.5"
-  dependencies:
-    "@types/react": "*"
-    "@types/slate": "*"
-    immutable: ^3.8.2
-  checksum: afc83c7f47d19cc6776a8b4c14eb3894b18db2410e8274058133ed53d78ee82976f1318a707597ddc7277b1b857a4baf97b152687679f4e9757bb8c662508164
   languageName: node
   linkType: hard
 
@@ -18122,6 +18116,7 @@ fsevents@^1.2.7:
     "@types/enzyme": 3.10.5
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/file-saver": 2.0.1
+    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": ^4.7.8
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 26.0.15

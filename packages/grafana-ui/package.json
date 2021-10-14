@@ -120,7 +120,7 @@
     "@types/d3": "7.0.0",
     "@types/enzyme": "3.10.5",
     "@types/enzyme-adapter-react-16": "1.0.6",
-    "@types/grafana__slate-react": "link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react",
+    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "26.0.15",

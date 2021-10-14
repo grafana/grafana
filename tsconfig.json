@@ -3,11 +3,6 @@
     "jsx": "react",
     "baseUrl": "public/",
     "outDir": "public/dist",
-    "paths": {
-      "@grafana/slate-react": [
-        "../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react/index.d.ts"
-      ]
-    },
     "rootDirs": ["public/"],
     "allowJs": true,
     "strictNullChecks": true,
