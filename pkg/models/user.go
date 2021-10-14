@@ -280,20 +280,6 @@ func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 	return []byte{}, nil
 }
 
-// TODO: decision: add this to a separate model in itself
-// OR keep the struct deatils in user, as the serviceaccount is actually
-// a user
-// this migth be confusion for the person working on it, if it is a user or not
-type ServiceAccount struct {
-	// TODO: decide on the implmentation to follow user or to create a separate struct
-	// that links to user_id
-
-	// implementation 1
-	User User
-	// implementation 2
-	UserId int64
-}
-
 type DeleteServiceAccountCommand struct {
-	UserId int64
+	ServiceAccountId int64
 }
