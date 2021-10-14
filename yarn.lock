@@ -4493,6 +4493,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@opentelemetry/semantic-conventions@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.0.0"
+  checksum: 1fc7a5cbabd49ebfaf83413dcadd742a483efb8d95532aef3522b332abf32cc5c4602ec87ea5d9fc0bcfeea4e88e4993d2e996bf050fdfae3d19d1fa91ddae8a
+  languageName: node
+  linkType: hard
+
 "@opentelemetry/tracing@npm:0.23.0":
   version: 0.23.0
   resolution: "@opentelemetry/tracing@npm:0.23.0"
@@ -17808,7 +17815,7 @@ fsevents@~2.1.2:
     "@kusto/monaco-kusto": 3.2.7
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.23.0
-    "@opentelemetry/semantic-conventions": 0.23.0
+    "@opentelemetry/semantic-conventions": 1.0.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.0-rc.6
     "@popperjs/core": 2.5.4
     "@reduxjs/toolkit": 1.6.1
