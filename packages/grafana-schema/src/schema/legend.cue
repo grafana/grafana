@@ -9,7 +9,7 @@ VizLegendOptions: {
 	placement:    LegendPlacement
 	asTable?:     bool
 	isVisible?:   bool
-  sortBy?:      string;
-  sortDesc?:    bool;
+  sortBy?:      string
+  sortDesc?:    bool
 	calcs:        [...string]
 } @cuetsy(kind="interface")
