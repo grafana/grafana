@@ -21,9 +21,9 @@ import (
 )
 
 var (
-	logger                    = log.New("plugin.loader")
-	InvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
-	InvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
+	logger                       = log.New("plugin.loader")
+	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
 type Loader struct {
@@ -204,7 +204,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	logger.Debug("Loading plugin", "path", pluginJSONPath)
 
 	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
-		return plugins.JSONData{}, InvalidPluginJSONFilePath
+		return plugins.JSONData{}, ErrInvalidPluginJSONFilePath
 	}
 
 	// nolint:gosec
@@ -241,7 +241,7 @@ func (l *Loader) Errors() map[string]error {
 
 func validatePluginJSON(data plugins.JSONData) error {
 	if data.ID == "" || !data.Type.IsValid() {
-		return InvalidPluginJSON
+		return ErrInvalidPluginJSON
 	}
 	return nil
 }

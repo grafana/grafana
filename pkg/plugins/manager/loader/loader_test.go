@@ -900,7 +900,7 @@ func Test_validatePluginJSON(t *testing.T) {
 					Type: plugins.Panel,
 				},
 			},
-			err: InvalidPluginJSON,
+			err: ErrInvalidPluginJSON,
 		},
 		{
 			name: "Invalid plugin type",
@@ -910,7 +910,7 @@ func Test_validatePluginJSON(t *testing.T) {
 					Type: "test",
 				},
 			},
-			err: InvalidPluginJSON,
+			err: ErrInvalidPluginJSON,
 		},
 	}
 	for _, tt := range tests {

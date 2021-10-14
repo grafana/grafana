@@ -54,6 +54,8 @@ func (e SignatureError) Error() string {
 		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
 	case SignatureUnsigned:
 		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
+	case SignatureInternal, SignatureValid:
+		return ""
 	}
 
 	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)

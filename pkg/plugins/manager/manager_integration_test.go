@@ -120,7 +120,6 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, ds)
 		assert.True(t, strings.HasPrefix(pluginRoutes[ds].Directory, pm.Plugin(ds).PluginDir))
 	}
-
 }
 
 func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
@@ -145,5 +144,4 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, pluginID)
 		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, pm.cfg.BundledPluginsPath+"/"+pluginDir))
 	}
-
 }
