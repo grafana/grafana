@@ -65,8 +65,5 @@
     "typescript": "4.4.3",
     "uuid": "8.3.0",
     "yaml": "^1.8.3"
-  },
-  "volta": {
-    "extends": "../../package.json"
   }
 }

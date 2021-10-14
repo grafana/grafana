@@ -7,6 +7,7 @@ import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { GroupState } from 'app/features/canvas/runtime/group';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -16,7 +17,8 @@ interface State {
 
 export interface InstanceState {
   scene: Scene;
-  selected?: ElementState;
+  selected: ElementState[];
+  layer: GroupState;
 }
 
 export class CanvasPanel extends Component<Props, State> {
@@ -34,7 +36,7 @@ export class CanvasPanel extends Component<Props, State> {
     };
 
     // Only the initial options are ever used.
-    // later changs are all controled by the scene
+    // later changes are all controlled by the scene
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
@@ -53,14 +55,16 @@ export class CanvasPanel extends Component<Props, State> {
     if (this.panelContext.onInstanceStateChange && this.panelContext.app === CoreApp.PanelEditor) {
       this.panelContext.onInstanceStateChange({
         scene: this.scene,
+        layer: this.scene.root,
       });
 
       this.subs.add(
-        this.scene.selected.subscribe({
+        this.scene.selection.subscribe({
           next: (v) => {
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
               selected: v,
+              layer: this.scene.root,
             });
           },
         })

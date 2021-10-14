@@ -8,10 +8,11 @@ import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 // Types
 import { PanelModel, DashboardModel } from '../../state';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { changePanelPlugin } from '../../state/actions';
+import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {
   panel: PanelModel;
@@ -20,7 +21,7 @@ interface OwnProps {
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => ({
-  angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+  angularPanelComponent: getPanelStateForModel(state, props.panel)?.angularComponent,
 });
 
 const mapDispatchToProps = { changePanelPlugin };
@@ -41,7 +42,10 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.props.plugin !== prevProps.plugin) {
+    if (
+      this.props.plugin !== prevProps.plugin ||
+      this.props.angularPanelComponent !== prevProps.angularPanelComponent
+    ) {
       this.cleanUpAngularOptions();
     }
 

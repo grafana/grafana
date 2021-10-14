@@ -3,7 +3,7 @@ import $ from 'jquery';
 import { isNumber } from 'lodash';
 import { getColorForTheme } from '@grafana/data';
 import { CoreEvents } from 'app/types';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { config } from 'app/core/config';
 
 export class ThresholdManager {

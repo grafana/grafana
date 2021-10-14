@@ -1,43 +1,116 @@
 import React, { CSSProperties } from 'react';
+import { OnDrag, OnResize } from 'react-moveable/declaration/types';
+
 import {
   BackgroundImageSize,
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
+  Placement,
+  Anchor,
 } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
 
-let counter = 100;
+let counter = 0;
 
 export class ElementState {
   readonly UID = counter++;
 
   revId = 0;
-  style: CSSProperties = {};
+  sizeStyle: CSSProperties = {};
+  dataStyle: CSSProperties = {};
+
+  // Filled in by ref
+  div?: HTMLDivElement;
 
   // Calculated
   width = 100;
   height = 100;
   data?: any; // depends on the type
 
+  // From options, but always set and always valid
+  anchor: Anchor;
+  placement: Placement;
+
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
       this.options = { type: item.id };
     }
+    this.anchor = options.anchor ?? {};
+    this.placement = options.placement ?? {};
+    options.anchor = this.anchor;
+    options.placement = this.placement;
+  }
+
+  validatePlacement() {
+    const { anchor, placement } = this;
+    if (!(anchor.left || anchor.right)) {
+      anchor.left = true;
+    }
+    if (!(anchor.top || anchor.bottom)) {
+      anchor.top = true;
+    }
+
+    const w = placement.width ?? 100; // this.div ? this.div.clientWidth : this.width;
+    const h = placement.height ?? 100; // this.div ? this.div.clientHeight : this.height;
+
+    if (anchor.top) {
+      if (!placement.top) {
+        placement.top = 0;
+      }
+      if (anchor.bottom) {
+        delete placement.height;
+      } else {
+        placement.height = h;
+        delete placement.bottom;
+      }
+    } else if (anchor.bottom) {
+      if (!placement.bottom) {
+        placement.bottom = 0;
+      }
+      placement.height = h;
+      delete placement.top;
+    }
+
+    if (anchor.left) {
+      if (!placement.left) {
+        placement.left = 0;
+      }
+      if (anchor.right) {
+        delete placement.width;
+      } else {
+        placement.width = w;
+        delete placement.right;
+      }
+    } else if (anchor.right) {
+      if (!placement.right) {
+        placement.right = 0;
+      }
+      placement.width = w;
+      delete placement.left;
+    }
+
+    this.width = w;
+    this.height = h;
+
+    this.options.anchor = this.anchor;
+    this.options.placement = this.placement;
+
+    // console.log('validate', this.UID, this.item.id, this.placement, this.anchor);
   }
 
   // The parent size, need to set our own size based on offsets
   updateSize(width: number, height: number) {
     this.width = width;
     this.height = height;
+    this.validatePlacement();
 
     // Update the CSS position
-    this.style = {
-      ...this.style,
-      width,
-      height,
+    this.sizeStyle = {
+      ...this.options.placement,
+      position: 'absolute',
     };
   }
 
@@ -96,18 +169,14 @@ export class ElementState {
       }
     }
 
-    css.width = this.width;
-    css.height = this.height;
-
-    this.style = css;
+    this.dataStyle = css;
   }
 
-  /** Recursivly visit all nodes */
+  /** Recursively visit all nodes */
   visit(visitor: (v: ElementState) => void) {
     visitor(this);
   }
 
-  // Something changed
   onChange(options: CanvasElementOptions) {
     if (this.item.id !== options.type) {
       this.item = canvasElementRegistry.getIfExists(options.type) ?? notFoundItem;
@@ -126,10 +195,103 @@ export class ElementState {
     return { ...this.options };
   }
 
+  initElement = (target: HTMLDivElement) => {
+    this.div = target;
+  };
+
+  applyDrag = (event: OnDrag) => {
+    const { placement, anchor } = this;
+
+    const deltaX = event.delta[0];
+    const deltaY = event.delta[1];
+
+    const style = event.target.style;
+    if (anchor.top) {
+      placement.top! += deltaY;
+      style.top = `${placement.top}px`;
+    }
+    if (anchor.bottom) {
+      placement.bottom! -= deltaY;
+      style.bottom = `${placement.bottom}px`;
+    }
+    if (anchor.left) {
+      placement.left! += deltaX;
+      style.left = `${placement.left}px`;
+    }
+    if (anchor.right) {
+      placement.right! -= deltaX;
+      style.right = `${placement.right}px`;
+    }
+  };
+
+  // kinda like:
+  // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
+  applyResize = (event: OnResize) => {
+    const { placement, anchor } = this;
+
+    const style = event.target.style;
+    const deltaX = event.delta[0];
+    const deltaY = event.delta[1];
+    const dirLR = event.direction[0];
+    const dirTB = event.direction[1];
+    if (dirLR === 1) {
+      // RIGHT
+      if (anchor.right) {
+        placement.right! -= deltaX;
+        style.right = `${placement.right}px`;
+        if (!anchor.left) {
+          placement.width = event.width;
+          style.width = `${placement.width}px`;
+        }
+      } else {
+        placement.width! = event.width;
+        style.width = `${placement.width}px`;
+      }
+    } else if (dirLR === -1) {
+      // LEFT
+      if (anchor.left) {
+        placement.left! -= deltaX;
+        placement.width! = event.width;
+        style.left = `${placement.left}px`;
+        style.width = `${placement.width}px`;
+      } else {
+        placement.width! += deltaX;
+        style.width = `${placement.width}px`;
+      }
+    }
+
+    if (dirTB === -1) {
+      // TOP
+      if (anchor.top) {
+        placement.top! -= deltaY;
+        placement.height = event.height;
+        style.top = `${placement.top}px`;
+        style.height = `${placement.height}px`;
+      } else {
+        placement.height = event.height;
+        style.height = `${placement.height}px`;
+      }
+    } else if (dirTB === 1) {
+      // BOTTOM
+      if (anchor.bottom) {
+        placement.bottom! -= deltaY;
+        placement.height! = event.height;
+        style.bottom = `${placement.bottom}px`;
+        style.height = `${placement.height}px`;
+      } else {
+        placement.height! = event.height;
+        style.height = `${placement.height}px`;
+      }
+    }
+
+    this.width = event.width;
+    this.height = event.height;
+  };
+
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}/${this.revId}`} style={this.style}>
+      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
         <item.display config={this.options.config} width={this.width} height={this.height} data={this.data} />
       </div>
     );

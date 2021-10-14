@@ -40,6 +40,8 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@monaco-editor/react": "4.2.2",
     "@popperjs/core": "2.5.4",
+    "@react-aria/focus": "3.4.1",
+    "@react-aria/overlays": "3.7.2",
     "@sentry/browser": "5.25.0",
     "ansicolor": "1.1.95",
     "calculate-size": "1.1.1",
@@ -114,10 +116,10 @@
     "@types/classnames": "2.2.7",
     "@types/clipboard": "2.0.1",
     "@types/common-tags": "^1.8.0",
-    "@types/d3": "5.7.2",
     "@types/enzyme": "3.10.5",
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/grafana__slate-react": "link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react",
+    "@types/d3": "7.0.0",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "26.0.15",
@@ -167,8 +169,5 @@
     "webpack": "5.51.1",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
-  "types": "src/index.ts",
-  "volta": {
-    "extends": "../../package.json"
-  }
+  "types": "src/index.ts"
 }
