@@ -51,10 +51,12 @@ const renderPluginDetails = (
   });
 
   return render(
-    <Provider store={store}>
-      <PluginDetailsPage {...props} />
-    </Provider>,
-    { wrapper: MemoryRouter }
+    <MemoryRouter>
+      <Provider store={store}>
+        <PluginDetailsPage {...props} />
+      </Provider>
+      ,
+    </MemoryRouter>
   );
 };
 
@@ -97,10 +99,12 @@ describe('Plugin details page', () => {
     });
     const store = configureStore();
     const { queryByText } = render(
-      <Provider store={store}>
-        <PluginDetailsPage {...props} />
-      </Provider>,
-      { wrapper: MemoryRouter }
+      <MemoryRouter>
+        <Provider store={store}>
+          <PluginDetailsPage {...props} />
+        </Provider>
+        ,
+      </MemoryRouter>
     );
 
     await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
