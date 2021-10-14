@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -62,7 +61,6 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -78,19 +76,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "aps"
 		}
 
-		httpMethod, ok := jsonData["httpMethod"].(string)
-		if !ok {
-			httpMethod = defaultHttpMethod
-		}
-
 		// timeInterval can be a string or can be missing.
 		// if it is missing, we set it to empty-string
-
 		timeInterval := ""
 
 		timeIntervalJson := jsonData["timeInterval"]
 		if timeIntervalJson != nil {
 			// if it is not nil, it must be a string
+			var ok bool
 			timeInterval, ok = timeIntervalJson.(string)
 			if !ok {
 				return nil, errors.New("invalid time-interval provided")
@@ -105,7 +98,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		mdl := DatasourceInfo{
 			ID:           settings.ID,
 			URL:          settings.URL,
-			HTTPMethod:   httpMethod,
 			TimeInterval: timeInterval,
 			promClient:   client,
 		}
