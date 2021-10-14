@@ -14,6 +14,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -67,10 +68,12 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		require.JSONEq(t, string(b), "{\"message\": \"no admin configuration available\"}")
 	}
 
-	// Now, lets re-set external Alertmanagers for main organisation.
+	// Now, lets re-set external Alertmanagers for main organisation
+	// and make it so that only the external Alertmanagers handle the alerts.
 	{
 		ac := apimodels.PostableNGalertConfig{
 			Alertmanagers: []string{fakeAM1.URL(), fakeAM2.URL()},
+			Handling:      store.HandleExternally,
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -90,7 +93,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"]}\n", fakeAM1.URL(), fakeAM2.URL()))
+		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"handling\": %d}\n", fakeAM1.URL(), fakeAM2.URL(), store.HandleExternally))
 	}
 
 	// With the configuration set, we should eventually discover those Alertmanagers.
@@ -189,7 +192,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\"]}\n", fakeAM3.URL()))
+		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"handling\": %d}\n", fakeAM3.URL(), store.HandleBothWays))
 	}
 
 	// With the configuration set, we should eventually not discover Alertmanagers.
