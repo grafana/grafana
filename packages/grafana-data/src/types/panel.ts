@@ -13,6 +13,7 @@ import { OptionEditorConfig } from './options';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
 import { DataTransformerConfig } from './transformations';
+import { defaultsDeep } from 'lodash';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -59,7 +60,7 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
-export interface PanelProps<T = any, S = any> {
+export interface PanelProps<T = any> {
   /** ID of the panel within the current dashboard */
   id: number;
 
@@ -195,9 +196,9 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig extends ob
   /** Panel plugin id */
   pluginId: string;
   /** Panel plugin options */
-  options?: TOptions;
+  options?: Partial<TOptions>;
   /** Panel plugin field options */
-  fieldConfig?: FieldConfigSource<TFieldConfig>;
+  fieldConfig?: FieldConfigSource<Partial<TFieldConfig>>;
   /** Data transformations */
   transformations?: DataTransformerConfig[];
   /** Tweak for small preview */
@@ -215,3 +216,20 @@ export interface VisualizationSuggestionsInput {
  * @alpha
  */
 export type VisualizationSuggestionsSupplier = (input: VisualizationSuggestionsInput) => VisualizationSuggestion[];
+
+/**
+ * @alpha
+ */
+export class VisualizationSuggestionBuilderUtil<TOptions, TFieldConfig extends object> {
+  private list: Array<VisualizationSuggestion<TOptions, TFieldConfig>> = [];
+
+  constructor(private defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {}
+
+  add(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
+    this.list.push(defaultsDeep(overrides, this.defaults));
+  }
+
+  getList() {
+    return this.list;
+  }
+}

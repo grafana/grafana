@@ -33,9 +33,9 @@ export function useGraphableFields({
   useEffect(() => {
     const result = prepareGraphableFields(frames, theme);
 
-    if (result.noTimeField && onSuggestVisualizations) {
-      onSuggestVisualizations(getNoTimeFieldSuggestions(frames));
-    }
+    // if (result.noTimeField && onSuggestVisualizations) {
+    //   onSuggestVisualizations(getNoTimeFieldSuggestions(frames));
+    // }
 
     setState(result);
   }, [frames, theme, onSuggestVisualizations]);
@@ -150,17 +150,4 @@ export function prepareGraphableFields(series: DataFrame[] | undefined, theme: G
   }
 
   return { frames };
-}
-
-function getNoTimeFieldSuggestions(frames: DataFrame[] | undefined): VisualizationSuggestion[] {
-  return [
-    {
-      name: 'Switch to table',
-      pluginId: 'table',
-    },
-    {
-      name: 'Switch to bar chart',
-      pluginId: 'barchart',
-    },
-  ];
 }

@@ -436,7 +436,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.configRev++;
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
-    this.replaceVariables = this.replaceVariables.bind(this);
     this.applyPluginOptionDefaults(newPlugin, true);
 
     if (newPlugin.onPanelMigration) {
