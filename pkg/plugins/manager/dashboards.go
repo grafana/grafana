@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -76,6 +77,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 			res.Compatible = con.Check(&grafanaVersion)
 			// if the dashboard is incompatible we exclude unless its imported already - worst case we list as incompatible or offer an update
 			if !res.Compatible && !res.Imported {
+				plog.Info(fmt.Sprintf("Dashboard %s for plugin %s is not compatible - requires Grafana %s", dashboard.Slug, plugin.Name, include.SupportedVersions))
 				continue
 			}
 		}
