@@ -29,6 +29,16 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// Internal interval and range variables
+const (
+	varInterval     = "$__interval"
+	varIntervalMs   = "$__interval"
+	varRange        = "$__range"
+	varRangeS       = "$__range_s"
+	varRangeMs      = "$__range_ms"
+	varRateInterval = "$__rate_interval"
+)
+
 var (
 	plog         = log.New("tsdb.prometheus")
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
@@ -157,7 +167,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
-			response[Range] = rangeResponse
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
@@ -165,7 +175,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
-			response[Instant] = instantResponse
+			response[InstantQueryType] = instantResponse
 		}
 		// For now, we ignore exemplar errors and continue with processing of other results
 		if query.ExemplarQuery {
@@ -174,7 +184,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				exemplarResponse = nil
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
 			}
-			response[Exemplar] = exemplarResponse
+			response[ExemplarQueryType] = exemplarResponse
 		}
 
 		frames, err := parseResponse(response, query)
@@ -270,7 +280,7 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		//Calculate interval
 		queryInterval := model.Interval
 		//If we are using variable or interval/step, we will replace it with calculated interval
-		if queryInterval == "$__interval" || queryInterval == "$__interval_ms" || queryInterval == "$__rate_interval" {
+		if queryInterval == varInterval || queryInterval == varIntervalMs || queryInterval == varRateInterval {
 			queryInterval = ""
 		}
 		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
@@ -286,7 +296,7 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 			adjustedInterval = calculatedInterval.Value
 		}
 
-		if queryInterval == "$__rate_interval" {
+		if queryInterval == varRateInterval {
 			// Rate interval is final and is not affected by resolution
 			interval = calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, s.intervalCalculator)
 		} else {
@@ -302,12 +312,12 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 
 		// Interpolate variables in expr
 		expr := model.Expr
-		expr = strings.ReplaceAll(expr, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
-		expr = strings.ReplaceAll(expr, "$__interval", intervalv2.FormatDuration(interval))
-		expr = strings.ReplaceAll(expr, "$__range_ms", strconv.FormatInt(rangeS*1000, 10))
-		expr = strings.ReplaceAll(expr, "$__range_s", strconv.FormatInt(rangeS, 10))
-		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
-		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
+		expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(intervalMs, 10))
+		expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+		expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeS*1000, 10))
+		expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeS, 10))
+		expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeS, 10)+"s")
+		expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {
