@@ -85,7 +85,6 @@ func (l *Loader) load(path string, ignore map[string]struct{}) (*plugins.Plugin,
 	return loadedPlugins[0], nil
 }
 
-// test one bad doesn't break all loading
 func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 

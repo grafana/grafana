@@ -58,7 +58,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	return m, hs
 }
 
-func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
+func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
