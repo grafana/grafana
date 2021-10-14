@@ -3,6 +3,7 @@ import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { changePanelPlugin } from './actions';
 import { panelModelAndPluginReady } from './reducers';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';
 
 jest.mock('app/features/plugins/importPanelPlugin', () => {
   return {
@@ -31,7 +32,7 @@ describe('panel state actions', () => {
         .whenThunkIsDispatched(sourcePanel, 'table');
 
       expect(dispatchedActions.length).toBe(2);
-      expect(dispatchedActions[0].type).toBe('plugins/loadPanelPlugin/fulfilled');
+      expect(dispatchedActions[0].type).toBe(panelPluginLoaded.type);
       expect(dispatchedActions[1].type).toBe(panelModelAndPluginReady.type);
       expect(sourcePanel.type).toBe('table');
     });
