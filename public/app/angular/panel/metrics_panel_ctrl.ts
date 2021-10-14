@@ -1,5 +1,5 @@
 import { isArray } from 'lodash';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import {
@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
+import { PanelQueryRunner } from '../../features/query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   declare datasource: DataSourceApi;
