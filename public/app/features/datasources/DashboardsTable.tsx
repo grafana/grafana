@@ -9,8 +9,50 @@ export interface Props {
 }
 
 const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
-  function buttonText(dashboard: PluginDashboard) {
-    return dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import';
+  function renderDashboardButtons(dashboard: PluginDashboard) {
+    console.log(dashboard);
+    if (!dashboard.imported) {
+      // won't be returned from api if not compatible
+      return (
+        <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, false)}>
+          Import
+        </Button>
+      );
+    }
+
+    if (dashboard.importedCompatible) {
+      if (dashboard.compatible) {
+        return (
+          <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, true)}>
+            {dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import'}
+          </Button>
+        );
+      }
+      //dont offer re-import or update as the new version isn't compatible
+      return <></>;
+    } else {
+      const incompatibe = (
+        <Badge
+          text="Incompatible"
+          icon="exclamation-triangle"
+          color="red"
+          tooltip="This dashboard is not compatible with this version of Grafana"
+          style={{ marginRight: '5px' }}
+        />
+      );
+      if (dashboard.compatible) {
+        return (
+          <>
+            {incompatibe}
+            <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, true)}>
+              Update
+            </Button>
+          </>
+        );
+      }
+      //
+      return incompatibe;
+    }
   }
 
   return (
@@ -30,23 +72,7 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
                 )}
               </td>
               <td style={{ textAlign: 'right' }}>
-                {!dashboard.imported ? (
-                  <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, false)}>
-                    Import
-                  </Button>
-                ) : dashboard.compatible ? (
-                  <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, true)}>
-                    {buttonText(dashboard)}
-                  </Button>
-                ) : (
-                  <Badge
-                    text="Incompatible"
-                    icon="exclamation-triangle"
-                    color="red"
-                    tooltip="This dashboard is not compatible with this version of Grafana"
-                    style={{ marginRight: '5px' }}
-                  />
-                )}
+                {renderDashboardButtons(dashboard)}
                 {dashboard.imported && (
                   <Button icon="trash-alt" variant="destructive" size="sm" onClick={() => onRemove(dashboard)} />
                 )}

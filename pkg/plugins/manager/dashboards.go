@@ -37,8 +37,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 		return nil, err
 	}
 
-	// used to de-duplicate dashboards in case multiple with the same uid are compatible. If installed offer upgrades - effectively a re-import.
-	existingMatches := make(map[int64]bool)
+	existingMatches := make(map[string]bool)
 	for _, include := range plugin.Includes {
 		if include.Type != plugins.PluginTypeDashboard {
 			continue
@@ -63,31 +62,30 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 				res.ImportedUri = "db/" + existingDash.Slug
 				res.ImportedUrl = existingDash.GetUrl()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
-				existingMatches[existingDash.Id] = true
+				res.ImportedCompatible, err = isCompatible(grafanaVersion, existingDash.SupportedVersions)
+				if err != nil {
+					return nil, err
+				}
+				existingMatches[existingDash.Uid] = true
 			}
 		}
 
-		//if SupportVersions is not set we include to support backwards compatibility and by default mark as compatible
-		res.Compatible = true
-		if include.SupportedVersions != "" {
-			con, err := semver.NewConstraint(include.SupportedVersions)
-			if err != nil {
-				return nil, err
-			}
-			res.Compatible = con.Check(&grafanaVersion)
-			// if the dashboard is incompatible we exclude unless its imported already - worst case we list as incompatible or offer an update
-			if !res.Compatible && !res.Imported {
-				plog.Info(fmt.Sprintf("Dashboard %s for plugin %s is not compatible - requires Grafana %s", dashboard.Slug, plugin.Name, include.SupportedVersions))
-				continue
-			}
+		res.Compatible, err = isCompatible(grafanaVersion, include.SupportedVersions)
+		if err != nil {
+			return nil, err
 		}
 
+		if !res.Imported && !res.Compatible {
+			//not imported and incompatible so skip - only case where the user doesn't see the result
+			plog.Info(fmt.Sprintf("Dashboard %s for plugin %s is not compatible - requires Grafana %s", dashboard.Slug, plugin.Name, include.SupportedVersions))
+			continue
+		}
 		result = append(result, res)
 	}
 
-	// find deleted dashboards
+	// find installed dashboards that have been deleted from the plugin
 	for _, dash := range query.Result {
-		if _, exists := existingMatches[dash.Id]; !exists {
+		if _, exists := existingMatches[dash.Uid]; !exists {
 			result = append(result, &plugins.PluginDashboardInfoDTO{
 				Slug:        dash.Slug,
 				DashboardId: dash.Id,
@@ -97,6 +95,18 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 	}
 
 	return result, nil
+}
+
+func isCompatible(version semver.Version, dashboardConstaint string) (bool, error) {
+	//if no constraint is set we determine its compatible in the absence of other information
+	if dashboardConstaint == "" {
+		return true, nil
+	}
+	con, err := semver.NewConstraint(dashboardConstaint)
+	if err != nil {
+		return false, err
+	}
+	return con.Check(&version), nil
 }
 
 func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
