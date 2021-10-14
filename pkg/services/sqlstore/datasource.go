@@ -18,22 +18,26 @@ import (
 // either uid (preferred), id, or name and is added to the bus.
 func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
-	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
-		return models.ErrDataSourceIdentifierNotSet
-	}
 
-	datasource := models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-	has, err := x.Context(ctx).Get(&datasource)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+			return models.ErrDataSourceIdentifierNotSet
+		}
 
-	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
-		return err
-	} else if !has {
-		return models.ErrDataSourceNotFound
-	}
+		datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+		has, err := sess.Get(datasource)
 
-	query.Result = &datasource
-	return nil
+		if err != nil {
+			sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+			return err
+		} else if !has {
+			return models.ErrDataSourceNotFound
+		}
+
+		query.Result = datasource
+
+		return nil
+	})
 }
 
 func (ss *SQLStore) GetDataSources(query *models.GetDataSourcesQuery) error {
@@ -95,7 +99,7 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 		return models.ErrDataSourceIdentifierNotSet
 	}
 
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		result, err := sess.Exec(params...)
 		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
 
@@ -112,7 +116,7 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 }
 
 func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing := models.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
