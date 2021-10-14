@@ -14,7 +14,7 @@ export interface DashboardPickerItem {
 }
 
 interface Props {
-  onChange: (dashboard: DashboardPickerItem) => void;
+  onChange: (dashboard?: DashboardPickerItem) => void;
   value?: DashboardPickerItem;
   width?: number;
   isClearable?: boolean;
@@ -38,9 +38,7 @@ export const DashboardPickerByID: FC<Props> = ({
   const debouncedSearch = debounce(getDashboards, 300);
   const option = value ? { value, label: value.label } : undefined;
   const onChange = (item: SelectableValue<DashboardPickerItem>) => {
-    if (item.value) {
-      propsOnChange(item.value);
-    }
+    propsOnChange(item?.value);
   };
 
   return (
