@@ -494,13 +494,13 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);
 
   if (info.type === PluginType.app) {
-    return importAppPlugin(info).then((value) => value as GrafanaPlugin);
+    return importAppPlugin(info) as Promise<GrafanaPlugin>;
   }
   if (info.type === PluginType.datasource) {
-    return importDataSourcePlugin(info).then((value) => value as GrafanaPlugin);
+    return importDataSourcePlugin(info) as Promise<GrafanaPlugin>;
   }
   if (info.type === PluginType.panel) {
-    return importPanelPluginFromMeta(info as PanelPluginMeta).then((value) => (value as unknown) as GrafanaPlugin);
+    return (importPanelPluginFromMeta(info as PanelPluginMeta) as unknown) as Promise<GrafanaPlugin>;
   }
   if (info.type === PluginType.renderer) {
     return Promise.resolve({ meta: info } as GrafanaPlugin);
