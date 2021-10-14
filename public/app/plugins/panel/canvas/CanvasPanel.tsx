@@ -89,7 +89,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props) {
-    const { width, height, data, renderCounter } = this.props;
+    const { width, height, data } = this.props;
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
@@ -107,10 +107,6 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.load(nextProps.options.root);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
-      changed = true;
-    }
-
-    if (renderCounter !== nextProps.renderCounter) {
       changed = true;
     }
 
