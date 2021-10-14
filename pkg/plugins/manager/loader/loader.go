@@ -121,7 +121,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 		sig, err := signature.Calculate(logger, plugin)
 		if err != nil {
 			logger.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
-			return nil, err
+			continue
 		}
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
