@@ -72,7 +72,7 @@ export function transformV2(
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
   const [tableFrames, framesWithoutTable] = partition(response.data, (df) => isTableResult(df, request));
-  const processedTableFrames = transformDFoTable(tableFrames);
+  const processedTableFrames = transformDFToTable(tableFrames);
 
   const [heatmapResults, framesWithoutTableAndHeatmaps] = partition(framesWithoutTable, (df) =>
     isHeatmapResult(df, request)
@@ -120,7 +120,7 @@ export function transformV2(
   };
 }
 
-export function transformDFoTable(dfs: DataFrame[]): DataFrame[] {
+export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
   // If no dataFrames or if 1 dataFrames with no values, return original dataFrame
   if (dfs.length === 0 || (dfs.length === 1 && dfs[0].length === 0)) {
     return dfs;
