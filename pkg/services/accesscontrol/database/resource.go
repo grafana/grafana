@@ -200,7 +200,7 @@ func createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, re
 	permission.Created = time.Now()
 	permission.Updated = time.Now()
 
-	if _, err := sess.Insert(permission); err != nil {
+	if _, err := sess.Insert(&permission); err != nil {
 		return nil, err
 	}
 
@@ -414,19 +414,25 @@ func (s *AccessControlStore) builtinRoleAdder(sess *sqlstore.DBSession, orgID in
 }
 
 func (s *AccessControlStore) getOrCreateManagedRole(sess *sqlstore.DBSession, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
-	role := &accesscontrol.Role{OrgID: orgID, Name: name}
-	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(role)
+	role := accesscontrol.Role{OrgID: orgID, Name: name}
+	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(&role)
 
 	// If managed role does not exist, create it and add it to user/team/builtin
 	if !has {
-		role := &accesscontrol.Role{
+		uid, err := generateNewRoleUID(sess, orgID)
+		if err != nil {
+			return nil, err
+		}
+
+		role = accesscontrol.Role{
 			OrgID:   orgID,
 			Name:    name,
+			UID:     uid,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Insert(role); err != nil {
+		if _, err := sess.Insert(&role); err != nil {
 			return nil, err
 		}
 
@@ -439,7 +445,7 @@ func (s *AccessControlStore) getOrCreateManagedRole(sess *sqlstore.DBSession, or
 		return nil, err
 	}
 
-	return role, nil
+	return &role, nil
 }
 
 func getManagedPermissions(sess *sqlstore.DBSession, resourceID string, ids []int64) ([]accesscontrol.ResourcePermission, error) {
