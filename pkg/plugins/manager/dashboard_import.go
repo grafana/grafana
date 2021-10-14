@@ -25,11 +25,24 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
 	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, *models.Dashboard, error) {
 	var dashboard *models.Dashboard
+	var supportedVersions string
 	if pluginID != "" {
 		var err error
 		if dashboard, err = pm.LoadPluginDashboard(pluginID, path); err != nil {
 			return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 		}
+
+		// get supportedVersions if the plugin specifies
+		plugin := pm.GetPlugin(pluginID)
+		if plugin == nil {
+			return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, plugins.PluginNotFoundError{PluginID: pluginID}
+		}
+		for _, include := range plugin.Includes {
+			if include.Slug == dashboard.Slug {
+				supportedVersions = include.SupportedVersions
+			}
+		}
+
 	} else {
 		dashboard = models.NewDashboardFromJson(dashboardModel)
 	}
@@ -45,12 +58,13 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 	}
 
 	saveCmd := models.SaveDashboardCommand{
-		Dashboard: generatedDash,
-		OrgId:     orgID,
-		UserId:    user.UserId,
-		Overwrite: overwrite,
-		PluginId:  pluginID,
-		FolderId:  folderID,
+		Dashboard:         generatedDash,
+		OrgId:             orgID,
+		UserId:            user.UserId,
+		Overwrite:         overwrite,
+		PluginId:          pluginID,
+		FolderId:          folderID,
+		SupportedVersions: supportedVersions,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
@@ -66,17 +80,18 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 	}
 
 	return plugins.PluginDashboardInfoDTO{
-		PluginId:         pluginID,
-		Title:            savedDash.Title,
-		Path:             path,
-		Revision:         savedDash.Data.Get("revision").MustInt64(1),
-		FolderId:         savedDash.FolderId,
-		ImportedUri:      "db/" + savedDash.Slug,
-		ImportedUrl:      savedDash.GetUrl(),
-		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
-		Imported:         true,
-		DashboardId:      savedDash.Id,
-		Slug:             savedDash.Slug,
+		PluginId:          pluginID,
+		Title:             savedDash.Title,
+		Path:              path,
+		Revision:          savedDash.Data.Get("revision").MustInt64(1),
+		FolderId:          savedDash.FolderId,
+		ImportedUri:       "db/" + savedDash.Slug,
+		ImportedUrl:       savedDash.GetUrl(),
+		ImportedRevision:  dashboard.Data.Get("revision").MustInt64(1),
+		Imported:          true,
+		DashboardId:       savedDash.Id,
+		Slug:              savedDash.Slug,
+		SupportedVersions: savedDash.SupportedVersions,
 	}, savedDash, nil
 }
 

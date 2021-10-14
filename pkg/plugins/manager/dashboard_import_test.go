@@ -29,6 +29,8 @@ func TestDashboardImport(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, info)
 		require.NotNil(t, dash)
+		require.Equal(t, info.SupportedVersions, "")
+		require.Equal(t, dash.SupportedVersions, "")
 
 		resultStr, err := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
 		require.NoError(t, err)
@@ -43,6 +45,25 @@ func TestDashboardImport(t *testing.T) {
 
 		panel := mock.SavedDashboards[0].Dashboard.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
 		require.Equal(t, "graphite", panel.Get("datasource").MustString())
+	})
+
+	pluginScenario(t, "When importing a plugin dashboard with supported versions", func(t *testing.T, pm *PluginManager) {
+		origNewDashboardService := dashboards.NewService
+		t.Cleanup(func() {
+			dashboards.NewService = origNewDashboardService
+		})
+		mock := &dashboards.FakeDashboardService{}
+		dashboards.MockDashboardService(mock)
+
+		info, dash, err := pm.ImportDashboard("test-app", "dashboards/latest_connections.json", 1, 0, nil, false,
+			[]plugins.ImportDashboardInput{
+				{Name: "*", Type: "datasource", Value: "graphite"},
+			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		require.NotNil(t, dash)
+		require.Equal(t, info.SupportedVersions, ">8.2.0, <=8.x")
+		require.Equal(t, dash.SupportedVersions, ">8.2.0, <=8.x")
 	})
 
 	t.Run("When evaling dashboard template", func(t *testing.T) {
