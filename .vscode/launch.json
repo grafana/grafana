@@ -1,5 +1,18 @@
 {
   "version": "0.2.0",
+  "inputs": [
+    {
+      "type": "command",
+      "id": "VERSION",
+      "command": "shell-command.run",
+      "args": {
+        "cmd": "jq",
+        "args": ["-r", "'.version'", "package.json"],
+        "capture": "stdout",
+        "quickPick": "true"
+      }
+    }
+  ],
   "configurations": [
     {
       "name": "Run Server",
