@@ -103,8 +103,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
+    const category = ['Icon'];
     builder
       .addCustomEditor({
+        category,
         id: 'iconSelector',
         path: 'config.path',
         name: 'SVG Path',
@@ -114,9 +116,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addCustomEditor({
+        category,
         id: 'config.fill',
         path: 'config.fill',
-        name: 'Icon fill color',
+        name: 'Fill color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -125,6 +128,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addSliderInput({
+        category,
         path: 'config.stroke.width',
         name: 'Stroke',
         defaultValue: 0,
@@ -134,16 +138,17 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         },
       })
       .addCustomEditor({
+        category,
         id: 'config.stroke.color',
         path: 'config.stroke.color',
-        name: 'Icon Stroke color',
+        name: 'Stroke color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
           // Configured values
           fixed: 'grey',
         },
-        showIf: (cfg) => Boolean(cfg.config?.stroke?.width),
+        showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
       });
   },
 };

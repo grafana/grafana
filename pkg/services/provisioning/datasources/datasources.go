@@ -92,9 +92,7 @@ func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*deleteDatasourc
 			return err
 		}
 
-		if cmd.DeletedDatasourcesCount > 0 {
-			dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
-		}
+		dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
 	}
 
 	return nil

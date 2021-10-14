@@ -1,10 +1,13 @@
 import { Component } from 'react';
-import { PanelProps } from '@grafana/data';
+import { CoreApp, PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
-import { ReplaySubject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { GroupState } from 'app/features/canvas/runtime/group';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -12,10 +15,16 @@ interface State {
   refresh: number;
 }
 
-// Used to pass the scene to the editor functions
-export const theScene = new ReplaySubject<Scene>(1);
+export interface InstanceState {
+  scene: Scene;
+  selected: ElementState[];
+  layer: GroupState;
+}
 
 export class CanvasPanel extends Component<Props, State> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
   readonly scene: Scene;
   private subs = new Subscription();
   needsReload = false;
@@ -27,11 +36,10 @@ export class CanvasPanel extends Component<Props, State> {
     };
 
     // Only the initial options are ever used.
-    // later changs are all controled by the scene
+    // later changes are all controlled by the scene
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
-    theScene.next(this.scene); // used in the editors
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
@@ -43,7 +51,25 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    theScene.next(this.scene);
+    this.panelContext = this.context as PanelContext;
+    if (this.panelContext.onInstanceStateChange && this.panelContext.app === CoreApp.PanelEditor) {
+      this.panelContext.onInstanceStateChange({
+        scene: this.scene,
+        layer: this.scene.root,
+      });
+
+      this.subs.add(
+        this.scene.selection.subscribe({
+          next: (v) => {
+            this.panelContext.onInstanceStateChange!({
+              scene: this.scene,
+              selected: v,
+              layer: this.scene.root,
+            });
+          },
+        })
+      );
+    }
   }
 
   componentWillUnmount() {

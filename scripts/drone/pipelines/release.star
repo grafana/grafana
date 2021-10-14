@@ -8,6 +8,7 @@ load(
     'codespell_step',
     'shellcheck_step',
     'test_backend_step',
+    'test_backend_integration_step',
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
@@ -30,7 +31,8 @@ load(
     'upload_packages_step',
     'publish_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step'
+    'validate_scuemata_step',
+    'ensure_cuetsified_step'
 )
 
 load(
@@ -85,12 +87,14 @@ def get_steps(edition, ver_mode):
         shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
-        test_backend_step(edition=edition, tries=tries),
+        test_backend_step(edition=edition),
+        test_backend_integration_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -98,7 +102,8 @@ def get_steps(edition, ver_mode):
         edition2 = 'enterprise2'
         steps.extend([
             lint_backend_step(edition=edition2),
-            test_backend_step(edition=edition2, tries=tries),
+            test_backend_step(edition=edition2),
+            test_backend_integration_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 
@@ -108,13 +113,16 @@ def get_steps(edition, ver_mode):
         package_step(edition=edition, ver_mode=ver_mode),
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition, tries=3),
-        build_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ])
+
+    build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
+    if build_storybook:
+        steps.append(build_storybook)
 
     if include_enterprise2:
       steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
@@ -123,10 +131,12 @@ def get_steps(edition, ver_mode):
         steps.append(upload_cdn_step(edition=edition))
         steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
-        steps.extend([
-            publish_storybook_step(edition=edition, ver_mode=ver_mode),
-            release_npm_packages_step(edition=edition, ver_mode=ver_mode),
-        ])
+        publish_step = publish_storybook_step(edition=edition, ver_mode=ver_mode)
+        release_npm_step = release_npm_packages_step(edition=edition, ver_mode=ver_mode)
+        if publish_step:
+            steps.append(publish_step)
+        if release_npm_step:
+            steps.append(release_npm_step)
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     if include_enterprise2:
@@ -138,7 +148,9 @@ def get_steps(edition, ver_mode):
             upload_cdn_step(edition=edition2),
         ])
         if should_upload:
-            steps.append(upload_packages_step(edition=edition2, ver_mode=ver_mode))
+            step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
+            if step:
+                steps.append(step)
 
     return steps, windows_steps
 

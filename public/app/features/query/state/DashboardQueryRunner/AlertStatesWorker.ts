@@ -14,6 +14,11 @@ export class AlertStatesWorker implements DashboardQueryRunnerWorker {
       return false;
     }
 
+    // if dashboard has no alerts, no point to query alert states
+    if (!dashboard.panels.find((panel) => !!panel.alert)) {
+      return false;
+    }
+
     return true;
   }
 

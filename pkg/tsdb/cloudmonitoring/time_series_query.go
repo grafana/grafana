@@ -11,42 +11,34 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/opentracing/opentracing-go"
-	"golang.org/x/net/context/ctxhttp"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery plugins.DataQuery,
-	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
+
 	if projectName == "" {
-		defaultProject, err := e.getDefaultProject(ctx)
+		var err error
+		projectName, err = s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
-			queryResult.Error = err
-			return queryResult, cloudMonitoringResponse{}, "", nil
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
 		}
-		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	from, err := tsdbQuery.TimeRange.ParseFrom()
-	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
-	}
-	to, err := tsdbQuery.TimeRange.ParseTo()
-	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
-	}
-	intervalCalculator := interval.NewCalculator(interval.CalculatorOptions{})
-	interval := intervalCalculator.Calculate(*tsdbQuery.TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second)
+	intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
+	interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
 
+	from := req.Queries[0].TimeRange.From
+	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | graph_period %s | within d'%s', d'%s'", interval.Text, from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 
@@ -54,53 +46,54 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 		"query": timeSeriesQuery.Query,
 	})
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
-	req, err := e.createRequest(ctx, e.dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
+	r, err := s.createRequest(ctx, req.PluginContext, &dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring MQL query")
 	span.SetTag("query", timeSeriesQuery.Query)
-	span.SetTag("from", tsdbQuery.TimeRange.From)
-	span.SetTag("until", tsdbQuery.TimeRange.To)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("from", req.Queries[0].TimeRange.From)
+	span.SetTag("until", req.Queries[0].TimeRange.To)
+	span.SetTag("datasource_id", dsInfo.id)
+	span.SetTag("org_id", req.PluginContext.OrgID)
 
 	defer span.Finish()
 
 	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		opentracing.HTTPHeadersCarrier(r.Header)); err != nil {
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	r = r.WithContext(ctx)
+	res, err := dsInfo.client.Do(r)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	data, err := unmarshalResponse(res)
-
+	d, err := unmarshalResponse(res)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	return queryResult, data, timeSeriesQuery.Query, nil
+	return dr, d, timeSeriesQuery.Query, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *plugins.DataQueryResult,
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
+
+	customFrameMeta := map[string]interface{}{}
 	for _, series := range response.TimeSeriesData {
 		seriesLabels := make(map[string]string)
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -252,23 +245,29 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 		frames = addConfigData(frames, dl, response.Unit)
 	}
 
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
-
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
 		for value := range values {
 			labelsByKey[key] = append(labelsByKey[key], value)
 		}
 	}
+	customFrameMeta["labels"] = labelsByKey
 
-	queryRes.Meta.Set("labels", labelsByKey)
+	for _, frame := range frames {
+		if frame.Meta != nil {
+			frame.Meta.Custom = customFrameMeta
+		} else {
+			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
+		}
+	}
+
+	queryRes.Frames = frames
 
 	return nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *plugins.DataQueryResult,
-	data cloudMonitoringResponse, title string, text string, tags string) error {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
+	data cloudMonitoringResponse, title, text, tags string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeriesData {
@@ -315,7 +314,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 		}
 	}
 
-	transformAnnotationToTable(annotations, queryRes)
+	timeSeriesQuery.transformAnnotationToFrame(annotations, queryRes)
 	return nil
 }
 
@@ -348,8 +347,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 		},
 		"timeSelection": map[string]string{
 			"timeRange": "custom",
-			"start":     timeSeriesQuery.timeRange.MustGetFrom().Format(time.RFC3339Nano),
-			"end":       timeSeriesQuery.timeRange.MustGetTo().Format(time.RFC3339Nano),
+			"start":     timeSeriesQuery.timeRange.From.Format(time.RFC3339Nano),
+			"end":       timeSeriesQuery.timeRange.To.Format(time.RFC3339Nano),
 		},
 	}
 

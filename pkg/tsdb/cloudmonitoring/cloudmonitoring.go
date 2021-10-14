@@ -16,16 +16,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"golang.org/x/oauth2/google"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
+
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/oauth2/google"
 )
 
 var (
@@ -66,145 +72,213 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider) *Service {
-	return &Service{
-		PluginManager:      pluginManager,
-		HTTPClientProvider: httpClientProvider,
-		Cfg:                cfg,
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginManager plugins.Manager,
+	backendPluginManager backendplugin.Manager, dsService *datasources.Service) *Service {
+	s := &Service{
+		pluginManager:        pluginManager,
+		backendPluginManager: backendPluginManager,
+		httpClientProvider:   httpClientProvider,
+		cfg:                  cfg,
+		im:                   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		dsService:            dsService,
 	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := s.backendPluginManager.Register("stackdriver", factory); err != nil {
+		slog.Error("Failed to register plugin", "error", err)
+	}
+	return s
 }
 
 type Service struct {
-	PluginManager      plugins.Manager
-	HTTPClientProvider httpclient.Provider
-	Cfg                *setting.Cfg
+	pluginManager        plugins.Manager
+	backendPluginManager backendplugin.Manager
+	httpClientProvider   httpclient.Provider
+	cfg                  *setting.Cfg
+	im                   instancemgmt.InstanceManager
+	dsService            *datasources.Service
 }
 
-// Executor executes queries for the CloudMonitoring datasource.
-type Executor struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
+type QueryModel struct {
+	Type string `json:"type"`
 }
 
-// NewExecutor returns an Executor.
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHTTPClient(s.HTTPClientProvider)
-	if err != nil {
-		return nil, err
+type datasourceInfo struct {
+	id                 int64
+	updated            time.Time
+	url                string
+	authenticationType string
+	defaultProject     string
+	client             *http.Client
+
+	jsonData                map[string]interface{}
+	decryptedSecureJSONData map[string]string
+}
+
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		var jsonData map[string]interface{}
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		client, err := httpClientProvider.New(opts)
+		if err != nil {
+			return nil, err
+		}
+
+		authType := jwtAuthentication
+		if authTypeOverride, ok := jsonData["authenticationType"].(string); ok && authTypeOverride != "" {
+			authType = authTypeOverride
+		}
+
+		var defaultProject string
+		if jsonData["defaultProject"] != nil {
+			defaultProject = jsonData["defaultProject"].(string)
+		}
+
+		return &datasourceInfo{
+			id:                      settings.ID,
+			updated:                 settings.Updated,
+			url:                     settings.URL,
+			authenticationType:      authType,
+			defaultProject:          defaultProject,
+			client:                  client,
+			jsonData:                jsonData,
+			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
+		}, nil
 	}
-
-	return &Executor{
-		httpClient:    httpClient,
-		dsInfo:        dsInfo,
-		pluginManager: s.PluginManager,
-		cfg:           s.Cfg,
-	}, nil
 }
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
-// the time series or table format
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
-	plugins.DataResponse, error) {
-	var result plugins.DataResponse
-	var err error
-	queryType := tsdbQuery.Queries[0].Model.Get("type").MustString("")
+// the data frames
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+	if len(req.Queries) == 0 {
+		return resp, fmt.Errorf("query contains no queries")
+	}
 
-	switch queryType {
+	model := &QueryModel{}
+	err := json.Unmarshal(req.Queries[0].JSON, model)
+	if err != nil {
+		return resp, err
+	}
+
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	switch model.Type {
 	case "annotationQuery":
-		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
+		resp, err = s.executeAnnotationQuery(ctx, req, *dsInfo)
 	case "getGCEDefaultProject":
-		result, err = e.getGCEDefaultProject(ctx, tsdbQuery)
+		resp, err = s.getGCEDefaultProject(ctx, req, *dsInfo)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
-		result, err = e.executeTimeSeriesQuery(ctx, tsdbQuery)
+		resp, err = s.executeTimeSeriesQuery(ctx, req, *dsInfo)
 	}
 
-	return result, err
+	return resp, err
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		Results: make(map[string]plugins.DataQueryResult),
-	}
-	refID := tsdbQuery.Queries[0].RefID
-	//nolint: staticcheck // plugins.DataPlugin deprecated
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: refID}
-
-	gceDefaultProject, err := e.getDefaultProject(ctx)
+func (s *Service) getGCEDefaultProject(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	gceDefaultProject, err := s.getDefaultProject(ctx, dsInfo)
 	if err != nil {
-		return plugins.DataResponse{}, fmt.Errorf(
+		return backend.NewQueryDataResponse(), fmt.Errorf(
 			"failed to retrieve default project from GCE metadata server, error: %w", err)
 	}
 
-	queryResult.Meta.Set("defaultProject", gceDefaultProject)
-	result.Results[refID] = queryResult
-
-	return result, nil
+	return &backend.QueryDataResponse{
+		Responses: backend.Responses{
+			req.Queries[0].RefID: {
+				Frames: data.Frames{data.NewFrame("").SetMeta(&data.FrameMeta{
+					Custom: map[string]interface{}{
+						"defaultProject": gceDefaultProject,
+					},
+				})},
+			},
+		},
+	}, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
-	plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		Results: make(map[string]plugins.DataQueryResult),
-	}
-
-	queryExecutors, err := e.buildQueryExecutors(tsdbQuery)
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+	*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+	queryExecutors, err := s.buildQueryExecutors(req)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return resp, err
 	}
 
 	for _, queryExecutor := range queryExecutors {
-		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, tsdbQuery, e)
+		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return resp, err
 		}
-		err = queryExecutor.parseResponse(&queryRes, resp, executedQueryString)
+		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
 		}
 
-		result.Results[queryExecutor.getRefID()] = queryRes
+		resp.Responses[queryExecutor.getRefID()] = *queryRes
 	}
 
-	return result, nil
+	return resp, nil
 }
 
-func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMonitoringQueryExecutor, error) {
-	cloudMonitoringQueryExecutors := []cloudMonitoringQueryExecutor{}
-
-	startTime, err := tsdbQuery.TimeRange.ParseFrom()
+func queryModel(query backend.DataQuery) (grafanaQuery, error) {
+	var rawQuery map[string]interface{}
+	err := json.Unmarshal(query.JSON, &rawQuery)
 	if err != nil {
-		return nil, err
+		return grafanaQuery{}, err
 	}
 
-	endTime, err := tsdbQuery.TimeRange.ParseTo()
-	if err != nil {
-		return nil, err
+	if rawQuery["metricQuery"] == nil {
+		// migrate legacy query
+		var mq metricQuery
+		err = json.Unmarshal(query.JSON, &mq)
+		if err != nil {
+			return grafanaQuery{}, err
+		}
+
+		return grafanaQuery{
+			QueryType:   metricQueryType,
+			MetricQuery: mq,
+		}, nil
 	}
 
+	var q grafanaQuery
+	err = json.Unmarshal(query.JSON, &q)
+	if err != nil {
+		return grafanaQuery{}, err
+	}
+
+	return q, nil
+}
+
+func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
+	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
+	startTime := req.Queries[0].TimeRange.From
+	endTime := req.Queries[0].TimeRange.To
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
-	for i := range tsdbQuery.Queries {
-		migrateLegacyQueryModel(&tsdbQuery.Queries[i])
-		query := tsdbQuery.Queries[i]
-		q := grafanaQuery{}
-		model, err := query.Model.MarshalJSON()
+	for _, query := range req.Queries {
+		q, err := queryModel(query)
 		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal(model, &q); err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
+
 		q.MetricQuery.PreprocessorType = toPreprocessorType(q.MetricQuery.Preprocessor)
 		var target string
 		params := url.Values{}
@@ -223,9 +297,9 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 					RefID:       query.RefID,
 					ProjectName: q.MetricQuery.ProjectName,
 					Query:       q.MetricQuery.Query,
-					IntervalMS:  query.IntervalMS,
+					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
-					timeRange:   *tsdbQuery.TimeRange,
+					timeRange:   req.Queries[0].TimeRange,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy
@@ -236,7 +310,7 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 				}
 				params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
 				params.Add("view", q.MetricQuery.View)
-				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMS)
+				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.Interval.Milliseconds())
 				queryInterface = cmtsf
 			}
 		case sloQueryType:
@@ -246,7 +320,7 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 			cmtsf.Service = q.SloQuery.ServiceId
 			cmtsf.Slo = q.SloQuery.SloId
 			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
-			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.IntervalMS)
+			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
 		default:
 			panic(fmt.Sprintf("Unrecognized query type %q", q.QueryType))
@@ -264,17 +338,6 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 	}
 
 	return cloudMonitoringQueryExecutors, nil
-}
-
-func migrateLegacyQueryModel(query *plugins.DataSubQuery) {
-	mq := query.Model.Get("metricQuery").MustMap()
-	if mq == nil {
-		migratedModel := simplejson.NewFromAny(map[string]interface{}{
-			"queryType":   metricQueryType,
-			"metricQuery": query.Model.MustMap(),
-		})
-		query.Model = migratedModel
-	}
 }
 
 func reverse(s string) string {
@@ -515,8 +578,8 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource, proxyPass string, body io.Reader) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginContext, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +598,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 	req.Header.Set("Content-Type", "application/json")
 
 	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	plugin := s.pluginManager.GetDataSource(pluginCtx.PluginID)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
@@ -548,14 +611,18 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, pluginproxy.DSInfo{
+		ID:                      dsInfo.id,
+		Updated:                 dsInfo.updated,
+		JSONData:                dsInfo.jsonData,
+		DecryptedSecureJSONData: dsInfo.decryptedSecureJSONData,
+	}, s.cfg)
 
 	return req, nil
 }
 
-func (e *Executor) getDefaultProject(ctx context.Context) (string, error) {
-	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	if authenticationType == gceAuthentication {
+func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
+	if dsInfo.authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
 			return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
@@ -570,7 +637,7 @@ func (e *Executor) getDefaultProject(ctx context.Context) (string, error) {
 
 		return defaultCredentials.ProjectID, nil
 	}
-	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+	return dsInfo.defaultProject, nil
 }
 
 func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
@@ -618,4 +685,18 @@ func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
 		}
 	}
 	return frames
+}
+
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, ok := i.(*datasourceInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast datsource info")
+	}
+
+	return instance, nil
 }

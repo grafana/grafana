@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -9,16 +10,15 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -141,8 +141,8 @@ type TestReceiversConfigParams struct {
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *TestReceiversConfigParams) ProcessConfig() error {
-	return processReceiverConfigs(c.Receivers)
+func (c *TestReceiversConfigParams) ProcessConfig(encrypt EncryptFn) error {
+	return processReceiverConfigs(c.Receivers, encrypt)
 }
 
 // swagger:model
@@ -412,8 +412,8 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 }
 
 // ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
-func (c *PostableUserConfig) ProcessConfig() error {
-	return processReceiverConfigs(c.AlertmanagerConfig.Receivers)
+func (c *PostableUserConfig) ProcessConfig(encrypt EncryptFn) error {
+	return processReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -870,22 +870,6 @@ type PostableGrafanaReceiver struct {
 	SecureSettings        map[string]string `json:"secureSettings"`
 }
 
-func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error) {
-	storedValue, ok := r.SecureSettings[key]
-	if !ok {
-		return "", nil
-	}
-	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
-	if err != nil {
-		return "", err
-	}
-	decryptedValue, err := util.Decrypt(decodeValue, setting.SecretKey)
-	if err != nil {
-		return "", err
-	}
-	return string(decryptedValue), nil
-}
-
 type ReceiverType int
 
 const (
@@ -1061,7 +1045,9 @@ type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
 
-func processReceiverConfigs(c []*PostableApiReceiver) error {
+type EncryptFn func(ctx context.Context, payload []byte, secret string) ([]byte, error)
+
+func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
@@ -1069,7 +1055,7 @@ func processReceiverConfigs(c []*PostableApiReceiver) error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					encryptedData, err := encrypt(context.Background(), []byte(v), setting.SecretKey)
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

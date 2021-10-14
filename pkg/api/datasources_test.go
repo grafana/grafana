@@ -199,7 +199,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		return nil
 	}
 	deleteDatasourceStub := func(cmd *models.DeleteDataSourceCommand) error {
-		cmd.DeletedDatasourcesCount = 1
 		return nil
 	}
 	addDatasourceBody := func() io.Reader {

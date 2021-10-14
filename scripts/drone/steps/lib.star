@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.4.8'
+grabpl_version = '2.5.2'
 build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -62,7 +62,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'yarn install --frozen-lockfile --no-progress',
+            'yarn install --immutable',
         ])
     if edition in ('enterprise', 'enterprise2'):
         source_commit = ''
@@ -357,12 +357,7 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition, tries=None):
-    test_backend_cmd = './bin/grabpl test-backend --edition {}'.format(edition)
-    integration_tests_cmd = './bin/grabpl integration-tests --edition {}'.format(edition)
-    if tries:
-        test_backend_cmd += ' --tries {}'.format(tries)
-        integration_tests_cmd += ' --tries {}'.format(tries)
+def test_backend_step(edition):
     return {
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
@@ -372,10 +367,19 @@ def test_backend_step(edition, tries=None):
         'commands': [
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
-            # Then execute non-integration tests in parallel, since it should be safe
-            test_backend_cmd,
-            # Then execute integration tests in serial
-            integration_tests_cmd,
+            './bin/grabpl test-backend --edition {}'.format(edition),
+        ],
+    }
+
+def test_backend_integration_step(edition):
+    return {
+        'name': 'test-backend-integration' + enterprise2_suffix(edition),
+        'image': build_image,
+        'depends_on': [
+            'lint-backend',
+        ],
+        'commands': [
+            './bin/grabpl integration-tests --edition {}'.format(edition),
         ],
     }
 
@@ -427,7 +431,7 @@ def test_a11y_frontend_step(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+            'yarn run test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 
@@ -446,7 +450,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         'failure': 'ignore',
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility-pr',
+            'yarn run test:accessibility-pr',
         ],
     }
 
@@ -480,6 +484,7 @@ def codespell_step():
             # Important: all words have to be in lowercase, and separated by "\n".
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
+            'rm words_to_ignore.txt',
         ],
     }
 
@@ -631,7 +636,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            './node_modules/.bin/cypress install',
+            'yarn run cypress install',
             cmd,
         ],
     }
@@ -788,26 +793,6 @@ def release_canary_npm_packages_step(edition):
         'commands': [
             './scripts/circle-release-canary-packages.sh',
         ],
-    }
-
-def push_to_deployment_tools_step(edition, is_downstream=False):
-    if edition != 'enterprise' or not is_downstream:
-        return None
-
-    return {
-        'name': 'push-to-deployment_tools',
-        'image': deploy_docker_image,
-        'depends_on': [
-            'build-docker-images',
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
-        'settings': {
-            'github_token': from_secret(github_token),
-            'images_file': './deployment_tools_config.json',
-            'docker_tag_file': './dist/grafana.version'
-        },
     }
 
 def enterprise2_suffix(edition):
@@ -1014,5 +999,23 @@ def validate_scuemata_step():
         ],
         'commands': [
             './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
+        ],
+    }
+
+def ensure_cuetsified_step():
+    return {
+        'name': 'ensure-cuetsified',
+        'image': build_image,
+        'depends_on': [
+            'validate-scuemata',
+        ],
+        'commands': [
+            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
+            '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
+            '# It is required that the generated Typescript be in sync with the input CUE files.',
+            '# ...Modulo eslint auto-fixes...:',
+            './node_modules/.bin/eslint . --ext .gen.ts --fix',
+            '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
+            './scripts/clean-git-or-error.sh',
         ],
     }

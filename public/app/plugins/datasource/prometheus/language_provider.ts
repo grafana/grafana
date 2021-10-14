@@ -9,7 +9,7 @@ import {
   addLimitInfo,
   fixSummariesMetadata,
   parseSelector,
-  processHistogramLabels,
+  processHistogramMetrics,
   processLabels,
   roundSecToMin,
 } from './language_utils';
@@ -123,22 +123,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
-    this.processHistogramMetrics(this.metrics);
-
+    this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return [];
   };
 
   getLabelKeys(): string[] {
     return this.labelKeys;
   }
-
-  processHistogramMetrics = (data: string[]) => {
-    const { values } = processHistogramLabels(data);
-
-    if (values && values['__name__']) {
-      this.histogramMetrics = values['__name__'].slice().sort();
-    }
-  };
 
   provideCompletionItems = async (
     { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
