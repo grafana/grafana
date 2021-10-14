@@ -32,7 +32,7 @@ import (
 // Internal interval and range variables
 const (
 	varInterval     = "$__interval"
-	varIntervalMs   = "$__interval"
+	varIntervalMs   = "$__interval_ms"
 	varRange        = "$__range"
 	varRangeS       = "$__range_s"
 	varRangeMs      = "$__range_ms"
