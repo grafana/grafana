@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -21,7 +22,7 @@ func TestKafkaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewKafkaNotifier(model)
+				_, err := NewKafkaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +40,7 @@ func TestKafkaNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewKafkaNotifier(model)
+				not, err := NewKafkaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				kafkaNotifier := not.(*KafkaNotifier)
 
 				So(err, ShouldBeNil)

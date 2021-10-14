@@ -77,7 +77,10 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(
+					ds.BasicAuthUser,
+					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
+				)
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -85,13 +88,13 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 			if ds.Type == models.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.DecryptedPassword()
+				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == models.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.DecryptedPassword()
+				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
 				dsMap["url"] = url
 			}
 		}

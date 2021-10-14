@@ -47,7 +47,7 @@ func init() {
 	})
 }
 
-func newDingDingNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func newDingDingNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}

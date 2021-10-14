@@ -1,0 +1,32 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "enabledManagers": ["npm"],
+  "ignoreDeps": [
+    "d3",
+    "husky",
+    "slate",
+    "slate-plain-serializer",
+    "systemjs",
+    "ts-loader", // we should remove ts-loader and use babel-loader instead
+    "ora" // we should bump this once we move to esm modules
+  ],
+  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
+  "labels": ["area/frontend", "dependencies"],
+  "minor": {
+    "enabled": false
+  },
+  "patch": {
+    "enabled": false
+  },
+  "pin": {
+    "enabled": false
+  },
+  "prConcurrentLimit": 10,
+  "reviewers": ["team:grafana/frontend-ops"],
+  "separateMajorMinor": false,
+  "vulnerabilityAlerts": {
+    "addLabels": ["area/security"]
+  }
+}

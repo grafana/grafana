@@ -11,6 +11,7 @@ import {
   UserOrg,
   UserSession,
   UserListAdminState,
+  UserFilter,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -128,7 +129,7 @@ const initialUserListAdminState: UserListAdminState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
-  filter: 'all',
+  filters: [{ name: 'activeLast30Days', value: false }],
   isLoading: false,
 };
 
@@ -171,10 +172,20 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
-    filterChanged: (state, action: PayloadAction<string>) => ({
-      ...state,
-      filter: action.payload,
-    }),
+    filterChanged: (state, action: PayloadAction<UserFilter>) => {
+      const { name, value } = action.payload;
+
+      if (state.filters.some((filter) => filter.name === name)) {
+        return {
+          ...state,
+          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
+        };
+      }
+      return {
+        ...state,
+        filters: [...state.filters, action.payload],
+      };
+    },
   },
 });
 

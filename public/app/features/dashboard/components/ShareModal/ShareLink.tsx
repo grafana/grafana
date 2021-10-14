@@ -114,6 +114,7 @@ export class ShareLink extends PureComponent<Props, State> {
 
           <Field label="Link URL">
             <Input
+              id="link-url-input"
               value={shareUrl}
               readOnly
               addonAfter={

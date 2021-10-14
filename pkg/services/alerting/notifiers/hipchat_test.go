@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -22,7 +23,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewHipChatNotifier(model)
+				_, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -38,7 +39,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewHipChatNotifier(model)
+				not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				hipchatNotifier := not.(*HipChatNotifier)
 
 				So(err, ShouldBeNil)
@@ -64,7 +65,7 @@ func TestHipChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewHipChatNotifier(model)
+				not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
 				hipchatNotifier := not.(*HipChatNotifier)
 
 				So(err, ShouldBeNil)
