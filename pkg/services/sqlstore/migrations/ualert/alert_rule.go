@@ -201,7 +201,7 @@ func transNoData(s string) (string, error) {
 	case "alerting":
 		return "Alerting", nil
 	case "keep_state":
-		return "Alerting", nil
+		return "NoData", nil
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
