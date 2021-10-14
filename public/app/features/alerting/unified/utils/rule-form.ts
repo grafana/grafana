@@ -229,8 +229,8 @@ const dataQueriesToGrafanaQueries = async (
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
   for (const target of queries) {
-    const dsName = target.datasource || datasourceName;
-    const datasource = await getDataSourceSrv().get(dsName);
+    const datasource = await getDataSourceSrv().get(target.datasource || datasourceName);
+    const dsName = datasource.name;
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
     const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
