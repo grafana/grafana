@@ -4,6 +4,7 @@ import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOption
 import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import { ResourcePicker } from './ResourcePicker';
+import { ResourceFolderName } from '..';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -58,21 +59,24 @@ export const ResourceDimensionEditor: FC<
   }, []);
 
   const mode = value?.mode ?? ResourceDimensionMode.Fixed;
+  const showSourceRadio = item.settings?.showSourceRadio ?? true;
   const mediaType = item.settings?.resourceType ?? 'icon';
+  const folderName = item.settings?.folderName ?? ResourceFolderName.Icon;
 
   return (
     <>
       {isOpen && (
         <Modal isOpen={isOpen} title={`Select ${mediaType}`} onDismiss={() => setOpen(false)} closeOnEscape>
-          <ResourcePicker onChange={onFixedChange} value={value?.fixed} mediaType={mediaType} />
+          <ResourcePicker onChange={onFixedChange} value={value?.fixed} mediaType={mediaType} folderName={folderName} />
         </Modal>
       )}
-
-      <InlineFieldRow>
-        <InlineField label="Source" labelWidth={labelWidth} grow={true}>
-          <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
-        </InlineField>
-      </InlineFieldRow>
+      {showSourceRadio && (
+        <InlineFieldRow>
+          <InlineField label="Source" labelWidth={labelWidth} grow={true}>
+            <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {mode !== ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
           <InlineField label="Field" labelWidth={labelWidth} grow={true}>

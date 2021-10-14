@@ -363,7 +363,7 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 
 func awsServiceNamespace(dsType string) string {
 	switch dsType {
-	case models.DS_ES, models.DS_ES_OPEN_DISTRO:
+	case models.DS_ES, models.DS_ES_OPEN_DISTRO, models.DS_ES_OPENSEARCH:
 		return "es"
 	case models.DS_PROMETHEUS:
 		return "aps"
