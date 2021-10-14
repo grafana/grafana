@@ -124,7 +124,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
         <TestNotificationChannelModal
           onDismiss={() => setTestContactPointModalOpen(false)}
           isOpen={testContactPointModalOpen}
-          onTest={() => testNotification()}
+          onTest={(alert) => testNotification(alert)}
         />
       </>
     );
