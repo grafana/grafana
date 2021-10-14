@@ -159,8 +159,8 @@ const (
 type SignatureType string
 
 const (
-	GrafanaType SignatureType = "grafana"
-	PrivateType SignatureType = "private"
+	GrafanaSignature SignatureType = "grafana"
+	PrivateSignature SignatureType = "private"
 )
 
 type PluginFiles map[string]struct{}

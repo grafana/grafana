@@ -23,7 +23,7 @@ import (
 
 var compareOpts = cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log")
 
-func TestLoader_LoadAll(t *testing.T) {
+func TestLoader_Load(t *testing.T) {
 	corePluginDir, err := filepath.Abs("./../../../../public")
 	if err != nil {
 		t.Errorf("could not construct absolute path of core plugins dir")
@@ -203,7 +203,7 @@ func TestLoader_LoadAll(t *testing.T) {
 					BaseURL:       "public/plugins/test-app",
 					PluginDir:     filepath.Join(parentDir, "testdata/includes-symlinks"),
 					Signature:     "valid",
-					SignatureType: plugins.GrafanaType,
+					SignatureType: plugins.GrafanaSignature,
 					SignatureOrg:  "Grafana Labs",
 				},
 			},
@@ -224,7 +224,180 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 }
 
-func TestLoader_loadDuplicatePlugins(t *testing.T) {
+func TestLoader_Load_MultiplePlugins(t *testing.T) {
+	parentDir, err := filepath.Abs("../")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
+	}
+
+	t.Run("Load multiple", func(t *testing.T) {
+		tests := []struct {
+			name            string
+			cfg             *setting.Cfg
+			pluginPaths     []string
+			appURL          string
+			existingPlugins map[string]struct{}
+			want            []*plugins.Plugin
+			wantErr         bool
+		}{
+			{
+				name: "Load multiple plugins (broken, valid, unsigned)",
+				cfg: &setting.Cfg{
+					PluginsPath: filepath.Join(parentDir),
+				},
+				appURL: "http://localhost:3000",
+				pluginPaths: []string{
+					"../testdata/invalid-plugin-json",    // test-app
+					"../testdata/valid-v2-pvt-signature", // test
+					"../testdata/unsigned-panel",         // test-panel
+					//"../testdata/nested-plugins", // test-panel + test-ds
+				},
+				want: []*plugins.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test",
+							Type: "datasource",
+							Name: "Test",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Will Browne",
+									URL:  "https://willbrowne.com",
+								},
+								Logos: plugins.Logos{
+									Small: "public/img/icn-datasource.svg",
+									Large: "public/img/icn-datasource.svg",
+								},
+								Description: "Test",
+								Version:     "1.0.0",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+							Backend:    true,
+							Executable: "test",
+							State:      plugins.AlphaRelease,
+						},
+						Class:         plugins.External,
+						Module:        "plugins/test/module",
+						BaseURL:       "public/plugins/test",
+						PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"),
+						Signature:     "valid",
+						SignatureType: plugins.PrivateSignature,
+						SignatureOrg:  "Will Browne",
+					},
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-panel",
+							Type: "panel",
+							Name: "Test",
+							Info: plugins.Info{
+								Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
+								Description: "Test panel",
+								Logos: plugins.Logos{
+									Small: "public/img/icn-panel.svg",
+									Large: "public/img/icn-panel.svg",
+								},
+							},
+							Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}},
+						},
+						PluginDir: filepath.Join(parentDir, "testdata/unsigned-panel/plugin"),
+						Class:     "external",
+						Signature: "unsigned",
+						Module:    "plugins/test-panel/module",
+						BaseURL:   "public/plugins/test-panel",
+					},
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			l := newLoader(tt.cfg, nil)
+			t.Run(tt.name, func(t *testing.T) {
+				origAppURL := setting.AppUrl
+				t.Cleanup(func() {
+					setting.AppUrl = origAppURL
+				})
+				setting.AppUrl = tt.appURL
+
+				got, err := l.Load(tt.pluginPaths, tt.existingPlugins)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				sort.SliceStable(got, func(i, j int) bool {
+					return got[i].ID < got[j].ID
+				})
+				if !cmp.Equal(got, tt.want, compareOpts) {
+					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+				}
+			})
+		}
+	})
+}
+
+func TestLoader_Signature_RootURL(t *testing.T) {
+	const defaultAppURL = "http://localhost:3000/grafana"
+
+	parentDir, err := filepath.Abs("../")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
+	}
+
+	t.Run("Private signature verification ignores trailing slash in root URL", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		origAppSubURL := setting.AppSubUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+			setting.AppSubUrl = origAppSubURL
+		})
+		setting.AppUrl = defaultAppURL
+
+		paths := []string{"../testdata/valid-v2-pvt-signature-root-url-uri"}
+
+		expected := []*plugins.Plugin{
+			{
+				JSONData: plugins.JSONData{
+					ID:   "test",
+					Type: "datasource",
+					Name: "Test",
+					Info: plugins.Info{
+						Author:      plugins.InfoLink{Name: "Will Browne", URL: "https://willbrowne.com"},
+						Description: "Test",
+						Logos: plugins.Logos{
+							Small: "public/img/icn-datasource.svg",
+							Large: "public/img/icn-datasource.svg",
+						},
+						Version: "1.0.0",
+					},
+					State:        plugins.AlphaRelease,
+					Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}},
+					Backend:      true,
+					Executable:   "test",
+				},
+				PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
+				Class:         "external",
+				Signature:     "valid",
+				SignatureType: "private",
+				SignatureOrg:  "Will Browne",
+				Module:        "plugins/test/module",
+				BaseURL:       "public/plugins/test",
+			},
+		}
+
+		l := newLoader(&setting.Cfg{PluginsPath: filepath.Join(parentDir)}, nil)
+		got, err := l.Load(paths, map[string]struct{}{})
+		assert.NoError(t, err)
+
+		if !cmp.Equal(got, expected, compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		}
+	})
+}
+
+func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 	t.Run("Load duplicate plugin folders", func(t *testing.T) {
 		pluginDir, err := filepath.Abs("../testdata/test-app")
 		if err != nil {
@@ -276,7 +449,7 @@ func TestLoader_loadDuplicatePlugins(t *testing.T) {
 				PluginDir:     pluginDir,
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
-				SignatureType: plugins.GrafanaType,
+				SignatureType: plugins.GrafanaSignature,
 				SignatureOrg:  "Grafana Labs",
 				Module:        "plugins/test-app/module",
 				BaseURL:       "public/plugins/test-app",
@@ -330,7 +503,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		BaseURL:       "public/plugins/test-ds",
 		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent"),
 		Signature:     "valid",
-		SignatureType: plugins.GrafanaType,
+		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
 		Class:         "external",
 	}
@@ -362,7 +535,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		BaseURL:       "public/plugins/test-panel",
 		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent/nested"),
 		Signature:     "valid",
-		SignatureType: plugins.GrafanaType,
+		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
 		Class:         "external",
 	}

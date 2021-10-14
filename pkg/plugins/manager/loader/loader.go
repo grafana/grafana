@@ -92,16 +92,18 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
-			return nil, err
+			logger.Warn("Skipping plugin loading as it's plugin.json is invalid", "id", plugin.ID)
+			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			return nil, err
+			logger.Warn("Skipping plugin loading as full plugin.json path could not be calculated", "id", plugin.ID)
+			continue
 		}
 
 		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			logger.Warn("Skipping plugin as it's a duplicate", "id", plugin.ID)
+			logger.Warn("Skipping plugin loading as it's a duplicate", "id", plugin.ID)
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
@@ -160,7 +162,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 				"signature", plugin.Signature, "status", signingError)
 			plugin.SignatureError = signingError
 			l.errs[plugin.ID] = signingError
-			continue // verify skip plugins
+			continue
 		}
 
 		// verify module.js exists for SystemJS to load

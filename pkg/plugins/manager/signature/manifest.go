@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -134,7 +135,7 @@ func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error
 	}
 
 	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateType {
+	if manifest.SignatureType == plugins.PrivateSignature {
 		appURL, err := url.Parse(setting.AppUrl)
 		if err != nil {
 			return plugins.Signature{}, err
@@ -147,9 +148,10 @@ func Calculate(log log.Logger, plugin *plugins.Plugin) (plugins.Signature, error
 				log.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
 				return plugins.Signature{}, err
 			}
+
 			if rootURL.Scheme == appURL.Scheme &&
 				rootURL.Host == appURL.Host &&
-				rootURL.RequestURI() == appURL.RequestURI() {
+				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
 				foundMatch = true
 				break
 			}
