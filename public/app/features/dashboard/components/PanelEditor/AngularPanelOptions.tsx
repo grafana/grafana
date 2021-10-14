@@ -11,7 +11,7 @@ import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 
 interface OwnProps {

@@ -203,6 +203,7 @@ export const Components = {
   },
   FolderPicker: {
     container: 'Folder picker select container',
+    input: 'Select a folder',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',

@@ -21,7 +21,7 @@ import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader
 
 // Types
 import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
-import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { setLinkSrv, LinkSrv } from 'app/angular/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
