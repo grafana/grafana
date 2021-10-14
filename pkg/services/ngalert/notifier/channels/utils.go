@@ -55,6 +55,7 @@ func getAlertStatusColor(status model.AlertStatus) string {
 }
 
 type NotificationChannelConfig struct {
+	OrgID                 int64             // only used internally
 	UID                   string            `json:"uid"`
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`

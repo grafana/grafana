@@ -4,8 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -20,14 +19,14 @@ func TestDeleteLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.reqContext.SignedInUser.OrgId = 2
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
 			resp := sc.service.deleteHandler(sc.reqContext)
@@ -70,7 +69,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
 			require.NoError(t, err)
 
-			sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 403, resp.Status())
 		})

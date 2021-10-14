@@ -100,7 +100,7 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
         if (filePaths.length > 0) {
           return filePaths[0];
         } else {
-          return resolvePath(__dirname, '../../config/eslint.plugin.json');
+          return resolvePath(__dirname, '../../config/eslint.plugin.js');
         }
       }
     );
@@ -108,6 +108,7 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
     const cli = new CLIEngine({
       configFile,
       fix,
+      useEslintrc: false,
     });
 
     const report = cli.executeOnFiles(await getTypescriptSources());
