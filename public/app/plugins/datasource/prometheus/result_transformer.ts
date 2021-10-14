@@ -50,19 +50,12 @@ const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery
 
   // We want to process all dataFrames with target.format === 'table' as table
   const target = options.targets.find((target) => target.refId === dataFrame.refId);
-  if (target?.format === 'table') {
-    return true;
-  }
-
-  return false;
+  return target?.format === 'table';
 };
 
 const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
   const target = options.targets.find((target) => target.refId === dataFrame.refId);
-  if (target?.format === 'heatmap') {
-    return true;
-  }
-  return false;
+  return target?.format === 'heatmap';
 };
 
 // V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
@@ -71,22 +64,22 @@ export function transformV2(
   request: DataQueryRequest<PromQuery>,
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
-  const [tableFrames, framesWithoutTable] = partition(response.data, (df) => isTableResult(df, request));
+  const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
-  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition(framesWithoutTable, (df) =>
+  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition<DataFrame>(framesWithoutTable, (df) =>
     isHeatmapResult(df, request)
   );
   const processedHeatmapFrames = transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel));
 
-  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition(
+  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
     framesWithoutTableAndHeatmaps,
     (df) => df.meta?.custom?.resultType === 'exemplar'
   );
 
   // EXEMPLAR FRAMES: We enrich exemplar frames with data links and add dataTopic meta info
   const { exemplarTraceIdDestinations: destinations } = options;
-  const processedExemplarFrames = exemplarFrames.map((dataFrame: DataFrame) => {
+  const processedExemplarFrames = exemplarFrames.map((dataFrame) => {
     if (destinations?.length) {
       for (const exemplarTraceIdDestination of destinations) {
         const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
@@ -129,7 +122,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
   // Group results by refId and process dataFrames with the same refId as 1 dataFrame
   const dataFramesByRefId = groupBy(dfs, 'refId');
 
-  const frames = Object.keys(dataFramesByRefId).map((refId: string) => {
+  const frames = Object.keys(dataFramesByRefId).map((refId) => {
     // Create timeField, valueField and labelFields
     const valueText = getValueText(dfs.length, refId);
     const valueField = getValueField({ data: [], valueName: valueText });
@@ -137,7 +130,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     const labelFields: MutableField[] = [];
 
     // Fill labelsFields with labels from dataFrames
-    dataFramesByRefId[refId].forEach((df: DataFrame) => {
+    dataFramesByRefId[refId].forEach((df) => {
       const frameValueField = df.fields[1];
       const promLabels = frameValueField.labels ?? {};
 
