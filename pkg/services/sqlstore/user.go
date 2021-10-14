@@ -734,11 +734,11 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	if !has {
 		return models.ErrUserNotFound
 	}
-	// we need to make sure that usercommand
-	// do not accidently delete
-	// a service account when the intention was a user account
-	if user.IsServiceAccount && !cmd.DeleteServiceAccount {
-		return fmt.Errorf("user is service account, but cmd said it should not delete service account")
+	for _, sql := range userDeletions() {
+		_, err := sess.Exec(sql, cmd.UserId)
+		if err != nil {
+			return err
+		}
 	}
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
