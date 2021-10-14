@@ -171,3 +171,12 @@ type Signature struct {
 	SigningOrg string
 	Files      PluginFiles
 }
+
+type PluginMetaDTO struct {
+	JSONData
+
+	Signature SignatureStatus `json:"signature"`
+
+	Module  string `json:"module"`
+	BaseURL string `json:"baseUrl"`
+}

@@ -68,7 +68,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 		}
 		dsMap["preload"] = meta.Preload
 		dsMap["module"] = meta.Module
-		dsMap["meta"] = &plugins.PluginDTO{
+		dsMap["meta"] = &plugins.PluginMetaDTO{
 			JSONData:  meta.JSONData,
 			Signature: meta.Signature,
 			Module:    meta.Module,
@@ -125,7 +125,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			info := map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": &plugins.PluginDTO{
+				"meta": &plugins.PluginMetaDTO{
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
