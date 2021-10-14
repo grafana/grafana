@@ -34,8 +34,9 @@ type User struct {
 	HelpFlags1    HelpFlags1
 	IsDisabled    bool
 
-	IsAdmin bool
-	OrgId   int64
+	IsAdmin          bool
+	IsServiceAccount bool
+	OrgId            int64
 
 	Created    time.Time
 	Updated    time.Time

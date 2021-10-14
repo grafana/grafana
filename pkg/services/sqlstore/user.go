@@ -757,6 +757,63 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	return nil
 }
 
+func DeleteServiceAccount(ctx context.Context, cmd *models.DeleteUserCommand) error {
+	// TODO: check if user is service account
+	// before deleting user
+	return inTransaction(func(sess *DBSession) error {
+		return deleteUserInTransaction(sess, cmd)
+	})
+}
+
+func deleteServiceAccountInTrasaction(sess *DBSession, cmd *models.DeleteServiceAccountCommand) error {
+	user := models.User{Id: cmd.UserId}
+	has, err := sess.Get(&user)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return models.ErrUserNotFound
+	}
+	if !user.IsServiceAccount {
+		return models.ErrServiceAccountNotFound
+	}
+
+	// TODO: if service account, do we need to delete api_keys?
+	// yes we probably need to delete all of the api_keys associated with that service account
+	// maybe best to separate the deletes then?
+	// maybe best way is to:
+	// deleteServiceAccountInTrasaction
+	// at the end
+	// deleteUserInTransaction()
+	// deal with service account details first and then deleteUserInTransaction()
+	deletes := []string{
+		"DELETE FROM api_keys WHERE service_account_id = ?",
+	}
+	for _, sql := range deletes {
+		_, err := sess.Exec(sql, cmd.UserId)
+		if err != nil {
+			return err
+		}
+	}
+
+	/*
+	  initiate the associated deletes for a user
+	  if grafana terminates between
+	  the delettion of api_keys
+	  and this command, what happens?
+	  --
+	  not good state, should we delete everything in one go instead?
+	  however that means duplicateion of user deletion,
+	  what happens if someone forgets to update the deletion table
+	  to the deletion table here than
+	*/
+	userCmd := models.DeleteUserCommand{
+		UserId:               cmd.UserId,
+		DeleteServiceAccount: true,
+	}
+	return deleteUserInTransaction(sess, &userCmd)
+}
+
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		var user models.User
