@@ -6,41 +6,13 @@ import {
   getDisplayProcessor,
   GrafanaTheme2,
   isBooleanUnit,
-  VisualizationSuggestion,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
-import { useTheme2 } from '@grafana/ui';
-import { useEffect, useState } from 'react';
 
 export interface GraphableFieldsResult {
   frames?: DataFrame[];
   warn?: string;
   noTimeField?: boolean;
-}
-
-export interface UseGraphableFieldsProps {
-  frames?: DataFrame[];
-  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
-}
-
-export function useGraphableFields({
-  frames,
-  onSuggestVisualizations,
-}: UseGraphableFieldsProps): GraphableFieldsResult {
-  const theme = useTheme2();
-  const [state, setState] = useState<GraphableFieldsResult>({});
-
-  useEffect(() => {
-    const result = prepareGraphableFields(frames, theme);
-
-    // if (result.noTimeField && onSuggestVisualizations) {
-    //   onSuggestVisualizations(getNoTimeFieldSuggestions(frames));
-    // }
-
-    setState(result);
-  }, [frames, theme, onSuggestVisualizations]);
-
-  return state;
 }
 
 // This will return a set of frames with only graphable values included

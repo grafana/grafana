@@ -1,5 +1,5 @@
 import { FieldType, VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/schema';
+import { GraphFieldConfig, LegendDisplayMode, StackingMode } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 
 export function getSuggestions({ data }: VisualizationSuggestionsInput) {
@@ -9,7 +9,7 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
 
   const frames = data.series;
   const builder = new VisualizationSuggestionBuilderUtil<TimeSeriesOptions, GraphFieldConfig>({
-    name: 'Line graph',
+    name: 'Line chart',
     pluginId: 'timeseries',
     options: {
       legend: {} as any,
@@ -35,6 +35,21 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   }
 
   builder.add({});
+  builder.add({
+    name: 'Area chart stacked',
+    fieldConfig: {
+      defaults: {
+        custom: {
+          fillOpacity: 15,
+          stacking: {
+            mode: StackingMode.Normal,
+            group: 'A',
+          },
+        },
+      },
+      overrides: [],
+    },
+  });
 
   return builder.getList();
 }

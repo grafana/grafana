@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Field, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
@@ -7,9 +7,10 @@ import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
-import { useGraphableFields } from './utils';
+import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
+import { config } from 'app/core/config';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -24,20 +25,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
-  const {
-    sync,
-    canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    onSplitOpen,
-    onSuggestVisualizations,
-  } = usePanelContext();
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const { frames, warn } = useGraphableFields({ frames: data.series, onSuggestVisualizations });
+  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
   if (!frames || warn) {
     return (
