@@ -29,6 +29,7 @@
     "@types/node": "13.7.7",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
+    "rimraf": "3.0.1",
     "rollup": "2.33.3",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
