@@ -1,10 +1,10 @@
-import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { FieldType, VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 
 export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   if (!data || !data.series || data.series.length === 0) {
-    return [];
+    return null;
   }
 
   const frames = data.series;
@@ -25,9 +25,16 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     },
   });
 
-  if (frames.length === 1) {
-    builder.add({});
+  for (const frame of frames) {
+    const hasTimeField = frame.fields.some((x) => x.type === FieldType.time);
+    const hasNumberField = frame.fields.some((x) => x.type === FieldType.number);
+
+    if (!hasTimeField || !hasNumberField) {
+      return null;
+    }
   }
+
+  builder.add({});
 
   return builder.getList();
 }

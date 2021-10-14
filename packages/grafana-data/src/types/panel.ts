@@ -215,7 +215,9 @@ export interface VisualizationSuggestionsInput {
 /**
  * @alpha
  */
-export type VisualizationSuggestionsSupplier = (input: VisualizationSuggestionsInput) => VisualizationSuggestion[];
+export type VisualizationSuggestionsSupplier = (
+  input: VisualizationSuggestionsInput
+) => VisualizationSuggestion[] | null;
 
 /**
  * @alpha

@@ -30,6 +30,11 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   });
 
   if (frames.length === 1) {
+    // if many values this is not a good option
+    if (frames[0].length > 10) {
+      return null;
+    }
+
     builder.add({});
     builder.add({
       name: 'Piechart donut',

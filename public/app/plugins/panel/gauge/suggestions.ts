@@ -1,4 +1,4 @@
-import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { FieldType, VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
 import { GaugeOptions } from './types';
 
 export function getSuggestions({ data }: VisualizationSuggestionsInput) {
@@ -25,14 +25,19 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   });
 
   if (frames.length === 1) {
-    builder.add({
-      options: {
-        reduceOptions: {
-          values: true,
-          calcs: [],
+    if (
+      frames[0].fields.some((x) => x.type === FieldType.string) &&
+      frames[0].fields.some((x) => x.type === FieldType.number)
+    ) {
+      builder.add({
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
         },
-      },
-    });
+      });
+    }
   }
 
   return builder.getList();
