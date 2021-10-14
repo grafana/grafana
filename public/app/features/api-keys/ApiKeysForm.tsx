@@ -44,7 +44,6 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const [name, setName] = useState<string>('');
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [secondsToLive, setSecondsToLive] = useState<string>('');
-
   useEffect(() => {
     setName('');
     setRole(OrgRole.Viewer);
