@@ -18,7 +18,7 @@ import { useStyles2 } from '../../..';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
-import { TimePickerCalendar } from './TimePickerCalendar';
+import TimePickerCalendar from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
@@ -65,16 +65,6 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [setOpen]
   );
 
-  const onFocus = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      if (!isFullscreen) {
-        return;
-      }
-      onOpen(event);
-    },
-    [isFullscreen, onOpen]
-  );
-
   const onApply = useCallback(
     (e: FormEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -111,15 +101,21 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     </div>
   );
 
-  const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const icon = (
+    <Button
+      aria-label={selectors.components.TimePicker.calendar.openButton}
+      icon="calendar-alt"
+      variant="secondary"
+      onClick={onOpen}
+    />
+  );
 
   return (
-    <div aria-label="Absolute time ranges">
+    <div>
       <div className={style.fieldContainer}>
         <Field label="From" invalid={from.invalid} error={from.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
-            onFocus={onFocus}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
             addonAfter={icon}
             aria-label={selectors.components.TimePicker.fromField}
@@ -132,7 +128,6 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         <Field label="To" invalid={to.invalid} error={to.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
-            onFocus={onFocus}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
             addonAfter={icon}
             aria-label={selectors.components.TimePicker.toField}

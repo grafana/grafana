@@ -31,20 +31,22 @@ function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc'): TimeRan
 
 describe('TimeRangeForm', () => {
   it('should render form correcty', () => {
-    const { getByLabelText, getByText } = setup();
+    const { getByLabelText, getByText, getAllByRole } = setup();
     const { TimePicker } = selectors.components;
 
     expect(getByText('Apply time range')).toBeInTheDocument();
+    expect(getAllByRole('button', { name: TimePicker.calendar.openButton })).toHaveLength(2);
     expect(getByLabelText(TimePicker.fromField)).toBeInTheDocument();
     expect(getByLabelText(TimePicker.toField)).toBeInTheDocument();
   });
 
-  it('should display calendar when clicking the from input field', () => {
-    const { getByLabelText } = setup();
+  it('should display calendar when clicking the calendar icon', () => {
+    const { getByLabelText, getAllByRole } = setup();
     const { TimePicker } = selectors.components;
+    const openCalendarButton = getAllByRole('button', { name: TimePicker.calendar.openButton });
 
-    fireEvent.focus(getByLabelText(TimePicker.fromField));
-    expect(getByLabelText(TimePicker.calendar)).toBeInTheDocument();
+    fireEvent.click(openCalendarButton[0]);
+    expect(getByLabelText(TimePicker.calendar.label)).toBeInTheDocument();
   });
 
   it('should have passed time range entered in form', () => {
@@ -58,26 +60,31 @@ describe('TimeRangeForm', () => {
     expect(getByLabelText(TimePicker.toField)).toHaveValue(toValue);
   });
 
-  it('should display calendar when clicking the to input field', () => {
-    const { getByLabelText } = setup();
+  it('should close calendar when clicking the close icon', () => {
+    const { queryByLabelText, getAllByRole, getByRole } = setup();
     const { TimePicker } = selectors.components;
+    const openCalendarButton = getAllByRole('button', { name: TimePicker.calendar.openButton });
 
-    fireEvent.focus(getByLabelText(TimePicker.toField));
-    expect(getByLabelText(TimePicker.calendar)).toBeInTheDocument();
+    fireEvent.click(openCalendarButton[0]);
+    expect(getByRole('button', { name: TimePicker.calendar.closeButton })).toBeInTheDocument();
+
+    fireEvent.click(getByRole('button', { name: TimePicker.calendar.closeButton }));
+    expect(queryByLabelText(TimePicker.calendar.label)).toBeNull();
   });
 
-  it('should not display calendar without clicking any input field', () => {
+  it('should not display calendar without clicking the calendar icon', () => {
     const { queryByLabelText } = setup();
     const { TimePicker } = selectors.components;
 
-    expect(queryByLabelText(TimePicker.calendar)).toBeNull();
+    expect(queryByLabelText(TimePicker.calendar.label)).toBeNull();
   });
 
   it('should have passed time range selected in calendar', () => {
-    const { getByLabelText, getCalendarDayByLabelText } = setup();
+    const { getAllByRole, getCalendarDayByLabelText } = setup();
     const { TimePicker } = selectors.components;
+    const openCalendarButton = getAllByRole('button', { name: TimePicker.calendar.openButton });
 
-    fireEvent.focus(getByLabelText(TimePicker.toField));
+    fireEvent.click(openCalendarButton[0]);
     const from = getCalendarDayByLabelText('June 17, 2021');
     const to = getCalendarDayByLabelText('June 19, 2021');
 
@@ -86,10 +93,11 @@ describe('TimeRangeForm', () => {
   });
 
   it('should select correct time range in calendar when having a custom time zone', () => {
-    const { getByLabelText, getCalendarDayByLabelText } = setup(defaultTimeRange, 'Asia/Tokyo');
+    const { getAllByRole, getCalendarDayByLabelText } = setup(defaultTimeRange, 'Asia/Tokyo');
     const { TimePicker } = selectors.components;
+    const openCalendarButton = getAllByRole('button', { name: TimePicker.calendar.openButton });
 
-    fireEvent.focus(getByLabelText(TimePicker.toField));
+    fireEvent.click(openCalendarButton[1]);
     const from = getCalendarDayByLabelText('June 17, 2021');
     const to = getCalendarDayByLabelText('June 19, 2021');
 

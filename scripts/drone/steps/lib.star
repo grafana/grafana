@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.5.1'
+grabpl_version = '2.5.2'
 build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -793,26 +793,6 @@ def release_canary_npm_packages_step(edition):
         'commands': [
             './scripts/circle-release-canary-packages.sh',
         ],
-    }
-
-def push_to_deployment_tools_step(edition, is_downstream=False):
-    if edition != 'enterprise' or not is_downstream:
-        return None
-
-    return {
-        'name': 'push-to-deployment_tools',
-        'image': deploy_docker_image,
-        'depends_on': [
-            'build-docker-images',
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
-        'settings': {
-            'github_token': from_secret(github_token),
-            'images_file': './deployment_tools_config.json',
-            'docker_tag_file': './dist/grafana.version'
-        },
     }
 
 def enterprise2_suffix(edition):

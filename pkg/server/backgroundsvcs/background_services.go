@@ -49,7 +49,7 @@ func ProvideBackgroundServiceRegistry(
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service,
 	_ *influxdb.Service, _ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service,
-	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ secrets.SecretsService,
+	_ *testdatasource.TestDataPlugin, _ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ secrets.Service,
 	_ *postgres.Service, _ *mysql.Service, _ *mssql.Service, _ *grafanads.Service, _ *cloudmonitoring.Service,
 	_ *pluginsettings.Service, _ *alerting.AlertNotificationService,
 ) *BackgroundServiceRegistry {

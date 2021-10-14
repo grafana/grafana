@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 import { locationService } from '@grafana/runtime';
@@ -37,7 +37,7 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
-import { setPanelInstanceState } from '../state/reducers';
+import { setPanelInstanceState } from '../../panel/state/reducers';
 import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -63,7 +63,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends Component<Props, State> {
+export class PanelChrome extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -103,7 +103,7 @@ export class PanelChrome extends Component<Props, State> {
     });
 
     // Set redux panel state so panel options can get notified
-    store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
+    store.dispatch(setPanelInstanceState({ key: this.props.panel.key, value }));
   };
 
   getPanelContextApp() {
@@ -219,19 +219,6 @@ export class PanelChrome extends Component<Props, State> {
     if (width !== prevProps.width) {
       liveTimer.updateInterval(this);
     }
-  }
-
-  shouldComponentUpdate(prevProps: Props, prevState: State) {
-    const { plugin, panel } = this.props;
-
-    // If plugin changed we need to process fieldOverrides again
-    // We do this by asking panel query runner to resend last result
-    if (prevProps.plugin !== plugin) {
-      panel.getQueryRunner().resendLastResult();
-      return false;
-    }
-
-    return true;
   }
 
   // Updates the response with information from the stream
