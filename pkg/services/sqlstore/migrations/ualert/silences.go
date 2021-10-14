@@ -18,6 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+const (
+	defaultCreatedBy     string = "Grafana Migration"
+	defaultCommentNoData string = "Silence alert rules that had option 'Keep Last State' for No Data status"
+)
+
 func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 	if da.State != "paused" {
 		return nil
@@ -41,7 +46,7 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 			},
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().Add(365 * 20 * time.Hour), // 1 year.
-			CreatedBy: "Grafana Migration",
+			CreatedBy: defaultCreatedBy,
 			Comment:   "Created during auto migration to unified alerting",
 		},
 		ExpiresAt: time.Now().Add(365 * 20 * time.Hour), // 1 year.
@@ -52,6 +57,47 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
 	}
 	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	return nil
+}
+
+// addNoDataSilence adds a silence to the organization that matches all rules with label `alertstate` and value 'NoData'.
+// If the silence already exists for the organization, does nothing.
+// the duration of silence is 1 year.
+func (m *migration) addNoDataSilence(orgID int64) error {
+	silences, ok := m.silences[orgID]
+	if !ok {
+		silences = make([]*pb.MeshSilence, 0)
+		m.silences[orgID] = silences
+	} else {
+		for _, silence := range silences {
+			if silence.Silence.CreatedBy == defaultCreatedBy && silence.Silence.Comment == defaultCommentNoData {
+				return nil
+			}
+		}
+	}
+
+	uid, err := uuid.NewV4()
+	if err != nil {
+		return errors.New("failed to create uuid for silence")
+	}
+	s := &pb.MeshSilence{
+		Silence: &pb.Silence{
+			Id: uid.String(),
+			Matchers: []*pb.Matcher{
+				{
+					Type:    pb.Matcher_EQUAL,
+					Name:    "alertstate",
+					Pattern: "NoData",
+				},
+			},
+			StartsAt:  time.Now(),
+			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year.
+			CreatedBy: defaultCreatedBy,
+			Comment:   defaultCommentNoData,
+		},
+		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
+	}
+	m.silences[orgID] = append(m.silences[orgID], s)
 	return nil
 }
 

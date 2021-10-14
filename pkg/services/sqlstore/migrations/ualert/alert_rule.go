@@ -95,6 +95,13 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	lbls, annotations := addMigrationInfo(&da)
 	lbls["alertname"] = da.Name
 	annotations["message"] = da.Message
+	if da.ParsedSettings.NoDataState == "keep_state" {
+		lbls["alertstate"] = " {{ .State }}"
+		err := m.addNoDataSilence(da.OrgId)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	ar := &alertRule{
 		OrgID:           da.OrgId,
