@@ -234,8 +234,11 @@ export interface AlertmanagerStatus {
   };
 }
 
+export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
+
 export interface TestReceiversPayload {
   receivers?: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 interface TestReceiversResultGrafanaReceiverConfig {

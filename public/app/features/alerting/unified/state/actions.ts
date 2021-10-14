@@ -7,6 +7,7 @@ import {
   Receiver,
   Silence,
   SilenceCreatePayload,
+  TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
@@ -633,12 +634,13 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
 interface TestReceiversOptions {
   alertManagerSourceName: string;
   receivers: Receiver[];
+  alert?: TestReceiversAlert;
 }
 
 export const testReceiversAction = createAsyncThunk(
   'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });

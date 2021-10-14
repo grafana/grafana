@@ -3,8 +3,9 @@ import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
   Receiver,
+  TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
@@ -22,6 +23,7 @@ import {
 } from '../../../utils/receiver-form';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
+import { TestNotificationChannelModal } from './TestNotificationChannelModal';
 
 interface Props {
   alertManagerSourceName: string;
@@ -40,6 +42,8 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
 
 export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
+  const [testContactPointModalOpen, setTestContactPointModalOpen] = useState(false);
+  const [channelValues, setChannelValues] = useState<GrafanaChannelValues>();
 
   const dispatch = useDispatch();
 
@@ -74,10 +78,16 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {
-    const existing: GrafanaManagedReceiverConfig | undefined = id2original[values.__id];
-    const chan = formChannelValuesToGrafanaChannelConfig(values, defaultChannelValues, 'test', existing);
-    dispatch(
-      testReceiversAction({
+    setTestContactPointModalOpen(true);
+    setChannelValues(values);
+  };
+
+  const testNotification = (alert?: TestReceiversAlert) => {
+    if (channelValues) {
+      const existing: GrafanaManagedReceiverConfig | undefined = id2original[channelValues.__id];
+      const chan = formChannelValuesToGrafanaChannelConfig(channelValues, defaultChannelValues, 'test', existing);
+
+      const payload = {
         alertManagerSourceName,
         receivers: [
           {
@@ -85,8 +95,11 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
             grafana_managed_receiver_configs: [chan],
           },
         ],
-      })
-    );
+        alert,
+      };
+
+      dispatch(testReceiversAction(payload));
+    }
   };
 
   const takenReceiverNames = useMemo(
@@ -96,17 +109,24 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
 
   if (grafanaNotifiers.result) {
     return (
-      <ReceiverForm<GrafanaChannelValues>
-        config={config}
-        onSubmit={onSubmit}
-        initialValues={existingValue}
-        onTestChannel={onTestChannel}
-        notifiers={grafanaNotifiers.result}
-        alertManagerSourceName={alertManagerSourceName}
-        defaultItem={defaultChannelValues}
-        takenReceiverNames={takenReceiverNames}
-        commonSettingsComponent={GrafanaCommonChannelSettings}
-      />
+      <>
+        <ReceiverForm<GrafanaChannelValues>
+          config={config}
+          onSubmit={onSubmit}
+          initialValues={existingValue}
+          onTestChannel={onTestChannel}
+          notifiers={grafanaNotifiers.result}
+          alertManagerSourceName={alertManagerSourceName}
+          defaultItem={defaultChannelValues}
+          takenReceiverNames={takenReceiverNames}
+          commonSettingsComponent={GrafanaCommonChannelSettings}
+        />
+        <TestNotificationChannelModal
+          onDismiss={() => setTestContactPointModalOpen(false)}
+          isOpen={testContactPointModalOpen}
+          onTest={() => testNotification()}
+        />
+      </>
     );
   } else {
     return <LoadingPlaceholder text="Loading notifiers..." />;
