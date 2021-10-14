@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -113,16 +114,12 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State != eval.Alerting && a.State != eval.Normal {
-		return false
-	}
-
-	if a.State == eval.Normal && !a.Resolved {
+	if a.State == eval.Pending || a.State == eval.Error || a.State == eval.Normal && !a.Resolved {
 		return false
 	}
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
-	return a.LastSentAt.Add(resendDelay).Before(a.LastEvaluationTime) ||
-		a.LastSentAt.Add(resendDelay).Equal(a.LastEvaluationTime)
+	nextSent := a.LastSentAt.Add(resendDelay)
+	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {
