@@ -740,6 +740,10 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 			return err
 		}
 	}
+	return nil
+}
+
+func userDeletions() []string {
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
 		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
@@ -751,27 +755,25 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 		"DELETE FROM user_auth_token WHERE user_id = ?",
 		"DELETE FROM quota WHERE user_id = ?",
 	}
-
-	for _, sql := range deletes {
-		_, err := sess.Exec(sql, cmd.UserId)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return deletes
 }
 
-func DeleteServiceAccount(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	// TODO: check if user is service account
-	// before deleting user
+func DeleteServiceAccount(ctx context.Context, cmd *models.DeleteServiceAccountCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		return deleteUserInTransaction(sess, cmd)
+		return deleteServiceAccountInTransaction(sess, cmd)
 	})
 }
 
-func deleteServiceAccountInTrasaction(sess *DBSession, cmd *models.DeleteServiceAccountCommand) error {
-	user := models.User{Id: cmd.UserId}
+func serviceAccountDeletions() []string {
+	deletes := []string{
+		"DELETE FROM api_keys WHERE service_account_id = ?",
+	}
+	deletes = append(deletes, userDeletions()...)
+	return deletes
+}
+
+func deleteServiceAccountInTransaction(sess *DBSession, cmd *models.DeleteServiceAccountCommand) error {
+	user := models.User{Id: cmd.ServiceAccountId}
 	has, err := sess.Get(&user)
 	if err != nil {
 		return err
@@ -782,41 +784,13 @@ func deleteServiceAccountInTrasaction(sess *DBSession, cmd *models.DeleteService
 	if !user.IsServiceAccount {
 		return models.ErrServiceAccountNotFound
 	}
-
-	// TODO: if service account, do we need to delete api_keys?
-	// yes we probably need to delete all of the api_keys associated with that service account
-	// maybe best to separate the deletes then?
-	// maybe best way is to:
-	// deleteServiceAccountInTrasaction
-	// at the end
-	// deleteUserInTransaction()
-	// deal with service account details first and then deleteUserInTransaction()
-	deletes := []string{
-		"DELETE FROM api_keys WHERE service_account_id = ?",
-	}
-	for _, sql := range deletes {
-		_, err := sess.Exec(sql, cmd.UserId)
+	for _, sql := range serviceAccountDeletions() {
+		_, err := sess.Exec(sql, cmd.ServiceAccountId)
 		if err != nil {
 			return err
 		}
 	}
-
-	/*
-	  initiate the associated deletes for a user
-	  if grafana terminates between
-	  the delettion of api_keys
-	  and this command, what happens?
-	  --
-	  not good state, should we delete everything in one go instead?
-	  however that means duplicateion of user deletion,
-	  what happens if someone forgets to update the deletion table
-	  to the deletion table here than
-	*/
-	userCmd := models.DeleteUserCommand{
-		UserId:               cmd.UserId,
-		DeleteServiceAccount: true,
-	}
-	return deleteUserInTransaction(sess, &userCmd)
+	return nil
 }
 
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
