@@ -14,7 +14,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">app plugin</td>
     <td>
-      An extension of Grafana that allows users to provide additional functionality to enhance their experience by including a set of panel and data source plugins, as well as custom pages. See also <i>data source plugin</i>, <i>panel plugin</i> and <i>plugin</i>.
+      An extension of Grafana that allows users to provide additional functionality to enhance their experience by including a set of panel and data source plugins, as well as custom pages. See also <i>data source plugin</i>, <i>panel plugin</i>, and <i>plugin</i>.
     </td>
   </tr>
   <tr>
