@@ -375,13 +375,14 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(configNodes) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
-			Id:         dtos.NavIDCfg,
-			Text:       "Configuration",
-			SubTitle:   "Organization: " + c.OrgName,
-			Icon:       "cog",
-			Url:        configNodes[0].Url,
-			SortWeight: dtos.WeightConfig,
-			Children:   configNodes,
+			Id:           dtos.NavIDCfg,
+			Text:         "Configuration",
+			SubTitle:     "Organization: " + c.OrgName,
+			Icon:         "cog",
+			Url:          configNodes[0].Url,
+			SortWeight:   dtos.WeightConfig,
+			Children:     configNodes,
+			HideFromMenu: hs.Cfg.IsNewNavigationEnabled(),
 		})
 	}
 
@@ -389,6 +390,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(adminNavLinks) > 0 {
 		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
+		if hs.Cfg.IsNewNavigationEnabled() {
+			serverAdminNode.HideFromMenu = true
+		}
 		navTree = append(navTree, serverAdminNode)
 	}
 
