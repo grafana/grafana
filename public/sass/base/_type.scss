@@ -217,8 +217,10 @@ a.external-link {
     margin-top: $spacer;
   }
 
-  *:first-child {
-    margin: 0 !important;
+  figure:first-child,
+  h1:first-child {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   table {
