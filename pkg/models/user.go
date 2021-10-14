@@ -11,7 +11,7 @@ var (
 	ErrUserAlreadyExists      = errors.New("user already exists")
 	ErrLastGrafanaAdmin       = errors.New("cannot remove last grafana admin")
 	ErrProtectedUser          = errors.New("cannot adopt protected user")
-	ErrServiceAccountNotFound = errors.New("not a service account")
+	ErrServiceAccountNotFound = errors.New("service account not found")
 )
 
 type Password string
@@ -102,8 +102,7 @@ type BatchDisableUsersCommand struct {
 }
 
 type DeleteUserCommand struct {
-	UserId               int64
-	DeleteServiceAccount bool
+	UserId int64
 }
 
 type SetUsingOrgCommand struct {
