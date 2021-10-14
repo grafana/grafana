@@ -9,6 +9,7 @@ import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
+import NavBarItem from './NavBarItem';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -22,6 +23,7 @@ export const NavBar: FC = React.memo(() => {
   const toggleNavBarSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
+  const newNavigationEnabled = config.featureToggles.newNavigation;
 
   if (kiosk !== null) {
     return null;
@@ -29,9 +31,16 @@ export const NavBar: FC = React.memo(() => {
 
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
-      <a href={homeUrl} className={styles.homeLogo}>
-        <Branding.MenuLogo />
-      </a>
+      {!newNavigationEnabled && (
+        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo}>
+          <Branding.MenuLogo />
+        </NavBarItem>
+      )}
+      {newNavigationEnabled && (
+        <NavBarItem onClick={() => console.log('WOW!')} label="Full menu" className={styles.grafanaLogo}>
+          <Branding.MenuLogo />
+        </NavBarItem>
+      )}
       <div className={styles.mobileSidemenuLogo} onClick={toggleNavBarSmallBreakpoint} key="hamburger">
         <Icon name="bars" size="xl" />
         <span className={styles.closeButton}>
@@ -73,26 +82,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       width: 100%;
     }
   `,
-  homeLogo: css`
+  grafanaLogo: css`
     display: none;
-    min-height: ${theme.components.sidemenu.width}px;
-
-    &:focus-visible,
-    &:hover {
-      background-color: ${theme.colors.action.hover};
-    }
-
-    &:focus-visible {
-      box-shadow: none;
-      color: ${theme.colors.text.primary};
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: -2px;
-      transition: none;
-    }
-
-    img {
-      width: ${theme.spacing(3.5)};
-    }
 
     ${theme.breakpoints.up('md')} {
       align-items: center;
