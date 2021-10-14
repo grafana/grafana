@@ -1,0 +1,986 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
+    "title": "Grafana HTTP API.",
+    "contact": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com",
+      "email": "hello@grafana.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.0.1"
+  },
+  "host": "localhost:10081",
+  "basePath": "/api",
+  "paths": {
+    "/auth/keys": {
+      "get": {
+        "description": "Will return auth keys.",
+        "tags": [
+          "apikeys"
+        ],
+        "summary": "Get auth keys",
+        "operationId": "getAPIkeys",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "x-go-name": "IncludeExpired",
+            "description": "Show expired keys",
+            "name": "includeExpired",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/apikeyResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Will return details of the created API key",
+        "tags": [
+          "apikeys"
+        ],
+        "summary": "Creates an API key",
+        "operationId": "addAPIkey",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AddApiKeyCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/newAPIkeyResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/quotaReachedError"
+          },
+          "409": {
+            "$ref": "#/responses/dublicateAPIkeyError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/auth/keys/{id}": {
+      "delete": {
+        "description": "Delete API key",
+        "tags": [
+          "apikeys"
+        ],
+        "operationId": "deleteAPIkey",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/calculate-diff": {
+      "post": {
+        "description": "Perform diff on two dashboards",
+        "produces": [
+          "application/json",
+          "text/html"
+        ],
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "calcDashboardDiff",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CalculateDiffOptions"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardDiffResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/db": {
+      "post": {
+        "description": "Creates a new dashboard or updates an existing dashboard.",
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Create / Update dashboard",
+        "operationId": "postDashboard",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SaveDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "412": {
+            "$ref": "#/responses/preconditionFailedError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/home": {
+      "get": {
+        "description": "Get home dashboard",
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "getHomeDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getHomeDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/trim": {
+      "post": {
+        "description": "Trim defaults from dashboard",
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "trimDashboard",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TrimDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/trimDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}": {
+      "get": {
+        "description": "Will return the dashboard given the dashboard unique identifier (uid).",
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Get dashboard by uid",
+        "operationId": "getDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Delete dashboard by uid",
+        "operationId": "deleteDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AddApiKeyCommand": {
+      "description": "COMMANDS",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        },
+        "secondsToLive": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "SecondsToLive"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "ApiKeyDTO": {
+      "type": "object",
+      "properties": {
+        "expiration": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Expiration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "CalculateDiffOptions": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "$ref": "#/definitions/CalculateDiffTarget"
+        },
+        "diffType": {
+          "type": "string",
+          "x-go-name": "DiffType"
+        },
+        "new": {
+          "$ref": "#/definitions/CalculateDiffTarget"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "CalculateDiffTarget": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "unsavedDashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Dashboard": {
+      "description": "Dashboard model",
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "CreatedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Data": {
+          "$ref": "#/definitions/Json"
+        },
+        "FolderId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "GnetId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "HasAcl": {
+          "type": "boolean"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "IsFolder": {
+          "type": "boolean"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PluginId": {
+          "type": "string"
+        },
+        "Slug": {
+          "type": "string"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "Uid": {
+          "type": "string"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "UpdatedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "DashboardFullWithMeta": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "meta": {
+          "$ref": "#/definitions/DashboardMeta"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardMeta": {
+      "type": "object",
+      "properties": {
+        "canAdmin": {
+          "type": "boolean",
+          "x-go-name": "CanAdmin"
+        },
+        "canEdit": {
+          "type": "boolean",
+          "x-go-name": "CanEdit"
+        },
+        "canSave": {
+          "type": "boolean",
+          "x-go-name": "CanSave"
+        },
+        "canStar": {
+          "type": "boolean",
+          "x-go-name": "CanStar"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "createdBy": {
+          "type": "string",
+          "x-go-name": "CreatedBy"
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Expires"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "FolderId"
+        },
+        "folderTitle": {
+          "type": "string",
+          "x-go-name": "FolderTitle"
+        },
+        "folderUid": {
+          "type": "string",
+          "x-go-name": "FolderUid"
+        },
+        "folderUrl": {
+          "type": "string",
+          "x-go-name": "FolderUrl"
+        },
+        "hasAcl": {
+          "type": "boolean",
+          "x-go-name": "HasAcl"
+        },
+        "isFolder": {
+          "type": "boolean",
+          "x-go-name": "IsFolder"
+        },
+        "isHome": {
+          "type": "boolean",
+          "x-go-name": "IsHome"
+        },
+        "isSnapshot": {
+          "type": "boolean",
+          "x-go-name": "IsSnapshot"
+        },
+        "isStarred": {
+          "type": "boolean",
+          "x-go-name": "IsStarred"
+        },
+        "provisioned": {
+          "type": "boolean",
+          "x-go-name": "Provisioned"
+        },
+        "provisionedExternalId": {
+          "type": "string",
+          "x-go-name": "ProvisionedExternalId"
+        },
+        "slug": {
+          "type": "string",
+          "x-go-name": "Slug"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        },
+        "updatedBy": {
+          "type": "string",
+          "x-go-name": "UpdatedBy"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardRedirect": {
+      "type": "object",
+      "properties": {
+        "redirectUri": {
+          "type": "string",
+          "x-go-name": "RedirectUri"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "ErrorResponseBody": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "error": {
+          "description": "Error An optional detailed description of the actual error. Only included if running in developer mode.",
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "message": {
+          "description": "a human readable version of the error",
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "status": {
+          "description": "Status An optional status to denote the cause of the error.\n\nFor example, a 412 Precondition Failed error may include additional information of why that error happened.",
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "GetHomeDashboardResponse": {
+      "title": "Get home dashboard response.",
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dashboard": {
+              "$ref": "#/definitions/Json"
+            },
+            "meta": {
+              "$ref": "#/definitions/DashboardMeta"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "redirectUri": {
+              "type": "string",
+              "x-go-name": "RedirectUri"
+            }
+          }
+        }
+      ],
+      "x-go-name": "GetHomeDashboardResponseBody",
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "Json": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
+    },
+    "NewApiKeyResult": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "RoleType": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "SaveDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/Dashboard"
+        },
+        "UpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "FolderId"
+        },
+        "folderUid": {
+          "type": "string",
+          "x-go-name": "FolderUid"
+        },
+        "isFolder": {
+          "type": "boolean",
+          "x-go-name": "IsFolder"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "overwrite": {
+          "type": "boolean",
+          "x-go-name": "Overwrite"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "SuccessResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "TrimDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "Result": {
+          "$ref": "#/definitions/Dashboard"
+        },
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "meta": {
+          "$ref": "#/definitions/Json"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "TrimDashboardFullWithMeta": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "meta": {
+          "$ref": "#/definitions/Json"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    }
+  },
+  "responses": {
+    "apikeyResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ApiKeyDTO"
+        }
+      }
+    },
+    "badRequestError": {
+      "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "conflictError": {
+      "description": "ConflictError",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "dashboardDiffResponse": {
+      "description": "Calculate dashboard diff response.",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8"
+        }
+      }
+    },
+    "dashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
+      }
+    },
+    "deleteDashboardResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "description": "ID Identifier of the deleted dashboard.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID",
+            "example": 65
+          },
+          "message": {
+            "description": "Message Message of the deleted dashboard.",
+            "type": "string",
+            "x-go-name": "Message",
+            "example": "Dashboard My Dashboard deleted"
+          },
+          "title": {
+            "description": "Title Title of the deleted dashboard.",
+            "type": "string",
+            "x-go-name": "Title",
+            "example": "My Dashboard"
+          }
+        }
+      }
+    },
+    "dublicateAPIkeyError": {
+      "description": "DublicateAPIkeyError is returned when the API key conflicts with another",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "forbiddenError": {
+      "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "genericError": {
+      "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "getHomeDashboardResponse": {
+      "description": "Home dashboard response.",
+      "schema": {
+        "$ref": "#/definitions/GetHomeDashboardResponse"
+      }
+    },
+    "internalServerError": {
+      "description": "InternalServerError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "newAPIkeyResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/NewApiKeyResult"
+      }
+    },
+    "notFoundError": {
+      "description": "NotFoundError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "okResponse": {
+      "description": "An OKResponse is returned if the request was successful.",
+      "schema": {
+        "$ref": "#/definitions/SuccessResponseBody"
+      }
+    },
+    "postDashboardResponse": {
+      "description": "Create/update dashboard response.",
+      "schema": {
+        "type": "object",
+        "required": [
+          "status",
+          "title",
+          "version",
+          "uid",
+          "url"
+        ],
+        "properties": {
+          "status": {
+            "description": "Status status of the response.",
+            "type": "string",
+            "x-go-name": "Status",
+            "example": "success"
+          },
+          "title": {
+            "description": "Slug The slug of the dashboard.",
+            "type": "string",
+            "x-go-name": "Slug",
+            "example": "my-dashboard"
+          },
+          "uid": {
+            "description": "UID The unique identifier (uid) of the created/updated dashboard.",
+            "type": "string",
+            "x-go-name": "UID",
+            "example": "nHz3SXiiz"
+          },
+          "url": {
+            "description": "URL The relative URL for accessing the created/updated dashboard.",
+            "type": "string",
+            "x-go-name": "URL",
+            "example": "/d/nHz3SXiiz/my-dashboard"
+          },
+          "version": {
+            "description": "Version The version of the dashboard.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Verion",
+            "example": 2
+          }
+        }
+      }
+    },
+    "preconditionFailedError": {
+      "description": "PreconditionFailedError",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "quotaReachedError": {
+      "description": "QuotaReachedError is returned when quota have been reached for this resource.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "trimDashboardResponse": {
+      "description": "Trimmed dashboard response.",
+      "schema": {
+        "$ref": "#/definitions/TrimDashboardFullWithMeta"
+      }
+    },
+    "unauthorisedError": {
+      "description": "UnauthorizedError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "unprocessableEntityError": {
+      "description": "UnprocessableEntityError",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "basic": {
+      "type": "basic"
+    }
+  },
+  "security": [
+    {
+      "basic": []
+    },
+    {
+      "api_key": []
+    }
+  ]
+}
