@@ -55,6 +55,7 @@ public/css/*.min.css
 # Editor junk
 *.sublime-workspace
 *.swp
+[._]*.un~
 .idea/
 *.iml
 *.tmp
