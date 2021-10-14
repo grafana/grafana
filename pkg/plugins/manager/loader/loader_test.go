@@ -207,6 +207,213 @@ func TestLoader_Load(t *testing.T) {
 					SignatureOrg:  "Grafana Labs",
 				},
 			},
+		}, {
+			name: "Load an unsigned plugin (development)",
+			cfg: &setting.Cfg{
+				PluginsPath: filepath.Join(parentDir),
+				Env:         "development",
+			},
+			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: "datasource",
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+						State:   plugins.AlphaRelease,
+					},
+					Class:     plugins.External,
+					Module:    "plugins/test/module",
+					BaseURL:   "public/plugins/test",
+					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					Signature: "unsigned",
+				},
+			},
+		}, {
+			name: "Load an unsigned plugin (production)",
+			cfg: &setting.Cfg{
+				PluginsPath: filepath.Join(parentDir),
+				Env:         "production",
+			},
+			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: "datasource",
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+						State:   plugins.AlphaRelease,
+					},
+					Class:     plugins.External,
+					Module:    "plugins/test/module",
+					BaseURL:   "public/plugins/test",
+					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					Signature: "unsigned",
+					SignatureError: &plugins.SignatureError{
+						PluginID:        "test",
+						SignatureStatus: "unsigned",
+					},
+				},
+			},
+		},
+		{
+			name: "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
+			cfg: &setting.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				Env:                  "production",
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: "datasource",
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+						State:   plugins.AlphaRelease,
+					},
+					Class:     plugins.External,
+					Module:    "plugins/test/module",
+					BaseURL:   "public/plugins/test",
+					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					Signature: "unsigned",
+				},
+			},
+		},
+		{
+			name: "Load an unsigned plugin with modified signature (production)",
+			cfg: &setting.Cfg{
+				PluginsPath: filepath.Join(parentDir),
+				Env:         "production",
+			},
+			pluginPaths: []string{"../testdata/lacking-files"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: "datasource",
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+							Version:     "1.0.0",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+					},
+					Class:     plugins.External,
+					Module:    "plugins/test/module",
+					BaseURL:   "public/plugins/test",
+					PluginDir: filepath.Join(parentDir, "testdata/lacking-files/plugin"),
+					Signature: "modified",
+					SignatureError: &plugins.SignatureError{
+						PluginID:        "test",
+						SignatureStatus: "modified",
+					},
+				},
+			},
+		},
+		{
+			name: "Load an unsigned plugin with modified signature using PluginsAllowUnsigned config (production) still includes a signing error",
+			cfg: &setting.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				Env:                  "production",
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/lacking-files"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: "datasource",
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+							Version:     "1.0.0",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+					},
+					Class:     plugins.External,
+					Module:    "plugins/test/module",
+					BaseURL:   "public/plugins/test",
+					PluginDir: filepath.Join(parentDir, "testdata/lacking-files/plugin"),
+					Signature: "modified",
+					SignatureError: &plugins.SignatureError{
+						PluginID:        "test",
+						SignatureStatus: "modified",
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -251,7 +458,6 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					"../testdata/invalid-plugin-json",    // test-app
 					"../testdata/valid-v2-pvt-signature", // test
 					"../testdata/unsigned-panel",         // test-panel
-					//"../testdata/nested-plugins", // test-panel + test-ds
 				},
 				want: []*plugins.Plugin{
 					{
@@ -307,6 +513,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Signature: "unsigned",
 						Module:    "plugins/test-panel/module",
 						BaseURL:   "public/plugins/test-panel",
+						SignatureError: &plugins.SignatureError{
+							PluginID:        "test-panel",
+							SignatureStatus: "unsigned",
+						},
 					},
 				},
 			},

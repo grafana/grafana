@@ -12,9 +12,7 @@ type unsignedPluginConditionFunc = func(plugin *plugins.Plugin) bool
 
 // UnsignedCond changes the policy for allowing unsigned plugins.
 // true = permissible, false = non-permissible
-var UnsignedCond unsignedPluginConditionFunc = func(plugin *plugins.Plugin) bool {
-	return true
-}
+var UnsignedCond unsignedPluginConditionFunc
 
 type Validator struct {
 	cfg *setting.Cfg
