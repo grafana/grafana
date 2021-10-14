@@ -66,7 +66,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 
 	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.cfg.ProvisioningPath
+	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err

@@ -71,7 +71,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		return nil, err
 	}
 
-	var appLinks []*dtos.NavLink
+	appLinks := []*dtos.NavLink{}
 	for _, plugin := range enabledPlugins[plugins.App] {
 		if !plugin.Pinned {
 			continue

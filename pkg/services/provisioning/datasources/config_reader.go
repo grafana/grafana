@@ -51,7 +51,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*c
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 
 	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.cfg.ProvisioningPath
+	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err

@@ -408,7 +408,7 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 	}
 
 	for _, pluginDef := range hs.pluginStore.Plugins() {
-		// ignore entries that exists
+		// ignore entries that already exist
 		if _, ok := pluginMap[pluginDef.ID]; ok {
 			continue
 		}
@@ -426,7 +426,7 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 			opt.Pinned = p.AutoEnabled
 		}
 
-		// if it's included in app check app settings
+		// if it's included in app, check app settings
 		if pluginDef.IncludedInAppID != "" {
 			// app components are by default disabled
 			opt.Enabled = false
@@ -435,7 +435,6 @@ func (hs *HTTPServer) pluginSettings(orgID int64) (map[string]*models.PluginSett
 				opt.Enabled = appSettings.Enabled
 			}
 		}
-
 		pluginMap[pluginDef.ID] = opt
 	}
 
