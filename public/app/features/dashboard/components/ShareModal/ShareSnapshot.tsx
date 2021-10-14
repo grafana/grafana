@@ -223,10 +223,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           </p>
         </div>
         <Field label="Snapshot name">
-          <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+          <Input id="snapshot-name-input" width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
         </Field>
         <Field label="Expire">
           <Select
+            inputId="expire-select-input"
             menuShouldPortal
             width={30}
             options={expireOptions}
@@ -239,7 +240,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           description="You might need to configure the timeout value if it takes a long time to collect your dashboard
             metrics."
         >
-          <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+          <Input id="timeout-input" type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
         </Field>
 
         <Modal.ButtonRow>

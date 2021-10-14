@@ -28,12 +28,11 @@ TimeoutStopSec=20
 CapabilityBoundingSet=
 DeviceAllow=
 LockPersonality=true
-MemoryDenyWriteExecute=true
+MemoryDenyWriteExecute=false
 NoNewPrivileges=true
 PrivateDevices=true
 PrivateTmp=true
 PrivateUsers=true
-ProcSubset=pid
 ProtectClock=true
 ProtectControlGroups=true
 ProtectHome=true
@@ -49,9 +48,6 @@ RestrictNamespaces=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 SystemCallArchitectures=native
-SystemCallFilter=@system-service
-SystemCallFilter=~@privileged
-SystemCallFilter=~@resources
 UMask=0027
 
 [Install]

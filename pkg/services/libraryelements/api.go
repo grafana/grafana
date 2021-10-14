@@ -4,12 +4,11 @@ import (
 	"errors"
 
 	"github.com/go-macaron/binding"
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -36,7 +35,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
 func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
-	err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, macaron.Params(c.Req)[":uid"])
+	err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
@@ -46,7 +45,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 
 // getHandler handles GET  /api/library-elements/:uid.
 func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Response {
-	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, macaron.Params(c.Req)[":uid"])
+	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
@@ -76,7 +75,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 
 // patchHandler handles PATCH /api/library-elements/:uid
 func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
-	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, macaron.Params(c.Req)[":uid"])
+	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
 	}
@@ -86,7 +85,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibr
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
 func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) response.Response {
-	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, macaron.Params(c.Req)[":uid"])
+	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
 	}
@@ -96,7 +95,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 
 // getByNameHandler handles GET /api/library-elements/name/:name/.
 func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.Response {
-	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, macaron.Params(c.Req)[":name"])
+	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}

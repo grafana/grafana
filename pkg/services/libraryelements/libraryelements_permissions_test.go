@@ -6,10 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLibraryElementPermissions(t *testing.T) {
@@ -86,7 +85,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				cmd := patchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(models.PanelElement)}
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
 			})
@@ -101,7 +100,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				cmd := patchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(models.PanelElement)}
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
 			})
@@ -114,7 +113,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.deleteHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
@@ -148,7 +147,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				cmd := patchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(models.PanelElement)}
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
 			})
@@ -162,7 +161,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				cmd := patchLibraryElementCommand{FolderID: folder.Id, Version: 1, Kind: int64(models.PanelElement)}
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, testCase.status, resp.Status())
 			})
@@ -174,7 +173,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result := validateAndUnMarshalResponse(t, resp)
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.deleteHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
@@ -207,7 +206,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				cmd := patchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(models.PanelElement)}
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, 404, resp.Status())
 			})
@@ -242,7 +241,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				for i, result := range results {
-					sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.UID})
+					sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.UID})
 					resp := sc.service.getHandler(sc.reqContext)
 					require.Equal(t, testCase.statuses[i], resp.Status())
 				}
@@ -261,7 +260,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 				result.Result.Meta.FolderUID = ""
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				sc.ctx.Req = macaron.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.getHandler(sc.reqContext)
 				require.Equal(t, 200, resp.Status())
 				var actual libraryElementResult

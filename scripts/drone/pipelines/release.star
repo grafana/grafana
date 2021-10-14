@@ -8,6 +8,7 @@ load(
     'codespell_step',
     'shellcheck_step',
     'test_backend_step',
+    'test_backend_integration_step',
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
@@ -30,7 +31,8 @@ load(
     'upload_packages_step',
     'publish_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step'
+    'validate_scuemata_step',
+    'ensure_cuetsified_step'
 )
 
 load(
@@ -85,12 +87,14 @@ def get_steps(edition, ver_mode):
         shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
-        test_backend_step(edition=edition, tries=tries),
+        test_backend_step(edition=edition),
+        test_backend_integration_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -98,7 +102,8 @@ def get_steps(edition, ver_mode):
         edition2 = 'enterprise2'
         steps.extend([
             lint_backend_step(edition=edition2),
-            test_backend_step(edition=edition2, tries=tries),
+            test_backend_step(edition=edition2),
+            test_backend_integration_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 

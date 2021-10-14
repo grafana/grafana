@@ -229,8 +229,8 @@ const dataQueriesToGrafanaQueries = async (
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
   for (const target of queries) {
-    const dsName = target.datasource || datasourceName;
-    const datasource = await getDataSourceSrv().get(dsName);
+    const datasource = await getDataSourceSrv().get(target.datasource || datasourceName);
+    const dsName = datasource.name;
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
     const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
@@ -281,7 +281,7 @@ export const panelToRuleFormValues = async (
   dashboard: DashboardModel
 ): Promise<Partial<RuleFormValues> | undefined> => {
   const { targets } = panel;
-  if (!panel.editSourceId || !dashboard.uid) {
+  if (!panel.id || !dashboard.uid) {
     return undefined;
   }
 
@@ -324,7 +324,7 @@ export const panelToRuleFormValues = async (
       },
       {
         key: Annotation.panelID,
-        value: String(panel.editSourceId),
+        value: String(panel.id),
       },
     ],
   };

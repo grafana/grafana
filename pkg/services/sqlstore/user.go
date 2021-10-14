@@ -654,6 +654,18 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}
 
+	for _, filter := range query.Filters {
+		if jc := filter.JoinCondition(); jc != nil {
+			countSess.Join(jc.Operator, jc.Table, jc.Params)
+		}
+		if ic := filter.InCondition(); ic != nil {
+			countSess.In(ic.Condition, ic.Params)
+		}
+		if wc := filter.WhereCondition(); wc != nil {
+			countSess.Where(wc.Condition, wc.Params)
+		}
+	}
+
 	count, err := countSess.Count(&user)
 	query.Result.TotalCount = count
 
