@@ -12,7 +12,9 @@ export const getForcedLoginUrl = (url: string) => {
 export const isLinkActive = (pathname: string, link: NavModelItem) => {
   // strip out any query params
   const linkPathname = link.url?.split('?')[0];
+  const newNavigationEnabled = getConfig().featureToggles.newNavigation;
   if (linkPathname) {
+    const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
     if (linkPathname === pathname) {
       // exact match
       return true;
@@ -23,7 +25,7 @@ export const isLinkActive = (pathname: string, link: NavModelItem) => {
       // alert channel match
       // TODO refactor routes such that we don't need this custom logic
       return true;
-    } else if (linkPathname === '/' && pathname.startsWith('/d/')) {
+    } else if (linkPathname === dashboardLinkMatch && pathname.startsWith('/d/')) {
       // dashboard match
       // TODO refactor routes such that we don't need this custom logic
       return true;

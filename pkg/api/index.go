@@ -135,6 +135,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
+	if hs.Cfg.IsNewNavigationEnabled() {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Home",
+			Id:         "home",
+			Icon:       "home-alt",
+			Url:        hs.Cfg.AppSubURL + "/",
+			SortWeight: dtos.WeightHome,
+		})
+	}
+
 	if hasEditPerm && !hs.Cfg.IsNewNavigationEnabled() {
 		children := hs.buildCreateNavLinks(c)
 		navTree = append(navTree, &dtos.NavLink{
@@ -147,12 +157,22 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true},
-		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
-		{Text: "Manage", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap"},
-		{Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play"},
+	dashboardChildNavs := []*dtos.NavLink{}
+
+	if !hs.Cfg.IsNewNavigationEnabled() {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true,
+		})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
+		})
 	}
+	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+		Text: "Manage", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+	})
+	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+		Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+	})
 
 	if c.IsSignedIn {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
@@ -189,12 +209,17 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
+	dashboardsUrl := "/"
+	if hs.Cfg.IsNewNavigationEnabled() {
+		dashboardsUrl = "/dashboards"
+	}
+
 	navTree = append(navTree, &dtos.NavLink{
 		Text:       "Dashboards",
 		Id:         "dashboards",
 		SubTitle:   "Manage dashboards and folders",
 		Icon:       "apps",
-		Url:        hs.Cfg.AppSubURL + "/",
+		Url:        hs.Cfg.AppSubURL + dashboardsUrl,
 		SortWeight: dtos.WeightDashboard,
 		Children:   dashboardChildNavs,
 	})
