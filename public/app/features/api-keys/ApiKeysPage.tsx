@@ -76,7 +76,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   onAddApiKey = (newApiKey: NewApiKey) => {
-    console.log(newApiKey);
     const openModal = (apiKey: string) => {
       const rootPath = window.location.origin + config.appSubUrl;
 
