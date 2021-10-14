@@ -75,7 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     heading: css({
       ...theme.typography.h5,
-      margin: theme.spacing(0, 0.5),
+      margin: theme.spacing(0, 0.5, 1),
     }),
     suggestionsGrid: css({
       display: 'grid',
