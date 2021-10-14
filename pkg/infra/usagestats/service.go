@@ -17,8 +17,11 @@ type Report struct {
 
 type MetricsFunc func() (map[string]interface{}, error)
 
+type SendReportCallbackFunc func()
+
 type Service interface {
 	GetUsageReport(context.Context) (Report, error)
 	RegisterMetricsFunc(MetricsFunc)
+	RegisterSendReportCallback(SendReportCallbackFunc)
 	ShouldBeReported(string) bool
 }

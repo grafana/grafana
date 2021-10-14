@@ -1,5 +1,7 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 
+import { DataSourceJsonData } from '@grafana/data';
+
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
@@ -87,12 +89,17 @@ export type Receiver = {
   [key: string]: any;
 };
 
+type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+
 export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
+  object_matchers?: ObjectMatcher[];
   matchers?: string[];
+  /** @deprecated use `object_matchers` */
   match?: Record<string, string>;
+  /** @deprecated use `object_matchers` */
   match_re?: Record<string, string>;
   group_wait?: string;
   group_interval?: string;
@@ -246,3 +253,10 @@ export interface TestReceiversResult {
   notified_at: string;
   receivers: TestReceiversResultReceiver[];
 }
+
+export enum AlertManagerImplementation {
+  cortex = 'cortex',
+  prometheus = 'prometheus',
+}
+
+export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };

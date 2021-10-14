@@ -40,6 +40,8 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@monaco-editor/react": "4.2.2",
     "@popperjs/core": "2.5.4",
+    "@react-aria/focus": "3.4.1",
+    "@react-aria/overlays": "3.7.2",
     "@sentry/browser": "5.25.0",
     "ansicolor": "1.1.95",
     "classnames": "2.2.6",
@@ -58,7 +60,7 @@
     "rc-time-picker": "^3.7.3",
     "react": "17.0.1",
     "react-beautiful-dnd": "13.1.0",
-    "react-calendar": "2.19.2",
+    "react-calendar": "3.4.0",
     "react-colorful": "5.1.2",
     "react-custom-scrollbars-2": "4.4.0",
     "react-dom": "17.0.1",
@@ -73,6 +75,7 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
+    "tslib": "2.3.1",
     "uplot": "1.6.16"
   },
   "devDependencies": {
@@ -90,7 +93,7 @@
     "@testing-library/jest-dom": "5.11.9",
     "@types/classnames": "2.2.7",
     "@types/common-tags": "^1.8.0",
-    "@types/d3": "5.7.2",
+    "@types/d3": "7.0.0",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "26.0.15",
@@ -101,6 +104,7 @@
     "@types/papaparse": "5.2.0",
     "@types/react": "16.9.9",
     "@types/react-beautiful-dnd": "13.1.1",
+    "@types/react-calendar": "^3.4.3",
     "@types/react-color": "3.0.1",
     "@types/react-router-dom": "^5.1.7",
     "@types/react-select": "4.0.13",
@@ -111,11 +115,12 @@
     "@types/slate": "0.47.2",
     "@types/slate-react": "0.22.5",
     "@types/tinycolor2": "1.4.1",
+    "@wojtekmaj/enzyme-adapter-react-17": "0.6.2",
     "common-tags": "^1.8.0",
+    "csstype": "3.0.9",
+    "enzyme": "3.11.0",
     "mock-raf": "1.0.1",
-    "pretty-format": "25.1.0",
     "react-docgen-typescript-loader": "3.7.2",
-    "react-is": "16.8.0",
     "react-test-renderer": "17.0.1",
     "rollup": "2.33.3",
     "rollup-plugin-sourcemaps": "0.6.3",
@@ -124,11 +129,8 @@
     "rollup-plugin-visualizer": "4.2.0",
     "storybook-dark-mode": "1.0.8",
     "ts-loader": "8.0.11",
-    "typescript": "4.3.4",
+    "typescript": "4.4.3",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
-  "types": "src/index.ts",
-  "volta": {
-    "extends": "../../package.json"
-  }
+  "types": "src/index.ts"
 }

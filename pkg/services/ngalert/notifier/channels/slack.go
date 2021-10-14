@@ -14,14 +14,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
 )
 
 // SlackNotifier is responsible for sending
@@ -49,12 +48,12 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
-	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
+	slackURL := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString(), setting.SecretKey)
 	if slackURL == "" {
 		slackURL = SlackAPIEndpoint
 	}
@@ -99,7 +98,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*
 		}
 	}
 
-	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString(), setting.SecretKey)
 	if token == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, receiverInitError{Cfg: *model,
 			Reason: "token must be specified when using the Slack chat API",

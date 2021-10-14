@@ -24,7 +24,8 @@ import { Alert, LinkButton, PluginSignatureBadge, Tooltip, Badge, useStyles2, Ic
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
-import { importAppPlugin, importDataSourcePlugin, importPanelPluginFromMeta } from './plugin_loader';
+import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
+import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
@@ -62,33 +63,29 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { location, queryParams } = this.props;
-    const { appSubUrl } = config;
-
-    const plugin = await loadPlugin(this.props.match.params.pluginId);
-
-    if (!plugin) {
+    try {
+      const { location, queryParams } = this.props;
+      const { appSubUrl } = config;
+      const plugin = await loadPlugin(this.props.match.params.pluginId);
+      const { defaultPage, nav } = getPluginTabsNav(
+        plugin,
+        appSubUrl,
+        location.pathname,
+        queryParams,
+        contextSrv.hasRole('Admin')
+      );
+      this.setState({
+        loading: false,
+        plugin,
+        defaultPage,
+        nav,
+      });
+    } catch {
       this.setState({
         loading: false,
         nav: getNotFoundNav(),
       });
-      return; // 404
     }
-
-    const { defaultPage, nav } = getPluginTabsNav(
-      plugin,
-      appSubUrl,
-      location.pathname,
-      queryParams,
-      contextSrv.hasRole('Admin')
-    );
-
-    this.setState({
-      loading: false,
-      plugin,
-      defaultPage,
-      nav,
-    });
   }
 
   componentDidUpdate(prevProps: Props) {

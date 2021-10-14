@@ -38,7 +38,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &statsQuery); err != nil {
 		uss.log.Error("Failed to get system stats", "error", err)
 		return report, err
 	}
@@ -110,7 +110,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return report, err
 	}
@@ -129,7 +129,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &esDataSourcesQuery); err != nil {
 		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
@@ -150,31 +150,9 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
 	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
 
-	// Alerting stats
-	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
-	if err != nil {
-		uss.log.Error("Failed to get alerting usage stats", "error", err)
-		return report, err
-	}
-
-	var addAlertingUsageStats = func(dsType string, usageCount int) {
-		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
-	}
-
-	alertingOtherCount := 0
-	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if uss.ShouldBeReported(dsType) {
-			addAlertingUsageStats(dsType, usageCount)
-		} else {
-			alertingOtherCount += usageCount
-		}
-	}
-
-	addAlertingUsageStats("other", alertingOtherCount)
-
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsAccessStats); err != nil {
 		uss.log.Error("Failed to get datasource access stats", "error", err)
 		return report, err
 	}
@@ -309,13 +287,13 @@ var sendUsageStats = func(uss *UsageStats, data *bytes.Buffer) {
 	}()
 }
 
-func (uss *UsageStats) updateTotalStats() {
+func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
 		return
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &statsQuery); err != nil {
 		uss.log.Error("Failed to get system stats", "error", err)
 		return
 	}
@@ -339,7 +317,7 @@ func (uss *UsageStats) updateTotalStats() {
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return
 	}

@@ -46,9 +46,9 @@ const dataSources = {
 };
 
 const ui = {
-  silencesTable: byTestId('silences-table'),
-  silenceRow: byTestId('silence-table-row'),
-  silencedAlertCell: byTestId('silenced-alerts'),
+  silencesTable: byTestId('dynamic-table'),
+  silenceRow: byTestId('row'),
+  silencedAlertCell: byTestId('alerts'),
   queryBar: byPlaceholderText('Search'),
   editor: {
     timeRange: byLabelText('Timepicker', { exact: false }),
@@ -58,7 +58,7 @@ const ui = {
     matcherName: byPlaceholderText('label'),
     matcherValue: byPlaceholderText('value'),
     comment: byPlaceholderText('Details about the silence'),
-    createdBy: byPlaceholderText('Username'),
+    createdBy: byPlaceholderText('User'),
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
