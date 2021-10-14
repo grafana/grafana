@@ -125,7 +125,10 @@ describe('ApiKeysPage', () => {
       expect(within(firstRow).getByRole('cell', { name: /cancel delete/i })).toBeInTheDocument();
       userEvent.click(within(firstRow).getByRole('cell', { name: /cancel delete/i }));
       expect(within(firstRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }));
+      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+      userEvent.click(within(firstRow).getByRole('button', { name: /delete$/i }), undefined, {
+        skipPointerEventsCheck: true,
+      });
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(1, false);
 
@@ -135,7 +138,10 @@ describe('ApiKeysPage', () => {
       expect(within(secondRow).getByRole('cell', { name: /cancel delete/i })).toBeInTheDocument();
       userEvent.click(within(secondRow).getByRole('cell', { name: /cancel delete/i }));
       expect(within(secondRow).getByRole('button', { name: /delete$/i })).toBeInTheDocument();
-      userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }));
+      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+      userEvent.click(within(secondRow).getByRole('button', { name: /delete$/i }), undefined, {
+        skipPointerEventsCheck: true,
+      });
       expect(deleteApiKeyMock).toHaveBeenCalledTimes(1);
       expect(deleteApiKeyMock).toHaveBeenCalledWith(2, true);
     });

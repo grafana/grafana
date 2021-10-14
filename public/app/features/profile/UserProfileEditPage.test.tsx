@@ -236,7 +236,8 @@ describe('UserProfileEditPage', () => {
         const { email, saveProfile } = getSelectors();
         userEvent.clear(email());
         userEvent.type(email(), 'test@test.se');
-        userEvent.click(saveProfile());
+        // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+        userEvent.click(saveProfile(), undefined, { skipPointerEventsCheck: true });
 
         await waitFor(() => expect(props.updateUserProfile).toHaveBeenCalledTimes(1));
         expect(props.updateUserProfile).toHaveBeenCalledWith({

@@ -140,7 +140,8 @@ describe('RuleEditor', () => {
     userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
     userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
     userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
@@ -199,7 +200,8 @@ describe('RuleEditor', () => {
     userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
     userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
     userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
@@ -276,18 +278,21 @@ describe('RuleEditor', () => {
 
     userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
     userEvent.type(ui.inputs.labelKey(1).get(), 'team');
     userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // try to save, find out that recording rule name is invalid
     userEvent.click(ui.buttons.save.get());
-    expect(
-      await byText(
-        'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
-      ).find()
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        byText(
+          'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+        ).get()
+      ).toBeInTheDocument()
+    );
     expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
 
     // fix name and re-submit

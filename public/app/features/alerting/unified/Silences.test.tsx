@@ -205,19 +205,22 @@ describe('Silence edit', () => {
     userEvent.tab();
     userEvent.type(ui.editor.matcherValue.get(), 'bar');
 
-    userEvent.click(ui.editor.addMatcherButton.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
     userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
     userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
     userEvent.tab();
     userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
 
-    userEvent.click(ui.editor.addMatcherButton.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
     userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
     userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
     userEvent.tab();
     userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
 
-    userEvent.click(ui.editor.addMatcherButton.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
     userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
     userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
     userEvent.tab();
