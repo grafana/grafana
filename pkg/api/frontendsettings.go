@@ -348,7 +348,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 	c.JSON(200, settings)
 }
 
-// EnabledPlugins represents a mapping of plugin types to plugin IDs to plugins
+// EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
+// For example ["panel"] -> ["piechart"] -> {pie chart plugin instance}
 type EnabledPlugins map[plugins.Type]map[string]*plugins.Plugin
 
 func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (*plugins.Plugin, bool) {
