@@ -67,18 +67,19 @@ module.exports = {
     new CopyUniconsPlugin(),
     new CopyWebpackPlugin({
       patterns: [
-        // {
-        //   context: path.join(require.resolve('monaco-editor'), 'min/vs'),
-        //   from: '**/*',
-        //   to: '../lib/monaco/', // inside the public/build folder
-        //   globOptions: {
-        //     ignore: [
-        //       '**/*.map', // debug files
-        //     ],
-        //   },
-        // },
         {
-          from: require.resolve('@kusto/monaco-kusto'),
+          context: path.join(require.resolve('monaco-editor/package.json'), '../min/vs/'),
+          from: '**/*',
+          to: '../lib/monaco/min/vs/', // inside the public/build folder
+          globOptions: {
+            ignore: [
+              '**/*.map', // debug files
+            ],
+          },
+        },
+        {
+          context: path.join(require.resolve('@kusto/monaco-kusto'), '../'),
+          from: '**/*',
           to: '../lib/monaco/min/vs/language/kusto/',
         },
       ],
