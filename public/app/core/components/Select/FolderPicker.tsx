@@ -20,7 +20,6 @@ export interface Props {
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
   allowEmpty?: boolean;
   showRoot?: boolean;
-  inputId?: string;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -28,6 +27,8 @@ export interface Props {
    * initialFolderId needs to have an value > -1 or an error will be thrown.
    */
   skipInitialLoad?: boolean;
+  /** The id of the search input. Use this to set a matching label with htmlFor */
+  inputId?: string;
 }
 
 interface State {
@@ -170,13 +171,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { inputId, enableCreateNew } = this.props;
+    const { enableCreateNew, inputId } = this.props;
 
     return (
       <div aria-label={selectors.components.FolderPicker.container}>
         <AsyncSelect
-          menuShouldPortal
           inputId={inputId}
+          aria-label={selectors.components.FolderPicker.input}
           loadingMessage="Loading folders..."
           defaultOptions
           defaultValue={folder}
@@ -185,6 +186,7 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
+          menuShouldPortal
         />
       </div>
     );

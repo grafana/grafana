@@ -283,10 +283,18 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
+      const errorRes = responses.find((res) => !!res.error);
+      if (errorRes) {
+        throw new Error(errorRes.error!.message);
+      }
+
       return {
         data: mapPromMetricsToServiceMap(responses, request.range),
         state: LoadingState.Done,
       };
+    }),
+    catchError((error) => {
+      return of({ error: { message: error.message }, data: [] });
     })
   );
 }

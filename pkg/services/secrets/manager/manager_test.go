@@ -1,57 +1,62 @@
-package secrets
+package manager
 
 import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/types"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 func TestSecrets_EnvelopeEncryption(t *testing.T) {
-	svc := SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	svc := setupTestService(t, store)
 	ctx := context.Background()
 
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), plaintext, WithoutScope())
+		encrypted, err := svc.Encrypt(context.Background(), plaintext, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.GetAllDataKeys(ctx)
+		keys, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), plaintext, WithoutScope())
+		encrypted, err := svc.Encrypt(context.Background(), plaintext, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.GetAllDataKeys(ctx)
+		keys, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
-		encrypted, err := svc.Encrypt(context.Background(), plaintext, WithScope("user:100"))
+		encrypted, err := svc.Encrypt(context.Background(), plaintext, secrets.WithScope("user:100"))
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(context.Background(), encrypted)
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.GetAllDataKeys(ctx)
+		keys, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 2)
 	})
@@ -73,10 +78,10 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestSecretsService_DataKeys(t *testing.T) {
-	svc := SetupTestService(t)
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 	ctx := context.Background()
 
-	dataKey := types.DataKey{
+	dataKey := secrets.DataKey{
 		Active:        true,
 		Name:          "test1",
 		Provider:      "test",
@@ -84,16 +89,16 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	}
 
 	t.Run("querying for a DEK that does not exist", func(t *testing.T) {
-		res, err := svc.GetDataKey(ctx, dataKey.Name)
-		assert.ErrorIs(t, types.ErrDataKeyNotFound, err)
+		res, err := store.GetDataKey(ctx, dataKey.Name)
+		assert.ErrorIs(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
 	t.Run("creating an active DEK", func(t *testing.T) {
-		err := svc.CreateDataKey(ctx, dataKey)
+		err := store.CreateDataKey(ctx, dataKey)
 		require.NoError(t, err)
 
-		res, err := svc.GetDataKey(ctx, dataKey.Name)
+		res, err := store.GetDataKey(ctx, dataKey.Name)
 		require.NoError(t, err)
 		assert.Equal(t, dataKey.EncryptedData, res.EncryptedData)
 		assert.Equal(t, dataKey.Provider, res.Provider)
@@ -102,38 +107,38 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("creating an inactive DEK", func(t *testing.T) {
-		k := types.DataKey{
+		k := secrets.DataKey{
 			Active:        false,
 			Name:          "test2",
 			Provider:      "test",
 			EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
 		}
 
-		err := svc.CreateDataKey(ctx, k)
+		err := store.CreateDataKey(ctx, k)
 		require.Error(t, err)
 
-		res, err := svc.GetDataKey(ctx, k.Name)
-		assert.Equal(t, types.ErrDataKeyNotFound, err)
+		res, err := store.GetDataKey(ctx, k.Name)
+		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
 	t.Run("deleting DEK when no name provided must fail", func(t *testing.T) {
-		beforeDelete, err := svc.GetAllDataKeys(ctx)
+		beforeDelete, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
-		err = svc.DeleteDataKey(ctx, "")
+		err = store.DeleteDataKey(ctx, "")
 		require.Error(t, err)
 
-		afterDelete, err := svc.GetAllDataKeys(ctx)
+		afterDelete, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, beforeDelete, afterDelete)
 	})
 
 	t.Run("deleting a DEK", func(t *testing.T) {
-		err := svc.DeleteDataKey(ctx, dataKey.Name)
+		err := store.DeleteDataKey(ctx, dataKey.Name)
 		require.NoError(t, err)
 
-		res, err := svc.GetDataKey(ctx, dataKey.Name)
-		assert.Equal(t, types.ErrDataKeyNotFound, err)
+		res, err := store.GetDataKey(ctx, dataKey.Name)
+		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 }
