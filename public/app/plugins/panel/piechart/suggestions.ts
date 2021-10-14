@@ -1,6 +1,6 @@
 import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
-import { PieChartOptions, PieChartType } from './types';
+import { PieChartLabels, PieChartOptions, PieChartType } from './types';
 
 export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   if (!data || !data.series || data.series.length === 0) {
@@ -16,10 +16,16 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
         values: true,
         calcs: [],
       },
+      displayLabels: [PieChartLabels.Percent],
       legend: {
-        displayMode: LegendDisplayMode.Hidden,
         placement: 'right',
+        values: [],
       } as any,
+    },
+    previewModifier: (s) => {
+      // Hide labels in preview
+      s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+      s.options!.displayLabels = [];
     },
   });
 

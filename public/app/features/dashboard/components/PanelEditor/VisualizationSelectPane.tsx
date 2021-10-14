@@ -1,21 +1,17 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, PanelData, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
 import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { changePanelPlugin } from '../../../panel/state/actions';
 import { PanelModel } from '../../state/PanelModel';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  filterPluginList,
-  getAllPanelPluginMeta,
-  VizTypePicker,
-} from '../../../panel/components/VizTypePicker/VizTypePicker';
+import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPanelPluginWithFallback } from '../../state/selectors';
-import { VisualizationSuggestions } from 'app/features/panel/components/VisualizationSuggestions/VisualizationSuggestions';
+import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
 interface Props {
   panel: PanelModel;
@@ -30,18 +26,16 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
   const styles = useStyles(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  const onPluginTypeChange = useCallback(
-    (meta: PanelPluginMeta, withModKey: boolean) => {
-      if (meta.id !== plugin.meta.id) {
-        dispatch(changePanelPlugin(panel, meta.id));
-      }
+  const onVizChange = useCallback(
+    (pluginChange: VizTypeChangeDetails) => {
+      dispatch(changePanelPlugin({ panel: panel, ...pluginChange }));
 
       // close viz picker unless a mod key is pressed while clicking
-      if (!withModKey) {
+      if (!pluginChange.withModKey) {
         dispatch(toggleVizPicker(false));
       }
     },
-    [dispatch, panel, plugin.meta.id]
+    [dispatch, panel]
   );
 
   // Give Search input focus when using radio button switch list mode
@@ -55,20 +49,20 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     dispatch(toggleVizPicker(false));
   };
 
-  const onKeyPress = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const query = e.currentTarget.value;
-        const plugins = getAllPanelPluginMeta();
-        const match = filterPluginList(plugins, query, plugin.meta);
+  // const onKeyPress = useCallback(
+  //   (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //     if (e.key === 'Enter') {
+  //       const query = e.currentTarget.value;
+  //       const plugins = getAllPanelPluginMeta();
+  //       const match = filterPluginList(plugins, query, plugin.meta);
 
-        if (match && match.length) {
-          onPluginTypeChange(match[0], false);
-        }
-      }
-    },
-    [onPluginTypeChange, plugin.meta]
-  );
+  //       if (match && match.length) {
+  //         onPluginTypeChange(match[0], false);
+  //       }
+  //     }
+  //   },
+  //   [onPluginTypeChange, plugin.meta]
+  // );
 
   if (!plugin) {
     return null;
@@ -90,7 +84,6 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
           <FilterInput
             value={searchQuery}
             onChange={setSearchQuery}
-            onKeyPress={onKeyPress}
             ref={searchRef}
             autoFocus={true}
             placeholder="Search for..."
@@ -112,15 +105,13 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.scrollContent}>
             {listMode === ListMode.Visualizations && (
-              <div>
-                {data && <VisualizationSuggestions data={data} />}
-                <VizTypePicker
-                  current={plugin.meta}
-                  onTypeChange={onPluginTypeChange}
-                  searchQuery={searchQuery}
-                  onClose={() => {}}
-                />
-              </div>
+              <VizTypePicker
+                current={plugin.meta}
+                onChange={onVizChange}
+                searchQuery={searchQuery}
+                data={data}
+                onClose={() => {}}
+              />
             )}
             {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />

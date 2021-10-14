@@ -202,7 +202,7 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig extends ob
   /** Data transformations */
   transformations?: DataTransformerConfig[];
   /** Tweak for small preview */
-  getPreviewVersion?: (suggestion: VisualizationSuggestion) => VisualizationSuggestion;
+  previewModifier?: (suggestion: VisualizationSuggestion) => void;
 }
 
 /**
