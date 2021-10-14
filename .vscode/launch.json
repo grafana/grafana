@@ -21,7 +21,8 @@
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana-server/",
       "env": {},
-      "args": ["--homepath", "${workspaceFolder}", "--packaging", "dev"]
+      "args": ["--homepath", "${workspaceFolder}", "--packaging", "dev"],
+      "buildFlags": "-ldflags='-X main.version=${input:VERSION}'"
     },
     {
       "name": "Debug Jest test",
