@@ -131,7 +131,10 @@ describe('LinksSettings', () => {
 
     expect(getTableBodyRows().length).toBe(links.length);
 
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: /delete/i })[0]);
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(within(getTableBody()).getAllByRole('button', { name: /delete/i })[0], undefined, {
+      skipPointerEventsCheck: true,
+    });
 
     expect(getTableBodyRows().length).toBe(links.length - 1);
     expect(within(getTableBody()).queryByText(links[0].title)).not.toBeInTheDocument();

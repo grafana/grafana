@@ -23,8 +23,9 @@ go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 
 # Continuous Integration
-.drone.yml @malcolmholmes @dsotirakis @kminehart
-/scripts/drone/ @malcolmholmes @dsotirakis @kminehart
+.drone.yml @grafana/grafana-release-eng
+.drone.star @grafana/grafana-release-eng
+/scripts/drone/ @grafana/grafana-release-eng
 
 # Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/cloud-datasources @grafana/observability-squad
