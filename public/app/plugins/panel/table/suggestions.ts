@@ -1,6 +1,5 @@
 import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/schema';
-import { TimeSeriesOptions } from './types';
+import { PanelOptions, PanelFieldConfig } from './models.gen';
 
 export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   if (!data || !data.series || data.series.length === 0) {
@@ -8,21 +7,17 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
   }
 
   const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<TimeSeriesOptions, GraphFieldConfig>({
-    name: 'Line graph',
-    pluginId: 'timeseries',
-    options: {
-      legend: {} as any,
-    },
+  const builder = new VisualizationSuggestionBuilderUtil<PanelOptions, PanelFieldConfig>({
+    name: 'Table',
+    pluginId: 'table',
+    options: {},
     fieldConfig: {
       defaults: {
         custom: {},
       },
       overrides: [],
     },
-    previewModifier: (s) => {
-      s.options!.legend.displayMode = LegendDisplayMode.Hidden;
-    },
+    previewModifier: (s) => {},
   });
 
   if (frames.length === 1) {

@@ -2,7 +2,7 @@ import { PanelData, VisualizationSuggestion } from '@grafana/data';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export async function getAllSuggestions(data?: PanelData): Promise<VisualizationSuggestion[]> {
-  const plugins = ['timeseries', 'barchart', 'gauge', 'piechart', 'bargauge', 'table', 'stat'];
+  const plugins = ['timeseries', 'barchart', 'gauge', 'stat', 'piechart', 'bargauge', 'table'];
   const input = { data };
   const allSuggestions: VisualizationSuggestion[] = [];
 
