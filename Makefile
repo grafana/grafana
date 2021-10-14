@@ -155,7 +155,7 @@ clean: ## Clean up intermediate build artifacts.
 # you modify starlark files.
 drone:
 	@if [ "$(DRONE_VERSION)" != "1.4.0" ]; then\
-		echo "WARN: Please update your LOCAL drone-cli version to 1.4.0. Using latest bingo version...";\
+		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
 	fi
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml
