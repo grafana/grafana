@@ -5,6 +5,14 @@ import (
 	"fmt"
 )
 
+type AlertmanagersChoice int
+
+const (
+	AllAlertmanagers AlertmanagersChoice = iota
+	InternalAlertmanager
+	ExternalAlertmanagers
+)
+
 // AdminConfiguration represents the ngalert administration configuration settings.
 type AdminConfiguration struct {
 	ID    int64 `xorm:"pk autoincr 'id'"`
@@ -13,11 +21,8 @@ type AdminConfiguration struct {
 	// List of Alertmanager(s) URL to push alerts to.
 	Alertmanagers []string
 
-	// Handling indicates which alertmanager will handle the alert:
-	// 0: both internal and external alertmanagers.
-	// 1: the internal alertmanager.
-	// 2: the external alertmanagers.
-	Handling int `xorm:"handling"`
+	// AlertmanagersChoice indicates which set of alertmanagers will handle the alert.
+	AlertmanagersChoice AlertmanagersChoice `xorm:"alertmanagers_choice"`
 
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`

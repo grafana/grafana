@@ -1,6 +1,9 @@
 package definitions
 
-import v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+import (
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+)
 
 // swagger:route GET /api/v1/ngalert/alertmanagers configuration RouteGetAlertmanagers
 //
@@ -54,14 +57,14 @@ type NGalertConfig struct {
 
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers []string `json:"alertmanagers"`
-	Handling      int      `json:"handling"`
+	Alertmanagers       []string                   `json:"alertmanagers"`
+	AlertmanagersChoice models.AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
-	Alertmanagers []string `json:"alertmanagers"`
-	Handling      int      `json:"handling"`
+	Alertmanagers       []string                   `json:"alertmanagers"`
+	AlertmanagersChoice models.AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model

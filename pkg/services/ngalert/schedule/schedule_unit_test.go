@@ -39,19 +39,19 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 
 	// First, let's create an admin configuration that holds an alertmanager
 	// and sends alerts to both internal and external alertmanagers.
-	adminConfigBothWays := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, Handling: store.HandleBothWays}
+	adminConfigBothWays := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, AlertmanagersChoice: models.AllAlertmanagers}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigBothWays}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Then, let's create an admin configuration that holds an alertmanager
 	// and sends alerts just to the external alertmanagers.
-	adminConfigExternal := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL}, Handling: store.HandleExternally}
+	adminConfigExternal := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL}, AlertmanagersChoice: models.ExternalAlertmanagers}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigExternal}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Finally, let's create an admin configuration that holds an alertmanager
 	// and sends alerts just to the internal alertmanager.
-	adminConfigInternal := &models.AdminConfiguration{OrgID: 3, Alertmanagers: []string{fakeAM.server.URL}, Handling: store.HandleInternally}
+	adminConfigInternal := &models.AdminConfiguration{OrgID: 3, Alertmanagers: []string{fakeAM.server.URL}, AlertmanagersChoice: models.InternalAlertmanager}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfigInternal}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 

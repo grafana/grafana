@@ -13,12 +13,6 @@ var (
 	ErrNoAdminConfiguration = fmt.Errorf("no admin configuration available")
 )
 
-const (
-	HandleBothWays = iota
-	HandleInternally
-	HandleExternally
-)
-
 type UpdateAdminConfigurationCmd struct {
 	AdminConfiguration *ngmodels.AdminConfiguration
 }
