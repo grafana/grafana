@@ -381,47 +381,51 @@ describe('Plugin details page', () => {
   });
 
   it('should display post installation step for installed data source plugins', async () => {
+    const name = 'Akumuli';
     const { queryByText } = renderPluginDetails({
-      name: 'Akumuli',
+      name,
       isInstalled: true,
       type: PluginType.datasource,
     });
 
     await waitFor(() => queryByText('Uninstall'));
-    expect(queryByText('Add Akumuli data source')).toBeInTheDocument();
+    expect(queryByText(`Create a ${name} data source`)).toBeInTheDocument();
   });
 
   it('should not display post installation step for disabled data source plugins', async () => {
+    const name = 'Akumuli';
     const { queryByText } = renderPluginDetails({
-      name: 'Akumuli',
+      name,
       isInstalled: true,
       isDisabled: true,
       type: PluginType.datasource,
     });
 
     await waitFor(() => queryByText('Uninstall'));
-    expect(queryByText('Add Akumuli data source')).toBeNull();
+    expect(queryByText(`Create a ${name} data source`)).toBeNull();
   });
 
   it('should not display post installation step for panel plugins', async () => {
+    const name = 'Akumuli';
     const { queryByText } = renderPluginDetails({
-      name: 'Akumuli',
+      name,
       isInstalled: true,
       type: PluginType.panel,
     });
 
     await waitFor(() => queryByText('Uninstall'));
-    expect(queryByText('Add Akumuli data source')).toBeNull();
+    expect(queryByText(`Create a ${name} data source`)).toBeNull();
   });
 
   it('should not display post installation step for app plugins', async () => {
+    const name = 'Akumuli';
     const { queryByText } = renderPluginDetails({
-      name: 'Akumuli',
+      name,
       isInstalled: true,
       type: PluginType.app,
     });
 
     await waitFor(() => queryByText('Uninstall'));
-    expect(queryByText('Add Akumuli data source')).toBeNull();
+    expect(queryByText(`Create a ${name} data source`)).toBeNull();
   });
 });
