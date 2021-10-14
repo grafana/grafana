@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -143,7 +144,7 @@ func TestRenderLimitImage(t *testing.T) {
 	}
 }
 
-func TestRenderingService404Behavior(t *testing.T) {
+func TestRenderingServiceVersionFail(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
 		Cfg: cfg,
@@ -176,5 +177,38 @@ func TestRenderingService404Behavior(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, version, "1.0.0")
+	})
+
+	t.Run("When renderer responds with 500 should retry until success", func(t *testing.T) {
+		tries := uint(0)
+		ctx, cancel := context.WithCancel(context.Background())
+		lastRetryHit := make(chan struct{})
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			tries++
+
+			if tries < rs.remoteVersionFetchRetries {
+				w.WriteHeader(http.StatusInternalServerError)
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("{\"version\":\"3.1.4159\"}"))
+				cancel()
+				lastRetryHit <- struct{}{}
+			}
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererUrl = server.URL + "/render"
+		rs.remoteVersionFetchInterval = time.Millisecond
+		rs.remoteVersionFetchRetries = 5
+		go rs.Run(ctx)
+
+		select {
+		case <-time.After(time.Second):
+			t.Fatal("server did not retry version check")
+		case <-lastRetryHit:
+		}
+
+		require.Eventually(t, func() bool { return rs.Version() == "3.1.4159" }, time.Second, time.Millisecond)
 	})
 }
