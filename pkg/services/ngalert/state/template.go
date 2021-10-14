@@ -36,10 +36,12 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 		Labels map[string]string
 		Values map[string]templateCaptureValue
 		Value  string
+		State  string
 	}{
 		Labels: labels,
 		Values: newTemplateCaptureValues(alertInstance.Values),
 		Value:  alertInstance.EvaluationString,
+		State:  alertInstance.State.String(),
 	}
 
 	expander := template.NewTemplateExpander(
