@@ -153,14 +153,15 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	cmd := &models.SaveDashboardCommand{
-		Dashboard: dash.Data,
-		Message:   dto.Message,
-		OrgId:     dto.OrgId,
-		Overwrite: dto.Overwrite,
-		UserId:    dto.User.UserId,
-		FolderId:  dash.FolderId,
-		IsFolder:  dash.IsFolder,
-		PluginId:  dash.PluginId,
+		Dashboard:         dash.Data,
+		Message:           dto.Message,
+		OrgId:             dto.OrgId,
+		Overwrite:         dto.Overwrite,
+		UserId:            dto.User.UserId,
+		FolderId:          dash.FolderId,
+		IsFolder:          dash.IsFolder,
+		PluginId:          dash.PluginId,
+		SupportedVersions: dash.SupportedVersions,
 	}
 
 	if !dto.UpdatedAt.IsZero() {

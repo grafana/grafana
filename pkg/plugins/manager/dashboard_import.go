@@ -38,7 +38,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 			return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, plugins.PluginNotFoundError{PluginID: pluginID}
 		}
 		for _, include := range plugin.Includes {
-			if include.Slug == dashboard.Slug {
+			if include.Path == path {
 				supportedVersions = include.SupportedVersions
 			}
 		}
