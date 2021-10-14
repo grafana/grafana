@@ -3479,3 +3479,8 @@ get:
   path: infra/data/ci/drone
 kind: secret
 name: drone_token
+---
+kind: signature
+hmac: 935c307038257b7b7af994f4191fb86e29f6e69c02f753ffe71f99adcb626c00
+
+...
