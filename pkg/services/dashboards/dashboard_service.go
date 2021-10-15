@@ -172,7 +172,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, d
 
 var validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dash, dash.OrgId, user)
-	return extractor.ValidateAlerts(ctx)
+	return extractor.ValidateAlerts()
 }
 
 func validateDashboardRefreshInterval(dash *models.Dashboard) error {
@@ -207,7 +207,7 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 // Stubbable by tests.
 var UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dashboard, orgID, user)
-	alerts, err := extractor.GetAlerts(ctx)
+	alerts, err := extractor.GetAlerts()
 	if err != nil {
 		return err
 	}

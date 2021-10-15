@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"context"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -68,7 +67,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Equal(t, getTarget(dashJSON), "")
 
 		extractor := NewDashAlertExtractor(dash, 1, nil)
-		_, _ = extractor.GetAlerts(context.Background())
+		_, _ = extractor.GetAlerts()
 
 		require.Equal(t, getTarget(dashJSON), "")
 	})
@@ -80,7 +79,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		alerts, err := extractor.GetAlerts()
 
 		require.Nil(t, err)
 
@@ -130,7 +129,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		_, err = extractor.GetAlerts(context.Background())
+		_, err = extractor.GetAlerts()
 
 		require.NotNil(t, err)
 	})
@@ -144,7 +143,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		_, err = extractor.GetAlerts(context.Background())
+		_, err = extractor.GetAlerts()
 
 		require.NotNil(t, err)
 	})
@@ -158,7 +157,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		alerts, err := extractor.GetAlerts()
 		require.Nil(t, err)
 
 		condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
@@ -175,7 +174,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		alerts, err := extractor.GetAlerts()
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 2)
@@ -200,7 +199,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		alerts, err := extractor.GetAlerts()
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 1)
@@ -225,7 +224,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		alerts, err := extractor.GetAlerts()
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 4)
@@ -240,11 +239,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dash := models.NewDashboardFromJson(dashJSON)
 		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		err = extractor.ValidateAlerts(context.Background())
+		err = extractor.ValidateAlerts()
 
 		require.Nil(t, err)
 
-		_, err = extractor.GetAlerts(context.Background())
+		_, err = extractor.GetAlerts()
 		require.Equal(t, err.Error(), "alert validation error: Panel id is not correct, alertName=Influxdb, panelId=1")
 	})
 }
