@@ -154,7 +154,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -184,7 +184,7 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	}
 
 	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -246,7 +246,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDa
 		return response.Error(500, "Failed to update datasource", err)
 	}
 
-	err = bus.Dispatch(&cmd)
+	err = bus.DispatchCtx(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
