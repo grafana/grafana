@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -121,12 +122,44 @@ func Test_stateToPostableAlert(t *testing.T) {
 				})
 			})
 
-			t.Run("should copy labels as is", func(t *testing.T) {
-				alertState := randomState(tc.state)
-				alertState.Labels = randomMapOfStrings()
-				result := stateToPostableAlert(alertState, appURL)
-				require.Equal(t, models.LabelSet(alertState.Labels), result.Labels)
-			})
+			switch tc.state {
+			case eval.NoData:
+				t.Run("should keep existing labels and change name", func(t *testing.T) {
+					alertState := randomState(tc.state)
+					alertState.Labels = randomMapOfStrings()
+					alertName := util.GenerateShortUID()
+					alertState.Labels[model.AlertNameLabel] = alertName
+
+					result := stateToPostableAlert(alertState, appURL)
+
+					expected := make(models.LabelSet, len(alertState.Labels)+1)
+					for k, v := range alertState.Labels {
+						expected[k] = v
+					}
+					expected[model.AlertNameLabel] = NoDataAlertName
+					expected[OriginalAlertName] = alertName
+
+					require.Equal(t, expected, result.Labels)
+
+					t.Run("should not backup original alert name if it does not exist", func(t *testing.T) {
+						alertState := randomState(tc.state)
+						alertState.Labels = randomMapOfStrings()
+						delete(alertState.Labels, model.AlertNameLabel)
+
+						result := stateToPostableAlert(alertState, appURL)
+
+						require.Equal(t, NoDataAlertName, result.Labels[model.AlertNameLabel])
+						require.NotContains(t, result.Labels[model.AlertNameLabel], OriginalAlertName)
+					})
+				})
+			default:
+				t.Run("should copy labels as is", func(t *testing.T) {
+					alertState := randomState(tc.state)
+					alertState.Labels = randomMapOfStrings()
+					result := stateToPostableAlert(alertState, appURL)
+					require.Equal(t, models.LabelSet(alertState.Labels), result.Labels)
+				})
+			}
 		})
 	}
 }
