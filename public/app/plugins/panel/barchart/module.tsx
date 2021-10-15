@@ -93,6 +93,11 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
         },
       })
+      .addNumberInput({
+        path: 'valueMaxLength',
+        name: 'Value max length',
+        defaultValue: 20,
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',

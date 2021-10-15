@@ -49,10 +49,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   rawValue,
   allFrames,
   valueRotation,
+  valueMaxLength,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) => {
-    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), 10);
+    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), valueMaxLength);
   };
 
   // bar orientation -> x scale orientation & direction
@@ -90,7 +91,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   const rawRotation = valueRotation.presetRotation ?? valueRotation.customRotation ?? 0;
   if (vizOrientation.xOri === ScaleOrientation.Horizontal) {
-    builder.setPadding(getRotationPadding(frame, rawRotation, theme, 10));
+    builder.setPadding(getRotationPadding(frame, rawRotation, theme, valueMaxLength));
   }
 
   builder.setPrepData(config.prepData);
@@ -214,7 +215,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 };
 
 function shortenValue(value: string, length: number) {
-  if (value.length > 10) {
+  if (value.length > length) {
     return value.substring(0, length).concat('...');
   } else {
     return value;
