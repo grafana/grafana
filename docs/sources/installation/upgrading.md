@@ -291,7 +291,7 @@ The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK cr
 1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
 1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
 
-The other authentication methods, _Access & secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
+The other authentication methods, _Access and secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
 
 For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/aws-cloudwatch/aws-authentication.md" >}}).
 
