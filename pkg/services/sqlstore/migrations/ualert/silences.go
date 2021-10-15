@@ -14,6 +14,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -47,6 +48,46 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		ExpiresAt: time.Now().Add(365 * 20 * time.Hour), // 1 year.
 	}
 
+	_, ok := m.silences[da.OrgId]
+	if !ok {
+		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+	}
+	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	return nil
+}
+
+func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
+	if da.ParsedSettings.NoDataState != "keep_state" {
+		return nil
+	}
+
+	uid, err := uuid.NewV4()
+	if err != nil {
+		return errors.New("failed to create uuid for silence")
+	}
+
+	s := &pb.MeshSilence{
+		Silence: &pb.Silence{
+			Id: uid.String(),
+			Matchers: []*pb.Matcher{
+				{
+					Type:    pb.Matcher_EQUAL,
+					Name:    model.AlertNameLabel,
+					Pattern: "DatasourceNoData",
+				},
+				{
+					Type:    pb.Matcher_EQUAL,
+					Name:    "rule_uid",
+					Pattern: rule.UID,
+				},
+			},
+			StartsAt:  time.Now(),
+			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year.
+			CreatedBy: "Grafana Migration",
+			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence NoData state for alert rule '%s' because the option 'Keep Last State' was selected for NoData state", rule.Title),
+		},
+		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
+	}
 	_, ok := m.silences[da.OrgId]
 	if !ok {
 		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)

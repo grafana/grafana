@@ -131,6 +131,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
 	}
 
+	if err := m.addNoDataSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
+	}
+
 	return ar, nil
 }
 
