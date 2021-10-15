@@ -1,5 +1,12 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode, StackingMode } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  LegendDisplayMode,
+  LineInterpolation,
+  StackingMode,
+} from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
@@ -21,7 +28,10 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
     },
     previewModifier: (s) => {
       s.options!.legend.displayMode = LegendDisplayMode.Hidden;
-      s.fieldConfig!.defaults.custom!.lineWidth = 4;
+
+      if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+        s.fieldConfig!.defaults.custom!.lineWidth = 4;
+      }
     },
   });
 
@@ -30,6 +40,20 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
   }
 
   list.append({});
+
+  if (builder.dataRowCountMax < 200) {
+    list.append({
+      name: 'Line chart smooth',
+      fieldConfig: {
+        defaults: {
+          custom: {
+            lineInterpolation: LineInterpolation.Smooth,
+          },
+        },
+        overrides: [],
+      },
+    });
+  }
 
   if (builder.dataNumberFieldCount === 1) {
     list.append({
@@ -51,6 +75,27 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
         defaults: {
           custom: {
             fillOpacity: 25,
+            stacking: {
+              mode: StackingMode.Normal,
+              group: 'A',
+            },
+          },
+        },
+        overrides: [],
+      },
+    });
+  }
+
+  if (builder.dataRowCountTotal / builder.dataNumberFieldCount < 100) {
+    list.append({
+      name: 'Bar chart with time x-axis',
+      fieldConfig: {
+        defaults: {
+          custom: {
+            drawStyle: GraphDrawStyle.Bars,
+            fillOpacity: 100,
+            lineWidth: 1,
+            gradientMode: GraphGradientMode.Hue,
             stacking: {
               mode: StackingMode.Normal,
               group: 'A',

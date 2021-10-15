@@ -30,7 +30,7 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
 
   if (builder.dataFrameCount === 1) {
     // if many values this is not a good option
-    if (builder.dataRowCount > 10) {
+    if (builder.dataRowCountTotal > 10) {
       return;
     }
 

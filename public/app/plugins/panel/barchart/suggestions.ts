@@ -1,5 +1,5 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
-import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
+import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { BarChartFieldConfig, BarChartOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
@@ -44,4 +44,20 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
       orientation: VizOrientation.Horizontal,
     },
   });
+
+  if (builder.dataNumberFieldCount > 1) {
+    list.append({
+      name: 'Bar chart stacked',
+      options: {
+        stacking: StackingMode.Normal,
+      },
+    });
+    list.append({
+      name: 'Bar chart stacked horizontal',
+      options: {
+        stacking: StackingMode.Normal,
+        orientation: VizOrientation.Horizontal,
+      },
+    });
+  }
 }

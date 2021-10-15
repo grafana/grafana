@@ -221,7 +221,8 @@ export class VisualizationSuggestionsBuilder {
   private list: VisualizationSuggestion[] = [];
 
   dataExists?: boolean;
-  dataRowCount = 0;
+  dataRowCountTotal = 0;
+  dataRowCountMax = 0;
   dataFrameCount = 0;
   dataNumberFieldCount = 0;
   dataTimeFieldCount = 0;
@@ -251,7 +252,7 @@ export class VisualizationSuggestionsBuilder {
     this.dataFrameCount = this.data.series.length;
 
     for (const frame of this.data.series) {
-      this.dataRowCount += frame.length;
+      this.dataRowCountTotal += frame.length;
 
       for (const field of frame.fields) {
         switch (field.type) {
@@ -266,9 +267,13 @@ export class VisualizationSuggestionsBuilder {
             break;
         }
       }
+
+      if (frame.length > this.dataRowCountMax) {
+        this.dataRowCountMax = frame.length;
+      }
     }
 
-    this.dataExists = this.dataRowCount > 0;
+    this.dataExists = this.dataRowCountTotal > 0;
     this.dataHasTimeField = this.dataTimeFieldCount > 0;
     this.dataHasNumberField = this.dataNumberFieldCount > 0;
     this.dataHasStringField = this.dataStringFieldCount > 0;

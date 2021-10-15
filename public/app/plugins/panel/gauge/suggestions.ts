@@ -31,7 +31,7 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
     },
   });
 
-  if (builder.dataFrameCount === 1 && builder.dataRowCount < 10) {
+  if (builder.dataFrameCount === 1 && builder.dataRowCountTotal < 10) {
     list.append({
       options: {
         reduceOptions: {
