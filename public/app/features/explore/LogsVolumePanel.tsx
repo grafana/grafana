@@ -1,5 +1,5 @@
-import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Alert, Button, Collapse, TooltipDisplayMode, useTheme2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQueryResponse, GrafanaTheme2, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
+import { Alert, Button, Collapse, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
 import { css } from '@emotion/css';
@@ -17,6 +17,7 @@ type Props = {
 export function LogsVolumePanel(props: Props) {
   const { width, logsVolumeData, absoluteRange, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume } = props;
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
@@ -58,12 +59,7 @@ export function LogsVolumePanel(props: Props) {
   if (zoomLevel !== undefined && zoomLevel < 1) {
     zoomLevelInfo = (
       <>
-        <span
-          style={{
-            padding: '8px',
-            fontSize: `${theme.typography.bodySmall.fontSize}`,
-          }}
-        >
+        <span className={styles.zoomInfo}>
           Logs volume zoom ~ {(zoomLevel * 100).toFixed(0)}%. Reload to show higher resolution
         </span>
         <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
@@ -73,30 +69,34 @@ export function LogsVolumePanel(props: Props) {
 
   return (
     <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
-      <div
-        style={{ height }}
-        className={css({
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        })}
-      >
+      <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
-      <div
-        className={css({
-          display: 'flex',
-          justifyContent: 'end',
-          position: 'absolute',
-          right: '5px',
-          top: '5px',
-        })}
-      >
-        {zoomLevelInfo}
-      </div>
+      <div className={styles.zoomInfoContainer}>{zoomLevelInfo}</div>
     </Collapse>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    zoomInfoContainer: css`
+      display: flex;
+      justify-content: end;
+      position: absolute;
+      right: 5px;
+      top: 5px;
+    `,
+    zoomInfo: css`
+      padding: 8px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+    contentContainer: css`
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+  };
+};
 
 function logsLevelZoomRatio(
   logsVolumeData: DataQueryResponse | undefined,
