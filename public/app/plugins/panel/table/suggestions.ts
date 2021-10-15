@@ -1,13 +1,12 @@
-import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { PanelOptions, PanelFieldConfig } from './models.gen';
 
-export function getSuggestions({ data }: VisualizationSuggestionsInput) {
-  if (!data || !data.series || data.series.length === 0) {
-    return [];
+export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  if (!builder.dataExists) {
+    return;
   }
 
-  const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<PanelOptions, PanelFieldConfig>({
+  const list = builder.getListAppender<PanelOptions, PanelFieldConfig>({
     name: 'Table',
     pluginId: 'table',
     options: {},
@@ -20,9 +19,7 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     previewModifier: (s) => {},
   });
 
-  if (frames.length === 1) {
-    builder.add({});
+  if (builder.dataFrameCount === 1) {
+    list.append({});
   }
-
-  return builder.getList();
 }

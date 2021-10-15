@@ -1,14 +1,13 @@
-import { FieldType, VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode, StackingMode } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 
-export function getSuggestions({ data }: VisualizationSuggestionsInput) {
-  if (!data || !data.series || data.series.length === 0) {
-    return null;
+export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  if (!builder.dataExists) {
+    return;
   }
 
-  const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<TimeSeriesOptions, GraphFieldConfig>({
+  const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
     name: 'Line chart',
     pluginId: 'timeseries',
     options: {
@@ -25,31 +24,40 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     },
   });
 
-  for (const frame of frames) {
-    const hasTimeField = frame.fields.some((x) => x.type === FieldType.time);
-    const hasNumberField = frame.fields.some((x) => x.type === FieldType.number);
-
-    if (!hasTimeField || !hasNumberField) {
-      return null;
-    }
+  if (!builder.dataHasTimeField || !builder.dataHasNumberField) {
+    return;
   }
 
-  builder.add({});
-  builder.add({
-    name: 'Area chart stacked',
-    fieldConfig: {
-      defaults: {
-        custom: {
-          fillOpacity: 25,
-          stacking: {
-            mode: StackingMode.Normal,
-            group: 'A',
+  list.append({});
+
+  if (builder.dataNumberFieldCount === 1) {
+    list.append({
+      name: 'Area chart',
+      fieldConfig: {
+        defaults: {
+          custom: {
+            fillOpacity: 25,
           },
         },
+        overrides: [],
       },
-      overrides: [],
-    },
-  });
-
-  return builder.getList();
+    });
+  } else {
+    // If more than 1 series suggest stacked chart
+    list.append({
+      name: 'Area chart stacked',
+      fieldConfig: {
+        defaults: {
+          custom: {
+            fillOpacity: 25,
+            stacking: {
+              mode: StackingMode.Normal,
+              group: 'A',
+            },
+          },
+        },
+        overrides: [],
+      },
+    });
+  }
 }

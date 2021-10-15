@@ -2,7 +2,7 @@ import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource
 import { PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
-import { DataFrame } from './dataFrame';
+import { DataFrame, FieldType } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
@@ -188,7 +188,7 @@ export interface PanelPluginDataSupport {
 /**
  * @alpha
  */
-export interface VisualizationSuggestion<TOptions = any, TFieldConfig extends object = any> {
+export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
   /** Name of suggestion */
   name: string;
   /** Description */
@@ -208,30 +208,93 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig extends ob
 /**
  * @alpha
  */
-export interface VisualizationSuggestionsInput {
+export class VisualizationSuggestionsBuilder {
+  /** Current data */
   data?: PanelData;
+  /** Current pluginId */
+  pluginId: string;
+  /** Current options */
+  options: any;
+  /** Current field config */
+  fieldConfig: FieldConfigSource;
+  /** List of suggestions */
+  private list: VisualizationSuggestion[] = [];
+
+  dataExists?: boolean;
+  dataRowCount = 0;
+  dataFrameCount = 0;
+  dataNumberFieldCount = 0;
+  dataTimeFieldCount = 0;
+  dataStringFieldCount = 0;
+  dataHasNumberField?: boolean;
+  dataHasTimeField?: boolean;
+  dataHasStringField?: boolean;
+
+  constructor(data: PanelData | undefined, pluginId: string, options: any, fieldConfig: FieldConfigSource) {
+    this.data = data;
+    this.pluginId = pluginId;
+    this.options = options;
+    this.fieldConfig = fieldConfig;
+    this.preComputeDataAttributes();
+  }
+
+  getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {
+    return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
+  }
+
+  /** Since many plugins implement suggestions suppliers separately and need these data attributes we precompute these here so they can be shared */
+  preComputeDataAttributes() {
+    if (!this.data?.series?.length) {
+      return;
+    }
+
+    this.dataFrameCount = this.data.series.length;
+
+    for (const frame of this.data.series) {
+      this.dataRowCount += frame.length;
+
+      for (const field of frame.fields) {
+        switch (field.type) {
+          case FieldType.number:
+            this.dataNumberFieldCount += 1;
+            break;
+          case FieldType.time:
+            this.dataTimeFieldCount += 1;
+            break;
+          case FieldType.string:
+            this.dataStringFieldCount += 1;
+            break;
+        }
+      }
+    }
+
+    this.dataExists = this.dataRowCount > 0;
+    this.dataHasTimeField = this.dataTimeFieldCount > 0;
+    this.dataHasNumberField = this.dataNumberFieldCount > 0;
+    this.dataHasStringField = this.dataStringFieldCount > 0;
+  }
+
+  getList() {
+    return this.list;
+  }
 }
 
 /**
  * @alpha
  */
-export type VisualizationSuggestionsSupplier = (
-  input: VisualizationSuggestionsInput
-) => VisualizationSuggestion[] | null;
+export type VisualizationSuggestionsSupplier = (builder: VisualizationSuggestionsBuilder) => void;
 
 /**
+ * Helps with typings and defaults
  * @alpha
  */
-export class VisualizationSuggestionBuilderUtil<TOptions, TFieldConfig extends object> {
-  private list: Array<VisualizationSuggestion<TOptions, TFieldConfig>> = [];
+export class VisualizationSuggestionsListAppender<TOptions, TFieldConfig> {
+  constructor(
+    private list: VisualizationSuggestion[],
+    private defaults: VisualizationSuggestion<TOptions, TFieldConfig>
+  ) {}
 
-  constructor(private defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {}
-
-  add(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
+  append(overrides: Partial<VisualizationSuggestion<TOptions, TFieldConfig>>) {
     this.list.push(defaultsDeep(overrides, this.defaults));
-  }
-
-  getList() {
-    return this.list;
   }
 }

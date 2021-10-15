@@ -1,19 +1,13 @@
-import {
-  FieldType,
-  VisualizationSuggestionBuilderUtil,
-  VisualizationSuggestionsInput,
-  VizOrientation,
-} from '@grafana/data';
+import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import { BarChartFieldConfig, BarChartOptions } from './types';
 
-export function getSuggestions({ data }: VisualizationSuggestionsInput) {
-  if (!data || !data.series || data.series.length === 0) {
-    return null;
+export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  if (!builder.dataExists) {
+    return;
   }
 
-  const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<BarChartOptions, BarChartFieldConfig>({
+  const list = builder.getListAppender<BarChartOptions, BarChartFieldConfig>({
     name: 'Bar chart',
     pluginId: 'barchart',
     options: {
@@ -34,22 +28,19 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     },
   });
 
-  if (frames.length !== 1) {
-    return null;
+  if (builder.dataFrameCount !== 1) {
+    return;
   }
 
-  const hasStringField = frames[0].fields.some((x) => x.type === FieldType.string);
-  if (!hasStringField) {
-    return null;
+  if (!builder.dataHasNumberField || !builder.dataHasStringField) {
+    return;
   }
 
-  builder.add({});
-  builder.add({
+  list.append({});
+  list.append({
     name: 'Bar chart horizontal',
     options: {
       orientation: VizOrientation.Horizontal,
     },
   });
-
-  return builder.getList();
 }

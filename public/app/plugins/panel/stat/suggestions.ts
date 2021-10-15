@@ -1,13 +1,12 @@
-import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { StatPanelOptions } from './types';
 
-export function getSuggestions({ data }: VisualizationSuggestionsInput) {
-  if (!data || !data.series || data.series.length === 0) {
-    return null;
+export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  if (!builder.dataExists) {
+    return;
   }
 
-  const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<StatPanelOptions, {}>({
+  const list = builder.getListAppender<StatPanelOptions, {}>({
     name: 'Stat',
     pluginId: 'stat',
     options: {},
@@ -24,8 +23,8 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     },
   });
 
-  if (frames.length === 1 && frames[0].length < 5) {
-    builder.add({
+  if (builder.dataFrameCount === 1 && builder.dataRowCount < 10) {
+    list.append({
       options: {
         reduceOptions: {
           values: true,
@@ -34,7 +33,7 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
       },
     });
   } else {
-    builder.add({
+    list.append({
       options: {
         reduceOptions: {
           values: false,
@@ -43,6 +42,4 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
       },
     });
   }
-
-  return builder.getList();
 }

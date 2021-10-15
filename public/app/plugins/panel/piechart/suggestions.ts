@@ -1,14 +1,13 @@
-import { VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 import { PieChartLabels, PieChartOptions, PieChartType } from './types';
 
-export function getSuggestions({ data }: VisualizationSuggestionsInput) {
-  if (!data || !data.series || data.series.length === 0) {
-    return [];
+export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  if (!builder.dataExists) {
+    return;
   }
 
-  const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<PieChartOptions, {}>({
+  const list = builder.getListAppender<PieChartOptions, {}>({
     name: 'Piechart',
     pluginId: 'piechart',
     options: {
@@ -29,31 +28,33 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     },
   });
 
-  if (frames.length === 1) {
+  if (builder.dataFrameCount === 1) {
     // if many values this is not a good option
-    if (frames[0].length > 10) {
-      return null;
+    if (builder.dataRowCount > 10) {
+      return;
     }
 
-    builder.add({});
-    builder.add({
+    list.append({});
+    list.append({
       name: 'Piechart donut',
       options: {
         pieType: PieChartType.Donut,
       },
     });
+
+    return;
   }
 
-  if (frames.length > 1 && frames.length < 30) {
-    builder.add({
-      options: {
-        reduceOptions: {
-          values: false,
-          calcs: ['lastNotNull'],
-        },
+  if (builder.dataFrameCount > 30) {
+    return;
+  }
+
+  list.append({
+    options: {
+      reduceOptions: {
+        values: false,
+        calcs: ['lastNotNull'],
       },
-    });
-  }
-
-  return builder.getList();
+    },
+  });
 }

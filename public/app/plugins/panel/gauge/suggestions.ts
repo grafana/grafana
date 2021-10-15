@@ -1,13 +1,12 @@
-import { FieldType, VisualizationSuggestionBuilderUtil, VisualizationSuggestionsInput } from '@grafana/data';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { GaugeOptions } from './types';
 
-export function getSuggestions({ data }: VisualizationSuggestionsInput) {
-  if (!data || !data.series || data.series.length === 0) {
-    return [];
+export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
+  if (!builder.dataExists) {
+    return;
   }
 
-  const frames = data.series;
-  const builder = new VisualizationSuggestionBuilderUtil<GaugeOptions, {}>({
+  const list = builder.getListAppender<GaugeOptions, {}>({
     name: 'Gauge',
     pluginId: 'gauge',
     options: {},
@@ -24,21 +23,23 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     },
   });
 
-  if (frames.length === 1) {
-    if (
-      frames[0].fields.some((x) => x.type === FieldType.string) &&
-      frames[0].fields.some((x) => x.type === FieldType.number)
-    ) {
-      builder.add({
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-          },
+  if (builder.dataFrameCount === 1 && builder.dataRowCount < 10) {
+    list.append({
+      options: {
+        reduceOptions: {
+          values: true,
+          calcs: [],
         },
-      });
-    }
+      },
+    });
+  } else {
+    list.append({
+      options: {
+        reduceOptions: {
+          values: false,
+          calcs: ['lastNotNull'],
+        },
+      },
+    });
   }
-
-  return builder.getList();
 }
