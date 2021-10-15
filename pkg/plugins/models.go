@@ -61,6 +61,21 @@ func (e SignatureError) Error() string {
 	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)
 }
 
+func (e SignatureError) AsErrorCode() ErrorCode {
+	switch e.SignatureStatus {
+	case SignatureInvalid:
+		return signatureInvalid
+	case SignatureModified:
+		return signatureModified
+	case SignatureUnsigned:
+		return signatureMissing
+	case SignatureInternal, SignatureValid:
+		return ""
+	}
+
+	return ""
+}
+
 type Dependencies struct {
 	GrafanaVersion string       `json:"grafanaVersion"`
 	Plugins        []Dependency `json:"plugins"`
@@ -181,4 +196,17 @@ type PluginMetaDTO struct {
 
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
+}
+
+const (
+	signatureMissing  ErrorCode = "signatureMissing"
+	signatureModified ErrorCode = "signatureModified"
+	signatureInvalid  ErrorCode = "signatureInvalid"
+)
+
+type ErrorCode string
+
+type Error struct {
+	ErrorCode `json:"errorCode"`
+	PluginID  string `json:"pluginId,omitempty"`
 }

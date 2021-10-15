@@ -482,13 +482,13 @@ func (hs *HTTPServer) pluginMarkdown(pluginId string, name string) ([]byte, erro
 	return data, nil
 }
 
-func (hs *HTTPServer) pluginSignatureErrors() []plugins.SignatureError {
-	scanningErrs := make([]plugins.SignatureError, 0)
+func (hs *HTTPServer) pluginSignatureErrors() []plugins.Error {
+	scanningErrs := make([]plugins.Error, 0)
 	for _, p := range hs.pluginStore.Plugins() {
 		if p.SignatureError != nil {
-			scanningErrs = append(scanningErrs, plugins.SignatureError{
-				PluginID:        p.ID,
-				SignatureStatus: p.SignatureError.SignatureStatus,
+			scanningErrs = append(scanningErrs, plugins.Error{
+				PluginID:  p.ID,
+				ErrorCode: p.SignatureError.AsErrorCode(),
 			})
 		}
 	}
