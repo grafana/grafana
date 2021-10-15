@@ -147,7 +147,7 @@ protobuf: ## Compile protobuf definitions
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
-	rm -rf node_modules
+	rm -rf .yarn/cache
 	rm -rf public/build
 
 # This repository's configuration is protected (https://readme.drone.io/signature/).

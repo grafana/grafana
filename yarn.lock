@@ -2316,12 +2316,15 @@ __metadata:
     "@grafana/data": 8.3.0-pre
     "@grafana/toolkit": 8.3.0-pre
     "@grafana/ui": 8.3.0-pre
+    "@types/jest": 26.0.15
+    "@types/react": 17.0.30
     jquery: 3.5.1
     react: 17.0.1
     react-dom: 17.0.1
     react-hook-form: 7.5.3
     react-router-dom: ^5.2.0
     ts-loader: 8.0.11
+    tslib: 2.3.1
     webpack: 5.51.1
   languageName: unknown
   linkType: soft
@@ -8299,7 +8302,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*":
+"@types/react@npm:*, @types/react@npm:17.0.30":
   version: 17.0.30
   resolution: "@types/react@npm:17.0.30"
   dependencies:
