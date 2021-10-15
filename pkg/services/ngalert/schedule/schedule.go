@@ -432,7 +432,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(&q)
 		if err != nil {
-			logger.Error("failed to fetch alert rule")
+			logger.Error("failed to fetch alert rule", "error", err)
 			return nil, err
 		}
 		return q.Result, nil
@@ -462,6 +462,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			logger.Error("failed to evaluate alert rule", "duration", end.Sub(start), "error", err)
 			return err
 		}
+		logger.Debug("alert rule evaluated", "results", results)
 
 		processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
 		sch.saveAlertStates(processedStates)
@@ -508,14 +509,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		return nil
 	}
 
-	retryIfError := func(f func(attempt int64) error) {
+	retryIfError := func(f func(attempt int64) error) error {
 		var attempt int64
+		var err error
 		for attempt = 0; attempt < sch.maxAttempts; attempt++ {
-			err := f(attempt)
+			err = f(attempt)
 			if err == nil {
-				return
+				return nil
 			}
 		}
+		return err
 	}
 
 	evalRunning := false
@@ -534,7 +537,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					sch.evalApplied(key, ctx.now)
 				}()
 
-				retryIfError(func(attempt int64) error {
+				err := retryIfError(func(attempt int64) error {
 					// fetch latest alert rule version
 					if currentRule == nil || currentRule.Version < ctx.version {
 						newRule, err := updateRule()
@@ -546,6 +549,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					}
 					return evaluate(currentRule, attempt, ctx)
 				})
+				if err != nil {
+					log.Error("evaluation failed after all retries", "error", err)
+				}
 			}()
 		case <-stopCh:
 			sch.stopApplied(key)
