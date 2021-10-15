@@ -12,67 +12,87 @@ import {
   stylesFactory,
 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { ResourceCards } from './ResourceCards';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 import { getPublicOrAbsoluteUrl } from '../resource';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { ResourceFolderName } from '..';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
+  folderName: ResourceFolderName;
+}
+
+interface ResourceItem {
+  label: string;
+  value: string;
+  search: string;
+  imgUrl: string;
 }
 
 export function ResourcePicker(props: Props) {
-  const { value, onChange, mediaType } = props;
-  const folders = (mediaType === 'icon' ? ['img/icons/unicons', 'img/icons/iot'] : ['img/bg']).map((v) => ({
+  const { value, onChange, mediaType, folderName } = props;
+  const folders = getFolders(mediaType).map((v) => ({
     label: v,
     value: v,
   }));
-  const folderOfCurrentValue = value ? folders.filter((folder) => value.indexOf(folder.value) > -1)[0] : folders[0];
+
+  const folderOfCurrentValue = value || folderName ? folderIfExists(folders, value ?? folderName) : folders[0];
   const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
   const [tabs, setTabs] = useState([
     { label: 'Select', active: true },
     // { label: 'Upload', active: false },
   ]);
-  const [directoryIndex, setDirectoryIndex] = useState<SelectableValue[]>([]);
-  const [defaultList, setDefaultList] = useState<SelectableValue[]>([]);
+  const [directoryIndex, setDirectoryIndex] = useState<ResourceItem[]>([]);
+  const [filteredIndex, setFilteredIndex] = useState<ResourceItem[]>([]);
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   useEffect(() => {
     // we don't want to load everything before picking a folder
-    if (currentFolder) {
-      getBackendSrv()
-        .get(`public/${currentFolder?.value}/index.json`)
-        .then((data) => {
-          const cards = data.files.map((v: string) => ({
-            value: v,
-            label: v,
-            imgUrl: `public/${currentFolder?.value}/${v}`,
-          }));
-          setDirectoryIndex(cards);
-          setDefaultList(cards);
-        })
-        .catch((e) => console.error(e));
-    } else {
-      return;
+    const folder = currentFolder?.value;
+    if (folder) {
+      const filter =
+        mediaType === 'icon'
+          ? (item: FileElement) => item.name.endsWith('.svg')
+          : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
+
+      getDatasourceSrv()
+        .get('-- Grafana --')
+        .then((ds) => {
+          (ds as GrafanaDatasource).listFiles(folder).subscribe({
+            next: (frame) => {
+              const cards: ResourceItem[] = [];
+              frame.forEach((item) => {
+                if (filter(item)) {
+                  const idx = item.name.lastIndexOf('.');
+                  cards.push({
+                    value: item.name,
+                    label: item.name,
+                    search: (idx ? item.name.substr(0, idx) : item.name).toLowerCase(),
+                    imgUrl: `public/${folder}/${item.name}`,
+                  });
+                }
+              });
+              setDirectoryIndex(cards);
+              setFilteredIndex(cards);
+            },
+          });
+        });
     }
-  }, [currentFolder]);
+  }, [mediaType, currentFolder]);
 
   const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      const filtered = directoryIndex.filter((card) =>
-        card.value
-          // exclude file type (.svg) in the search
-          .substr(0, card.value.length - 4)
-          .toLocaleLowerCase()
-          .includes(e.target.value.toLocaleLowerCase())
-      );
-      setDirectoryIndex(filtered);
+    let query = e.currentTarget.value;
+    if (query) {
+      query = query.toLowerCase();
+      setFilteredIndex(directoryIndex.filter((card) => card.search.includes(query)));
     } else {
-      setDirectoryIndex(defaultList);
+      setFilteredIndex(directoryIndex);
     }
   };
   const imgSrc = getPublicOrAbsoluteUrl(value!);
@@ -104,11 +124,11 @@ export function ResourcePicker(props: Props) {
       <TabContent>
         {tabs[0].active && (
           <div className={styles.tabContent}>
-            <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
+            <Select menuShouldPortal={true} options={folders} onChange={setCurrentFolder} value={currentFolder} />
             <Input placeholder="Search" onChange={onChangeSearch} />
-            {directoryIndex ? (
+            {filteredIndex ? (
               <div className={styles.cardsWrapper}>
-                <ResourceCards cards={directoryIndex} onChange={onChange} currentFolder={currentFolder} />
+                <ResourceCards cards={filteredIndex} onChange={onChange} currentFolder={currentFolder} />
               </div>
             ) : (
               <Spinner />
@@ -152,3 +172,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
   };
 });
+
+const getFolders = (mediaType: 'icon' | 'image') => {
+  if (mediaType === 'icon') {
+    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
+  } else {
+    return [ResourceFolderName.BG];
+  }
+};
+
+const folderIfExists = (folders: Array<{ label: string; value: string }>, path: string) => {
+  return folders.filter((folder) => path.indexOf(folder.value) > -1)[0] ?? folders[0];
+};

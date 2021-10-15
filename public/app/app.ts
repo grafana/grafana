@@ -41,13 +41,14 @@ import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { AngularApp } from './angular/AngularApp';
-import { PanelRenderer } from './features/panel/PanelRenderer';
+import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { contextSrv } from './core/services/context_srv';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
+import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { getAllOptionEditors } from './core/components/editors/registry';
 
@@ -179,6 +180,15 @@ function initEchoSrv() {
         writeKey: (config as any).rudderstackWriteKey,
         dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
         user: config.bootData.user,
+      })
+    );
+  }
+
+  if (config.applicationInsightsConnectionString) {
+    registerEchoBackend(
+      new ApplicationInsightsBackend({
+        connectionString: config.applicationInsightsConnectionString,
+        endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
   }

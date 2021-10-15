@@ -44,6 +44,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   const { moduleNameMapper, ...otherOverrides } = jestConfigOverrides;
   const moduleNameMapperConfig = {
     '\\.(css|sass|scss)$': `${__dirname}/styles.mock.js`,
+    'react-inlinesvg': `${__dirname}/react-inlinesvg.tsx`,
     ...moduleNameMapper,
   };
 

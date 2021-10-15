@@ -9,14 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
-	macaron "gopkg.in/macaron.v1"
 )
 
 func TestMiddlewareQuota(t *testing.T) {
 	t.Run("With user not logged in", func(t *testing.T) {
 		middlewareScenario(t, "and global quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -33,7 +33,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "and global quota reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -53,7 +53,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		})
 
 		middlewareScenario(t, "and global session quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -101,7 +101,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				}, nil
 			}
 
-			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -209,7 +209,7 @@ func TestMiddlewareQuota(t *testing.T) {
 			cfg.Quota.Enabled = false
 		})
 
-		middlewareScenario(t, "org alert quota reached and ngalert enabled", func(t *testing.T, sc *scenarioContext) {
+		middlewareScenario(t, "org alert quota reached and unified alerting is enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
 			quotaHandler := getQuotaHandler(sc, "alert_rule")
@@ -219,11 +219,11 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.FeatureToggles = map[string]bool{"ngalert": true}
+			cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
-		middlewareScenario(t, "org alert quota not reached and ngalert enabled", func(t *testing.T, sc *scenarioContext) {
+		middlewareScenario(t, "org alert quota not reached and unified alerting is enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
 			quotaHandler := getQuotaHandler(sc, "alert_rule")
@@ -233,7 +233,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 
-			cfg.FeatureToggles = map[string]bool{"ngalert": true}
+			cfg.UnifiedAlerting.Enabled = true
 			cfg.Quota.Org.AlertRule = quotaUsed + 1
 		})
 
@@ -266,7 +266,7 @@ func TestMiddlewareQuota(t *testing.T) {
 	})
 }
 
-func getQuotaHandler(sc *scenarioContext, target string) macaron.Handler {
+func getQuotaHandler(sc *scenarioContext, target string) web.Handler {
 	fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 	qs := &quota.QuotaService{
 		AuthTokenService: fakeAuthTokenService,

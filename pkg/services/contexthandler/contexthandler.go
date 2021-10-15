@@ -21,10 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/opentracing/opentracing-go"
 	ol "github.com/opentracing/opentracing-go/log"
 	cw "github.com/weaveworks/common/middleware"
-	"gopkg.in/macaron.v1"
 )
 
 const (
@@ -71,7 +71,7 @@ func FromContext(c context.Context) *models.ReqContext {
 }
 
 // Middleware provides a middleware to initialize the Macaron context.
-func (h *ContextHandler) Middleware(mContext *macaron.Context) {
+func (h *ContextHandler) Middleware(mContext *web.Context) {
 	span, _ := opentracing.StartSpanFromContext(mContext.Req.Context(), "Auth - Middleware")
 	defer span.Finish()
 
@@ -132,7 +132,7 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := bus.DispatchCtx(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -320,8 +320,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) macaron.BeforeFunc {
-	return func(w macaron.ResponseWriter) {
+	token *models.UserToken) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
 			return

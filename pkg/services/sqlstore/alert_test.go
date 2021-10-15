@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -258,7 +259,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			err = SaveAlerts(&cmd)
 			So(err, ShouldBeNil)
 
-			err = DeleteDashboard(&models.DeleteDashboardCommand{
+			err = DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 				OrgId: 1,
 				Id:    testDash.Id,
 			})

@@ -2,32 +2,39 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, InlineLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 import { PrometheusDatasource } from '../datasource';
-import { filter } from 'rxjs/operators';
+import { PromQuery } from '../types';
 
 interface Props {
-  isEnabled: boolean;
-  onChange: (isEnabled: boolean) => void;
+  onChange: (exemplar: boolean) => void;
   datasource: PrometheusDatasource;
-  refId: string;
+  query: PromQuery;
 }
 
-export function PromExemplarField({ datasource, onChange, isEnabled, refId }: Props) {
+export function PromExemplarField({ datasource, onChange, query }: Props) {
   const [error, setError] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
+  const prevError = usePrevious(error);
 
   useEffect(() => {
-    const subscription = datasource.exemplarErrors.pipe(filter((value) => refId === value.refId)).subscribe((err) => {
-      setError(err.error);
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [datasource, refId]);
+    if (!datasource.exemplarsAvailable) {
+      setError('Exemplars for this query are not available');
+      onChange(false);
+    } else if (query.instant && !query.range) {
+      setError('Exemplars are not available for instant queries');
+      onChange(false);
+    } else {
+      setError(null);
+      if (prevError !== error) {
+        onChange(true);
+      }
+    }
+  }, [datasource.exemplarsAvailable, query.instant, query.range, onChange, prevError, error]);
 
   const iconButtonStyles = cx(
     {
-      [styles.activeIcon]: isEnabled,
+      [styles.activeIcon]: !!query.exemplar,
     },
     styles.eyeIcon
   );
@@ -39,11 +46,11 @@ export function PromExemplarField({ datasource, onChange, isEnabled, refId }: Pr
           Exemplars
           <IconButton
             name="eye"
-            tooltip={isEnabled ? 'Disable query with exemplars' : 'Enable query with exemplars'}
+            tooltip={!!query.exemplar ? 'Disable query with exemplars' : 'Enable query with exemplars'}
             disabled={!!error}
             className={iconButtonStyles}
             onClick={() => {
-              onChange(!isEnabled);
+              onChange(!query.exemplar);
             }}
           />
         </div>

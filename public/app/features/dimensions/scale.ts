@@ -1,4 +1,5 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data';
+import { ScaleDimensionMode } from '.';
 import { getMinMaxAndDelta } from '../../../../packages/grafana-data/src/field/scale';
 import { ScaleDimensionConfig, DimensionSupplier, ScaleDimensionOptions } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
@@ -11,7 +12,14 @@ export function getScaledDimension(
   frame: DataFrame | undefined,
   config: ScaleDimensionConfig
 ): DimensionSupplier<number> {
-  const field = findField(frame, config.field);
+  return getScaledDimensionForField(findField(frame, config?.field), config);
+}
+
+export function getScaledDimensionForField(
+  field: Field | undefined,
+  config: ScaleDimensionConfig,
+  mode?: ScaleDimensionMode
+): DimensionSupplier<number> {
   if (!field) {
     const v = config.fixed ?? 0;
     return {
@@ -32,6 +40,19 @@ export function getScaledDimension(
     };
   }
 
+  let scaled = (percent: number) => config.min + percent * delta;
+  if (mode === ScaleDimensionMode.Quadratic) {
+    const maxArea = Math.PI * (config.max / 2) ** 2;
+    const minArea = Math.PI * (config.min / 2) ** 2;
+    const deltaArea = maxArea - minArea;
+
+    // quadratic scaling (px area)
+    scaled = (percent: number) => {
+      let area = minArea + deltaArea * percent;
+      return Math.sqrt(area / Math.PI) * 2;
+    };
+  }
+
   const get = (i: number) => {
     const value = field.values.get(i);
     let percent = 0;
@@ -43,7 +64,7 @@ export function getScaledDimension(
     } else if (percent < 0) {
       percent = 0;
     }
-    return config.min + percent * delta;
+    return scaled(percent);
   };
 
   return {

@@ -62,17 +62,17 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setExploreQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreMetricsQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreLogsQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
@@ -147,9 +147,9 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
-  ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  ExploreMetricsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  ExploreLogsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
@@ -251,12 +251,27 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * Retrieve context for a given log row
+   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   *
+   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
+   * the same signature in DataSourceWithLogsContextSupport).
+   * This method will be removed from DataSourceApi in the future. Some editors may still show
+   * a deprecation warning which can be ignored for time being.
    */
   getLogRowContext?: <TContextQueryOptions extends {}>(
     row: LogRowModel,
     options?: TContextQueryOptions
   ) => Promise<DataQueryResponse>;
+
+  /**
+   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
+   *
+   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
+   * the same signature in DataSourceWithLogsContextSupport).
+   * This method will be removed from DataSourceApi in the future. Some editors may still show
+   * a deprecation warning which can be ignored for time being.
+   */
+  showContextToggle?(row?: LogRowModel): boolean;
 
   /**
    * Variable query action.
@@ -295,7 +310,8 @@ abstract class DataSourceApi<
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
 
   /**
-   * Used in explore
+   * @deprecated since version 8.2.0
+   * Not used anymore.
    */
   getHighlighterExpression?(query: TQuery): string[];
 
@@ -305,8 +321,6 @@ abstract class DataSourceApi<
   languageProvider?: any;
 
   getVersion?(optionalOptions?: any): Promise<string>;
-
-  showContextToggle?(row?: LogRowModel): boolean;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 
@@ -373,7 +387,7 @@ export interface QueryEditorProps<
   data?: PanelData;
   range?: TimeRange;
   exploreId?: any;
-  history?: HistoryItem[];
+  history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
 }
@@ -385,15 +399,14 @@ export enum ExploreMode {
   Tracing = 'Tracing',
 }
 
-export interface ExploreQueryFieldProps<
+/**
+ * @deprecated use QueryEditorProps instead
+ */
+export type ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends QueryEditorProps<DSType, TQuery, TOptions> {
-  history: any[];
-  onBlur?: () => void;
-  exploreId?: any;
-}
+> = QueryEditorProps<DSType, TQuery, TOptions>;
 
 export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
   datasource: DataSourceApi<TQuery>;
@@ -517,6 +530,7 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
+  alertmanagerUid?: string;
 }
 
 /**

@@ -33,7 +33,6 @@ import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable2 {
-  highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
@@ -54,6 +53,7 @@ interface Props extends Themeable2 {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  onLogRowHover?: (row?: LogRowModel) => void;
 }
 
 interface State {
@@ -130,7 +130,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       onClickShowDetectedField,
       onClickHideDetectedField,
-      highlighterExpressions,
       enableLogDetails,
       row,
       showDuplicates,
@@ -143,6 +142,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
       forceEscape,
+      onLogRowHover,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -159,7 +159,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <tr className={logRowBackground} onClick={this.toggleDetails}>
+        <tr
+          className={logRowBackground}
+          onClick={this.toggleDetails}
+          onMouseEnter={() => {
+            onLogRowHover && onLogRowHover(row);
+          }}
+          onMouseLeave={() => {
+            onLogRowHover && onLogRowHover(undefined);
+          }}
+        >
           {showDuplicates && (
             <td className={style.logsRowDuplicates}>
               {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
@@ -192,7 +201,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             />
           ) : (
             <LogRowMessage
-              highlighterExpressions={highlighterExpressions}
               row={processedRow}
               getRows={getRows}
               errors={errors}

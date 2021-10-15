@@ -88,6 +88,9 @@ export const Pages = {
           General: {
             headerLink: 'Variable editor Header link',
             modeLabelNew: 'Variable editor Header mode New',
+            /**
+             * @deprecated
+             */
             modeLabelEdit: 'Variable editor Header mode Edit',
             generalNameInput: 'Variable editor Form Name field',
             generalTypeSelect: 'Variable editor Form Type select',
@@ -159,6 +162,7 @@ export const Pages = {
   PluginPage: {
     page: 'Plugin page',
     signatureInfo: 'Plugin signature info',
+    disabledInfo: 'Plugin disabled info',
   },
   PlaylistForm: {
     name: 'Playlist name',

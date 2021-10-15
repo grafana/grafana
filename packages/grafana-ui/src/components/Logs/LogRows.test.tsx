@@ -12,7 +12,6 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -35,7 +34,6 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -67,7 +65,6 @@ describe('LogRows', () => {
         logRows={rows}
         deduplicatedRows={dedupedRows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -89,7 +86,6 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -112,7 +108,6 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}
@@ -137,7 +132,6 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
-        highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
         wrapLogMessage={true}

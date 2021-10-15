@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -97,6 +98,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["samlEnabled"] = hs.samlEnabled()
+	viewData.Settings["samlName"] = hs.samlName()
 
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
@@ -169,7 +171,11 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+	cmd := dtos.LoginCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad login data", err)
+	}
 	authModule := ""
 	var user *models.User
 	var resp *response.NormalResponse
@@ -309,12 +315,12 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return "", false
 	}
 
-	decryptedError, err := hs.EncryptionService.Decrypt(decoded, setting.SecretKey)
+	decryptedError, err := hs.EncryptionService.Decrypt(ctx.Req.Context(), decoded, setting.SecretKey)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := hs.EncryptionService.Encrypt([]byte(value), setting.SecretKey)
+	encryptedError, err := hs.EncryptionService.Encrypt(ctx.Req.Context(), []byte(value), setting.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -344,6 +350,10 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 
 func (hs *HTTPServer) samlEnabled() bool {
 	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.HasValidLicense()
+}
+
+func (hs *HTTPServer) samlName() string {
+	return hs.SettingsProvider.KeyValue("auth.saml", "name").MustString("SAML")
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {

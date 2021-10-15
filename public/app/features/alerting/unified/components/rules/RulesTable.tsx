@@ -85,30 +85,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
   `,
-  table: css`
-    width: 100%;
-    border-radius: ${theme.shape.borderRadius()};
-    border: solid 1px ${theme.colors.border.weak};
-    background-color: ${theme.colors.background.secondary};
-
-    th {
-      padding: ${theme.spacing(1)};
-    }
-
-    td + td {
-      padding: ${theme.spacing(0, 1)};
-    }
-
-    tr {
-      height: 38px;
-    }
-  `,
-  evenRow: css`
-    background-color: ${theme.colors.background.primary};
-  `,
-  state: css`
-    width: 110px;
-  `,
 });
 
 function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {

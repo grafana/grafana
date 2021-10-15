@@ -26,7 +26,6 @@ describe('Jest config', () => {
     it('should preserve mapping for stylesheets when moduleNameMapper overrides provided', () => {
       const config = jestConfig(`${__dirname}/mocks/jestSetup/overrides`);
       expect(config.moduleNameMapper).toBeDefined();
-      expect(Object.keys(config.moduleNameMapper)).toHaveLength(2);
       expect(Object.keys(config.moduleNameMapper)).toContain('\\.(css|sass|scss)$');
       expect(Object.keys(config.moduleNameMapper)).toContain('someOverride');
     });

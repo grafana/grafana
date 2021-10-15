@@ -38,9 +38,9 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
 
   return (
     <div className={styles.wrapper}>
-      <TabsBar className={styles.tabBar}>
+      <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
-          if (config.featureToggles.ngalert && tab.id === PanelEditorTabId.Alert) {
+          if (config.unifiedAlertingEnabled && tab.id === PanelEditorTabId.Alert) {
             return (
               <PanelAlertTab
                 key={tab.id}
@@ -107,7 +107,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-grow: 1;
       min-height: 0;
       background: ${theme.colors.background.primary};
-      border-right: 1px solid ${theme.components.panel.borderColor};
+      border: 1px solid ${theme.components.panel.borderColor};
+      border-left: none;
+      border-bottom: none;
+      border-top-right-radius: ${theme.shape.borderRadius(1.5)};
     `,
   };
 };

@@ -5,7 +5,6 @@ package server
 
 import (
 	"github.com/google/wire"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -45,10 +46,14 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -87,8 +92,8 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
-	usagestats.ProvideService,
-	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
+	uss.ProvideService,
+	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	backendmanager.ProvideService,
@@ -142,8 +147,15 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	secretsManager.ProvideSecretsService,
+	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	secretsDatabase.ProvideSecretsStore,
+	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
+	datasources.ProvideService,
+	pluginsettings.ProvideService,
+	alerting.ProvideService,
 )
 
 var wireSet = wire.NewSet(

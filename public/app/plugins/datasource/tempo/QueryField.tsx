@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { DataSourceApi, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   FileDropzone,
@@ -21,7 +21,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
 import NativeSearch from './NativeSearch';
 
-interface Props extends ExploreQueryFieldProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 
@@ -96,14 +96,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
     }
 
-    if (config.featureToggles.tempoSearch) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
+    if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search - Beta' });
     }
 
-    if (logsDatasourceUid) {
+    if (logsDatasourceUid && tracesToLogsOptions?.lokiSearch !== false) {
       if (!config.featureToggles.tempoSearch) {
         // Place at beginning as Search if no native search
         queryTypeOptions.unshift({ value: 'search', label: 'Search' });
@@ -179,13 +179,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
         )}
-        {query.queryType === 'serviceMap' && <ServiceMapSection graphDatasourceUid={graphDatasourceUid} />}
+        {query.queryType === 'serviceMap' && <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} />}
       </>
     );
   }
 }
 
-function ServiceMapSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
+function ServiceGraphSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
   if (dsState.loading) {
     return null;

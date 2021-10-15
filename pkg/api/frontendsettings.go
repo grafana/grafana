@@ -4,16 +4,15 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
@@ -78,7 +77,10 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(
+					ds.BasicAuthUser,
+					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
+				)
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -86,13 +88,13 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 			if ds.Type == models.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.DecryptedPassword()
+				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == models.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.DecryptedPassword()
+				dsMap["password"] = hs.DataSourcesService.DecryptedPassword(ds)
 				dsMap["url"] = url
 			}
 		}
@@ -196,39 +198,43 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		buildstamp = 0
 	}
 
+	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":          defaultDS,
-		"datasources":                dataSources,
-		"minRefreshInterval":         setting.MinRefreshInterval,
-		"panels":                     panels,
-		"appUrl":                     hs.Cfg.AppURL,
-		"appSubUrl":                  hs.Cfg.AppSubURL,
-		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":           setting.AuthProxyEnabled,
-		"ldapEnabled":                hs.Cfg.LDAPEnabled,
-		"alertingEnabled":            setting.AlertingEnabled,
-		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
-		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
-		"alertingMinInterval":        setting.AlertingMinInterval,
-		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
-		"autoAssignOrg":              setting.AutoAssignOrg,
-		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
-		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
-		"exploreEnabled":             setting.ExploreEnabled,
-		"googleAnalyticsId":          setting.GoogleAnalyticsId,
-		"rudderstackWriteKey":        setting.RudderstackWriteKey,
-		"rudderstackDataPlaneUrl":    setting.RudderstackDataPlaneUrl,
-		"disableLoginForm":           setting.DisableLoginForm,
-		"disableUserSignUp":          !setting.AllowUserSignUp,
-		"loginHint":                  setting.LoginHint,
-		"passwordHint":               setting.PasswordHint,
-		"externalUserMngInfo":        setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
-		"viewersCanEdit":             setting.ViewersCanEdit,
-		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
-		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
-		"pluginsToPreload":           pluginsToPreload,
+		"defaultDatasource":                   defaultDS,
+		"datasources":                         dataSources,
+		"minRefreshInterval":                  setting.MinRefreshInterval,
+		"panels":                              panels,
+		"appUrl":                              hs.Cfg.AppURL,
+		"appSubUrl":                           hs.Cfg.AppSubURL,
+		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":                    setting.AuthProxyEnabled,
+		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"alertingEnabled":                     setting.AlertingEnabled,
+		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":                 setting.AlertingMinInterval,
+		"liveEnabled":                         hs.Cfg.LiveMaxConnections != 0,
+		"autoAssignOrg":                       setting.AutoAssignOrg,
+		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
+		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
+		"exploreEnabled":                      setting.ExploreEnabled,
+		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
+		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
+		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
+		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
+		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
+		"disableLoginForm":                    setting.DisableLoginForm,
+		"disableUserSignUp":                   !setting.AllowUserSignUp,
+		"loginHint":                           setting.LoginHint,
+		"passwordHint":                        setting.PasswordHint,
+		"externalUserMngInfo":                 setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
+		"viewersCanEdit":                      setting.ViewersCanEdit,
+		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
+		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":                    pluginsToPreload,
 		"buildInfo": map[string]interface{}{
 			"hideVersion":   hideVersion,
 			"version":       version,
@@ -245,7 +251,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"hasValidLicense": hs.License.HasValidLicense(),
 			"expiry":          hs.License.Expiry(),
 			"stateInfo":       hs.License.StateInfo(),
-			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
+			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
 			"edition":         hs.License.Edition(),
 		},
 		"featureToggles":                   hs.Cfg.FeatureToggles,
@@ -266,6 +272,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
+		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {

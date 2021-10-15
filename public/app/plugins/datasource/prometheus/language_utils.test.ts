@@ -1,4 +1,10 @@
-import { expandRecordingRules, fixSummariesMetadata, parseSelector } from './language_utils';
+import {
+  escapeLabelValueInExactSelector,
+  escapeLabelValueInRegexSelector,
+  expandRecordingRules,
+  fixSummariesMetadata,
+  parseSelector,
+} from './language_utils';
 
 describe('parseSelector()', () => {
   let parsed;
@@ -73,23 +79,25 @@ describe('parseSelector()', () => {
 
 describe('fixSummariesMetadata', () => {
   const synthetics = {
-    ALERTS: [
-      {
-        type: 'counter',
-        help:
-          'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
-      },
-    ],
+    ALERTS: {
+      type: 'counter',
+      help:
+        'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+    },
   };
   it('returns only synthetics on empty metadata', () => {
     expect(fixSummariesMetadata({})).toEqual({ ...synthetics });
   });
 
   it('returns unchanged metadata if no summary is present', () => {
-    const metadata = {
+    const metadataRaw = {
       foo: [{ type: 'not_a_summary', help: 'foo help' }],
     };
-    expect(fixSummariesMetadata(metadata)).toEqual({ ...metadata, ...synthetics });
+
+    const metadata = {
+      foo: { type: 'not_a_summary', help: 'foo help' },
+    };
+    expect(fixSummariesMetadata(metadataRaw)).toEqual({ ...metadata, ...synthetics });
   });
 
   it('returns metadata with added count and sum for a summary', () => {
@@ -98,10 +106,10 @@ describe('fixSummariesMetadata', () => {
       bar: [{ type: 'summary', help: 'bar help' }],
     };
     const expected = {
-      foo: [{ type: 'not_a_summary', help: 'foo help' }],
-      bar: [{ type: 'summary', help: 'bar help' }],
-      bar_count: [{ type: 'counter', help: 'Count of events that have been observed for the base metric (bar help)' }],
-      bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the base metric (bar help)' }],
+      foo: { type: 'not_a_summary', help: 'foo help' },
+      bar: { type: 'summary', help: 'bar help' },
+      bar_count: { type: 'counter', help: 'Count of events that have been observed for the base metric (bar help)' },
+      bar_sum: { type: 'counter', help: 'Total sum of all observed values for the base metric (bar help)' },
     };
     expect(fixSummariesMetadata(metadata)).toEqual({ ...expected, ...synthetics });
   });
@@ -112,13 +120,14 @@ describe('fixSummariesMetadata', () => {
       bar: [{ type: 'histogram', help: 'bar help' }],
     };
     const expected = {
-      foo: [{ type: 'not_a_histogram', help: 'foo help' }],
-      bar: [{ type: 'histogram', help: 'bar help' }],
-      bar_bucket: [{ type: 'counter', help: 'Cumulative counters for the observation buckets (bar help)' }],
-      bar_count: [
-        { type: 'counter', help: 'Count of events that have been observed for the histogram metric (bar help)' },
-      ],
-      bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the histogram metric (bar help)' }],
+      foo: { type: 'not_a_histogram', help: 'foo help' },
+      bar: { type: 'histogram', help: 'bar help' },
+      bar_bucket: { type: 'counter', help: 'Cumulative counters for the observation buckets (bar help)' },
+      bar_count: {
+        type: 'counter',
+        help: 'Count of events that have been observed for the histogram metric (bar help)',
+      },
+      bar_sum: { type: 'counter', help: 'Total sum of all observed values for the histogram metric (bar help)' },
     };
     expect(fixSummariesMetadata(metadata)).toEqual({ ...expected, ...synthetics });
   });
@@ -166,5 +175,47 @@ describe('expandRecordingRules()', () => {
         metricB: 'rate(fooB[])',
       })
     ).toBe('rate(fooA{label1="value1",label2="value2"}[])/ rate(fooB{label3="value3"}[])');
+  });
+});
+
+describe('escapeLabelValueInExactSelector()', () => {
+  it('handles newline characters', () => {
+    expect(escapeLabelValueInExactSelector('t\nes\nt')).toBe('t\\nes\\nt');
+  });
+
+  it('handles backslash characters', () => {
+    expect(escapeLabelValueInExactSelector('t\\es\\t')).toBe('t\\\\es\\\\t');
+  });
+
+  it('handles double-quote characters', () => {
+    expect(escapeLabelValueInExactSelector('t"es"t')).toBe('t\\"es\\"t');
+  });
+
+  it('handles all together', () => {
+    expect(escapeLabelValueInExactSelector('t\\e"st\nl\nab"e\\l')).toBe('t\\\\e\\"st\\nl\\nab\\"e\\\\l');
+  });
+});
+
+describe('escapeLabelValueInRegexSelector()', () => {
+  it('handles newline characters', () => {
+    expect(escapeLabelValueInRegexSelector('t\nes\nt')).toBe('t\\nes\\nt');
+  });
+
+  it('handles backslash characters', () => {
+    expect(escapeLabelValueInRegexSelector('t\\es\\t')).toBe('t\\\\\\\\es\\\\\\\\t');
+  });
+
+  it('handles double-quote characters', () => {
+    expect(escapeLabelValueInRegexSelector('t"es"t')).toBe('t\\"es\\"t');
+  });
+
+  it('handles regex-meaningful characters', () => {
+    expect(escapeLabelValueInRegexSelector('t+es$t')).toBe('t\\\\+es\\\\$t');
+  });
+
+  it('handles all together', () => {
+    expect(escapeLabelValueInRegexSelector('t\\e"s+t\nl\n$ab"e\\l')).toBe(
+      't\\\\\\\\e\\"s\\\\+t\\nl\\n\\\\$ab\\"e\\\\\\\\l'
+    );
   });
 });

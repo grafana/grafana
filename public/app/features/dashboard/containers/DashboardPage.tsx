@@ -335,6 +335,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const containerClassNames = classnames(styles.dashboardContainer, {
       'panel-in-fullscreen': viewPanel,
     });
+    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
 
     return (
       <div className={containerClassNames}>
@@ -364,7 +365,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           >
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
-              {!editPanel && kioskMode === KioskMode.Off && (
+              {showSubMenu && (
                 <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
                 </section>
@@ -395,14 +396,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
   const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
-      position: absolute;
-      top: 0;
-      bottom: 0;
       width: 100%;
       height: 100%;
       display: flex;
       flex: 1 1 0;
       flex-direction: column;
+      min-height: 0;
     `,
     dashboardScroll: css`
       width: 100%;

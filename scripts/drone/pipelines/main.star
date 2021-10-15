@@ -1,9 +1,11 @@
 load(
     'scripts/drone/steps/lib.star',
     'lint_backend_step',
+    'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
     'test_backend_step',
+    'test_backend_integration_step',
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
@@ -27,10 +29,10 @@ load(
     'publish_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'push_to_deployment_tools_step',
     'publish_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
+    'ensure_cuetsified_step',
     'test_a11y_frontend_step'
 )
 
@@ -56,12 +58,15 @@ def get_steps(edition, is_downstream=False):
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
+        lint_frontend_step(),
         test_backend_step(edition=edition),
+        test_backend_integration_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
+        ensure_cuetsified_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -70,6 +75,7 @@ def get_steps(edition, is_downstream=False):
         steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
+            test_backend_integration_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
         ])
 
@@ -97,7 +103,6 @@ def get_steps(edition, is_downstream=False):
     steps.extend([
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        push_to_deployment_tools_step(edition=edition, is_downstream=is_downstream),
         upload_cdn_step(edition=edition)
     ])
 
