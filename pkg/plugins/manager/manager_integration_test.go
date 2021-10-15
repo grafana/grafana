@@ -60,6 +60,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"gettingstarted",
 		"graph",
 		"heatmap",
+		"histogram",
 		"live",
 		"logs",
 		"news",
@@ -67,12 +68,11 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"piechart",
 		"pluginlist",
 		"stat",
+		"state-timeline",
+		"status-history",
 		"table",
 		"table-old",
 		"text",
-		"timeseries",
-		"state-timeline",
-		"status-history",
 		"timeseries",
 		"welcome",
 		"xychart",
@@ -109,12 +109,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, p)
 		assert.True(t, strings.HasPrefix(pluginRoutes[p].Directory, pm.Plugin(p).PluginDir))
 	}
-	pmPanels := pm.Plugins(plugins.Panel)
-	for _, panel := range pmPanels {
-		if _, exists := panelPlugins[panel.ID]; !exists {
-			t.Errorf("Could not find plugin %s", panel.ID)
-		}
-	}
+	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
 
 	for _, ds := range dataSources {
 		require.NotNil(t, pm.Plugin(ds))
