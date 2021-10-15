@@ -24,7 +24,6 @@ export interface AxisProps {
   timeZone?: TimeZone;
 }
 
-const fontSize = 12;
 const labelPad = 8;
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
@@ -36,6 +35,47 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     if (this.props.placement === AxisPlacement.Auto) {
       this.props.placement = props.placement;
     }
+  }
+  /* Minimum grid & tick spacing in CSS pixels */
+  calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, plotDim: number): number {
+    const axis = self.axes[axisIdx];
+    const scale = self.scales[axis.scale!];
+
+    // for axis left & right
+    if (axis.side !== 2 || !scale) {
+      return 30;
+    }
+
+    const defaultSpacing = 40;
+
+    if (scale.time) {
+      const maxTicks = plotDim / defaultSpacing;
+      const increment = (scaleMax - scaleMin) / maxTicks;
+      const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
+      const width = measureText(sample[0], this.props.theme.typography.fontSize).width + 18;
+      return width;
+    }
+
+    return defaultSpacing;
+  }
+
+  /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
+  calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
+    const axis = self.axes[axisIdx];
+
+    let axisSize = axis.ticks!.size!;
+
+    if (axis.side === 2) {
+      axisSize += axis!.gap! + this.props.theme.typography.fontSize;
+    } else if (values?.length) {
+      let maxTextWidth = values.reduce(
+        (acc, value) => Math.max(acc, measureText(value, this.props.theme.typography.fontSize).width),
+        0
+      );
+      axisSize += axis!.gap! + axis!.labelGap! + maxTextWidth;
+    }
+
+    return Math.ceil(axisSize);
   }
 
   getConfig(): Axis {
@@ -57,7 +97,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       size,
     } = this.props;
 
-    const font = `${fontSize}px ${theme.typography.fontFamily}`;
+    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
@@ -71,7 +111,11 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       stroke: theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
-      size: size ?? calculateAxisSize,
+      size:
+        size ??
+        ((self, values, axisIdx) => {
+          return this.calculateAxisSize(self, values, axisIdx);
+        }),
       rotate: valueRotation,
       gap,
 
@@ -90,12 +134,14 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       },
       splits,
       values: values,
-      space: calculateSpace,
+      space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
+        return this.calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
+      },
     };
 
     if (label != null && label.length > 0) {
       config.label = label;
-      config.labelSize = fontSize + labelPad;
+      config.labelSize = theme.typography.fontSize + labelPad;
       config.labelFont = font;
       config.labelGap = labelPad;
     }
@@ -113,45 +159,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     return config;
   }
-}
-
-/* Minimum grid & tick spacing in CSS pixels */
-function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, plotDim: number): number {
-  const axis = self.axes[axisIdx];
-  const scale = self.scales[axis.scale!];
-
-  // for axis left & right
-  if (axis.side !== 2 || !scale) {
-    return 30;
-  }
-
-  const defaultSpacing = 40;
-
-  if (scale.time) {
-    const maxTicks = plotDim / defaultSpacing;
-    const increment = (scaleMax - scaleMin) / maxTicks;
-    const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
-    const width = measureText(sample[0], fontSize).width + 18;
-    return width;
-  }
-
-  return defaultSpacing;
-}
-
-/** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
-function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
-  const axis = self.axes[axisIdx];
-
-  let axisSize = axis.ticks!.size!;
-
-  if (axis.side === 2) {
-    axisSize += axis!.gap! + fontSize;
-  } else if (values?.length) {
-    let maxTextWidth = values.reduce((acc, value) => Math.max(acc, measureText(value, fontSize).width), 0);
-    axisSize += axis!.gap! + axis!.labelGap! + maxTextWidth;
-  }
-
-  return Math.ceil(axisSize);
 }
 
 const timeUnitSize = {

@@ -51,8 +51,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   valueRotation,
 }) => {
   const builder = new UPlotConfigBuilder();
-  const defaultValueFormatter = (seriesIdx: number, value: any) =>
-    formattedValueToString(frame.fields[seriesIdx].display!(value));
+  const defaultValueFormatter = (seriesIdx: number, value: any) => {
+    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), 10);
+  };
 
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
@@ -89,7 +90,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   const rawRotation = valueRotation.presetRotation ?? valueRotation.customRotation ?? 0;
   if (vizOrientation.xOri === ScaleOrientation.Horizontal) {
-    builder.setPadding(getRotationPadding(frame, rawRotation, theme));
+    builder.setPadding(getRotationPadding(frame, rawRotation, theme, 10));
   }
 
   builder.setPrepData(config.prepData);
@@ -212,24 +213,49 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   return builder;
 };
 
-function getRotationPadding(frame: DataFrame, rotateLabel: number, theme: GrafanaTheme2): Padding {
+function shortenValue(value: string, length: number) {
+  if (value.length > 10) {
+    return value.substring(0, length).concat('...');
+  } else {
+    return value;
+  }
+}
+
+function getRotationPadding(
+  frame: DataFrame,
+  rotateLabel: number,
+  theme: GrafanaTheme2,
+  valueMaxLength: number
+): Padding {
   const values = frame.fields[0].values;
   const fontSize = theme.typography.fontSize;
+  const displayProcessor = frame.fields[0].display ?? ((v) => v);
   let maxLength = 0;
   for (let i = 0; i < values.length; i++) {
-    let size = measureText(values.get(i), fontSize);
+    let size = measureText(
+      shortenValue(formattedValueToString(displayProcessor(values.get(i))), valueMaxLength),
+      fontSize
+    );
     maxLength = size.width > maxLength ? size.width : maxLength;
   }
 
   // Add padding to the right if the labels are rotated in a way that makes the last label extend outside the graph.
   const paddingRight =
     rotateLabel < 0
-      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) * measureText(values.get(values.length - 1), fontSize).width
+      ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
+        measureText(
+          shortenValue(formattedValueToString(displayProcessor(values.get(values.length - 1))), valueMaxLength),
+          fontSize
+        ).width
       : 0;
 
   // Add padding to the left if the labels are rotated in a way that makes the first label extend outside the graph.
   const paddingLeft =
-    rotateLabel > 0 ? Math.cos((rotateLabel * Math.PI) / 180) * measureText(values.get(0), fontSize).width : 0;
+    rotateLabel > 0
+      ? Math.cos((rotateLabel * Math.PI) / 180) *
+        measureText(shortenValue(formattedValueToString(displayProcessor(values.get(0))), valueMaxLength), fontSize)
+          .width
+      : 0;
 
   // Add padding to the bottom to avoid clipping the rotated labels.
   const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
