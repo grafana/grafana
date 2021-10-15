@@ -4,7 +4,7 @@ API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
 SWAGGER_TAG ?= latest
 
-spec: $(GO_PKG_FILES)
+spec.json: $(GO_PKG_FILES)
 	# this is slow because this image does not use the cache
 	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
 	docker run --rm -it \
@@ -23,7 +23,7 @@ spec-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
 	swagger generate spec -m -w $(API_DIR) -o spec.json
 
 .PHONY: openapi
-openapi: spec
+openapi: spec.json
 	docker-compose up
 
 clean-spec:

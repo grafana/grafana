@@ -3,7 +3,7 @@
 The following command will build the API specification inside a docker container.
 
 ```bash
-$ make spec
+$ make spec.json
 ```
 
 # Build specification on M1 Chip
