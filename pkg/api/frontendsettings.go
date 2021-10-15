@@ -370,7 +370,7 @@ func (hs *HTTPServer) enabledPlugins(orgID int64) (EnabledPlugins, error) {
 
 	apps := make(map[string]*plugins.Plugin)
 	for _, app := range hs.pluginStore.Plugins(plugins.App) {
-		if b, ok := pluginSettingMap[app.ID]; ok {
+		if b, exists := pluginSettingMap[app.ID]; exists {
 			app.Pinned = b.Pinned
 			apps[app.ID] = app
 		}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PluginSignatureErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { CatalogPlugin } from '../types';
 import { config } from '@grafana/runtime';
@@ -64,11 +64,7 @@ describe('PluginListItemBadges', () => {
   });
 
   it('renders a error badge (when plugin has an error', () => {
-    render(
-      <PluginListItemBadges
-        plugin={{ ...plugin, isDisabled: true, error: PluginSignatureErrorCode.modifiedSignature }}
-      />
-    );
+    render(<PluginListItemBadges plugin={{ ...plugin, isDisabled: true, error: PluginErrorCode.modifiedSignature }} />);
     expect(screen.getByText(/disabled/i)).toBeVisible();
   });
 });

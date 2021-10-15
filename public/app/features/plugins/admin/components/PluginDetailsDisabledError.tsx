@@ -1,5 +1,5 @@
 import React from 'react';
-import { PluginSignatureErrorCode } from '@grafana/data';
+import { PluginErrorCode } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { CatalogPlugin } from '../types';
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,9 +35,9 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): React.
   );
 }
 
-function renderDescriptionFromError(error?: PluginSignatureErrorCode): React.ReactElement {
+function renderDescriptionFromError(error?: PluginErrorCode): React.ReactElement {
   switch (error) {
-    case PluginSignatureErrorCode.modifiedSignature:
+    case PluginErrorCode.modifiedSignature:
       return (
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we
@@ -46,7 +46,7 @@ function renderDescriptionFromError(error?: PluginSignatureErrorCode): React.Rea
           running a verified version of this plugin.
         </p>
       );
-    case PluginSignatureErrorCode.invalidSignature:
+    case PluginErrorCode.invalidSignature:
       return (
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we
@@ -55,7 +55,7 @@ function renderDescriptionFromError(error?: PluginSignatureErrorCode): React.Rea
           plugin.
         </p>
       );
-    case PluginSignatureErrorCode.missingSignature:
+    case PluginErrorCode.missingSignature:
       return (
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. While doing this, we

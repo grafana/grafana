@@ -4,7 +4,7 @@ import {
   PluginSignatureStatus,
   PluginSignatureType,
   PluginDependencies,
-  PluginSignatureErrorCode,
+  PluginErrorCode,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
@@ -54,7 +54,7 @@ export interface CatalogPlugin {
   updatedAt: string;
   version: string;
   details?: CatalogPluginDetails;
-  error?: PluginSignatureErrorCode;
+  error?: PluginErrorCode;
 }
 
 export interface CatalogPluginDetails {

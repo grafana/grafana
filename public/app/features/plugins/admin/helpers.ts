@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus, dateTimeParse, PluginSignatureError } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, PluginError } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Settings } from 'app/core/config';
@@ -17,7 +17,7 @@ export function isOrgAdmin() {
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
   remote: RemotePlugin[] = [],
-  errors?: PluginSignatureError[]
+  errors?: PluginError[]
 ): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
@@ -43,11 +43,7 @@ export function mergeLocalsAndRemotes(
   return catalogPlugins;
 }
 
-export function mergeLocalAndRemote(
-  local?: LocalPlugin,
-  remote?: RemotePlugin,
-  error?: PluginSignatureError
-): CatalogPlugin {
+export function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   if (!local && remote) {
     return mapRemoteToCatalog(remote, error);
   }
@@ -59,7 +55,7 @@ export function mergeLocalAndRemote(
   return mapToCatalogPlugin(local, remote, error);
 }
 
-export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginSignatureError): CatalogPlugin {
+export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): CatalogPlugin {
   const {
     name,
     slug: id,
@@ -107,7 +103,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginSignature
   return catalogPlugin;
 }
 
-export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginSignatureError): CatalogPlugin {
+export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): CatalogPlugin {
   const {
     name,
     info: { description, version, logos, updated, author },
@@ -144,11 +140,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginSignatureEr
   };
 }
 
-export function mapToCatalogPlugin(
-  local?: LocalPlugin,
-  remote?: RemotePlugin,
-  error?: PluginSignatureError
-): CatalogPlugin {
+export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const version = remote?.version || local?.info.version || '';
   const hasUpdate =
     local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
@@ -225,11 +217,11 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   return plugins;
 };
 
-function groupErrorsByPluginId(errors: PluginSignatureError[] = []): Record<string, PluginSignatureError | undefined> {
+function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, PluginError | undefined> {
   return errors.reduce((byId, error) => {
     byId[error.pluginId] = error;
     return byId;
-  }, {} as Record<string, PluginSignatureError | undefined>);
+  }, {} as Record<string, PluginError | undefined>);
 }
 
 // Updates the core Grafana config to have the correct list available panels
