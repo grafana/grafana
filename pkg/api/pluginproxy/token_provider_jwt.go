@@ -7,12 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-type jwtAccessTokenProvider struct {
-	tokenProvider googletokenprovider.TokenProvider
-}
-
 func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *jwtAccessTokenProvider {
+	authParams *plugins.JwtTokenAuth) googletokenprovider.TokenProvider {
 	jwtConf := &googletokenprovider.JwtTokenConfig{}
 	if val, ok := authParams.Params["client_email"]; ok {
 		jwtConf.Email = val
@@ -35,11 +31,5 @@ func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plug
 		JwtTokenConfig:    jwtConf,
 	}
 
-	return &jwtAccessTokenProvider{
-		tokenProvider: googletokenprovider.NewJwtAccessTokenProvider(ctx, cfg),
-	}
-}
-
-func (provider *jwtAccessTokenProvider) GetAccessToken() (string, error) {
-	return provider.tokenProvider.GetAccessToken()
+	return googletokenprovider.NewJwtAccessTokenProvider(ctx, cfg)
 }

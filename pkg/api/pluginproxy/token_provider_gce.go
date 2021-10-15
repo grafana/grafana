@@ -7,12 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-type gceAccessTokenProvider struct {
-	tokenProvider googletokenprovider.TokenProvider
-}
-
 func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) (*gceAccessTokenProvider, error) {
+	authParams *plugins.JwtTokenAuth) (googletokenprovider.TokenProvider, error) {
 	cfg := googletokenprovider.Config{
 		RoutePath:         pluginRoute.Path,
 		RouteMethod:       pluginRoute.Method,
@@ -20,12 +16,5 @@ func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plug
 		DataSourceUpdated: ds.Updated,
 		Scopes:            authParams.Scopes,
 	}
-	gceProvider := &gceAccessTokenProvider{}
-	var err error
-	gceProvider.tokenProvider, err = googletokenprovider.NewGceAccessTokenProvider(ctx, &cfg)
-	return gceProvider, err
-}
-
-func (provider *gceAccessTokenProvider) GetAccessToken() (string, error) {
-	return provider.tokenProvider.GetAccessToken()
+	return googletokenprovider.NewGceAccessTokenProvider(ctx, &cfg)
 }
