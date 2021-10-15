@@ -109,7 +109,12 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, p)
 		assert.True(t, strings.HasPrefix(pluginRoutes[p].Directory, pm.Plugin(p).PluginDir))
 	}
-	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
+	pmPanels := pm.Plugins(plugins.Panel)
+	for _, panel := range pmPanels {
+		if _, exists := panelPlugins[panel.ID]; !exists {
+			t.Errorf("Could not find plugin %s", panel.ID)
+		}
+	}
 
 	for _, ds := range dataSources {
 		require.NotNil(t, pm.Plugin(ds))
