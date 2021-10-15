@@ -503,7 +503,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     return (importPanelPluginFromMeta(info as PanelPluginMeta) as unknown) as Promise<GrafanaPlugin>;
   }
   if (info.type === PluginType.renderer) {
-    return Promise.resolve({ meta: info } as GrafanaPlugin);
+    return { meta: info } as GrafanaPlugin;
   }
 
 throw new Error('Unknown Plugin type: ' + info.type);
