@@ -10,7 +10,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
 }
 
 export const FilterInput = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, placeholder, width, onChange, ...restProps }, ref) => {
+  ({ value, width, onChange, ...restProps }, ref) => {
     const innerRef = React.useRef<HTMLInputElement>(null);
     const combinedRef = useCombinedRefs(ref, innerRef) as React.Ref<HTMLInputElement>;
 

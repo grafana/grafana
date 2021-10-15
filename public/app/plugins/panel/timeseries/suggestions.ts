@@ -40,7 +40,7 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
     fieldConfig: {
       defaults: {
         custom: {
-          fillOpacity: 15,
+          fillOpacity: 25,
           stacking: {
             mode: StackingMode.Normal,
             group: 'A',

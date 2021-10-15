@@ -29,6 +29,9 @@ export function getSuggestions({ data }: VisualizationSuggestionsInput) {
       },
       overrides: [],
     },
+    previewModifier: (s) => {
+      s.options!.barWidth = 0.8;
+    },
   });
 
   if (frames.length !== 1) {

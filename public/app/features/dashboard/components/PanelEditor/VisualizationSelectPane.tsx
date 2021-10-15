@@ -12,6 +12,7 @@ import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 
 interface Props {
   panel: PanelModel;
@@ -70,8 +71,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
+    { label: 'Suggestions', value: ListMode.Suggestions },
     {
-      label: 'Library panels',
+      label: 'Panels',
       value: ListMode.LibraryPanels,
       description: 'Reusable panels you can share between multiple dashboards.',
     },
@@ -113,6 +115,15 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
                 onClose={() => {}}
               />
             )}
+            {listMode === ListMode.Suggestions && (
+              <VisualizationSuggestions
+                current={plugin.meta}
+                onChange={onVizChange}
+                searchQuery={searchQuery}
+                data={data}
+                onClose={() => {}}
+              />
+            )}
             {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
@@ -126,6 +137,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
 enum ListMode {
   Visualizations,
   LibraryPanels,
+  Suggestions,
 }
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';
