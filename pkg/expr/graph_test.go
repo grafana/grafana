@@ -220,7 +220,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 				},
 			},
-			expectedOrder: []string{"B", "A"},
+			expectedOrder: []string{"A", "B"},
 		},
 	}
 	s := Service{}
