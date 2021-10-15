@@ -23,10 +23,10 @@ import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRan
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldLazy } from './monaco-query-field/MonacoQueryFieldLazy';
-import { LocalStorageValueProvider } from '../../../../core/components/LocalStorageValueProvider';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
-export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
+const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
   if (metricsLookupDisabled) {

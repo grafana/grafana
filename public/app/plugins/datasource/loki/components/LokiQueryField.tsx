@@ -19,7 +19,7 @@ import { shouldRefreshLabels } from '../language_utils';
 import LokiDatasource from '../datasource';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
-export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
+const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
   if (!hasSyntax) {
