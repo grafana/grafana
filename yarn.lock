@@ -2598,7 +2598,7 @@ __metadata:
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
     "@types/rimraf": ^2.0.3
-    "@types/semver": ^6.0.0
+    "@types/semver": ^7.0.0
     "@types/tmp": ^0.1.0
     "@types/webpack": 4.41.7
     axios: 0.21.2
@@ -8226,10 +8226,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:^6.0.0":
-  version: 6.2.3
-  resolution: "@types/semver@npm:6.2.3"
-  checksum: 83c86d7005b229df9c4c0d6d13825b839a01932895504596140aea19e2b88f63ac27ab1575347451b50eedb63f72309e845ce1a0ca78360c4f719bbb38371594
+"@types/semver@npm:7.3.8, @types/semver@npm:^7.0.0":
+  version: 7.3.8
+  resolution: "@types/semver@npm:7.3.8"
+  checksum: bc90f5a9d5430e36f766c08c898e3c28af88830ebc7736baef8ffc74783bad2efb32f29c40d450e85fc341847ee74e2dd97b76cfc7da407e4232ba9ecae4ff9c
   languageName: node
   linkType: hard
 
@@ -17869,7 +17869,7 @@ fsevents@~2.1.2:
     "@types/react-window": 1.8.1
     "@types/redux-mock-store": 1.0.2
     "@types/reselect": 2.2.0
-    "@types/semver": ^6.0.0
+    "@types/semver": 7.3.8
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.6.1
     "@types/slate-react": 0.22.5
