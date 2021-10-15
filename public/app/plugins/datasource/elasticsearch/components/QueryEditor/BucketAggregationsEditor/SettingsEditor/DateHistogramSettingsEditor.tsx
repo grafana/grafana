@@ -1,4 +1,4 @@
-import React, { ComponentProps } from 'react';
+import React from 'react';
 import { InlineField, Input, Select } from '@grafana/ui';
 import { DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
@@ -9,9 +9,7 @@ import { inlineFieldProps } from '.';
 import { uniqueId } from 'lodash';
 import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 
-type IntervalOption = Required<Pick<SelectableValue<string>, 'label' | 'value'>>;
-
-const defaultIntervalOptions: IntervalOption[] = [
+const defaultIntervalOptions: Array<SelectableValue<string>> = [
   { label: 'auto', value: 'auto' },
   { label: '10s', value: '10s' },
   { label: '1m', value: '1m' },
@@ -22,12 +20,12 @@ const defaultIntervalOptions: IntervalOption[] = [
   { label: '1d', value: '1d' },
 ];
 
-const hasValue = (searchValue: IntervalOption['value']) => ({ value }: IntervalOption) => value === searchValue;
+const hasValue = (searchValue: string) => ({ value }: SelectableValue<string>) => value === searchValue;
 
-const isValidNewOption: ComponentProps<typeof Select>['isValidNewOption'] = (
-  inputValue,
-  _,
-  options: IntervalOption[]
+const isValidNewOption = (
+  inputValue: string,
+  _: SelectableValue<string> | null,
+  options: Readonly<Array<SelectableValue<string>>>
 ) => {
   // TODO: would be extremely nice here to allow only template variables and values that are
   // valid date histogram's Interval options
@@ -36,7 +34,7 @@ const isValidNewOption: ComponentProps<typeof Select>['isValidNewOption'] = (
   return !valueExists && inputValue.trim().length > 0;
 };
 
-const optionStartsWithValue: ComponentProps<typeof Select>['filterOption'] = (option: IntervalOption, value) =>
+const optionStartsWithValue = (option: SelectableValue<string>, value: string) =>
   option.value?.startsWith(value) || false;
 
 interface Props {
@@ -46,8 +44,8 @@ interface Props {
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
 
-  const handleIntervalChange = (newValue: string) =>
-    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue }));
+  const handleIntervalChange = ({ value }: SelectableValue<string>) =>
+    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue: value }));
 
   return (
     <>

@@ -15,7 +15,7 @@
     "@types/grafana__slate-react": "link:../../.yarn/cache/@types-slate-react-npm-0.22.5-0d49b63254-afc83c7f47.zip/node_modules/@types/slate-react",
     "@types/hoist-non-react-statics": "^3.3.1",
     "@types/lodash": "^4.14.123",
-    "@types/react": "16.9.9",
+    "@types/react": "17.0.30",
     "@types/react-icons": "2.2.7",
     "@types/recompose": "^0.30.7",
     "@types/reselect": "2.2.0",

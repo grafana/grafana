@@ -38,6 +38,7 @@ export interface LokiQuery extends DataQuery {
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
+  alertmanager?: string;
 }
 
 export interface LokiStats {
