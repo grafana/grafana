@@ -202,6 +202,9 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
+		// Update the Alertmanagers choice for the organization.
+		sch.alertmanagersChoice[cfg.OrgID] = cfg.AlertmanagersChoice
+
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
 		existing, ok := sch.senders[cfg.OrgID]
