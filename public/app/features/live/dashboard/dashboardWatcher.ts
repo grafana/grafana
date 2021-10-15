@@ -1,6 +1,6 @@
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { appEvents } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import {
   AppEvents,
   isLiveChannelMessageEvent,
@@ -24,12 +24,14 @@ class DashboardWatcher {
   editing = false;
   lastEditing?: DashboardEvent;
   subscription?: Unsubscribable;
+  hasSeenNotice?: boolean;
 
   setEditingState(state: boolean) {
     const changed = (this.editing = state);
     this.editing = state;
+    this.hasSeenNotice = false;
 
-    if (changed) {
+    if (changed && contextSrv.isEditor) {
       this.sendEditingState();
     }
   }
@@ -131,10 +133,11 @@ class DashboardWatcher {
                 this.reloadPage();
               }
             } else if (showPopup) {
-              if (action === DashboardEventAction.EditingStarted) {
+              if (action === DashboardEventAction.EditingStarted && !this.hasSeenNotice) {
                 const editingEvent = event.message;
                 const recent = this.getRecentEditingEvent();
                 if (!recent || recent.message !== editingEvent.message) {
+                  this.hasSeenNotice = true;
                   appEvents.emit(AppEvents.alertWarning, [
                     'Another session is editing this dashboard',
                     editingEvent.message,

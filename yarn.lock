@@ -3174,10 +3174,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.42":
-  version: 0.0.42
-  resolution: "@kusto/language-service-next@npm:0.0.42"
-  checksum: 57cab545a236f4d242a2fe86b1353c8125f7773a96eea638367a9a939e49b55d59b9cb96cf1b0230ed22c73092358980981272da00f0957526f7ee2fb4e13733
+"@kusto/language-service-next@npm:0.0.51":
+  version: 0.0.51
+  resolution: "@kusto/language-service-next@npm:0.0.51"
+  checksum: 0400f88b0d201288eb888fc9c48984b7ae4b0f12fe24d9959d0e5bd003f0efa6a0882d047fd31166c23f6d467ee21351ab325a8efaa4b89bff50546c3fc514f4
   languageName: node
   linkType: hard
 
@@ -3188,15 +3188,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:3.2.7":
-  version: 3.2.7
-  resolution: "@kusto/monaco-kusto@npm:3.2.7"
+"@kusto/monaco-kusto@npm:4.0.6":
+  version: 4.0.6
+  resolution: "@kusto/monaco-kusto@npm:4.0.6"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
-    "@kusto/language-service-next": 0.0.42
+    "@kusto/language-service-next": 0.0.51
   peerDependencies:
-    monaco-editor: ^0.20.0
-  checksum: 14033eff1386dff2d21731f22b442eaf2794daf2511d9419056afe1269a676a7b85a797e2867b3a567e87004e255f15f2630ca1675ab68b815f5cc5561717ec5
+    monaco-editor: ^0.24.0
+  checksum: 62a775904e65a42d174e402ffffb880b100e6bd2afd355fa6f46a878a6c9471f9b61364e4e528e626bfa3091fe51d023b33f21d6ad904caffe68cd82fb4149e9
   languageName: node
   linkType: hard
 
@@ -4490,6 +4490,13 @@ __metadata:
   version: 0.23.0
   resolution: "@opentelemetry/semantic-conventions@npm:0.23.0"
   checksum: 829e5c39eee15c3b551086661b37c5e71f7e8962a1748ab7d9d00d5e8f03156835c6cce51c00db57b7e323b76b9bebb375de43270f6c48f678bc1585c94aac0d
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/semantic-conventions@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.0.0"
+  checksum: 1fc7a5cbabd49ebfaf83413dcadd742a483efb8d95532aef3522b332abf32cc5c4602ec87ea5d9fc0bcfeea4e88e4993d2e996bf050fdfae3d19d1fa91ddae8a
   languageName: node
   linkType: hard
 
@@ -6644,14 +6651,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:^12.1.3":
-  version: 12.8.3
-  resolution: "@testing-library/user-event@npm:12.8.3"
+"@testing-library/user-event@npm:13.3.0":
+  version: 13.3.0
+  resolution: "@testing-library/user-event@npm:13.3.0"
   dependencies:
     "@babel/runtime": ^7.12.5
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: c9fb5ee07cbe79ddf32d81e1a353e556d02a1f1619456ccfad6abcdf1b7db400fdc9d7a8e0be3994f456e7135a0dfb7fa10b29fb98a0f5fc417b99fce0ce8166
+  checksum: 0d17c47728aec71343fc4a8d8b594224c3031513ab59d5797695c53fdfcebef87797a7935ede68c0af896127b2a995e2feb20e64cbd0cd2b2af3f5240241af91
   languageName: node
   linkType: hard
 
@@ -17805,10 +17812,10 @@ fsevents@~2.1.2:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 3.2.7
+    "@kusto/monaco-kusto": 4.0.6
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.23.0
-    "@opentelemetry/semantic-conventions": 0.23.0
+    "@opentelemetry/semantic-conventions": 1.0.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.0-rc.6
     "@popperjs/core": 2.5.4
     "@reduxjs/toolkit": 1.6.1
@@ -17818,7 +17825,7 @@ fsevents@~2.1.2:
     "@testing-library/jest-dom": 5.11.5
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": ^3.2.1
-    "@testing-library/user-event": ^12.1.3
+    "@testing-library/user-event": 13.3.0
     "@types/angular": 1.6.56
     "@types/angular-route": 1.7.0
     "@types/classnames": 2.2.9

@@ -148,7 +148,8 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new query/i })).not.toBeInTheDocument();
 
-    userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByRole('button', { name: /^delete$/i }), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.queryAllByRole('row').length).toBe(0);
     expect(
@@ -251,7 +252,8 @@ describe('AnnotationsSettings', () => {
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(3);
 
-    userEvent.click(screen.getAllByRole('button', { name: /delete/i })[1]);
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getAllByRole('button', { name: /delete/i })[1], undefined, { skipPointerEventsCheck: true });
 
     expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
   });

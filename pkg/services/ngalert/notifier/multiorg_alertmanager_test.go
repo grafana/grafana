@@ -97,8 +97,9 @@ grafana_alerting_discovered_configurations 4
 		require.Len(t, mam.alertmanagers, 4)
 	}
 
-	// Orphaned local state should be removed.
+	// Orphaned state should be removed.
 	{
+		orgID := int64(6)
 		// First we create a directory and two files for an ograniztation that
 		// is not existing in the current state.
 		orphanDir := filepath.Join(tmpDir, "alerting", "6")
@@ -121,12 +122,26 @@ grafana_alerting_discovered_configurations 4
 		require.NoError(t, err)
 		require.Equal(t, info.Name(), notificationLogFilename)
 
+		// We also populate the kvstore with orphaned records.
+		err = kvStore.Set(ctx, orgID, KVNamespace, silencesFilename, "file_1")
+		require.NoError(t, err)
+
+		err = kvStore.Set(ctx, orgID, KVNamespace, notificationLogFilename, "file_1")
+		require.NoError(t, err)
+
 		// Now re run the sync job once.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		// The organization directory should be gone by now.
 		_, err = os.Stat(orphanDir)
 		require.True(t, errors.Is(err, fs.ErrNotExist))
+
+		// The organization kvstore records should be gone by now.
+		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, silencesFilename)
+		require.False(t, exists)
+
+		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, notificationLogFilename)
+		require.False(t, exists)
 	}
 }
 
