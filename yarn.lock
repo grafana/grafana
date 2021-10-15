@@ -3174,10 +3174,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.42":
-  version: 0.0.42
-  resolution: "@kusto/language-service-next@npm:0.0.42"
-  checksum: 57cab545a236f4d242a2fe86b1353c8125f7773a96eea638367a9a939e49b55d59b9cb96cf1b0230ed22c73092358980981272da00f0957526f7ee2fb4e13733
+"@kusto/language-service-next@npm:0.0.51":
+  version: 0.0.51
+  resolution: "@kusto/language-service-next@npm:0.0.51"
+  checksum: 0400f88b0d201288eb888fc9c48984b7ae4b0f12fe24d9959d0e5bd003f0efa6a0882d047fd31166c23f6d467ee21351ab325a8efaa4b89bff50546c3fc514f4
   languageName: node
   linkType: hard
 
@@ -3188,15 +3188,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:3.2.7":
-  version: 3.2.7
-  resolution: "@kusto/monaco-kusto@npm:3.2.7"
+"@kusto/monaco-kusto@npm:4.0.6":
+  version: 4.0.6
+  resolution: "@kusto/monaco-kusto@npm:4.0.6"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
-    "@kusto/language-service-next": 0.0.42
+    "@kusto/language-service-next": 0.0.51
   peerDependencies:
-    monaco-editor: ^0.20.0
-  checksum: 14033eff1386dff2d21731f22b442eaf2794daf2511d9419056afe1269a676a7b85a797e2867b3a567e87004e255f15f2630ca1675ab68b815f5cc5561717ec5
+    monaco-editor: ^0.24.0
+  checksum: 62a775904e65a42d174e402ffffb880b100e6bd2afd355fa6f46a878a6c9471f9b61364e4e528e626bfa3091fe51d023b33f21d6ad904caffe68cd82fb4149e9
   languageName: node
   linkType: hard
 
@@ -17812,7 +17812,7 @@ fsevents@~2.1.2:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 3.2.7
+    "@kusto/monaco-kusto": 4.0.6
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.23.0
     "@opentelemetry/semantic-conventions": 1.0.0

@@ -92,6 +92,7 @@ go.sum @grafana/backend-platform
 /public/app/plugins/panel/timeseries @grafana/grafana-bi-squad
 /public/app/plugins/panel/geomap @grafana/grafana-edge-squad
 /public/app/plugins/panel/canvas @grafana/grafana-edge-squad
+/public/app/plugins/panel/icon @grafana/grafana-edge-squad
 /scripts/build/release-packages.sh @grafana/plugins-platform
 /scripts/circle-release-next-packages.sh @grafana/plugins-platform
 /scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform @grafana/grafana-bi-squad
