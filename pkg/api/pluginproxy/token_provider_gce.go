@@ -9,11 +9,10 @@ import (
 
 type gceAccessTokenProvider struct {
 	tokenProvider googletokenprovider.TokenProvider
-	initErr       error
 }
 
 func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) *gceAccessTokenProvider {
+	authParams *plugins.JwtTokenAuth) (*gceAccessTokenProvider, error) {
 	cfg := googletokenprovider.Config{
 		RoutePath:         pluginRoute.Path,
 		RouteMethod:       pluginRoute.Method,
@@ -22,8 +21,9 @@ func newGceAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plug
 		Scopes:            authParams.Scopes,
 	}
 	gceProvider := &gceAccessTokenProvider{}
-	gceProvider.tokenProvider, gceProvider.initErr = googletokenprovider.NewGceAccessTokenProvider(ctx, &cfg)
-	return gceProvider
+	var err error
+	gceProvider.tokenProvider, err = googletokenprovider.NewGceAccessTokenProvider(ctx, &cfg)
+	return gceProvider, err
 }
 
 func (provider *gceAccessTokenProvider) GetAccessToken() (string, error) {
