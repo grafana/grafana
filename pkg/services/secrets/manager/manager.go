@@ -24,9 +24,8 @@ type SecretsService struct {
 	enc      encryption.Service
 	settings setting.Provider
 
-	currentProvider string
-	providers       map[string]secrets.Provider
-	dataKeyCache    map[string]dataKeyCacheItem
+	providers    map[string]secrets.Provider
+	dataKeyCache map[string]dataKeyCacheItem
 }
 
 func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Service, settings setting.Provider) *SecretsService {
@@ -35,13 +34,12 @@ func ProvideSecretsService(store secrets.Store, bus bus.Bus, enc encryption.Serv
 	}
 
 	s := &SecretsService{
-		store:           store,
-		bus:             bus,
-		enc:             enc,
-		settings:        settings,
-		currentProvider: defaultProvider,
-		providers:       providers,
-		dataKeyCache:    make(map[string]dataKeyCacheItem),
+		store:        store,
+		bus:          bus,
+		enc:          enc,
+		settings:     settings,
+		providers:    providers,
+		dataKeyCache: make(map[string]dataKeyCacheItem),
 	}
 
 	return s
@@ -56,7 +54,7 @@ var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	scope := opt()
-	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
+	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider())
 
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
@@ -175,9 +173,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	if err != nil {
 		return nil, err
 	}
-	provider, exists := s.providers[s.currentProvider]
+	provider, exists := s.providers[s.currentProvider()]
 	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProvider)
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProvider())
 	}
 
 	// 2. Encrypt it
@@ -190,7 +188,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	err = s.store.CreateDataKey(ctx, secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
-		Provider:      s.currentProvider,
+		Provider:      s.currentProvider(),
 		EncryptedData: encrypted,
 		Scope:         scope,
 	})
@@ -241,6 +239,12 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	return decrypted, nil
+}
+
+func (s *SecretsService) currentProvider() string {
+	// TODO: 1. Should this method be defined here in OSS if OSS has only secret_key provider?
+	// TODO: 2. Do we really need to fallback to secret_key?
+	return s.settings.KeyValue("security", "encryption_provider").MustString(defaultProvider)
 }
 
 func (s *SecretsService) RegisterProvider(providerID string, provider secrets.Provider) {
