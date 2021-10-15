@@ -47,7 +47,7 @@ export const NavBar: FC = React.memo(() => {
         <NavBarItem
           className={cx(styles.grafanaLogo, styles.section)}
           label="Full menu"
-          onClick={() => console.log('WOW!')}
+          onClick={toggleNavBarSmallBreakpoint}
           showMenu={false}
         >
           <Branding.MenuLogo />
@@ -122,6 +122,13 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
       height: auto;
       position: absolute;
       width: 100%;
+
+      ${theme.breakpoints.up('md')} {
+        border: 1px solid ${theme.components.panel.borderColor};
+        height: 100%;
+        overflow: auto;
+        width: 300px;
+      }
     }
   `,
   grafanaLogo: css`
@@ -152,6 +159,10 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
 
     ${theme.breakpoints.up('md')} {
       display: none;
+    }
+
+    .sidemenu-open--xs & {
+      display: flex;
     }
   `,
   spacer: css`
