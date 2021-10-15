@@ -46,83 +46,68 @@ func TestPluginManager_int_init(t *testing.T) {
 func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	t.Helper()
 
-	panels := []string{
-		"alertGroups",
-		"alertlist",
-		"annolist",
-		"barchart",
-		"bargauge",
-		"canvas",
-		"dashlist",
-		"debug",
-		"gauge",
-		"geomap",
-		"gettingstarted",
-		"graph",
-		"heatmap",
-		"histogram",
-		"live",
-		"logs",
-		"news",
-		"nodeGraph",
-		"piechart",
-		"pluginlist",
-		"stat",
-		"state-timeline",
-		"status-history",
-		"table",
-		"table-old",
-		"text",
-		"timeseries",
-		"welcome",
-		"xychart",
+	panels := map[string]struct{}{
+		"alertGroups":    {},
+		"alertlist":      {},
+		"annolist":       {},
+		"barchart":       {},
+		"bargauge":       {},
+		"canvas":         {},
+		"dashlist":       {},
+		"debug":          {},
+		"gauge":          {},
+		"geomap":         {},
+		"gettingstarted": {},
+		"graph":          {},
+		"heatmap":        {},
+		"histogram":      {},
+		"icon":           {},
+		"live":           {},
+		"logs":           {},
+		"news":           {},
+		"nodeGraph":      {},
+		"piechart":       {},
+		"pluginlist":     {},
+		"stat":           {},
+		"state-timeline": {},
+		"status-history": {},
+		"table":          {},
+		"table-old":      {},
+		"text":           {},
+		"timeseries":     {},
+		"welcome":        {},
+		"xychart":        {},
 	}
 
-	dataSources := []string{
-		"alertmanager",
-		"dashboard",
-		"input",
-		"jaeger",
-		"mixed",
-		"zipkin",
-	}
-
-	panelPlugins := make(map[string]struct{})
-	for _, p := range pm.Plugins(plugins.Panel) {
-		panelPlugins[p.ID] = struct{}{}
-	}
-
-	dsPlugins := make(map[string]struct{})
-	for _, p := range pm.Plugins(plugins.DataSource) {
-		dsPlugins[p.ID] = struct{}{}
+	dataSources := map[string]struct{}{
+		"alertmanager": {},
+		"dashboard":    {},
+		"input":        {},
+		"jaeger":       {},
+		"mixed":        {},
+		"zipkin":       {},
 	}
 
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range pm.Routes() {
-		pluginRoutes[r.PluginID] = r
+	for _, route := range pm.Routes() {
+		pluginRoutes[route.PluginID] = route
 	}
 
-	for _, p := range panels {
-		require.NotNil(t, pm.Plugin(p))
-		assert.Contains(t, panelPlugins, p)
-		assert.Contains(t, pm.registeredPlugins(), p)
-		assert.Contains(t, pluginRoutes, p)
-		assert.True(t, strings.HasPrefix(pluginRoutes[p].Directory, pm.Plugin(p).PluginDir))
+	for _, p := range pm.Plugins(plugins.Panel) {
+		require.NotNil(t, pm.Plugin(p.ID))
+		assert.Contains(t, panels, p.ID)
+		assert.Contains(t, pm.registeredPlugins(), p.ID)
+		assert.Contains(t, pluginRoutes, p.ID)
+		assert.Equal(t, pluginRoutes[p.ID].Directory, p.PluginDir)
 	}
 
-	iconPlugin := pm.Plugin("icon")
-	t.Logf("Icon plugin: %+v\n", iconPlugin)
-	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
-
-	for _, ds := range dataSources {
-		require.NotNil(t, pm.Plugin(ds))
-		assert.Contains(t, dsPlugins, ds)
-		assert.Contains(t, pm.registeredPlugins(), ds)
-		assert.Contains(t, pluginRoutes, ds)
-		assert.True(t, strings.HasPrefix(pluginRoutes[ds].Directory, pm.Plugin(ds).PluginDir))
+	for _, ds := range pm.Plugins(plugins.DataSource) {
+		require.NotNil(t, pm.Plugin(ds.ID))
+		assert.Contains(t, dataSources, ds.ID)
+		assert.Contains(t, pm.registeredPlugins(), ds.ID)
+		assert.Contains(t, pluginRoutes, ds.ID)
+		assert.Equal(t, pluginRoutes[ds.ID].Directory, ds.PluginDir)
 	}
-	assert.Equal(t, len(pm.Plugins(plugins.DataSource)), len(dataSources))
-	assert.Equal(t, len(pm.Plugins(plugins.DataSource))+len(pm.Plugins(plugins.Panel)), len(pm.Routes()))
 }
 
 func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
@@ -141,10 +126,10 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 	assert.NotNil(t, pm.Plugin("input"))
 	assert.NotNil(t, dsPlugins["input"])
 
-	for pluginID, pluginDir := range map[string]string{
-		"input": "input-datasource",
+	for _, pluginID := range []string{
+		"input",
 	} {
 		assert.Contains(t, pluginRoutes, pluginID)
-		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, pm.cfg.BundledPluginsPath+"/"+pluginDir))
+		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, pm.Plugin("input").PluginDir))
 	}
 }
