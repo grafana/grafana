@@ -1,32 +1,44 @@
-import React, { useState } from 'react';
-import { Button, CodeEditor, Label, Table, useStyles } from '@grafana/ui';
+import React, { useState, useEffect } from 'react';
+import { Button, CodeEditor, Table, useStyles, Select, Field } from '@grafana/ui';
 import { ChannelFrame, Rule } from './types';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { getBackendSrv } from '@grafana/runtime';
 import { css } from '@emotion/css';
-import { DataFrame, GrafanaTheme, StreamingDataFrame } from '@grafana/data';
+import { GrafanaTheme, StreamingDataFrame } from '@grafana/data';
+import { transformLabel } from './utils';
 
-interface ReqBody {
-  channelRules: Rule[];
-  channel: string;
-  data: string;
-}
 export default function RuleTest() {
   const navModel = useNavModel('live-test');
   const [response, setResponse] = useState<ChannelFrame[]>();
-  const [body, setBody] = useState<ReqBody>();
+  const [data, setData] = useState<string>();
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [channelRules, setChannelRules] = useState<Rule[]>();
+  const [channelSelected, setChannelSelected] = useState<string>();
   const styles = useStyles(getStyles);
+  useEffect(() => {
+    getBackendSrv()
+      .get(`api/live/channel-rules`)
+      .then((data) => {
+        setRules(data.rules);
+      })
+      .catch((e) => {
+        if (e.data) {
+          console.log(e);
+        }
+      });
+  }, []);
 
   const onBlur = (text: string) => {
-    setBody(JSON.parse(text));
+    setData(text);
   };
+
   const onClick = () => {
     getBackendSrv()
       .post(`api/live/pipeline-convert-test`, {
-        channelRules: body?.channelRules,
-        channel: body?.channel,
-        data: body?.data,
+        channelRules: channelRules,
+        channel: channelSelected,
+        data: data,
       })
       .then((data: any) => {
         const t = data.channelFrames as any[];
@@ -38,43 +50,50 @@ export default function RuleTest() {
         setResponse(e);
       });
   };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <Label>JSON Content</Label>
-        <CodeEditor
-          height="25vh"
-          value=""
-          showLineNumbers={true}
-          readOnly={false}
-          language="json"
-          showMiniMap={false}
-          onBlur={onBlur}
-        />
-        <Button onClick={onClick} className={styles.testButton}>
+        <Field label="Channel">
+          <Select
+            menuShouldPortal
+            options={transformLabel(rules, 'pattern')}
+            value=""
+            onChange={(v) => {
+              setChannelSelected(v.value);
+              setChannelRules(rules.filter((r) => r.pattern === v.value));
+            }}
+            placeholder="Select Channel"
+          />
+        </Field>
+        <Field label="Data">
+          <CodeEditor
+            height="25vh"
+            value=""
+            showLineNumbers={true}
+            readOnly={false}
+            language="json"
+            showMiniMap={false}
+            onBlur={onBlur}
+          />
+        </Field>
+        <Button onClick={onClick} className={styles.margin}>
           Test
         </Button>
-        {response?.length && (
-          <div>
-            <Label>Reponse</Label>
-            {response.map((r) => (
-              <div key={r.channel}>
-                <Label>{r.channel}</Label>
-                <Table data={r.frame} width={500} height={400} showTypeIcons></Table>
-                <pre>{JSON.stringify(r.frame, null, 2)}</pre>
-              </div>
-            ))}
-          </div>
-        )}
+        {response?.length &&
+          response.map((r) => (
+            <Field key={r.channel} label={r.channel}>
+              <Table data={r.frame} width={500} height={10 * r.frame.length + 10} showTypeIcons></Table>
+            </Field>
+          ))}
       </Page.Contents>
     </Page>
   );
 }
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    testButton: css`
-      margin-top: 5px;
-      margin-bottom: 5px;
+    margin: css`
+      margin-bottom: 15px;
     `,
   };
 };

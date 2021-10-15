@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Cell } from 'react-table';
-import { Field } from '@grafana/data';
+import { Field, getDisplayProcessor, createTheme } from '@grafana/data';
 import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
 
@@ -17,7 +17,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
   const cellProps = cell.getCellProps();
 
   if (!field.display) {
-    return null;
+    field.display = getDisplayProcessor({ field, theme: createTheme({ colors: { mode: 'dark' } }) });
   }
 
   if (cellProps.style) {
