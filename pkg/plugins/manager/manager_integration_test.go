@@ -103,7 +103,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	}
 
 	for _, p := range panels {
-		assert.NotNil(t, pm.Plugin(p))
+		require.NotNil(t, pm.Plugin(p))
 		assert.Contains(t, panelPlugins, p)
 		assert.Contains(t, pm.registeredPlugins(), p)
 		assert.Contains(t, pluginRoutes, p)
@@ -112,7 +112,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
 
 	for _, ds := range dataSources {
-		assert.NotNil(t, pm.Plugin(ds))
+		require.NotNil(t, pm.Plugin(ds))
 		assert.Contains(t, dsPlugins, ds)
 		assert.Contains(t, pm.registeredPlugins(), ds)
 		assert.Contains(t, pluginRoutes, ds)
