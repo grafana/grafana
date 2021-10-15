@@ -506,7 +506,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     return Promise.resolve({ meta: info } as GrafanaPlugin);
   }
 
-  return Promise.reject('Unknown Plugin type: ' + info.type);
+throw new Error('Unknown Plugin type: ' + info.type);
 }
 
 type PluginSignatureDetailsBadgeProps = {
