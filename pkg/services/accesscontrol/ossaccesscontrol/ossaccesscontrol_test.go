@@ -555,6 +555,7 @@ func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
 				UsageStats:    &usagestats.UsageStatsMock{T: t},
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
+				scopeResolver: accesscontrol.NewScopeResolver(),
 			}
 			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 

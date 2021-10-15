@@ -42,7 +42,8 @@ func TestResolveKeywordedScope(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resolved, err := ResolveKeywordScope(tt.user, tt.permission)
+			resolver := NewScopeResolver()
+			resolved, err := resolver.ResolveKeyword(tt.user, tt.permission)
 			if tt.wantErr {
 				assert.Error(t, err, "expected an error during the resolution of the scope")
 				return
