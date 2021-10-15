@@ -143,7 +143,7 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := models.GetDataSourceQuery{Id: ds.Id, OrgId: 10}
-			err = sqlStore.GetDataSource(&query)
+			err = sqlStore.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, ds.Uid, query.Result.Uid)
 		})
