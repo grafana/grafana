@@ -30,7 +30,7 @@ type DashboardService interface {
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SaveFolderForProvisionedDashboards(_ *SaveDashboardDTO) (*models.Dashboard, error)
+	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(dashboardID int64) error
@@ -81,8 +81,8 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboa
 	return GetProvisionedData(dr.dashboardStore, dashboardID)
 }
 
-func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
-	shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, shouldValidateAlerts bool,
+	validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.OrgId = dto.OrgId
@@ -384,8 +384,7 @@ func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) e
 	return nil
 }
 
-func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64) (
-	*models.DashboardProvisioning, error) {
+func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64) (*models.DashboardProvisioning, error) {
 	return s.ProvisionedDashData, nil
 }
 

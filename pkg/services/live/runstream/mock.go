@@ -149,9 +149,9 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *models.SignedInUser, arg2, arg3 string, arg4 bool) (backend.PluginContext, bool, error) {
+func (m *MockPluginContextGetter) GetPluginContext(arg0 *models.SignedInUser, arg1, arg2 string, arg3 bool) (backend.PluginContext, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(backend.PluginContext)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
@@ -159,7 +159,7 @@ func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *m
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2, arg3)
 }

@@ -46,7 +46,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 		return apimodels.GrafanaBackend, nil
 	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		if ds, err := cache.GetDatasource(datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
@@ -179,7 +179,7 @@ func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.S
 		return nil
 	}
 
-	refIDs, err := validateQueriesAndExpressions(ctx, c.Data, user, skipCache, datasourceCache)
+	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.S
 	return nil
 }
 
-func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil
@@ -215,7 +215,7 @@ func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQue
 			continue
 		}
 
-		_, err = datasourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
+		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
 			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}

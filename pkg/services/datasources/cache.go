@@ -18,8 +18,8 @@ func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlsto
 }
 
 type CacheService interface {
-	GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
-	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
@@ -28,7 +28,6 @@ type CacheServiceImpl struct {
 }
 
 func (dc *CacheServiceImpl) GetDatasource(
-	ctx context.Context,
 	datasourceID int64,
 	user *models.SignedInUser,
 	skipCache bool,
@@ -47,7 +46,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
 	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(ctx, query)
+	err := dc.SQLStore.GetDataSource(context.TODO(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +61,6 @@ func (dc *CacheServiceImpl) GetDatasource(
 }
 
 func (dc *CacheServiceImpl) GetDatasourceByUID(
-	ctx context.Context,
 	datasourceUID string,
 	user *models.SignedInUser,
 	skipCache bool,
@@ -86,7 +84,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
 	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
-	err := dc.SQLStore.GetDataSource(ctx, query)
+	err := dc.SQLStore.GetDataSource(context.TODO(), query)
 	if err != nil {
 		return nil, err
 	}

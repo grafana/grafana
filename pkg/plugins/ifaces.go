@@ -44,7 +44,7 @@ type Manager interface {
 	// GetPluginMarkdown gets markdown for a certain plugin/name.
 	GetPluginMarkdown(pluginID string, name string) ([]byte, error)
 	// ImportDashboard imports a dashboard.
-	ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
 		requestHandler DataRequestHandler) (PluginDashboardInfoDTO, *models.Dashboard, error)
 	// ScanningErrors returns plugin scanning errors encountered.

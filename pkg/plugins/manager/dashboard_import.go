@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -22,7 +21,7 @@ func (e DashboardInputMissingError) Error() string {
 	return fmt.Sprintf("Dashboard input variable: %v missing from import command", e.VariableName)
 }
 
-func (pm *PluginManager) ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64,
+func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64,
 	dashboardModel *simplejson.Json, overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
 	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, *models.Dashboard, error) {
 	var dashboard *models.Dashboard

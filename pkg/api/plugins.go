@@ -218,7 +218,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		}
 	}
 
-	dashInfo, dash, err := hs.PluginManager.ImportDashboard(c.Req.Context(), apiCmd.PluginId, apiCmd.Path, c.OrgId,
+	dashInfo, dash, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId,
 		apiCmd.FolderId, apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser, hs.DataService)
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
@@ -315,7 +315,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -357,7 +357,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return

@@ -779,7 +779,7 @@ func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *models.Signed
 		return c, addr, nil
 	}
 
-	getter, err := g.GetChannelHandlerFactory(ctx, user, addr.Scope, addr.Namespace)
+	getter, err := g.GetChannelHandlerFactory(user, addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, addr, fmt.Errorf("error getting channel handler factory: %w", err)
 	}
@@ -797,14 +797,14 @@ func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *models.Signed
 
 // GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user *models.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
 	switch scope {
 	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
 	case live.ScopePlugin:
 		return g.handlePluginScope(user, namespace)
 	case live.ScopeDatasource:
-		return g.handleDatasourceScope(ctx, user, namespace)
+		return g.handleDatasourceScope(user, namespace)
 	case live.ScopeStream:
 		return g.handleStreamScope(user, namespace)
 	default:
@@ -844,8 +844,8 @@ func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string
 	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, live.ScopeStream, namespace)
 }
 
-func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	ds, err := g.DataSourceCache.GetDatasourceByUID(ctx, namespace, user, false)
+func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+	ds, err := g.DataSourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
