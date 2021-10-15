@@ -127,7 +127,7 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
         border: 1px solid ${theme.components.panel.borderColor};
         height: 100%;
         overflow: auto;
-        width: 300px;
+        width: ${newNavigationEnabled ? '300px' : '100%'};
       }
     }
   `,
