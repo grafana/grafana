@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
     z-index: ${theme.zIndex.sidemenu};
 
     ${theme.breakpoints.up('md')} {
-      background-color: ${newNavigationEnabled ? 'none' : theme.colors.background.primary};
+      background: ${newNavigationEnabled ? 'none' : theme.colors.background.primary};
       border-right: ${newNavigationEnabled ? 'none' : `1px solid ${theme.components.panel.borderColor}`};
       gap: ${theme.spacing(newNavigationEnabled ? 1 : 0)};
       position: relative;
