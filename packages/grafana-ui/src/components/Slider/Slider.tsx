@@ -63,12 +63,13 @@ export const Slider: FunctionComponent<SliderProps> = ({
   // custom values that might seem above/below min/max on first keystroke
   const onSliderInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
-      let v = +e.target.value;
+      const v = +e.target.value;
 
-      v > max && (v = max);
-      v < min && (v = min);
-
-      setSliderValue(v);
+      if (v > max) {
+        setSliderValue(max);
+      } else if (v < min) {
+        setSliderValue(min);
+      }
     },
     [max, min]
   );
