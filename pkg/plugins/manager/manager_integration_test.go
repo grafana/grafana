@@ -2,8 +2,11 @@ package manager
 
 import (
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -47,8 +50,8 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	t.Helper()
 
 	panels := []string{
-		"alertlist",
 		"alertGroups",
+		"alertlist",
 		"annolist",
 		"barchart",
 		"bargauge",
@@ -81,10 +84,10 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	dataSources := []string{
 		"alertmanager",
 		"dashboard",
+		"input",
 		"jaeger",
 		"mixed",
 		"zipkin",
-		"input",
 	}
 
 	panelPlugins := make(map[string]struct{})
@@ -109,6 +112,20 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, p)
 		assert.True(t, strings.HasPrefix(pluginRoutes[p].Directory, pm.Plugin(p).PluginDir))
 	}
+
+	var pmPanels []string
+	for _, p := range pm.Plugins(plugins.Panel) {
+		pmPanels = append(pmPanels, p.ID)
+	}
+
+	sort.SliceStable(pmPanels, func(i, j int) bool {
+		return pmPanels[i] < pmPanels[j]
+	})
+
+	if diff := cmp.Diff(panels, pmPanels); diff != "" {
+		t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+	}
+
 	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
 
 	for _, ds := range dataSources {
