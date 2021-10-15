@@ -80,46 +80,49 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
   };
 
   return (
-    <div className={styles.wrapper}>
-      {!isEditing && (
-        <button
-          className={styles.queryNameWrapper}
-          aria-label={selectors.components.QueryEditorRow.title(query.refId)}
-          title="Edit query name"
-          onClick={onEditQuery}
-          data-testid="query-name-div"
-        >
-          <span className={styles.queryName}>{query.refId}</span>
-          <Icon name="pen" className={styles.queryEditIcon} size="sm" />
-        </button>
-      )}
-      {isEditing && (
-        <>
-          <Input
-            type="text"
-            defaultValue={query.refId}
-            onBlur={onEditQueryBlur}
-            autoFocus
-            onKeyDown={onKeyDown}
-            onFocus={onFocus}
-            invalid={validationError !== null}
-            onChange={onInputChange}
-            className={styles.queryNameInput}
-            data-testid="query-name-input"
-          />
-          {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
-        </>
-      )}
-      {renderDataSource(props, styles)}
-      {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
-      {disabled && <em className={styles.contextInfo}>Disabled</em>}
+    <>
+      <div className={styles.wrapper}>
+        {!isEditing && (
+          <button
+            className={styles.queryNameWrapper}
+            aria-label={selectors.components.QueryEditorRow.title(query.refId)}
+            title="Edit query name"
+            onClick={onEditQuery}
+            data-testid="query-name-div"
+          >
+            <span className={styles.queryName}>{query.refId}</span>
+            <Icon name="pen" className={styles.queryEditIcon} size="sm" />
+          </button>
+        )}
+
+        {isEditing && (
+          <>
+            <Input
+              type="text"
+              defaultValue={query.refId}
+              onBlur={onEditQueryBlur}
+              autoFocus
+              onKeyDown={onKeyDown}
+              onFocus={onFocus}
+              invalid={validationError !== null}
+              onChange={onInputChange}
+              className={styles.queryNameInput}
+              data-testid="query-name-input"
+            />
+            {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
+          </>
+        )}
+        {renderDataSource(props, styles)}
+        {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
+        {disabled && <em className={styles.contextInfo}>Disabled</em>}
+      </div>
 
       {collapsedText && (
         <div className={styles.collapsedText} onClick={onClick}>
           {collapsedText}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -143,44 +146,37 @@ const renderDataSource = <TQuery extends DataQuery>(
 const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
+      label: Wrapper;
       display: flex;
       align-items: center;
-      flex-grow: 1;
       margin-left: ${theme.spacing.xs};
-      overflow: hidden;
+    `,
+    queryNameWrapper: css`
+      display: flex;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: ${theme.border.radius.md};
+      align-items: center;
+      padding: 0 0 0 ${theme.spacing.xs};
+      margin: 0;
+      background: transparent;
 
       &:hover {
-        .query-name-wrapper {
-          background: ${theme.colors.bg3};
-          border: 1px dashed ${theme.colors.border3};
-        }
+        background: ${theme.colors.bg3};
+        border: 1px dashed ${theme.colors.border3};
+      }
 
+      &:focus {
+        border: 2px solid ${theme.colors.formInputBorderActive};
+      }
+
+      &:hover,
+      &:focus {
         .query-name-edit-icon {
           visibility: visible;
         }
       }
     `,
-    queryNameWrapper: cx(
-      css`
-        display: flex;
-        cursor: pointer;
-        border: 1px solid transparent;
-        border-radius: ${theme.border.radius.md};
-        align-items: center;
-        padding: 0 0 0 ${theme.spacing.xs};
-        margin: 0;
-        background: transparent;
-
-        &:focus {
-          border: 2px solid ${theme.colors.formInputBorderActive};
-
-          .query-name-edit-icon {
-            visibility: visible;
-          }
-        }
-      `,
-      'query-name-wrapper'
-    ),
     queryName: css`
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.textBlue};
@@ -207,10 +203,8 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
       overflow: hidden;
       font-style: italic;
-      overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      min-width: 0;
     `,
     contextInfo: css`
       font-size: ${theme.typography.size.sm};

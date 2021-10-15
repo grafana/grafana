@@ -95,6 +95,9 @@ func (r RoleDTO) GetDisplayName() string {
 	if r.IsFixed() && r.DisplayName == "" {
 		r.DisplayName = fallbackDisplayName(r.Name)
 	}
+	if r.DisplayName == "" {
+		return r.Name
+	}
 	return r.DisplayName
 }
 
@@ -138,6 +141,12 @@ func (p Permission) OSSPermission() Permission {
 		Action: p.Action,
 		Scope:  p.Scope,
 	}
+}
+
+// ScopeParams holds the parameters used to fill in scope templates
+type ScopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
 }
 
 const (

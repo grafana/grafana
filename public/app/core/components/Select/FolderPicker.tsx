@@ -27,6 +27,8 @@ export interface Props {
    * initialFolderId needs to have an value > -1 or an error will be thrown.
    */
   skipInitialLoad?: boolean;
+  /** The id of the search input. Use this to set a matching label with htmlFor */
+  inputId?: string;
 }
 
 interface State {
@@ -169,11 +171,13 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew } = this.props;
+    const { enableCreateNew, inputId } = this.props;
 
     return (
       <div aria-label={selectors.components.FolderPicker.container}>
         <AsyncSelect
+          inputId={inputId}
+          aria-label={selectors.components.FolderPicker.input}
           menuShouldPortal
           loadingMessage="Loading folders..."
           defaultOptions

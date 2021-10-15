@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -44,7 +45,7 @@ func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
 		bus := bus.New()
 		usMock := &usagestats.UsageStatsMock{T: t}
-		engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, setting.NewCfg())
+		engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
 		setting.AlertingEvaluationTimeout = 30 * time.Second
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3

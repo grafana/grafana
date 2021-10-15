@@ -39,7 +39,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
 
     // now replace panel to get current edits
     model.panels = model.panels.map((dashPanel) => {
-      return dashPanel.id === panel.editSourceId ? panel.getSaveModel() : dashPanel;
+      return dashPanel.id === panel.id ? panel.getSaveModel() : dashPanel;
     });
 
     const payload = { dashboard: model, panelId: panel.id };

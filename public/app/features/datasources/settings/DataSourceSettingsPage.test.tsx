@@ -44,6 +44,7 @@ const getProps = (): Props => ({
   page: null,
   plugin: null,
   loadError: null,
+  loading: false,
   testingStatus: {},
 });
 
@@ -57,6 +58,7 @@ describe('Render', () => {
   it('should render loading if datasource is not ready', () => {
     const mockProps = getProps();
     mockProps.dataSource.id = 0;
+    mockProps.loading = true;
 
     render(<DataSourceSettingsPage {...mockProps} />);
 

@@ -40,6 +40,8 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@monaco-editor/react": "4.2.2",
     "@popperjs/core": "2.5.4",
+    "@react-aria/focus": "3.4.1",
+    "@react-aria/overlays": "3.7.2",
     "@sentry/browser": "5.25.0",
     "ansicolor": "1.1.95",
     "classnames": "2.2.6",
@@ -73,6 +75,7 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
+    "tslib": "2.3.1",
     "uplot": "1.6.16"
   },
   "devDependencies": {
@@ -90,7 +93,7 @@
     "@testing-library/jest-dom": "5.11.9",
     "@types/classnames": "2.2.7",
     "@types/common-tags": "^1.8.0",
-    "@types/d3": "5.7.2",
+    "@types/d3": "7.0.0",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "26.0.15",
@@ -99,7 +102,7 @@
     "@types/mock-raf": "1.0.2",
     "@types/node": "10.14.1",
     "@types/papaparse": "5.2.0",
-    "@types/react": "16.9.9",
+    "@types/react": "17.0.30",
     "@types/react-beautiful-dnd": "13.1.1",
     "@types/react-calendar": "^3.4.3",
     "@types/react-color": "3.0.1",
@@ -112,7 +115,10 @@
     "@types/slate": "0.47.2",
     "@types/slate-react": "0.22.5",
     "@types/tinycolor2": "1.4.1",
+    "@wojtekmaj/enzyme-adapter-react-17": "0.6.2",
     "common-tags": "^1.8.0",
+    "csstype": "3.0.9",
+    "enzyme": "3.11.0",
     "mock-raf": "1.0.1",
     "react-docgen-typescript-loader": "3.7.2",
     "react-test-renderer": "17.0.1",
@@ -126,8 +132,5 @@
     "typescript": "4.4.3",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
-  "types": "src/index.ts",
-  "volta": {
-    "extends": "../../package.json"
-  }
+  "types": "src/index.ts"
 }

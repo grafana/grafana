@@ -70,7 +70,7 @@ export default class Api {
 
   post(data: Record<string, any>): Observable<FetchResponse<PostResponse>> {
     return getBackendSrv().fetch<PostResponse>({
-      url: '/api/tsdb/query',
+      url: '/api/ds/query',
       method: 'POST',
       data,
     });

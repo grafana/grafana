@@ -74,7 +74,11 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
                   ) : null}
                 </td>
                 <td style={{ width: '1%' }}>
-                  <DeleteButton size="sm" onConfirm={() => onDelete(idx)} />
+                  <DeleteButton
+                    size="sm"
+                    onConfirm={() => onDelete(idx)}
+                    aria-label={`Delete query with title "${annotation.name}"`}
+                  />
                 </td>
               </tr>
             ))}

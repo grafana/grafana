@@ -11,7 +11,7 @@ import { CatalogPlugin, PluginTabIds, RequestStatus, ReducerState } from '../typ
 import * as api from '../api';
 import { fetchRemotePlugins } from '../state/actions';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => {
@@ -51,10 +51,12 @@ const renderPluginDetails = (
   });
 
   return render(
-    <Provider store={store}>
-      <PluginDetailsPage {...props} />
-    </Provider>,
-    { wrapper: MemoryRouter }
+    <MemoryRouter>
+      <Provider store={store}>
+        <PluginDetailsPage {...props} />
+      </Provider>
+      ,
+    </MemoryRouter>
   );
 };
 
@@ -97,10 +99,12 @@ describe('Plugin details page', () => {
     });
     const store = configureStore();
     const { queryByText } = render(
-      <Provider store={store}>
-        <PluginDetailsPage {...props} />
-      </Provider>,
-      { wrapper: MemoryRouter }
+      <MemoryRouter>
+        <Provider store={store}>
+          <PluginDetailsPage {...props} />
+        </Provider>
+        ,
+      </MemoryRouter>
     );
 
     await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
@@ -115,7 +119,6 @@ describe('Plugin details page', () => {
   it('should display the number of downloads in the header', async () => {
     const downloads = 24324;
     const { queryByText } = renderPluginDetails({ id, downloads });
-
     await waitFor(() => expect(queryByText(new Intl.NumberFormat().format(downloads))).toBeInTheDocument());
   });
 
@@ -375,5 +378,54 @@ describe('Plugin details page', () => {
     // TODO<Import these texts from a single source of truth instead of having them defined in multiple places>
     const message = 'The install controls have been disabled because the Grafana server cannot access grafana.com.';
     expect(rendered.getByText(message)).toBeInTheDocument();
+  });
+
+  it('should display post installation step for installed data source plugins', async () => {
+    const name = 'Akumuli';
+    const { queryByText } = renderPluginDetails({
+      name,
+      isInstalled: true,
+      type: PluginType.datasource,
+    });
+
+    await waitFor(() => queryByText('Uninstall'));
+    expect(queryByText(`Create a ${name} data source`)).toBeInTheDocument();
+  });
+
+  it('should not display post installation step for disabled data source plugins', async () => {
+    const name = 'Akumuli';
+    const { queryByText } = renderPluginDetails({
+      name,
+      isInstalled: true,
+      isDisabled: true,
+      type: PluginType.datasource,
+    });
+
+    await waitFor(() => queryByText('Uninstall'));
+    expect(queryByText(`Create a ${name} data source`)).toBeNull();
+  });
+
+  it('should not display post installation step for panel plugins', async () => {
+    const name = 'Akumuli';
+    const { queryByText } = renderPluginDetails({
+      name,
+      isInstalled: true,
+      type: PluginType.panel,
+    });
+
+    await waitFor(() => queryByText('Uninstall'));
+    expect(queryByText(`Create a ${name} data source`)).toBeNull();
+  });
+
+  it('should not display post installation step for app plugins', async () => {
+    const name = 'Akumuli';
+    const { queryByText } = renderPluginDetails({
+      name,
+      isInstalled: true,
+      type: PluginType.app,
+    });
+
+    await waitFor(() => queryByText('Uninstall'));
+    expect(queryByText(`Create a ${name} data source`)).toBeNull();
   });
 });

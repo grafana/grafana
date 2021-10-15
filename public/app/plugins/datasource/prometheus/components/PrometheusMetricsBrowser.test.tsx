@@ -133,6 +133,9 @@ describe('PrometheusMetricsBrowser', () => {
       onChange: () => {},
       autoSelect: 0,
       languageProvider: (mockLanguageProvider as unknown) as PromQlLanguageProvider,
+      lastUsedLabels: [],
+      storeLastUsedLabels: () => {},
+      deleteLastUsedLabels: () => {},
     };
 
     return defaults;
@@ -270,7 +273,7 @@ describe('PrometheusMetricsBrowser', () => {
     await screen.findByLabelText('Values for label2');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(4);
     // Typing '1' to filter for values
-    await userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
+    userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
     expect(screen.getByLabelText('Filter expression for label values')).toHaveValue('1');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(3);
     expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument();

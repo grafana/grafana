@@ -17,17 +17,17 @@ const (
 )
 
 // API related scopes
-const (
-	ScopeProvisionersAll           = "provisioners:*"
-	ScopeProvisionersDashboards    = "provisioners:dashboards"
-	ScopeProvisionersPlugins       = "provisioners:plugins"
-	ScopeProvisionersDatasources   = "provisioners:datasources"
-	ScopeProvisionersNotifications = "provisioners:notifications"
+var (
+	ScopeProvisionersAll           = accesscontrol.Scope("provisioners", "*")
+	ScopeProvisionersDashboards    = accesscontrol.Scope("provisioners", "dashboards")
+	ScopeProvisionersPlugins       = accesscontrol.Scope("provisioners", "plugins")
+	ScopeProvisionersDatasources   = accesscontrol.Scope("provisioners", "datasources")
+	ScopeProvisionersNotifications = accesscontrol.Scope("provisioners", "notifications")
 
-	ScopeDatasourcesAll = `datasources:*`
-	ScopeDatasourceID   = `datasources:id:{{ index . ":id" }}`
-	ScopeDatasourceUID  = `datasources:uid:{{ index . ":uid" }}`
-	ScopeDatasourceName = `datasources:name:{{ index . ":name" }}`
+	ScopeDatasourcesAll = accesscontrol.Scope("datasources", "*")
+	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
+	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
+	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
