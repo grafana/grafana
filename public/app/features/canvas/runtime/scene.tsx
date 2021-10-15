@@ -31,7 +31,6 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 
 export class Scene {
-  readonly initTime = Date.now();
   private lookup = new Map<number, ElementState>();
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
@@ -44,23 +43,15 @@ export class Scene {
   height = 0;
   style: CSSProperties = {};
   data?: PanelData;
-  selecto?: Selecto | null;
+  selecto?: Selecto;
+  moveable?: Moveable;
   div?: HTMLDivElement;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg);
   }
 
-  // Called when the component unmounts
-  destroy() {
-    console.log('Calling destroy', this.initTime);
-    if (this.selecto) {
-      this.selecto.destroy();
-    }
-  }
-
   load(cfg: CanvasGroupOptions) {
-    console.log('LOAD', this.initTime, cfg, this);
     this.root = new RootElement(
       cfg ?? {
         type: 'group',
@@ -75,9 +66,9 @@ export class Scene {
       this.lookup.set(v.UID, v);
     });
 
-    if (this.div) {
-      this.initMoveable(this.div);
-    }
+    setTimeout(() => {
+      this.initMoveable();
+    }, 100);
     return this.root;
   }
 
@@ -98,6 +89,12 @@ export class Scene {
     this.height = height;
     this.style = { width, height };
     this.root.updateSize(width, height);
+
+    const numberOfCurrentSelectedTargets = this?.selecto?.getSelectedTargets()?.length ?? 0;
+    if (numberOfCurrentSelectedTargets > 0) {
+      let event: MouseEvent = new MouseEvent('click');
+      this?.selecto?.clickTarget(event, this.div);
+    }
   }
 
   onChange(uid: number, cfg: CanvasElementOptions) {
@@ -156,26 +153,27 @@ export class Scene {
     return this.root.elements.find((element) => element.div === target);
   };
 
-  initMoveable = (sceneContainer: HTMLDivElement) => {
-    console.log('Calling destroy', this.initTime);
-    this.div = sceneContainer;
-    if (this.selecto) {
-      console.log('TODO? clear existing selection???', this.initTime);
-      this.selecto.destroy();
+  setRef = (sceneContainer: HTMLDivElement) => {
+    if (this.div) {
+      console.log('destroy moveable?');
     }
 
+    this.div = sceneContainer;
+  };
+
+  initMoveable = () => {
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
     });
 
     this.selecto = new Selecto({
-      container: sceneContainer,
+      container: this.div,
       selectableTargets: targetElements,
       selectByClick: true,
     });
 
-    const moveable = new Moveable(sceneContainer, {
+    this.moveable = new Moveable(this.div!, {
       draggable: true,
       resizable: true,
     })
@@ -212,7 +210,7 @@ export class Scene {
       const selectedTarget = event.inputEvent.target;
 
       const isTargetMoveableElement =
-        moveable.isMoveableElement(selectedTarget) ||
+        this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
       if (isTargetMoveableElement) {
@@ -221,7 +219,7 @@ export class Scene {
       }
     }).on('selectEnd', (event) => {
       targets = event.selected;
-      moveable.target = targets;
+      this.moveable!.target = targets;
 
       const s = event.selected.map((t) => this.findElementByTarget(t)!);
       this.selection.next(s);
@@ -229,9 +227,8 @@ export class Scene {
 
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
-
         setTimeout(() => {
-          moveable.dragStart(event.inputEvent);
+          this.moveable!.dragStart(event.inputEvent);
         });
       }
     });
@@ -239,7 +236,7 @@ export class Scene {
 
   render() {
     return (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.initMoveable}>
+      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
       </div>
     );

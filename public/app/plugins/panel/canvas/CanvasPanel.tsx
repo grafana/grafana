@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { CoreApp, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
@@ -45,7 +45,6 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
-          console.log('EXIT editor!!!');
         }
       })
     );
@@ -75,7 +74,6 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.subs.unsubscribe();
-    this.scene.destroy();
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -105,7 +103,6 @@ export class CanvasPanel extends Component<Props, State> {
 
     // After editing, the options are valid, but the scene was in a different panel
     if (this.needsReload && this.props.options !== nextProps.options) {
-      console.log('reloading canvas (after panel edit?)');
       this.needsReload = false;
       this.scene.load(nextProps.options.root);
       this.scene.updateSize(nextProps.width, nextProps.height);
