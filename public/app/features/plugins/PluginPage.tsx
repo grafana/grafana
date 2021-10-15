@@ -492,21 +492,27 @@ export function getLoadingNav(): NavModel {
 
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);
+  let result: GrafanaPlugin | undefined;
 
   if (info.type === PluginType.app) {
-    return importAppPlugin(info) as Promise<GrafanaPlugin>;
+    result = await importAppPlugin(info);
   }
   if (info.type === PluginType.datasource) {
-    return importDataSourcePlugin(info) as Promise<GrafanaPlugin>;
+    result = await importDataSourcePlugin(info);
   }
   if (info.type === PluginType.panel) {
-    return (importPanelPluginFromMeta(info as PanelPluginMeta) as unknown) as Promise<GrafanaPlugin>;
+    const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
+    result = (panelPlugin as unknown) as GrafanaPlugin;
   }
   if (info.type === PluginType.renderer) {
-    return { meta: info } as GrafanaPlugin;
+    result = { meta: info } as GrafanaPlugin;
   }
 
-throw new Error('Unknown Plugin type: ' + info.type);
+  if (!result) {
+    throw new Error('Unknown Plugin type: ' + info.type);
+  }
+
+  return result;
 }
 
 type PluginSignatureDetailsBadgeProps = {
