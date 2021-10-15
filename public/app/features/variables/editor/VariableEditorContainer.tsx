@@ -85,10 +85,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             </a>
             {this.props.idInEditor && (
               <span>
-                <Icon
-                  name="angle-right"
-                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.modeLabelEdit}
-                />
+                <Icon name="angle-right" />
                 Edit
               </span>
             )}
