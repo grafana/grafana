@@ -107,8 +107,9 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue('First/Second')).toBeInTheDocument();
   });
@@ -129,8 +130,9 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
   });
@@ -141,8 +143,9 @@ describe('Cascader', () => {
     );
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
@@ -151,8 +154,9 @@ describe('Cascader', () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
     userEvent.click(screen.getByPlaceholderText(placeholder));
-    userEvent.click(screen.getByText('First'));
-    userEvent.click(screen.getByText('Second'));
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(screen.getByText('First'), undefined, { skipPointerEventsCheck: true });
+    userEvent.click(screen.getByText('Second'), undefined, { skipPointerEventsCheck: true });
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });

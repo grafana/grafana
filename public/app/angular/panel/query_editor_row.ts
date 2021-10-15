@@ -31,7 +31,7 @@ function queryEditorRowDirective() {
     controller: QueryRowCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    templateUrl: 'public/app/features/panel/partials/query_editor_row.html',
+    templateUrl: 'public/app/angular/panel/partials/query_editor_row.html',
     transclude: true,
     scope: {
       queryCtrl: '=',

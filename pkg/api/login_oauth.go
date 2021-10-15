@@ -24,8 +24,12 @@ import (
 )
 
 var (
-	oauthLogger          = log.New("oauth")
+	oauthLogger = log.New("oauth")
+)
+
+const (
 	OauthStateCookieName = "oauth_state"
+	OauthPKCECookieName  = "oauth_code_verifier"
 )
 
 func GenStateString() (string, error) {
@@ -35,6 +39,32 @@ func GenStateString() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(rnd), nil
+}
+
+// genPKCECode returns a random URL-friendly string and it's base64 URL encoded SHA256 digest.
+func genPKCECode() (string, string, error) {
+	// IETF RFC 7636 specifies that the code verifier should be 43-128
+	// characters from a set of unreserved URI characters which is
+	// almost the same as the set of characters in base64url.
+	// https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+	//
+	// It doesn't hurt to generate a few more bytes here, we generate
+	// 96 bytes which we then encode using base64url to make sure
+	// they're within the set of unreserved characters.
+	//
+	// 96 is chosen because 96*8/6 = 128, which means that we'll have
+	// 128 characters after it has been base64 encoded.
+	raw := make([]byte, 96)
+	_, err := rand.Read(raw)
+	if err != nil {
+		return "", "", err
+	}
+	ascii := make([]byte, 128)
+	base64.RawURLEncoding.Encode(ascii, raw)
+
+	shasum := sha256.Sum256(ascii)
+	pkce := base64.RawURLEncoding.EncodeToString(shasum[:])
+	return string(ascii), pkce, nil
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
@@ -71,6 +101,26 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	code := ctx.Query("code")
 	if code == "" {
+		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
+
+		if provider.UsePKCE {
+			ascii, pkce, err := genPKCECode()
+			if err != nil {
+				ctx.Logger.Error("Generating PKCE failed", "error", err)
+				hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+					HttpStatus:    http.StatusInternalServerError,
+					PublicMessage: "An internal error occurred",
+				})
+			}
+
+			cookies.WriteCookie(ctx.Resp, OauthPKCECookieName, ascii, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+
+			opts = append(opts,
+				oauth2.SetAuthURLParam("code_challenge", pkce),
+				oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+			)
+		}
+
 		state, err := GenStateString()
 		if err != nil {
 			ctx.Logger.Error("Generating state string failed", "err", err)
@@ -83,11 +133,11 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 		hashedState := hashStatecode(state, provider.ClientSecret)
 		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
-		if provider.HostedDomain == "" {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
-		} else {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", provider.HostedDomain), oauth2.AccessTypeOnline))
+		if provider.HostedDomain != "" {
+			opts = append(opts, oauth2.SetAuthURLParam("hd", provider.HostedDomain))
 		}
+
+		ctx.Redirect(connect.AuthCodeURL(state, opts...))
 		return
 	}
 
@@ -125,9 +175,18 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
+	opts := []oauth2.AuthCodeOption{}
+
+	codeVerifier := ctx.GetCookie(OauthPKCECookieName)
+	cookies.DeleteCookie(ctx.Resp, OauthPKCECookieName, hs.CookieOptionsFromCfg)
+	if codeVerifier != "" {
+		opts = append(opts,
+			oauth2.SetAuthURLParam("code_verifier", codeVerifier),
+		)
+	}
 
 	// get token from provider
-	token, err := connect.Exchange(oauthCtx, code)
+	token, err := connect.Exchange(oauthCtx, code, opts...)
 	if err != nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
