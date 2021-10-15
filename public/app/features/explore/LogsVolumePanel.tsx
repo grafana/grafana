@@ -53,15 +53,13 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  const zoomLevel = logsLevelZoomRatio(logsVolumeData, absoluteRange);
+  const zoomRatio = logsLevelZoomRatio(logsVolumeData, absoluteRange);
   let zoomLevelInfo;
 
-  if (zoomLevel !== undefined && zoomLevel < 1) {
+  if (zoomRatio !== undefined && zoomRatio < 1) {
     zoomLevelInfo = (
       <>
-        <span className={styles.zoomInfo}>
-          Logs volume zoom ~ {(zoomLevel * 100).toFixed(0)}%. Reload to show higher resolution
-        </span>
+        <span className={styles.zoomInfo}>Reload to show higher resolution</span>
         <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
       </>
     );
