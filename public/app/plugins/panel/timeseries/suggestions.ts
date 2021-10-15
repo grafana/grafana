@@ -21,6 +21,7 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
     },
     previewModifier: (s) => {
       s.options!.legend.displayMode = LegendDisplayMode.Hidden;
+      s.fieldConfig!.defaults.custom!.lineWidth = 4;
     },
   });
 

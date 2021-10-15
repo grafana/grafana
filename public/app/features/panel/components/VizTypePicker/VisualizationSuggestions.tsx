@@ -41,6 +41,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridGap: theme.spacing(0.5),
       gridTemplateColumns: 'repeat(auto-fill, 144px)',
       marginBottom: theme.spacing(1),
+      justifyContent: 'space-evenly',
     }),
   };
 };
