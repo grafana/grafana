@@ -87,19 +87,16 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"input",
 	}
 
-	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
 	panelPlugins := make(map[string]struct{})
 	for _, p := range pm.Plugins(plugins.Panel) {
 		panelPlugins[p.ID] = struct{}{}
 	}
 
-	assert.Equal(t, len(pm.Plugins(plugins.DataSource)), len(dataSources))
 	dsPlugins := make(map[string]struct{})
 	for _, p := range pm.Plugins(plugins.DataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 
-	assert.Equal(t, len(pm.Plugins(plugins.DataSource))+len(pm.Plugins(plugins.Panel)), len(pm.Routes()))
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
 	for _, r := range pm.Routes() {
 		pluginRoutes[r.PluginID] = r
@@ -112,6 +109,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, p)
 		assert.True(t, strings.HasPrefix(pluginRoutes[p].Directory, pm.Plugin(p).PluginDir))
 	}
+	assert.Equal(t, len(pm.Plugins(plugins.Panel)), len(panels))
 
 	for _, ds := range dataSources {
 		assert.NotNil(t, pm.Plugin(ds))
@@ -120,6 +118,8 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.Contains(t, pluginRoutes, ds)
 		assert.True(t, strings.HasPrefix(pluginRoutes[ds].Directory, pm.Plugin(ds).PluginDir))
 	}
+	assert.Equal(t, len(pm.Plugins(plugins.DataSource)), len(dataSources))
+	assert.Equal(t, len(pm.Plugins(plugins.DataSource))+len(pm.Plugins(plugins.Panel)), len(pm.Routes()))
 }
 
 func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
