@@ -74,7 +74,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
 
     // Should call onChange when selecting an already existing option
     userEvent.click(option1);
-    expect(onChange).toHaveBeenCalledWith('Option 1');
+    expect(onChange).toHaveBeenCalledWith({ value: 'Option 1', label: 'Option 1' });
 
     userEvent.click(input);
 
