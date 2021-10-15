@@ -1,12 +1,33 @@
 {
   "__inputs": [
     {
-      "name": "AZ_MON",
+      "name": "DS_AZURE_MONITOR",
       "label": "Azure Monitor",
       "description": "",
       "type": "datasource",
       "pluginId": "grafana-azure-monitor-datasource",
       "pluginName": "Azure Monitor"
+    }
+  ],
+  "__elements": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.3.0-pre"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-azure-monitor-datasource",
+      "name": "Azure Monitor",
+      "version": "0.3.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
     }
   ],
   "annotations": {
@@ -28,16 +49,18 @@
       }
     ]
   },
+  "description": "A summary of all alerts for the subscription and other filters selected",
   "editable": true,
+  "fiscalYearStartMonth": 0,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 59,
-  "iteration": 1633448629564,
+  "id": null,
+  "iteration": 1634314135767,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": "${AZ_MON}",
+      "datasource": "${DS_AZURE_MONITOR}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -382,12 +405,8 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "RTD-Experimental",
-          "value": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
-        },
-        "datasource": "${AZ_MON}",
+        "current": {},
+        "datasource": "${DS_AZURE_MONITOR}",
         "definition": "subscriptions()",
         "description": null,
         "error": null,
@@ -406,12 +425,8 @@
       },
       {
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "development",
-          "value": "development"
-        },
-        "datasource": "Azure Monitor",
+        "current": {},
+        "datasource": "${DS_AZURE_MONITOR}",
         "definition": "ResourceGroups($sub)",
         "description": null,
         "error": null,
@@ -552,7 +567,7 @@
     "refresh_intervals": ["30m", "1h", "12h", "24h", "3d", "7d", "30d"]
   },
   "timezone": "",
-  "title": "Alert consumption",
+  "title": "Azure Alert Consumption",
   "uid": "5DLst5N7k",
-  "version": 2
+  "version": 1
 }
