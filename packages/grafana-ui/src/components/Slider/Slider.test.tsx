@@ -26,4 +26,14 @@ describe('Slider', () => {
     expect(wrapper.html()).not.toContain('aria-valuenow="20"');
     expect(wrapper.html()).not.toContain('aria-valuenow="10"');
   });
+
+  it('allows for custom values to be set in the input', () => {
+    console.log('something');
+    const wrapper = mount(<Slider {...sliderProps} value={10} min={10} max={100} />);
+    const sliderInput = wrapper.find('input');
+    sliderInput.simulate('focus');
+    sliderInput.simulate('change', { target: { value: 50 } });
+    sliderInput.simulate('blur');
+    expect(wrapper.html()).toContain('aria-valuenow="50"');
+  });
 });
