@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { ExploreId } from '../../types';
 import { DataQueryResponse, LoadingState } from '@grafana/data';
 
 jest.mock('./ExploreGraph', () => {
@@ -14,8 +13,6 @@ jest.mock('./ExploreGraph', () => {
 function renderPanel(logsVolumeData?: DataQueryResponse) {
   render(
     <LogsVolumePanel
-      exploreId={ExploreId.left}
-      loadLogsVolumeData={() => {}}
       absoluteRange={{ from: 0, to: 1 }}
       timeZone="timeZone"
       splitOpen={() => {}}

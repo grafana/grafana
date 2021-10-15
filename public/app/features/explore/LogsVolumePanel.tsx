@@ -2,12 +2,9 @@ import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone
 import { Alert, Button, Collapse, TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
 import React from 'react';
-import { ExploreId } from '../../types';
 import { css } from '@emotion/css';
 
 type Props = {
-  exploreId: ExploreId;
-  loadLogsVolumeData: (exploreId: ExploreId) => void;
   logsVolumeData?: DataQueryResponse;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;

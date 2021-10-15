@@ -219,8 +219,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <LogsVolumePanel
-        exploreId={exploreId}
-        loadLogsVolumeData={loadLogsVolumeData}
         absoluteRange={absoluteRange}
         width={width}
         logsVolumeData={logsVolumeData}
