@@ -45,7 +45,7 @@ export enum PluginErrorCode {
 
 /** Describes error returned from Grafana plugins API call */
 export interface PluginError {
-  status: PluginErrorCode;
+  errorCode: PluginErrorCode;
   pluginId: string;
 }
 

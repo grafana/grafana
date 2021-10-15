@@ -64,7 +64,7 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
               <HorizontalGroup spacing="sm" justify="flex-start" align="center">
                 <strong>{e.pluginId}</strong>
                 <PluginSignatureBadge
-                  status={mapPluginErrorCodeToSignatureStatus(e.status)}
+                  status={mapPluginErrorCodeToSignatureStatus(e.errorCode)}
                   className={css`
                     margin-top: 0;
                   `}

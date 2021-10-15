@@ -98,7 +98,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isDev: false,
     isEnterprise: status === 'enterprise',
     type: typeCode,
-    error: error?.status,
+    error: error?.errorCode,
   };
   return catalogPlugin;
 }
@@ -136,7 +136,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDev: Boolean(dev),
     isEnterprise: false,
     type,
-    error: error?.status,
+    error: error?.errorCode,
   };
 }
 
@@ -185,7 +185,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version,
-    error: error?.status,
+    error: error?.errorCode,
   };
 }
 
