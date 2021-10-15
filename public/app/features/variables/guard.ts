@@ -8,7 +8,6 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   MetricFindValue,
-  QueryEditorProps,
   StandardVariableQuery,
   StandardVariableSupport,
   VariableModel,
@@ -86,7 +85,7 @@ interface DataSourceWithCustomVariableSupport<
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     getType(): VariableSupportType;
-    editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
+    editor: VariableQueryEditorType;
     query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
   };
 }
@@ -184,7 +183,7 @@ export function isQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions, any>> {
+): component is VariableQueryEditorType {
   if (!component) {
     return false;
   }

@@ -5,20 +5,20 @@ weight = 110
 
 # Grafana alerts
 
-Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
+Alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
-Grafana 8.0 has new and improved alerts that centralizes alerting information for Grafana managed alerts as well as alerts from Prometheus-compatible data sources into one user interface and API.
+Grafana 8.0 has new and improved alerts that centralize alerting information for Grafana managed alerts as well as alerts from Prometheus-compatible data sources into one user interface and API.
 
-> **Note:** Grafana 8 alerts is an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
+> **Note:** Grafana 8 alerts are an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "./old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana 8 alerts.
 
 Alerts have four main components:
 
-- Alerting rule - One or more query and/or expression, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert.
+- Alerting rule - One or more queries and/or expressions, conditions, evaluation frequencies, and the (optional) duration that a condition must be met before creating an alert.
 - Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
 - Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
 - Silences - Date and matching criteria used to silence notifications.
 
-You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts, as well as see alerting information from Prometheus-compatible data sources, in a single searchable view. For more information on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
 For handling notifications for Grafana managed alerts, we use an embedded alert manager. You can configure its contact points, notification policies, silences, and templates from the new Grafana alerting UI by selecting `Grafana` from the Alertmanager dropdown on the top of the respective tab.
 
