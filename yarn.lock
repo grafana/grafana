@@ -2406,7 +2406,7 @@ __metadata:
     "@types/marked": 1.1.0
     "@types/node": 10.14.1
     "@types/papaparse": 5.2.0
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/rollup-plugin-visualizer": 2.6.0
     "@types/sinon": ^10.0.4
     date-fns: 2.21.3
@@ -2598,7 +2598,7 @@ __metadata:
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
     "@types/rimraf": ^2.0.3
-    "@types/semver": ^6.0.0
+    "@types/semver": ^7.0.0
     "@types/tmp": ^0.1.0
     "@types/webpack": 4.41.7
     axios: 0.21.2
@@ -2707,7 +2707,7 @@ __metadata:
     "@types/mock-raf": 1.0.2
     "@types/node": 10.14.1
     "@types/papaparse": 5.2.0
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-calendar": ^3.4.3
     "@types/react-color": 3.0.1
@@ -2847,7 +2847,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/lodash": ^4.14.123
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/react-icons": 2.2.7
     "@types/recompose": ^0.30.7
     "@types/slate-react": 0.22.5
@@ -3174,10 +3174,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.42":
-  version: 0.0.42
-  resolution: "@kusto/language-service-next@npm:0.0.42"
-  checksum: 57cab545a236f4d242a2fe86b1353c8125f7773a96eea638367a9a939e49b55d59b9cb96cf1b0230ed22c73092358980981272da00f0957526f7ee2fb4e13733
+"@kusto/language-service-next@npm:0.0.51":
+  version: 0.0.51
+  resolution: "@kusto/language-service-next@npm:0.0.51"
+  checksum: 0400f88b0d201288eb888fc9c48984b7ae4b0f12fe24d9959d0e5bd003f0efa6a0882d047fd31166c23f6d467ee21351ab325a8efaa4b89bff50546c3fc514f4
   languageName: node
   linkType: hard
 
@@ -3188,15 +3188,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:3.2.7":
-  version: 3.2.7
-  resolution: "@kusto/monaco-kusto@npm:3.2.7"
+"@kusto/monaco-kusto@npm:4.0.6":
+  version: 4.0.6
+  resolution: "@kusto/monaco-kusto@npm:4.0.6"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
-    "@kusto/language-service-next": 0.0.42
+    "@kusto/language-service-next": 0.0.51
   peerDependencies:
-    monaco-editor: ^0.20.0
-  checksum: 14033eff1386dff2d21731f22b442eaf2794daf2511d9419056afe1269a676a7b85a797e2867b3a567e87004e255f15f2630ca1675ab68b815f5cc5561717ec5
+    monaco-editor: ^0.24.0
+  checksum: 62a775904e65a42d174e402ffffb880b100e6bd2afd355fa6f46a878a6c9471f9b61364e4e528e626bfa3091fe51d023b33f21d6ad904caffe68cd82fb4149e9
   languageName: node
   linkType: hard
 
@@ -6651,14 +6651,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:^12.1.3":
-  version: 12.8.3
-  resolution: "@testing-library/user-event@npm:12.8.3"
+"@testing-library/user-event@npm:13.3.0":
+  version: 13.3.0
+  resolution: "@testing-library/user-event@npm:13.3.0"
   dependencies:
     "@babel/runtime": ^7.12.5
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: c9fb5ee07cbe79ddf32d81e1a353e556d02a1f1619456ccfad6abcdf1b7db400fdc9d7a8e0be3994f456e7135a0dfb7fa10b29fb98a0f5fc417b99fce0ce8166
+  checksum: 0d17c47728aec71343fc4a8d8b594224c3031513ab59d5797695c53fdfcebef87797a7935ede68c0af896127b2a995e2feb20e64cbd0cd2b2af3f5240241af91
   languageName: node
   linkType: hard
 
@@ -8129,13 +8129,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react@npm:16.9.9"
+"@types/react@npm:17.0.30":
+  version: 17.0.30
+  resolution: "@types/react@npm:17.0.30"
   dependencies:
     "@types/prop-types": "*"
-    csstype: ^2.2.0
-  checksum: a44ad6338989161b4da02b1d0da6efe31a50e78bd747525402c953110736e0567f54148743f1399bd58e2874866bcd9c56961893c791d0cdc11df5b955c78382
+    "@types/scheduler": "*"
+    csstype: ^3.0.2
+  checksum: e3aaac1b8fda6e3622b75db0bd7d8dc412c2f2b77a00afdd32cae8c71fb0b1ca6926ab1fbe1c536dd51d96c0ba372738993837a8df1637637aaab7b86e421b7f
   languageName: node
   linkType: hard
 
@@ -8225,10 +8226,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:^6.0.0":
-  version: 6.2.3
-  resolution: "@types/semver@npm:6.2.3"
-  checksum: 83c86d7005b229df9c4c0d6d13825b839a01932895504596140aea19e2b88f63ac27ab1575347451b50eedb63f72309e845ce1a0ca78360c4f719bbb38371594
+"@types/semver@npm:7.3.8, @types/semver@npm:^7.0.0":
+  version: 7.3.8
+  resolution: "@types/semver@npm:7.3.8"
+  checksum: bc90f5a9d5430e36f766c08c898e3c28af88830ebc7736baef8ffc74783bad2efb32f29c40d450e85fc341847ee74e2dd97b76cfc7da407e4232ba9ecae4ff9c
   languageName: node
   linkType: hard
 
@@ -13511,7 +13512,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^2.2.0, csstype@npm:^2.5.7":
+"csstype@npm:^2.5.7":
   version: 2.6.18
   resolution: "csstype@npm:2.6.18"
   checksum: 1d6d67bc7f55af976d7a9cb153d61867d6c84eb0d69733165d2d4f10c659e7647a1e7a19859acacbf0120552164b8ff1a4ffef45a435aa37a4ff2f09e5b0bcf7
@@ -17812,7 +17813,7 @@ fsevents@~2.1.2:
     "@grafana/tsconfig": ^1.0.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 3.2.7
+    "@kusto/monaco-kusto": 4.0.6
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.23.0
     "@opentelemetry/semantic-conventions": 1.0.0
@@ -17825,7 +17826,7 @@ fsevents@~2.1.2:
     "@testing-library/jest-dom": 5.11.5
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": ^3.2.1
-    "@testing-library/user-event": ^12.1.3
+    "@testing-library/user-event": 13.3.0
     "@types/angular": 1.6.56
     "@types/angular-route": 1.7.0
     "@types/classnames": 2.2.9
@@ -17853,7 +17854,7 @@ fsevents@~2.1.2:
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.0
     "@types/rc-time-picker": ^3
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-dom": 16.9.9
     "@types/react-grid-layout": 1.1.1
@@ -17868,7 +17869,7 @@ fsevents@~2.1.2:
     "@types/react-window": 1.8.1
     "@types/redux-mock-store": 1.0.2
     "@types/reselect": 2.2.0
-    "@types/semver": ^6.0.0
+    "@types/semver": 7.3.8
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.6.1
     "@types/slate-react": 0.22.5

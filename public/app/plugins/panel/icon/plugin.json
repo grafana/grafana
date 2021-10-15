@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Icon",
+  "id": "icon",
+  "state": "alpha",
+
+  "info": {
+    "description": "Show icon based on data",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-icon.svg",
+      "large": "img/icn-icon.svg"
+    }
+  }
+}
