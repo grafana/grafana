@@ -201,7 +201,7 @@ func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context,
 		// so afterwards the dashboard is considered unprovisioned.
 		for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.UnprovisionDashboard(ctx, dashboardID)
+			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardID)
 			if err != nil {
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}
@@ -210,7 +210,7 @@ func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context,
 		// delete dashboards missing JSON file
 		for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("deleting provisioned dashboard, missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(ctx, dashboardID, fr.Cfg.OrgID)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgID)
 			if err != nil {
 				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
 			}
@@ -266,7 +266,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
+		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp); err != nil {
 			return provisioningMetadata, err
 		}
 	} else {
@@ -279,7 +279,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 
 func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
 	map[string]*models.DashboardProvisioning, error) {
-	arr, err := service.GetProvisionedDashboardData(ctx, name)
+	arr, err := service.GetProvisionedDashboardData(name)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.Da
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
 		dash.Dashboard.SetUid(cfg.FolderUID)
-		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
+		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
 		if err != nil {
 			return 0, err
 		}

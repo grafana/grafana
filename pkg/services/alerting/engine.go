@@ -66,7 +66,7 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService, encryptionService.GetDecryptedValue)
 
-	e.registerUsageMetrics(context.Background())
+	e.registerUsageMetrics()
 
 	return e
 }
@@ -245,9 +245,9 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	}()
 }
 
-func (e *AlertEngine) registerUsageMetrics(ctx context.Context) {
+func (e *AlertEngine) registerUsageMetrics() {
 	e.usageStatsService.RegisterMetricsFunc(func() (map[string]interface{}, error) {
-		alertingUsageStats, err := e.QueryUsageStats(ctx)
+		alertingUsageStats, err := e.QueryUsageStats()
 		if err != nil {
 			return nil, err
 		}

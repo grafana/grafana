@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -56,7 +55,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	result, err := ae.QueryUsageStats(context.Background())
+	result, err := ae.QueryUsageStats()
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
 	expected := map[string]int{

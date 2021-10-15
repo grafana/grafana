@@ -30,17 +30,17 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 	}
 }
 
-func (e *DashAlertExtractor) lookupDatasourceID(ctx context.Context, dsName string) (*models.DataSource, error) {
+func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSource, error) {
 	if dsName == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
-		if err := bus.DispatchCtx(ctx, query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
 	query := &models.GetDataSourceQuery{Name: dsName, OrgId: e.OrgID}
-	if err := bus.DispatchCtx(ctx, query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 		return nil, err
 	}
 
@@ -166,7 +166,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				dsName = panel.Get("datasource").MustString()
 			}
 
-			datasource, err := e.lookupDatasourceID(context.TODO(), dsName)
+			datasource, err := e.lookupDatasourceID(dsName)
 			if err != nil {
 				e.log.Debug("Error looking up datasource", "error", err)
 				return nil, ValidationError{Reason: fmt.Sprintf("Data source used by alert rule not found, alertName=%v, datasource=%s", alert.Name, dsName)}

@@ -1,7 +1,6 @@
 package dashboards
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -36,7 +35,7 @@ func TestDashboardService(t *testing.T) {
 
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
-					_, err := service.SaveDashboard(context.Background(), dto, false)
+					_, err := service.SaveDashboard(dto, false)
 					So(err, ShouldEqual, models.ErrDashboardTitleEmpty)
 				}
 			})
@@ -44,13 +43,13 @@ func TestDashboardService(t *testing.T) {
 			Convey("Should return validation error if it's a folder and have a folder id", func() {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
-				_, err := service.SaveDashboard(context.Background(), dto, false)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardFolderCannotHaveParent)
 			})
 
 			Convey("Should return validation error if folder is named General", func() {
 				dto.Dashboard = models.NewDashboardFolder("General")
-				_, err := service.SaveDashboard(context.Background(), dto, false)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardFolderNameExists)
 			})
 
@@ -59,7 +58,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -81,7 +80,7 @@ func TestDashboardService(t *testing.T) {
 					dto.Dashboard.SetUid(tc.Uid)
 					dto.User = &models.SignedInUser{}
 
-					_, err := service.buildSaveDashboardCommand(context.Background(), dto, true, false)
+					_, err := service.buildSaveDashboardCommand(dto, true, false)
 					So(err, ShouldEqual, tc.Error)
 				}
 			})
@@ -96,14 +95,14 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveDashboard(context.Background(), dto, false)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 
@@ -112,14 +111,14 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveDashboard(context.Background(), dto, true)
+				_, err := service.SaveDashboard(dto, true)
 				So(err, ShouldBeNil)
 			})
 
@@ -128,12 +127,12 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return fmt.Errorf("alert validation error")
 				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				_, err := service.SaveDashboard(context.Background(), dto, false)
+				_, err := service.SaveDashboard(dto, false)
 				So(err.Error(), ShouldEqual, "alert validation error")
 			})
 		})
@@ -146,7 +145,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 					user *models.SignedInUser) error {
 					return nil
 				}
@@ -155,14 +154,14 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
+				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
 			})
 
@@ -175,7 +174,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -183,7 +182,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 					user *models.SignedInUser) error {
 					return nil
 				}
@@ -192,7 +191,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				dto.Dashboard.Data.Set("refresh", "1s")
-				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
+				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
 				So(dto.Dashboard.Data.Get("refresh").MustString(), ShouldEqual, "5m")
 			})
@@ -211,7 +210,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
 				})
-				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
+				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -219,7 +218,7 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
 					user *models.SignedInUser) error {
 					return nil
 				}
@@ -227,7 +226,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.ImportDashboard(context.Background(), dto)
+				_, err := service.ImportDashboard(dto)
 				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 		})
@@ -236,13 +235,13 @@ func TestDashboardService(t *testing.T) {
 			result := setupDeleteHandlers(t, &fakeStore, true)
 
 			Convey("DeleteProvisionedDashboard should delete it", func() {
-				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
+				err := service.DeleteProvisionedDashboard(1, 1)
 				So(err, ShouldBeNil)
 				So(result.deleteWasCalled, ShouldBeTrue)
 			})
 
 			Convey("DeleteDashboard should fail to delete it", func() {
-				err := service.DeleteDashboard(context.Background(), 1, 1)
+				err := service.DeleteDashboard(1, 1)
 				So(err, ShouldEqual, models.ErrDashboardCannotDeleteProvisionedDashboard)
 				So(result.deleteWasCalled, ShouldBeFalse)
 			})
@@ -252,13 +251,13 @@ func TestDashboardService(t *testing.T) {
 			result := setupDeleteHandlers(t, &fakeStore, false)
 
 			Convey("DeleteProvisionedDashboard should delete it", func() {
-				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
+				err := service.DeleteProvisionedDashboard(1, 1)
 				So(err, ShouldBeNil)
 				So(result.deleteWasCalled, ShouldBeTrue)
 			})
 
 			Convey("DeleteDashboard should delete it", func() {
-				err := service.DeleteDashboard(context.Background(), 1, 1)
+				err := service.DeleteDashboard(1, 1)
 				So(err, ShouldBeNil)
 				So(result.deleteWasCalled, ShouldBeTrue)
 			})

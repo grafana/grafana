@@ -21,19 +21,19 @@ type UsageStats struct {
 // UsageStatsQuerier returns usage stats about alert rules
 // configured in Grafana.
 type UsageStatsQuerier interface {
-	QueryUsageStats(ctx context.Context) (*UsageStats, error)
+	QueryUsageStats() (*UsageStats, error)
 }
 
 // QueryUsageStats returns usage stats about alert rules
 // configured in Grafana.
-func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
+func (e *AlertEngine) QueryUsageStats() (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
 	err := e.Bus.Dispatch(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	dsUsage, err := e.mapRulesToUsageStats(ctx, cmd.Result)
+	dsUsage, err := e.mapRulesToUsageStats(cmd.Result)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) 
 	}, nil
 }
 
-func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.Alert) (DatasourceAlertUsage, error) {
+func (e *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAlertUsage, error) {
 	// map of datasourceId type and frequency
 	typeCount := map[int64]int{}
 	for _, a := range rules {
@@ -63,7 +63,7 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &models.GetDataSourceQuery{Id: k}
-		err := e.Bus.DispatchCtx(ctx, query)
+		err := e.Bus.DispatchCtx(context.TODO(), query)
 		if err != nil {
 			return map[string]int{}, nil
 		}
