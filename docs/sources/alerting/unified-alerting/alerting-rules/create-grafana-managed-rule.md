@@ -33,6 +33,8 @@ This section describes the fields you fill out to create an alert.
 
 Add one or more [queries]({{< relref "../../../panels/queries.md" >}}) or [expressions]({{< relref "../../../panels/expressions.md" >}}). You can use classic condition expression to create a rule that will trigger a single alert if it's threshold is met, or use reduce and math expressions to create a multi dimensional alert rule that can trigger multiple alerts, one per matching series in the query result.
 
+> **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
+
 #### Rule with classic condition
 
 You can use classic condition expression to create a rule that will trigger a single alert if it's conditions is met. It works about the same way as dashboard alerts in previous versions of Grafana.
