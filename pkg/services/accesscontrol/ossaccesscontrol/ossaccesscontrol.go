@@ -3,6 +3,7 @@ package ossaccesscontrol
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -119,6 +120,11 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	}
 
 	return roles
+}
+
+func (ac *OSSAccessControlService) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error {
+	fmt.Printf("format strinossaccesscontrol")
+	return nil
 }
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {

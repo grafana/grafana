@@ -31,6 +31,7 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", DisableUser)
 	bus.AddHandlerCtx("sql", BatchDisableUsers)
 	bus.AddHandlerCtx("sql", DeleteUser)
+	bus.AddHandlerCtx("sql", DeleteServiceAccount)
 	bus.AddHandlerCtx("sql", SetUserHelpFlag)
 }
 
@@ -773,7 +774,7 @@ func serviceAccountDeletions() []string {
 }
 
 func deleteServiceAccountInTransaction(sess *DBSession, cmd *models.DeleteServiceAccountCommand) error {
-	user := models.User{Id: cmd.ServiceAccountId}
+	user := models.User{Id: cmd.ServiceAccountID}
 	has, err := sess.Get(&user)
 	if err != nil {
 		return err
@@ -785,7 +786,7 @@ func deleteServiceAccountInTransaction(sess *DBSession, cmd *models.DeleteServic
 		return models.ErrServiceAccountNotFound
 	}
 	for _, sql := range serviceAccountDeletions() {
-		_, err := sess.Exec(sql, cmd.ServiceAccountId)
+		_, err := sess.Exec(sql, cmd.ServiceAccountID)
 		if err != nil {
 			return err
 		}

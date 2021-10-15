@@ -281,5 +281,5 @@ func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 }
 
 type DeleteServiceAccountCommand struct {
-	ServiceAccountId int64
+	ServiceAccountID int64
 }
