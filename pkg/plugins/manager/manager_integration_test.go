@@ -126,9 +126,7 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 	assert.NotNil(t, pm.Plugin("input"))
 	assert.NotNil(t, dsPlugins["input"])
 
-	for _, pluginID := range []string{
-		"input",
-	} {
+	for _, pluginID := range []string{"input"} {
 		assert.Contains(t, pluginRoutes, pluginID)
 		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, pm.Plugin("input").PluginDir))
 	}
