@@ -13,7 +13,6 @@ import {
 import LokiLanguageProvider from '../language_provider';
 import PromQlLanguageProvider from '../../prometheus/language_provider';
 import { css, cx } from '@emotion/css';
-import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2 } from '@grafana/data';
 import { sortBy } from 'lodash';
@@ -24,8 +23,6 @@ const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
 
-export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
-
 export interface BrowserProps {
   // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
   languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
@@ -33,6 +30,9 @@ export interface BrowserProps {
   theme: GrafanaTheme2;
   autoSelect?: number;
   hide?: () => void;
+  lastUsedLabels: string[];
+  storeLastUsedLabels: (labels: string[]) => void;
+  deleteLastUsedLabels: () => void;
 }
 
 interface BrowserState {
@@ -208,7 +208,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       }));
       return { labels, searchTerm: '', status: '', error: '', validationStatus: '' };
     });
-    store.delete(LAST_USED_LABELS_KEY);
+    this.props.deleteLastUsedLabels();
   };
 
   onClickLabel = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
@@ -261,9 +261,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   componentDidMount() {
-    const { languageProvider, autoSelect = MAX_AUTO_SELECT } = this.props;
+    const { languageProvider, autoSelect = MAX_AUTO_SELECT, lastUsedLabels } = this.props;
     if (languageProvider) {
-      const selectedLabels: string[] = store.getObject(LAST_USED_LABELS_KEY, []);
+      const selectedLabels: string[] = lastUsedLabels;
       languageProvider.start().then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         if (rawLabels.length > MAX_LABEL_COUNT) {
@@ -295,7 +295,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       return;
     }
     const selectedLabels = this.state.labels.filter((label) => label.selected).map((label) => label.name);
-    store.setObject(LAST_USED_LABELS_KEY, selectedLabels);
+    this.props.storeLastUsedLabels(selectedLabels);
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {

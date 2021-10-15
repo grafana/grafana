@@ -1,7 +1,7 @@
 // @ts-ignore
 import baron from 'baron';
 import { PanelEvents } from '@grafana/data';
-import { PanelModel } from '../dashboard/state';
+import { PanelModel } from '../../features/dashboard/state';
 import { PanelCtrl } from './panel_ctrl';
 import { Subscription } from 'rxjs';
 import { PanelDirectiveReadyEvent, RefreshEvent, RenderEvent } from 'app/types/events';

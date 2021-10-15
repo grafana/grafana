@@ -203,13 +203,18 @@ export const Components = {
   },
   FolderPicker: {
     container: 'Folder picker select container',
+    input: 'Select a folder',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
     container: 'Data source picker select container',
+    /**
+     * @deprecated use inputV2 instead
+     */
     input: () => 'input[id="data-source-picker"]',
+    inputV2: 'Select a data source',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',

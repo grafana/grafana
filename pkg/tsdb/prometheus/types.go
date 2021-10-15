@@ -3,15 +3,15 @@ package prometheus
 import (
 	"time"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type DatasourceInfo struct {
-	ID             int64
-	HTTPClientOpts sdkhttpclient.Options
-	URL            string
-	HTTPMethod     string
-	TimeInterval   string
+	ID           int64
+	URL          string
+	TimeInterval string
+
+	promClient apiv1.API
 }
 
 type PrometheusQuery struct {
@@ -49,7 +49,7 @@ type QueryModel struct {
 type PrometheusQueryType string
 
 const (
-	Range    PrometheusQueryType = "range"
-	Instant  PrometheusQueryType = "instant"
-	Exemplar PrometheusQueryType = "exemplar"
+	RangeQueryType    PrometheusQueryType = "range"
+	InstantQueryType  PrometheusQueryType = "instant"
+	ExemplarQueryType PrometheusQueryType = "exemplar"
 )

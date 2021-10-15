@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { has, cloneDeep } from 'lodash';
+import { cloneDeep, has } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';

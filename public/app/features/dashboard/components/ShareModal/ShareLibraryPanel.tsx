@@ -1,10 +1,8 @@
 import React from 'react';
-import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
+import { ShareModalTabProps } from './types';
 
-interface Props {
-  onDismiss?: () => void;
-  panel?: PanelModel;
+interface Props extends ShareModalTabProps {
   initialFolderId?: number;
 }
 

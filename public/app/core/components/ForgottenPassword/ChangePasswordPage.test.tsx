@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
@@ -51,14 +51,12 @@ describe('ChangePassword Page', () => {
     expect(await screen.findByText('New Password is required')).toBeInTheDocument();
     expect(screen.getByText('Confirmed Password is required')).toBeInTheDocument();
 
-    await act(async () => {
-      await userEvent.type(screen.getByLabelText('New password'), 'admin');
-      await userEvent.type(screen.getByLabelText('Confirm new password'), 'a');
-      expect(screen.getByText('Passwords must match!')).toBeInTheDocument();
+    userEvent.type(screen.getByLabelText('New password'), 'admin');
+    userEvent.type(screen.getByLabelText('Confirm new password'), 'a');
+    await waitFor(() => expect(screen.getByText('Passwords must match!')).toBeInTheDocument());
 
-      await userEvent.type(screen.getByLabelText('Confirm new password'), 'dmin');
-      expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument();
-    });
+    userEvent.type(screen.getByLabelText('Confirm new password'), 'dmin');
+    await waitFor(() => expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument());
   });
   it('should navigate to default url if change password is successful', async () => {
     Object.defineProperty(window, 'location', {
@@ -69,8 +67,8 @@ describe('ChangePassword Page', () => {
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<ChangePasswordPage {...props} />);
 
-    await userEvent.type(screen.getByLabelText('New password'), 'test');
-    await userEvent.type(screen.getByLabelText('Confirm new password'), 'test');
+    userEvent.type(screen.getByLabelText('New password'), 'test');
+    userEvent.type(screen.getByLabelText('Confirm new password'), 'test');
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/api/user/password/reset', {
