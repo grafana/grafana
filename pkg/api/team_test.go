@@ -3,13 +3,12 @@ package api
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 
 	"net/http"
 
@@ -126,7 +125,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		t.Run("with no real signed in user", func(t *testing.T) {
 			stub := &testLogger{}
 			c := &models.ReqContext{
-				Context:      &macaron.Context{Req: req},
+				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{},
 				Logger:       stub,
 			}
@@ -142,7 +141,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		t.Run("with real signed in user", func(t *testing.T) {
 			stub := &testLogger{}
 			c := &models.ReqContext{
-				Context:      &macaron.Context{Req: req},
+				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{UserId: 42},
 				Logger:       stub,
 			}

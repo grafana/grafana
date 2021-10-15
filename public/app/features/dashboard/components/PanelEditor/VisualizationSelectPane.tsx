@@ -2,10 +2,14 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Button, CustomScrollbar, Icon, Input, RadioButtonGroup, useStyles } from '@grafana/ui';
-import { changePanelPlugin } from '../../state/actions';
+import { changePanelPlugin } from '../../../panel/state/actions';
 import { PanelModel } from '../../state/PanelModel';
 import { useDispatch, useSelector } from 'react-redux';
-import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../VizTypePicker/VizTypePicker';
+import {
+  filterPluginList,
+  getAllPanelPluginMeta,
+  VizTypePicker,
+} from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';

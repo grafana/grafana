@@ -21,15 +21,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	cw "github.com/weaveworks/common/middleware"
-	"gopkg.in/macaron.v1"
 )
 
-func Logger(cfg *setting.Cfg) macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+func Logger(cfg *setting.Cfg) web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		start := time.Now()
 
-		rw := res.(macaron.ResponseWriter)
+		rw := res.(web.ResponseWriter)
 		c.Next()
 
 		timeTaken := time.Since(start) / time.Millisecond

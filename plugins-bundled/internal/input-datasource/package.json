@@ -18,8 +18,5 @@
     "@grafana/data": "8.3.0-pre",
     "@grafana/toolkit": "8.3.0-pre",
     "@grafana/ui": "8.3.0-pre"
-  },
-  "volta": {
-    "extends": "../../../package.json"
   }
 }

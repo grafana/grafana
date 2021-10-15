@@ -39,6 +39,7 @@ export interface SliderFieldConfigSettings {
   min: number;
   max: number;
   step?: number;
+  ariaLabelForHandle?: string;
 }
 
 export interface DataLinksFieldConfigSettings {}

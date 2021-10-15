@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.4.6'
-build_image = 'grafana/build-container:1.4.2'
+grabpl_version = '2.5.2'
+build_image = 'grafana/build-container:1.4.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -41,6 +41,10 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         'chmod +x bin/grabpl',
     ]
     common_cmds = [
+        './bin/grabpl verify-drone',
+        # Generate Go code, will install Wire
+        # TODO: Install Wire in Docker image instead
+        'make gen-go',
     ]
 
     if ver_mode == 'release':
@@ -58,9 +62,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
 
     if install_deps:
         common_cmds.extend([
-            'curl -fLO https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz',
-            'tar -C bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz',
-            'rm dockerize-linux-amd64-v0.6.1.tar.gz',
             'ls -a yarncache',
             'yarn install --immutable',
         ])
@@ -95,7 +96,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'name': 'initialize',
                 'image': build_image,
                 'depends_on': [
-                    'clone'
+                    'clone',
                 ],
                 'commands': [
                     'mv bin/grabpl /tmp/',
@@ -125,7 +126,6 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             'commands': ['echo test'] + download_grabpl_cmds + common_cmds,
         },
     ]
-
 
     return steps
 
@@ -158,12 +158,9 @@ def lint_backend_step(edition):
             'CGO_ENABLED': '1',
         },
         'depends_on': [
-                    'initialize',
-                ],
+            'initialize',
+        ],
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -180,7 +177,7 @@ def benchmark_ldap_step():
 	  'LDAP_HOSTNAME': 'ldap',
         },
         'commands': [
-            './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
+            'dockerize -wait tcp://ldap:389 -timeout 120s',
             'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
     }
@@ -295,7 +292,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'lint-backend',
+            'test-backend' + enterprise2_suffix(edition),
         ],
         'environment': env,
         'commands': cmds,
@@ -836,26 +833,6 @@ def release_canary_npm_packages_step(edition):
         'commands': [
             './scripts/circle-release-canary-packages.sh',
         ],
-    }
-
-def push_to_deployment_tools_step(edition, is_downstream=False):
-    if edition != 'enterprise' or not is_downstream:
-        return None
-
-    return {
-        'name': 'push-to-deployment_tools',
-        'image': deploy_docker_image,
-        'depends_on': [
-            'build-docker-images',
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
-        ],
-        'settings': {
-            'github_token': from_secret(github_token),
-            'images_file': './deployment_tools_config.json',
-            'docker_tag_file': './dist/grafana.version'
-        },
     }
 
 def enterprise2_suffix(edition):
