@@ -2406,7 +2406,7 @@ __metadata:
     "@types/marked": 1.1.0
     "@types/node": 10.14.1
     "@types/papaparse": 5.2.0
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/rollup-plugin-visualizer": 2.6.0
     "@types/sinon": ^10.0.4
     date-fns: 2.21.3
@@ -2707,7 +2707,7 @@ __metadata:
     "@types/mock-raf": 1.0.2
     "@types/node": 10.14.1
     "@types/papaparse": 5.2.0
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-calendar": ^3.4.3
     "@types/react-color": 3.0.1
@@ -2847,7 +2847,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/lodash": ^4.14.123
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/react-icons": 2.2.7
     "@types/recompose": ^0.30.7
     "@types/slate-react": 0.22.5
@@ -8129,13 +8129,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:16.9.9":
-  version: 16.9.9
-  resolution: "@types/react@npm:16.9.9"
+"@types/react@npm:17.0.30":
+  version: 17.0.30
+  resolution: "@types/react@npm:17.0.30"
   dependencies:
     "@types/prop-types": "*"
-    csstype: ^2.2.0
-  checksum: a44ad6338989161b4da02b1d0da6efe31a50e78bd747525402c953110736e0567f54148743f1399bd58e2874866bcd9c56961893c791d0cdc11df5b955c78382
+    "@types/scheduler": "*"
+    csstype: ^3.0.2
+  checksum: e3aaac1b8fda6e3622b75db0bd7d8dc412c2f2b77a00afdd32cae8c71fb0b1ca6926ab1fbe1c536dd51d96c0ba372738993837a8df1637637aaab7b86e421b7f
   languageName: node
   linkType: hard
 
@@ -13511,7 +13512,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^2.2.0, csstype@npm:^2.5.7":
+"csstype@npm:^2.5.7":
   version: 2.6.18
   resolution: "csstype@npm:2.6.18"
   checksum: 1d6d67bc7f55af976d7a9cb153d61867d6c84eb0d69733165d2d4f10c659e7647a1e7a19859acacbf0120552164b8ff1a4ffef45a435aa37a4ff2f09e5b0bcf7
@@ -17853,7 +17854,7 @@ fsevents@~2.1.2:
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.16.0
     "@types/rc-time-picker": ^3
-    "@types/react": 16.9.9
+    "@types/react": 17.0.30
     "@types/react-beautiful-dnd": 13.1.1
     "@types/react-dom": 16.9.9
     "@types/react-grid-layout": 1.1.1
