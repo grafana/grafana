@@ -115,7 +115,7 @@ func TestDashboardAlertConditions(t *testing.T) {
 
 			require.NoError(t, err)
 
-			cond, err := DashboardAlertConditions(context.Background(), b, 1)
+			cond, err := DashboardAlertConditions(b, 1)
 			require.NoError(t, err)
 
 			tt.spotCheckFn(t, cond)

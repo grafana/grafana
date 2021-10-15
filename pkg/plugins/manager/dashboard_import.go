@@ -21,8 +21,8 @@ func (e DashboardInputMissingError) Error() string {
 	return fmt.Sprintf("Dashboard input variable: %v missing from import command", e.VariableName)
 }
 
-func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64,
-	dashboardModel *simplejson.Json, overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
+func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
+	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
 	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, *models.Dashboard, error) {
 	var dashboard *models.Dashboard
 	if pluginID != "" {

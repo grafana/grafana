@@ -24,7 +24,7 @@ import (
 // A query is created for each unique referenced query in the dashboard. Each query is considered to be unique
 // based on the RefID and the Time Range. Therefore, if the same RefID has multiple time ranges in the dashboard
 // condition, new RefIDs will be created.
-func DashboardAlertConditions(ctx context.Context, rawDCondJSON []byte, orgID int64) (*ngmodels.Condition, error) {
+func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condition, error) {
 	oldCond := dashConditionsJSON{}
 
 	err := json.Unmarshal(rawDCondJSON, &oldCond)
@@ -32,7 +32,7 @@ func DashboardAlertConditions(ctx context.Context, rawDCondJSON []byte, orgID in
 		return nil, err
 	}
 
-	ngCond, err := oldCond.GetNew(ctx, orgID)
+	ngCond, err := oldCond.GetNew(orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ type conditionEvalJSON struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
-func (dc *dashConditionsJSON) GetNew(ctx context.Context, orgID int64) (*ngmodels.Condition, error) {
+func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range dc.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -189,7 +189,7 @@ func (dc *dashConditionsJSON) GetNew(ctx context.Context, orgID int64) (*ngmodel
 				Id:    dc.Conditions[condIdx].Query.DatasourceID,
 			}
 
-			if err := bus.DispatchCtx(ctx, getDsInfo); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), getDsInfo); err != nil {
 				return nil, fmt.Errorf("could not find datasource: %w", err)
 			}
 
