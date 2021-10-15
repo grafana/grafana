@@ -234,7 +234,7 @@ const dataQueriesToGrafanaQueries = async (
   const result: AlertQuery[] = [];
 
   for (const target of queries) {
-    const datasource = await getDataSourceSrv().get(target.datasource);
+    const datasource = await getDataSourceSrv().get(target.datasource?.uid ? target.datasource : panelDataSourceRef);
     const dsRef = { uid: datasource.uid, type: datasource.type };
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
@@ -249,34 +249,32 @@ const dataQueriesToGrafanaQueries = async (
       ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
 
-    if (dsRef) {
-      // expressions
-      if (dsRef.uid === ExpressionDatasourceUID) {
+    // expressions
+    if (dsRef.uid === ExpressionDatasourceUID) {
+      const newQuery: AlertQuery = {
+        refId: interpolatedTarget.refId,
+        queryType: '',
+        relativeTimeRange,
+        datasourceUid: ExpressionDatasourceUID,
+        model: interpolatedTarget,
+      };
+      result.push(newQuery);
+      // queries
+    } else {
+      const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+      if (datasourceSettings && datasourceSettings.meta.alerting) {
         const newQuery: AlertQuery = {
           refId: interpolatedTarget.refId,
-          queryType: '',
+          queryType: interpolatedTarget.queryType ?? '',
           relativeTimeRange,
-          datasourceUid: ExpressionDatasourceUID,
-          model: interpolatedTarget,
+          datasourceUid: datasourceSettings.uid,
+          model: {
+            ...interpolatedTarget,
+            maxDataPoints,
+            intervalMs,
+          },
         };
         result.push(newQuery);
-        // queries
-      } else {
-        const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
-        if (datasourceSettings && datasourceSettings.meta.alerting) {
-          const newQuery: AlertQuery = {
-            refId: interpolatedTarget.refId,
-            queryType: interpolatedTarget.queryType ?? '',
-            relativeTimeRange,
-            datasourceUid: datasourceSettings.uid,
-            model: {
-              ...interpolatedTarget,
-              maxDataPoints,
-              intervalMs,
-            },
-          };
-          result.push(newQuery);
-        }
       }
     }
   }
