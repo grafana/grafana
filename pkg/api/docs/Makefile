@@ -31,3 +31,24 @@ clean-spec:
 
 clean-containers:
 	docker-compose down
+
+client-go:
+	docker run --rm \
+	--user $$(id -u):$$(id -g) \
+	-v $$(pwd)/../../..:${HOME}/grafana \
+	swaggerapi/swagger-codegen-cli generate \
+	-i ${HOME}/grafana/pkg/api/docs/spec.json \
+	-l go \
+	-o ${HOME}/grafana/pkg/api/docs/clients/go
+
+client-python:
+	docker run --rm \
+	--user $$(id -u):$$(id -g) \
+	-v $$(pwd)/../../..:${HOME}/grafana \
+	swaggerapi/swagger-codegen-cli generate \
+	-i ${HOME}/grafana/pkg/api/docs/spec.json \
+	-l python \
+	-o ${HOME}/grafana/pkg/api/docs/clients/python
+
+clean-clients:
+	rm -rf clients/*

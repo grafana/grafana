@@ -142,3 +142,6 @@ compilation-stats.json
 
 # auto generated Go files
 *_gen.go
+
+# api generated clients
+/pkg/api/docs/clients
