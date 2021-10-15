@@ -22,6 +22,7 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -91,7 +92,8 @@ export class QueryGroup extends PureComponent<Props, State> {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
       const defaultDataSource = await this.dataSourceSrv.get();
-      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource: dsSettings?.name }));
+      const datasource: DataSourceRef = { type: ds.type, uid: ds.uid };
+      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
       this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -140,12 +142,10 @@ export class QueryGroup extends PureComponent<Props, State> {
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 
-    if (!dsSettings?.meta.mixed) {
-      return { datasource: dsSettings?.name };
-    }
+    const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
-      datasource: { uid: defaultDataSource?.uid },
+      datasource: { uid: ds?.uid, type: ds?.type },
     };
   }
 
@@ -259,7 +259,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
-    this.onQueriesChange(addQuery(queries, query, dsSettings?.name));
+    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
   };
 
