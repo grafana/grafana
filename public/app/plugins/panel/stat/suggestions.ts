@@ -12,13 +12,14 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
     options: {},
     fieldConfig: {
       defaults: {
+        unit: 'short',
         custom: {},
       },
       overrides: [],
     },
     previewModifier: (s) => {
       if (s.options!.reduceOptions.values) {
-        s.options!.reduceOptions.limit = 2;
+        s.options!.reduceOptions.limit = 1;
       }
     },
   });

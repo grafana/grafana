@@ -1,4 +1,4 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { GaugeOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
@@ -12,13 +12,21 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
     options: {},
     fieldConfig: {
       defaults: {
+        thresholds: {
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 70, color: 'orange' },
+            { value: 85, color: 'red' },
+          ],
+          mode: ThresholdsMode.Percentage,
+        },
         custom: {},
       },
       overrides: [],
     },
     previewModifier: (s) => {
       if (s.options!.reduceOptions.values) {
-        s.options!.reduceOptions.limit = 2;
+        s.options!.reduceOptions.limit = 1;
       }
     },
   });

@@ -78,15 +78,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: relative;
       border-radius: ${theme.shape.borderRadius(1)};
       cursor: pointer;
-      background: ${theme.colors.background.secondary};
-      box-shadow: ${theme.shadows.z1};
+      border: 2px solid ${theme.colors.border.strong};
 
       transition: ${theme.transitions.create(['background'], {
         duration: theme.transitions.duration.short,
       })};
 
       &:hover {
-        background: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
+        background: ${theme.colors.background.secondary};
       }
     `,
     renderContainer: css`

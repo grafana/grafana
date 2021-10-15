@@ -19,6 +19,7 @@ export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
     },
     fieldConfig: {
       defaults: {
+        unit: 'short',
         custom: {},
       },
       overrides: [],
