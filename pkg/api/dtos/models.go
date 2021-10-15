@@ -38,7 +38,7 @@ type CurrentUser struct {
 	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
 	GravatarUrl                string             `json:"gravatarUrl"`
 	Timezone                   string             `json:"timezone"`
-	WeekStart                  int                `json:"weekStart"`
+	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
 	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`

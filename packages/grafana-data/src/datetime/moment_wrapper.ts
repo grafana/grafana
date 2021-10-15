@@ -121,14 +121,19 @@ export const dateTimeForTimeZone = (
   return dateTime(input, formatInput);
 };
 
-export const setWeekStart = (weekStart: number) => {
+export const getWeekdayIndex = (day: string) => {
+  return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
+};
+
+export const setWeekStart = (weekStart?: string) => {
   const suffix = '-weekStart';
   const language = getLocale().replace(suffix, '');
-  if (weekStart !== -1) {
+  const dow = weekStart ? getWeekdayIndex(weekStart) : -1;
+  if (dow !== -1) {
     moment.locale(language + suffix, {
       parentLocale: language,
       week: {
-        dow: weekStart,
+        dow,
       },
     });
   } else {

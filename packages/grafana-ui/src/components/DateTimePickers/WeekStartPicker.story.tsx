@@ -15,14 +15,14 @@ export const basic = () => {
   return (
     <UseState
       initialState={{
-        value: -1,
+        value: '',
       }}
     >
       {(value, updateValue) => {
         return (
           <WeekStartPicker
             value={value.value}
-            onChange={(newValue) => {
+            onChange={(newValue: string) => {
               if (!newValue) {
                 return;
               }

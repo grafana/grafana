@@ -30,7 +30,7 @@ export interface State {
   homeDashboardId: number;
   theme: string;
   timezone: string;
-  weekStart: number;
+  weekStart: string;
   dashboards: DashboardSearchHit[];
 }
 
@@ -51,7 +51,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId: 0,
       theme: '',
       timezone: '',
-      weekStart: -1,
+      weekStart: '',
       dashboards: [],
     };
   }
@@ -109,7 +109,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ timezone: timezone });
   };
 
-  onWeekStartChanged = (weekStart: number) => {
+  onWeekStartChanged = (weekStart: string) => {
     this.setState({ weekStart: weekStart });
   };
 

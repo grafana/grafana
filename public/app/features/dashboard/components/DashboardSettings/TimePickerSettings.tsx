@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
 interface Props {
-  onWeekStartChange: (weekStart: number) => void;
+  onWeekStartChange: (weekStart: string) => void;
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
@@ -16,7 +16,7 @@ interface Props {
   timePickerHidden: boolean;
   nowDelay: string;
   timezone: TimeZone;
-  weekStart: number;
+  weekStart: string;
   liveNow: boolean;
 }
 
@@ -58,7 +58,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onTimeZoneChange(timeZone);
   };
 
-  onWeekStartChange = (weekStart: number) => {
+  onWeekStartChange = (weekStart: string) => {
     this.props.onWeekStartChange(weekStart);
   };
 

@@ -211,7 +211,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set week start
-    if (dashboard.weekStart !== -1) {
+    if (dashboard.weekStart !== '') {
       setWeekStart(dashboard.weekStart);
     } else {
       setWeekStart(config.bootData.user.weekStart);

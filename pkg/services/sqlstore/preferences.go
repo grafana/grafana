@@ -55,7 +55,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			if p.Timezone != "" {
 				res.Timezone = p.Timezone
 			}
-			if p.WeekStart != -1 {
+			if p.WeekStart != "" {
 				res.WeekStart = p.WeekStart
 			}
 			if p.HomeDashboardId != 0 {

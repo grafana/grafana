@@ -4,8 +4,8 @@ import { Select } from '../Select/Select';
 import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
-  onChange: (weekStart: number) => void;
-  value: number;
+  onChange: (weekStart: string) => void;
+  value: string;
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
@@ -14,18 +14,18 @@ export interface Props {
   inputId?: string;
 }
 
-const weekStarts: Array<SelectableValue<number>> = [
-  { value: -1, label: 'Default' },
-  { value: 6, label: 'Saturday' },
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
+const weekStarts: Array<SelectableValue<string>> = [
+  { value: '', label: 'Default' },
+  { value: 'saturday', label: 'Saturday' },
+  { value: 'sunday', label: 'Sunday' },
+  { value: 'monday', label: 'Monday' },
 ];
 
 export const WeekStartPicker: React.FC<Props> = (props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
 
   const onChangeWeekStart = useCallback(
-    (selectable: SelectableValue<number>) => {
+    (selectable: SelectableValue<string>) => {
       if (selectable.value !== undefined) {
         onChange(selectable.value);
       }

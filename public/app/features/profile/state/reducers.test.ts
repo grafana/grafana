@@ -38,8 +38,8 @@ describe('userReducer', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
         .givenReducer(userReducer, { ...initialUserState })
-        .whenActionIsDispatched(updateWeekStart({ weekStart: 2 }))
-        .thenStateShouldEqual({ ...initialUserState, weekStart: 2 });
+        .whenActionIsDispatched(updateWeekStart({ weekStart: 'xyz' }))
+        .thenStateShouldEqual({ ...initialUserState, weekStart: 'xyz' });
     });
   });
 

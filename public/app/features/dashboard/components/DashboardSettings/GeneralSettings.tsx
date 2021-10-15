@@ -64,7 +64,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     updateTimeZone(timeZone);
   };
 
-  const onWeekStartChange = (weekStart: number) => {
+  const onWeekStartChange = (weekStart: string) => {
     dashboard.weekStart = weekStart;
     setRenderCounter(renderCounter + 1);
     updateWeekStart(weekStart);
