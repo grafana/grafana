@@ -3,38 +3,22 @@ import { useLocation } from 'react-router-dom';
 import { cloneDeep } from 'lodash';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import config from '../../config';
 import { isLinkActive, isSearchActive } from './utils';
 import NavBarItem from './NavBarItem';
 
 const TopSection = () => {
-  const newNavigationEnabled = config.featureToggles.newNavigation;
   const location = useLocation();
   const theme = useTheme2();
-  const styles = getStyles(theme, newNavigationEnabled);
+  const styles = getStyles(theme);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
-  const mainLinks = navTree.filter((item) => {
-    if (newNavigationEnabled) {
-      return !item.hideFromMenu && !item.id?.startsWith('plugin-page-');
-    }
-    return !item.hideFromMenu;
-  });
-  const activeItemId = mainLinks.find((item) => isLinkActive(location.pathname, item))?.id;
-
-  const onOpenSearch = () => {
-    locationService.partial({ search: 'open' });
-  };
+  const pluginLinks = navTree.filter((item) => !item.hideFromMenu && item.id?.startsWith('plugin-page-'));
+  const activeItemId = pluginLinks.find((item) => isLinkActive(location.pathname, item))?.id;
 
   return (
-    <div data-testid="top-section-items" className={styles.container}>
-      {!newNavigationEnabled && (
-        <NavBarItem isActive={isSearchActive(location)} label="Search dashboards" onClick={onOpenSearch}>
-          <Icon name="search" size="xl" />
-        </NavBarItem>
-      )}
-      {mainLinks.map((link, index) => {
+    <div data-testid="plugin-section-items" className={styles.container}>
+      {pluginLinks.map((link, index) => {
         return (
           <NavBarItem
             key={`${link.id}-${index}`}
@@ -55,17 +39,16 @@ const TopSection = () => {
 
 export default TopSection;
 
-const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: none;
 
     ${theme.breakpoints.up('md')} {
-      background-color: ${newNavigationEnabled ? theme.colors.background.primary : 'inherit'};
-      border: ${newNavigationEnabled ? `1px solid ${theme.components.panel.borderColor}` : 'none'};
+      background-color: ${theme.colors.background.primary};
+      border: 1px solid ${theme.components.panel.borderColor};
       border-radius: 2px;
       display: flex;
       flex-direction: inherit;
-      margin-top: ${newNavigationEnabled ? 'none' : theme.spacing(5)};
     }
 
     .sidemenu-open--xs & {

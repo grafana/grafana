@@ -34,6 +34,7 @@ jest.mock('../../config', () => ({
       },
     ],
   },
+  featureToggles: {},
 }));
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

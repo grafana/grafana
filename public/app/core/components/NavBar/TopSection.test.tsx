@@ -13,6 +13,10 @@ jest.mock('../../config', () => ({
       { id: '4', hideFromMenu: false },
     ],
   },
+  featureToggles: {},
+  getConfig: () => ({
+    featureToggles: {},
+  }),
 }));
 
 describe('Render', () => {

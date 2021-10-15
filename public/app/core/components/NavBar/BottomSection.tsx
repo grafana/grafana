@@ -15,8 +15,9 @@ import NavBarItem from './NavBarItem';
 import { getForcedLoginUrl, isLinkActive, isSearchActive } from './utils';
 
 export default function BottomSection() {
+  const newNavigationEnabled = config.featureToggles.newNavigation;
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, newNavigationEnabled);
   const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
   const bottomNav = navTree.filter((item) => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
@@ -96,18 +97,23 @@ export default function BottomSection() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
   container: css`
     display: none;
 
     ${theme.breakpoints.up('md')} {
+      background-color: ${newNavigationEnabled ? theme.colors.background.primary : 'inherit'};
+      border: ${newNavigationEnabled ? `1px solid ${theme.components.panel.borderColor}` : 'none'};
+      border-radius: 2px;
       display: flex;
       flex-direction: inherit;
-      margin-bottom: ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(newNavigationEnabled ? 1 : 2)};
     }
 
     .sidemenu-open--xs & {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
     }
   `,
 });

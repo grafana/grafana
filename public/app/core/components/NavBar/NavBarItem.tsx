@@ -13,6 +13,7 @@ export interface Props {
   menuSubTitle?: string;
   onClick?: () => void;
   reverseMenuDirection?: boolean;
+  showMenu?: boolean;
   target?: HTMLAnchorElement['target'];
   url?: string;
 }
@@ -26,6 +27,7 @@ const NavBarItem = ({
   menuSubTitle,
   onClick,
   reverseMenuDirection = false,
+  showMenu = true,
   target,
   url,
 }: Props) => {
@@ -60,7 +62,7 @@ const NavBarItem = ({
   return (
     <div className={cx(styles.container, 'dropdown', className, { dropup: reverseMenuDirection })}>
       {element}
-      {menuItems.length > 0 && (
+      {showMenu && (
         <NavBarDropdown
           headerTarget={target}
           headerText={label}

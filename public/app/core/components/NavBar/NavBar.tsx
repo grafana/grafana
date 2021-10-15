@@ -3,19 +3,23 @@ import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useTheme2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
 import appEvents from '../../app_events';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
+import { isSearchActive } from './utils';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
+import PluginSection from './PluginSection';
 import NavBarItem from './NavBarItem';
 
 const homeUrl = config.appSubUrl || '/';
 
 export const NavBar: FC = React.memo(() => {
+  const newNavigationEnabled = config.featureToggles.newNavigation;
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, newNavigationEnabled);
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
@@ -23,21 +27,29 @@ export const NavBar: FC = React.memo(() => {
   const toggleNavBarSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
-  const newNavigationEnabled = config.featureToggles.newNavigation;
 
   if (kiosk !== null) {
     return null;
   }
 
+  const onOpenSearch = () => {
+    locationService.partial({ search: 'open' });
+  };
+
   return (
     <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
       {!newNavigationEnabled && (
-        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo}>
+        <NavBarItem url={homeUrl} label="Home" className={styles.grafanaLogo} showMenu={false}>
           <Branding.MenuLogo />
         </NavBarItem>
       )}
       {newNavigationEnabled && (
-        <NavBarItem onClick={() => console.log('WOW!')} label="Full menu" className={styles.grafanaLogo}>
+        <NavBarItem
+          className={cx(styles.grafanaLogo, styles.section)}
+          label="Full menu"
+          onClick={() => console.log('WOW!')}
+          showMenu={false}
+        >
           <Branding.MenuLogo />
         </NavBarItem>
       )}
@@ -48,7 +60,19 @@ export const NavBar: FC = React.memo(() => {
           Close
         </span>
       </div>
+      {newNavigationEnabled && (
+        <NavBarItem
+          className={cx(styles.search, styles.section)}
+          isActive={isSearchActive(location)}
+          label="Search dashboards"
+          onClick={onOpenSearch}
+        >
+          <Icon name="search" size="xl" />
+        </NavBarItem>
+      )}
       <TopSection />
+      {newNavigationEnabled && <PluginSection />}
+      <div className={styles.spacer} />
       <BottomSection />
     </nav>
   );
@@ -56,7 +80,23 @@ export const NavBar: FC = React.memo(() => {
 
 NavBar.displayName = 'NavBar';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, newNavigationEnabled: boolean) => ({
+  search: css`
+    display: none;
+
+    ${theme.breakpoints.up('md')} {
+      display: block;
+    }
+
+    .sidemenu-open--xs & {
+      display: block;
+    }
+  `,
+  section: css`
+    background-color: ${theme.colors.background.primary};
+    border: 1px solid ${theme.components.panel.borderColor};
+    border-radius: 2px;
+  `,
   sidemenu: css`
     display: flex;
     flex-direction: column;
@@ -64,8 +104,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     z-index: ${theme.zIndex.sidemenu};
 
     ${theme.breakpoints.up('md')} {
-      background-color: ${theme.colors.background.primary};
-      border-right: 1px solid ${theme.components.panel.borderColor};
+      background-color: ${newNavigationEnabled ? 'none' : theme.colors.background.primary};
+      border-right: ${newNavigationEnabled ? 'none' : `1px solid ${theme.components.panel.borderColor}`};
+      gap: ${theme.spacing(newNavigationEnabled ? 1 : 0)};
       position: relative;
       width: ${theme.components.sidemenu.width}px;
     }
@@ -77,6 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     .sidemenu-open--xs & {
       background-color: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z1};
+      gap: ${theme.spacing(1)};
       height: auto;
       position: absolute;
       width: 100%;
@@ -84,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   grafanaLogo: css`
     display: none;
+    margin-top: ${newNavigationEnabled ? theme.spacing(1) : 'none'};
 
     ${theme.breakpoints.up('md')} {
       align-items: center;
@@ -108,6 +151,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
 
     ${theme.breakpoints.up('md')} {
+      display: none;
+    }
+  `,
+  spacer: css`
+    flex: 1;
+
+    .sidemenu-open--xs & {
       display: none;
     }
   `,

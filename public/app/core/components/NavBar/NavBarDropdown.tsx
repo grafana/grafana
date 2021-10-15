@@ -105,7 +105,6 @@ const getStyles = (
         display: flex;
         flex-direction: column;
         float: none;
-        margin-bottom: ${theme.spacing(1)};
         position: unset;
         width: 100%;
       }
