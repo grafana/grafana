@@ -20,7 +20,11 @@ import LokiDatasource, { isMetricsQuery } from '../datasource';
 import { LogLevelColor } from '../../../../core/logs_model';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
-const TIMEOUT = 15000;
+/**
+ * Logs volume query may be expensive as it requires counting all logs in the selected range. If such query
+ * takes too much time it may need be made more specific to limit number of logs processed under the hood.
+ */
+const TIMEOUT = 10000;
 
 export function createLokiLogsVolumeProvider(
   datasource: LokiDatasource,
