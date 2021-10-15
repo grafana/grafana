@@ -1,5 +1,5 @@
 import { PanelChrome } from '@grafana/ui';
-import { PanelRenderer } from 'app/features/panel/PanelRenderer';
+import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 import React, { useEffect, useState } from 'react';
 import { PanelModel, DashboardModel } from '../../state';
 import { usePanelLatestData } from './usePanelLatestData';

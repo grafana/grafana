@@ -57,6 +57,15 @@ export function makeAMLink(path: string, alertManagerName?: string): string {
   return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
 }
 
+export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
+  return (
+    `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
+    `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
+      .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
+      .join(',')}`
+  );
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,

@@ -3,6 +3,9 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -171,6 +174,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}
+			moa.alertmanagers[orgID] = am
 			alertmanager = am
 		}
 
@@ -213,6 +217,66 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
+		// Cleanup all the remaining resources from this alertmanager.
+		am.fileStore.CleanUp()
+	}
+
+	// We look for orphan directories and remove them. Orphan directories can
+	// occur when an organization is deleted and the node running Grafana is
+	// shutdown before the next sync is executed.
+	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
+}
+
+// cleanupOrphanLocalOrgState will check if there is any organization on
+// disk that is not part of the active organizations. If this is the case
+// it will delete the local state from disk.
+func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
+	activeOrganizations map[int64]struct{}) {
+	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
+	files, err := ioutil.ReadDir(dataDir)
+	if err != nil {
+		moa.logger.Error("failed to list local working directory", "dir", dataDir, "err", err)
+		return
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			moa.logger.Warn("ignoring unexpected file while scanning local working directory", "filename", filepath.Join(dataDir, file.Name()))
+			continue
+		}
+		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
+		if err != nil {
+			moa.logger.Error("unable to parse orgID from directory name", "name", file.Name(), "err", err)
+			continue
+		}
+		_, exists := activeOrganizations[orgID]
+		if !exists {
+			moa.logger.Info("found orphan organization directory", "orgID", orgID)
+			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
+			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
+			// Cleanup all the remaining resources from this alertmanager.
+			fileStore.CleanUp()
+		}
+	}
+	// Remove all orphaned items from kvstore by listing all existing items
+	// in our used namespace and comparing them to the currently active
+	// organizations.
+	storedFiles := []string{notificationLogFilename, silencesFilename}
+	for _, fileName := range storedFiles {
+		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
+		if err != nil {
+			moa.logger.Error("failed to fetch items from kvstore", "err", err,
+				"namespace", KVNamespace, "key", fileName)
+		}
+		for _, key := range keys {
+			if _, exists := activeOrganizations[key.OrgId]; exists {
+				continue
+			}
+			err = moa.kvStore.Del(ctx, key.OrgId, key.Namespace, key.Key)
+			if err != nil {
+				moa.logger.Error("failed to delete item from kvstore", "err", err,
+					"orgID", key.OrgId, "namespace", KVNamespace, "key", key.Key)
+			}
+		}
 	}
 }
 
