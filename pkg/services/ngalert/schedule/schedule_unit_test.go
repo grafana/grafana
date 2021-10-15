@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -354,6 +356,26 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			require.Equal(t, evalState.String(), string(cmd.State))
 			require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 		})
+		t.Run("it increases counters", func(t *testing.T) {
+			totalCounter, err := sch.metrics.EvalTotal.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
+			require.NoError(t, err)
+			m := &dto.Metric{}
+			err = totalCounter.Write(m)
+			require.NoError(t, err)
+			require.Equal(t, float64(1), *m.Counter.Value)
+
+			failureCounter, err := sch.metrics.EvalFailures.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
+			require.NoError(t, err)
+			err = failureCounter.Write(m)
+			require.NoError(t, err)
+			require.Equal(t, float64(0), *m.Counter.Value)
+
+			duration, err := sch.metrics.EvalDuration.MetricVec.GetMetricWithLabelValues(strconv.FormatInt(rule.OrgID, 10))
+			require.NoError(t, err)
+			err = duration.Write(m)
+			require.NoError(t, err)
+			require.Equal(t, float64(1), *m.Summary.SampleCount)
+		})
 	})
 
 	t.Run("should exit", func(t *testing.T) {
@@ -488,11 +510,17 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		}
 		require.Len(t, queries, 1, "Expected exactly one request of %T", models.GetAlertRuleByUIDQuery{})
 	})
-
-	t.Run("retries when fails", func(t *testing.T) {
-		// TODO figure out how to simulate failure
-		t.Skip()
+	t.Run("when evaluation fails", func(t *testing.T) {
+		t.Run("it should increase failure counter", func(t *testing.T) {
+			t.Skip()
+			// TODO implement check for counter
+		})
+		t.Run("it should retry up to configured times", func(t *testing.T) {
+			// TODO figure out how to simulate failure
+			t.Skip()
+		})
 	})
+
 	t.Run("when there are alerts that should be firing", func(t *testing.T) {
 		t.Run("it should send to local alertmanager if configured for organization", func(t *testing.T) {
 			// TODO figure out how to simulate multiorg alertmanager
