@@ -24,12 +24,6 @@ jobs:
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-      - uses: actions/cache@v2.1.6
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            yarn-
       - run: yarn install --immutable
       - run: ./scripts/ci-reference-docs-build.sh
       - name: publish-to-git
