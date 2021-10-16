@@ -20,7 +20,7 @@ jobs:
         id: generate-docs
         with:
           node-version: "14"
-          cache: npm
+          cache: yarn
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
