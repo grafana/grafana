@@ -1,4 +1,4 @@
-![Grafana](docs/logo-horizontal.png)
+<a href="https://grafana.com/">![Grafana](docs/logo-horizontal.png)</a>
 
 The open-source platform for monitoring and observability.
 
