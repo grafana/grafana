@@ -56,7 +56,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       </ToolbarButton>
       {isOpen && (
         <div className={styles.menuWrapper}>
-          <ClickOutsideWrapper onClick={onCloseMenu} parent={document}>
+          <ClickOutsideWrapper onClick={onCloseMenu} parent={document} includeButtonPress={false}>
             <Menu>
               {options.map((item) => (
                 <MenuItem
