@@ -89,8 +89,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		{
 			Role: accesscontrol.RoleDTO{
 				Version:     1,
-				Name:        "fixed:datasources:reader",
-				Description: "Gives access to read datasources without permissions",
+				Name:        "fixed:datasources:compatibility:reader",
+				Description: "Gives access to read and query datasources without permissions",
 				Permissions: []accesscontrol.Permission{
 					{Action: ActionDatasourcesRead},
 				},
