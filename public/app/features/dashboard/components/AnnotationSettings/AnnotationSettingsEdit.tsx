@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AnnotationQuery, DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { AngularEditorLoader } from './AngularEditorLoader';
@@ -78,7 +78,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
           width={50}
         />
       </Field>
-      <Field label="Data source">
+      <Field label="Data source" htmlFor="data-source-picker">
         <DataSourcePicker
           width={50}
           annotations

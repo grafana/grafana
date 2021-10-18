@@ -248,5 +248,120 @@ func TestTimeRange(t *testing.T) {
 				So(res, ShouldEqual, expected)
 			})
 		})
+
+		Convey("Can parse now-1w/w, now-1w/w without timezone and week start on Monday", func() {
+			tr := TimeRange{
+				From: "now-1w/w",
+				To:   "now-1w/w",
+				now:  now,
+			}
+			weekstart := time.Monday
+			So(err, ShouldBeNil)
+
+			Convey("from now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-13T00:00:00.000Z")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseFromWithWeekStart(nil, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+
+			Convey("to now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T23:59:59.999Z")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseToWithWeekStart(nil, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+		})
+
+		Convey("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Monday", func() {
+			tr := TimeRange{
+				From: "now-1w/w",
+				To:   "now-1w/w",
+				now:  now,
+			}
+			weekstart := time.Monday
+			location, err := time.LoadLocation("America/Chicago")
+			So(err, ShouldBeNil)
+
+			Convey("from now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-13T00:00:00.000-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseFromWithWeekStart(location, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+
+			Convey("to now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T23:59:59.999-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseToWithWeekStart(location, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+		})
+
+		Convey("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Sunday", func() {
+			tr := TimeRange{
+				From: "now-1w/w",
+				To:   "now-1w/w",
+				now:  now,
+			}
+			weekstart := time.Sunday
+			location, err := time.LoadLocation("America/Chicago")
+			So(err, ShouldBeNil)
+
+			Convey("from now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-19T00:00:00.000-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseFromWithWeekStart(location, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+
+			Convey("to now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-25T23:59:59.999-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseToWithWeekStart(location, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+		})
+
+		Convey("Can parse now-1w/w, now-1w/w with America/Chicago timezone and week start on Saturday", func() {
+			tr := TimeRange{
+				From: "now-1w/w",
+				To:   "now-1w/w",
+				now:  now,
+			}
+			weekstart := time.Saturday
+			location, err := time.LoadLocation("America/Chicago")
+			So(err, ShouldBeNil)
+
+			Convey("from now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-18T00:00:00.000-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseFromWithWeekStart(location, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+
+			Convey("to now-1w/w ", func() {
+				expected, err := time.Parse(time.RFC3339Nano, "2020-07-24T23:59:59.999-05:00")
+				So(err, ShouldBeNil)
+
+				res, err := tr.ParseToWithWeekStart(location, weekstart)
+				So(err, ShouldBeNil)
+				So(res, ShouldEqual, expected)
+			})
+		})
 	})
 }

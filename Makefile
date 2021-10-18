@@ -15,6 +15,9 @@ SH_FILES ?= $(shell find ./scripts -name *.sh)
 
 all: deps build
 
+drone-version:
+    DRONE_VERSION := $(shell drone -v | cut -d' ' -f3)
+
 ##@ Dependencies
 
 deps-go: ## Install backend dependencies.
@@ -151,9 +154,12 @@ clean: ## Clean up intermediate build artifacts.
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone:
-	drone starlark
-	drone lint
-	drone --server https://drone.grafana.net sign --save grafana/grafana
+	@if [ "$(DRONE_VERSION)" != "1.4.0" ]; then\
+		echo "WARN: You are using drone-cli ${DRONE_VERSION}. Please update your LOCAL version to 1.4.0. Using latest bingo version...";\
+	fi
+	$(DRONE) starlark --format
+	$(DRONE) lint .drone.yml
+	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

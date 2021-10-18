@@ -23,8 +23,10 @@ import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRan
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldLazy } from './monaco-query-field/MonacoQueryFieldLazy';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
+const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
   if (metricsLookupDisabled) {
@@ -277,66 +279,78 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const isMonacoEditorEnabled = config.featureToggles.prometheusMonaco;
 
     return (
-      <>
-        <div
-          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
-          data-testid={this.props['data-testid']}
-        >
-          <button
-            className="gf-form-label query-keyword pointer"
-            onClick={this.onClickChooserButton}
-            disabled={buttonDisabled}
-          >
-            {chooserText}
-            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-          </button>
+      <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
+        {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
+          return (
+            <>
+              <div
+                className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+                data-testid={this.props['data-testid']}
+              >
+                <button
+                  className="gf-form-label query-keyword pointer"
+                  onClick={this.onClickChooserButton}
+                  disabled={buttonDisabled}
+                >
+                  {chooserText}
+                  <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+                </button>
 
-          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-            {isMonacoEditorEnabled ? (
-              <MonacoQueryFieldLazy
-                languageProvider={languageProvider}
-                history={history}
-                onChange={this.onChangeQuery}
-                onRunQuery={this.props.onRunQuery}
-                initialValue={query.expr ?? ''}
-              />
-            ) : (
-              <QueryField
-                additionalPlugins={this.plugins}
-                cleanText={cleanText}
-                query={query.expr}
-                onTypeahead={this.onTypeahead}
-                onWillApplySuggestion={willApplySuggestion}
-                onBlur={this.props.onBlur}
-                onChange={this.onChangeQuery}
-                onRunQuery={this.props.onRunQuery}
-                placeholder={placeholder}
-                portalOrigin="prometheus"
-                syntaxLoaded={syntaxLoaded}
-              />
-            )}
-          </div>
-        </div>
-        {labelBrowserVisible && (
-          <div className="gf-form">
-            <PrometheusMetricsBrowser languageProvider={languageProvider} onChange={this.onChangeLabelBrowser} />
-          </div>
-        )}
+                <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+                  {isMonacoEditorEnabled ? (
+                    <MonacoQueryFieldLazy
+                      languageProvider={languageProvider}
+                      history={history}
+                      onChange={this.onChangeQuery}
+                      onRunQuery={this.props.onRunQuery}
+                      initialValue={query.expr ?? ''}
+                    />
+                  ) : (
+                    <QueryField
+                      additionalPlugins={this.plugins}
+                      cleanText={cleanText}
+                      query={query.expr}
+                      onTypeahead={this.onTypeahead}
+                      onWillApplySuggestion={willApplySuggestion}
+                      onBlur={this.props.onBlur}
+                      onChange={this.onChangeQuery}
+                      onRunQuery={this.props.onRunQuery}
+                      placeholder={placeholder}
+                      portalOrigin="prometheus"
+                      syntaxLoaded={syntaxLoaded}
+                    />
+                  )}
+                </div>
+              </div>
+              {labelBrowserVisible && (
+                <div className="gf-form">
+                  <PrometheusMetricsBrowser
+                    languageProvider={languageProvider}
+                    onChange={this.onChangeLabelBrowser}
+                    lastUsedLabels={lastUsedLabels || []}
+                    storeLastUsedLabels={onLastUsedLabelsSave}
+                    deleteLastUsedLabels={onLastUsedLabelsDelete}
+                  />
+                </div>
+              )}
 
-        {ExtraFieldElement}
-        {hint ? (
-          <div className="query-row-break">
-            <div className="prom-query-field-info text-warning">
-              {hint.label}{' '}
-              {hint.fix ? (
-                <a className="text-link muted" onClick={this.onClickHintFix}>
-                  {hint.fix.label}
-                </a>
+              {ExtraFieldElement}
+              {hint ? (
+                <div className="query-row-break">
+                  <div className="prom-query-field-info text-warning">
+                    {hint.label}{' '}
+                    {hint.fix ? (
+                      <a className="text-link muted" onClick={this.onClickHintFix}>
+                        {hint.fix.label}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
-            </div>
-          </div>
-        ) : null}
-      </>
+            </>
+          );
+        }}
+      </LocalStorageValueProvider>
     );
   }
 }

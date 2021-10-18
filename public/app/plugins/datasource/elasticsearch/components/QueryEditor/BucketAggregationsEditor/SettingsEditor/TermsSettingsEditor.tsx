@@ -48,8 +48,8 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
           {...useCreatableSelectPersistedBehaviour({
             options: sizeOptions,
             value: bucketAgg.settings?.size || bucketAggregationConfig.terms.defaultSettings?.size,
-            onChange(newValue) {
-              dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'size', newValue }));
+            onChange({ value }) {
+              dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'size', newValue: value }));
             },
           })}
         />
