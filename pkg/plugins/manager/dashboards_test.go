@@ -40,8 +40,8 @@ func TestGetPluginDashboards(t *testing.T) {
 
 	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 		query.Result = []*models.Dashboard{
-			{Slug: "nginx-connections", Data: simplejson.NewFromAny(map[string]interface{}{"title": "Nginx Connections", "revision": 22})},
-			{Slug: "nginx-memory-incompatible", Data: simplejson.NewFromAny(map[string]interface{}{"title": "Nginx Memory - Incompatible", "revision": 21})},
+			{Uid: "1MHHlVjzz", Slug: "nginx-connections", Data: simplejson.NewFromAny(map[string]interface{}{"title": "Nginx Connections", "revision": 22})},
+			{Uid: "2VXHlVjll", Slug: "nginx-memory-incompatible", Data: simplejson.NewFromAny(map[string]interface{}{"title": "Nginx Memory - Incompatible", "revision": 21})},
 		}
 		return nil
 	})
