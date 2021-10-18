@@ -20,8 +20,7 @@ import (
 
 func TestGoogleChatNotifier(t *testing.T) {
 	constNow := time.Now()
-	mockTimeNow(constNow)
-	defer resetTimeNow()
+	defer mockTimeNow(constNow)()
 
 	tmpl := templateForTests(t)
 
