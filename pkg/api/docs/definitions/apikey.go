@@ -12,7 +12,7 @@ import (
 // Will return auth keys.
 //
 // Responses:
-// 200: apikeyResponse
+// 200: getAPIkeyResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
@@ -25,7 +25,7 @@ import (
 // Will return details of the created API key
 //
 // Responses:
-// 200: newAPIkeyResponse
+// 200: postAPIkeyResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -66,15 +66,15 @@ type DeleteAPIkeyParams struct {
 	ID int64 `json:"id"`
 }
 
-// swagger:response apikeyResponse
-type APIkeyResponse struct {
+// swagger:response getAPIkeyResponse
+type GetAPIkeyResponse struct {
 	// The response message
 	// in: body
 	Body []*models.ApiKeyDTO `json:"body"`
 }
 
-// swagger:response newAPIkeyResponse
-type NewAPIkeyResponse struct {
+// swagger:response postAPIkeyResponse
+type PostAPIkeyResponse struct {
 	// The response message
 	// in: body
 	Body dtos.NewApiKeyResult `json:"body"`

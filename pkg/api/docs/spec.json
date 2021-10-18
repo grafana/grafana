@@ -47,7 +47,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/apikeyResponse"
+            "$ref": "#/responses/getAPIkeyResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -81,7 +81,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/newAPIkeyResponse"
+            "$ref": "#/responses/postAPIkeyResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -771,15 +771,6 @@
     }
   },
   "responses": {
-    "apikeyResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/ApiKeyDTO"
-        }
-      }
-    },
     "badRequestError": {
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
       "schema": {
@@ -858,6 +849,15 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "getAPIkeyResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ApiKeyDTO"
+        }
+      }
+    },
     "getHomeDashboardResponse": {
       "description": "Home dashboard response.",
       "schema": {
@@ -870,12 +870,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "newAPIkeyResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/NewApiKeyResult"
-      }
-    },
     "notFoundError": {
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
@@ -886,6 +880,12 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
+      }
+    },
+    "postAPIkeyResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/NewApiKeyResult"
       }
     },
     "postDashboardResponse": {
