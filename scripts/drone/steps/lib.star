@@ -337,7 +337,7 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'test-frontend'
+            'build-frontend'
         ],
         'commands': [
             './scripts/ci-reference-docs-lint.sh ci',
