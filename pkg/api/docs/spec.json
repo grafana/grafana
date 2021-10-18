@@ -240,6 +240,136 @@
         }
       }
     },
+    "/dashboards/id/{DashboardID}/restore": {
+      "post": {
+        "tags": [
+          "dashboard_versions"
+        ],
+        "summary": "Restore a dashboard to a given dashboard version.",
+        "operationId": "restoreDashboardVersion",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/quotaReachedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/id/{DashboardID}/versions": {
+      "get": {
+        "tags": [
+          "dashboard_versions"
+        ],
+        "summary": "Gets all existing versions for the dashboard.",
+        "operationId": "getDashboardVersions",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "x-go-name": "Limit",
+            "description": "Maximum number of results to return",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "x-go-name": "Start",
+            "description": "Version to start from when returning queries",
+            "name": "start",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
+      "get": {
+        "tags": [
+          "dashboard_versions"
+        ],
+        "summary": "Get a specific dashboard version.",
+        "operationId": "getDashboardVersion",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboards/import": {
       "post": {
         "description": "Import dashboard",
@@ -686,6 +816,99 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "DashboardVersionDTO": {
+      "description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "createdBy": {
+          "type": "string",
+          "x-go-name": "CreatedBy"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "parentVersion": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ParentVersion"
+        },
+        "restoredFrom": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "RestoredFrom"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "DashboardVersionMeta": {
+      "description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "createdBy": {
+          "type": "string",
+          "x-go-name": "CreatedBy"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Id"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "parentVersion": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ParentVersion"
+        },
+        "restoredFrom": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "RestoredFrom"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": [
@@ -932,6 +1155,21 @@
         "$ref": "#/definitions/DashboardFullWithMeta"
       }
     },
+    "dashboardVersionResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DashboardVersionMeta"
+      }
+    },
+    "dashboardVersionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/DashboardVersionDTO"
+        }
+      }
+    },
     "dashboardsTagsResponse": {
       "description": "",
       "schema": {
@@ -1044,10 +1282,17 @@
           "status",
           "title",
           "version",
+          "id",
           "uid",
           "url"
         ],
         "properties": {
+          "id": {
+            "description": "ID The unique identifier (id) of the created/updated dashboard.",
+            "type": "string",
+            "x-go-name": "ID",
+            "example": "1"
+          },
           "status": {
             "description": "Status status of the response.",
             "type": "string",
