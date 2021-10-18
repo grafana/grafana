@@ -1,9 +1,9 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { appEvents } from 'app/core/core';
 import { buildIframeHtml } from './utils';
+import { ShareModalTabProps } from './types';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Current', value: 'current' },
@@ -11,10 +11,7 @@ const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Light', value: 'light' },
 ];
 
-interface Props {
-  dashboard: DashboardModel;
-  panel?: PanelModel;
-}
+interface Props extends ShareModalTabProps {}
 
 interface State {
   useCurrentTimeRange: boolean;
