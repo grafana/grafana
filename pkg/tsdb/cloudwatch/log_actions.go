@@ -212,7 +212,6 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
 		QueryString:   aws.String(modifiedQueryString),
 	}
-	plog.Debug("executeStartQuery", "startQueryInput", startQueryInput)
 
 	if resultsLimit, err := parameters.Get("limit").Int64(); err == nil {
 		startQueryInput.Limit = aws.Int64(resultsLimit)
