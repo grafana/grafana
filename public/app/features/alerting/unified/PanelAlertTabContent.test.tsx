@@ -34,9 +34,16 @@ const dataSources = {
   prometheus: mockDataSource<PromOptions>({
     name: 'Prometheus',
     type: DataSourceType.Prometheus,
+    isDefault: false,
+  }),
+  default: mockDataSource<PromOptions>({
+    name: 'Default',
+    type: DataSourceType.Prometheus,
+    isDefault: true,
   }),
 };
 dataSources.prometheus.meta.alerting = true;
+dataSources.default.meta.alerting = true;
 
 const mocks = {
   getAllDataSources: typeAsJestMock(getAllDataSources),
@@ -139,10 +146,11 @@ const dashboard = {
     folderTitle: 'super folder',
   },
 } as DashboardModel;
+
 const panel = ({
   datasource: dataSources.prometheus.uid,
   title: 'mypanel',
-  editSourceId: 34,
+  id: 34,
   targets: [
     {
       expr: 'sum(some_metric [$__interval])) by (app)',
@@ -164,6 +172,10 @@ describe('PanelAlertTabContent', () => {
     dsService.datasources[dataSources.prometheus.name] = new PrometheusDatasource(
       dataSources.prometheus
     ) as DataSourceApi<any, any>;
+    dsService.datasources[dataSources.default.name] = new PrometheusDatasource(dataSources.default) as DataSourceApi<
+      any,
+      any
+    >;
     setDataSourceSrv(dsService);
   });
 
@@ -182,6 +194,28 @@ describe('PanelAlertTabContent', () => {
       expr: 'sum(some_metric [5m])) by (app)',
       refId: 'A',
       datasource: 'Prometheus',
+      interval: '',
+      intervalMs: 300000,
+      maxDataPoints: 100,
+    });
+  });
+
+  it('Will work with default datasource', async () => {
+    await renderAlertTabContent(dashboard, ({
+      ...panel,
+      datasource: undefined,
+      maxDataPoints: 100,
+      interval: '10s',
+    } as any) as PanelModel);
+    const button = await ui.createButton.find();
+    const href = button.href;
+    const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
+    expect(match).toHaveLength(2);
+    const defaults = JSON.parse(decodeURIComponent(match![1]));
+    expect(defaults.queries[0].model).toEqual({
+      expr: 'sum(some_metric [5m])) by (app)',
+      refId: 'A',
+      datasource: 'Default',
       interval: '',
       intervalMs: 300000,
       maxDataPoints: 100,
@@ -273,11 +307,11 @@ describe('PanelAlertTabContent', () => {
 
     expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       dashboardUID: dashboard.uid,
-      panelId: panel.editSourceId,
+      panelId: panel.id,
     });
     expect(mocks.api.fetchRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       dashboardUID: dashboard.uid,
-      panelId: panel.editSourceId,
+      panelId: panel.id,
     });
   });
 });

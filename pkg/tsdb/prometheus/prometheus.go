@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -29,6 +28,16 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// Internal interval and range variables
+const (
+	varInterval     = "$__interval"
+	varIntervalMs   = "$__interval_ms"
+	varRange        = "$__range"
+	varRangeS       = "$__range_s"
+	varRangeMs      = "$__range_ms"
+	varRateInterval = "$__rate_interval"
+)
+
 var (
 	plog         = log.New("tsdb.prometheus")
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
@@ -36,17 +45,15 @@ var (
 )
 
 type Service struct {
-	httpClientProvider httpclient.Provider
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	plog.Debug("initializing")
-	im := datasource.NewInstanceManager(newInstanceSettings())
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
-		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 		im:                 im,
 	}
@@ -62,9 +69,8 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 	return s, nil
 }
 
-func newInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -80,32 +86,32 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			httpCliOpts.SigV4.Service = "aps"
 		}
 
-		httpMethod, ok := jsonData["httpMethod"].(string)
-		if !ok {
-			httpMethod = defaultHttpMethod
-		}
-
 		// timeInterval can be a string or can be missing.
 		// if it is missing, we set it to empty-string
-
 		timeInterval := ""
 
 		timeIntervalJson := jsonData["timeInterval"]
 		if timeIntervalJson != nil {
 			// if it is not nil, it must be a string
+			var ok bool
 			timeInterval, ok = timeIntervalJson.(string)
 			if !ok {
 				return nil, errors.New("invalid time-interval provided")
 			}
 		}
 
-		mdl := DatasourceInfo{
-			ID:             settings.ID,
-			URL:            settings.URL,
-			HTTPClientOpts: httpCliOpts,
-			HTTPMethod:     httpMethod,
-			TimeInterval:   timeInterval,
+		client, err := createClient(settings.URL, httpCliOpts, httpClientProvider)
+		if err != nil {
+			return nil, err
 		}
+
+		mdl := DatasourceInfo{
+			ID:           settings.ID,
+			URL:          settings.URL,
+			TimeInterval: timeInterval,
+			promClient:   client,
+		}
+
 		return mdl, nil
 	}
 }
@@ -120,10 +126,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-	client, err := getClient(dsInfo, s)
-	if err != nil {
-		return nil, err
-	}
+
+	client := dsInfo.promClient
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -157,7 +161,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
-			response[Range] = rangeResponse
+			response[RangeQueryType] = rangeResponse
 		}
 
 		if query.InstantQuery {
@@ -165,7 +169,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			if err != nil {
 				return &result, fmt.Errorf("query: %s failed with: %v", query.Expr, err)
 			}
-			response[Instant] = instantResponse
+			response[InstantQueryType] = instantResponse
 		}
 		// For now, we ignore exemplar errors and continue with processing of other results
 		if query.ExemplarQuery {
@@ -174,7 +178,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				exemplarResponse = nil
 				plog.Error("Exemplar query", query.Expr, "failed with", err)
 			}
-			response[Exemplar] = exemplarResponse
+			response[ExemplarQueryType] = exemplarResponse
 		}
 
 		frames, err := parseResponse(response, query)
@@ -190,24 +194,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
-	opts := &sdkhttpclient.Options{
-		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
-		TLS:       dsInfo.HTTPClientOpts.TLS,
-		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
-		Headers:   dsInfo.HTTPClientOpts.Headers,
-	}
-
+func createClient(url string, httpOpts sdkhttpclient.Options, clientProvider httpclient.Provider) (apiv1.API, error) {
 	customMiddlewares := customQueryParametersMiddleware(plog)
-	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
+	httpOpts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
-	roundTripper, err := s.httpClientProvider.GetTransport(*opts)
+	roundTripper, err := clientProvider.GetTransport(httpOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := api.Config{
-		Address:      dsInfo.URL,
+		Address:      url,
 		RoundTripper: roundTripper,
 	}
 
@@ -264,11 +261,13 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 		if err != nil {
 			return nil, err
 		}
+		//Final interval value
+		var interval time.Duration
 
 		//Calculate interval
 		queryInterval := model.Interval
 		//If we are using variable or interval/step, we will replace it with calculated interval
-		if queryInterval == "$__interval" || queryInterval == "$__interval_ms" {
+		if queryInterval == varInterval || queryInterval == varIntervalMs || queryInterval == varRateInterval {
 			queryInterval = ""
 		}
 		minInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, model.IntervalMS, 15*time.Second)
@@ -278,29 +277,34 @@ func (s *Service) parseQuery(queryContext *backend.QueryDataRequest, dsInfo *Dat
 
 		calculatedInterval := s.intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
 		safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
-
 		adjustedInterval := safeInterval.Value
+
 		if calculatedInterval.Value > safeInterval.Value {
 			adjustedInterval = calculatedInterval.Value
 		}
 
-		intervalFactor := model.IntervalFactor
-		if intervalFactor == 0 {
-			intervalFactor = 1
+		if queryInterval == varRateInterval {
+			// Rate interval is final and is not affected by resolution
+			interval = calculateRateInterval(adjustedInterval, dsInfo.TimeInterval, s.intervalCalculator)
+		} else {
+			intervalFactor := model.IntervalFactor
+			if intervalFactor == 0 {
+				intervalFactor = 1
+			}
+			interval = time.Duration(int64(adjustedInterval) * intervalFactor)
 		}
 
-		interval := time.Duration(int64(adjustedInterval) * intervalFactor)
 		intervalMs := int64(interval / time.Millisecond)
 		rangeS := query.TimeRange.To.Unix() - query.TimeRange.From.Unix()
 
 		// Interpolate variables in expr
 		expr := model.Expr
-		expr = strings.ReplaceAll(expr, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
-		expr = strings.ReplaceAll(expr, "$__interval", intervalv2.FormatDuration(interval))
-		expr = strings.ReplaceAll(expr, "$__range_ms", strconv.FormatInt(rangeS*1000, 10))
-		expr = strings.ReplaceAll(expr, "$__range_s", strconv.FormatInt(rangeS, 10))
-		expr = strings.ReplaceAll(expr, "$__range", strconv.FormatInt(rangeS, 10)+"s")
-		expr = strings.ReplaceAll(expr, "$__rate_interval", intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
+		expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(intervalMs, 10))
+		expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(interval))
+		expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeS*1000, 10))
+		expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeS, 10))
+		expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeS, 10)+"s")
+		expr = strings.ReplaceAll(expr, varRateInterval, intervalv2.FormatDuration(calculateRateInterval(interval, dsInfo.TimeInterval, s.intervalCalculator)))
 
 		rangeQuery := model.RangeQuery
 		if !model.InstantQuery && !model.RangeQuery {

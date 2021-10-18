@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
-import { SelectableValue, QueryEditorProps } from '@grafana/data';
+import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
-import { ExpressionDatasourceApi } from './ExpressionDatasource';
 import { Resample } from './components/Resample';
 import { Reduce } from './components/Reduce';
 import { Math } from './components/Math';
@@ -9,7 +8,7 @@ import { ClassicConditions } from './components/ClassicConditions';
 import { getDefaults } from './utils/expressionTypes';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
 
-type Props = QueryEditorProps<ExpressionDatasourceApi, ExpressionQuery>;
+type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
 const labelWidth = 14;
 export class ExpressionQueryEditor extends PureComponent<Props> {

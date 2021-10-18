@@ -5,6 +5,7 @@ import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/O
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { PlacementEditor } from './PlacementEditor';
 
 export interface CanvasEditorOptions {
   element: ElementState;
@@ -44,6 +45,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
     // Dynamically fill the selected element
     build: (builder, context) => {
+      console.log('MAKE element editor', opts.element.UID);
+
       const { options } = opts.element;
       const layerTypes = canvasElementRegistry.selectOptions(
         options?.type // the selected value
@@ -70,6 +73,15 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
       optionBuilder.addBackground(builder, ctx);
       optionBuilder.addBorder(builder, ctx);
+
+      builder.addCustomEditor({
+        category: ['Layout'],
+        id: 'content',
+        path: '__', // not used
+        name: 'Anchor',
+        editor: PlacementEditor,
+        settings: opts,
+      });
     },
   };
 }
