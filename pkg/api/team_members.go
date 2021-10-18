@@ -16,7 +16,7 @@ import (
 func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
@@ -84,7 +84,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTe
 	cmd.UserId = c.ParamsInt64(":userId")
 	cmd.OrgId = orgId
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrTeamMemberNotFound) {
 			return response.Error(404, "Team member not found.", nil)
 		}
@@ -108,7 +108,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 		protectLastAdmin = true
 	}
 
-	if err := hs.Bus.Dispatch(&models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Req.Context(), &models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
