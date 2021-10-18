@@ -6,6 +6,7 @@
 
 load('scripts/drone/pipelines/pr.star', 'pr_pipelines')
 load('scripts/drone/pipelines/main.star', 'main_pipelines')
+load('scripts/drone/pipelines/docs.star', 'docs_pipelines')
 load('scripts/drone/pipelines/release.star', 'release_pipelines', 'test_release_pipelines')
 load('scripts/drone/version.star', 'version_branch_pipelines')
 load('scripts/drone/pipelines/cron.star', 'cronjobs')
@@ -13,5 +14,5 @@ load('scripts/drone/vault.star', 'secrets')
 
 def main(ctx):
     edition = 'oss'
-    return pr_pipelines(edition=edition) + main_pipelines(edition=edition) + release_pipelines() + \
+    return pr_pipelines(edition=edition) + docs_pipelines(edition=edition) + main_pipelines(edition=edition) + release_pipelines() + \
         test_release_pipelines() + version_branch_pipelines() + cronjobs(edition=edition) + secrets()

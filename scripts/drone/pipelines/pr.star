@@ -60,7 +60,6 @@ def pr_pipelines(edition):
         ensure_cuetsified_step(),
     ]
 
-    # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.append(benchmark_ldap_step())

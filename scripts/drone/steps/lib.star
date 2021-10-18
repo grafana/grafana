@@ -193,7 +193,7 @@ def build_storybook_step(edition, ver_mode):
         'image': build_image,
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
-            'package',
+            'build-frontend',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -337,7 +337,7 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'lint-frontend'
+            'test-frontend'
         ],
         'commands': [
             './scripts/ci-reference-docs-lint.sh ci',

@@ -173,7 +173,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -194,7 +194,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - lint-frontend
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -256,6 +256,119 @@ steps:
 trigger:
   event:
   - pull_request
+type: docker
+---
+depends_on: []
+kind: pipeline
+name: test-docs-pr
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+- environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.6.48
+  name: mysql
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.14.2
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.5.2/grabpl
+  - chmod +x bin/grabpl
+  - ./bin/grabpl verify-drone
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.4.3
+  name: initialize
+- commands:
+  - |-
+    echo -e "unknwon
+    referer
+    errorstring
+    eror
+    iam
+    wan" > words_to_ignore.txt
+  - codespell -I words_to_ignore.txt docs/
+  - rm words_to_ignore.txt
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.3
+  name: codespell
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.3
+  name: shellcheck
+- commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
+  depends_on:
+  - initialize
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.3
+  name: lint-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - lint-frontend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.3
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.3
+  name: build-frontend
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - build-frontend
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.3
+  name: build-storybook
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - test-frontend
+  image: grafana/build-container:1.4.3
+  name: build-frontend-docs
+- commands:
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
+  depends_on:
+  - build-frontend-docs
+  image: grafana/docs-base:latest
+  name: build-docs-website
+trigger:
+  event:
+  - pull_request
+  when:
+    paths: docs/**
 type: docker
 ---
 depends_on: []
@@ -455,7 +568,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -498,7 +611,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - lint-frontend
+  - test-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -973,7 +1086,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -1903,7 +2016,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -2825,7 +2938,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -3198,7 +3311,7 @@ steps:
   - yarn storybook:build
   - ./bin/grabpl verify-storybook
   depends_on:
-  - package
+  - build-frontend
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.4.3
@@ -3459,6 +3572,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 7dfea5d0140c280d8942548a162a064744016a3e1a2242d92aade9e08af2b185
+hmac: 1a61c2edf75fac2a82fdb9327f0b25de65e86b72eb343202073bfc946609b425
 
 ...
