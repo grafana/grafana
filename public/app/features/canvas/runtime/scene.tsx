@@ -91,10 +91,9 @@ export class Scene {
     this.style = { width, height };
     this.root.updateSize(width, height);
 
-    const numberOfCurrentSelectedTargets = this?.selecto?.getSelectedTargets()?.length ?? 0;
-    if (numberOfCurrentSelectedTargets > 0) {
+    if (this.selecto?.getSelectedTargets().length) {
       let event: MouseEvent = new MouseEvent('click');
-      this?.selecto?.clickTarget(event, this.div);
+      this.selecto.clickTarget(event, this.div);
     }
   }
 
