@@ -17,7 +17,8 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
   const cellProps = cell.getCellProps();
 
   if (!field.display) {
-    field.display = getDisplayProcessor({ field, theme: createTheme({ colors: { mode: 'dark' } }) });
+    const mode = (window as any).grafanaBootData?.user?.lightTheme ? 'light' : 'dark';
+    field.display = getDisplayProcessor({ field, theme: createTheme({ colors: { mode } }) });
   }
 
   if (cellProps.style) {
