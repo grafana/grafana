@@ -3,6 +3,7 @@ package apidocs
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
@@ -79,6 +80,27 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
+// swagger:route GET /dashboards/tags dashboards getDashboardTags
+//
+// Get all dashboards tags of an organisation
+//
+// Responses:
+// 200: dashboardsTagsResponse
+// 401: unauthorisedError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/import dashboards importDashboard
+//
+// Import dashboard
+//
+// Responses:
+// 200: importDashboardResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 412: preconditionFailedError
+// 422: unprocessableEntityError
+// 500: internalServerError
+
 // swagger:parameters getDashboardByUID deleteDashboardByUID
 type UID struct {
 	// in:path
@@ -105,6 +127,13 @@ type TrimDashboardParam struct {
 	// in:body
 	// required:true
 	Body models.TrimDashboardCommand
+}
+
+// swagger:parameters importDashboard
+type ImportDashboardParam struct {
+	// in:body
+	// required:true
+	Body dtos.ImportDashboardCommand
 }
 
 // swagger:response dashboardResponse
@@ -187,6 +216,18 @@ type TrimDashboardResponse struct {
 type GetHomeDashboardResponse struct {
 	// in: body
 	Body GetHomeDashboardResponseBody `json:"body"`
+}
+
+// swagger:response dashboardsTagsResponse
+type DashboardsTagsResponse struct {
+	// in: body
+	Body []*models.DashboardTagCloudItem `json:"body"`
+}
+
+// swagger:response importDashboardResponse
+type ImportDashboardResponse struct {
+	// in: body
+	Body plugins.ImportDashboardInput `json:"body"`
 }
 
 // Get home dashboard response.

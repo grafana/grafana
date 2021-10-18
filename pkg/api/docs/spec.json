@@ -240,6 +240,65 @@
         }
       }
     },
+    "/dashboards/import": {
+      "post": {
+        "description": "Import dashboard",
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "importDashboard",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ImportDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/importDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "412": {
+            "$ref": "#/responses/preconditionFailedError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/tags": {
+      "get": {
+        "description": "Get all dashboards tags of an organisation",
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "getDashboardTags",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardsTagsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboards/trim": {
       "post": {
         "description": "Trim defaults from dashboard",
@@ -612,6 +671,21 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "DashboardTagCloudItem": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count"
+        },
+        "term": {
+          "type": "string",
+          "x-go-name": "Term"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": [
@@ -662,6 +736,65 @@
       ],
       "x-go-name": "GetHomeDashboardResponseBody",
       "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+    },
+    "ImportDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "FolderId"
+        },
+        "folderUid": {
+          "type": "string",
+          "x-go-name": "FolderUid"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ImportDashboardInput"
+          },
+          "x-go-name": "Inputs"
+        },
+        "overwrite": {
+          "type": "boolean",
+          "x-go-name": "Overwrite"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "pluginId": {
+          "type": "string",
+          "x-go-name": "PluginId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "ImportDashboardInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "pluginId": {
+          "type": "string",
+          "x-go-name": "PluginId"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/plugins"
     },
     "Json": {
       "type": "object",
@@ -799,6 +932,15 @@
         "$ref": "#/definitions/DashboardFullWithMeta"
       }
     },
+    "dashboardsTagsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/DashboardTagCloudItem"
+        }
+      }
+    },
     "deleteDashboardResponse": {
       "description": "",
       "schema": {
@@ -862,6 +1004,12 @@
       "description": "Home dashboard response.",
       "schema": {
         "$ref": "#/definitions/GetHomeDashboardResponse"
+      }
+    },
+    "importDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ImportDashboardInput"
       }
     },
     "internalServerError": {
