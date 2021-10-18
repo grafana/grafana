@@ -57,7 +57,7 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
     const labels = getLabelsFromRow(data, index, mappingResult);
 
     const field: Field = {
-      name: name,
+      name: String(name),
       type: valueField.type,
       values: new ArrayVector([value]),
       config: config,

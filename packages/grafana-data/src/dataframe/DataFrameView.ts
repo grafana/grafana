@@ -32,10 +32,10 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
         });
       }
 
-      Object.defineProperty(obj, i, {
-        enumerable: false, // Don't enumerate array index
-        get: getter,
-      });
+      // Object.defineProperty(obj, i, {
+      //   enumerable: false, // Don't enumerate array index
+      //   get: getter,
+      // });
     }
 
     this.obj = obj;
