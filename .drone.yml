@@ -256,6 +256,9 @@ steps:
 trigger:
   event:
   - pull_request
+  paths:
+    exclude:
+    - docs/**
 type: docker
 ---
 depends_on: []
@@ -352,6 +355,8 @@ steps:
   image: grafana/docs-base:latest
   name: build-docs-website
 trigger:
+  event:
+  - pull_request
   paths:
     include:
     - docs/**
@@ -3558,6 +3563,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 9e694aaca696cc74b40a6b938db5883c83e6080365865a676376cab55ffb7873
+hmac: 0476468742087962239f609c78dec0fbc748c753fb0b60d2aceea7d480cbdb9e
 
 ...
