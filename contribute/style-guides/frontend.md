@@ -268,7 +268,7 @@ For code that needs to be used by external plugin:
 
 - Use named exports for all code you want to export from a file.
 - Use declaration exports (i.e. `export const foo = ...`).
-- Avoid using default exports (i.e. `export default foo`).
+- Avoid using default exports (for example, `export default foo`).
 - Export only the code that is meant to be used outside the module.
 
 ### Comments
