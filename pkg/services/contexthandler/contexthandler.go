@@ -218,15 +218,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	//Use service account linked to API key as the signed in user
-	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
-		reqContext.Logger.Error(
-			"Failed to link API key to service account in",
-			"id", query.UserId,
-			"org", query.OrgId,
-		)
-		//Use the old APIkey method for now.  This provides backwards compatibility.  Later, return a 401
+	if apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+		//Use the old APIkey method.  This provides backwards compatibility.
 		reqContext.SignedInUser = &models.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
 		reqContext.ApiKeyId = apikey.Id
@@ -235,7 +228,21 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	//Use the service account as if it were a user
+	//There is a service account attached to the API key
+
+	//Use service account linked to API key as the signed in user
+	query := models.GetSignedInUserQuery{UserId: apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := bus.Dispatch(&query); err != nil {
+		reqContext.Logger.Error(
+			"Failed to link API key to service account in",
+			"id", query.UserId,
+			"org", query.OrgId,
+			"err", err,
+		)
+		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		return true
+	}
+
 	reqContext.IsSignedIn = true
 	reqContext.SignedInUser = query.Result
 	return true
