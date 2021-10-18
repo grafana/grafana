@@ -19917,16 +19917,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"is-core-module@npm:^2.1.0":
-  version: 2.8.0
-  resolution: "is-core-module@npm:2.8.0"
-  dependencies:
-    has: ^1.0.3
-  checksum: f8b52714891e1a6c6577fcb8d5e057bab064a7a30954aab6beb5092e311473eb8da57afd334de4981dc32409ffca998412efc3a2edceb9e397cef6098d21dd91
-  languageName: node
-  linkType: hard
-
-"is-core-module@npm:^2.2.0, is-core-module@npm:^2.5.0":
+"is-core-module@npm:^2.1.0, is-core-module@npm:^2.2.0, is-core-module@npm:^2.5.0":
   version: 2.8.0
   resolution: "is-core-module@npm:2.8.0"
   dependencies:
