@@ -352,11 +352,9 @@ steps:
   image: grafana/docs-base:latest
   name: build-docs-website
 trigger:
-  event:
-  - pull_request
-  when:
-    paths:
-      include: docs/**
+  paths:
+    include:
+    - docs/**
 type: docker
 ---
 depends_on: []
@@ -3560,6 +3558,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 4f472a3cfab5dc4f2a67f53d82a53bda5a7e6ac2fdc95ff535826b3b7ed4feb0
+hmac: 9e694aaca696cc74b40a6b938db5883c83e6080365865a676376cab55ffb7873
 
 ...
