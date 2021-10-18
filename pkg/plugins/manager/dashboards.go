@@ -63,11 +63,17 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 				res.ImportedUrl = existingDash.GetUrl()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
 				res.ImportedCompatible, err = isCompatible(grafanaVersion, existingDash.Data.Get("supportedVersions").MustString(""))
+				res.SupportedVersions = existingDash.Data.Get("supportedVersions").MustString("")
 				if err != nil {
 					return nil, err
 				}
 				existingMatches[existingDash.Uid] = true
 			}
+		}
+
+		if !res.Imported {
+			// if its imported, the supported versions of the currently imported variant are more useful
+			res.SupportedVersions = include.SupportedVersions
 		}
 
 		res.Compatible, err = isCompatible(grafanaVersion, include.SupportedVersions)
@@ -76,10 +82,11 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 		}
 
 		if !res.Imported && !res.Compatible {
-			//not imported and incompatible so skip - only case where the user doesn't see the result
+			// not imported and incompatible so skip - only case where the user doesn't see the result
 			plog.Info(fmt.Sprintf("Dashboard %s for plugin %s is not compatible - requires Grafana %s", dashboard.Slug, plugin.Name, include.SupportedVersions))
 			continue
 		}
+
 		result = append(result, res)
 	}
 

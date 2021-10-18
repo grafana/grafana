@@ -8,6 +8,7 @@ export interface PluginDashboard {
   imported: boolean;
   compatible: boolean;
   importedCompatible: boolean;
+  supportedVersions: string;
   importedRevision: number;
   importedUri: string;
   importedUrl: string;

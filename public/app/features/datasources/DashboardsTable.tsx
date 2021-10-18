@@ -35,7 +35,7 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
           text="Incompatible"
           icon="exclamation-triangle"
           color="red"
-          tooltip="This dashboard is not compatible with this version of Grafana"
+          tooltip={`This dashboard requires versions ${dashboard.supportedVersions} of Grafana`}
           style={{ marginRight: '5px' }}
         />
       );
