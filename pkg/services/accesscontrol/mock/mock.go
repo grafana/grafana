@@ -112,7 +112,7 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser
 func (m *Mock) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
 	m.Calls.GetUserRoles = append(m.Calls.GetUserRoles, []interface{}{ctx, user})
 	// Use override if provided
-	if m.GetUserPermissionsFunc != nil {
+	if m.GetUserRolesFunc != nil {
 		return m.GetUserRolesFunc(ctx, user)
 	}
 	// Otherwise return the Roles list
