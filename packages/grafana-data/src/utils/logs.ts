@@ -88,7 +88,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
         parsed = JSON.parse(line);
       } catch (error) {}
       // The JSON parser should only be used for log lines that are valid serialized JSON objects.
-      // parsed string, detected fields would include each letter of string as separate detected field.
+      // If it would be used for a string, detected fields would include each letter as a separate field.
       return typeof parsed === 'object';
     },
   },
