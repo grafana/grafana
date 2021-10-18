@@ -91,7 +91,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -319,7 +319,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -463,7 +463,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -916,7 +916,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1294,7 +1294,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1854,7 +1854,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2221,7 +2221,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2778,7 +2778,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -3117,7 +3117,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -3561,6 +3561,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: c2361c617422ad8d17a0a6e1bed7023c22aaebebb328e48ee9c8ee0dbd12447d
+hmac: 1e752d9b6867d0f950727e7fb52dcb0d4b212f8db283d8f791da583e4af2b20a
 
 ...
