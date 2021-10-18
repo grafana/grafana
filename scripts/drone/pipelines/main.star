@@ -81,8 +81,8 @@ def get_steps(edition, is_downstream=False):
 
     # Insert remaining steps
     steps.extend([
-        gen_version_step(ver_mode=ver_mode, is_downstream=is_downstream, include_enterprise2=include_enterprise2),
-        package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        gen_version_step(ver_mode=ver_mode, is_downstream=is_downstream),
+        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
@@ -109,7 +109,7 @@ def get_steps(edition, is_downstream=False):
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64'], is_downstream=is_downstream),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),

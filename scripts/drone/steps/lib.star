@@ -500,17 +500,7 @@ def shellcheck_step():
         ],
     }
 
-def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
-    deps = [
-        'initialize',
-    ]
-    if include_enterprise2:
-        sfx = '-enterprise2'
-        deps.extend([
-            'build-backend' + sfx,
-            'test-backend' + sfx,
-        ])
-
+def gen_version_step(ver_mode, is_downstream=False):
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
     elif ver_mode == 'test-release':
@@ -525,14 +515,30 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     return {
         'name': 'gen-version',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': [
+            'initialize',
+        ],
         'commands': [
             './bin/grabpl gen-version {}'.format(args),
         ],
     }
 
 
-def package_step(edition, ver_mode, variants=None, is_downstream=False):
+def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is_downstream=False):
+    deps = [
+        'build-plugins',
+        'build-backend',
+        'build-frontend',
+        'codespell',
+        'shellcheck',
+    ]
+
+    if include_enterprise2:
+        sfx = '-enterprise2'
+        deps.extend([
+            'build-backend' + sfx,
+            'test-backend' + sfx,
+            ])
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -580,13 +586,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     return {
         'name': 'package' + enterprise2_suffix(edition),
         'image': build_image,
-        'depends_on': [
-            'build-plugins',
-            'build-backend',
-            'build-frontend',
-            'codespell',
-            'shellcheck',
-        ],
+        'depends_on': deps,
         'environment': env,
         'commands': cmds,
     }

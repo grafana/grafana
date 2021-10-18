@@ -1294,8 +1294,6 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - initialize
-  - build-backend-enterprise2
-  - test-backend-enterprise2
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
@@ -1307,6 +1305,8 @@ steps:
   - build-frontend
   - codespell
   - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1454,6 +1454,8 @@ steps:
   - build-frontend
   - codespell
   - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2229,8 +2231,6 @@ steps:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
   - initialize
-  - build-backend-enterprise2
-  - test-backend-enterprise2
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
@@ -2242,6 +2242,8 @@ steps:
   - build-frontend
   - codespell
   - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2381,6 +2383,8 @@ steps:
   - build-frontend
   - codespell
   - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3129,8 +3133,6 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - initialize
-  - build-backend-enterprise2
-  - test-backend-enterprise2
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
@@ -3142,6 +3144,8 @@ steps:
   - build-frontend
   - codespell
   - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3290,6 +3294,8 @@ steps:
   - build-frontend
   - codespell
   - shellcheck
+  - build-backend-enterprise2
+  - test-backend-enterprise2
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3493,6 +3499,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 524709332c04d7ae94d7bcf7ebee0cb2411b49df05485d89036e556ffffd48b5
+hmac: d554130d35dbe9dbbb0ccf2415c85e70bfea4f498612d4d68efe08f12783a2b4
 
 ...
