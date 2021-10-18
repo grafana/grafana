@@ -44,7 +44,6 @@ export class Scene {
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
-  moveable?: Moveable;
   div?: HTMLDivElement;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
@@ -164,10 +163,6 @@ export class Scene {
       this.selecto.destroy();
     }
 
-    if (this.moveable) {
-      this.moveable.destroy();
-    }
-
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
@@ -179,7 +174,7 @@ export class Scene {
       selectByClick: true,
     });
 
-    this.moveable = new Moveable(this.div!, {
+    const moveable = new Moveable(this.div!, {
       draggable: true,
       resizable: true,
     })
@@ -216,7 +211,7 @@ export class Scene {
       const selectedTarget = event.inputEvent.target;
 
       const isTargetMoveableElement =
-        this.moveable!.isMoveableElement(selectedTarget) ||
+        moveable.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
       if (isTargetMoveableElement) {
@@ -225,7 +220,7 @@ export class Scene {
       }
     }).on('selectEnd', (event) => {
       targets = event.selected;
-      this.moveable!.target = targets;
+      moveable.target = targets;
 
       const s = event.selected.map((t) => this.findElementByTarget(t)!);
       this.selection.next(s);
@@ -234,7 +229,7 @@ export class Scene {
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
         setTimeout(() => {
-          this.moveable!.dragStart(event.inputEvent);
+          moveable.dragStart(event.inputEvent);
         });
       }
     });
