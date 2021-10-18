@@ -43,10 +43,9 @@ export class CanvasPanel extends Component<Props, State> {
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
-        if (this.props.id === evt.payload) {
-          let event: MouseEvent = new MouseEvent('click');
-          this.scene?.selecto?.clickTarget(event, this.scene?.div);
-        }
+        // Remove current selection when entering edit mode for any panel in dashboard
+        let event: MouseEvent = new MouseEvent('click');
+        this.scene?.selecto?.clickTarget(event, this.scene?.div);
       })
     );
 
