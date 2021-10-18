@@ -500,7 +500,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_ScopeResolution(t *testing.T) {
+func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	testUser := &models.SignedInUser{
 		UserId:  2,
 		OrgId:   3,
