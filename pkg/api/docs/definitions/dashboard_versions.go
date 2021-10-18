@@ -37,6 +37,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 500: internalServerError
 
 // swagger:parameters getDashboardVersions getDashboardVersion restoreDashboardVersion
+// swagger:parameters getDashboardPermissions postDashboardPermissions
 type DashboardIdParam struct {
 	// in:path
 	DashboardID int64

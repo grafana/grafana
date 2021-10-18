@@ -119,7 +119,13 @@ type PostDashboardParam struct {
 type CalcDashboardDiffOptions struct {
 	// in:body
 	// required:true
-	Body dtos.CalculateDiffOptions
+	Body struct {
+		Base dtos.CalculateDiffTarget `json:"base" binding:"Required"`
+		New  dtos.CalculateDiffTarget `json:"new" binding:"Required"`
+		// The type of diff to return
+		// enum: ["basic", "json"]
+		DiffType string `json:"diffType" binding:"Required"`
+	}
 }
 
 // swagger:parameters trimDashboard

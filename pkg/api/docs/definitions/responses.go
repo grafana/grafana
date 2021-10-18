@@ -23,6 +23,8 @@ type ErrorResponseBody struct {
 	// For example, a 412 Precondition Failed error may include additional information of why that error happened.
 	Status string `json:"status"`
 }
+
+// swagger:model
 type SuccessResponseBody struct {
 	Message string `json:"message,omitempty"`
 }

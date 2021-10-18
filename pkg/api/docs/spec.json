@@ -154,7 +154,24 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CalculateDiffOptions"
+              "type": "object",
+              "properties": {
+                "base": {
+                  "$ref": "#/definitions/CalculateDiffTarget"
+                },
+                "diffType": {
+                  "description": "The type of diff to return",
+                  "type": "string",
+                  "enum": [
+                    "[\"basic\"",
+                    " \"json\"]"
+                  ],
+                  "x-go-name": "DiffType"
+                },
+                "new": {
+                  "$ref": "#/definitions/CalculateDiffTarget"
+                }
+              }
             }
           }
         ],
@@ -233,6 +250,89 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/id/{DashboardID}/permissions": {
+      "get": {
+        "tags": [
+          "dashboard_permissions"
+        ],
+        "summary": "Gets all existing permissions for the given dashboard.",
+        "operationId": "getDashboardPermissions",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDashboardPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "tags": [
+          "dashboard_permissions"
+        ],
+        "summary": "Updates permissions for a dashboard.",
+        "operationId": "postDashboardPermissions",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DashboardAclUpdateItem"
+              }
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -573,22 +673,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "CalculateDiffOptions": {
-      "type": "object",
-      "properties": {
-        "base": {
-          "$ref": "#/definitions/CalculateDiffTarget"
-        },
-        "diffType": {
-          "type": "string",
-          "x-go-name": "DiffType"
-        },
-        "new": {
-          "$ref": "#/definitions/CalculateDiffTarget"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-    },
     "CalculateDiffTarget": {
       "type": "object",
       "properties": {
@@ -671,6 +755,130 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "DashboardAclInfoDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "folderId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "FolderId"
+        },
+        "inherited": {
+          "type": "boolean",
+          "x-go-name": "Inherited"
+        },
+        "isFolder": {
+          "type": "boolean",
+          "x-go-name": "IsFolder"
+        },
+        "permission": {
+          "$ref": "#/definitions/PermissionType"
+        },
+        "permissionName": {
+          "type": "string",
+          "x-go-name": "PermissionName"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        },
+        "slug": {
+          "type": "string",
+          "x-go-name": "Slug"
+        },
+        "team": {
+          "type": "string",
+          "x-go-name": "Team"
+        },
+        "teamAvatarUrl": {
+          "type": "string",
+          "x-go-name": "TeamAvatarUrl"
+        },
+        "teamEmail": {
+          "type": "string",
+          "x-go-name": "TeamEmail"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TeamId"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "userAvatarUrl": {
+          "type": "string",
+          "x-go-name": "UserAvatarUrl"
+        },
+        "userEmail": {
+          "type": "string",
+          "x-go-name": "UserEmail"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserId"
+        },
+        "userLogin": {
+          "type": "string",
+          "x-go-name": "UserLogin"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "DashboardAclUpdateItem": {
+      "type": "object",
+      "properties": {
+        "permission": {
+          "description": "Permission level\nDescription:\n`1` - View\n`2` - Edit\n`4` - Admin",
+          "type": "integer",
+          "format": "int64",
+          "enum": [
+            "[1",
+            " 2",
+            " 4]"
+          ],
+          "x-go-name": "Permission"
+        },
+        "role": {
+          "$ref": "#/definitions/RoleType"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TeamID"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
     },
     "DashboardFullWithMeta": {
       "type": "object",
@@ -1042,6 +1250,11 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "PermissionType": {
+      "type": "integer",
+      "format": "int64",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "RoleType": {
       "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -1235,6 +1448,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/ApiKeyDTO"
+        }
+      }
+    },
+    "getDashboardPermissionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/DashboardAclInfoDTO"
         }
       }
     },
