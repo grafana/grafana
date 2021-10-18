@@ -42,7 +42,6 @@ load(
 ver_mode = 'pr'
 
 def docs_pipelines(edition):
-    services = integration_test_services(edition)
     steps = [
         codespell_step(),
         shellcheck_step(),
@@ -61,12 +60,14 @@ def docs_pipelines(edition):
     trigger = {
         'event': ['pull_request',],
         'when': {
-            'paths': 'docs/**',
+            'paths': {
+                'include': 'docs/**',
+            },
         },
     }
     return [
         pipeline(
-            name='test-docs-pr', edition=edition, trigger=trigger, services=services, steps=steps,
+            name='test-docs-pr', edition=edition, trigger=trigger, services=[], steps=steps,
             ver_mode=ver_mode,
         ),
     ]

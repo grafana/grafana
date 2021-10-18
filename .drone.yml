@@ -266,20 +266,7 @@ node:
 platform:
   arch: amd64
   os: linux
-services:
-- environment:
-    POSTGRES_DB: grafanatest
-    POSTGRES_PASSWORD: grafanatest
-    POSTGRES_USER: grafanatest
-  image: postgres:12.3-alpine
-  name: postgres
-- environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.6.48
-  name: mysql
+services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -368,7 +355,8 @@ trigger:
   event:
   - pull_request
   when:
-    paths: docs/**
+    paths:
+      include: docs/**
 type: docker
 ---
 depends_on: []
@@ -3572,6 +3560,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 27fcfade7315be4e808ebfb98050f11d378a0e748940530db6acb14fa1b350c6
+hmac: 4f472a3cfab5dc4f2a67f53d82a53bda5a7e6ac2fdc95ff535826b3b7ed4feb0
 
 ...
