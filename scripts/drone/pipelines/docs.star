@@ -58,7 +58,6 @@ def docs_pipelines(edition):
     ])
 
     trigger = {
-        'event': ['pull_request',],
         'paths': {
             'include': [
                 'docs/**',
