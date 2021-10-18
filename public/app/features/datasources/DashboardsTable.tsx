@@ -10,7 +10,6 @@ export interface Props {
 
 const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
   function renderDashboardButtons(dashboard: PluginDashboard) {
-    console.log(dashboard);
     if (!dashboard.imported) {
       // won't be returned from api if not compatible
       return (
