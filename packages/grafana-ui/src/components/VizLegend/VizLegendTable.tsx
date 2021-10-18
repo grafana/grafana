@@ -72,7 +72,9 @@ export const VizLegendTable = <T extends unknown>({
               <th
                 title={displayValue.description}
                 key={columnTitle}
-                className={cx(styles.header, onToggleSort && styles.headerSortable)}
+                className={cx(styles.header, onToggleSort && styles.headerSortable, {
+                  [styles.withIcon]: sortKey === columnTitle,
+                })}
                 onClick={() => {
                   if (onToggleSort) {
                     onToggleSort(columnTitle);
@@ -80,9 +82,7 @@ export const VizLegendTable = <T extends unknown>({
                 }}
               >
                 {columnTitle}
-                {sortKey === columnTitle && (
-                  <Icon className={styles.sortIcon} name={sortDesc ? 'angle-down' : 'angle-up'} />
-                )}
+                {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
               </th>
             );
           })}
@@ -98,21 +98,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     th:first-child {
       width: 100%;
+      border-bottom: 1px solid ${theme.colors.border.weak};
     }
   `,
   header: css`
     color: ${theme.colors.primary.text};
     font-weight: ${theme.typography.fontWeightMedium};
     border-bottom: 1px solid ${theme.colors.border.weak};
-    padding: ${theme.spacing(0.25, 1)};
+    padding: ${theme.spacing(0.25, 2, 0.25, 1)};
     font-size: ${theme.typography.bodySmall.fontSize};
-    text-align: right;
+    text-align: left;
     white-space: nowrap;
+  `,
+  // This needs to be padding-right - icon size(xs==12) to avoid jumping
+  withIcon: css`
+    padding-right: 4px;
   `,
   headerSortable: css`
     cursor: pointer;
-  `,
-  sortIcon: css`
-    margin-left: ${theme.spacing(1)};
   `,
 });
