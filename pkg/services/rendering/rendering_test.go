@@ -144,7 +144,7 @@ func TestRenderLimitImage(t *testing.T) {
 	}
 }
 
-func TestRenderingServiceVersionFail(t *testing.T) {
+func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
 		Cfg: cfg,
@@ -164,7 +164,7 @@ func TestRenderingServiceVersionFail(t *testing.T) {
 		version, err := rs.getRemotePluginVersion()
 
 		require.NoError(t, err)
-		require.Equal(t, version, "2.7.1828")
+		require.Equal(t, "2.7.1828", version)
 	})
 
 	t.Run("When renderer responds with 404 should assume a valid but old version", func(t *testing.T) {
