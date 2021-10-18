@@ -230,8 +230,4 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"is_folder"},
 		Type: IndexType,
 	}))
-
-	mg.AddMigration("Add column supportedVersions in dashboard", NewAddColumnMigration(dashboardV2, &Column{
-		Name: "supported_versions", Type: DB_Varchar, Nullable: true, Default: "",
-	}))
 }

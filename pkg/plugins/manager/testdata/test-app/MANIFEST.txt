@@ -9,7 +9,7 @@ Hash: SHA512
   "signedByOrgName": "Grafana Labs",
   "plugin": "test-app",
   "version": "1.0.0",
-  "time": 1634136002513,
+  "time": 1634556351657,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "dashboards/memory.json": "7c042464941084caa91d0a9a2f188b05315a9796308a652ccdee31ca4fbcbfee",
@@ -18,7 +18,7 @@ Hash: SHA512
     "dashboards/connections.json": "bea86da4be970b98dc4681802ab55cdef3441dc3eb3c654cb207948d17b25303",
     "dashboards/memory_latest.json": "2073b9d35929015bb802482f106f66e597c955b9e9139313deaa853e5e6f4d58",
     "dashboards/latest_connections.json": "b5b559a28ff150cca9798f6be18b9ac61a3c2f3646721d5a58227c7b59694f30",
-    "dashboards/connections_result.json": "124d85c9c2e40214b83273f764574937a79909cfac3f925276fbb72543c224dc",
+    "dashboards/connections_result.json": "315476655aa4a44c0716896b68af413519ceb849b35fff577bcb7bfccb822c93",
     "plugin.json": "869bff73c9cf0f32c4bacfc94b0be47740a3d7b1d615e84677d436d1e0fb7816"
   }
 }
@@ -26,9 +26,9 @@ Hash: SHA512
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-wqAEARMKAAYFAmFm78IACgkQfk0ManCIZuekuwIHZp0uFfN72UkmgJcim6dH
-hHLKbN9BEXZXXYtDXrDptaLPn+7/dX82TYeR7VaGrddx789Nf69QaVVizx4H
-EfEeHmgCAgLkPtZP83SBNrL/DKjSyuQ+58mdf9kZHTjxwNhbeutCpL7k4d9k
-7IPmegk5vji0rFDefmwWJRhR8B4jouTvV0Ct
-=CHOf
+wqIEARMKAAYFAmFtWb8ACgkQfk0ManCIZueg/wIJAU1Lb8uxT13piD0Ya+zE
+gr8IBntTXEMzNrvQFKS6h8ezZxJpbpaLNK2aEskePdg+eqy+GK4bE9Bx81rl
+XtoRzLn7AgkBSmDjMrrF3KbKkf8QdnLlzuoyE5vUWindsJ89y2ptBejSkgNd
++CoQZzumtSCEnbJom7hKFBDItn8u6oTof2nWV0k=
+=SuLK
 -----END PGP SIGNATURE-----

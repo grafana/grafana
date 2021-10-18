@@ -56,13 +56,13 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 
 		// find existing dashboard
 		for _, existingDash := range query.Result {
-			if existingDash.Slug == dashboard.Slug {
+			if existingDash.Uid == dashboard.Uid {
 				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
 				res.ImportedUrl = existingDash.GetUrl()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
-				res.ImportedCompatible, err = isCompatible(grafanaVersion, existingDash.SupportedVersions)
+				res.ImportedCompatible, err = isCompatible(grafanaVersion, existingDash.Data.Get("supportedVersions").MustString(""))
 				if err != nil {
 					return nil, err
 				}

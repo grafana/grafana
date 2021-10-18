@@ -90,6 +90,7 @@ export class DashboardModel {
   refresh: any;
   snapshot: any;
   schemaVersion: number;
+  supportedVersions: string;
   version: number;
   revision: number;
   links: DashboardLink[];
@@ -149,6 +150,7 @@ export class DashboardModel {
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion ?? 0;
+    this.supportedVersions = data.supportedVersions ?? '';
     this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
     this.version = data.version ?? 0;
     this.links = data.links ?? [];

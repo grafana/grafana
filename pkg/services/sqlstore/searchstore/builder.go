@@ -53,7 +53,6 @@ func (b *Builder) buildSelect() {
 			dashboard_tag.term,
 			dashboard.is_folder,
 			dashboard.folder_id,
-			dashboard.supported_versions,
 			folder.uid AS folder_uid,
 			folder.slug AS folder_slug,
 			folder.title AS folder_title `)

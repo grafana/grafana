@@ -30,7 +30,7 @@ func TestDashboardImport(t *testing.T) {
 		require.NotNil(t, info)
 		require.NotNil(t, dash)
 		require.Equal(t, info.SupportedVersions, "")
-		require.Equal(t, dash.SupportedVersions, "")
+		require.Equal(t, dash.Data.Get("supportedVersions").MustString(), "")
 
 		resultStr, err := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
 		require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestDashboardImport(t *testing.T) {
 		require.NotNil(t, info)
 		require.NotNil(t, dash)
 		require.Equal(t, info.SupportedVersions, ">8.2.0, <=8.x")
-		require.Equal(t, dash.SupportedVersions, ">8.2.0, <=8.x")
+		//require.Equal(t, dash.SupportedVersions, ">8.2.0, <=8.x")
 	})
 
 	t.Run("When evaling dashboard template", func(t *testing.T) {

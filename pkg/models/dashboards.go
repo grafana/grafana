@@ -160,12 +160,11 @@ type Dashboard struct {
 	Created time.Time
 	Updated time.Time
 
-	UpdatedBy         int64
-	CreatedBy         int64
-	FolderId          int64
-	IsFolder          bool
-	HasAcl            bool
-	SupportedVersions string
+	UpdatedBy int64
+	CreatedBy int64
+	FolderId  int64
+	IsFolder  bool
+	HasAcl    bool
 
 	Title string
 	Data  *simplejson.Json
@@ -269,7 +268,6 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.PluginId = cmd.PluginId
 	dash.IsFolder = cmd.IsFolder
 	dash.FolderId = cmd.FolderId
-	dash.SupportedVersions = cmd.SupportedVersions
 	dash.UpdateSlug()
 	return dash
 }
@@ -333,17 +331,16 @@ type ValidateDashboardBeforeSaveResult struct {
 //
 
 type SaveDashboardCommand struct {
-	Dashboard         *simplejson.Json `json:"dashboard" binding:"Required"`
-	UserId            int64            `json:"userId"`
-	Overwrite         bool             `json:"overwrite"`
-	Message           string           `json:"message"`
-	OrgId             int64            `json:"-"`
-	RestoredFrom      int              `json:"-"`
-	PluginId          string           `json:"-"`
-	FolderId          int64            `json:"folderId"`
-	FolderUid         string           `json:"folderUid"`
-	IsFolder          bool             `json:"isFolder"`
-	SupportedVersions string           `json:"supportedVersions"`
+	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
+	UserId       int64            `json:"userId"`
+	Overwrite    bool             `json:"overwrite"`
+	Message      string           `json:"message"`
+	OrgId        int64            `json:"-"`
+	RestoredFrom int              `json:"-"`
+	PluginId     string           `json:"-"`
+	FolderId     int64            `json:"folderId"`
+	FolderUid    string           `json:"folderUid"`
+	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
 

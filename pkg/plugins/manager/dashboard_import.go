@@ -55,15 +55,15 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 	if err != nil {
 		return plugins.PluginDashboardInfoDTO{}, &models.Dashboard{}, err
 	}
+	generatedDash.Set("supportedVersions", supportedVersions)
 
 	saveCmd := models.SaveDashboardCommand{
-		Dashboard:         generatedDash,
-		OrgId:             orgID,
-		UserId:            user.UserId,
-		Overwrite:         overwrite,
-		PluginId:          pluginID,
-		FolderId:          folderID,
-		SupportedVersions: supportedVersions,
+		Dashboard: generatedDash,
+		OrgId:     orgID,
+		UserId:    user.UserId,
+		Overwrite: overwrite,
+		PluginId:  pluginID,
+		FolderId:  folderID,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
@@ -90,7 +90,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 		Imported:          true,
 		DashboardId:       savedDash.Id,
 		Slug:              savedDash.Slug,
-		SupportedVersions: savedDash.SupportedVersions,
+		SupportedVersions: supportedVersions,
 	}, savedDash, nil
 }
 
