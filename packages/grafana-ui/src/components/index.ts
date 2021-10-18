@@ -24,6 +24,7 @@ export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
+export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
