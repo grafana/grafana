@@ -10,7 +10,10 @@ class CopyUniconsPlugin {
       let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
 
       if (!fs.pathExistsSync(destDir)) {
-        let srcDir = require.resolve('iconscout-unicons-tarball/unicons/svg/line');
+        let srcDir = path.join(
+          path.dirname(require.resolve('iconscout-unicons-tarball/package.json')),
+          'unicons/svg/line'
+        );
         fs.copySync(srcDir, destDir);
       }
     });
