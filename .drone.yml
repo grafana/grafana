@@ -141,18 +141,18 @@ steps:
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment: null
   image: grafana/build-container:1.4.3
   name: package
@@ -199,7 +199,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - lint-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -418,18 +418,18 @@ steps:
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
     --sign
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -508,7 +508,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - lint-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -878,18 +878,18 @@ steps:
 - commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
     --sign ${DRONE_TAG}
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1293,11 +1293,7 @@ steps:
 - commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   - build-backend-enterprise2
   - test-backend-enterprise2
   image: grafana/build-container:1.4.3
@@ -1306,7 +1302,11 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign ${DRONE_TAG}
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1449,7 +1449,11 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign ${DRONE_TAG}
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1820,18 +1824,18 @@ steps:
 - commands:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
     --sign v7.3.0-test
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2224,11 +2228,7 @@ steps:
 - commands:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   - build-backend-enterprise2
   - test-backend-enterprise2
   image: grafana/build-container:1.4.3
@@ -2237,7 +2237,11 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign v7.3.0-test
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2372,7 +2376,11 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign v7.3.0-test
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2746,18 +2754,18 @@ steps:
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   image: grafana/build-container:1.4.3
   name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
     --sign
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3120,11 +3128,7 @@ steps:
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
-  - codespell
-  - shellcheck
+  - initialize
   - build-backend-enterprise2
   - test-backend-enterprise2
   image: grafana/build-container:1.4.3
@@ -3133,7 +3137,11 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise --sign
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3277,7 +3285,11 @@ steps:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise --variants linux-x64 --sign
   depends_on:
-  - gen-version
+  - build-plugins
+  - build-backend
+  - build-frontend
+  - codespell
+  - shellcheck
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3481,6 +3493,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 914bf2e3e06c65f7bc587a77e72e773858e864b4f0636d00f0edf6ede3f6d54d
+hmac: 524709332c04d7ae94d7bcf7ebee0cb2411b49df05485d89036e556ffffd48b5
 
 ...

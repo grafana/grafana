@@ -328,7 +328,7 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'build-frontend'
+            'lint-frontend'
         ],
         'commands': [
             './scripts/ci-reference-docs-lint.sh ci',
@@ -502,11 +502,7 @@ def shellcheck_step():
 
 def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     deps = [
-        'build-plugins',
-        'build-backend',
-        'build-frontend',
-        'codespell',
-        'shellcheck',
+        'initialize',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -585,9 +581,11 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'package' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            # This step should have all the dependencies required for packaging, and should generate
-            # dist/grafana.version
-            'gen-version',
+            'build-plugins',
+            'build-backend',
+            'build-frontend',
+            'codespell',
+            'shellcheck',
         ],
         'environment': env,
         'commands': cmds,
