@@ -133,7 +133,7 @@ func (m *Mock) LinkAPIKeyToServiceAccount(ctx context.Context, apikey *models.Ap
 	m.Calls.LinkAPIKeyToServiceAccount = append(m.Calls.LinkAPIKeyToServiceAccount, []interface{}{ctx, apikey, service_account})
 	// Use override if provided
 	if m.LinkAPIKeyToServiceAccountFunc != nil {
-		return m.LinkAPIKeyToServiceAccount(ctx, apikey, service_account)
+		return m.LinkAPIKeyToServiceAccountFunc(ctx, apikey, service_account)
 	}
 	// Otherwise return the default
 	return nil
