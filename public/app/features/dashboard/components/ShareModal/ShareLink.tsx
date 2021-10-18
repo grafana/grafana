@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, Input, FieldSet, Alert } from '@grafana/ui';
-import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
+import { ShareModalTabProps } from './types';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Current', value: 'current' },
@@ -13,10 +13,7 @@ const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Light', value: 'light' },
 ];
 
-export interface Props {
-  dashboard: DashboardModel;
-  panel?: PanelModel;
-}
+export interface Props extends ShareModalTabProps {}
 
 export interface State {
   useCurrentTimeRange: boolean;
