@@ -45,7 +45,7 @@ func removeRoleHelper(role string) {
 	}
 }
 
-// extractRawPermissions extracts action and scope fields only from a permission slice
+// extractRawPermissionsHelper extracts action and scope fields only from a permission slice
 func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
 	res := make([]*accesscontrol.Permission, len(perms))
 	for i, p := range perms {
