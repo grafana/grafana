@@ -14,21 +14,8 @@ export interface Props {
 
 export function VisualizationPreview({ data, suggestion, onChange }: Props) {
   const styles = useStyles2(getStyles);
-  const aspectRatio = 1.44;
-
-  const renderWidth = 300 * aspectRatio;
-  const renderHeight = 300;
-  const showWidth = 100 * aspectRatio;
-  const showHeight = 100;
-  const padding = 6;
-  const widthFactor = (showWidth - padding * 2) / renderWidth;
-  const heightFactor = (showHeight - padding * 2) / renderHeight;
-
-  const renderContainerStyles: CSSProperties = {
-    width: renderWidth,
-    height: renderHeight,
-    transform: `scale(${widthFactor}, ${heightFactor})`,
-  };
+  const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles();
+  // const [showLargePreview, setShowLargePreview] = useState<boolean>(false);
 
   const onClick = () => {
     onChange({
@@ -45,9 +32,9 @@ export function VisualizationPreview({ data, suggestion, onChange }: Props) {
   }
 
   return (
-    <div style={{ width: showWidth, height: showHeight }} className={styles.card} onClick={onClick}>
+    <div style={outerStyles} className={styles.card} onClick={onClick}>
       <Tooltip content={suggestion.name}>
-        <div style={renderContainerStyles} className={styles.renderContainer}>
+        <div style={innerStyles} className={styles.renderContainer}>
           <PanelRenderer
             title=""
             data={data}
@@ -78,14 +65,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: relative;
       border-radius: ${theme.shape.borderRadius(1)};
       cursor: pointer;
-      border: 2px solid ${theme.colors.border.strong};
+      background: ${theme.colors.background.secondary};
+      box-shadow: ${theme.shadows.z1};
 
       transition: ${theme.transitions.create(['background'], {
         duration: theme.transitions.duration.short,
       })};
 
       &:hover {
-        background: ${theme.colors.background.secondary};
+        background: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
       }
     `,
     renderContainer: css`
@@ -96,3 +84,32 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
+interface PreviewDimensionsAndStyles {
+  renderWidth: number;
+  renderHeight: number;
+  innerStyles: CSSProperties;
+  outerStyles: CSSProperties;
+}
+
+function getPreviewDimensionsAndStyles(): PreviewDimensionsAndStyles {
+  const aspectRatio = 1.44;
+  const renderWidth = 300 * aspectRatio;
+  const renderHeight = 300;
+  const showWidth = 100 * aspectRatio;
+  const showHeight = 100;
+  const padding = 6;
+  const widthFactor = (showWidth - padding * 2) / renderWidth;
+  const heightFactor = (showHeight - padding * 2) / renderHeight;
+
+  return {
+    renderHeight,
+    renderWidth,
+    outerStyles: { width: showWidth, height: showHeight },
+    innerStyles: {
+      width: renderWidth,
+      height: renderHeight,
+      transform: `scale(${widthFactor}, ${heightFactor})`,
+    },
+  };
+}

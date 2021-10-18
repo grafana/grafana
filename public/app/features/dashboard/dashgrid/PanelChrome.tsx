@@ -15,7 +15,6 @@ import {
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
-  VisualizationSuggestion,
   TimeRange,
   toDataFrameDTO,
   toUtc,
@@ -50,7 +49,6 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
-  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
   onInstanceStateChange: (value: any) => void;
 }
 
@@ -90,7 +88,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
-        onSuggestVisualizations: this.props.onSuggestVisualizations,
       },
       data: this.getInitialPanelDataState(),
     };

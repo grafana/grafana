@@ -6,7 +6,6 @@ import {
   ThresholdsConfig,
   SplitOpen,
   CoreApp,
-  VisualizationSuggestion,
 } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
@@ -60,8 +59,6 @@ export interface PanelContext {
 
   /** Update instance state, this is only supported in dashboard panel context currently */
   onInstanceStateChange?: (state: any) => void;
-
-  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

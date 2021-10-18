@@ -1,9 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelModel } from '../../../state/PanelModel';
-import { getDefaultTimeRange, LoadingState, PanelData, VisualizationSuggestion } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import { DisplayMode } from '../types';
 import store from '../../../../../core/store';
-import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 
 export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 
@@ -37,7 +36,6 @@ export interface PanelEditorState {
   ui: PanelEditorUIState;
   isVizPickerOpen: boolean;
   tableViewEnabled: boolean;
-  panelSuggestions: VisualizationSuggestion[];
 }
 
 export const initialState = (): PanelEditorState => {
@@ -66,7 +64,6 @@ export const initialState = (): PanelEditorState => {
       ...DEFAULT_PANEL_EDITOR_UI_STATE,
       ...migratedState,
     },
-    panelSuggestions: [],
   };
 };
 
@@ -99,9 +96,6 @@ const pluginsSlice = createSlice({
         state.isVizPickerOpen = false;
       }
     },
-    setPanelSuggestions: (state, action: PayloadAction<VisualizationSuggestion[]>) => {
-      state.panelSuggestions = action.payload;
-    },
     toggleVizPicker: (state, action: PayloadAction<boolean>) => {
       state.isVizPickerOpen = action.payload;
       // Ensure options pane is opened when viz picker is open
@@ -117,13 +111,8 @@ const pluginsSlice = createSlice({
       state.initDone = false;
       state.isVizPickerOpen = false;
       state.tableViewEnabled = false;
-      state.panelSuggestions = [];
     },
   },
-  extraReducers: (builder) =>
-    builder.addCase(panelModelAndPluginReady, (state) => {
-      state.panelSuggestions = [];
-    }),
 });
 
 export const {
@@ -134,7 +123,6 @@ export const {
   setPanelEditorUIState,
   toggleVizPicker,
   toggleTableView,
-  setPanelSuggestions,
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;

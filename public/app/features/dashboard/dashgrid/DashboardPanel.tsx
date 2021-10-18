@@ -4,7 +4,7 @@ import { PanelChrome } from './PanelChrome';
 import { PanelChromeAngular } from './PanelChromeAngular';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { PanelPlugin, VisualizationSuggestion } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
 import { initPanelState } from '../../panel/state/actions';
 
@@ -18,7 +18,6 @@ export interface OwnProps {
   width: number;
   height: number;
   skipStateCleanUp?: boolean;
-  onSuggestVisualizations?: (suggestions: VisualizationSuggestion[]) => void;
 }
 
 export interface State {
@@ -82,7 +81,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, width, height, onSuggestVisualizations } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
 
     if (plugin.angularPanelCtrl) {
       return (
@@ -110,7 +109,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
         width={width}
         height={height}
         onInstanceStateChange={this.onInstanceStateChange}
-        onSuggestVisualizations={onSuggestVisualizations}
       />
     );
   }
