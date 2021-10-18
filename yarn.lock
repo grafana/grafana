@@ -2576,7 +2576,7 @@ __metadata:
     "@types/node": ^12.0.4
     "@types/prettier": ^2.4.0
     "@types/react-dev-utils": ^9.0.4
-    "@types/rimraf": ^2.0.3
+    "@types/rimraf": ^3.0.0
     "@types/semver": ^7.0.0
     "@types/tmp": ^0.1.0
     "@types/webpack": 4.41.7
@@ -8219,13 +8219,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/rimraf@npm:^2.0.3":
-  version: 2.0.5
-  resolution: "@types/rimraf@npm:2.0.5"
+"@types/rimraf@npm:^3.0.0":
+  version: 3.0.2
+  resolution: "@types/rimraf@npm:3.0.2"
   dependencies:
     "@types/glob": "*"
     "@types/node": "*"
-  checksum: e388f546840704a240fb31536498921623bca4ec1230925013d6b6d7c7d2211c8ec07fcbbd2606151d7549cbbc28a01c18fb0df502107a9293860a5ff64bc147
+  checksum: b47fa302f46434cba704d20465861ad250df79467d3d289f9d6490d3aeeb41e8cb32dd80bd1a8fd833d1e185ac719fbf9be12e05ad9ce9be094d8ee8f1405347
   languageName: node
   linkType: hard
 
