@@ -57,7 +57,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       {isOpen && (
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={onCloseMenu} parent={document} includeButtonPress={false}>
-            <Menu>
+            <Menu onClose={onCloseMenu}>
               {options.map((item) => (
                 <MenuItem
                   key={`${item.value}`}
