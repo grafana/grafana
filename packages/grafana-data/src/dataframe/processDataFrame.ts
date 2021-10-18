@@ -25,6 +25,7 @@ import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
+import { StreamingDataFrame } from '.';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -302,6 +303,9 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (data.hasOwnProperty('data')) {
+    if (data.hasOwnProperty('schema')) {
+      return new StreamingDataFrame(data);
+    }
     return convertGraphSeriesToDataFrame(data);
   }
 
