@@ -6,7 +6,15 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
-import { AbsoluteTimeRange, DataFrame, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataFrame,
+  DataQuery,
+  GrafanaTheme2,
+  hasLogsVolumeSupport,
+  LoadingState,
+  RawTimeRange,
+} from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import { QueryRows } from './QueryRows';
@@ -16,15 +24,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import {
-  addQueryRow,
-  changeAutoLogsVolume,
-  loadLogsVolumeData,
-  modifyQueries,
-  scanStart,
-  scanStopAction,
-  setQueries,
-} from './state/query';
+import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -215,31 +215,17 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsVolume(width: number) {
-    const {
-      logsVolumeData,
-      exploreId,
-      loadLogsVolumeData,
-      autoLoadLogsVolume,
-      changeAutoLogsVolume,
-      absoluteRange,
-      timeZone,
-      splitOpen,
-    } = this.props;
+    const { logsVolumeData, exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen } = this.props;
 
     return (
       <LogsVolumePanel
-        exploreId={exploreId}
-        loadLogsVolumeData={loadLogsVolumeData}
         absoluteRange={absoluteRange}
         width={width}
         logsVolumeData={logsVolumeData}
         onUpdateTimeRange={this.onUpdateTimeRange}
         timeZone={timeZone}
         splitOpen={splitOpen}
-        autoLoadLogsVolume={autoLoadLogsVolume}
-        onChangeAutoLogsVolume={(autoLoadLogsVolume) => {
-          changeAutoLogsVolume(exploreId, autoLoadLogsVolume);
-        }}
+        onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
       />
     );
   }
@@ -317,13 +303,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showTrace,
       showNodeGraph,
       logsVolumeDataProvider,
+      loadLogsVolumeData,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
-    const showLogsVolume = !!logsVolumeDataProvider;
 
     return (
       <CustomScrollbar autoHeightMin={'100%'}>
@@ -340,9 +326,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
                 queryInspectorButtonActive={showQueryInspector}
+                loadingLogsVolumeAvailable={hasLogsVolumeSupport(datasourceInstance) && !!logsVolumeDataProvider}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                onClickLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
               />
               <ResponseErrorContainer exploreId={exploreId} />
             </div>
@@ -360,7 +348,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
-                          {showLogsVolume && <ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
+                          {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
@@ -395,7 +383,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
-  const { syncedTimes, autoLoadLogsVolume } = explore;
+  const { syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
@@ -423,7 +411,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    autoLoadLogsVolume,
     logsVolumeDataProvider,
     logsVolumeData,
     logsResult: logsResult ?? undefined,
@@ -448,7 +435,6 @@ const mapDispatchToProps = {
   setQueries,
   updateTimeRange,
   loadLogsVolumeData,
-  changeAutoLogsVolume,
   addQueryRow,
   splitOpen,
 };
