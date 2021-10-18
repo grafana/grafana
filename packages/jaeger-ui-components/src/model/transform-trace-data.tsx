@@ -72,7 +72,7 @@ export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[])
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceResponse | undefined): Trace | null {
+export default function transformTraceData(data: TraceResponse | undefined, focusedSpanId?: string): Trace | null {
   if (!data?.traceID) {
     return null;
   }

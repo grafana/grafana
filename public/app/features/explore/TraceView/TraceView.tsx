@@ -36,6 +36,7 @@ type Props = {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;
+  focusedSpanId?: string;
 };
 
 export function TraceView(props: Props) {
@@ -63,7 +64,10 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformDataFrames(props.dataFrames), [props.dataFrames]);
+  const traceProp = useMemo(() => transformDataFrames(props.dataFrames, props.focusedSpanId), [
+    props.dataFrames,
+    props.focusedSpanId,
+  ]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
@@ -173,7 +177,7 @@ export function TraceView(props: Props) {
   );
 }
 
-function transformDataFrames(frames: DataFrame[]): Trace | null {
+function transformDataFrames(frames: DataFrame[], focusedSpanId?: string): Trace | null {
   // At this point we only show single trace.
   const frame = frames[0];
   if (!frame) {
@@ -184,10 +188,10 @@ function transformDataFrames(frames: DataFrame[]): Trace | null {
       ? // For backward compatibility when we sent whole json response in a single field/value
         frame.fields[0].values.get(0)
       : transformTraceDataFrame(frame);
-  return transformTraceData(data);
+  return transformTraceData(data, focusedSpanId);
 }
 
-function transformTraceDataFrame(frame: DataFrame): TraceResponse {
+function transformTraceDataFrame(frame: DataFrame, focusedSpanId?: string): TraceResponse {
   const view = new DataFrameView<TraceSpanRow>(frame);
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {

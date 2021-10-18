@@ -29,6 +29,7 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { TempoQuery, TempoQueryType } from 'app/plugins/datasource/tempo/datasource';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -274,9 +275,19 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { queryResponse, splitOpen, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
+    // TODO: hack
+    const { focusedSpanId } = queryResponse.request?.targets.find((t) => t.refId === dataFrames[0].refId) as TempoQuery;
+
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
+      dataFrames.length && (
+        <TraceViewContainer
+          exploreId={exploreId}
+          dataFrames={dataFrames}
+          splitOpenFn={splitOpen}
+          focusedSpanId={focusedSpanId}
+        />
+      )
     );
   }
 
