@@ -443,27 +443,31 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             {createSpanLink &&
               (() => {
                 const link = createSpanLink(span);
-                return (
-                  <a
-                    href={link.href}
-                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                    target={'_blank'}
-                    style={{ marginRight: '5px' }}
-                    rel="noopener noreferrer"
-                    onClick={
-                      link.onClick
-                        ? (event) => {
-                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                              event.preventDefault();
-                              link.onClick(event);
+                if (link) {
+                  return (
+                    <a
+                      href={link.href}
+                      // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                      target={'_blank'}
+                      style={{ marginRight: '5px' }}
+                      rel="noopener noreferrer"
+                      onClick={
+                        link.onClick
+                          ? (event) => {
+                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                                event.preventDefault();
+                                link.onClick(event);
+                              }
                             }
-                          }
-                        : undefined
-                    }
-                  >
-                    {link.content}
-                  </a>
-                );
+                          : undefined
+                      }
+                    >
+                      {link.content}
+                    </a>
+                  );
+                } else {
+                  return null;
+                }
               })()}
 
             {span.references && span.references.length > 1 && (
