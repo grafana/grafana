@@ -205,6 +205,7 @@ export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
 export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-started';
 }
+
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
 }
