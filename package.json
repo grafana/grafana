@@ -81,12 +81,12 @@
     "@babel/preset-typescript": "7.14.5",
     "@emotion/eslint-plugin": "11.2.0",
     "@grafana/api-documenter": "7.11.2",
-    "@grafana/api-extractor": "7.10.1",
     "@grafana/e2e": "workspace:*",
     "@grafana/eslint-config": "2.5.0",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@kusto/monaco-kusto": "4.0.6",
+    "@microsoft/api-extractor": "7.18.16",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.0-rc.6",
     "@testing-library/jest-dom": "5.11.5",
     "@testing-library/react": "12.1.2",
@@ -347,10 +347,10 @@
   "resolutions": {
     "underscore": "1.12.1",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.10.3",
-    "@rushstack/node-core-library": "3.34.3",
-    "@rushstack/rig-package": "0.2.4",
-    "@rushstack/ts-command-line": "4.7.3"
+    "@microsoft/api-extractor-model": "7.13.13",
+    "@rushstack/node-core-library": "3.42.3",
+    "@rushstack/rig-package": "0.3.3",
+    "@rushstack/ts-command-line": "4.10.2"
   },
   "workspaces": {
     "packages": [
