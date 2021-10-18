@@ -130,7 +130,7 @@ func (m *Mock) CloneUserToServiceAccount(ctx context.Context, user *models.Signe
 }
 
 func (m *Mock) LinkAPIKeyToServiceAccount(ctx context.Context, apikey *models.ApiKey, service_account *models.User) error {
-	m.Calls.CloneUserToServiceAccount = append(m.Calls.LinkAPIKeyToServiceAccount, []interface{}{ctx, apikey, service_account})
+	m.Calls.LinkAPIKeyToServiceAccount = append(m.Calls.LinkAPIKeyToServiceAccount, []interface{}{ctx, apikey, service_account})
 	// Use override if provided
 	if m.LinkAPIKeyToServiceAccountFunc != nil {
 		return m.LinkAPIKeyToServiceAccount(ctx, apikey, service_account)
