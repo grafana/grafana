@@ -11,28 +11,28 @@ export interface MarkerMaker extends RegistryItem {
 }
 
 export enum RegularShapeId {
-  Circle = 'circle',
-  Square = 'square',
-  Triangle = 'triangle',
-  Star = 'star',
-  Cross = 'cross',
-  X = 'x',
+  circle = 'circle',
+  square = 'square',
+  triangle = 'triangle',
+  star = 'star',
+  cross = 'cross',
+  x = 'x',
 }
 
-export enum MarkerShapePath {
-  Circle = 'img/icons/marker/circle.svg',
-  Square = 'img/icons/marker/square.svg',
-  Triangle = 'img/icons/marker/triangle.svg',
-  Star = 'img/icons/marker/star.svg',
-  Cross = 'img/icons/marker/cross.svg',
-  X = 'img/icons/marker/x-mark.svg',
-}
+const MarkerShapePath = {
+  circle: 'img/icons/marker/circle.svg',
+  square: 'img/icons/marker/square.svg',
+  triangle: 'img/icons/marker/triangle.svg',
+  star: 'img/icons/marker/star.svg',
+  cross: 'img/icons/marker/cross.svg',
+  x: 'img/icons/marker/x-mark.svg',
+};
 
 export const circleMarker: MarkerMaker = {
-  id: RegularShapeId.Circle,
+  id: RegularShapeId.circle,
   name: 'Circle',
   hasFill: true,
-  aliasIds: [MarkerShapePath.Circle],
+  aliasIds: [MarkerShapePath.circle],
   make: (color: string, fillColor: string, radius: number) => {
     return new Style({
       image: new Circle({
@@ -47,10 +47,10 @@ export const circleMarker: MarkerMaker = {
 const makers: MarkerMaker[] = [
   circleMarker,
   {
-    id: RegularShapeId.Square,
+    id: RegularShapeId.square,
     name: 'Square',
     hasFill: true,
-    aliasIds: [MarkerShapePath.Square],
+    aliasIds: [MarkerShapePath.square],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -64,10 +64,10 @@ const makers: MarkerMaker[] = [
     },
   },
   {
-    id: RegularShapeId.Triangle,
+    id: RegularShapeId.triangle,
     name: 'Triangle',
     hasFill: true,
-    aliasIds: [MarkerShapePath.Triangle],
+    aliasIds: [MarkerShapePath.triangle],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -82,10 +82,10 @@ const makers: MarkerMaker[] = [
     },
   },
   {
-    id: RegularShapeId.Star,
+    id: RegularShapeId.star,
     name: 'Star',
     hasFill: true,
-    aliasIds: [MarkerShapePath.Star],
+    aliasIds: [MarkerShapePath.star],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -100,10 +100,10 @@ const makers: MarkerMaker[] = [
     },
   },
   {
-    id: RegularShapeId.Cross,
+    id: RegularShapeId.cross,
     name: 'Cross',
     hasFill: false,
-    aliasIds: [MarkerShapePath.Cross],
+    aliasIds: [MarkerShapePath.cross],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({
@@ -118,10 +118,10 @@ const makers: MarkerMaker[] = [
     },
   },
   {
-    id: RegularShapeId.X,
+    id: RegularShapeId.x,
     name: 'X',
     hasFill: false,
-    aliasIds: [MarkerShapePath.X],
+    aliasIds: [MarkerShapePath.x],
     make: (color: string, fillColor: string, radius: number) => {
       return new Style({
         image: new RegularShape({

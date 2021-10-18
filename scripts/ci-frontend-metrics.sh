@@ -13,11 +13,12 @@ STRICT_LINT_RESULTS="$(./node_modules/.bin/eslint --rule '@typescript-eslint/no-
 STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
 
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
-OUTDATED_DEPENDENCIES="$(yarn outdated | wc -l | xargs)"
-VULNERABILITY_AUDIT="$(yarn audit | grep 'Severity:' | grep -Eo '[0-9]{1,4}')"
-LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '1p')"
-MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '2p')"
-HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '3p')"
+OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?=dependencies are out of date)')"
+VULNERABILITY_AUDIT="$(yarn npm audit --all --recursive --json)"
+LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"low"' | wc -l)"
+MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"moderate"' | wc -l)"
+HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"high"' | wc -l)"
+CRITICAL_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | grep -o -i '"severity":"critical"' | wc -l)"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
@@ -32,6 +33,7 @@ echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
 echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
 echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
+echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
 
 echo "Metrics: {
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
@@ -47,4 +49,5 @@ echo "Metrics: {
   \"grafana.ci-code.dependencies.vulnerabilities.low\": \"${LOW_VULNERABILITIES}\",
   \"grafana.ci-code.dependencies.vulnerabilities.medium\": \"${MED_VULNERABILITIES}\",
   \"grafana.ci-code.dependencies.vulnerabilities.high\": \"${HIGH_VULNERABILITIES}\"
+  \"grafana.ci-code.dependencies.vulnerabilities.critical\": \"${CRITICAL_VULNERABILITIES}\"
 }"
