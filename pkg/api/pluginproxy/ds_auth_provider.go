@@ -105,7 +105,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds DSInfo, pluginRo
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
 		}
-		return newGceAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth)
+		return newGceAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth), nil
 
 	case "jwt":
 		if jwtTokenAuth == nil {

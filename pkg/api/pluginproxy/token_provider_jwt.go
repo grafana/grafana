@@ -3,12 +3,17 @@ package pluginproxy
 import (
 	"context"
 
-	googletokenprovider "github.com/grafana/grafana-google-sdk-go/tokenprovider"
+	googletokenprovider "github.com/grafana/grafana-google-sdk-go/pkg/tokenprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+type jwtAccessTokenProvider struct {
+	source googletokenprovider.TokenProvider
+	ctx    context.Context
+}
+
 func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plugins.AppPluginRoute,
-	authParams *plugins.JwtTokenAuth) googletokenprovider.TokenProvider {
+	authParams *plugins.JwtTokenAuth) *jwtAccessTokenProvider {
 	jwtConf := &googletokenprovider.JwtTokenConfig{}
 	if val, ok := authParams.Params["client_email"]; ok {
 		jwtConf.Email = val
@@ -22,7 +27,7 @@ func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plug
 		jwtConf.URI = val
 	}
 
-	cfg := &googletokenprovider.Config{
+	cfg := googletokenprovider.Config{
 		RoutePath:         pluginRoute.Path,
 		RouteMethod:       pluginRoute.Method,
 		DataSourceID:      ds.ID,
@@ -31,5 +36,12 @@ func newJwtAccessTokenProvider(ctx context.Context, ds DSInfo, pluginRoute *plug
 		JwtTokenConfig:    jwtConf,
 	}
 
-	return googletokenprovider.NewJwtAccessTokenProvider(ctx, cfg)
+	return &jwtAccessTokenProvider{
+		source: googletokenprovider.NewJwtAccessTokenProvider(cfg),
+		ctx:    ctx,
+	}
+}
+
+func (provider *jwtAccessTokenProvider) GetAccessToken() (string, error) {
+	return provider.source.GetAccessToken(provider.ctx)
 }
