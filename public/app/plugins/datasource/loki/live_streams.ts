@@ -38,12 +38,8 @@ export class LiveStreams {
     data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
     data.refId = target.refId;
 
-    stream = webSocket(target.url).pipe(
-      map((unknownResponse: unknown) => {
-        // we need to cast response to `LokiTailResponse`.
-        // we need to cast it first to unknown, to make typescript happy.
-        const anyResponse: any = unknownResponse;
-        const response: LokiTailResponse = anyResponse;
+    stream = webSocket<LokiTailResponse>(target.url).pipe(
+      map((response: LokiTailResponse) => {
         appendResponseToBufferedData(response, data);
         return [data];
       }),
