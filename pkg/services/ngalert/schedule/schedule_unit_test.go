@@ -374,7 +374,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			require.NoError(t, err)
 			err = duration.Write(m)
 			require.NoError(t, err)
-			require.Equal(t, float64(1), *m.Summary.SampleCount)
+			require.Equal(t, uint64(1), *m.Summary.SampleCount)
 		})
 	})
 
