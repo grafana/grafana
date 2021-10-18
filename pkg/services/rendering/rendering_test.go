@@ -183,7 +183,6 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 	t.Run("When renderer responds with 500 should retry until success", func(t *testing.T) {
 		tries := uint(0)
 		ctx, cancel := context.WithCancel(context.Background())
-		lastRetryHit := make(chan struct{})
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			tries++
 
@@ -195,7 +194,6 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 				_, err := w.Write([]byte("{\"version\":\"3.1.4159\"}"))
 				require.NoError(t, err)
 				cancel()
-				lastRetryHit <- struct{}{}
 			}
 		}))
 		defer server.Close()
@@ -206,12 +204,6 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 		go func() {
 			require.NoError(t, rs.Run(ctx))
 		}()
-
-		select {
-		case <-time.After(time.Second):
-			t.Fatal("server did not retry version check")
-		case <-lastRetryHit:
-		}
 
 		require.Eventually(t, func() bool { return rs.Version() == "3.1.4159" }, time.Second, time.Millisecond)
 	})

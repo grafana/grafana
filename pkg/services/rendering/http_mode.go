@@ -195,22 +195,15 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 }
 
 func (rs *RenderingService) getRemotePluginVersionWithRetry(retryInterval time.Duration, numRetries uint, callback func(string, error)) {
-	version, err := rs.getRemotePluginVersion()
-	if err == nil {
-		callback(version, err)
-		return
-	}
-	rs.log.Info("Couldn't get remote renderer version, retrying", "err", err)
-
 	go func() {
 		var err error
-		for try := uint(0); try < numRetries; try++ {
+		for try := uint(0); try <= numRetries; try++ {
 			version, err := rs.getRemotePluginVersion()
 			if err == nil {
 				callback(version, err)
 				return
 			}
-			rs.log.Info("Couldn't get remote renderer version on retry, retrying", "err", err, "try", try)
+			rs.log.Info("Couldn't get remote renderer version, retrying", "err", err, "try", try)
 
 			time.Sleep(retryInterval)
 		}
