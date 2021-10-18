@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -202,10 +203,16 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
-		EndTime:       aws.Int64(endTime.Unix()),
+		// Usually grafana time range allows only second precision, but you can create ranges with milliseconds
+		// for example when going from trace to logs for that trace and trace length is sub second. In that case
+		// StartTime is effectively floored while here EndTime is ceiled and so we should get the logs user wants
+		// and also a little bit more but as CW logs accept only seconds as integers there is not much to do about
+		// that.
+		EndTime:       aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
 		QueryString:   aws.String(modifiedQueryString),
 	}
+	plog.Debug("executeStartQuery", "startQueryInput", startQueryInput)
 
 	if resultsLimit, err := parameters.Get("limit").Int64(); err == nil {
 		startQueryInput.Limit = aws.Int64(resultsLimit)
