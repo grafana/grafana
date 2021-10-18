@@ -40,7 +40,7 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
     useEffectOnce(() => {
       const firstMenuItem = localRef?.current?.querySelector(`[data-role="menuitem"]`) as MenuItemElement | null;
       if (firstMenuItem) {
-        firstMenuItem.tabIndex = 0;
+        setFocusedItem(0);
       }
       onOpen?.(setFocusedItem);
     });
