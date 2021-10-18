@@ -151,6 +151,8 @@ func (m *Mock) IsDisabled() bool {
 	return m.disabled
 }
 
+func (m *Mock) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error { return nil }
+
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
 // assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // This mock returns no error unless an override is provided.
