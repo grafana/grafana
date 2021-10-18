@@ -32,6 +32,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -138,12 +139,6 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
@@ -296,6 +291,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -415,12 +411,6 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
     --sign
@@ -765,6 +755,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
+  - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -875,12 +866,6 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
     --sign ${DRONE_TAG}
@@ -1146,6 +1131,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version ${DRONE_TAG}
+  - ./bin/grabpl gen-version ${DRONE_TAG}
   - yarn install --immutable
   depends_on:
   - clone
@@ -1290,12 +1276,6 @@ steps:
       from_secret: github_token
   image: grafana/build-container:1.4.3
   name: build-backend-enterprise2
-- commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign ${DRONE_TAG}
@@ -1713,6 +1693,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
+  - ./bin/grabpl gen-version v7.3.0-test
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -1823,12 +1804,6 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl gen-version v7.3.0-test
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise
     --sign v7.3.0-test
@@ -2083,6 +2058,7 @@ steps:
   - ./bin/grabpl verify-drone
   - make gen-go
   - ./bin/grabpl verify-version v7.3.0-test
+  - ./bin/grabpl gen-version v7.3.0-test
   - yarn install --immutable
   depends_on:
   - clone
@@ -2227,12 +2203,6 @@ steps:
       from_secret: github_token
   image: grafana/build-container:1.4.3
   name: build-backend-enterprise2
-- commands:
-  - ./bin/grabpl gen-version v7.3.0-test
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     --no-pull-enterprise --sign v7.3.0-test
@@ -2647,6 +2617,7 @@ steps:
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   image: grafana/build-container:1.4.3
   name: initialize
@@ -2755,12 +2726,6 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.4.3
   name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
     --sign
@@ -2989,6 +2954,7 @@ steps:
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
   - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   - yarn install --immutable
   depends_on:
   - clone
@@ -3129,12 +3095,6 @@ steps:
   environment: {}
   image: grafana/build-container:1.4.3
   name: build-backend-enterprise2
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.3
-  name: gen-version
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise --sign
@@ -3499,6 +3459,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: d554130d35dbe9dbbb0ccf2415c85e70bfea4f498612d4d68efe08f12783a2b4
+hmac: 7dfea5d0140c280d8942548a162a064744016a3e1a2242d92aade9e08af2b185
 
 ...

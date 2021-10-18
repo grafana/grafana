@@ -13,7 +13,6 @@ load(
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
-    'gen_version_step',
     'package_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
@@ -109,7 +108,6 @@ def get_steps(edition, ver_mode):
 
     # Insert remaining steps
     steps.extend([
-        gen_version_step(ver_mode=ver_mode),
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition, tries=3),
