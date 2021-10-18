@@ -67,7 +67,9 @@ export class Scene {
     });
 
     setTimeout(() => {
-      this.initMoveable();
+      if (this.div) {
+        this.initMoveable();
+      }
     }, 100);
     return this.root;
   }
@@ -154,14 +156,18 @@ export class Scene {
   };
 
   setRef = (sceneContainer: HTMLDivElement) => {
-    if (this.div) {
-      console.log('destroy moveable?');
-    }
-
     this.div = sceneContainer;
   };
 
   initMoveable = () => {
+    if (this.selecto) {
+      this.selecto.destroy();
+    }
+
+    if (this.moveable) {
+      this.moveable.destroy();
+    }
+
     const targetElements: HTMLDivElement[] = [];
     this.root.elements.forEach((element: ElementState) => {
       targetElements.push(element.div!);
