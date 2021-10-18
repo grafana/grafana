@@ -37,6 +37,7 @@ import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { config } from '@grafana/runtime';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -326,7 +327,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
                 queryInspectorButtonActive={showQueryInspector}
-                loadingLogsVolumeAvailable={hasLogsVolumeSupport(datasourceInstance) && !!logsVolumeDataProvider}
+                loadingLogsVolumeAvailable={
+                  hasLogsVolumeSupport(datasourceInstance) &&
+                  !!logsVolumeDataProvider &&
+                  !config.featureToggles.autoLoadFullRangeLogsVolume
+                }
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}

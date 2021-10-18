@@ -33,6 +33,7 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
+import { config } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -40,6 +41,7 @@ jest.mock('@grafana/runtime', () => ({
     ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
     featureToggles: {
       fullRangeLogsVolume: true,
+      autoLoadFullRangeLogsVolume: false,
     },
   },
 }));
@@ -322,6 +324,7 @@ describe('reducer', () => {
   describe('logs volume', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
+      unsubscribes: Function[],
       mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
@@ -352,11 +355,9 @@ describe('reducer', () => {
 
       dispatch = store.dispatch;
       getState = store.getState;
-    });
 
-    it('should cancel any unfinished logs volume queries', async () => {
       setupQueryResponse(getState());
-      let unsubscribes: Function[] = [];
+      unsubscribes = [];
 
       mockLogsVolumeDataProvider = () => {
         return ({
@@ -369,7 +370,9 @@ describe('reducer', () => {
           },
         } as unknown) as Observable<DataQueryResponse>;
       };
+    });
 
+    it('should cancel any unfinished logs volume queries', async () => {
       await dispatch(runQueries(ExploreId.left));
       // no subscriptions created yet
       expect(unsubscribes).toHaveLength(0);
@@ -390,6 +393,12 @@ describe('reducer', () => {
       expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[0]).toBeCalled();
       expect(unsubscribes[1]).not.toBeCalled();
+    });
+
+    it('should load logs volume after running the query', async () => {
+      config.featureToggles.autoLoadFullRangeLogsVolume = true;
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
     });
   });
 });
