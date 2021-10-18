@@ -269,11 +269,7 @@ func (l *Loader) pluginClass(pluginDir string) plugins.Class {
 		return plugins.Bundled
 	}
 
-	if isSubDir(l.cfg.PluginsPath, pluginDir) {
-		return plugins.External
-	}
-
-	return plugins.Unknown
+	return plugins.External
 }
 
 type foundPlugins map[string]plugins.JSONData

@@ -970,7 +970,7 @@ func Test_pluginClass(t *testing.T) {
 					PluginsPath: "/root",
 				},
 			},
-			expected: plugins.Unknown,
+			expected: plugins.External,
 		},
 	}
 	for _, tt := range tests {

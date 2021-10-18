@@ -81,7 +81,7 @@ func (i *Initializer) Initialize(p *plugins.Plugin) error {
 	}
 
 	if !p.IsCorePlugin() {
-		logger.Info(fmt.Sprintf("Successfully initialized %s plugin", p.Class), "pluginID", p.ID)
+		logger.Info("Successfully initialized plugin", "pluginID", p.ID)
 	}
 
 	pluginLog := log.New(p.ID)

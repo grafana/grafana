@@ -317,7 +317,6 @@ const (
 	Core     Class = "core"
 	Bundled  Class = "bundled"
 	External Class = "external"
-	Unknown  Class = "unknown"
 )
 
 var PluginTypes = []Type{

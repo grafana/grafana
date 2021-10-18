@@ -69,7 +69,7 @@ func newManager(cfg *setting.Cfg, license models.Licensing, pluginRequestValidat
 		requestValidator: pluginRequestValidator,
 		sqlStore:         sqlStore,
 		plugins:          map[string]*plugins.Plugin{},
-		log:              log.New("plugin.manager.v2"),
+		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		pluginLoader:     loader.New(license, cfg),
 	}
@@ -156,12 +156,13 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 
 	loadedPlugins, err := m.pluginLoader.Load(pluginPaths, m.registeredPlugins())
 	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
 	}
 
 	for _, p := range loadedPlugins {
 		if err := m.registerAndStart(context.Background(), p); err != nil {
-			return err
+			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
 	}
 
@@ -610,9 +611,7 @@ func (m *PluginManager) registerAndStart(ctx context.Context, plugin *plugins.Pl
 		return fmt.Errorf("plugin %s is not registered", plugin.ID)
 	}
 
-	err = m.start(ctx, plugin)
-
-	return err
+	return m.start(ctx, plugin)
 }
 
 func (m *PluginManager) register(p *plugins.Plugin) error {
