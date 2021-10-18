@@ -325,7 +325,9 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 		return response.Error(404, "Plugin not found", nil)
 	}
 
-	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), pCtx)
+	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
+		PluginContext: pCtx,
+	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
@@ -378,7 +380,7 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.InstallOpts{})
+	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version, plugins.AddOpts{})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {

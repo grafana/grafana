@@ -453,14 +453,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	if err != nil {
 		return response.Error(500, "Unable to get datasource model", err)
 	}
-	pCtx := backend.PluginContext{
-		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
-		OrgID:                      c.OrgId,
-		PluginID:                   plugin.ID,
-		DataSourceInstanceSettings: dsInstanceSettings,
+	req := &backend.CheckHealthRequest{
+		PluginContext: backend.PluginContext{
+			User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
+			OrgID:                      c.OrgId,
+			PluginID:                   plugin.ID,
+			DataSourceInstanceSettings: dsInstanceSettings,
+		},
 	}
 
-	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), pCtx)
+	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}

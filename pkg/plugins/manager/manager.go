@@ -248,6 +248,15 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 		return nil, errutil.Wrap("failed to query data", err)
 	}
 
+	for refID, res := range resp.Responses {
+		// set frame ref ID based on response ref ID
+		for _, f := range res.Frames {
+			if f.RefID == "" {
+				f.RefID = refID
+			}
+		}
+	}
+
 	return resp, err
 }
 
@@ -426,10 +435,10 @@ func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*b
 	return resp, nil
 }
 
-func (m *PluginManager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	var dsURL string
-	if pluginContext.DataSourceInstanceSettings != nil {
-		dsURL = pluginContext.DataSourceInstanceSettings.URL
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
 	}
 
 	err := m.requestValidator.Validate(dsURL, nil)
@@ -440,14 +449,14 @@ func (m *PluginManager) CheckHealth(ctx context.Context, pluginContext backend.P
 		}, nil
 	}
 
-	p := m.Plugin(pluginContext.PluginID)
+	p := m.Plugin(req.PluginContext.PluginID)
 	if p == nil {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
 	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
-		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: pluginContext})
+		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: req.PluginContext})
 		return
 	})
 
@@ -475,7 +484,7 @@ func (m *PluginManager) isRegistered(pluginID string) bool {
 	return !p.IsDecommissioned()
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.InstallOpts) error {
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 	var pluginZipURL string
 
 	if opts.PluginRepoURL == "" {
@@ -510,20 +519,20 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		}
 	}
 
-	if opts.InstallDir == "" {
-		opts.InstallDir = m.cfg.PluginsPath
+	if opts.PluginInstallDir == "" {
+		opts.PluginInstallDir = m.cfg.PluginsPath
 	}
 
 	if opts.PluginZipURL == "" {
 		opts.PluginZipURL = pluginZipURL
 	}
 
-	err := m.pluginInstaller.Install(ctx, pluginID, version, opts.InstallDir, opts.PluginZipURL, opts.PluginRepoURL)
+	err := m.pluginInstaller.Install(ctx, pluginID, version, opts.PluginInstallDir, opts.PluginZipURL, opts.PluginRepoURL)
 	if err != nil {
 		return err
 	}
 
-	err = m.loadPlugins(opts.InstallDir)
+	err = m.loadPlugins(opts.PluginInstallDir)
 	if err != nil {
 		return err
 	}

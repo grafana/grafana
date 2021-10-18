@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,8 +27,9 @@ type latestJSON struct {
 type Service struct {
 	cfg *setting.Cfg
 
-	HasUpdate     bool
-	LatestVersion string
+	hasUpdate     bool
+	latestVersion string
+	mutex         sync.RWMutex
 }
 
 func ProvideService(cfg *setting.Cfg) *Service {
@@ -40,6 +42,10 @@ func newUpdateChecker(cfg *setting.Cfg) *Service {
 	return &Service{
 		cfg: cfg,
 	}
+}
+
+func (s *Service) IsDisabled() bool {
+	return !s.cfg.CheckForUpdates
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -61,10 +67,6 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) checkForUpdates() {
-	if !s.cfg.CheckForUpdates {
-		return
-	}
-
 	resp, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
 		log.Warnf("Failed to get latest.json repo from github.com: %v", err.Error())
@@ -88,17 +90,31 @@ func (s *Service) checkForUpdates() {
 		return
 	}
 
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	if strings.Contains(s.cfg.BuildVersion, "-") {
-		s.LatestVersion = latest.Testing
-		s.HasUpdate = !strings.HasPrefix(s.cfg.BuildVersion, latest.Testing)
+		s.latestVersion = latest.Testing
+		s.hasUpdate = !strings.HasPrefix(s.cfg.BuildVersion, latest.Testing)
 	} else {
-		s.LatestVersion = latest.Stable
-		s.HasUpdate = latest.Stable != s.cfg.BuildVersion
+		s.latestVersion = latest.Stable
+		s.hasUpdate = latest.Stable != s.cfg.BuildVersion
 	}
 
 	currVersion, err1 := version.NewVersion(s.cfg.BuildVersion)
-	latestVersion, err2 := version.NewVersion(s.LatestVersion)
+	latestVersion, err2 := version.NewVersion(s.latestVersion)
 	if err1 == nil && err2 == nil {
-		s.HasUpdate = currVersion.LessThan(latestVersion)
+		s.hasUpdate = currVersion.LessThan(latestVersion)
 	}
+}
+
+func (s *Service) GrafanaUpdateAvailable() bool {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	return s.hasUpdate
+}
+
+func (s *Service) LatestGrafanaVersion() string {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	return s.latestVersion
 }

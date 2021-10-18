@@ -163,7 +163,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			pm.pluginLoader = l
 		})
 
-		err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
+		err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.AddOpts{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, i.installCount)
@@ -183,7 +183,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Plugins(), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.InstallOpts{})
+			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.AddOpts{})
 			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
@@ -198,7 +198,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			}
 			pm.pluginLoader = l
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.InstallOpts{})
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.AddOpts{})
 			assert.NoError(t, err)
 
 			assert.Equal(t, 2, i.installCount)
@@ -251,7 +251,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "", plugins.InstallOpts{})
+		err = pm.Add(context.Background(), testPluginID, "", plugins.AddOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
@@ -282,7 +282,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "", plugins.InstallOpts{})
+		err = pm.Add(context.Background(), testPluginID, "", plugins.AddOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
@@ -368,7 +368,7 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 					})
 
 					t.Run("Check health should return method not implemented error", func(t *testing.T) {
-						_, err = ctx.manager.CheckHealth(context.Background(), backend.PluginContext{PluginID: testPluginID})
+						_, err = ctx.manager.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 					})
 
@@ -407,7 +407,7 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 							}, nil
 						}
 
-						res, err := ctx.manager.CheckHealth(context.Background(), backend.PluginContext{PluginID: testPluginID})
+						res, err := ctx.manager.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.NoError(t, err)
 						require.NotNil(t, res)
 						require.Equal(t, backend.HealthStatusOk, res.Status)

@@ -99,16 +99,9 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
-	for refID, res := range qdr.Responses {
+	for _, res := range qdr.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
-		}
-
-		// set frame ref ID based on response ref ID
-		for _, f := range res.Frames {
-			if f.RefID == "" {
-				f.RefID = refID
-			}
 		}
 	}
 
@@ -230,6 +223,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	return response.JSON(statusCode, &resp)
 }
 
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
 func (hs *HTTPServer) createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {

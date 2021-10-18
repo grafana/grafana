@@ -24,13 +24,13 @@ type Store interface {
 	Plugins(pluginTypes ...Type) []*Plugin
 
 	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string, opts InstallOpts) error
+	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type InstallOpts struct {
-	InstallDir, PluginZipURL, PluginRepoURL string
+type AddOpts struct {
+	PluginInstallDir, PluginZipURL, PluginRepoURL string
 }
 
 // Loader is responsible for loading plugins from the file system.
@@ -58,14 +58,13 @@ type UpdateInfo struct {
 
 // Client is used to communicate with backend plugin implementations.
 type Client interface {
-	// QueryData queries data from a plugin.
-	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
+	backend.QueryDataHandler
+	backend.CheckHealthHandler
+
 	// CallResource calls a plugin resource.
 	CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string)
 	// CollectMetrics collects metrics from a plugin.
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
-	// CheckHealth performs a health check on a plugin.
-	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
 }
 
 type RendererManager interface {
