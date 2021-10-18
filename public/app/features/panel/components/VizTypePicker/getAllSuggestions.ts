@@ -5,6 +5,10 @@ export async function getAllSuggestions(data?: PanelData): Promise<Visualization
   const plugins = ['timeseries', 'barchart', 'gauge', 'stat', 'piechart', 'bargauge', 'table'];
   const builder = new VisualizationSuggestionsBuilder(data, 'table', {}, { defaults: {}, overrides: [] });
 
+  if (!builder.dataExists) {
+    return builder.getList();
+  }
+
   for (const pluginId of plugins) {
     const plugin = await importPanelPlugin(pluginId);
     const supplier = plugin.getSuggestionsSupplier();

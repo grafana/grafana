@@ -3,10 +3,6 @@ import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema
 import { BarChartFieldConfig, BarChartOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
-  if (!builder.dataExists) {
-    return;
-  }
-
   const list = builder.getListAppender<BarChartOptions, BarChartFieldConfig>({
     name: 'Bar chart',
     pluginId: 'barchart',

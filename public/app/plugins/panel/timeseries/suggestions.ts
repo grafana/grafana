@@ -10,10 +10,6 @@ import {
 import { TimeSeriesOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
-  if (!builder.dataExists) {
-    return;
-  }
-
   const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
     name: 'Line chart',
     pluginId: 'timeseries',

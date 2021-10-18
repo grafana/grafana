@@ -2,10 +2,6 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { StatPanelOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
-  if (!builder.dataExists) {
-    return;
-  }
-
   const list = builder.getListAppender<StatPanelOptions, {}>({
     name: 'Stat',
     pluginId: 'stat',

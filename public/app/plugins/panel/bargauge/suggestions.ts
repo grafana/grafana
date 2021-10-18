@@ -3,10 +3,6 @@ import { BarGaugeDisplayMode } from '@grafana/ui';
 import { BarGaugeOptions } from './types';
 
 export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
-  if (!builder.dataExists) {
-    return;
-  }
-
   const list = builder.getListAppender<BarGaugeOptions, {}>({
     name: 'Bar gauge',
     pluginId: 'bargauge',
