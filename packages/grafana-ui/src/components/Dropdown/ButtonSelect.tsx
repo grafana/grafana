@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
+import { FocusScope } from '@react-aria/focus';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -57,16 +58,18 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       {isOpen && (
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={onCloseMenu} parent={document} includeButtonPress={false}>
-            <Menu onClose={onCloseMenu}>
-              {options.map((item) => (
-                <MenuItem
-                  key={`${item.value}`}
-                  label={(item.label || item.value) as string}
-                  onClick={() => onChangeInternal(item)}
-                  active={item.value === value?.value}
-                />
-              ))}
-            </Menu>
+            <FocusScope contain restoreFocus autoFocus>
+              <Menu onClose={onCloseMenu}>
+                {options.map((item) => (
+                  <MenuItem
+                    key={`${item.value}`}
+                    label={(item.label || item.value) as string}
+                    onClick={() => onChangeInternal(item)}
+                    active={item.value === value?.value}
+                  />
+                ))}
+              </Menu>
+            </FocusScope>
           </ClickOutsideWrapper>
         </div>
       )}
