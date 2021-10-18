@@ -87,7 +87,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
       try {
         parsed = JSON.parse(line);
       } catch (error) {}
-      // JSON parser should be used for line that was parsed to object. If we would use it for
+      // The JSON parser should only be used for log lines that are valid serialized JSON objects.
       // parsed string, detected fields would include each letter of string as separate detected field.
       return typeof parsed === 'object';
     },
