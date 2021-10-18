@@ -160,11 +160,11 @@
                   "$ref": "#/definitions/CalculateDiffTarget"
                 },
                 "diffType": {
-                  "description": "The type of diff to return",
+                  "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
                   "type": "string",
                   "enum": [
-                    "[\"basic\"",
-                    " \"json\"]"
+                    "basic",
+                    "json"
                   ],
                   "x-go-name": "DiffType"
                 },
@@ -858,9 +858,9 @@
           "type": "integer",
           "format": "int64",
           "enum": [
-            "[1",
-            " 2",
-            " 4]"
+            1,
+            2,
+            4
           ],
           "x-go-name": "Permission"
         },

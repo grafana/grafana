@@ -123,7 +123,10 @@ type CalcDashboardDiffOptions struct {
 		Base dtos.CalculateDiffTarget `json:"base" binding:"Required"`
 		New  dtos.CalculateDiffTarget `json:"new" binding:"Required"`
 		// The type of diff to return
-		// enum: ["basic", "json"]
+		// Description:
+		// * `basic`
+		// * `json`
+		// Enum: basic,json
 		DiffType string `json:"diffType" binding:"Required"`
 	}
 }

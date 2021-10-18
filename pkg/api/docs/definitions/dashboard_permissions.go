@@ -52,6 +52,6 @@ type DashboardAclUpdateItem struct {
 	// * `1` - View
 	// * `2` - Edit
 	// * `4` - Admin
-	// Enum: [1, 2, 4]
+	// Enum: 1,2,4
 	Permission int `json:"permission"`
 }
