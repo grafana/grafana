@@ -139,24 +139,14 @@ func (p *Plugin) Start(ctx context.Context) error {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
 
-	err := p.client.Start(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return p.client.Start(ctx)
 }
 
 func (p *Plugin) Stop(ctx context.Context) error {
 	if p.client == nil {
 		return nil
 	}
-	err := p.client.Stop(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return p.client.Stop(ctx)
 }
 
 func (p *Plugin) IsManaged() bool {
