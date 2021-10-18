@@ -1,7 +1,8 @@
 import { createSlice, createEntityAdapter, AnyAction, PayloadAction } from '@reduxjs/toolkit';
-import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards } from './actions';
+import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
 import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
+import { PanelPlugin } from '@grafana/data';
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
 
@@ -62,8 +63,8 @@ const slice = createSlice({
       })
       // Load a panel plugin (backward-compatibility)
       // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
-      .addCase(`${STATE_PREFIX}/loadPanelPlugin/fulfilled`, (state, action: AnyAction) => {
-        state.panels[action.payload.meta!.id] = action.payload;
+      .addCase(panelPluginLoaded, (state, action: PayloadAction<PanelPlugin>) => {
+        state.panels[action.payload.meta.id] = action.payload;
       })
       // Start loading panel dashboards (backward-compatibility)
       // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
