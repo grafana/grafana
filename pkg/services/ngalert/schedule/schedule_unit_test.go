@@ -417,7 +417,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan)
 
-		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), eval.State(rand.Intn(int(eval.Error))))
+		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
 
 		go func() {
 			_ = sch.ruleRoutine(context.Background(), rule.GetKey(), evalChan, make(chan struct{}))
