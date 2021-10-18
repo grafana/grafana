@@ -252,7 +252,7 @@
     "@visx/scale": "2.1.0",
     "@visx/shape": "2.1.0",
     "@visx/tooltip": "2.1.0",
-    "@welldone-software/why-did-you-render": "4.0.6",
+    "@welldone-software/why-did-you-render": "6.2.1",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.8.2",
     "angular-bindonce": "0.3.1",

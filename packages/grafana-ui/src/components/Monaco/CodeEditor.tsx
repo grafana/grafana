@@ -31,7 +31,10 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   componentDidUpdate(oldProps: Props) {
     const { getSuggestions, language } = this.props;
 
-    if (language !== oldProps.language) {
+    const newLanguage = oldProps.language !== language;
+    const newGetSuggestions = oldProps.getSuggestions !== getSuggestions;
+
+    if (newGetSuggestions || newLanguage) {
       if (this.completionCancel) {
         this.completionCancel.dispose();
       }
@@ -44,7 +47,9 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       if (getSuggestions) {
         this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
       }
+    }
 
+    if (newLanguage) {
       this.loadCustomLanguage();
     }
   }
