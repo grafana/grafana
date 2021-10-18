@@ -17,14 +17,25 @@ const geojsonObject = {
       },
     },
     {
-      id: 'B',
       type: 'Feature',
       geometry: {
         type: 'Point',
         coordinates: [1, 1],
       },
       properties: {
+        some_code: 'B',
         hello: 'B',
+      },
+    },
+    {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [2, 2],
+      },
+      properties: {
+        an_id: 'C',
+        hello: 'C',
       },
     },
   ],
@@ -42,18 +53,43 @@ describe('Placename lookup from geojson format', () => {
     backendResults = { hello: 'world' };
   });
 
-  it('unified worldmap config', async () => {
+  it('can lookup by id', async () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('local');
     expect(gaz.error).toBeUndefined();
     expect(gaz.find('A')).toMatchInlineSnapshot(`
       Object {
         "coords": Array [
-          0, 0,
+          0,
+          0,
         ],
-        "props": Object {
-          "hello": "A",
-        },
+      }
+    `);
+  });
+  it('can look up by a code', async () => {
+    backendResults = geojsonObject;
+    const gaz = await getGazetteer('airports');
+    expect(gaz.error).toBeUndefined();
+    expect(gaz.find('B')).toMatchInlineSnapshot(`
+      Object {
+        "coords": Array [
+          1,
+          1,
+        ],
+      }
+    `);
+  });
+
+  it('can look up by an id property', async () => {
+    backendResults = geojsonObject;
+    const gaz = await getGazetteer('airports');
+    expect(gaz.error).toBeUndefined();
+    expect(gaz.find('C')).toMatchInlineSnapshot(`
+      Object {
+        "coords": Array [
+          2,
+          2,
+        ],
       }
     `);
   });

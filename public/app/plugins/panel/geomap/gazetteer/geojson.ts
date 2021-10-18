@@ -11,30 +11,42 @@ export interface GeoJSONPoint {
 
 export function loadFromGeoJSON(path: string, body: any): Gazetteer {
   const data = new GeoJSON().readFeatures(body);
-  console.log('TODO read', data);
   let count = 0;
   const values = new Map<string, PlacenameInfo>();
-  // for (const v of data) {
-  //   const info: PlacenameInfo = {
-  //     coords: [v.longitude, v.latitude],
-  //   };
-  //   if (v.name) {
-  //     values.set(v.name, info);
-  //     values.set(v.name.toUpperCase(), info);
-  //     info.props = { name: v.name };
-  //   }
-  //   if (v.key) {
-  //     values.set(v.key, info);
-  //     values.set(v.key.toUpperCase(), info);
-  //   }
-  //   if (v.keys) {
-  //     for (const key of v.keys) {
-  //       values.set(key, info);
-  //       values.set(key.toUpperCase(), info);
-  //     }
-  //   }
-  //   count++;
-  // }
+  for (const f of data) {
+    const coords = f.getGeometry().getFlatCoordinates(); //for now point, eventually geometry
+    const info: PlacenameInfo = {
+      coords: coords,
+    };
+    const id = f.getId();
+    if (id) {
+      if (typeof id === 'number') {
+        values.set(id.toString(), info);
+      } else {
+        values.set(id, info);
+        values.set(id.toUpperCase(), info);
+      }
+    }
+    const properties = f.getProperties();
+    if (properties) {
+      for (const k of Object.keys(properties)) {
+        if (k.includes('_code') || k.includes('_id')) {
+          const value = properties[k];
+          if (value) {
+            if (typeof value === 'number') {
+              values.set(value.toString(), info);
+            } else {
+              values.set(value, info);
+              values.set(value.toUpperCase(), info);
+            }
+          }
+        }
+      }
+    }
+
+    count++;
+  }
+
   return {
     path,
     find: (k) => {
