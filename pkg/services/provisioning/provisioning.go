@@ -36,8 +36,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager
 
 type ProvisioningService interface {
 	registry.BackgroundService
-	RunInitProvisioners() error
-	ProvisionDatasources() error
+	RunInitProvisioners(ctx context.Context) error
+	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
 	ProvisionDashboards(ctx context.Context) error
@@ -60,7 +60,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string, encryption.Service) error,
-	provisionDatasources func(string) error,
+	provisionDatasources func(context.Context, string) error,
 	provisionPlugins func(string, plugifaces.Manager) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
@@ -82,13 +82,13 @@ type ProvisioningServiceImpl struct {
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string, encryption.Service) error
-	provisionDatasources    func(string) error
+	provisionDatasources    func(context.Context, string) error
 	provisionPlugins        func(string, plugifaces.Manager) error
 	mutex                   sync.Mutex
 }
 
-func (ps *ProvisioningServiceImpl) RunInitProvisioners() error {
-	err := ps.ProvisionDatasources()
+func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
+	err := ps.ProvisionDatasources(ctx)
 	if err != nil {
 		return err
 	}
@@ -135,9 +135,9 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	}
 }
 
-func (ps *ProvisioningServiceImpl) ProvisionDatasources() error {
+func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	err := ps.provisionDatasources(datasourcePath)
+	err := ps.provisionDatasources(ctx, datasourcePath)
 	return errutil.Wrap("Datasource provisioning error", err)
 }
 
