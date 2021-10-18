@@ -59,12 +59,12 @@ describe('createGraphFrames', () => {
 });
 
 describe('mapPromMetricsToServiceMap', () => {
-  it('transforms prom metrics to service map', async () => {
+  it('transforms prom metrics to service graph', async () => {
     const range = {
       from: dateTime('2000-01-01T00:00:00'),
       to: dateTime('2000-01-01T00:01:00'),
     };
-    const [nodes, edges] = mapPromMetricsToServiceMap([{ data: [totalsPromMetric] }, { data: [secondsPromMetric] }], {
+    const [nodes, edges] = mapPromMetricsToServiceMap([{ data: [totalsPromMetric, secondsPromMetric] }], {
       ...range,
       raw: range,
     });

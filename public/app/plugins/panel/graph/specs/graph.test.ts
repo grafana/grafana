@@ -1,6 +1,6 @@
 import { GraphCtrl } from '../module';
-import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';

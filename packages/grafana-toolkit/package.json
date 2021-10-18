@@ -40,8 +40,8 @@
     "@types/node": "^12.0.4",
     "@types/prettier": "^2.4.0",
     "@types/react-dev-utils": "^9.0.4",
-    "@types/rimraf": "^2.0.3",
-    "@types/semver": "^6.0.0",
+    "@types/rimraf": "^3.0.0",
+    "@types/semver": "^7.0.0",
     "@types/tmp": "^0.1.0",
     "@types/webpack": "4.41.7",
     "axios": "0.21.2",
@@ -98,8 +98,5 @@
     "typescript": "4.4.3",
     "url-loader": "^2.0.1",
     "webpack": "4.41.5"
-  },
-  "volta": {
-    "extends": "../../package.json"
   }
 }

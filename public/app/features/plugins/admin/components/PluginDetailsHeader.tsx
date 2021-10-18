@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Icon } from '@grafana/ui';
+import { useStyles2, Icon, HorizontalGroup } from '@grafana/ui';
 
 import { InstallControls } from './InstallControls';
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
@@ -9,6 +9,7 @@ import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependenci
 import { PluginLogo } from './PluginLogo';
 import { CatalogPlugin } from '../types';
 import { PluginDisabledBadge } from './Badges';
+import { GetStartedWithPlugin } from './GetStartedWithPlugin';
 
 type Props = {
   currentUrl: string;
@@ -84,7 +85,10 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
 
         <p>{plugin.description}</p>
 
-        <InstallControls plugin={plugin} />
+        <HorizontalGroup height="auto">
+          <InstallControls plugin={plugin} />
+          <GetStartedWithPlugin plugin={plugin} />
+        </HorizontalGroup>
       </div>
     </div>
   );
