@@ -56,7 +56,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
-  queryTimeout: string;
+  queryTimeout: string | undefined;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
@@ -80,7 +80,9 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'POST';
-    this.directUrl = instanceSettings.jsonData.directUrl;
+    // `directUrl` is never undefined, we set it at https://github.com/grafana/grafana/blob/main/pkg/api/frontendsettings.go#L108
+    // here we "fall back" to this.url to make typescript happy, but it should never happen
+    this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
@@ -316,10 +318,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    // WIP - currently we want to run trough backend only if all queries are explore + range/instant queries
-    const shouldRunBackendQuery = this.access === 'proxy' && request.app === CoreApp.Explore;
-
-    if (shouldRunBackendQuery) {
+    if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       return super
         .query({ ...request, targets })

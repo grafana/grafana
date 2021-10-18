@@ -49,7 +49,7 @@ type QueryModel struct {
 type PrometheusQueryType string
 
 const (
-	Range    PrometheusQueryType = "range"
-	Instant  PrometheusQueryType = "instant"
-	Exemplar PrometheusQueryType = "exemplar"
+	RangeQueryType    PrometheusQueryType = "range"
+	InstantQueryType  PrometheusQueryType = "instant"
+	ExemplarQueryType PrometheusQueryType = "exemplar"
 )
