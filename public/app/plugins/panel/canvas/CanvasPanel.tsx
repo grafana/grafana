@@ -2,7 +2,7 @@ import { Component } from 'react';
 import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Subscription } from 'rxjs';
-import { PanelEditExitedEvent } from 'app/types/events';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
@@ -40,6 +40,15 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
+
+    this.subs.add(
+      this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
+        if (this.props.id === evt.payload) {
+          let event: MouseEvent = new MouseEvent('click');
+          this.scene?.selecto?.clickTarget(event, this.scene?.div);
+        }
+      })
+    );
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
