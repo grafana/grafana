@@ -142,6 +142,7 @@ export const getAvailableIcons = () =>
     'sync',
     'table',
     'tag-alt',
+    'text-fields',
     'times',
     'toggle-on',
     'trash-alt',
