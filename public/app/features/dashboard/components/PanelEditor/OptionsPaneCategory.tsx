@@ -5,8 +5,14 @@ import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
+<<<<<<< HEAD
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+=======
+import { getLocationSrv } from '@grafana/runtime';
+import { categoryParam } from './OptionsPaneOptions';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+>>>>>>> adb4ddec8e (scroll to view with panel query)
 export interface OptionsPaneCategoryProps {
   id: string;
   title?: string;
@@ -28,6 +34,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: initialIsExpanded,
     });
 
+<<<<<<< HEAD
     const styles = useStyles2(getStyles);
     const [queryParams, updateQueryParams] = useQueryParams();
     const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
@@ -60,6 +67,31 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
     }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
+=======
+    const isSelected = useQueryParams()[0][categoryParam] === id;
+    // `savedState` can be undefined by typescript, so we have to handle that case
+    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? initialIsExpanded);
+    const styles = useStyles2(getStyles);
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+      if ((!isExpanded && forceOpen && forceOpen > 0) || isSelected) {
+        setIsExpanded(true);
+        ref.current?.scrollIntoView();
+      }
+    }, [forceOpen, isExpanded, isSelected]);
+
+    const onToggle = useCallback(() => {
+      // TODO: set the route, listening to changes in the url, make sure the element is visible
+      getLocationSrv().update({
+        query: {
+          [categoryParam]: isExpanded ? undefined : id,
+        },
+        partial: true,
+      });
+      setSavedState({ isExpanded: !isExpanded });
+      setIsExpanded(!isExpanded);
+    }, [setSavedState, setIsExpanded, isExpanded, id]);
+>>>>>>> adb4ddec8e (scroll to view with panel query)
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -98,6 +130,10 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         className={boxStyles}
         data-testid="options-category"
         aria-label={selectors.components.OptionsGroup.group(id)}
+<<<<<<< HEAD
+=======
+        data-optioncategory={id}
+>>>>>>> adb4ddec8e (scroll to view with panel query)
         ref={ref}
       >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
