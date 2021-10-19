@@ -1,6 +1,7 @@
 import { DataFrame, Field, FieldType, FieldDTO, DataFrameDTO } from '../types/dataFrame';
 import { vectorToArray } from '../vector/vectorToArray';
 import { isBoolean, isNumber, isString } from 'lodash';
+import { isDateTime } from '..';
 
 export function isTimeSerie(frame: DataFrame) {
   if (frame.fields.length > 2) {
