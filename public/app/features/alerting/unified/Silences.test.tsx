@@ -194,37 +194,40 @@ describe('Silence edit', () => {
     const endDateString = dateTime(end).format('YYYY-MM-DD');
 
     userEvent.clear(ui.editor.durationInput.get());
-    await userEvent.type(ui.editor.durationInput.get(), '1d');
+    userEvent.type(ui.editor.durationInput.get(), '1d');
 
     await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1d'));
     await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
     await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(endDateString));
 
-    await userEvent.type(ui.editor.matcherName.get(), 'foo');
-    await userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
+    userEvent.type(ui.editor.matcherName.get(), 'foo');
+    userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
     userEvent.tab();
-    await userEvent.type(ui.editor.matcherValue.get(), 'bar');
+    userEvent.type(ui.editor.matcherValue.get(), 'bar');
 
-    userEvent.click(ui.editor.addMatcherButton.get());
-    await userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
-    await userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
+    userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
+    userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
     userEvent.tab();
-    await userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
+    userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
 
-    userEvent.click(ui.editor.addMatcherButton.get());
-    await userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
-    await userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
+    userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
+    userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
     userEvent.tab();
-    await userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
+    userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
 
-    userEvent.click(ui.editor.addMatcherButton.get());
-    await userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
-    await userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
+    userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
+    userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
     userEvent.tab();
-    await userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
+    userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
 
-    await userEvent.type(ui.editor.comment.get(), 'Test');
-    await userEvent.type(ui.editor.createdBy.get(), 'Homer Simpson');
+    userEvent.type(ui.editor.comment.get(), 'Test');
+    userEvent.type(ui.editor.createdBy.get(), 'Homer Simpson');
 
     userEvent.click(ui.editor.submit.get());
 

@@ -114,7 +114,7 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser
 func (m *Mock) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
 	m.Calls.GetUserRoles = append(m.Calls.GetUserRoles, []interface{}{ctx, user})
 	// Use override if provided
-	if m.GetUserPermissionsFunc != nil {
+	if m.GetUserRolesFunc != nil {
 		return m.GetUserRolesFunc(ctx, user)
 	}
 	// Otherwise return the Roles list
@@ -132,10 +132,10 @@ func (m *Mock) CloneUserToServiceAccount(ctx context.Context, user *models.Signe
 }
 
 func (m *Mock) LinkAPIKeyToServiceAccount(ctx context.Context, apikey *models.ApiKey, service_account *models.User) error {
-	m.Calls.CloneUserToServiceAccount = append(m.Calls.LinkAPIKeyToServiceAccount, []interface{}{ctx, apikey, service_account})
+	m.Calls.LinkAPIKeyToServiceAccount = append(m.Calls.LinkAPIKeyToServiceAccount, []interface{}{ctx, apikey, service_account})
 	// Use override if provided
-	if m.LinkAPIKeyToServiceAccount != nil {
-		return m.LinkAPIKeyToServiceAccount(ctx, apikey, service_account)
+	if m.LinkAPIKeyToServiceAccountFunc != nil {
+		return m.LinkAPIKeyToServiceAccountFunc(ctx, apikey, service_account)
 	}
 	// Otherwise return the default
 	return nil

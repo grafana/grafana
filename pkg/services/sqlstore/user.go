@@ -563,7 +563,7 @@ func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) er
 	}
 
 	getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-	err = GetTeamsByUser(getTeamsByUserQuery)
+	err = GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return err
 	}

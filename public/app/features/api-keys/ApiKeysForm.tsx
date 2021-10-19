@@ -42,14 +42,10 @@ const tooltipText =
 
 export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const [name, setName] = useState<string>('');
-  const [serviceAccount, setServiceAccount] = useState<string>('');
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [secondsToLive, setSecondsToLive] = useState<string>('');
-  const [createServiceAccount, setCreateServiceAccount] = useState<boolean>(false);
-
   useEffect(() => {
     setName('');
-    setServiceAccount('');
     setRole(OrgRole.Viewer);
     setSecondsToLive('');
   }, [show]);
@@ -57,7 +53,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (isValidInterval(secondsToLive)) {
-      onKeyAdded({ name, role, secondsToLive, serviceAccount, createServiceAccount });
+      onKeyAdded({ name, role, secondsToLive });
       onClose();
     }
   };

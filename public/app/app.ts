@@ -19,6 +19,7 @@ import {
   monacoLanguageRegistry,
   setLocale,
   setTimeZoneResolver,
+  setWeekStart,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
@@ -77,6 +78,7 @@ export class GrafanaApp {
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
+    setWeekStart(config.bootData.user.weekStart);
     setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
     // Important that extensions are initialized before store
