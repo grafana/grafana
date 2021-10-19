@@ -778,6 +778,10 @@ type fakeLogger struct {
 	log.Logger
 }
 
+func (tl fakeLogger) Info(msg string, ctx ...interface{}) {
+
+}
+
 func (tl fakeLogger) Debug(msg string, ctx ...interface{}) {
 
 }
