@@ -117,6 +117,7 @@ function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
   return [
     { label: OptionFilter.All, value: OptionFilter.All },
     { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
+    // { label: OptionFilter.Suggestions, value: OptionFilter.Suggestions },
   ];
 }
 
@@ -124,6 +125,7 @@ export enum OptionFilter {
   All = 'All',
   Overrides = 'Overrides',
   Recent = 'Recent',
+  Suggestions = 'Suggestions',
 }
 
 function renderSearchHits(
