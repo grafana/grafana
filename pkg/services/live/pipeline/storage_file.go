@@ -16,10 +16,11 @@ type FileStorage struct {
 }
 
 func (f *FileStorage) ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error) {
+	cfgfile := filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json")
 	var backends []RemoteWriteBackend
-	backendBytes, err := ioutil.ReadFile(filepath.Join(f.DataPath, "pipeline", "remote-write-backends.json"))
+	backendBytes, err := ioutil.ReadFile(cfgfile)
 	if err != nil {
-		return backends, fmt.Errorf("can't read ./pipeline/remote-write-backends.json file: %w", err)
+		return backends, fmt.Errorf("can't read %s file: %w", cfgfile, err)
 	}
 	var remoteWriteBackends RemoteWriteBackends
 	err = json.Unmarshal(backendBytes, &remoteWriteBackends)
