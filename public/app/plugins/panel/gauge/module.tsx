@@ -4,7 +4,7 @@ import { GaugeOptions } from './types';
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/types';
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { getSuggestions } from './suggestions';
+import { GaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .useFieldConfig()
@@ -29,5 +29,5 @@ export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
     commonOptionsBuilder.addTextSizeOptions(builder);
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
-  .setSuggestionsSupplier(getSuggestions)
+  .setSuggestionsSupplier(new GaugeSuggestionsSupplier())
   .setMigrationHandler(gaugePanelMigrationHandler);

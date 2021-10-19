@@ -208,75 +208,85 @@ export interface VisualizationSuggestion<TOptions = any, TFieldConfig = any> {
 /**
  * @alpha
  */
+export interface PanelDataSummary {
+  hasData?: boolean;
+  rowCountTotal: number;
+  rowCountMax: number;
+  frameCount: number;
+  numberFieldCount: number;
+  timeFieldCount: number;
+  stringFieldCount: number;
+  hasNumberField?: boolean;
+  hasTimeField?: boolean;
+  hasStringField?: boolean;
+}
+
+/**
+ * @alpha
+ */
 export class VisualizationSuggestionsBuilder {
   /** Current data */
   data?: PanelData;
-  /** Current pluginId */
-  pluginId: string;
-  /** Current options */
-  options: any;
-  /** Current field config */
-  fieldConfig: FieldConfigSource;
-  /** List of suggestions */
+  /** Current panel & options */
+  panel?: PanelModel;
+  /** Summary stats for current data */
+  dataSummary: PanelDataSummary;
+
   private list: VisualizationSuggestion[] = [];
 
-  dataExists?: boolean;
-  dataRowCountTotal = 0;
-  dataRowCountMax = 0;
-  dataFrameCount = 0;
-  dataNumberFieldCount = 0;
-  dataTimeFieldCount = 0;
-  dataStringFieldCount = 0;
-  dataHasNumberField?: boolean;
-  dataHasTimeField?: boolean;
-  dataHasStringField?: boolean;
-
-  constructor(data: PanelData | undefined, pluginId: string, options: any, fieldConfig: FieldConfigSource) {
+  constructor(data: PanelData | undefined, panel?: PanelModel) {
     this.data = data;
-    this.pluginId = pluginId;
-    this.options = options;
-    this.fieldConfig = fieldConfig;
-    this.preComputeDataAttributes();
+    this.panel = panel;
+    this.dataSummary = this.computeDataSummary();
   }
 
   getListAppender<TOptions, TFieldConfig>(defaults: VisualizationSuggestion<TOptions, TFieldConfig>) {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
   }
 
-  /** Since many plugins implement suggestions suppliers separately and need these data attributes we precompute these here so they can be shared */
-  preComputeDataAttributes() {
-    if (!this.data?.series?.length) {
-      return;
-    }
+  private computeDataSummary() {
+    const frames = this.data?.series || [];
 
-    this.dataFrameCount = this.data.series.length;
+    let numberFieldCount = 0;
+    let timeFieldCount = 0;
+    let stringFieldCount = 0;
+    let rowCountTotal = 0;
+    let rowCountMax = 0;
 
-    for (const frame of this.data.series) {
-      this.dataRowCountTotal += frame.length;
+    for (const frame of frames) {
+      rowCountTotal += frame.length;
 
       for (const field of frame.fields) {
         switch (field.type) {
           case FieldType.number:
-            this.dataNumberFieldCount += 1;
+            numberFieldCount += 1;
             break;
           case FieldType.time:
-            this.dataTimeFieldCount += 1;
+            timeFieldCount += 1;
             break;
           case FieldType.string:
-            this.dataStringFieldCount += 1;
+            stringFieldCount += 1;
             break;
         }
       }
 
-      if (frame.length > this.dataRowCountMax) {
-        this.dataRowCountMax = frame.length;
+      if (frame.length > rowCountMax) {
+        rowCountMax = frame.length;
       }
     }
 
-    this.dataExists = this.dataRowCountTotal > 0;
-    this.dataHasTimeField = this.dataTimeFieldCount > 0;
-    this.dataHasNumberField = this.dataNumberFieldCount > 0;
-    this.dataHasStringField = this.dataStringFieldCount > 0;
+    return {
+      numberFieldCount,
+      timeFieldCount,
+      stringFieldCount,
+      rowCountTotal,
+      rowCountMax,
+      frameCount: frames.length,
+      hasData: rowCountTotal > 0,
+      hasTimeField: timeFieldCount > 0,
+      hasNumberField: numberFieldCount > 0,
+      hasStringField: stringFieldCount > 0,
+    };
   }
 
   getList() {
@@ -287,7 +297,10 @@ export class VisualizationSuggestionsBuilder {
 /**
  * @alpha
  */
-export type VisualizationSuggestionsSupplier = (builder: VisualizationSuggestionsBuilder) => void;
+export type VisualizationSuggestionsSupplier = {
+  getDataSuggestions: (builder: VisualizationSuggestionsBuilder) => void;
+  getOptionSuggestions?: (builder: VisualizationSuggestionsBuilder) => void;
+};
 
 /**
  * Helps with typings and defaults

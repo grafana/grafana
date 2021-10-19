@@ -1,11 +1,11 @@
-import { PanelData, VisualizationSuggestion, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { PanelData, VisualizationSuggestion, VisualizationSuggestionsBuilder, PanelModel } from '@grafana/data';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-export async function getAllSuggestions(data?: PanelData): Promise<VisualizationSuggestion[]> {
+export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
   const plugins = ['timeseries', 'barchart', 'gauge', 'stat', 'piechart', 'bargauge', 'table'];
-  const builder = new VisualizationSuggestionsBuilder(data, 'table', {}, { defaults: {}, overrides: [] });
+  const builder = new VisualizationSuggestionsBuilder(data, panel);
 
-  if (!builder.dataExists) {
+  if (!builder.dataSummary.hasData) {
     return builder.getList();
   }
 
@@ -14,7 +14,7 @@ export async function getAllSuggestions(data?: PanelData): Promise<Visualization
     const supplier = plugin.getSuggestionsSupplier();
 
     if (supplier) {
-      supplier(builder);
+      supplier.getDataSuggestions(builder);
     }
   }
 

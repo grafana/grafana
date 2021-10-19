@@ -5,7 +5,7 @@ import { LegendDisplayMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
 import { addStandardDataReduceOptions } from '../stat/types';
-import { getSuggestions } from './suggestions';
+import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
@@ -71,4 +71,4 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
     });
   })
-  .setSuggestionsSupplier(getSuggestions);
+  .setSuggestionsSupplier(new PieChartSuggestionsSupplier());

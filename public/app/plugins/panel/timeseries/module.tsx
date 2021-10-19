@@ -5,7 +5,7 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { TimeSeriesOptions } from './types';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
-import { getSuggestions } from './suggestions';
+import { TimeSeriesSuggestionSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -14,5 +14,5 @@ export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeS
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
-  .setSuggestionsSupplier(getSuggestions)
+  .setSuggestionsSupplier(new TimeSeriesSuggestionSupplier())
   .setDataSupport({ annotations: true, alertStates: true });

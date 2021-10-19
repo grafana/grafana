@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel } from '@grafana/data';
 import { css } from '@emotion/css';
 import { VizTypeChangeDetails } from './types';
 import { VisualizationPreview } from './VisualizationPreview';
@@ -10,15 +10,16 @@ import { useAsync } from 'react-use';
 export interface Props {
   current: PanelPluginMeta;
   data?: PanelData;
+  panel?: PanelModel;
   onChange: (options: VizTypeChangeDetails) => void;
   searchQuery: string;
   onClose: () => void;
 }
 
-export function VisualizationSuggestions({ onChange, data }: Props) {
+export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const styles = useStyles2(getStyles);
 
-  const { value: suggestions } = useAsync(() => getAllSuggestions(data), [data]);
+  const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
 
   return (
     <div className={styles.grid}>

@@ -9,97 +9,101 @@ import {
 } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 
-export function getSuggestions(builder: VisualizationSuggestionsBuilder) {
-  const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
-    name: 'Line chart',
-    pluginId: 'timeseries',
-    options: {
-      legend: {} as any,
-    },
-    fieldConfig: {
-      defaults: {
-        custom: {},
+export class TimeSeriesSuggestionSupplier {
+  getDataSuggestions(builder: VisualizationSuggestionsBuilder) {
+    const list = builder.getListAppender<TimeSeriesOptions, GraphFieldConfig>({
+      name: 'Line chart',
+      pluginId: 'timeseries',
+      options: {
+        legend: {} as any,
       },
-      overrides: [],
-    },
-    previewModifier: (s) => {
-      s.options!.legend.displayMode = LegendDisplayMode.Hidden;
-
-      if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-        s.fieldConfig!.defaults.custom!.lineWidth = 4;
-      }
-    },
-  });
-
-  if (!builder.dataHasTimeField || !builder.dataHasNumberField) {
-    return;
-  }
-
-  list.append({});
-
-  if (builder.dataRowCountMax < 200) {
-    list.append({
-      name: 'Line chart smooth',
       fieldConfig: {
         defaults: {
-          custom: {
-            lineInterpolation: LineInterpolation.Smooth,
-          },
+          custom: {},
         },
         overrides: [],
       },
-    });
-  }
+      previewModifier: (s) => {
+        s.options!.legend.displayMode = LegendDisplayMode.Hidden;
 
-  if (builder.dataNumberFieldCount === 1) {
-    list.append({
-      name: 'Area chart',
-      fieldConfig: {
-        defaults: {
-          custom: {
-            fillOpacity: 25,
-          },
-        },
-        overrides: [],
+        if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+          s.fieldConfig!.defaults.custom!.lineWidth = 4;
+        }
       },
     });
-  } else {
-    // If more than 1 series suggest stacked chart
-    list.append({
-      name: 'Area chart stacked',
-      fieldConfig: {
-        defaults: {
-          custom: {
-            fillOpacity: 25,
-            stacking: {
-              mode: StackingMode.Normal,
-              group: 'A',
+
+    const { dataSummary } = builder;
+
+    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField) {
+      return;
+    }
+
+    list.append({});
+
+    if (dataSummary.rowCountMax < 200) {
+      list.append({
+        name: 'Line chart smooth',
+        fieldConfig: {
+          defaults: {
+            custom: {
+              lineInterpolation: LineInterpolation.Smooth,
             },
           },
+          overrides: [],
         },
-        overrides: [],
-      },
-    });
-  }
+      });
+    }
 
-  if (builder.dataRowCountTotal / builder.dataNumberFieldCount < 100) {
-    list.append({
-      name: 'Bar chart with time x-axis',
-      fieldConfig: {
-        defaults: {
-          custom: {
-            drawStyle: GraphDrawStyle.Bars,
-            fillOpacity: 100,
-            lineWidth: 1,
-            gradientMode: GraphGradientMode.Hue,
-            stacking: {
-              mode: StackingMode.Normal,
-              group: 'A',
+    if (dataSummary.numberFieldCount === 1) {
+      list.append({
+        name: 'Area chart',
+        fieldConfig: {
+          defaults: {
+            custom: {
+              fillOpacity: 25,
             },
           },
+          overrides: [],
         },
-        overrides: [],
-      },
-    });
+      });
+    } else {
+      // If more than 1 series suggest stacked chart
+      list.append({
+        name: 'Area chart stacked',
+        fieldConfig: {
+          defaults: {
+            custom: {
+              fillOpacity: 25,
+              stacking: {
+                mode: StackingMode.Normal,
+                group: 'A',
+              },
+            },
+          },
+          overrides: [],
+        },
+      });
+    }
+
+    if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < 100) {
+      list.append({
+        name: 'Bar chart with time x-axis',
+        fieldConfig: {
+          defaults: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              fillOpacity: 100,
+              lineWidth: 1,
+              gradientMode: GraphGradientMode.Hue,
+              stacking: {
+                mode: StackingMode.Normal,
+                group: 'A',
+              },
+            },
+          },
+          overrides: [],
+        },
+      });
+    }
   }
 }

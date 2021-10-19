@@ -120,6 +120,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
                 current={plugin.meta}
                 onChange={onVizChange}
                 searchQuery={searchQuery}
+                panel={panel}
                 data={data}
                 onClose={() => {}}
               />
