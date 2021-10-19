@@ -99,6 +99,9 @@ def pr_pipelines(edition):
             'exclude': [
                 '**.md',
             ],
+            'include': [
+                '**',
+            ],
         },
     }
     return [

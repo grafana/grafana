@@ -240,6 +240,8 @@ trigger:
   paths:
     exclude:
     - '**.md'
+    include:
+    - '**'
 type: docker
 ---
 depends_on: []
@@ -3578,6 +3580,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 3866bfd9c97ab35741de30a9554b592112ed0266a4b731b4962c427861b47f44
+hmac: 840d504c1b1ee2b8cd46a7b93f760dd4f5aaddd3a0afd2d0aa46b315fb75a798
 
 ...

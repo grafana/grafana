@@ -4,7 +4,7 @@ When you, it is a good practice to build the docs on your local machine to make 
 
 ## Requirements
 
-Yarn >= 1.22.4
+Yarn >= 1.22.4test
 
 ## Build the doc site
 
