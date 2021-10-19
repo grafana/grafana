@@ -40,7 +40,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     }, [forceOpen, isExpanded, isSelected]);
 
     const onToggle = useCallback(() => {
-      // TODO: set the route, listening to changes in the url, make sure the element is visible
+      // on expand, append query param
       getLocationSrv().update({
         query: {
           [categoryParam]: isExpanded ? undefined : id,
