@@ -29,9 +29,9 @@ export function createSpanLinkFactory({
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptions;
-  dataFrame: DataFrame;
+  dataFrame?: DataFrame;
 }): SpanLinkFunc | undefined {
-  if (dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
+  if (!dataFrame || dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
     // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
     // let's try to use the old legacy path.
     return legacyCreateSpanLinkFactory(splitOpenFn, traceToLogsOptions);
