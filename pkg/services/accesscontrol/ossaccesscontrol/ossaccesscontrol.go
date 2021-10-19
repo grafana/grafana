@@ -14,9 +14,10 @@ import (
 
 func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		Cfg:        cfg,
-		UsageStats: usageStats,
-		Log:        log.New("accesscontrol"),
+		Cfg:           cfg,
+		UsageStats:    usageStats,
+		Log:           log.New("accesscontrol"),
+		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
 	s.registerUsageMetrics()
 	return s
@@ -28,6 +29,7 @@ type OSSAccessControlService struct {
 	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
+	scopeResolver accesscontrol.ScopeResolver
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -65,6 +67,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
+
 	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
 }
 
@@ -83,8 +86,12 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 					continue
 				}
 				for _, p := range role.Permissions {
-					permission := p
-					permissions = append(permissions, &permission)
+					// if the permission has a keyword in its scope it will be resolved
+					permission, err := ac.scopeResolver.ResolveKeyword(user, p)
+					if err != nil {
+						return nil, err
+					}
+					permissions = append(permissions, permission)
 				}
 			}
 		}
