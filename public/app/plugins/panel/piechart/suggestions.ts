@@ -27,13 +27,13 @@ export class PieChartSuggestionsSupplier {
 
     const { dataSummary } = builder;
 
-    if (!dataSummary.hasNumberField || dataSummary.numberFieldCount < 2) {
+    if (!dataSummary.hasNumberField) {
       return;
     }
 
     if (dataSummary.frameCount === 1) {
-      // if many values this is not a good option
-      if (dataSummary.rowCountTotal > 10) {
+      // if many values this or single value PieChart is not a good option
+      if (dataSummary.rowCountTotal > 30 || dataSummary.rowCountTotal < 2) {
         return;
       }
 
@@ -48,7 +48,7 @@ export class PieChartSuggestionsSupplier {
       return;
     }
 
-    if (dataSummary.frameCount > 30) {
+    if (dataSummary.numberFieldCount > 30 || dataSummary.numberFieldCount < 2) {
       return;
     }
 
