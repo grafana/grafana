@@ -121,16 +121,18 @@ const getRolePickerInputStyles = stylesFactory(
           display: flex;
           align-items: center;
           line-height: 1;
-          background: ${disabled ? theme.colors.secondary.border : theme.colors.background.secondary};
+          background: ${disabled
+            ? theme.colors.emphasize(theme.colors.background.secondary)
+            : theme.colors.background.secondary};
           border-radius: ${theme.shape.borderRadius()};
           margin: ${theme.spacing(0.25, 1, 0.25, 0)};
           padding: ${theme.spacing(0.25, 1, 0.25, 0.25)};
           color: ${theme.colors.text.primary};
           font-size: ${theme.typography.bodySmall.fontSize};
 
-          // &:hover {
-          //   background: ${theme.colors.emphasize(theme.colors.background.secondary)};
-          // }
+          &:hover {
+            background: ${theme.colors.emphasize(theme.colors.background.secondary)};
+          }
 
           svg {
             margin: ${theme.spacing(0, 0.25, 0, 0)};
