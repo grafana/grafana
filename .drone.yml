@@ -64,10 +64,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -82,15 +79,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -124,6 +121,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -339,10 +338,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -357,15 +353,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -401,6 +397,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -797,10 +795,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -815,15 +810,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -861,6 +856,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1180,10 +1177,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -1198,15 +1192,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1245,6 +1239,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1275,7 +1271,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend-enterprise2
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
@@ -1739,10 +1735,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -1757,15 +1750,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1803,6 +1796,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2111,10 +2106,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -2129,15 +2121,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2176,6 +2168,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2206,7 +2200,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend-enterprise2
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
@@ -2667,10 +2661,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -2685,15 +2676,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2729,6 +2720,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3011,10 +3004,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  - yarn run check-strict
+  - echo skip
   depends_on:
   - initialize
   environment:
@@ -3029,15 +3019,15 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - yarn run ci:test-frontend
+  - echo skip
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -3074,6 +3064,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - pwd
+  - ls -a bin/linux-amd64
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3104,7 +3096,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend-enterprise2
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - echo skip
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
@@ -3481,6 +3473,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 914bf2e3e06c65f7bc587a77e72e773858e864b4f0636d00f0edf6ede3f6d54d
+hmac: 485001e8ea52089210dbdaada0a9045e63e2fd693258a205c1bd1d182e6888df
 
 ...
