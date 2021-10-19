@@ -64,7 +64,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -79,13 +82,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -198,7 +201,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - lint-frontend
+  - build-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -338,7 +341,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -353,13 +359,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -506,7 +512,7 @@ steps:
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - lint-frontend
+  - build-frontend
   image: grafana/build-container:1.4.3
   name: build-frontend-docs
 - commands:
@@ -795,7 +801,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -810,13 +819,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -1177,7 +1186,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -1192,13 +1204,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -1271,7 +1283,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend-enterprise2
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
@@ -1735,7 +1747,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -1750,13 +1765,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -2106,7 +2121,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -2121,13 +2139,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -2200,7 +2218,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend-enterprise2
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
@@ -2661,7 +2679,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -2676,13 +2697,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -3004,7 +3025,10 @@ steps:
   image: grafana/build-container:1.4.3
   name: lint-backend
 - commands:
-  - echo skip
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run typecheck
+  - yarn run check-strict
   depends_on:
   - initialize
   environment:
@@ -3019,13 +3043,13 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
   name: test-backend-integration
 - commands:
-  - echo skip
+  - yarn run ci:test-frontend
   depends_on:
   - initialize
   environment:
@@ -3096,7 +3120,7 @@ steps:
   image: grafana/build-container:1.4.3
   name: test-backend-enterprise2
 - commands:
-  - echo skip
+  - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - lint-backend
   image: grafana/build-container:1.4.3
@@ -3473,6 +3497,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 545c17474588c3e4c797cd8b84069d9e3b20ee6b2cab7aaa141c4c35a45597af
+hmac: a6afb9baae7ecf011d368d43870c625c727d8604563a6daae0c76fac94762886
 
 ...

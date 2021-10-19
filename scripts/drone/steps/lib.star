@@ -328,7 +328,7 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'lint-frontend'
+            'build-frontend'
         ],
         'commands': [
             './scripts/ci-reference-docs-lint.sh ci',
@@ -379,7 +379,7 @@ def test_backend_integration_step(edition):
             'lint-backend',
         ],
         'commands': [
-            'echo skip',
+            './bin/grabpl integration-tests --edition {}'.format(edition),
         ],
     }
 
@@ -394,7 +394,7 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            'echo skip',
+            'yarn run ci:test-frontend',
         ],
     }
 
@@ -409,7 +409,10 @@ def lint_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            'echo skip',
+            'yarn run prettier:check',
+            'yarn run lint',
+            'yarn run typecheck',
+            'yarn run check-strict',
         ],
     }
 
