@@ -61,7 +61,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 				SignatureStatus: plugins.SignatureUnsigned,
 			}
 		}
-		logger.Warn("Running an unsigned plugin", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir)
+		logger.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir)
 		return nil
 	case plugins.SignatureInvalid:
 		logger.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
