@@ -3,7 +3,6 @@ package ossaccesscontrol
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -85,6 +84,11 @@ func (ac *OSSAccessControlService) LinkAPIKeyToServiceAccount(context.Context, *
 	return errors.New("link SA not implemented yet in service accounts") //Please switch on Enterprise to test this
 }
 
+// DeleleServiceAccount deletes a service account and its associated api-keys
+func (ac *OSSAccessControlService) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error {
+	return errors.New("delete not implemented yet in service accounts") //Please switch on Enterprise to test this
+}
+
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -120,11 +124,6 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	}
 
 	return roles
-}
-
-func (ac *OSSAccessControlService) DeleteServiceAccount(ctx context.Context, serviceAccountId int64) error {
-	fmt.Printf("format strinossaccesscontrol")
-	return nil
 }
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
