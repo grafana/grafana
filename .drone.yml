@@ -90,7 +90,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -124,6 +124,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -365,7 +367,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -401,6 +403,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -823,7 +827,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -861,6 +865,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1206,7 +1212,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1245,6 +1251,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -1765,7 +1773,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -1803,6 +1811,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2137,7 +2147,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2176,6 +2186,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -2693,7 +2705,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -2729,6 +2741,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3037,7 +3051,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - lint-frontend
+  - initialize
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.4.3
@@ -3074,6 +3088,8 @@ steps:
   image: grafana/build-container:1.4.3
   name: validate-scuemata
 - commands:
+  - '# Make sure the git tree is clean.'
+  - git reset --hard
   - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .
   - '# The above command generates Typescript files (*.gen.ts) from all appropriate
     .cue files.'
@@ -3481,6 +3497,6 @@ kind: secret
 name: drone_token
 ---
 kind: signature
-hmac: 914bf2e3e06c65f7bc587a77e72e773858e864b4f0636d00f0edf6ede3f6d54d
+hmac: a6afb9baae7ecf011d368d43870c625c727d8604563a6daae0c76fac94762886
 
 ...
