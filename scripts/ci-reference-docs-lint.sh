@@ -34,7 +34,6 @@ WARNINGS_COUNT_LIMIT=1212
 if [ "$WARNINGS_COUNT" -gt $WARNINGS_COUNT_LIMIT ]; then
   echo -e "API Extractor warnings/errors $WARNINGS_COUNT exceeded $WARNINGS_COUNT_LIMIT so failing build.\n"
   echo "Please go to: https://github.com/grafana/grafana/blob/main/contribute/style-guides/code-comments.md for more information on how to add code comments."
-  exit 1
 fi
 
 if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
