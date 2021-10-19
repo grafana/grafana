@@ -45,8 +45,17 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
         this.meta = meta;
       }
       if (fields) {
-        for (const f of fields) {
-          this.addField(f);
+        // This is legacy (like Grafana 6.2), hence the ignore.
+        // @ts-ignore
+        const rows = source.rows;
+        if (rows) {
+          fields.forEach((f, index) => {
+            this.addLegacyField(f, rows, index);
+          });
+        } else {
+          for (const f of fields) {
+            this.addField(f);
+          }
         }
       }
     }
@@ -70,6 +79,18 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
     });
+  }
+
+  addLegacyField(f: Field | FieldDTO, rows: any[][], index: number): MutableField {
+    const values: any[] = [];
+    rows.forEach((row) => {
+      values.push(row[index]);
+    });
+    const newField = {
+      ...f,
+      values,
+    };
+    return this.addField(newField);
   }
 
   addField(f: Field | FieldDTO, startLength?: number): MutableField {
