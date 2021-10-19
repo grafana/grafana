@@ -49,21 +49,21 @@ describe('PluginListItem', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
     render(<PluginListItem plugin={datasourcePlugin} pathName="" />);
 
-    expect(screen.getByLabelText(/datasource plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/datasource plugin/i)).toBeVisible();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
     render(<PluginListItem plugin={panelPlugin} pathName="" />);
 
-    expect(screen.getByLabelText(/panel plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/panel plugin/i)).toBeVisible();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
     render(<PluginListItem plugin={appPlugin} pathName="" />);
 
-    expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/app plugin/i)).toBeVisible();
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
@@ -92,21 +92,21 @@ describe('PluginListItem', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
     render(<PluginListItem plugin={datasourcePlugin} pathName="" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByLabelText(/datasource plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/datasource plugin/i)).toBeVisible();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
     render(<PluginListItem plugin={panelPlugin} pathName="" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByLabelText(/panel plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/panel plugin/i)).toBeVisible();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
     render(<PluginListItem plugin={appPlugin} pathName="" displayMode={PluginListDisplayMode.List} />);
 
-    expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
+    expect(screen.getByTitle(/app plugin/i)).toBeVisible();
   });
 
   it('renders a disabled plugin with a badge to indicate its error', () => {
